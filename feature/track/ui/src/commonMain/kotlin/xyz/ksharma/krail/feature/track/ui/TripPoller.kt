@@ -2,10 +2,6 @@
     "TooManyFunctions",
     "LongParameterList",
     "LongMethod",
-    // Banned by CyclomaticSuppressBan and grandfathered in
-    // config/cyclomatic-suppress-baseline.txt — startPolling (16) and computeCountdown (19) are
-    // both over the threshold of 15 and need extracting. Do not copy this line anywhere else.
-    "CyclomaticComplexMethod",
     "LoopWithTooManyJumpStatements",
     "ForbiddenComment",
 )
@@ -15,6 +11,7 @@ package xyz.ksharma.krail.feature.track.ui
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -28,7 +25,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiDateString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiTimeString
-import xyz.ksharma.krail.core.datetime.DateTimeHelper.toGenericFormattedTimeString
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.maps.state.LatLng
@@ -135,12 +131,12 @@ internal class TripPoller(
             when (trackTripState) {
                 is TrackTripState.Tracking -> computeCountdown(trackTripState.journey, now)
                 is TrackTripState.Arrived -> computeCountdown(trackTripState.journey, now)
-                else -> "" to ""
+                else -> EMPTY_COUNTDOWN
             }
         }.stateIn(
             scope = scope,
             started = SharingStarted.WhileSubscribed(WHILE_SUBSCRIBED_TIMEOUT_MS),
-            initialValue = "" to "",
+            initialValue = EMPTY_COUNTDOWN,
         )
 
     private var pollingJob: Job? = null
@@ -213,57 +209,56 @@ internal class TripPoller(
             "TrackTrip: startPolling — ${deepLink.fromStopName} → ${deepLink.toStopName}, " +
                 "interval=${TrackingConfig.POLL_INTERVAL_MS}ms",
         )
-        pollingJob = scope.launch {
-            while (isActive) {
-                // Guard before each API call — trip may expire between polls.
-                if (isTripExpired(deepLink)) {
-                    log(
-                        "TrackTrip: poll loop — departure expired " +
-                            "(>${TrackingConfig.DEPARTURE_EXPIRED_HOURS}h ago)",
-                    )
-                    transitionToArrivedAndFinished()
-                    break
-                }
+        pollingJob = scope.launch { runPollLoop(deepLink) }
+    }
 
-                // Smart delay: if we polled recently (e.g. user returned to this screen),
-                // wait out the remaining interval instead of hitting the API immediately.
-                // lastPollInstant == null means first poll — go straight through.
-                val elapsedMs =
-                    lastPollInstant?.let { (timeSource.now() - it).inWholeMilliseconds }
-                        ?: Long.MAX_VALUE
-                val remainingWaitMs =
-                    (TrackingConfig.POLL_INTERVAL_MS - elapsedMs).coerceAtLeast(0L)
-                if (remainingWaitMs > 0L) {
-                    log("TrackTrip: poll — polled ${elapsedMs}ms ago, waiting ${remainingWaitMs}ms before next call")
-                    delay(remainingWaitMs)
-                    continue
-                }
-
-                setRefreshing(true)
-                fetchAndUpdate(deepLink)
-                lastPollInstant = timeSource.now()
-                setRefreshing(false)
-                val current = state.value
-                when {
-                    current is TrackTripState.Arrived -> {
-                        log("TrackTrip: poll loop exit — Arrived")
-                        break
-                    }
-
-                    current is TrackTripState.ArrivedAndFinished -> {
-                        log("TrackTrip: poll loop exit — ArrivedAndFinished")
-                        break
-                    }
-
-                    current !is TrackTripState.Tracking -> {
-                        log("TrackTrip: poll loop exit — state=${current::class.simpleName}")
-                        break
-                    }
-
-                    else -> delay(TrackingConfig.POLL_INTERVAL_MS)
-                }
+    private suspend fun runPollLoop(deepLink: TripDeepLink) {
+        while (currentCoroutineContext().isActive) {
+            // Guard before each API call — trip may expire between polls.
+            if (isTripExpired(deepLink)) {
+                log(
+                    "TrackTrip: poll loop — departure expired " +
+                        "(>${TrackingConfig.DEPARTURE_EXPIRED_HOURS}h ago)",
+                )
+                transitionToArrivedAndFinished()
+                break
             }
+
+            val remainingWaitMs = remainingSmartDelayMs()
+            if (remainingWaitMs > 0L) {
+                log("TrackTrip: poll — polled recently, waiting ${remainingWaitMs}ms before next call")
+                delay(remainingWaitMs)
+                continue
+            }
+
+            pollOnce(deepLink)
+
+            val exitReason = pollLoopExitReason(state.value)
+            if (exitReason != null) {
+                log("TrackTrip: poll loop exit — $exitReason")
+                break
+            }
+            delay(TrackingConfig.POLL_INTERVAL_MS)
         }
+    }
+
+    private suspend fun pollOnce(deepLink: TripDeepLink) {
+        setRefreshing(true)
+        fetchAndUpdate(deepLink)
+        lastPollInstant = timeSource.now()
+        setRefreshing(false)
+    }
+
+    /**
+     * Milliseconds still owed to the poll interval, or 0 to poll now.
+     *
+     * Smart delay: returning to this screen shortly after a poll should wait out the rest of
+     * the interval rather than hitting the API again. No previous poll means poll immediately.
+     */
+    private fun remainingSmartDelayMs(): Long {
+        val lastPoll = lastPollInstant ?: return 0L
+        val elapsedMs = (timeSource.now() - lastPoll).inWholeMilliseconds
+        return (TrackingConfig.POLL_INTERVAL_MS - elapsedMs).coerceAtLeast(0L)
     }
 
     fun stopPolling() {
@@ -515,67 +510,24 @@ internal class TripPoller(
         }
     }
 
-    @Suppress("MagicNumber")
     private fun computeCountdown(
         journey: TrackedJourneyDisplay,
         now: Instant,
     ): Pair<String, String> {
-        val originInstant = runCatching { Instant.parse(journey.originUtcDateTime) }.getOrNull()
-            ?: return "" to ""
-        // Use the last transport stop's utcTime as destination — identical source to what
-        // TrackedLegView uses, so CountdownCard and the timeline always agree.
-        val lastStopUtc =
-            (journey.legs.lastOrNull { it is TrackedLeg.Transport } as? TrackedLeg.Transport)
-                ?.stops
-                ?.lastOrNull()
-                ?.utcTime
-        val destinationInstant = lastStopUtc
-            ?.let { runCatching { Instant.parse(it) }.getOrNull() }
-            ?: runCatching { Instant.parse(journey.destinationUtcDateTime) }.getOrNull()
-            ?: return "" to ""
-        return if (now < originInstant) {
-            val secs = (originInstant - now).inWholeSeconds
-            val value = when {
-                secs < SECONDS_PER_MINUTE -> "${secs}s"
-                secs < SECONDS_PER_HOUR -> {
-                    val mins = secs / SECONDS_PER_MINUTE
-                    val rem = secs % SECONDS_PER_MINUTE
-                    if (rem > 0L) "${mins}m ${rem}s" else "${mins}m"
-                }
+        val originInstant = journey.originInstantOrNull() ?: return EMPTY_COUNTDOWN
+        val destinationInstant = journey.destinationInstantOrNull() ?: return EMPTY_COUNTDOWN
 
-                else -> (originInstant - now).toGenericFormattedTimeString()
-            }
-            LABEL_DEPARTING_IN to value
-        } else {
-            val duration = destinationInstant - now
-            val totalSeconds = duration.inWholeSeconds
-
-            // One-way latch: once we've crossed into arrived territory, never go back.
-            if (totalSeconds <= 0L) hasPassedArrivalMoment = true
-
-            when {
-                hasPassedArrivalMoment && totalSeconds > 0L -> LABEL_ARRIVED to LABEL_JUST_NOW
-                totalSeconds <= -SECONDS_PER_MINUTE -> LABEL_ARRIVED to duration.toGenericFormattedTimeString()
-                totalSeconds < 0L -> LABEL_ARRIVED to LABEL_JUST_NOW
-                totalSeconds < SECONDS_PER_MINUTE -> LABEL_ARRIVING_IN to "${totalSeconds}s"
-                totalSeconds < SECONDS_PER_HOUR -> {
-                    val mins = totalSeconds / SECONDS_PER_MINUTE
-                    val secs = totalSeconds % SECONDS_PER_MINUTE
-                    LABEL_ARRIVING_IN to if (secs > 0L) "${mins}m ${secs}s" else "${mins}m"
-                }
-
-                else -> LABEL_ARRIVING_IN to duration.toGenericFormattedTimeString()
-            }
+        if (now < originInstant) {
+            return LABEL_DEPARTING_IN to shortCountdownValue(originInstant - now)
         }
+
+        val remaining = destinationInstant - now
+        // One-way latch: once we've crossed into arrived territory, never go back.
+        if (remaining.inWholeSeconds <= 0L) hasPassedArrivalMoment = true
+        return arrivedOrArrivingLabel(remaining, hasPassedArrivalMoment)
     }
 
     companion object {
-        private const val SECONDS_PER_MINUTE = 60L
-        private const val SECONDS_PER_HOUR = 3600L
-        private const val LABEL_ARRIVED = "Arrived"
-        private const val LABEL_JUST_NOW = "just now"
-        private const val LABEL_ARRIVING_IN = "Arriving in"
-        private const val LABEL_DEPARTING_IN = "Departing in"
         private const val GTFS_RT_RETRY_DELAY_MS = 2_000L
         private const val WHILE_SUBSCRIBED_TIMEOUT_MS = 5_000L
 

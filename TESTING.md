@@ -195,6 +195,73 @@ before pushing.
 
 ---
 
+## Running the shared tests on iOS
+
+`commonTest` has always *compiled* for iOS. Until the `iosUnitTest` lane it never **ran**
+there, so every Kotlin/Native behaviour difference — freezing, date and number formatting,
+`kotlin.time`, `Char` handling — was invisible.
+
+```
+./gradlew iosUnitTest          # macOS + Xcode only
+```
+
+That aggregate runs `iosSimulatorArm64Test` for each module in the lane and first runs
+`verifyIosTestClassification`, which fails if a module has shared test sources but is in
+neither the include nor the exclude list. Both lists, and the reason for every exclusion,
+live in one place:
+[`gradle/build-logic/convention/src/main/kotlin/xyz/ksharma/krail/gradle/IosUnitTests.kt`](gradle/build-logic/convention/src/main/kotlin/xyz/ksharma/krail/gradle/IosUnitTests.kt).
+`verifyIosTestClassification` also runs on the cheap Ubuntu runner in `code-quality.yml`, so
+drift is caught on every PR rather than only on the macOS lane.
+
+CI: [`.github/workflows/ios-unit-tests.yml`](.github/workflows/ios-unit-tests.yml) on
+`macos-latest`, for pushes to `main` and PRs touching shared sources or build config.
+
+### What runs on iOS
+
+| Module | Tests |
+|---|---|
+| `:core:date-time` | 27 |
+| `:core:deeplink` | 18 |
+| `:core:transport` | 15 |
+| `:taj` | 8 |
+| `:feature:debug-settings:store` | 6 |
+
+### What is host-only, and why
+
+**Firebase iOS frameworks — 19 of the 24 modules with shared tests.** `:core:analytics` and
+`:core:remote-config` depend on the GitLive Firebase Kotlin SDK, whose iOS klibs declare
+`-framework FirebaseCore`. Those frameworks are supplied by the Xcode project's SPM
+integration, so when Gradle links a standalone `.kexe` test binary the linker cannot find
+them:
+
+```
+ld: framework 'FirebaseCore' not found
+> Task :core:analytics:linkDebugTestIosSimulatorArm64 FAILED
+```
+
+`:core:testing` depends on both, so **every module that consumes the shared fakes inherits
+the wall** — that is what keeps the lane small, not anything wrong with the tests. Widening
+it means giving Gradle its own copy of the Firebase iOS frameworks (the repo already drives
+SPM from Gradle for MapLibre, via `krail.maplibre`), or splitting the Firebase-backed
+implementations out from the interfaces the fakes need. Both are real work, neither is a
+test-code change.
+
+**Backtick test names containing `,`.** Kotlin/Native rejects them where the JVM accepts
+them:
+
+```
+e: ThemeContrastTest.kt:35:9 Name contains illegal characters: ",".
+```
+
+Cheap to fix — rename the test. `:taj` joined the lane this way. `:feature:track:network`
+and `:feature:trip-planner:ui` still carry such names, but both also sit behind the Firebase
+wall, so renaming alone would not get them running.
+
+**Robolectric, Roborazzi and Compose UI tests** stay host-only by construction — they live in
+`androidHostTest`, which the iOS compilation never sees.
+
+---
+
 ## Snapshot testing
 
 The annotation-driven generation flow is preserved: any `@PreviewComponent` /

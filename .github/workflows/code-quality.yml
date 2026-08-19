@@ -47,6 +47,7 @@ jobs:
         run: >-
           ./gradlew
           verifyTestWiring verifyTestingModuleUsage verifyNoAdHocBoundaryFakes
+          verifyIosTestClassification
           --continue -PciQuality=true
 
       # -PciQuality=true tells core/network/build.gradle.kts to skip the

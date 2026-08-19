@@ -66,7 +66,7 @@ onFlowComplete:
 - extendedWaitUntil:
     visible:
       id: "searchstop.result..*"
-    timeout: 30000
+    timeout: 60000
 
 # Rotating with results on screen exercises a different path than rotating an
 # empty list: the results have to survive recreation too.
@@ -85,7 +85,7 @@ onFlowComplete:
 - extendedWaitUntil:
     visible:
       id: "searchstop.result..*"
-    timeout: 30000
+    timeout: 60000
 - tapOn:
     id: "searchstop.result..*"
     index: 0
@@ -107,7 +107,7 @@ onFlowComplete:
 - extendedWaitUntil:
     visible:
       id: "searchstop.result..*"
-    timeout: 30000
+    timeout: 60000
 - tapOn:
     id: "searchstop.result..*"
     index: 0

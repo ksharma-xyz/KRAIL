@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.krail.kotlin.multiplatform)
     alias(libs.plugins.krail.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.roborazzi)
+    alias(libs.plugins.krail.snapshot.testing)
     alias(libs.plugins.krail.android.kmp.library)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
@@ -56,7 +56,7 @@ kotlin {
 
         commonMain {
             dependencies {
-                implementation(projects.core.snapshotTestingAnnotations)
+                // `:core:snapshot-testing-annotations` is added by `krail.snapshot.testing`.
                 implementation(projects.core.adaptiveUi)
                 implementation(projects.core.aiText)
                 implementation(projects.core.speechToText)
@@ -147,10 +147,14 @@ kotlin {
             kotlin.srcDir("src/androidHostTest/kotlin")
             resources.srcDir("src/androidHostTest/resources")
             dependencies {
-                implementation(projects.core.snapshotTesting)
+                // `:core:snapshot-testing` is added by `krail.snapshot.testing`, which also
+                // raises the host-test heap to 4g — this module's several hundred
+                // @ScreenshotTest previews exhaust the default heap.
+                //
                 // Robolectric's createComposeRule() launches a ComponentActivity via
                 // ActivityScenario, which needs it declared in a manifest to resolve the
-                // launch intent — this artifact ships exactly that debug-only manifest.
+                // launch intent — this artifact ships exactly that debug-only manifest, and
+                // the convention plugin does not add it.
                 implementation(libs.test.composeUiTestManifest)
             }
         }

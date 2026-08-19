@@ -56,7 +56,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -1248,56 +1247,8 @@ class TimeTableViewModelTest {
 
     // endregion
 
-    // region Test for autoRefreshTimeTable
-
-    @Test
-    fun `GIVEN non-empty journey list WHEN AUTO_REFRESH_TIME_TABLE_DURATION passes THEN rate limiter is triggered`() =
-        runTest {
-            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
-            tripPlanningService.isSuccess = true
-
-            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
-            viewModel.fetchTrip()
-            advanceUntilIdle()
-            assertTrue(viewModel.uiState.value.journeyList.isNotEmpty())
-
-            rateLimiter.reset()
-
-            viewModel.autoRefreshTimeTable.test {
-                skipItems(1) // initial value
-
-                advanceTimeBy(
-                    TimeTableViewModel.AUTO_REFRESH_TIME_TABLE_DURATION.inWholeMilliseconds + 1.seconds.inWholeMilliseconds,
-                )
-                assertTrue(rateLimiter.triggerCount > 0, "Rate limiter should be triggered after auto-refresh interval")
-
-                cancelAndConsumeRemainingEvents()
-            }
-        }
-
-    @Test
-    fun `GIVEN empty journey list WHEN AUTO_REFRESH_TIME_TABLE_DURATION passes THEN rate limiter is NOT triggered`() =
-        runTest {
-            // GIVEN empty journey list (no trips loaded)
-            rateLimiter.reset()
-
-            viewModel.autoRefreshTimeTable.test {
-                skipItems(1)
-
-                advanceTimeBy(
-                    TimeTableViewModel.AUTO_REFRESH_TIME_TABLE_DURATION.inWholeMilliseconds + 1.seconds.inWholeMilliseconds,
-                )
-                assertEquals(
-                    0,
-                    rateLimiter.triggerCount,
-                    "Rate limiter should not be triggered when journey list is empty",
-                )
-
-                cancelAndConsumeRemainingEvents()
-            }
-        }
-
-    // endregion
+    // Auto-refresh cadence lives in TimeTableAutoRefreshTest — it needs the shared
+    // scheduler from krailRunTest so `pumpOnce` can pin the interval to the millisecond.
 
     // region Test for isActive (time text updates)
 

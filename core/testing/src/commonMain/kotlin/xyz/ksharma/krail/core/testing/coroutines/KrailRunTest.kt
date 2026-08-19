@@ -2,6 +2,7 @@ package xyz.ksharma.krail.core.testing.coroutines
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.TestResult
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -18,12 +19,18 @@ import kotlinx.coroutines.test.setMain
 @OptIn(ExperimentalCoroutinesApi::class)
 fun krailRunTest(
     body: suspend KrailTestScope.() -> Unit,
-) = runTest {
-    val scope = KrailTestScope(this)
-    Dispatchers.setMain(scope.mainDispatcher)
-    try {
+): TestResult = try {
+    runTest {
+        val scope = KrailTestScope(this)
+        Dispatchers.setMain(scope.mainDispatcher)
         scope.body()
-    } finally {
-        Dispatchers.resetMain()
     }
+} finally {
+    // Reset AFTER runTest returns, not inside it. `runTest` drains the scheduler once
+    // more on the way out, and anything still parked on a scope that is not a child of
+    // the test scope — a `viewModelScope`, most often — dispatches onto Dispatchers.Main
+    // during that drain. Resetting inside the test body leaves those dispatches with no
+    // Main delegate, and the test dies with a DispatchException that has nothing to do
+    // with what it was asserting.
+    Dispatchers.resetMain()
 }

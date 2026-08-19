@@ -1,7 +1,7 @@
 package xyz.ksharma.krail.trip.planner.network.api.di
 
 import org.koin.core.module.dsl.bind
-import org.koin.core.module.dsl.singleOf
+import org.koin.core.module.dsl.factoryOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -13,7 +13,10 @@ import xyz.ksharma.krail.trip.planner.network.api.service.TripPlanningService
 import xyz.ksharma.krail.trip.planner.network.api.service.tripPlannerHttpClient
 
 val tripPlannerNetworkModule = module {
-    singleOf(::NetworkRateLimiter) { bind<RateLimiter>() }
+    // factory, NOT single: a limiter's trigger channel is a broadcast, so every consumer
+    // sharing one instance fetches whenever any of them refreshes. See NetworkRateLimiter's
+    // KDoc and RateLimiterScopeTest.
+    factoryOf(::NetworkRateLimiter) { bind<RateLimiter>() }
 
     single {
         RealTripPlanningService(

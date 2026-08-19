@@ -48,9 +48,49 @@ UI subscribes via collectAsStateWithLifecycle() or repeatOnLifecycle(STARTED)
   → no more API calls
 ```
 
-Polling flows in this codebase that use this pattern:
-- `TimeTableViewModel.autoRefreshTimeTable` — 30s trip refresh
-- `TimeTableViewModel.isLoading` — triggers `fetchTrip()` on screen entry
-- `TimeTableViewModel.isActive` — 10s time-text refresh
-- `TrackTripViewModel.uiState` — GTFS-RT live tracking poll
-- `DeparturesViewModel` — departure board poll (gated on `_uiState.subscriptionCount`)
+## The register
+
+Every `SharingStarted.WhileSubscribed(` in production source appears in one of the two tables
+below, and `PollingLifecycleGuardTest` (in `:composeApp` androidHostTest) fails if one does not.
+Adding a flow is therefore a deliberate choice between the two: does it do repeating work while
+subscribed, or is it just state?
+
+### Polling flows — the UI MUST activate these with `repeatOnLifecycle(STARTED)`
+
+These run a loop or a network call for as long as they have a subscriber. Collecting one from a
+plain `LaunchedEffect` keeps it running behind the lock screen.
+
+| Flow | What it does |
+|---|---|
+| `TimeTableViewModel.autoRefreshTimeTable` | 30s trip refresh |
+| `TimeTableViewModel.isLoading` | triggers `fetchTrip()` on screen entry |
+| `TimeTableViewModel.isActive` | 10s time-text refresh |
+| `TrackTripViewModel.uiState` | GTFS-RT live tracking poll |
+| `TripPoller.liveOverlay` | GTFS-RT overlay for the tracked trip |
+| `TripPoller.stopCoordinates` | stop coordinates for the tracked trip |
+| `TripPoller.countdownDisplay` | 1s countdown tick |
+| `DeparturesViewModel.isActive` | 10s relative-time-text refresh |
+| `DeparturesViewModel.init` | departure board poll, gated on `_uiState.subscriptionCount` |
+| `SplashViewModel.isLoading` | app-start work triggered `onStart` |
+
+### State-only flows — `collectAsStateWithLifecycle()` is enough
+
+`WhileSubscribed` here only releases upstream collectors; nothing repeats, so there is no
+background-work hazard. They are listed so that a new flow cannot land unclassified.
+
+| Flow |
+|---|
+| `AddParkRideViewModel.uiState` |
+| `DateTimeSelectorViewModel.uiState` |
+| `DebugSettingsViewModel.state` |
+| `DiscoverViewModel.uiState` |
+| `IntroViewModel.uiState` |
+| `MapStopSelectionViewModel.mapUiState` |
+| `SavedTripsViewModel.uiState` |
+| `SearchStopViewModel.uiState` |
+| `ServiceAlertsViewModel.uiState` |
+| `SettingsViewModel.uiState` |
+| `ThemeSelectionViewModel.uiState` |
+
+Moving a flow between the tables is the whole point of the register: if a state-only flow grows
+an `onStart` loop, it belongs in the first table and its screen needs `repeatOnLifecycle`.

@@ -58,6 +58,12 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
         // SearchStop pick does (FromStopChanged/ToStopChanged) — per field, so a half-resolved
         // trip still fills the field it did find and leaves the other for a normal tap.
         //
+        // One-shot per resolve, enforced by the phase: this effect re-launches every time this
+        // entry recomposes (coming back from the stop-search screen included), so it must only
+        // act while the resolve is live. closeAfterHandoff steps the phase to IDLE as the
+        // dialog closes; without that, a back-navigation replayed the AI's stops over the
+        // rider's own later picks.
+        //
         // Loading a timetable is still the rider's call and always has been: they read the two
         // stops, decide the AI got it right, and press the button themselves. Doing it for them
         // takes that check away at the one moment it matters most. What changed is only where

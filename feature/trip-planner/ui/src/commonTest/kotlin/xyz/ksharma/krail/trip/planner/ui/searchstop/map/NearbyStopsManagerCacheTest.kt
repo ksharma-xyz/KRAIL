@@ -12,6 +12,8 @@ import kotlinx.coroutines.test.setMain
 import xyz.ksharma.krail.core.maps.data.model.NearbyStop
 import xyz.ksharma.krail.core.maps.data.repository.NearbyStopsRepository
 import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.core.maps.state.NearbyStopsConfig
+import xyz.ksharma.krail.core.testing.fakes.FakeClock
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
@@ -19,6 +21,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Tests the cache-bypass rule: when the caller's MapUiState has no stops yet,
@@ -33,15 +36,18 @@ class NearbyStopsManagerCacheTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var fakeRepository: FakeNearbyStopsRepository
+    private lateinit var fakeClock: FakeClock
     private lateinit var manager: NearbyStopsManager
 
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         fakeRepository = FakeNearbyStopsRepository()
+        fakeClock = FakeClock()
         manager = createNearbyStopsManager(
             repository = fakeRepository,
             ioDispatcher = testDispatcher,
+            clock = fakeClock,
         )
     }
 
@@ -120,6 +126,62 @@ class NearbyStopsManagerCacheTest {
         )
         advanceUntilIdle()
         assertEquals(1, fakeRepository.callCount, "caller with stops should reuse warm cache")
+    }
+
+    /**
+     * Demonstrates the clock seam: cache expiry is now decided by the injected clock,
+     * so the test moves time instead of sleeping for [NearbyStopsConfig.CACHE_EXPIRY_MS].
+     */
+    @Test
+    fun `reloads once the injected clock passes the cache expiry window`() = runTest {
+        val center = LatLng(-33.87, 151.21)
+        val scope = CoroutineScope(testDispatcher)
+        val existingStop = NearbyStopFeature(
+            stopId = "stop-1",
+            stopName = "Town Hall",
+            position = center,
+            transportModes = persistentListOf(),
+        )
+        val warmState = MapUiState.Ready(
+            mapDisplay = MapDisplay(nearbyStops = persistentListOf(existingStop), mapCenter = center),
+        )
+
+        manager.loadNearbyStops(
+            mapState = MapUiState.Ready(mapDisplay = MapDisplay(mapCenter = center)),
+            center = center,
+            scope = scope,
+            onLoadingStateChanged = {},
+            onStopsLoaded = {},
+            onError = {},
+        )
+        advanceUntilIdle()
+        assertEquals(1, fakeRepository.callCount)
+
+        // Still inside the window — cache holds.
+        fakeClock.advanceBy((NearbyStopsConfig.CACHE_EXPIRY_MS - 1).milliseconds)
+        manager.loadNearbyStops(
+            mapState = warmState,
+            center = center,
+            scope = scope,
+            onLoadingStateChanged = {},
+            onStopsLoaded = {},
+            onError = {},
+        )
+        advanceUntilIdle()
+        assertEquals(1, fakeRepository.callCount, "cache must still be warm one millisecond early")
+
+        // Past the window — cache expires and the manager fetches again.
+        fakeClock.advanceBy(2.milliseconds)
+        manager.loadNearbyStops(
+            mapState = warmState,
+            center = center,
+            scope = scope,
+            onLoadingStateChanged = {},
+            onStopsLoaded = {},
+            onError = {},
+        )
+        advanceUntilIdle()
+        assertEquals(2, fakeRepository.callCount, "expired cache must trigger a fresh query")
     }
 }
 

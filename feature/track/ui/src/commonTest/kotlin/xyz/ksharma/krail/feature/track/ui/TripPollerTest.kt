@@ -10,10 +10,12 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import xyz.ksharma.krail.core.testing.fakes.FakeClock
 import xyz.ksharma.krail.feature.track.GtfsRealtimeRepository
 import xyz.ksharma.krail.feature.track.LegTrackingInfo
 import xyz.ksharma.krail.feature.track.LiveTrackingOverlay
 import xyz.ksharma.krail.feature.track.TrackTripState
+import xyz.ksharma.krail.feature.track.TrackingConfig
 import xyz.ksharma.krail.feature.track.TrackingManager
 import xyz.ksharma.krail.feature.track.TripDeepLink
 import xyz.ksharma.krail.sandook.RecentSearchLocation
@@ -211,6 +213,29 @@ class TripPollerTest {
         assertFalse(poller.isTripExpired(fresh))
     }
 
+    /**
+     * Demonstrates the clock seam: the same deep link is fresh, then expired, because
+     * the injected clock moved. Before the seam this could only be tested by picking a
+     * departure time relative to the real wall clock.
+     */
+    @Test
+    fun `GIVEN a fixed departure WHEN the injected clock passes the expiry window THEN the trip expires`() = runTest {
+        val fakeClock = FakeClock()
+        val deepLink = makeDeepLink(
+            departureUtcDateTime = (fakeClock.now() - 1.hours).toString(),
+        )
+        val poller = makePoller(timeSource = fakeClock)
+
+        assertFalse(
+            poller.isTripExpired(deepLink),
+            "one hour past departure is inside the ${TrackingConfig.DEPARTURE_EXPIRED_HOURS}h window",
+        )
+
+        fakeClock.advanceBy(2.hours)
+
+        assertTrue(poller.isTripExpired(deepLink), "three hours past departure is outside the window")
+    }
+
     @Test
     fun `GIVEN startPolling WHEN successful THEN polling job is active`() = runTest {
         val deepLink = makeDeepLink(departureUtcDateTime = futureIso(30.minutes))
@@ -235,6 +260,7 @@ class TripPollerTest {
         tripService: TripPlanningService = ConfigurableTripService(),
         state: MutableStateFlow<TrackTripState> = MutableStateFlow(TrackTripState.Loading()),
         trackingManager: TrackingManager = TrackingManager(),
+        timeSource: Clock = Clock.System,
     ): TripPoller = TripPoller(
         scope = backgroundScope,
         // Share the test scheduler so withContext(ioDispatcher) advances under the
@@ -245,6 +271,7 @@ class TripPollerTest {
         gtfsRealtimeRepository = NoopGtfsRealtimeRepository,
         sandook = NoopSandook,
         state = state,
+        timeSource = timeSource,
     )
 
     private fun futureIso(duration: kotlin.time.Duration) =

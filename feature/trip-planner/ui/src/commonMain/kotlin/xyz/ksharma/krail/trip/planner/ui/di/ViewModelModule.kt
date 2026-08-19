@@ -194,6 +194,7 @@ val viewModelsModule = module {
             shareManager = get(),
             appReviewManager = get(),
             tripTrackingDebugOverride = tripTrackingDebugOverride,
+            clock = get(),
         )
     }
 
@@ -241,6 +242,7 @@ val viewModelsModule = module {
         createNearbyStopsManager(
             repository = get(),
             ioDispatcher = get(named(IODispatcher)),
+            clock = get(),
         )
     }
 

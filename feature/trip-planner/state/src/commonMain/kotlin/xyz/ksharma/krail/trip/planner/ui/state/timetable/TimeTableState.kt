@@ -121,15 +121,21 @@ data class TimeTableState(
 
         /**
          * If the origin time is in the past.
+         *
+         * Takes [now] rather than reading the system clock so a caller that already
+         * knows "now" (and a test that controls it) decides which instant the journey
+         * is compared against. Defaults to the system clock, so untouched call sites
+         * behave exactly as before.
          */
-        val hasJourneyStarted: Boolean
-            get() = Instant.parse(originUtcDateTime) < Clock.System.now()
+        fun hasJourneyStarted(now: Instant = Clock.System.now()): Boolean =
+            Instant.parse(originUtcDateTime) < now
 
         /**
-         * If the destination time is in the past.
+         * If the destination time is in the past. See [hasJourneyStarted] for why this
+         * takes [now].
          */
-        val hasJourneyEnded: Boolean
-            get() = Instant.parse(destinationUtcDateTime) < Clock.System.now()
+        fun hasJourneyEnded(now: Instant = Clock.System.now()): Boolean =
+            Instant.parse(destinationUtcDateTime) < now
 
         /**
          * A sealed type describing the departure deviation status.

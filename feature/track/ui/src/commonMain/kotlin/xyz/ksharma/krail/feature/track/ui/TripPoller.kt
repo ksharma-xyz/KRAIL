@@ -77,9 +77,14 @@ internal class TripPoller(
     private val gtfsRealtimeRepository: GtfsRealtimeRepository,
     private val sandook: Sandook,
     private val state: MutableStateFlow<TrackTripState>,
+    /**
+     * Wall-clock seam. The smart-delay anchor, the expiry check and the 1 Hz tick all
+     * read time from here, so a test decides what "now" is. See `dateTimeModule`.
+     */
+    private val timeSource: Clock = Clock.System,
 ) {
 
-    private val _clock = MutableStateFlow(Clock.System.now())
+    private val _clock = MutableStateFlow(timeSource.now())
 
     /** Current time, ticking every second while polling is active. */
     val clock: StateFlow<Instant> = _clock
@@ -160,7 +165,7 @@ internal class TripPoller(
     fun isTripExpired(deepLink: TripDeepLink): Boolean {
         val depInstant = runCatching { Instant.parse(deepLink.departureUtcDateTime) }.getOrNull()
             ?: return false
-        return Clock.System.now() > depInstant + TrackingConfig.DEPARTURE_EXPIRED_HOURS.hours
+        return timeSource.now() > depInstant + TrackingConfig.DEPARTURE_EXPIRED_HOURS.hours
     }
 
     /**
@@ -216,7 +221,7 @@ internal class TripPoller(
                 // wait out the remaining interval instead of hitting the API immediately.
                 // lastPollInstant == null means first poll — go straight through.
                 val elapsedMs =
-                    lastPollInstant?.let { (Clock.System.now() - it).inWholeMilliseconds }
+                    lastPollInstant?.let { (timeSource.now() - it).inWholeMilliseconds }
                         ?: Long.MAX_VALUE
                 val remainingWaitMs =
                     (TrackingConfig.POLL_INTERVAL_MS - elapsedMs).coerceAtLeast(0L)
@@ -228,7 +233,7 @@ internal class TripPoller(
 
                 setRefreshing(true)
                 fetchAndUpdate(deepLink)
-                lastPollInstant = Clock.System.now()
+                lastPollInstant = timeSource.now()
                 setRefreshing(false)
                 val current = state.value
                 when {
@@ -306,7 +311,7 @@ internal class TripPoller(
         clockJob?.cancel()
         clockJob = scope.launch {
             while (isActive) {
-                _clock.value = Clock.System.now()
+                _clock.value = timeSource.now()
                 delay(1.seconds)
             }
         }
@@ -364,7 +369,7 @@ internal class TripPoller(
             trackingManager.update(display)
             fetchStopCoordinatesIfNeeded(display)
 
-            val now = Clock.System.now()
+            val now = timeSource.now()
             val arrivalInstant = Instant.parse(display.destinationUtcDateTime)
             val arrivalFinishedAt = arrivalInstant + TrackingConfig.ARRIVAL_FINISHED_MINUTES.minutes
             when {
@@ -483,7 +488,7 @@ internal class TripPoller(
     private fun scheduleAutoRemoval(arrivalInstant: Instant) {
         scope.launch {
             val removeAt = arrivalInstant + TrackingConfig.ARRIVAL_FINISHED_MINUTES.minutes
-            val delayMs = (removeAt - Clock.System.now()).inWholeMilliseconds.coerceAtLeast(0)
+            val delayMs = (removeAt - timeSource.now()).inWholeMilliseconds.coerceAtLeast(0)
             log("TrackTrip: scheduleAutoRemoval — ArrivedAndFinished in ${delayMs}ms")
             delay(delayMs)
             transitionToArrivedAndFinished()

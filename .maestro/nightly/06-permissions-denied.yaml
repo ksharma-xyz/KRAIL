@@ -1,0 +1,65 @@
+# Location denied is a supported state, not an error state. The app uses GPS to
+# offer a nearby origin; without it every other path must still work.
+#
+# `clearState: true` would be the obvious way to guarantee a clean permission
+# state, and it is wrong here: it also wipes the "intro seen" flag, so the flow
+# would spend its time walking the first-run carousel instead of testing a
+# denial. Maestro's `permissions:` map revokes without touching app data, which
+# is what this needs.
+#
+# On a device where location was previously granted, revoke it out of band
+# before the run so the denial is real rather than assumed:
+#
+#   adb shell pm revoke xyz.ksharma.krail.debug android.permission.ACCESS_FINE_LOCATION
+#   adb shell pm revoke xyz.ksharma.krail.debug android.permission.ACCESS_COARSE_LOCATION
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+    permissions:
+      location: deny
+
+- runFlow:
+    when:
+      visible:
+        id: "intro.screen"
+    file: ../shared/dismiss-intro.yaml
+
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
+    timeout: 45000
+
+# Home renders and the primary action is reachable with no location fix.
+- assertVisible:
+    id: "searchrow.root"
+- assertVisible:
+    id: "searchrow.to"
+
+# Planning a trip by typing must not depend on GPS at all.
+- tapOn:
+    id: "searchrow.to"
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.query"
+    timeout: 20000
+- tapOn:
+    id: "searchstop.query"
+- inputText: "Central"
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.result..*"
+    timeout: 30000
+- tapOn:
+    id: "searchstop.result..*"
+    index: 0
+
+# Back on home, still alive. If the denial had crashed a background coroutine
+# this assertion is where it surfaces.
+- extendedWaitUntil:
+    visible:
+      id: "searchrow.root"
+    timeout: 20000
+- assertVisible:
+    id: "savedtrips.screen"

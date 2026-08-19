@@ -1,0 +1,33 @@
+# Gets past the first-run intro carousel.
+#
+# Every clean device lands here, so a CI emulator hits this on the first flow of
+# a run and never again. Callers guard the `runFlow` on `intro.screen` being
+# visible, so on a device that has already been through it this file never
+# executes and costs nothing.
+#
+# The carousel is driven by a single button whose label changes per page
+# ("Next", then "Let's KRAIL" on the last one). `intro.action.primary` is the
+# same node throughout, so looping on the tag walks the whole thing without this
+# flow knowing how many pages there are or what any of them say. Adding a page
+# does not require touching this file.
+#
+# `times` is a safety net, not the exit condition: `while` is what ends the
+# loop. Without the cap a button that stops responding would hang the run
+# instead of failing it.
+#
+# Not a test. It has no assertions, and a directory run does not pick it up
+# because `.maestro/shared/` sits outside both `smoke/` and `nightly/`.
+appId: ${APP_ID}
+---
+- repeat:
+    times: 12
+    while:
+      visible:
+        id: "intro.action.primary"
+    commands:
+      - tapOn:
+          id: "intro.action.primary"
+      # The pager animates between pages. Tapping through that animation lands
+      # the second tap on the page that is still sliding in.
+      - waitForAnimationToEnd:
+          timeout: 5000

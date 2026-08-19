@@ -1,0 +1,59 @@
+# Process death, the hard kind. `killApp` force-stops, which discards the task,
+# so the app must come back on home and be usable rather than crash on a
+# half-restored back stack.
+#
+# The opposite expectation to flow 04, and that contrast is deliberate: 04 pins
+# "resume where you were", this pins "recover cleanly when there is nothing to
+# resume".
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+
+
+# A clean device (every CI emulator) starts on the first-run carousel. Guarded,
+# so this is skipped entirely on a device that has already been through it.
+- runFlow:
+    when:
+      visible:
+        id: "intro.screen"
+    file: ../shared/dismiss-intro.yaml
+
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
+    timeout: 30000
+
+# Get off the start destination first, so landing on home afterwards is a real
+# result and not just where we already were.
+- tapOn:
+    id: "savedtrips.action.settings"
+- extendedWaitUntil:
+    visible:
+      id: "settings.screen"
+    timeout: 15000
+
+- killApp
+
+- launchApp:
+    clearState: false
+
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
+    timeout: 30000
+
+- assertNotVisible:
+    id: "settings.screen"
+
+# Recovered, and still works: navigation out of home has to function after the
+# restart, not just render.
+- assertVisible:
+    id: "searchrow.root"
+- tapOn:
+    id: "searchrow.to"
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.query"
+    timeout: 15000

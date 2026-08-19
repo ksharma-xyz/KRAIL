@@ -1,0 +1,52 @@
+# Cold launch. Pins that the app starts, the home screen composes, and the two
+# controls every other flow depends on are present.
+#
+# Deliberately asserts the saved-trips *list container*, never its contents: a
+# fresh install has no saved trips, and a flow that needs seeded data is not a
+# smoke test.
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+
+
+# A clean device (every CI emulator) starts on the first-run carousel. Guarded,
+# so this is skipped entirely on a device that has already been through it.
+- runFlow:
+    when:
+      visible:
+        id: "intro.screen"
+    file: ../shared/dismiss-intro.yaml
+
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
+    timeout: 30000
+
+- assertVisible:
+    id: "savedtrips.list"
+
+# The bottom search row is the app's primary action. If it is missing, the home
+# screen rendered but is useless.
+#
+# The row's own root appears with the screen, but its fields animate in and are
+# briefly replaced by a collapsed "Plan a trip" pill, so they are waited for
+# rather than asserted. Asserting them in place passes on a warm device and
+# fails on a cold one, which is the worst kind of flake: green locally, red in
+# CI, and only on the first run.
+- assertVisible:
+    id: "searchrow.root"
+- extendedWaitUntil:
+    visible:
+      id: "searchrow.to"
+    timeout: 20000
+- extendedWaitUntil:
+    visible:
+      id: "searchrow.search"
+    timeout: 20000
+
+# Settings is the only always-present title-bar action (Discover is flagged off
+# by default), so it stands in for "the title bar rendered".
+- assertVisible:
+    id: "savedtrips.action.settings"

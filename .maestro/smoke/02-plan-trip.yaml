@@ -1,0 +1,109 @@
+# The core journey: pick an origin, pick a destination, get a timetable.
+#
+# Every selector is a testTag, and results are chosen by index rather than by
+# name, so the flow does not break when NSW renames a stop or reorders results.
+# The stop names typed in are inputs, not assertions.
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+
+
+# A clean device (every CI emulator) starts on the first-run carousel. Guarded,
+# so this is skipped entirely on a device that has already been through it.
+- runFlow:
+    when:
+      visible:
+        id: "intro.screen"
+    file: ../shared/dismiss-intro.yaml
+
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
+    timeout: 30000
+
+# --- Origin ---
+- tapOn:
+    id: "searchrow.from"
+
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.query"
+    timeout: 15000
+
+- tapOn:
+    id: "searchstop.query"
+- inputText: "Central"
+
+# Search is a network call, so give it real time rather than a fixed sleep.
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.result..*"
+    timeout: 30000
+
+- tapOn:
+    id: "searchstop.result..*"
+    index: 0
+
+- extendedWaitUntil:
+    visible:
+      id: "searchrow.root"
+    timeout: 15000
+
+# --- Destination ---
+- tapOn:
+    id: "searchrow.to"
+
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.query"
+    timeout: 15000
+
+- tapOn:
+    id: "searchstop.query"
+- inputText: "Town Hall"
+
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.result..*"
+    timeout: 30000
+
+- tapOn:
+    id: "searchstop.result..*"
+    index: 0
+
+- extendedWaitUntil:
+    visible:
+      id: "searchrow.root"
+    timeout: 15000
+
+# --- Timetable ---
+- tapOn:
+    id: "searchrow.search"
+
+- extendedWaitUntil:
+    visible:
+      id: "timetable.screen"
+    timeout: 30000
+
+# Controls on the timetable that other flows and riders depend on. Asserted
+# before the scroll below, while the top of the list is still on screen.
+- assertVisible:
+    id: "timetable.action.datetime"
+- assertVisible:
+    id: "timetable.action.reverse"
+
+# The screen scaffold renders while the request is still in flight, so the
+# journey cards are checked separately. This is what actually proves a trip was
+# planned.
+#
+# Scrolled to rather than asserted in place: a "Save this trip?" prompt sits
+# above the results, and on a short viewport it pushes every card below the
+# fold. Maestro only matches what is on screen, so asserting in place would make
+# this flow's result depend on device height.
+- scrollUntilVisible:
+    element:
+      id: "timetable.journey..*"
+    direction: DOWN
+    timeout: 45000

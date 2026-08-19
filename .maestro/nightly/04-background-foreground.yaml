@@ -1,0 +1,49 @@
+# Backgrounding is not a relaunch. Coming back must land the rider exactly where
+# they left, not on home.
+#
+# Settings is used as the marker screen because it is one tap from home, is not
+# the start destination, and has a tag of its own, so "we came back to the right
+# place" is a single unambiguous assertion.
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+
+
+# A clean device (every CI emulator) starts on the first-run carousel. Guarded,
+# so this is skipped entirely on a device that has already been through it.
+- runFlow:
+    when:
+      visible:
+        id: "intro.screen"
+    file: ../shared/dismiss-intro.yaml
+
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
+    timeout: 30000
+
+- tapOn:
+    id: "savedtrips.action.settings"
+- extendedWaitUntil:
+    visible:
+      id: "settings.screen"
+    timeout: 15000
+
+- pressKey: Home
+- assertNotVisible:
+    id: "settings.screen"
+
+# stopApp:false is the whole test. With stopApp:true this would be flow 05.
+- launchApp:
+    stopApp: false
+
+- extendedWaitUntil:
+    visible:
+      id: "settings.screen"
+    timeout: 20000
+
+# And the screen has to be usable, not just present.
+- assertVisible:
+    id: "settings.item.theme"

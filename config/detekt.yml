@@ -13,7 +13,14 @@ comments:
 complexity:
   StringLiteralDuplication:
     active: true
-    excludes: ['**/test/**', '**/*Test.kt', '**/*Spec.kt']
+    excludes:
+      - '**/test/**'
+      - '**/*Test.kt'
+      - '**/*Spec.kt'
+      - '**/commonTest/**'
+      - '**/androidHostTest/**'
+      - '**/iosTest/**'
+      - '**/androidInstrumentedTest/**'
     ignoreAnnotation: true
     ignoreStringsRegex: '$^'
     ignoreAnnotated: ['Preview', 'PreviewParameter', 'PreviewParameterProvider', 'Test', 'Composable']
@@ -26,7 +33,14 @@ complexity:
     ignoreSingleWhenExpression: true
   LargeClass:
     active: true
-    excludes: ['**/test/**', '**/*.Test.kt', '**/*.Spec.kt']
+    excludes:
+      - '**/test/**'
+      - '**/*.Test.kt'
+      - '**/*.Spec.kt'
+      - '**/commonTest/**'
+      - '**/androidHostTest/**'
+      - '**/iosTest/**'
+      - '**/androidInstrumentedTest/**'
   LongMethod:
     active: true
     threshold: 60
@@ -41,7 +55,13 @@ complexity:
   MethodOverloading:
     active: true
   TooManyFunctions:
-    excludes: ['**/test/**', '**/functionalTest/**']
+    excludes:
+      - '**/test/**'
+      - '**/functionalTest/**'
+      - '**/commonTest/**'
+      - '**/androidHostTest/**'
+      - '**/iosTest/**'
+      - '**/androidInstrumentedTest/**'
 
 coroutines:
   active: true
@@ -107,7 +127,13 @@ naming:
 
 performance:
   SpreadOperator:
-    excludes: ['**/test/**', '**/functionalTest/**']
+    excludes:
+      - '**/test/**'
+      - '**/functionalTest/**'
+      - '**/commonTest/**'
+      - '**/androidHostTest/**'
+      - '**/iosTest/**'
+      - '**/androidInstrumentedTest/**'
 
 potential-bugs:
   AvoidReferentialEquality:
@@ -132,7 +158,14 @@ potential-bugs:
     active: true
   UnsafeCast:
     active: true
-    excludes: ['**/test/**', '**/*.Test.kt', '**/*.Spec.kt']
+    excludes:
+      - '**/test/**'
+      - '**/*.Test.kt'
+      - '**/*.Spec.kt'
+      - '**/commonTest/**'
+      - '**/androidHostTest/**'
+      - '**/iosTest/**'
+      - '**/androidInstrumentedTest/**'
   UselessPostfixExpression:
     active: true
 
@@ -209,7 +242,14 @@ style:
     active: true
     ignoreOverridden: true
   MagicNumber:
-    excludes: ['**/test/**', '**/*Test.kt', '**/*Spec.kt']
+    excludes:
+      - '**/test/**'
+      - '**/*Test.kt'
+      - '**/*Spec.kt'
+      - '**/commonTest/**'
+      - '**/androidHostTest/**'
+      - '**/iosTest/**'
+      - '**/androidInstrumentedTest/**'
     ignorePropertyDeclaration: true
     ignoreAnnotation: true
     ignoreEnums: true
@@ -225,7 +265,14 @@ style:
     active: true
   MaxLineLength:
     active: true
-    excludes: ['**/test/**', '**/*Test.kt', '**/*Spec.kt']
+    excludes:
+      - '**/test/**'
+      - '**/*Test.kt'
+      - '**/*Spec.kt'
+      - '**/commonTest/**'
+      - '**/androidHostTest/**'
+      - '**/iosTest/**'
+      - '**/androidInstrumentedTest/**'
     excludeCommentStatements: true
   NestedClassesVisibility:
     active: true

@@ -21,6 +21,20 @@ kotlin {
 
         withHostTest {
             isIncludeAndroidResources = true
+
+            // Needed by the Molecule presenter tests, which drive Compose on a plain JVM test
+            // (no Robolectric). `Recomposer.processCompositionError` calls `android.util.Log.e`
+            // through `compose.runtime.internal.Utils_androidKt.logError`, and the stub
+            // android.jar throws "Method e in android.util.Log not mocked" from inside Compose's
+            // own error handler — so composition dies on the logging call rather than on
+            // anything wrong with the presenter. Defaulting the stubs lets that handler
+            // complete and the composition proceed.
+            //
+            // Note this cannot be fixed by swapping kermit's log writer: the caller is the
+            // Compose runtime itself, not `:core:log`. Robolectric tests in this module are
+            // unaffected either way — they get Robolectric's android implementation, not these
+            // stubs.
+            isReturnDefaultValues = true
         }
 
         // MANDATORY for AGP 9 to include assets

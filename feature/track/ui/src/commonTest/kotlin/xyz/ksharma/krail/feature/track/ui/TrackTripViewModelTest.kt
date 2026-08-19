@@ -262,7 +262,8 @@ class TrackTripViewModelTest {
                 runCurrent()
                 // Consume intermediate Loading / Tracking states and wait for Arrived
                 val finalState = generateSequence { runCatching { expectMostRecentItem() }.getOrNull() }
-                    .firstOrNull { it is TrackTripState.Arrived } ?: awaitItem()
+                    .firstOrNull { it is TrackTripState.Arrived }
+                    ?: awaitItem()
                 assertIs<TrackTripState.Arrived>(finalState)
                 cancelAndIgnoreRemainingEvents()
             }

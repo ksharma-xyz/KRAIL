@@ -298,7 +298,8 @@ class InfoTileJsonValidatorTest {
     @OptIn(ExperimentalTime::class)
     private fun getCurrentDate(): LocalDate {
         return Clock.System.now()
-            .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .date
     }
 
     /**

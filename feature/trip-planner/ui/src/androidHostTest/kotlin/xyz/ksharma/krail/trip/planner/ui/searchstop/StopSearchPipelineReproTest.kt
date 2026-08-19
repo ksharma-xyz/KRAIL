@@ -46,7 +46,8 @@ class StopSearchPipelineReproTest {
         val lines = this::class.java.classLoader
             ?.getResourceAsStream("nsw_stops_eval.csv")
             ?.bufferedReader()
-            ?.readLines() ?: return null
+            ?.readLines()
+            ?: return null
         return lines.drop(1).filter { it.isNotBlank() }.mapNotNull { line ->
             val c = line.split("|")
             if (c.size < 3) return@mapNotNull null
@@ -186,7 +187,9 @@ class StopSearchPipelineReproTest {
         val misses = mutableListOf<String>()
         cases.forEach { (q, expect) ->
             val top = mgr.fetchStopResults(q, searchRoutesEnabled = false)
-                .filterIsInstance<SearchStopState.SearchResult.Stop>().take(5).map { it.stopName }
+                .filterIsInstance<SearchStopState.SearchResult.Stop>()
+                .take(5)
+                .map { it.stopName }
             val hit = top.any { it.contains(expect, ignoreCase = true) }
             println("${if (hit) "OK " else "MISS"} \"$q\" -> want \"$expect\" :: $top")
             if (!hit) misses += "\"$q\"→\"$expect\""
@@ -220,7 +223,9 @@ class StopSearchPipelineReproTest {
         )
         cases.forEach { (q, station) ->
             val top = mgr.fetchStopResults(q, searchRoutesEnabled = false)
-                .filterIsInstance<SearchStopState.SearchResult.Stop>().take(5).map { it.stopName }
+                .filterIsInstance<SearchStopState.SearchResult.Stop>()
+                .take(5)
+                .map { it.stopName }
             assertTrue(
                 top.any { it.equals(station, ignoreCase = true) },
                 "\"$q\" expected \"$station\" in top 5 but got: $top",
@@ -256,7 +261,9 @@ class StopSearchPipelineReproTest {
         )
         cases.forEach { (q, expect, klass) ->
             val top = mgr.fetchStopResults(q, searchRoutesEnabled = false)
-                .filterIsInstance<SearchStopState.SearchResult.Stop>().take(5).map { it.stopName }
+                .filterIsInstance<SearchStopState.SearchResult.Stop>()
+                .take(5)
+                .map { it.stopName }
             assertTrue(
                 top.any { it.contains(expect, ignoreCase = true) },
                 "[$klass] \"$q\" expected \"$expect\" in top 5 but got: $top",

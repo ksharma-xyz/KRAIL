@@ -256,7 +256,8 @@ class DateTimeHelperTest {
     @Test
     fun testIsDateInFuture_validFutureDate() {
         val futureDate = Clock.System.now()
-            .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .date
             .plus(1, DateTimeUnit.DAY)
             .toString()
         assertEquals(true, futureDate.isDateInFuture())
@@ -266,7 +267,8 @@ class DateTimeHelperTest {
     @Test
     fun testIsDateInFuture_todayDate() {
         val todayDate = Clock.System.now()
-            .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .date
             .toString()
         assertEquals(false, todayDate.isDateInFuture())
     }
@@ -275,7 +277,8 @@ class DateTimeHelperTest {
     @Test
     fun testIsDateInFuture_pastDate() {
         val pastDate = Clock.System.now()
-            .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .date
             .minus(1, DateTimeUnit.DAY)
             .toString()
         assertEquals(false, pastDate.isDateInFuture())
@@ -293,7 +296,8 @@ class DateTimeHelperTest {
     @Test
     fun testIsDateTodayOrInFuture() {
         val today = Clock.System.now()
-            .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .date
 
         // Test data: (dayOffset, expectedResult, testCase)
         val testCases = listOf(
@@ -319,7 +323,8 @@ class DateTimeHelperTest {
     @Test
     fun testIsDateTodayOrInPast() {
         val today = Clock.System.now()
-            .toLocalDateTime(TimeZone.currentSystemDefault()).date
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .date
 
         // Test data: (dayOffset, expectedResult, testCase)
         val testCases = listOf(

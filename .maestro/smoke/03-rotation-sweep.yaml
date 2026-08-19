@@ -1,0 +1,159 @@
+# Rotation destroys and recreates the Activity. This repo treats a screen that
+# dies on rotation as a broken screen, and neither detekt nor unit tests can see
+# that class of bug: a missing NavKey serializer, or state held in `remember`
+# instead of `rememberSaveable`, compiles perfectly and crashes only here.
+#
+# Each of the three main screens is rotated to landscape, re-asserted, and
+# rotated back. The re-assertion after each rotation is the whole point: the
+# screen must still be *there*, not merely have survived the rotate call.
+#
+# Every post-rotation check is an `extendedWaitUntil`, never a bare
+# `assertVisible`. Recreation re-runs the composition and can re-issue a
+# request, so a node is legitimately absent for a moment; asserting instantly
+# tests the timing of the rotate call rather than whether the screen came back.
+#
+# `onFlowComplete` restores portrait even when the flow fails. Without it a
+# failure here leaves the device in landscape, where the search row collapses to
+# a single pill, and every later flow in the run fails looking for fields that
+# are not on screen. That is exactly how this file was first written, and the
+# two cascading failures it caused are the reason for the hook.
+appId: ${APP_ID}
+onFlowComplete:
+  - setOrientation: PORTRAIT
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+
+- runFlow:
+    when:
+      visible:
+        id: "intro.screen"
+    file: ../shared/dismiss-intro.yaml
+
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
+    timeout: 30000
+
+# --- Home ---
+- setOrientation: LANDSCAPE_LEFT
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
+    timeout: 20000
+# In landscape the search row collapses to a pill, so assert the row's root,
+# which is present in both layouts, rather than the portrait-only fields.
+- extendedWaitUntil:
+    visible:
+      id: "searchrow.root"
+    timeout: 20000
+
+- setOrientation: PORTRAIT
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
+    timeout: 20000
+
+# --- Search stop ---
+- tapOn:
+    id: "searchrow.from"
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.query"
+    timeout: 15000
+- tapOn:
+    id: "searchstop.query"
+- inputText: "Central"
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.result..*"
+    timeout: 30000
+
+# Rotating with results on screen exercises a different path than rotating an
+# empty list: the results have to survive recreation too.
+- setOrientation: LANDSCAPE_LEFT
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.query"
+    timeout: 20000
+
+- setOrientation: PORTRAIT
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.query"
+    timeout: 20000
+
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.result..*"
+    timeout: 30000
+- tapOn:
+    id: "searchstop.result..*"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "searchrow.root"
+    timeout: 15000
+
+# --- Timetable ---
+- tapOn:
+    id: "searchrow.to"
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.query"
+    timeout: 15000
+- tapOn:
+    id: "searchstop.query"
+- inputText: "Town Hall"
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.result..*"
+    timeout: 30000
+- tapOn:
+    id: "searchstop.result..*"
+    index: 0
+- extendedWaitUntil:
+    visible:
+      id: "searchrow.root"
+    timeout: 15000
+
+- tapOn:
+    id: "searchrow.search"
+- extendedWaitUntil:
+    visible:
+      id: "timetable.journey..*"
+    timeout: 45000
+
+# Rotating with journey data loaded is the case that has historically broken:
+# the list, its expanded state and the polling all have to come back. Landscape
+# also switches this screen to a dual-pane layout, so this is a layout change as
+# well as a recreation.
+#
+# The journey cards are reached with `scrollUntilVisible` rather than asserted
+# in place. Landscape is short enough that the title bar, the origin/destination
+# header, the actions row and the "Save this trip?" prompt fill the viewport on
+# their own, pushing every card below the fold — and Maestro only matches what
+# is actually on screen. Asserting in place here does not test whether the list
+# survived rotation, it tests how tall the device is.
+- setOrientation: LANDSCAPE_LEFT
+- extendedWaitUntil:
+    visible:
+      id: "timetable.screen"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "timetable.journey..*"
+    direction: DOWN
+    timeout: 45000
+
+- setOrientation: PORTRAIT
+- extendedWaitUntil:
+    visible:
+      id: "timetable.screen"
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: "timetable.journey..*"
+    direction: DOWN
+    timeout: 45000

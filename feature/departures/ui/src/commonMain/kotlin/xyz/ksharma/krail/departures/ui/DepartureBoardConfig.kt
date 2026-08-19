@@ -18,9 +18,12 @@ package xyz.ksharma.krail.departures.ui
  * ```
  *
  * @param refreshIntervalMs              Milliseconds between full API re-fetches (default 30 s).
- *                                       The repository will not call the API more often than this,
- *                                       even if the same stop is expanded across both the map sheet
- *                                       and the saved trips screen simultaneously.
+ *                                       This is a per-stop budget, not a per-collector one: however
+ *                                       many surfaces poll the same stop at once (the map sheet and
+ *                                       the saved trips screen both can), exactly one API call is
+ *                                       made per window. `DepartureBoardRepository.fetchIfWindowOpen`
+ *                                       enforces it — the first session to claim the window fetches,
+ *                                       the rest read the result from the shared cache entry.
  * @param previousDeparturesWindowMinutes Minutes into the past to fetch when the user taps
  *                                       "Show previous" (default 30 min). Can be driven from
  *                                       remote config or feature flags without changing call sites.

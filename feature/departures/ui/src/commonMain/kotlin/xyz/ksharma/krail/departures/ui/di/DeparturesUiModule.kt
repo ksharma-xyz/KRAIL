@@ -17,6 +17,7 @@ val departuresUiModule = module {
             departuresService = get(),
             ioDispatcher = get(named(IODispatcher)),
             config = get(),
+            clock = get(),
         )
     }
     viewModel {

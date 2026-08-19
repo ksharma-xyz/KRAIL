@@ -94,3 +94,31 @@ background-work hazard. They are listed so that a new flow cannot land unclassif
 
 Moving a flow between the tables is the whole point of the register: if a state-only flow grows
 an `onStart` loop, it belongs in the first table and its screen needs `repeatOnLifecycle`.
+
+## Rule: a refresh interval is a budget per subject, not per collector
+
+`WhileSubscribed` stops polling when nobody is looking. It says nothing about what happens
+when **two** collectors look at the same thing at once, and that is a separate defect: two
+surfaces polling one stop, each running its own loop, doubles the API calls while both
+appear to be respecting the interval.
+
+`DepartureBoardRepository.pollStop` is the worked example. Every collector still gets its
+own `channelFlow` — that is what keeps cancellation simple — but the network call is gated
+by `fetchIfWindowOpen`, which claims the stop's refresh window under a mutex **before**
+issuing the call. The first session in fetches; the others skip and read the result from the
+shared cache entry. Writing the claim before the call rather than after it is the whole
+mechanism: two sessions waking in the same instant would otherwise both see a stale
+timestamp and both fetch.
+
+If you add a poll loop that shares a subject with another loop, gate it the same way, and
+test it the same way: two concurrent collectors, one pumped interval, assert the call count
+is one. A test with a single collector cannot see this class of bug.
+
+## Testing polling: the clock must be the scheduler's
+
+A refresh window compares a timestamp against wall-clock time while the loop advances on
+`delay`. In a test those are different clocks unless you make them one — virtual time jumps
+30 seconds while `Clock.System.now()` barely moves, so the window never opens and the
+assertion passes or fails for the wrong reason. Inject `KrailTestScope.clock` (or
+`virtualClock(scheduler)` where the test still owns a bare `StandardTestDispatcher`) into
+the `clock` seam of anything under test that has one.

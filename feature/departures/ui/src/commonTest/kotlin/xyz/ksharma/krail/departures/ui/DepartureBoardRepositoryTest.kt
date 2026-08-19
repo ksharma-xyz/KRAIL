@@ -2,6 +2,7 @@ package xyz.ksharma.krail.departures.ui
 
 import app.cash.turbine.test
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.testing.coroutines.krailRunTest
 import xyz.ksharma.krail.core.testing.fakes.FakeDeparturesService
 import xyz.ksharma.krail.departures.network.api.model.DepartureMonitorResponse
@@ -46,7 +47,7 @@ class DepartureBoardRepositoryTest {
     @Test
     fun `Given no cached data When pollStop collected Then emits loading then success`() = krailRunTest {
         val service = FakeDeparturesService(response = buildResponse(count = 3))
-        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig)
+        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig, clock)
 
         repo.pollStop(STOP_A).test {
             val loading = awaitItem()
@@ -66,7 +67,7 @@ class DepartureBoardRepositoryTest {
     @Test
     fun `Given no cached data When API fails Then emits error state`() = krailRunTest {
         val service = FakeDeparturesService(shouldThrow = true)
-        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig)
+        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig, clock)
 
         repo.pollStop(STOP_A).test {
             awaitItem() // loading
@@ -85,7 +86,7 @@ class DepartureBoardRepositoryTest {
     @Test
     fun `Given pollStop collected When collection cancelled Then loading flags cleared`() = krailRunTest {
         val service = FakeDeparturesService(response = buildResponse(count = 1))
-        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig)
+        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig, clock)
 
         repo.pollStop(STOP_A).test {
             awaitItem() // loading — cancelled mid-flight
@@ -107,7 +108,7 @@ class DepartureBoardRepositoryTest {
     @Test
     fun `Given active pollStop When refresh interval elapses Then API is called again`() = krailRunTest {
         val service = FakeDeparturesService(response = buildResponse(count = 1))
-        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig)
+        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig, clock)
 
         repo.pollStop(STOP_A).test {
             awaitItem() // loading
@@ -125,13 +126,58 @@ class DepartureBoardRepositoryTest {
         }
     }
 
+    // ── pollStop — one fetch per stop, however many collectors ────────────────
+
+    /**
+     * The same stop can be expanded on two surfaces at once (the map sheet and the saved
+     * trips card), and each surface collects its own `pollStop`. They must share the
+     * refresh window, not each run their own — which is what
+     * [DepartureBoardConfig.refreshIntervalMs] has always claimed.
+     */
+    @Test
+    fun `Given two collectors of one stop When both start Then only one API call is made`() = krailRunTest {
+        val service = FakeDeparturesService(response = buildResponse(count = 1))
+        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig, clock)
+
+        val first = launch { repo.pollStop(STOP_A).collect {} }
+        val second = launch { repo.pollStop(STOP_A).collect {} }
+        runCurrent()
+
+        assertEquals(1, service.callCount, "two collectors of one stop must share the first fetch")
+
+        pumpOnce(REFRESH_INTERVAL_MS + EXTRA_DELTA_MS)
+
+        assertEquals(2, service.callCount, "and one refresh per interval between them, not one each")
+
+        first.cancel()
+        second.cancel()
+    }
+
+    @Test
+    fun `Given two collectors of one stop When one is cancelled Then the other keeps refreshing`() = krailRunTest {
+        val service = FakeDeparturesService(response = buildResponse(count = 1))
+        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig, clock)
+
+        val first = launch { repo.pollStop(STOP_A).collect {} }
+        val second = launch { repo.pollStop(STOP_A).collect {} }
+        runCurrent()
+        assertEquals(1, service.callCount)
+
+        first.cancel()
+        pumpOnce(REFRESH_INTERVAL_MS + EXTRA_DELTA_MS)
+
+        assertEquals(2, service.callCount, "the surviving collector must keep the stop refreshing")
+
+        second.cancel()
+    }
+
     // ── pollStop — refresh window (cache hit) ─────────────────────────────────
 
     @Test
     fun `Given recent successful fetch When pollStop re-collected quickly Then waits for window before fetch`() =
         krailRunTest {
             val service = FakeDeparturesService(response = buildResponse(count = 1))
-            val repo = DepartureBoardRepository(service, ioDispatcher, testConfig)
+            val repo = DepartureBoardRepository(service, ioDispatcher, testConfig, clock)
 
             // First collection — fetches immediately.
             repo.pollStop(STOP_A).test {
@@ -160,7 +206,7 @@ class DepartureBoardRepositoryTest {
     @Test
     fun `Given no active polling When observeStop collected Then emits idle state — no API call`() = krailRunTest {
         val service = FakeDeparturesService(response = buildResponse(count = 2))
-        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig)
+        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig, clock)
 
         repo.observeStop(STOP_A).test {
             val initial = awaitItem()
@@ -175,7 +221,7 @@ class DepartureBoardRepositoryTest {
     @Test
     fun `Given cached data When refresh called Then API is called immediately`() = krailRunTest {
         val service = FakeDeparturesService(response = buildResponse(count = 1))
-        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig)
+        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig, clock)
 
         repo.pollStop(STOP_A).test {
             awaitItem() // loading
@@ -197,7 +243,7 @@ class DepartureBoardRepositoryTest {
     fun `Given loadPreviousDepartures called When API succeeds Then previousDepartures populated`() = krailRunTest {
         val pastTime = "2020-01-01T00:00:00Z"
         val service = FakeDeparturesService(response = buildResponse(count = 2, plannedTime = pastTime))
-        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig)
+        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig, clock)
 
         repo.pollStop(STOP_A).test {
             awaitItem() // loading
@@ -221,7 +267,7 @@ class DepartureBoardRepositoryTest {
     @Test
     fun `Given loadPreviousDepartures called When API fails Then isPreviousLoading is reset to false`() = krailRunTest {
         val service = FakeDeparturesService(response = buildResponse(count = 1))
-        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig)
+        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig, clock)
 
         repo.pollStop(STOP_A).test {
             awaitItem() // loading
@@ -248,7 +294,7 @@ class DepartureBoardRepositoryTest {
     @Test
     fun `Given silent refresh in flight When collection cancelled Then silentLoading cleared`() = krailRunTest {
         val service = FakeDeparturesService(response = buildResponse(count = 1))
-        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig)
+        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig, clock)
 
         // First collect — populates cache so next collect does a silent refresh.
         repo.pollStop(STOP_A).test {
@@ -276,7 +322,7 @@ class DepartureBoardRepositoryTest {
     @Test
     fun `Given two stops polled separately When each succeeds Then their states are independent`() = krailRunTest {
         val service = FakeDeparturesService(response = buildResponse(count = 2))
-        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig)
+        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig, clock)
 
         // Poll STOP_A — 2 departures.
         repo.pollStop(STOP_A).test {
@@ -315,7 +361,7 @@ class DepartureBoardRepositoryTest {
     fun `Given loadPreviousDepartures succeeded When called again quickly Then no extra API call`() = krailRunTest {
         val pastTime = "2020-01-01T00:00:00Z"
         val service = FakeDeparturesService(response = buildResponse(count = 2, plannedTime = pastTime))
-        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig)
+        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig, clock)
 
         repo.pollStop(STOP_A).test {
             awaitItem() // loading
@@ -350,7 +396,7 @@ class DepartureBoardRepositoryTest {
     @Test
     fun `Given cached departures When refresh fails Then isError stays false`() = krailRunTest {
         val service = FakeDeparturesService(response = buildResponse(count = 2))
-        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig)
+        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig, clock)
 
         repo.pollStop(STOP_A).test {
             awaitItem() // loading
@@ -375,7 +421,7 @@ class DepartureBoardRepositoryTest {
     @Test
     fun `Given pollStop completed When observeStop collected Then returns cached data`() = krailRunTest {
         val service = FakeDeparturesService(response = buildResponse(count = 3))
-        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig)
+        val repo = DepartureBoardRepository(service, ioDispatcher, testConfig, clock)
 
         repo.pollStop(STOP_A).test {
             awaitItem() // loading

@@ -45,6 +45,12 @@ class DepartureBoardRepository(
     private val departuresService: DeparturesService,
     private val ioDispatcher: CoroutineDispatcher,
     private val config: DepartureBoardConfig = DepartureBoardConfig(),
+    /**
+     * Wall-clock seam for the refresh window. It has to be injectable: the window is
+     * compared against `delay`-driven poll ticks, so a test that advances virtual time
+     * must move this clock too or the window never opens. See `dateTimeModule`.
+     */
+    private val clock: Clock = Clock.System,
 ) {
 
     private val mutex = Mutex()
@@ -55,7 +61,7 @@ class DepartureBoardRepository(
     private var pollSessionCounter = 0
 
     @OptIn(ExperimentalTime::class)
-    private fun nowMs(): Long = Clock.System.now().toEpochMilliseconds()
+    private fun nowMs(): Long = clock.now().toEpochMilliseconds()
 
     /**
      * Returns a cold [Flow] of [DeparturesState] for [stopId] backed by the in-memory cache.
@@ -96,28 +102,33 @@ class DepartureBoardRepository(
                     "refreshIntervalMs=${config.refreshIntervalMs}",
             )
 
-            if (lastFetch == 0L || elapsedMs >= config.refreshIntervalMs) {
-                fetchDepartures(stopId, showFullLoading = !hasData, sessionId = sessionId)
-            } else {
+            // Land on the window boundary before the first attempt, so a session that
+            // starts mid-window does not sit idle for a whole extra interval.
+            if (lastFetch != 0L && elapsedMs < config.refreshIntervalMs) {
                 val waitMs = config.refreshIntervalMs - elapsedMs
                 log(
                     "[$LOG_TAG] t=$t0 session=#$sessionId within refresh window, " +
                         "waiting ${waitMs}ms before first fetch",
                 )
                 delay(waitMs)
-                fetchDepartures(stopId, showFullLoading = false, sessionId = sessionId)
             }
 
-            var iteration = 1
+            var iteration = 0
             while (true) {
-                delay(config.refreshIntervalMs)
                 ensureActive()
-                log(
-                    "[$LOG_TAG] t=${nowMs()} session=#$sessionId auto-refresh #$iteration " +
-                        "for stopId=$stopId",
+                if (iteration > 0) {
+                    log(
+                        "[$LOG_TAG] t=${nowMs()} session=#$sessionId auto-refresh #$iteration " +
+                            "for stopId=$stopId",
+                    )
+                }
+                fetchIfWindowOpen(
+                    stopId = stopId,
+                    showFullLoading = !hasData && iteration == 0,
+                    sessionId = sessionId,
                 )
-                fetchDepartures(stopId, showFullLoading = false, sessionId = sessionId)
                 iteration++
+                delay(config.refreshIntervalMs)
             }
         } finally {
             // Runs on cancellation (WhileSubscribed, flatMapLatest switch) or completion.
@@ -137,6 +148,38 @@ class DepartureBoardRepository(
         mutex.withLock {
             cache.getOrPut(stopId) { MutableStateFlow(DeparturesState(isLoading = false)) }
         }
+
+    /**
+     * Single-flight gate on [DepartureBoardConfig.refreshIntervalMs].
+     *
+     * The same stop can be polled by more than one collector at a time — the map sheet and
+     * the saved trips card both expand it, and each collects its own [pollStop]. They share
+     * one cache entry, so they must also share one network call per window: whichever
+     * session gets the lock first claims the window and fetches; the others skip and keep
+     * receiving the result through the shared state flow.
+     *
+     * The claim is written **before** the call rather than after it, because two sessions
+     * waking in the same instant would otherwise both see a stale timestamp and both fetch.
+     * [fetchDepartures] overwrites it with the completion time on success, so the next
+     * window is measured from when fresh data actually landed.
+     */
+    private suspend fun fetchIfWindowOpen(stopId: String, showFullLoading: Boolean, sessionId: Int) {
+        val claimed = mutex.withLock {
+            val lastFetch = lastFetchTime[stopId] ?: 0L
+            val now = nowMs()
+            val isWindowOpen = lastFetch == 0L || now - lastFetch >= config.refreshIntervalMs
+            if (isWindowOpen) lastFetchTime[stopId] = now
+            isWindowOpen
+        }
+        if (claimed) {
+            fetchDepartures(stopId, showFullLoading = showFullLoading, sessionId = sessionId)
+        } else {
+            log(
+                "[$LOG_TAG] t=${nowMs()} session=#$sessionId skipping fetch for stopId=$stopId — " +
+                    "another session already claimed this refresh window",
+            )
+        }
+    }
 
     @OptIn(ExperimentalTime::class)
     @Suppress("LongMethod", "MagicNumber")
@@ -231,7 +274,7 @@ class DepartureBoardRepository(
                 "lastFetch=$elapsedLabel windowMinutes=${config.previousDeparturesWindowMinutes}",
         )
         flow.update { it.copy(isPreviousLoading = true) }
-        val fromTime = Clock.System.now() - config.previousDeparturesWindowMinutes.minutes
+        val fromTime = clock.now() - config.previousDeparturesWindowMinutes.minutes
         departuresService.suspendSafeResult(ioDispatcher) {
             departures(
                 stopId = stopId,
@@ -240,7 +283,7 @@ class DepartureBoardRepository(
             )
         }.onSuccess { response ->
             currentCoroutineContext().ensureActive()
-            val now = Clock.System.now()
+            val now = clock.now()
             val allFromResponse = response.toStopDepartures()
             val previous = allFromResponse
                 .filter { departure ->

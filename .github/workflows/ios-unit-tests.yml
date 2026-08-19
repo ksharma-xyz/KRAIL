@@ -1,0 +1,105 @@
+name: iOS Unit Tests
+
+# Runs the shared `commonTest` suites on the iOS simulator via Kotlin/Native
+# (`iosSimulatorArm64Test`). code-quality.yml already runs the same sources on the JVM host
+# through `testAndroidHostTest`; this lane is what catches the differences between the two
+# runtimes — freezing, memory model, `Char`/date/number formatting, `kotlin.time` behaviour.
+#
+# Only the modules in `IOS_TEST_MODULES` (build-logic → IosUnitTests.kt) participate. The
+# `verifyIosTestClassification` task that `iosUnitTest` depends on fails the build if a module
+# grows shared tests without being classified, so this lane cannot silently shrink.
+# See TESTING.md → "Running the shared tests on iOS".
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main, prod/* ]
+    types: [ opened, synchronize, reopened, ready_for_review ]
+    paths:
+      - '**/src/commonMain/**'
+      - '**/src/commonTest/**'
+      - '**/src/iosMain/**'
+      - '**/src/iosTest/**'
+      - '**/build.gradle.kts'
+      - 'gradle/build-logic/**'
+      - 'gradle/libs.versions.toml'
+      - 'gradle.properties'
+      - '.github/workflows/ios-unit-tests.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios-unit-tests:
+    # Same reasoning as build-ios.yml: Dependabot pull requests cannot read `secrets.*`, so
+    # Gradle configuration fails on the missing NSW transport API key.
+    if: github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.draft == false)
+    runs-on: macos-latest
+    environment: Firebase
+    # Measured locally: ~31s for the 5-module lane with a warm build cache, and ~6m40s for a
+    # whole-repo iosSimulatorArm64Test sweep with the Kotlin/Native toolchain already on disk.
+    # A cold CI run adds the ~1GB konan download and full Kotlin/Native compilation of every
+    # dependency, so 45min is generous head-room while still capping a hung simulator well
+    # short of the 6h default.
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      # Requires Xcode 26+ for the iOS 26 SDK, matching build-ios.yml.
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '~26'
+
+      - name: Setup environment variables
+        run: |
+          echo "IOS_NSW_TRANSPORT_API_KEY=${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+          echo "ANDROID_NSW_TRANSPORT_API_KEY=${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}" >> $GITHUB_ENV
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-disabled: false
+
+      # The Kotlin/Native compiler and its platform libs are a ~1GB download that is stable
+      # across runs — caching it separately from the Gradle caches keeps a cold run bearable.
+      - name: Cache Kotlin/Native toolchain
+        uses: actions/cache@v4
+        with:
+          path: ~/.konan
+          key: konan-${{ runner.os }}-${{ hashFiles('gradle/libs.versions.toml') }}
+          restore-keys: konan-${{ runner.os }}-
+
+      - name: Make Gradle executable
+        run: chmod +x ./gradlew
+
+      # -PciQuality=true tells core/network/build.gradle.kts to use placeholder API keys —
+      # none of these tests hit the network.
+      - name: Run iOS unit tests
+        id: tests
+        env:
+          CI: true
+          GITHUB_ACTIONS: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew iosUnitTest --continue -PciQuality=true
+
+      - name: Upload iOS test reports
+        if: always() && steps.tests.conclusion != 'skipped'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-test-reports-${{ github.run_id }}
+          path: |
+            **/build/reports/tests/iosSimulatorArm64Test/**
+            **/build/test-results/iosSimulatorArm64Test/**
+          if-no-files-found: ignore
+          retention-days: 7

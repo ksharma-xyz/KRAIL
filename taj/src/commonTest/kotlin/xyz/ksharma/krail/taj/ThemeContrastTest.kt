@@ -32,7 +32,7 @@ class ThemeContrastTest {
     }
 
     @Test
-    fun `a low-contrast preferred foreground is replaced, not passed through`() {
+    fun `a low-contrast preferred foreground is replaced rather than passed through`() {
         // The toggle passes LocalThemeContentColor as the preferred glyph colour. When that
         // local is unset (previews default it to opaque black) it can collide with a dark
         // theme colour, so the helper has to override it rather than honour the preference.

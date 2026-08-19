@@ -39,5 +39,10 @@ class KotlinMultiplatformConventionPlugin : Plugin<Project> {
         // Test-infrastructure guardrails. Idempotent — if AndroidKmpLibrary already
         // registered these (modules applying both plugins), this is a no-op.
         configureTestWiringVerification()
+
+        // Root-level `iosUnitTest` aggregate + its classification guard. Registered from here
+        // (idempotently) because the root project cannot apply a build-logic plugin itself —
+        // see the KDoc on configureIosUnitTestLane.
+        configureIosUnitTestLane()
     }
 }

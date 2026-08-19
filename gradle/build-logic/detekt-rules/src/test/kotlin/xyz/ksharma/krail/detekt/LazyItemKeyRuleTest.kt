@@ -56,6 +56,35 @@ class LazyItemKeyRuleTest {
     }
 
     @Test
+    fun `flags an unkeyed item in a fully-qualified LazyListScope extension function`() {
+        val code = """
+            private fun androidx.compose.foundation.lazy.LazyListScope.recentStopsSection() {
+                item {
+                    Text("Recent")
+                }
+            }
+        """.trimIndent()
+
+        assertEquals(1, rule.lint(code).size)
+    }
+
+    @Test
+    fun `does not flag a receiver whose name merely contains a lazy scope name`() {
+        // The scope check is an exact simple-name match, not containment: this receiver is an
+        // unrelated type that happens to embed "LazyListScope" in its name, and `item` on it is
+        // somebody else's function with somebody else's semantics.
+        val code = """
+            private fun MyLazyListScopeExtension.render() {
+                item {
+                    Text("not a lazy list")
+                }
+            }
+        """.trimIndent()
+
+        assertEquals(0, rule.lint(code).size)
+    }
+
+    @Test
     fun `does not flag a positional string key`() {
         val code = """
             @Composable

@@ -85,9 +85,19 @@ class LazyItemKeyRule(config: Config) : Rule(config) {
             .any { it.calleeExpression?.text in LAZY_CONTAINERS }
         if (insideLazyContainer) return true
 
-        val receiver = getStrictParentOfType<KtNamedFunction>()?.receiverTypeReference?.text
-        return receiver != null && LAZY_SCOPES.any { receiver.contains(it) }
+        return getStrictParentOfType<KtNamedFunction>()?.receiverTypeReference
+            ?.text
+            ?.simpleTypeName() in LAZY_SCOPES
     }
+
+    /**
+     * The unqualified, un-generic'd name of a receiver type reference, so the scope check is an
+     * exact match rather than a substring one: `androidx.compose.foundation.lazy.LazyListScope`
+     * and `LazyListScope` both reduce to `LazyListScope`, while an unrelated
+     * `MyLazyListScopeExtension` stays distinct instead of matching on containment.
+     */
+    private fun String.simpleTypeName(): String =
+        substringBefore('<').trim().substringAfterLast('.').trim()
 
     private fun KtCallExpression.isAllowedByBaseline(): Boolean {
         val ktFile = containingKtFile
@@ -122,7 +132,7 @@ class LazyItemKeyRule(config: Config) : Rule(config) {
             "LazyHorizontalStaggeredGrid",
         )
 
-        private val LAZY_SCOPES = listOf(
+        private val LAZY_SCOPES = setOf(
             "LazyListScope",
             "LazyGridScope",
             "LazyStaggeredGridScope",

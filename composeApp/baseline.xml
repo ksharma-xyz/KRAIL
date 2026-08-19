@@ -16,8 +16,6 @@
     <ID>LongParameterList:SplashScreen.kt$( letter: String, animationStarted: Boolean, logoColor: Color, modifier: Modifier = Modifier, fontSize: TextUnit = TextUnit(65F, TextUnitType.Sp), delayMillis: Int = 100, )</ID>
     <ID>LongParameterList:SplashViewModel.kt$SplashViewModel$( private val sandook: Sandook, private val analytics: Analytics, private val appInfoProvider: AppInfoProvider, private val ioDispatcher: CoroutineDispatcher, private val appStart: AppStart, private val preferences: SandookPreferences, private val appVersionManager: AppVersionManager, )</ID>
     <ID>MagicNumber:SplashScreen.kt$0.7f</ID>
-    <ID>MagicNumber:SplashScreen.kt$0xFF009B77</ID>
-    <ID>MagicNumber:SplashScreen.kt$0xFFF6891F</ID>
     <ID>MagicNumber:SplashScreen.kt$1.2f</ID>
     <ID>MagicNumber:SplashScreen.kt$1100</ID>
     <ID>MagicNumber:SplashScreen.kt$1200</ID>

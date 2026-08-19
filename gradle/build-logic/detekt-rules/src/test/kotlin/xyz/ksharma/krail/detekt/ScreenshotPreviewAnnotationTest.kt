@@ -40,6 +40,53 @@ class ScreenshotPreviewAnnotationTest {
     }
 
     @Test
+    fun `flags a fully-qualified bare Preview`() {
+        // Import-free call sites are legal Kotlin and are exactly how someone silences an
+        // import-ordering complaint. Matching is on the annotation's short name, so the
+        // qualifier makes no difference.
+        val code = """
+            @ScreenshotTest
+            @androidx.compose.ui.tooling.preview.Preview
+            @Composable
+            private fun MyThingPreview() {}
+        """.trimIndent()
+
+        assertEquals(1, rule.lint(code).size)
+    }
+
+    @Test
+    fun `flags a bare Preview whose parameters span several lines`() {
+        val code = """
+            @ScreenshotTest(
+                threshold = 0.01,
+                description = "a wide component that needs a tablet-sized canvas",
+            )
+            @Preview(
+                name = "Wide",
+                group = "Widgets",
+                showBackground = true,
+                widthDp = 720,
+            )
+            @Composable
+            private fun MyThingPreview() {}
+        """.trimIndent()
+
+        assertEquals(1, rule.lint(code).size)
+    }
+
+    @Test
+    fun `does not flag a fully-qualified PreviewComponent`() {
+        val code = """
+            @ScreenshotTest
+            @xyz.ksharma.krail.taj.preview.PreviewComponent
+            @Composable
+            private fun MyThingPreview() {}
+        """.trimIndent()
+
+        assertEquals(0, rule.lint(code).size)
+    }
+
+    @Test
     fun `flags a ScreenshotTest with no preview annotation at all`() {
         val code = """
             @ScreenshotTest

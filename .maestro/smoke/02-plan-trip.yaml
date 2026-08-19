@@ -10,18 +10,14 @@ appId: ${APP_ID}
     stopApp: true
 
 
-# A clean device (every CI emulator) starts on the first-run carousel. Guarded,
-# so this is skipped entirely on a device that has already been through it.
-- runFlow:
-    when:
-      visible:
-        id: "intro.screen"
-    file: ../shared/dismiss-intro.yaml
+# Unconditional. The shared flow settles the app and no-ops on a device that has
+# already been through the carousel; guarding it here raced the first frame.
+- runFlow: ../shared/dismiss-intro.yaml
 
 - extendedWaitUntil:
     visible:
       id: "savedtrips.screen"
-    timeout: 30000
+    timeout: 60000
 
 # --- Origin ---
 - tapOn:

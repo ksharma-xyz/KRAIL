@@ -94,8 +94,13 @@ These are all fixes for failures this suite actually hit, not style preferences.
 - **Restore device state in `onFlowComplete`.** A flow that fails mid-rotation leaves the device
   in landscape, where the search row collapses to a single pill, and every later flow in the run
   fails looking for fields that are not on screen. One failure becomes three.
-- **Guard the intro dismissal, do not inline it.** Only a clean device sees the carousel, so
-  `runFlow` is conditioned on `intro.screen` and costs nothing everywhere else.
+- **Settle before you look, and never guard on a node the app has not drawn yet.** The intro
+  dismissal used to be a caller-side `runFlow` conditioned on `intro.screen`. `launchApp`
+  returns once the process is foregrounded, not once Compose has drawn, so on a freshly booted
+  CI emulator that condition was evaluated against an empty hierarchy: it skipped, the carousel
+  stayed up, and every flow failed on its first assertion. `shared/dismiss-intro.yaml` now waits
+  for the app to settle and no-ops by itself, and callers invoke it unconditionally. A condition
+  is only as good as the frame it is tested against.
 
 ## Permission prep
 

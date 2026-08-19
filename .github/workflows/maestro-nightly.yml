@@ -91,29 +91,43 @@ jobs:
           profile: pixel_6
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          # Same shape as maestro-pr-smoke.yml, and for the same reason: the
+          # emulator is gone once this script returns, so anything needing adb
+          # has to happen here rather than in a later step.
           script: |
             adb install -r androidApp/build/outputs/apk/debug/androidApp-debug.apk
-            adb logcat -c
-            maestro test -e APP_ID=xyz.ksharma.krail.debug .maestro/
 
-      - name: Check for fatal exceptions
-        if: always()
-        run: |
-          adb logcat -d > logcat-android.txt || true
-          if grep -q "FATAL EXCEPTION" logcat-android.txt; then
-            echo "::error::FATAL EXCEPTION found in logcat"
-            grep -A 30 "FATAL EXCEPTION" logcat-android.txt
-            exit 1
-          fi
-          echo "No fatal exceptions."
+            adb shell settings put global window_animation_scale 0
+            adb shell settings put global transition_animation_scale 0
+            adb shell settings put global animator_duration_scale 0
+
+            adb logcat -c
+
+            set +e
+            maestro test -e APP_ID=xyz.ksharma.krail.debug .maestro/
+            MAESTRO_EXIT=$?
+            set -e
+
+            adb logcat -d > logcat-android.txt || true
+            mkdir -p maestro-output
+            cp -R "$HOME/.maestro/tests" maestro-output/ 2>/dev/null || true
+
+            if grep -q "FATAL EXCEPTION" logcat-android.txt; then
+              echo "::error::FATAL EXCEPTION found in logcat"
+              grep -A 30 "FATAL EXCEPTION" logcat-android.txt
+              exit 1
+            fi
+            echo "No fatal exceptions."
+
+            exit $MAESTRO_EXIT
 
       - name: Upload Maestro debug output
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: maestro-nightly-android-${{ github.run_id }}
           path: |
-            ~/.maestro/tests/**
+            maestro-output/**
             logcat-android.txt
           if-no-files-found: ignore
           retention-days: 7
@@ -221,12 +235,20 @@ jobs:
             run_suite
           fi
 
+      # Copied into the workspace first: actions/upload-artifact does not expand
+      # `~`, so pointing it at the home directory uploads nothing at all.
+      - name: Collect Maestro output
+        if: always()
+        run: |
+          mkdir -p maestro-output
+          cp -R "$HOME/.maestro/tests" maestro-output/ 2>/dev/null || true
+
       - name: Upload Maestro debug output
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: maestro-nightly-ios-${{ github.run_id }}
-          path: ~/.maestro/tests/**
+          path: maestro-output/**
           if-no-files-found: ignore
           retention-days: 7
 

@@ -91,6 +91,45 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew -p gradle/build-logic :detekt-rules:test
 
+      # Kover's report tasks depend on the very testAndroidHostTest tasks the step above just
+      # ran, so those are UP-TO-DATE here and this only does the merge — coverage costs a
+      # report, not a second test run. Skipped when tests failed: partial coverage from a
+      # broken run is worse than none.
+      - name: Generate coverage report
+        id: coverage
+        if: steps.tests.outcome == 'success'
+        env:
+          ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
+          IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
+          CI: true
+          GITHUB_ACTIONS: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew :koverXmlReport :koverHtmlReport -PciQuality=true
+
+      - name: Upload coverage report (HTML)
+        if: always() && steps.coverage.conclusion == 'success'
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report-${{ github.run_id }}
+          path: build/reports/kover/html/**
+          if-no-files-found: warn
+          retention-days: 7
+
+      # CODECOV_TOKEN must live in the `Firebase` environment, alongside the API keys above.
+      # A reusable workflow cannot see repository secrets, and the alternatives are both
+      # worse: `secrets: inherit` would hand this workflow the signing keystores and store
+      # credentials to deliver one upload token, and declaring `workflow_call.secrets` closes
+      # the secrets context, so the environment-only API keys above stop resolving.
+      # Upload is best-effort — a missing token or a Codecov outage must not fail a PR.
+      - name: Upload coverage to Codecov
+        if: always() && steps.coverage.conclusion == 'success'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: build/reports/kover/report.xml
+          flags: host-tests
+          fail_ci_if_error: false
+
       - name: Upload Detekt reports
         if: always() && steps.detekt.conclusion != 'skipped'
         uses: actions/upload-artifact@v7

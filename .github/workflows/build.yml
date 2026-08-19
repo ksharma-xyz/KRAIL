@@ -25,6 +25,9 @@ jobs:
   code-quality:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     uses: ./.github/workflows/code-quality.yml
+    # Deliberately passes no secrets. Everything code-quality.yml needs — including
+    # CODECOV_TOKEN — comes from the `Firebase` environment its job declares. See the
+    # Codecov step there.
 
   # Runs in parallel with code-quality rather than after it: it is the one job on a macOS
   # runner and the slowest of the two, so gating it on detekt would add its wait to the

@@ -6,6 +6,7 @@ real-time public transport information, personalised features like trip-saving a
 modular architecture for maintainability.
 
 [![Krail App CI](https://github.com/ksharma-xyz/Krail/actions/workflows/build.yml/badge.svg)](https://github.com/ksharma-xyz/Krail/actions/workflows/build.yml)
+[![codecov](https://codecov.io/gh/ksharma-xyz/Krail/branch/main/graph/badge.svg)](https://codecov.io/gh/ksharma-xyz/Krail)
 
 ## Table of Contents
 

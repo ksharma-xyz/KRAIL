@@ -282,6 +282,51 @@ itself is not the obstacle.
 
 ---
 
+## Coverage
+
+```
+./gradlew koverHtmlReport      # build/reports/kover/html/index.html
+./gradlew koverXmlReport       # build/reports/kover/report.xml — the Codecov upload
+./gradlew koverLog             # one line, straight to the console
+```
+
+One merged report for the whole repo, not 31 per-module ones. Kover's report tasks depend on
+the `testAndroidHostTest` tasks, so a report task runs the suites it measures — there is no
+"stale coverage" state to get caught by.
+
+Modules opt in automatically: `configureCoverage()` in
+[`Coverage.kt`](gradle/build-logic/convention/src/main/kotlin/xyz/ksharma/krail/gradle/Coverage.kt)
+applies Kover and registers the module into the root aggregate **if it has test sources**. A
+module with no tests is left out rather than reported as 0% — that would bury the signal from
+modules that do have suites, and `verifyTestWiring` is what stops a module having none. Two
+things are excluded on purpose: `:core:testing`, whose production code *is* test
+infrastructure, and codegen (`ComposableSingletons*`, SQLDelight, BuildKonfig, Compose
+Resources) — filters live in the root `build.gradle.kts`.
+
+CI generates the report inside `code-quality.yml`, right after the host-test step, so the
+suites run once. The HTML goes up as a build artifact and the XML to Codecov.
+
+> **`CODECOV_TOKEN` has to live in the `Firebase` environment**, next to the NSW API keys.
+> It currently exists only as a *repository* secret, and a reusable workflow cannot see
+> those — so until it is added there, coverage generates and uploads as a build artifact but
+> does not reach Codecov. Nothing else breaks: the step is `fail_ci_if_error: false`.
+>
+> Neither alternative is acceptable. `secrets: inherit` on the callers would hand
+> `code-quality.yml` every repository secret — signing keystores, App Store keys, service
+> accounts — to deliver one upload token. Declaring `workflow_call.secrets` instead *closes*
+> the secrets context, at which point the environment-only `ANDROID_NSW_TRANSPORT_API_KEY`
+> and `IOS_NSW_TRANSPORT_API_KEY` references stop resolving and `actionlint` fails the
+> `lint-workflows` job. The environment is the one place that is both narrow and consistent
+> with how this workflow already gets every other secret.
+
+### There are no iOS coverage numbers
+
+Kover instruments JVM bytecode. Kotlin/Native is not supported upstream and cannot be worked
+around here, so coverage measures the host-test run only. A module in the iOS lane still shows
+its host coverage — iOS execution is a correctness signal, not a coverage one.
+
+---
+
 ## Snapshot testing
 
 The annotation-driven generation flow is preserved: any `@PreviewComponent` /

@@ -15,4 +15,25 @@ plugins {
     alias(libs.plugins.wire) apply false
     alias(libs.plugins.detekt) apply false
     alias(libs.plugins.roborazzi) apply false
+    // Applied (not `apply false`) so the root project owns the merged coverage report. The
+    // per-module side is wired from KotlinMultiplatformConventionPlugin — see Coverage.kt.
+    alias(libs.plugins.kover)
+}
+
+kover {
+    reports {
+        filters {
+            excludes {
+                // Compose compiler emits one of these per file holding `@Composable` lambdas.
+                // Never written by hand, never meaningfully "covered".
+                classes("*.ComposableSingletons*")
+                // SQLDelight codegen. The hand-written repositories above it are measured.
+                packages("xyz.ksharma.krail.sandook.sandook")
+                // BuildKonfig codegen.
+                classes("*.BuildKonfig")
+                // Compose Resources accessors (`Res.drawable.*`), also codegen.
+                packages("*.generated.resources")
+            }
+        }
+    }
 }

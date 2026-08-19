@@ -37,6 +37,9 @@ foundationLayoutAndroid = "1.10.6"
 ui-tooling = "1.10.6"
 detekt = "1.23.8"
 detektCompose = "0.5.8"
+# 0.9.7+ is required: earlier Kover releases do not understand the KMP
+# `androidLibrary { withHostTest {} }` target this repo's modules use.
+kover = "0.9.9"
 coil3 = "3.4.0"
 appcompat = "1.7.1"
 roborazzi = "1.59.0"
@@ -218,6 +221,7 @@ firebase-crashlyticsPlugin = { id = "com.google.firebase.crashlytics", version =
 firebase-performancePlugin = { id = "com.google.firebase.firebase-perf", version = "2.0.2" }
 wire = { id = "com.squareup.wire", version = "6.2.0" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
 spmForKmp = { id = "io.github.frankois944.spmForKmp", version.ref = "spmForKmp" }
 

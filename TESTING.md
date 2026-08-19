@@ -125,7 +125,7 @@ from `build.yml` in parallel with `code-quality`. It runs one step per golden-ow
 | Step | Task | Blocking |
 |---|---|---|
 | `verify-taj` | `:taj:verifyRoborazziAndroidHostTest` | yes |
-| `verify-trip-planner` | `:feature:trip-planner:ui:verifyRoborazziAndroidHostTest` | no (`continue-on-error`) |
+| `verify-trip-planner` | `:feature:trip-planner:ui:verifyRoborazziAndroidHostTest` | yes |
 
 Four things about that job are load-bearing:
 
@@ -136,7 +136,8 @@ Four things about that job are load-bearing:
   pointer files on disk and every comparison fails on an undecodable PNG.
 - **The modules are named explicitly**, one step each. Onboarding a third module means adding
   a step — the cost of a macOS runner should not grow by accident.
-- **The trip-planner step reports, it does not block yet.** See below.
+- **Both steps block.** The theme-transition race that kept trip-planner on
+  `continue-on-error` is fixed. See below.
 
 The reason the job has to exist at all: `testAndroidHostTest` on its own captures in
 Roborazzi's default mode, which silently records a missing or changed golden and still
@@ -144,26 +145,33 @@ passes. Explicit verify is what turns a pixel change into a failure. When either
 reports a diff the job uploads the reference/diff/new composites from
 `**/build/outputs/roborazzi/**` as an artifact.
 
-### Why `:feature:trip-planner:ui` is not blocking yet
+### The theme-transition race, and how it was fixed
 
-`KrailTheme` animates `colors.surface` with `animateColorAsState` against a multi-stage
-target (`taj/animations/ThemeTransitionAnimations.kt`). The capture harness shoots a preview
-as soon as the view is attached, so the **first** capture of a preview can land while that
-transition is still running and record a background one shade off. Settled and mid-transition
-are both light greys, so the result is a whole-image diff on the `light_normal` variant while
-the same preview's `dark_normal` and `light_xlarge` variants, shot later from a warmer clock,
-come out correct.
+`KrailTheme` animates `colors.surface` with `animateColorAsState` against a multi-stage target
+(`taj/animations/ThemeTransitionAnimations.kt`). The harness used to shoot a preview as soon as
+the view was attached, mid-transition, so a golden recorded a background one shade off and
+which files that hit changed from run to run — which is why trip-planner ran with
+`continue-on-error` for as long as it did.
 
-Three consecutive local record runs on an unchanged tree each produced a *different*
-two-or-three-file set of `light_normal` drifts. That is a harness bug, not drift, and failing
-the build on it would only teach everyone to press re-run.
+`BaseSnapshotTest.captureScreenshot` now settles the animation clock before every capture:
+pause the Robolectric choreographer, then idle the main looper for a fixed 2 s, which is longer
+than the transition's worst case (80 ms + 100 ms of staged delay plus a 1500 ms surface tween).
+Two details are the whole fix:
 
-To make the step blocking: settle the animation before capture (advance the animation clock in
-`BaseSnapshotTest.captureScreenshot`, or let `PreviewTheme` skip the transition under test),
-re-record the module, then delete `continue-on-error` from the step. Nothing else about the job
-needs to change.
+- **The advance is a fixed duration, not a wait for quiescence.** Several previews animate
+  forever, so an idle-wait would hang on them.
+- **The choreographer has to be paused first.** Left running, Robolectric answers
+  `nativeScheduleVsync` immediately without moving the clock, so an endless animation re-arms a
+  frame inside the same idle window and `idleFor` never returns — one preview sat at 100% CPU
+  through 170 000+ frames. Paused, each vsync is posted at the next frame boundary, so the
+  window is capped at 125 frames and an endless animation lands on a fixed frame.
 
-One preview is excluded outright rather than waiting on that fix:
+Re-recording under the settled clock rewrote every golden in both modules: the committed
+images had been captured during the transition's 80 ms glow stage (`#E8ECF0`) rather than on
+the settled surface (`#FFFFFF`). Two consecutive record runs then produced byte-identical sets,
+and the step blocks.
+
+One preview is excluded outright rather than relying on that settle:
 `PreviewMapStopSelectionPane_Loading` renders an indeterminate `CircularProgressIndicator`, so
 its captured frame is decided by the animation clock no matter how well the theme settles. It
 is listed in `TripPlannerUiSnapshotTest.excludedPreviewNames`, the same treatment taj gives
@@ -251,8 +259,9 @@ Concrete bug classes the current setup makes hard or impossible:
   `verifyNoAdHocBoundaryFakes`; pre-existing ones are in a shrinking baseline.
 - **Snapshot drift shipping silently.** The `snapshot-verify` job runs
   `verifyRoborazziAndroidHostTest` explicitly, on macOS, with LFS goldens checked out, so a
-  pixel change without a re-record fails the build for `:taj`. Nineteen `:taj` goldens had
-  already drifted by the time that job existed, which is what an unrun check costs.
+  pixel change without a re-record fails the build for both golden-owning modules. Nineteen
+  `:taj` goldens had already drifted by the time that job existed, which is what an unrun
+  check costs.
 - **Boilerplate per test.** `krailRunTest { }` replaces ~10 lines of dispatcher
   setup/teardown ceremony. New module snapshot adoption is one-line plugin alias instead
   of three duplicated build-config blocks.

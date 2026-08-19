@@ -44,5 +44,8 @@ class KotlinMultiplatformConventionPlugin : Plugin<Project> {
         // (idempotently) because the root project cannot apply a build-logic plugin itself —
         // see the KDoc on configureIosUnitTestLane.
         configureIosUnitTestLane()
+
+        // Kover, for modules that have tests, feeding the root's merged report.
+        configureCoverage()
     }
 }

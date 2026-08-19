@@ -26,6 +26,7 @@ jobs:
   # ── 1. Quality gate ─────────────────────────────────────────────────────────
   code-quality:
     uses: ./.github/workflows/code-quality.yml
+    # See build.yml — passes no secrets; the `Firebase` environment supplies them.
 
   # ── 2. Build signed release AAB ─────────────────────────────────────────────
   build-android-release:

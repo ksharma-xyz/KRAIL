@@ -85,6 +85,7 @@ import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.ai.AskKrailScreen
 import xyz.ksharma.krail.trip.planner.ui.components.ai.rememberAiGreeting
+import xyz.ksharma.krail.trip.planner.ui.navigation.savers.parkRideExpansionSaver
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
@@ -150,6 +151,20 @@ fun SavedTripsScreen(
     // While editing, the system back gesture exits edit mode instead of the app.
     BackHandler(enabled = editing) { editing = false }
 
+    // Which Park & Ride cards are open.
+    //
+    // Saveable, not remembered: the ViewModel's matching refresh set survives recreation, so
+    // losing this half leaves the two out of step and the next tap reading as "expand" on a
+    // card that is already expanded. See parkRideExpansionSaver.
+    //
+    // Declared here rather than beside the list it feeds, because `body` below is called from
+    // two places — inside DualPaneScaffold and directly — which are two different composition
+    // slots. State remembered inside it is dropped the moment a rotation switches which of the
+    // two is used, no matter how saveable it is.
+    val expandedMap = rememberSaveable(saver = parkRideExpansionSaver()) {
+        mutableStateMapOf<String, Boolean>()
+    }
+
     val lazyListState = rememberLazyListState()
     val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
         val tripId = from.key as? String ?: return@rememberReorderableLazyListState
@@ -205,8 +220,6 @@ fun SavedTripsScreen(
                             )
                         },
                     )
-
-                    val expandedMap = remember { mutableStateMapOf<String, Boolean>() }
 
                     LazyColumn(
                         state = lazyListState,

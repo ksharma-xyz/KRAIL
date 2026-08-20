@@ -93,6 +93,7 @@ import xyz.ksharma.krail.trip.planner.ui.components.OriginDestination
 import xyz.ksharma.krail.trip.planner.ui.components.TransportModeChip
 import xyz.ksharma.krail.trip.planner.ui.components.loading.LoadingEmojiAnim
 import xyz.ksharma.krail.trip.planner.ui.components.map.StopDetailsBottomSheet
+import xyz.ksharma.krail.trip.planner.ui.navigation.savers.stopDisplaySaver
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopDisplay
@@ -130,9 +131,15 @@ fun TimeTableScreen(
         mutableStateListOf(*timeTableState.unselectedModes.toTypedArray())
     }
     var isReverseButtonRotated by rememberSaveable { mutableStateOf(false) }
-    // Tracks which stop's details sheet is open. Tap on a stop in the
-    // OriginDestination header sets this; the sheet is dismissed back to null.
-    var selectedStop by remember { mutableStateOf<StopDisplay?>(null) }
+    // Tracks which stop's details sheet is open. Tap on a stop in the OriginDestination header
+    // sets this; the sheet is dismissed back to null.
+    //
+    // Saveable, because turning the phone sideways to see more of a departure board is the
+    // most likely thing a rider does while this sheet is up, and a plain remember loses it
+    // outright. StopDisplay is not @Serializable, hence the explicit Saver.
+    var selectedStop by rememberSaveable(stateSaver = stopDisplaySaver()) {
+        mutableStateOf<StopDisplay?>(null)
+    }
     // One-shot: true while the title-bar star plays its first-save celebration
     // (triggered by the "Save this trip?" tile's Save button).
     var celebrateSaveStar by remember { mutableStateOf(false) }

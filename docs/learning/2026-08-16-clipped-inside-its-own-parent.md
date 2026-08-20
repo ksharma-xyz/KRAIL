@@ -95,7 +95,7 @@ directions.
 - [x] `AiInputBarLayoutTest.shortHost_theBarsActionsStayInsideIt` renders the bar at the height
       a keyboard leaves, with six lines of text, and asserts both controls with
       `assertIsDisplayed()`. Mutation-checked: removing the weight fails it, restoring it passes.
-      It lived on `AiResultCardTest` first and went with that class when the result card was
+      It lived on the result card's own test class first and went with it when the card was
       deleted; a probe outliving the composable it was written beside is exactly the kind of
       loss nothing warns you about, so it is now a class of its own named after what it guards.
 - [x] The send button's real content description is named in the test's companion, with why it

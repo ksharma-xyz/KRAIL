@@ -16,6 +16,8 @@ kotlin {
         namespace = "xyz.ksharma.krail.core.navigation"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+
+        withHostTest {}
     }
 
     iosArm64()
@@ -47,5 +49,11 @@ kotlin {
             }
         }
 
+        commonTest {
+            dependencies {
+                implementation(libs.test.kotlin)
+                implementation(libs.test.kotlinxCoroutineTest)
+            }
+        }
     }
 }

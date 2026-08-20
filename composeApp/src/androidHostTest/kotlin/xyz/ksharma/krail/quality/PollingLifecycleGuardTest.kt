@@ -149,10 +149,20 @@ class PollingLifecycleGuardTest {
                 "(?:class|object|interface)\\s+([A-Za-z0-9_]+)",
         )
 
-        /** Member level only: indent ≤ 4, so locals inside lambdas never win. */
+        /**
+         * Member level only: indent ≤ 4, so locals inside lambdas never win.
+         *
+         * [MODIFIERS] has to list every soft keyword that can precede the declaration, because an
+         * unrecognised one stops the match and the flow is attributed to `?` rather than to its
+         * name. `suspend` was the first to bite: a `suspend fun` holding a `WhileSubscribed`
+         * reported as `File.?`, which can never match a register row.
+         */
+        const val MODIFIERS =
+            "(?:public |internal |private |protected |override |open |abstract |final |suspend " +
+                "|inline |external |tailrec |operator |infix |lateinit |const )*"
+
         val MEMBER_DECLARATION = Regex(
-            "^ {0,4}(?:public |internal |private |protected )*(?:override )*" +
-                "(?:val|var|fun|init)\\b\\s*(?:<[^>]*>\\s*)?([A-Za-z0-9_]*)",
+            "^ {0,4}$MODIFIERS(?:val|var|fun|init)\\b\\s*(?:<[^>]*>\\s*)?([A-Za-z0-9_]*)",
         )
 
         /** Walks up from the test's working directory (the module dir) to the checkout root. */

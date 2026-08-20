@@ -35,6 +35,9 @@ interface ParkRideAvailabilityLoader {
     /**
      * Refreshes any of [mappings] that are off cooldown. Returns without a network call when
      * everything is still fresh, leaving the cached rows to be displayed.
+     *
+     * [mappings] may span more than one stop; each stop is refreshed on its own terms, so a
+     * station whose facilities are still warm costs nothing while its neighbour reloads.
      */
     suspend fun refreshIfNeeded(mappings: List<ParkRideMapping>)
 }
@@ -59,6 +62,21 @@ internal class RealParkRideAvailabilityLoader(
     override suspend fun refreshIfNeeded(mappings: List<ParkRideMapping>) {
         if (mappings.isEmpty()) return
 
+        // One pass per stop, because everything downstream of the fetch is written against a
+        // single stop: the batch call asks about stop ids, `applyBatchResults` resets whatever
+        // it was told to refresh and did not find, and both paths file each facility's detail
+        // under the stop id they were handed. Computing "what is refreshable" across every
+        // mapping and then asking about only the first stop meant the other stops' facilities
+        // were declared refreshable, never requested, and then reset to DISTANT_PAST as
+        // missing — which defeats their cooldown for good, so every later refresh spends an
+        // API call on them.
+        mappings.groupBy { it.stopId }.forEach { (stopId, stopMappings) ->
+            refreshStop(stopId = stopId, mappings = stopMappings)
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private suspend fun refreshStop(stopId: String, mappings: List<ParkRideMapping>) {
         val now = Clock.System.now().epochSeconds
         val refreshable = filterRefreshableFacilities(
             parkRideSandook = parkRideSandook,
@@ -70,11 +88,10 @@ internal class RealParkRideAvailabilityLoader(
             nowInstant = Instant.fromEpochSeconds(now),
         )
         if (refreshable.isEmpty()) {
-            log("Park & Ride facilities all on cooldown; showing cached availability")
+            log("Park & Ride facilities for stop $stopId all on cooldown; showing cached availability")
             return
         }
 
-        val stopId = mappings.first().stopId
         val batched = parkRideService.fetchAvailabilityForStops(stopIds = listOf(stopId))
         if (batched != null) {
             applyBatchResults(parkRideSandook, stopId, refreshable, batched, now)

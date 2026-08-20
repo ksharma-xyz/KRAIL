@@ -140,6 +140,8 @@ abstract class VerifyNoAdHocBoundaryFakesTask : DefaultTask() {
 
     @TaskAction
     fun verify() {
+        verifyBaselineOnlyShrinks()
+
         // The module that *owns* the canonical fakes is exempt.
         if (project.path == TESTING_MODULE_PATH) return
 
@@ -182,11 +184,45 @@ abstract class VerifyNoAdHocBoundaryFakesTask : DefaultTask() {
         }
     }
 
+    /**
+     * The baseline is a ratchet, and a ratchet with no stop is just a list.
+     *
+     * Grandfathering an existing violation is a one-line edit to a text file, which is
+     * exactly as easy as fixing one and considerably easier than arguing about it. Without a
+     * committed count, the file quietly grows and the rule stops meaning anything — the shape
+     * every "we'll clean it up later" baseline takes.
+     *
+     * [MAX_BASELINE_ENTRIES] is that stop. It moves DOWN as entries are replaced by the
+     * canonical `:core:testing` fakes, and never up.
+     */
+    private fun verifyBaselineOnlyShrinks() {
+        val entries = readBaseline(project).size
+        if (entries <= MAX_BASELINE_ENTRIES) return
+
+        throw IllegalStateException(
+            buildString {
+                appendLine("$BASELINE_PATH has $entries entries, above the committed")
+                appendLine("high-water mark of $MAX_BASELINE_ENTRIES.")
+                appendLine()
+                appendLine("This number only ever ratchets DOWN. A new ad-hoc boundary fake is")
+                appendLine("not grandfathered by adding a line here — replace it with the")
+                appendLine("canonical fake from $TESTING_MODULE_PATH instead.")
+                appendLine()
+                appendLine("If you removed entries and are lowering the mark, edit")
+                appendLine("MAX_BASELINE_ENTRIES in gradle/build-logic/convention/src/main/")
+                appendLine("kotlin/xyz/ksharma/krail/gradle/TestWiringVerification.kt to match.")
+            },
+        )
+    }
+
     companion object {
         const val NAME = "verifyNoAdHocBoundaryFakes"
         private const val BOUNDARY_ALTERNATION =
             "Sandook|SandookPreferences|Analytics|Flag|RemoteConfig|" +
                 "[A-Za-z]*Service|[A-Za-z]*Repository"
+
+        // Lower this when entries leave config/test-wiring-baseline.txt. Never raise it.
+        private const val MAX_BASELINE_ENTRIES = 8
     }
 }
 

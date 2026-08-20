@@ -2,6 +2,7 @@ package xyz.ksharma.krail.core.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.flow.receiveAsFlow
 
 /**
  * An Effect to receive results from another screen via [ResultEventBus].
@@ -53,26 +54,12 @@ inline fun <reified T> ResultEffect(
     crossinline onResult: suspend (T) -> Unit,
 ) {
     LaunchedEffect(resultKey) {
-        // Ensure the channel exists by calling getResultFlow (which creates it if needed)
-        val flow = resultEventBus.getResultFlow<T>(resultKey)
-
-        if (flow == null) {
-            // Create the channel if it doesn't exist
-            if (!resultEventBus.channelMap.contains(resultKey)) {
-                resultEventBus.channelMap[resultKey] = kotlinx.coroutines.channels.Channel(
-                    capacity = kotlinx.coroutines.channels.Channel.BUFFERED,
-                    onBufferOverflow = kotlinx.coroutines.channels.BufferOverflow.SUSPEND,
-                )
-            }
-            // Get the flow again
-            val newFlow = resultEventBus.getResultFlow<T>(resultKey)
-            newFlow?.collect { result ->
-                onResult.invoke(result as T)
-            }
-        } else {
-            flow.collect { result ->
-                onResult.invoke(result as T)
-            }
+        // channelFor creates the channel if this is the first use of the key, atomically.
+        // This used to hand-roll the same check-then-act the bus itself used to do, which meant
+        // a receiver arriving at the same moment as a sender could install a second channel
+        // over the one the result was already sitting in. One accessor, one create.
+        resultEventBus.channelFor(resultKey).receiveAsFlow().collect { result ->
+            onResult.invoke(result as T)
         }
     }
 }

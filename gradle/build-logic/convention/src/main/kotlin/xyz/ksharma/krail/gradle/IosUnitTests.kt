@@ -54,6 +54,7 @@ private val SHARED_TEST_SOURCE_DIRS = listOf("commonTest", "iosTest")
 val IOS_TEST_MODULES: List<String> = listOf(
     ":core:date-time",
     ":core:deeplink",
+    ":core:navigation",
     ":core:transport",
     ":feature:debug-settings:store",
     ":taj",

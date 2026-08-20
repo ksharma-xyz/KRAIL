@@ -78,6 +78,11 @@ plain `LaunchedEffect` keeps it running behind the lock screen.
 `WhileSubscribed` here only releases upstream collectors; nothing repeats, so there is no
 background-work hazard. They are listed so that a new flow cannot land unclassified.
 
+`SavedTripsViewModel.whileScreenSubscribed` is a `SharingStarted` strategy rather than a flow:
+it is `WhileSubscribed` with the screen's real subscriber count mirrored out on its way past, so
+the review moment can tell whether the rider is still on Saved Trips. It starts no work of its
+own, so it is classified here with the state it shares.
+
 | Flow |
 |---|
 | `AddParkRideViewModel.uiState` |
@@ -87,6 +92,7 @@ background-work hazard. They are listed so that a new flow cannot land unclassif
 | `IntroViewModel.uiState` |
 | `MapStopSelectionViewModel.mapUiState` |
 | `SavedTripsViewModel.uiState` |
+| `SavedTripsViewModel.whileScreenSubscribed` |
 | `SearchStopViewModel.uiState` |
 | `ServiceAlertsViewModel.uiState` |
 | `SettingsViewModel.uiState` |

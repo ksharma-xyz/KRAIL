@@ -11,16 +11,19 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingCommand
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.analytics.Analytics
@@ -118,6 +121,25 @@ class SavedTripsViewModel(
 
     val trackedJourney: StateFlow<TrackedJourney?> = trackingManager.tracked
 
+    // How many collectors uiState has RIGHT NOW, with no grace period.
+    //
+    // stateIn keeps its own subscriber count to itself, and the count that is reachable —
+    // _uiState.subscriptionCount — reads 1 for a further SUBSCRIPTION_GRACE_MS after the last
+    // collector has gone. That padding is deliberate and correct for keeping the database
+    // observation warm across a rotation; it is the wrong answer for "is the rider looking at
+    // Saved Trips", which is what the review moment below has to know.
+    private val screenCollectors = MutableStateFlow(0)
+
+    // WhileSubscribed with the real subscriber count mirrored into screenCollectors on its way
+    // past. The counting stream never emits a command of its own; merging it just keeps it
+    // collected for as long as the sharing coroutine lives.
+    private val whileScreenSubscribed = SharingStarted { subscriptionCount ->
+        merge(
+            SharingStarted.WhileSubscribed(SUBSCRIPTION_GRACE_MS).command(subscriptionCount),
+            subscriptionCount.transform<Int, SharingCommand> { screenCollectors.value = it },
+        )
+    }
+
     private val _uiState: MutableStateFlow<SavedTripsState> = MutableStateFlow(SavedTripsState())
     val uiState: StateFlow<SavedTripsState> = _uiState
         .onStart {
@@ -137,7 +159,7 @@ class SavedTripsViewModel(
         .onCompletion {
             cleanupJobs()
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SavedTripsState())
+        .stateIn(viewModelScope, whileScreenSubscribed, SavedTripsState())
 
     private suspend fun updateSelectedStops() {
         updateUiState {
@@ -221,6 +243,15 @@ class SavedTripsViewModel(
     private fun armParkRideCardReviewMoment() {
         viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
             delay(PARK_RIDE_CARD_REVIEW_DELAY_MS)
+            // Those few seconds are long enough for the rider to open a timetable, settings or
+            // the stop search, and the review sheet is a system dialog that will open over any
+            // of them — the one thing the calm-screen rule above exists to prevent. If they
+            // have left, the moment is simply dropped: it is not worth holding onto, since
+            // expanding a card again is all it takes to earn another one.
+            if (screenCollectors.value == 0) {
+                log("Park & Ride review moment dropped — Saved Trips is no longer on screen")
+                return@launchWithExceptionHandler
+            }
             appReviewManager.onDelightMoment(DelightMoment.PARK_RIDE_CARD_TAPPED)
             appReviewManager.onSavedTripsScreenShown()
         }
@@ -823,6 +854,10 @@ class SavedTripsViewModel(
 // Delay before requesting review after a Park and Ride card tap, so it never fires in the
 // same frame as the tap.
 private const val PARK_RIDE_CARD_REVIEW_DELAY_MS = 3_000L
+
+// How long the screen's data keeps loading after the last collector leaves, so a rotation or
+// a brief detach does not restart it.
+private const val SUBSCRIPTION_GRACE_MS = 5_000L
 
 private fun SavedTrip.toTrip(): Trip = Trip(
     fromStopId = fromStopId,

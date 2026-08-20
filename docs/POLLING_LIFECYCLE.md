@@ -69,7 +69,7 @@ plain `LaunchedEffect` keeps it running behind the lock screen.
 | `TripPoller.liveOverlay` | GTFS-RT overlay for the tracked trip |
 | `TripPoller.stopCoordinates` | stop coordinates for the tracked trip |
 | `TripPoller.countdownDisplay` | 1s countdown tick |
-| `DeparturesViewModel.isActive` | 10s relative-time-text refresh |
+| `DeparturesViewModel.isActive` | 10s relative-time-text refresh, activated by `DeparturesRelativeTimeTicker` |
 | `DeparturesViewModel.init` | departure board poll, gated on `_uiState.subscriptionCount` |
 | `SplashViewModel.isLoading` | app-start work triggered `onStart` |
 

@@ -12,7 +12,7 @@ import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.sandook.Sandook
-import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
+import xyz.ksharma.krail.sandook.db.SelectServiceAlertsByJourneyId
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlertState
 

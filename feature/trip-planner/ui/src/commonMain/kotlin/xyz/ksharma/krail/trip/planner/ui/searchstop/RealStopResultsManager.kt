@@ -16,10 +16,10 @@ import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.sandook.NswBusRoutesSandook
-import xyz.ksharma.krail.sandook.NswBusTripOptions
 import xyz.ksharma.krail.sandook.RecentSearchLocation
 import xyz.ksharma.krail.sandook.Sandook
-import xyz.ksharma.krail.sandook.SelectProductClassesForStop
+import xyz.ksharma.krail.sandook.db.NswBusTripOptions
+import xyz.ksharma.krail.sandook.db.SelectProductClassesForStop
 import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.FuzzyStopRanker
 import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.normalize
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState

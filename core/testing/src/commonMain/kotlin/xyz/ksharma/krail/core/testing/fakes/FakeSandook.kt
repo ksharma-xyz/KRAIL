@@ -3,14 +3,14 @@ package xyz.ksharma.krail.core.testing.fakes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import xyz.ksharma.krail.sandook.NswStops
 import xyz.ksharma.krail.sandook.RecentSearchLocation
-import xyz.ksharma.krail.sandook.RecentSearchLocations
 import xyz.ksharma.krail.sandook.Sandook
-import xyz.ksharma.krail.sandook.SavedTrip
-import xyz.ksharma.krail.sandook.SelectProductClassesForStop
-import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
-import xyz.ksharma.krail.sandook.StopLabels
+import xyz.ksharma.krail.sandook.db.NswStops
+import xyz.ksharma.krail.sandook.db.RecentSearchLocations
+import xyz.ksharma.krail.sandook.db.SavedTrip
+import xyz.ksharma.krail.sandook.db.SelectProductClassesForStop
+import xyz.ksharma.krail.sandook.db.SelectServiceAlertsByJourneyId
+import xyz.ksharma.krail.sandook.db.StopLabels
 
 // Intrinsic to faking the production Sandook interface (33 methods). Not refactorable.
 @Suppress("TooManyFunctions")

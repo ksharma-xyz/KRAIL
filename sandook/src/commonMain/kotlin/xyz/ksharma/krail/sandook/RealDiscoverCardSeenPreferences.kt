@@ -1,5 +1,7 @@
 package xyz.ksharma.krail.sandook
 
+import xyz.ksharma.krail.sandook.db.DiscoverCardQueries
+
 internal class RealDiscoverCardSeenPreferences(
     private val discoverCardQueries: DiscoverCardQueries,
 ) : DiscoverCardSeenPreferences {

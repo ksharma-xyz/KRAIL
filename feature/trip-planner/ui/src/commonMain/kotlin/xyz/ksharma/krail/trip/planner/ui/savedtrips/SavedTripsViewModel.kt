@@ -49,13 +49,13 @@ import xyz.ksharma.krail.park.ride.network.model.NswParkRideFacility
 import xyz.ksharma.krail.park.ride.network.model.ParkingStopBatchResponse
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
 import xyz.ksharma.krail.platform.ops.PlatformOps
-import xyz.ksharma.krail.sandook.NSWParkRideFacilityDetail
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.SavedTrips
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
-import xyz.ksharma.krail.sandook.SavedParkRide
-import xyz.ksharma.krail.sandook.SavedTrip
+import xyz.ksharma.krail.sandook.db.NSWParkRideFacilityDetail
+import xyz.ksharma.krail.sandook.db.SavedParkRide
+import xyz.ksharma.krail.sandook.db.SavedTrip
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchSessionStore
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.settings.ReferFriendManager.getReferText

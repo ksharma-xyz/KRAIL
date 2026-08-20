@@ -2,7 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.search.ai.resolve
 
 import kotlinx.coroutines.flow.first
 import xyz.ksharma.krail.sandook.Sandook
-import xyz.ksharma.krail.sandook.StopLabels
+import xyz.ksharma.krail.sandook.db.StopLabels
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**

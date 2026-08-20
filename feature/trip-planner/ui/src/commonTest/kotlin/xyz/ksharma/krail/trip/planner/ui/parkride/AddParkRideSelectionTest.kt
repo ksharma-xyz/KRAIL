@@ -19,8 +19,8 @@ import xyz.ksharma.krail.core.testing.fakes.FakeParkRideService
 import xyz.ksharma.krail.core.testing.fakes.FakePlatformOps
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.park.ride.network.model.NswParkRideFacility
-import xyz.ksharma.krail.sandook.NSWParkRideFacilityDetail
 import xyz.ksharma.krail.sandook.NswParkRideSandook
+import xyz.ksharma.krail.sandook.db.NSWParkRideFacilityDetail
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideUiEvent
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAppReviewManager
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager

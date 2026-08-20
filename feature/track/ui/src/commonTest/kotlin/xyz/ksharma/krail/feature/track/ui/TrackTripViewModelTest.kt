@@ -30,7 +30,7 @@ import xyz.ksharma.krail.feature.track.TrackingConfig
 import xyz.ksharma.krail.feature.track.TrackingManager
 import xyz.ksharma.krail.feature.track.TripDeepLink
 import xyz.ksharma.krail.sandook.RecentSearchLocation
-import xyz.ksharma.krail.sandook.RecentSearchLocations
+import xyz.ksharma.krail.sandook.db.RecentSearchLocations
 import xyz.ksharma.krail.trip.planner.network.api.model.StopFinderResponse
 import xyz.ksharma.krail.trip.planner.network.api.model.StopType
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse

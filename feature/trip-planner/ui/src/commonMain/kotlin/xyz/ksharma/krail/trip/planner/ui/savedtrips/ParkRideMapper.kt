@@ -6,7 +6,7 @@ import kotlinx.collections.immutable.toImmutableSet
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toSimple12HourTime
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
-import xyz.ksharma.krail.sandook.NSWParkRideFacilityDetail
+import xyz.ksharma.krail.sandook.db.NSWParkRideFacilityDetail
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState.ParkRideFacilityDetail
 import kotlin.time.Clock

@@ -12,7 +12,7 @@ import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.testing.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
-import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
+import xyz.ksharma.krail.sandook.db.SelectServiceAlertsByJourneyId
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlertState
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest

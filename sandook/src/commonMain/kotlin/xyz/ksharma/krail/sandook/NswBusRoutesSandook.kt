@@ -1,5 +1,9 @@
 package xyz.ksharma.krail.sandook
 
+import xyz.ksharma.krail.sandook.db.NswBusRouteVariants
+import xyz.ksharma.krail.sandook.db.NswBusTripOptions
+import xyz.ksharma.krail.sandook.db.SelectStopsByTripId
+
 /**
  * Interface for NSW Bus Routes database operations.
  * Standalone interface similar to DiscoverCardSeenPreferences.

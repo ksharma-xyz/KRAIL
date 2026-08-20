@@ -22,7 +22,7 @@ import xyz.ksharma.krail.park.ride.network.model.NswParkRideFacility
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.SavedTrips
 import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.UserAdded
-import xyz.ksharma.krail.sandook.SavedParkRide
+import xyz.ksharma.krail.sandook.db.SavedParkRide
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ErrorKind
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideUiEvent
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAppReviewManager

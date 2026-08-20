@@ -5,6 +5,7 @@ import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import xyz.ksharma.krail.sandook.db.KrailSandook
 import kotlin.test.assertEquals
 
 @RunWith(RobolectricTestRunner::class)

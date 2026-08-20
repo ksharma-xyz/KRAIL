@@ -2,10 +2,10 @@ package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
-import xyz.ksharma.krail.sandook.NswBusRouteVariants
 import xyz.ksharma.krail.sandook.NswBusRoutesSandook
-import xyz.ksharma.krail.sandook.NswBusTripOptions
-import xyz.ksharma.krail.sandook.SelectStopsByTripId
+import xyz.ksharma.krail.sandook.db.NswBusRouteVariants
+import xyz.ksharma.krail.sandook.db.NswBusTripOptions
+import xyz.ksharma.krail.sandook.db.SelectStopsByTripId
 
 /**
  * Strict map-backed [Flag] for tests. Throws on unregistered keys so missing setup fails

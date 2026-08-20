@@ -5,7 +5,6 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import xyz.ksharma.krail.core.di.DispatchersComponent
 import xyz.ksharma.krail.sandook.DiscoverCardSeenPreferences
-import xyz.ksharma.krail.sandook.KrailSandook
 import xyz.ksharma.krail.sandook.NswBusRoutesSandook
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.NswStopsSandook
@@ -20,6 +19,7 @@ import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookDriverFactory
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.UserLifecycleStore
+import xyz.ksharma.krail.sandook.db.KrailSandook
 
 val sandookModule = module {
     includes(sqlDriverModule)

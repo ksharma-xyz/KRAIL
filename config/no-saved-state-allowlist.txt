@@ -1,0 +1,38 @@
+# ViewModels that deliberately do NOT take a SavedStateHandle (ViewModelStateDurabilityTest)
+#
+# A ViewModel survives a configuration change; it does not survive the process being killed
+# in the background and the user coming back. Anything held only in a ViewModel field is gone
+# at that point, and the screen comes back empty or wrong with no crash and no log line.
+#
+# SavedStateHandle is the answer when a ViewModel holds something the rider would notice
+# losing. Most of ours hold nothing of the sort: their state is re-read from the database,
+# Remote Config or the network the moment something subscribes again, or the input lives in a
+# rememberSaveable on the screen instead. Those are listed here, with the mechanism that makes
+# them safe.
+#
+# The point of the list is not the exemption. It is that adding the next ViewModel means
+# writing a line here and saying out loud which of the two it is.
+#
+# Each line: <ViewModel simple name> # <why losing its state costs the rider nothing>
+# A name here that is no longer registered in any Koin module fails the test, so the list
+# cannot rot.
+
+AddParkRideViewModel # stations are re-observed from Remote Config plus the local DB in onStart
+AiSearchInputViewModel # the rider's sentence lives in the screen's TextFieldState; the flag is re-read in init
+AlertSummaryViewModel # summary work starts only on SummaryRequested, so a lost summary is re-requested not re-typed
+AppUpgradeViewModel # holds no state at all: one click handler that opens the store
+DateTimeSelectorViewModel # its StateFlow carries Unit, so there is nothing to lose
+DebugSettingsViewModel # debug-only surface; state comes from DebugNetworkConfigStore and a live flag re-read in init
+DeparturesViewModel # the stop id arrives from the screen as a LoadDepartures event, so a recreated VM is re-told what to show
+DiscoverViewModel # cards are refetched in onStart; the seen-card set is analytics-only and expendable
+IntroViewModel # one-shot onboarding whose state is the static page list; the work happens on Complete
+MapStopSelectionViewModel # camera and nearby stops are re-derived from the next location update; deliberately per-nav-entry
+OurStoryViewModel # display-only text recomposed from Remote Config inside the presenter
+SavedTripsViewModel # every section is re-observed from Sandook in uiState.onStart; nothing is held that is not re-read
+SearchStopViewModel # searchQuery and searchResults are re-derived from SearchStopScreen's rememberSaveable field text
+ServiceAlertsViewModel # alerts are fetched per call from the journey id the screen passes in; nothing is retained
+SettingsViewModel # app version and isDebug are re-derived from AppInfoProvider in onStart
+SplashViewModel # theme, theme mode and hasSeenIntro are re-read from Sandook in isLoading.onStart
+ThemeSelectionViewModel # the theme style is reloaded from Sandook in onStart
+TimeTableViewModel # the trip is re-sent by LoadTimeTable from the saved route key and refetched in isLoading.onStart
+TrackTripViewModel # the tracked trip is restored from TrackingManager in uiState.onStart; the route arg rides on the saved nav key

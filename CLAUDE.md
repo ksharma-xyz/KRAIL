@@ -38,12 +38,24 @@ file" section for the exact row format before adding one.
 
 Modules use KMP `androidLibrary { withHostTest {} }` — this creates `testAndroidHostTest`, not the standard AGP task name.
 
-Modules that have `withHostTest {}` enabled:
-- `feature/trip-planner/ui`
-- `feature/track/ui`
-- `feature/track/state`
+**Most modules have `withHostTest {}` now** — roughly half the build files in the repo, and every
+module that owns a test suite. Do not keep a list here; it goes stale. Check the module's own
+`build.gradle.kts`, or:
 
-If a module is missing `testAndroidHostTest`, add `withHostTest {}` inside its `androidLibrary {}` block in `build.gradle.kts`.
+```sh
+grep -rl "withHostTest" --include=build.gradle.kts .
+```
+
+If a module is missing `testAndroidHostTest`, add `withHostTest {}` inside its `androidLibrary {}`
+block in `build.gradle.kts`. You will not have to notice this yourself: `verifyTestWiring` fails
+the build when a module has test sources but no host-test task, which is exactly the bug that
+once hid seven modules' suites.
+
+Full testing doctrine lives in [`TESTING.md`](TESTING.md), with the detail split across
+[`docs/testing/LAYERS.md`](docs/testing/LAYERS.md) (what each test layer is for),
+[`docs/testing/GUARDS.md`](docs/testing/GUARDS.md) (every custom detekt rule and guard test) and
+[`docs/testing/COVERAGE.md`](docs/testing/COVERAGE.md) (what the coverage number does and does not
+mean).
 
 ## Detekt
 

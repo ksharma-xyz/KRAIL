@@ -1,6 +1,13 @@
 # Testing KRAIL
 
-A short guide. Read this before adding tests or onboarding a new module.
+The doctrine. Read this before adding tests or onboarding a module; the detail lives in three
+sub-pages.
+
+| Page | Answers |
+|---|---|
+| [`docs/testing/LAYERS.md`](docs/testing/LAYERS.md) | Which kind of test should I write? What does each layer catch, and what can it structurally never catch? |
+| [`docs/testing/GUARDS.md`](docs/testing/GUARDS.md) | What is that failure telling me? Every custom detekt rule and guard test, its baseline, and the ratchet contract. |
+| [`docs/testing/COVERAGE.md`](docs/testing/COVERAGE.md) | What does the coverage number mean, and what is it not allowed to claim? |
 
 ---
 
@@ -22,7 +29,7 @@ production class.
 > Rule of thumb: if you'd hit network, disk, the system clock, or a platform service in
 > production, that's a fake. Everything else is the real class.
 
-**PR checklist before merging a test:**
+**Checklist before merging a test:**
 
 - [ ] Class under test is the **real production class**.
 - [ ] Only seam interfaces from the table above are replaced with `:core:testing` fakes.
@@ -31,11 +38,25 @@ production class.
 - [ ] Koin is not started; collaborators are passed via constructor.
 - [ ] No `object : SomeBoundary { error(...) }` anonymous stub.
 
+### A test must be able to fail
+
+The rule that outranks everything else on this page:
+
+> **A test that cannot fail is worse than no test, because it reads as coverage.**
+
+Before committing a test that pins a fix, revert the fix, watch the test fail, and read the
+failure message to confirm it fails *for the reason you think*. When there is no shipped defect
+to revert against, prove it another way — instrument the harness and show the thing you assume
+is happening is actually happening. The full procedure, with a worked example, is under
+"[the discriminating-test rule](docs/testing/LAYERS.md#the-discriminating-test-rule)".
+
+Coverage percentages cannot see this distinction. Nothing in CI can. It is on the author.
+
 ---
 
 ## The harness — `krailRunTest`
 
-Single coroutine/scheduler harness for the whole codebase. Lives in
+One coroutine/scheduler harness for the whole codebase, in
 [`:core:testing`](core/testing/src/commonMain/kotlin/xyz/ksharma/krail/core/testing/coroutines/).
 
 ```kotlin
@@ -54,29 +75,18 @@ Single coroutine/scheduler harness for the whole codebase. Lives in
 }
 ```
 
-What you get:
-
-- One shared `TestCoroutineScheduler` for `runTest`, `ioDispatcher`, `mainDispatcher` — no
+- One shared `TestCoroutineScheduler` for `runTest`, `ioDispatcher` and `mainDispatcher` — no
   more *"Detected use of different schedulers"*.
-- `runCurrent()` drains coroutines at the current virtual instant; doesn't advance time.
-- `pumpOnce(interval)` = bounded `advanceTimeBy + runCurrent`. The **only** safe way to
-  drive a `channelFlow { while (true) { delay(); fetch() } }` poller.
-- `advanceUntilIdle()` is **deliberately not exposed** on `KrailTestScope`. Calling it
-  against an infinite poller spins forever — that's how `DepartureBoardRepositoryTest`
-  previously produced a 98 GB Gradle log (#1601).
+- `runCurrent()` drains coroutines at the current virtual instant without advancing time;
+  `pumpOnce(interval)` is a bounded `advanceTimeBy + runCurrent`.
+- **`advanceUntilIdle()` is deliberately not exposed.** Against an infinite poller it spins
+  forever — that is how `DepartureBoardRepositoryTest` once produced a 98 GB Gradle log (#1601).
 
-**Forbidden** when testing infinite pollers:
-- `advanceUntilIdle()` (won't terminate).
-- Forgetting `cancelAndIgnoreRemainingEvents()` on the Turbine block (leaks the flow into
-  the next test).
+Forbidden when testing infinite pollers: `advanceUntilIdle()`, and forgetting
+`cancelAndIgnoreRemainingEvents()` on the Turbine block. `TurbineHygieneTest` enforces the
+second; see [GUARDS.md](docs/testing/GUARDS.md).
 
-`TurbineHygieneTest` (in `:core:testing`) enforces the second one. It scans every test source
-for a `.test { }` block whose subject names itself a poller, ticker, auto-refresh or
-`isActive` gate, and fails if the block never cancels. It accepts
-`cancelAndConsumeRemainingEvents()` and a bare `cancel()` as well — all three end the
-collection, and they differ only in what they hand back. A genuinely finite flow that trips
-the name match goes in `config/turbine-hygiene-allowlist.txt` with the reason it is finite;
-a stale entry there fails the same test.
+Full API and the virtual-clock details: [LAYERS.md](docs/testing/LAYERS.md#unit-tests).
 
 ---
 
@@ -87,206 +97,110 @@ a stale entry there fails the same test.
 | Fake of a cross-cutting boundary interface (`Sandook`, `Analytics`, `*Service`, `Flag`, `RemoteConfig`, …) | `:core:testing/fakes/` — one canonical configurable impl, consumed via `testImplementation(projects.core.testing)`. |
 | Reused DTO / response builder | `:core:testing/builders/` |
 | Helper used across modules (e.g. analytics-assertion sugar) | `:core:testing/helpers/` |
-| Single-feature-only double (an interface defined *inside* one feature module) | Feature-local: `feature/<x>/src/commonTest/.../testfakes/` (e.g. `FakeStopResultsManager` in `trip-planner/ui`). Promote to `:core:testing` the moment a 2nd module needs it. |
+| Single-feature-only double (an interface defined *inside* one feature module) | Feature-local: `feature/<x>/src/commonTest/.../testfakes/`. Promote to `:core:testing` the moment a 2nd module needs it. |
 
 **Never:**
-- An anonymous `object : Boundary { error("x") }` stub. The CI guardrail
-  (`verifyNoAdHocBoundaryFakes`) rejects new ones.
-- A re-declared `private class Fake<Boundary>` in a test file. Same rule.
+- An anonymous `object : Boundary { error("x") }` stub.
+- A re-declared `private class Fake<Boundary>` in a test file.
 
-The few pre-existing offenders are listed in [`config/test-wiring-baseline.txt`](config/test-wiring-baseline.txt).
-The baseline file shrinks every time a migration replaces one with the canonical fake; it
-never grows.
+`verifyNoAdHocBoundaryFakes` rejects both. Pre-existing offenders sit in
+[`config/test-wiring-baseline.txt`](config/test-wiring-baseline.txt), which is **at its enforced
+cap** — a new ad-hoc fake cannot be grandfathered by adding a line.
 
----
-
-## CI guardrails
-
-Three verification tasks run on every PR via `.github/workflows/code-quality.yml` and are
-also wired into `check`:
-
-| Task | Fails when |
-|---|---|
-| `verifyTestWiring` | A module has Kotlin files under `src/commonTest`/`src/androidHostTest`/`src/androidUnitTest` but no `testAndroidHostTest` task — i.e. someone forgot `withHostTest {}` so CI was silently skipping the suite. |
-| `verifyTestingModuleUsage` | Any `commonMain` / `androidMain` / `iosMain` configuration resolves `:core:testing`. Stops fakes from shipping in the app and breaks any `:core:testing → feature → :core:testing` cycle. |
-| `verifyNoAdHocBoundaryFakes` | New `object : Boundary { … }` stub or `private class Fake<Boundary>` appears in any test source set. Existing offenders are grandfathered via the baseline file above. |
-
-The same workflow also runs the custom detekt rules' own suite:
-
-```
-./gradlew -p gradle/build-logic :detekt-rules:test
-```
-
-`:detekt-rules` lives in the `gradle/build-logic` included build. `./gradlew detekt` compiles
-it but never runs its tests, and a root-build `test` invocation cannot reach across the
-composite boundary — so `PublicImplementationClassTest` had never executed in CI. A rule could
-have quietly stopped flagging anything with CI still green. `-p` runs the task inside the
-included build directly.
-
-Note on the bare `test` task: it is not a way to run anything here. `./gradlew test` resolves
-to exactly one task, `:androidApp:test`, and `:androidApp` has no test source set, so it runs
-zero tests. `testAndroidHostTest` is the only host-test task name that matches KMP modules.
-
-Snapshot verification is a separate job, `.github/workflows/snapshot-verify.yml`, called
-from `build.yml` in parallel with `code-quality`. It runs one step per golden-owning module:
-
-| Step | Task | Blocking |
-|---|---|---|
-| `verify-taj` | `:taj:verifyRoborazziAndroidHostTest` | yes |
-| `verify-trip-planner` | `:feature:trip-planner:ui:verifyRoborazziAndroidHostTest` | yes |
-
-Four things about that job are load-bearing:
-
-- **It is a separate job, not a step in `code-quality`.** It runs on `macos-latest`, because
-  the goldens are recorded on a Mac and Robolectric's native rendering is not byte-identical
-  across operating systems. On `ubuntu-latest` it fails on files that are correct.
-- **The checkout sets `lfs: true`.** Goldens are Git LFS objects; without it the runner has
-  pointer files on disk and every comparison fails on an undecodable PNG.
-- **The modules are named explicitly**, one step each. Onboarding a third module means adding
-  a step — the cost of a macOS runner should not grow by accident.
-- **Both steps block.** The theme-transition race that kept trip-planner on
-  `continue-on-error` is fixed. See below.
-
-The reason the job has to exist at all: `testAndroidHostTest` on its own captures in
-Roborazzi's default mode, which silently records a missing or changed golden and still
-passes. Explicit verify is what turns a pixel change into a failure. When either step
-reports a diff the job uploads the reference/diff/new composites from
-`**/build/outputs/roborazzi/**` as an artifact.
-
-### The theme-transition race, and how it was fixed
-
-`KrailTheme` animates `colors.surface` with `animateColorAsState` against a multi-stage target
-(`taj/animations/ThemeTransitionAnimations.kt`). The harness used to shoot a preview as soon as
-the view was attached, mid-transition, so a golden recorded a background one shade off and
-which files that hit changed from run to run — which is why trip-planner ran with
-`continue-on-error` for as long as it did.
-
-`BaseSnapshotTest.captureScreenshot` now settles the animation clock before every capture:
-pause the Robolectric choreographer, then idle the main looper for a fixed 2 s, which is longer
-than the transition's worst case (80 ms + 100 ms of staged delay plus a 1500 ms surface tween).
-Two details are the whole fix:
-
-- **The advance is a fixed duration, not a wait for quiescence.** Several previews animate
-  forever, so an idle-wait would hang on them.
-- **The choreographer has to be paused first.** Left running, Robolectric answers
-  `nativeScheduleVsync` immediately without moving the clock, so an endless animation re-arms a
-  frame inside the same idle window and `idleFor` never returns — one preview sat at 100% CPU
-  through 170 000+ frames. Paused, each vsync is posted at the next frame boundary, so the
-  window is capped at 125 frames and an endless animation lands on a fixed frame.
-
-Re-recording under the settled clock rewrote every golden in both modules: the committed
-images had been captured during the transition's 80 ms glow stage (`#E8ECF0`) rather than on
-the settled surface (`#FFFFFF`). Two consecutive record runs then produced byte-identical sets,
-and the step blocks.
-
-One preview is excluded outright rather than relying on that settle:
-`PreviewMapStopSelectionPane_Loading` renders an indeterminate `CircularProgressIndicator`, so
-its captured frame is decided by the animation clock no matter how well the theme settles. It
-is listed in `TripPlannerUiSnapshotTest.excludedPreviewNames`, the same treatment taj gives
-`PreviewLoadingDotsPill_Visible`.
+The fakes live in `commonMain`, not `commonTest`, because KMP has no `java-test-fixtures`
+equivalent. `verifyTestingModuleUsage` is what stops them shipping in the app.
 
 ---
 
 ## Test commands
 
-The KMP Android plugin's host test task is `testAndroidHostTest` — **not** `jvmTest` or
-`testDebugUnitTest`.
+The KMP Android plugin's host test task is `testAndroidHostTest` — **not** `jvmTest`,
+`testDebugUnitTest` or `allTests`.
 
 | Scope | Command |
 |---|---|
 | Single module | `./gradlew :feature:track:ui:testAndroidHostTest` |
 | Multiple modules | `./gradlew :a:testAndroidHostTest :b:testAndroidHostTest --continue` |
 | All modules | `./gradlew testAndroidHostTest --continue` |
+| Static analysis | `./gradlew detekt --continue` |
+| The custom detekt rules' own suite | `./gradlew -p gradle/build-logic :detekt-rules:test` |
+| Shared tests on iOS (macOS only) | `./gradlew iosUnitTest` |
+| Snapshots | `./gradlew :module:recordRoborazziAndroidHostTest` / `verifyRoborazziAndroidHostTest` |
+| Coverage | `./gradlew koverHtmlReport` / `koverVerify` |
+| Everything static, both platforms | `./scripts/fullQualityChecks.sh` |
 
-`./gradlew detekt --continue` rounds out the pre-push gate. Both must be green locally
-before pushing.
+> The bare `test` task is not a way to run anything here. `./gradlew test` resolves to exactly
+> one task, `:androidApp:test`, and `:androidApp` has no test source set — so it runs zero tests
+> and reports success.
 
 ---
 
-## Running the shared tests on iOS
+## The layers
 
-`commonTest` has always *compiled* for iOS. Until the `iosUnitTest` lane it never **ran**
-there, so every Kotlin/Native behaviour difference — freezing, date and number formatting,
-`kotlin.time`, `Char` handling — was invisible.
+Six of them. Pick the cheapest layer that can actually fail for the reason you care about.
+Full detail in [LAYERS.md](docs/testing/LAYERS.md).
 
-```
-./gradlew iosUnitTest          # macOS + Xcode only
-```
+| Layer | Catches | Where |
+|---|---|---|
+| Unit (`krailRunTest`) | logic, state reduction, mapping, time | every module |
+| Compose interaction (Robolectric + `createComposeRule`) | what a screen renders, what a tap does, what survives recreation | `:feature:trip-planner:ui` |
+| Flow (`FlowTest`) | real screens + real ViewModels wired together, across recreation | `:feature:trip-planner:ui` |
+| Snapshot (Roborazzi) | pixels — contrast, clipping, font scale, dark mode | `:taj`, `:feature:trip-planner:ui` |
+| iOS (`iosUnitTest`) | Kotlin/Native behaviour differences | 6 modules |
+| E2E (Maestro) | does the app launch, can a rider finish a trip | `.maestro/` |
 
-That aggregate runs `iosSimulatorArm64Test` for each module in the lane and first runs
-`verifyIosTestClassification`, which fails if a module has shared test sources but is in
-neither the include nor the exclude list. Both lists, and the reason for every exclusion,
-live in one place:
-[`gradle/build-logic/convention/src/main/kotlin/xyz/ksharma/krail/gradle/IosUnitTests.kt`](gradle/build-logic/convention/src/main/kotlin/xyz/ksharma/krail/gradle/IosUnitTests.kt).
-`verifyIosTestClassification` also runs on the cheap Ubuntu runner in `code-quality.yml`, so
-drift is caught on every PR rather than only on the macOS lane.
+Everything is **host-side**. There are no instrumented `androidTest` targets, and the only
+emulator jobs in CI are the Maestro lanes.
 
-CI: [`.github/workflows/ios-unit-tests.yml`](.github/workflows/ios-unit-tests.yml) on
-`macos-latest`, for pushes to `main` and PRs touching shared sources or build config.
+Two limits worth knowing before you plan work around them:
 
-### What runs on iOS
+- **The iOS lane is small because of a linker wall, not because of the tests.** `:core:testing`
+  pulls in the GitLive Firebase SDK, whose iOS klibs need frameworks only the Xcode/SPM build
+  supplies — so every module consuming the shared fakes is excluded. 21 modules sit behind it.
+- **Snapshot goldens must be recorded on macOS.** Robolectric's native rendering is not
+  byte-identical across operating systems, and nothing in the code enforces this — it is a
+  property of where the CI job runs.
 
-| Module | Tests |
+---
+
+## Guards
+
+Beyond ordinary tests, the repo carries checks that hold **repo-wide invariants**: seven custom
+detekt rules, fifteen guard tests, four Gradle verification tasks and one Python
+script. Each exists because the mistake it catches actually shipped, is invisible in review, and
+is not catchable by a normal unit test.
+
+Full inventory, with every baseline file and where each check runs:
+[GUARDS.md](docs/testing/GUARDS.md).
+
+The contract shared by all of their allowlists:
+
+1. The list only ever **shrinks**. Fixing an offender means deleting its line in the same change.
+2. Every entry carries its reason.
+3. At zero entries, delete the file — the guard becomes an unconditional gate.
+4. **A stale entry is a failure.** An allowlist that excuses something which no longer exists
+   has rotted into a list of things that were once true.
+
+Adding a line to make a **new** violation pass is not a use of these files.
+
+### CI
+
+Guards run across four places, which is worth knowing when something fails locally but not in CI
+or the reverse:
+
+| Check | Runs in |
 |---|---|
-| `:core:date-time` | 27 |
-| `:core:deeplink` | 18 |
-| `:core:transport` | 15 |
-| `:taj` | 8 |
-| `:feature:debug-settings:store` | 6 |
+| `verifyTestWiring`, `verifyTestingModuleUsage`, `verifyNoAdHocBoundaryFakes`, `verifyIosTestClassification` | `code-quality.yml`, step **Verify test wiring** (before detekt, so a misconfigured module fails fast); also every local `check` |
+| The 7 custom detekt rules | `code-quality.yml`, step **Run Detekt** |
+| The rules' own unit tests | `code-quality.yml`, step **Run build-logic tests** — `./gradlew detekt` cannot run them, see below |
+| The guard tests | `code-quality.yml`, step **Run host tests** |
+| `check_layout_invariants.py` | `code-quality.yml`, step **Layout invariants**, and `fullQualityChecks.sh` |
+| Snapshot verify | `snapshot-verify.yml`, a separate **macOS** job called from `build.yml` |
 
-### What is host-only, and why
-
-**Firebase iOS frameworks — 19 of the 24 modules with shared tests.** `:core:analytics` and
-`:core:remote-config` depend on the GitLive Firebase Kotlin SDK, whose iOS klibs declare
-`-framework FirebaseCore`. Those frameworks are supplied by the Xcode project's SPM
-integration, so when Gradle links a standalone `.kexe` test binary the linker cannot find
-them:
-
-```
-ld: framework 'FirebaseCore' not found
-> Task :core:analytics:linkDebugTestIosSimulatorArm64 FAILED
-```
-
-`:core:testing` depends on both, so **every module that consumes the shared fakes inherits
-the wall** — that is what keeps the lane small, not anything wrong with the tests. Widening
-it means giving Gradle its own copy of the Firebase iOS frameworks (the repo already drives
-SPM from Gradle for MapLibre, via `krail.maplibre`), or splitting the Firebase-backed
-implementations out from the interfaces the fakes need. Both are real work, neither is a
-test-code change.
-
-**Backtick test names containing `,`.** Kotlin/Native rejects them where the JVM accepts
-them:
-
-```
-e: ThemeContrastTest.kt:35:9 Name contains illegal characters: ",".
-```
-
-Cheap to fix — rename the test. `:taj` joined the lane this way. `:feature:track:network`
-and `:feature:trip-planner:ui` still carry such names, but both also sit behind the Firebase
-wall, so renaming alone would not get them running.
-
-**Robolectric, Roborazzi and Compose UI tests** stay host-only by construction — they live in
-`androidHostTest`, which the iOS compilation never sees.
-
-### Shared Compose UI tests (`runComposeUiTest`) — parked, not rejected
-
-Spiked in `:taj` with `compose.uiTest` and an `@OptIn(ExperimentalTestApi)` test driving a real
-`Button` through `setContent` / `onNodeWithText` / `performClick`. Findings:
-
-- On **iOS it works**. The test ran green under `iosSimulatorArm64Test` with no extra setup.
-- In **`commonTest` it cannot stay**, because the same source also expands into
-  `androidHostTest`, and Android's `runComposeUiTest` needs a Robolectric runner and
-  `@Config`, which `commonTest` has no way to express. The Android run dies with
-  `NullPointerException: … "android.os.Build.FINGERPRINT" is null` from
-  `RobolectricIdlingStrategy`.
-- Moving it to **`iosTest` works on both** (iOS runs it, the host ignores it) — but then it is
-  an iOS-only test, not a shared one.
-
-**Parked.** An `iosTest`-only Compose test duplicates coverage `:taj` already has via
-Robolectric and Roborazzi, and the modules where a shared UI test would genuinely pay off
-(`:feature:trip-planner:ui`, `:feature:departures:ui`) are all behind the Firebase link wall,
-so they could not run it anyway. Worth revisiting the day that wall comes down — the API
-itself is not the obstacle.
+`:detekt-rules` lives in the `gradle/build-logic` included build. `./gradlew detekt` resolves its
+*jar*, so `test` is never in the task graph, and a root-build `test` invocation cannot reach
+across the composite boundary. A rule could quietly stop flagging anything with CI still green —
+hence the separate step. `fullQualityChecks.sh` does not run them either.
 
 ---
 
@@ -296,166 +210,19 @@ itself is not the obstacle.
 ./gradlew koverHtmlReport      # build/reports/kover/html/index.html
 ./gradlew koverXmlReport       # build/reports/kover/report.xml — the Codecov upload
 ./gradlew koverLog             # one line, straight to the console
+./gradlew koverVerify          # the floors
 ```
 
-One merged report for the whole repo, not 31 per-module ones. Kover's report tasks depend on
-the `testAndroidHostTest` tasks, so a report task runs the suites it measures — there is no
-"stale coverage" state to get caught by.
+One merged report for the repo rather than one per module. Kover's report tasks depend on the
+`testAndroidHostTest` tasks they measure, so there is no "stale coverage" state to get caught by.
 
-Modules opt in automatically: `configureCoverage()` in
-[`Coverage.kt`](gradle/build-logic/convention/src/main/kotlin/xyz/ksharma/krail/gradle/Coverage.kt)
-applies Kover and registers the module into the root aggregate **if it has test sources**. A
-module with no tests is left out rather than reported as 0% — that would bury the signal from
-modules that do have suites, and `verifyTestWiring` is what stops a module having none. Two
-things are excluded on purpose: `:core:testing`, whose production code *is* test
-infrastructure, and codegen (`ComposableSingletons*`, SQLDelight, BuildKonfig, Compose
-Resources) — filters live in the root `build.gradle.kts`.
+Three things the number does not mean, spelled out in [COVERAGE.md](docs/testing/COVERAGE.md):
 
-CI generates the report inside `code-quality.yml`, right after the host-test step, so the
-suites run once. The HTML goes up as a build artifact and the XML to Codecov.
-
-> **`CODECOV_TOKEN` has to live in the `Firebase` environment**, next to the NSW API keys.
-> It currently exists only as a *repository* secret, and a reusable workflow cannot see
-> those — so until it is added there, coverage generates and uploads as a build artifact but
-> does not reach Codecov. Nothing else breaks: the step is `fail_ci_if_error: false`.
->
-> Neither alternative is acceptable. `secrets: inherit` on the callers would hand
-> `code-quality.yml` every repository secret — signing keystores, App Store keys, service
-> accounts — to deliver one upload token. Declaring `workflow_call.secrets` instead *closes*
-> the secrets context, at which point the environment-only `ANDROID_NSW_TRANSPORT_API_KEY`
-> and `IOS_NSW_TRANSPORT_API_KEY` references stop resolving and `actionlint` fails the
-> `lint-workflows` job. The environment is the one place that is both narrow and consistent
-> with how this workflow already gets every other secret.
-
-### There are no iOS coverage numbers
-
-Kover instruments JVM bytecode. Kotlin/Native is not supported upstream and cannot be worked
-around here, so coverage measures the host-test run only. A module in the iOS lane still shows
-its host coverage — iOS execution is a correctness signal, not a coverage one.
-
----
-
-## End-to-end tests
-
-Host tests prove logic; snapshots prove pixels. Neither can tell you whether the app
-launches, whether a rider can actually reach a timetable, or whether a screen survives
-having its Activity destroyed underneath it. [Maestro](https://maestro.mobile.dev) flows in
-[`.maestro/`](.maestro/) drive the real app on a real device to cover exactly that gap.
-
-Full detail lives in [`.maestro/README.md`](.maestro/README.md). The essentials:
-
-### Two lanes
-
-| Lane | Runs | Workflow |
-|---|---|---|
-| `.maestro/smoke/` | Every non-draft pull request | `.github/workflows/maestro-pr-smoke.yml` |
-| `.maestro/nightly/` | 03:00 AEST cron, `prod/**`, manual dispatch | `.github/workflows/maestro-nightly.yml` |
-
-Smoke is three flows and finishes in about four minutes: cold launch, plan a trip against
-the real API, and a rotation sweep across home, search stop and the timetable. Nightly adds
-process lifecycle and permission denial, and runs the whole suite on Android **and** an iOS
-simulator.
-
-`.maestro/shared/` holds helper flows called via `runFlow`. It sits outside both lanes so a
-directory run never treats one as a test.
-
-### Running locally
-
-Requires Maestro 2.x — `setOrientation` does not exist on 1.x.
-
-```sh
-curl -fsSL "https://get.maestro.mobile.dev" | bash
-export PATH="$PATH:$HOME/.maestro/bin"
-
-./gradlew :androidApp:installDebug
-maestro test -e APP_ID=xyz.ksharma.krail.debug .maestro/smoke/
-```
-
-### The `APP_ID` convention
-
-One set of flows serves both platforms, so the app id is a parameter rather than a literal.
-It **must** be passed with `-e`: a plain shell variable never reaches the flow, and an
-in-file `env:` default would silently take precedence over `-e` and make the parameter
-impossible to override.
-
-| Target | `APP_ID` |
-|---|---|
-| Android debug | `xyz.ksharma.krail.debug` (note the suffix) |
-| Android release | `xyz.ksharma.krail` |
-| iOS | `xyz.ksharma.krail` |
-
-### Selectors
-
-Flows select on `testTag` ids, never on visible copy, so a wording change cannot break a
-flow and a failure always means behaviour changed. Tags are declared in
-`TripPlannerTestTags` and `DebugSettingsTestTags`, and are **public API** to `.maestro/` —
-grep there before renaming one.
-
-Android surfaces them as accessibility `resource-id`s via `exposeTestTagsToUiAutomation()`
-at the app root; on iOS, Compose Multiplatform publishes them as `accessibilityIdentifier`
-with no opt-in. The same `id:` selector works on both, verified on an iPhone 17 simulator
-with the flows unchanged.
-
-### Flake policy
-
-**The PR lane never retries.** A flake that can block a merge gets fixed, not re-run. The
-flows are built for that: they wait rather than assert after anything asynchronous, and
-scroll to list items instead of asserting them in place, because Maestro matches only what
-is on screen.
-
-**The iOS nightly leg retries once.** Simulator runs are meaningfully flakier than emulator
-runs (boot races, window-server hiccups) and that lane reports rather than gates, so one
-retry buys signal without hiding a real break — a genuine regression fails twice. The
-Android nightly leg does not retry.
-
-Neither nightly job merges, tags or publishes anything. A red nightly is a signal for a
-human.
-
----
-
-## Snapshot testing
-
-The annotation-driven generation flow is preserved: any `@PreviewComponent` /
-`@PreviewScreen` annotated `@ScreenshotTest` gets shot by the next
-`recordRoborazziAndroidHostTest` run.
-
-Onboarding a new UI module is one line plus a small test class:
-
-```kotlin
-// In module's build.gradle.kts
-plugins {
-    alias(libs.plugins.krail.snapshot.testing)   // adds roborazzi + both core/snapshot* deps
-    // …other plugins
-}
-
-androidLibrary {
-    withHostTest {
-        isIncludeAndroidResources = true         // Roborazzi needs Android resources
-    }
-    androidResources {
-        enable = true                            // MANDATORY for AGP 9
-    }
-}
-```
-
-Then a 10-line `<Module>SnapshotTest.kt` extending [`BaseSnapshotTest`](core/snapshot-testing/src/androidMain/kotlin/xyz/ksharma/krail/core/snapshot/BaseSnapshotTest.kt):
-
-```kotlin
-@RunWith(RobolectricTestRunner::class)
-@GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [34], qualifiers = RobolectricDeviceQualifiers.Pixel6, manifest = Config.NONE)
-class MyUiSnapshotTest : BaseSnapshotTest() {
-    override val packageToScan = "xyz.ksharma.krail.my.ui"
-
-    // Skip previews Robolectric hangs on (infinite shimmer, indeterminate loading).
-    override val excludedPreviewNames = setOf("PreviewLoadingDotsPill_Visible")
-
-    @Test fun `generate snapshots`() = generateSnapshots()
-}
-```
-
-Then `./gradlew :my:module:recordRoborazziAndroidHostTest` captures the goldens (PNGs go to
-`<module>/screenshots/`, tracked by Git LFS).
+- **It measures execution, not assertion.** A test with no assertions covers every line it runs.
+- **On a Compose module it is mostly previews.** A snapshot test renders the composable tree and
+  marks it covered without checking anything beyond "did not crash".
+- **It says nothing about iOS.** Kover instruments JVM bytecode; Kotlin/Native is unsupported
+  upstream. `commonMain` *is* counted — via the Android host run — but `iosMain` is invisible.
 
 ---
 
@@ -463,33 +230,36 @@ Then `./gradlew :my:module:recordRoborazziAndroidHostTest` captures the goldens 
 
 Concrete bug classes the current setup makes hard or impossible:
 
-- **"Detected use of different schedulers."** Eliminated by `krailRunTest` owning one
-  shared `TestCoroutineScheduler`.
-- **Infinite-poller virtual-time hangs** (the 98 GB log). `advanceUntilIdle()` isn't on
-  the surface area; only bounded `runCurrent` / `pumpOnce`. Mandatory
-  `cancelAndIgnoreRemainingEvents()` in every Turbine block.
-- **Silent dead tests.** `verifyTestWiring` fails the build when a module has test sources
-  but no `testAndroidHostTest` — exactly the bug that hid 7 modules' suites for months.
+- **"Detected use of different schedulers."** Eliminated by `krailRunTest` owning one shared
+  `TestCoroutineScheduler`.
+- **Infinite-poller virtual-time hangs** (the 98 GB log). `advanceUntilIdle()` is not on the
+  surface area; `TurbineHygieneTest` requires the cancel.
+- **Silent dead tests.** `verifyTestWiring` fails the build when a module has test sources but no
+  `testAndroidHostTest` — exactly the bug that hid seven modules' suites for months.
 - **Test code leaking into production.** `verifyTestingModuleUsage` forbids any non-test
   configuration from resolving `:core:testing`.
-- **Boundary fake drift** (the `FakeFlag` × 6 problem). The canonical fakes are the
-  shared source of truth; new ad-hoc copies fail
-  `verifyNoAdHocBoundaryFakes`; pre-existing ones are in a shrinking baseline.
-- **Snapshot drift shipping silently.** The `snapshot-verify` job runs
-  `verifyRoborazziAndroidHostTest` explicitly, on macOS, with LFS goldens checked out, so a
-  pixel change without a re-record fails the build for both golden-owning modules. Nineteen
-  `:taj` goldens had already drifted by the time that job existed, which is what an unrun
-  check costs.
-- **Boilerplate per test.** `krailRunTest { }` replaces ~10 lines of dispatcher
-  setup/teardown ceremony. New module snapshot adoption is one-line plugin alias instead
-  of three duplicated build-config blocks.
+- **Boundary fake drift** (the `FakeFlag` × 6 problem). Canonical fakes are the source of truth;
+  new ad-hoc copies fail `verifyNoAdHocBoundaryFakes` against a capped, shrinking baseline.
+- **Snapshot drift shipping silently.** Plain `testAndroidHostTest` *records* rather than
+  verifies, so a changed golden passes. The explicit `verifyRoborazzi` job is what makes a pixel
+  change a failure. Nineteen `:taj` goldens had already drifted by the time that job existed,
+  which is what an unrun check costs.
+- **Rotation crashes.** `NavKeySerializationConfigTest` catches an unregistered route at test
+  time instead of the first time a user rotates; `ViewModelStateDurabilityTest` makes skipping
+  `SavedStateHandle` a decision someone writes down.
+- **A screen that renders blank on one platform.** `DualPaneCompositingGuardTest` holds the
+  iOS map/gradient compositing rule that no compiler can see.
+- **Boilerplate per test.** `krailRunTest { }` replaces ~10 lines of dispatcher ceremony; module
+  snapshot adoption is a one-line plugin alias.
 
 ---
 
 ## Pointers
 
-- Plan that drove this work: [`.claude/plans/on-a-worktee-look-expressive-cat.md`](.claude/plans/on-a-worktee-look-expressive-cat.md) (in the parent checkout).
-- Canonical harness: [`core/testing/src/commonMain/kotlin/xyz/ksharma/krail/core/testing/`](core/testing/src/commonMain/kotlin/xyz/ksharma/krail/core/testing/)
-- Convention plugin source: [`gradle/build-logic/convention/src/main/kotlin/xyz/ksharma/krail/gradle/`](gradle/build-logic/convention/src/main/kotlin/xyz/ksharma/krail/gradle/)
+- Canonical harness: [`core/testing/`](core/testing/src/commonMain/kotlin/xyz/ksharma/krail/core/testing/)
+- Convention plugins: [`gradle/build-logic/convention/`](gradle/build-logic/convention/src/main/kotlin/xyz/ksharma/krail/gradle/)
+- Custom detekt rules: [`gradle/build-logic/detekt-rules/`](gradle/build-logic/detekt-rules/)
 - Snapshot infra: [`core/snapshot-testing/`](core/snapshot-testing/) and [`core/snapshot-testing-annotations/`](core/snapshot-testing-annotations/)
+- E2E flows: [`.maestro/README.md`](.maestro/README.md)
+- Integration-testing rationale and the discriminating-test procedure: [`docs/INTEGRATION_TESTING_PLAN.md`](docs/INTEGRATION_TESTING_PLAN.md)
 - Per-feature UX invariants worth keeping tests in sync with: e.g. [`feature/trip-planner/ui/SEARCH_STOP_UX.md`](feature/trip-planner/ui/SEARCH_STOP_UX.md)

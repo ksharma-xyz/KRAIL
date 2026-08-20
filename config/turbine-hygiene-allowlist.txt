@@ -1,0 +1,16 @@
+# Turbine hygiene allowlist (TurbineHygieneTest)
+#
+# A `.test { }` block on a poller, ticker, auto-refresh or isActive flow must cancel the
+# flow before it ends. An infinite flow left spinning inside a virtual-time test does not
+# fail — it runs until something else stops it. `DepartureBoardRepositoryTest` once produced
+# a 98 GB Gradle log that way (#1601). See TESTING.md.
+#
+# The guard accepts any of `cancelAndIgnoreRemainingEvents()`,
+# `cancelAndConsumeRemainingEvents()` or a bare `cancel()`: all three end the collection.
+#
+# Put a file here ONLY when the flow it collects is genuinely finite, so there is nothing to
+# cancel. Each line: <repo-relative file path> # <reason it is finite>
+# Every listed file must still exist and must still contain a matching block, so a stale
+# entry fails the test rather than silently exempting nothing.
+#
+# Empty on purpose: nothing in the repo needs an exemption today.

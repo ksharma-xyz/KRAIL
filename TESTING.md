@@ -70,6 +70,14 @@ What you get:
 - Forgetting `cancelAndIgnoreRemainingEvents()` on the Turbine block (leaks the flow into
   the next test).
 
+`TurbineHygieneTest` (in `:core:testing`) enforces the second one. It scans every test source
+for a `.test { }` block whose subject names itself a poller, ticker, auto-refresh or
+`isActive` gate, and fails if the block never cancels. It accepts
+`cancelAndConsumeRemainingEvents()` and a bare `cancel()` as well — all three end the
+collection, and they differ only in what they hand back. A genuinely finite flow that trips
+the name match goes in `config/turbine-hygiene-allowlist.txt` with the reason it is finite;
+a stale entry there fails the same test.
+
 ---
 
 ## Where a new fake goes

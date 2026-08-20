@@ -89,6 +89,11 @@ internal suspend fun filterRefreshableFacilities(
  * Applies a successful BFF batch response to the local store. Facilities the
  * batch did not return are reset to `DISTANT_PAST` so the cooldown does not
  * suppress a retry.
+ *
+ * [refreshable] must contain only facilities belonging to [stopId] — the ones this call
+ * actually asked the batch about. A facility from some other stop cannot appear in a response
+ * that was never asked for it, so passing one here reads as a failure and resets its cooldown
+ * permanently. Group by stop before calling; see [RealParkRideAvailabilityLoader].
  */
 @OptIn(ExperimentalTime::class)
 internal suspend fun applyBatchResults(

@@ -14,8 +14,11 @@ on:
     types: [ opened, synchronize, reopened, ready_for_review ]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  # This lane is pull-request-only, so the fallback and the condition are both inert today.
+  # They are here so that adding a push trigger cannot reintroduce build.yml's bug, where an
+  # empty pull_request.number put every push in one group and each merge cancelled the last.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   smoke:

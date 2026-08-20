@@ -28,8 +28,10 @@ on:
       - '.github/workflows/ios-unit-tests.yml'
 
 concurrency:
+  # Same rule as build.yml: main pushes all share refs/heads/main, so cancelling in progress
+  # would let each merge kill the previous commit's run.
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   ios-unit-tests:

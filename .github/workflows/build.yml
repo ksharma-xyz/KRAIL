@@ -11,8 +11,12 @@ permissions:
   actions: write  # allows build-android.yml to write back ANDROID_VERSION_CODE
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  # Fall back to the ref on push: pull_request.number is empty there, so every main push
+  # otherwise shared one group and each merge cancelled the previous push's run. Cancelling is
+  # right for a PR (a new commit supersedes the old one) and wrong for main, where every commit
+  # needs its own result and its Codecov upload.
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # The Dependabot gate lives inside build-android.yml and build-ios.yml, not here. The
 # branch ruleset for `main` requires the contexts "build-android-debug / build",

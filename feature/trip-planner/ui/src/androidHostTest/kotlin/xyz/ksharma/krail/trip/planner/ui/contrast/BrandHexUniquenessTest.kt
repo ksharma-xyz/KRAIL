@@ -119,10 +119,6 @@ class BrandHexUniquenessTest {
             "feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/" +
                 "components/TransportModeBadge.kt" to "Preview fixture.",
             "feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/" +
-                "departureboard/LineBadgeChip.kt" to "Preview fixtures.",
-            "feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/" +
-                "departureboard/TransportModeLineBadge.kt" to "Preview fixtures.",
-            "feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/" +
                 "journeymap/JourneyStopDetailsBottomSheet.kt" to "Preview fixtures.",
             "feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/" +
                 "tracktrip/TrackTripScreen.kt" to "Preview fixture.",

@@ -1289,7 +1289,7 @@ class TimeTableViewModelTest {
             sandookCast.insertAlerts(
                 journeyId = "j1",
                 alerts = listOf(
-                    xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId(
+                    xyz.ksharma.krail.sandook.db.SelectServiceAlertsByJourneyId(
                         journeyId = "j1",
                         heading = "Test heading",
                         message = "Test message",

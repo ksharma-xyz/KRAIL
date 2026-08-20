@@ -17,6 +17,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
+import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.departures.ui.state.model.DepartureTiming
 import xyz.ksharma.krail.departures.ui.state.model.StopDeparture
 import xyz.ksharma.krail.taj.components.Divider
@@ -26,8 +27,17 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.trip.planner.ui.departureboard.toTransportMode
 import xyz.ksharma.krail.trip.planner.ui.pastDepartureColor
+
+/**
+ * Maps a transport mode name (e.g. [StopDeparture.transportModeName]) to the matching
+ * [TransportMode], or `null` when the name is unknown.
+ *
+ * Driven off [TransportMode.all], so adding a mode to the sealed class makes it resolvable
+ * here with no further change.
+ */
+private fun String.toTransportMode(): TransportMode? =
+    TransportMode.all.firstOrNull { it.name.equals(trim(), ignoreCase = true) }
 
 /**
  * Displays a single departure row:

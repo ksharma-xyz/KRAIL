@@ -92,10 +92,12 @@ directions.
 
 - [x] `AiInputBar`'s `TextField` takes `weight(1f, fill = false)`, with the reasoning in a
       comment at the call site pointing here.
-- [ ] `AiResultCardTest.shortHost_theBarsActionsStayInsideIt` renders the surface at the height
+- [x] `AiInputBarLayoutTest.shortHost_theBarsActionsStayInsideIt` renders the bar at the height
       a keyboard leaves, with six lines of text, and asserts both controls with
       `assertIsDisplayed()`. Mutation-checked: removing the weight fails it, restoring it passes.
-      Check deleted with AiResultCard; restore tracked in the blind-spot audit.
+      It lived on `AiResultCardTest` first and went with that class when the result card was
+      deleted; a probe outliving the composable it was written beside is exactly the kind of
+      loss nothing warns you about, so it is now a class of its own named after what it guards.
 - [x] The send button's real content description is named in the test's companion, with why it
       is worth naming.
 - [x] Rule added to `docs/LAYOUT_AND_INSETS.md`: measurement order inside a `Column`, and

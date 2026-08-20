@@ -7,6 +7,10 @@
 # As the test-architecture migration (Stacks C/D) replaces these with the canonical
 # :core:testing fakes, DELETE the corresponding line in the SAME PR. When this file is
 # empty, delete it and the baseline lookup becomes a hard "zero ad-hoc fakes" gate.
+#
+# The COUNT is enforced. MAX_BASELINE_ENTRIES in TestWiringVerification.kt holds the
+# committed high-water mark and only ever ratchets down: adding a line here to grandfather
+# a new violation fails the build. Lower the constant in the same PR that removes entries.
 
 :core:festival|src/commonTest/kotlin/xyz/ksharma/krail/core/festival/FestivalJsonValidationTest.kt
 :core:festival|src/commonTest/kotlin/xyz/ksharma/krail/core/festival/RealFestivalManagerTest.kt

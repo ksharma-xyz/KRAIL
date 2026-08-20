@@ -1,5 +1,9 @@
 package xyz.ksharma.krail.sandook
 
+import xyz.ksharma.krail.sandook.db.KrailSandook
+import xyz.ksharma.krail.sandook.db.SelectProductClassesForStop
+import xyz.ksharma.krail.sandook.db.SelectStopsNearby
+
 /**
  * Interface for NSW Stops database operations.
  * Provides methods to query and manage stops and their product classes.

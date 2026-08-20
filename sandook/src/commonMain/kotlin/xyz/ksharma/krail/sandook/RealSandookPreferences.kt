@@ -1,5 +1,7 @@
 package xyz.ksharma.krail.sandook
 
+import xyz.ksharma.krail.sandook.db.AppPreferencesQueries
+
 internal class RealSandookPreferences(
     private val queries: AppPreferencesQueries,
 ) : SandookPreferences {

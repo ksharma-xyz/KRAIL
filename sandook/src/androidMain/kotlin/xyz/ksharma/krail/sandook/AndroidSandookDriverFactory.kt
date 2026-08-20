@@ -3,6 +3,7 @@ package xyz.ksharma.krail.sandook
 import android.content.Context
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
+import xyz.ksharma.krail.sandook.db.KrailSandook
 
 internal class AndroidSandookDriverFactory(private val context: Context) : SandookDriverFactory {
     override fun createDriver(): SqlDriver {

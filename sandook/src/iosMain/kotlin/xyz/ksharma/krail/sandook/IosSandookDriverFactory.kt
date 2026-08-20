@@ -4,6 +4,7 @@ import app.cash.sqldelight.db.AfterVersion
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.native.NativeSqliteDriver
 import co.touchlab.sqliter.JournalMode
+import xyz.ksharma.krail.sandook.db.KrailSandook
 import xyz.ksharma.krail.sandook.migrations.SandookMigrationAfter1
 import xyz.ksharma.krail.sandook.migrations.SandookMigrationAfter2
 import xyz.ksharma.krail.sandook.migrations.SandookMigrationAfter3

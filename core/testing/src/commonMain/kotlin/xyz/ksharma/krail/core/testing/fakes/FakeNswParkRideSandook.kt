@@ -4,9 +4,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
-import xyz.ksharma.krail.sandook.NSWParkRideFacilityDetail
 import xyz.ksharma.krail.sandook.NswParkRideSandook
-import xyz.ksharma.krail.sandook.SavedParkRide
+import xyz.ksharma.krail.sandook.db.NSWParkRideFacilityDetail
+import xyz.ksharma.krail.sandook.db.SavedParkRide
 
 // Intrinsic to faking the production NswParkRideSandook interface. Not refactorable.
 @Suppress("TooManyFunctions")

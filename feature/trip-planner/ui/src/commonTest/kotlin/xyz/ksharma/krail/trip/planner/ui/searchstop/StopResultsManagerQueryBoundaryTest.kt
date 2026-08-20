@@ -8,12 +8,12 @@ import kotlinx.coroutines.test.runTest
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 import xyz.ksharma.krail.sandook.RecentSearchLocation
-import xyz.ksharma.krail.sandook.RecentSearchLocations
 import xyz.ksharma.krail.sandook.Sandook
-import xyz.ksharma.krail.sandook.SavedTrip
-import xyz.ksharma.krail.sandook.SelectProductClassesForStop
-import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
-import xyz.ksharma.krail.sandook.StopLabels
+import xyz.ksharma.krail.sandook.db.RecentSearchLocations
+import xyz.ksharma.krail.sandook.db.SavedTrip
+import xyz.ksharma.krail.sandook.db.SelectProductClassesForStop
+import xyz.ksharma.krail.sandook.db.SelectServiceAlertsByJourneyId
+import xyz.ksharma.krail.sandook.db.StopLabels
 import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.DefaultFuzzyStopRanker
 import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.FuzzyStopRanker
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState

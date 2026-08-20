@@ -6,7 +6,7 @@ import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.model.NearbyStop
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.sandook.NswStopsSandook
-import xyz.ksharma.krail.sandook.SelectStopsNearby
+import xyz.ksharma.krail.sandook.db.SelectStopsNearby
 import xyz.ksharma.krail.sandook.utils.GeoUtils
 
 internal class RealNearbyStopsRepository(

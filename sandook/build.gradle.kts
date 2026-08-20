@@ -73,7 +73,7 @@ kotlin {
 sqldelight {
     databases {
         create("KrailSandook") {
-            packageName.set("xyz.ksharma.krail.sandook")
+            packageName.set("xyz.ksharma.krail.sandook.db")
             verifyMigrations.set(true)
         }
     }

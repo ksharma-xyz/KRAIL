@@ -1,5 +1,7 @@
 package xyz.ksharma.krail.sandook
 
+import xyz.ksharma.krail.sandook.db.UserLifecycleCounter
+import xyz.ksharma.krail.sandook.db.UserLifecycleQueries
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 

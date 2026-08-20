@@ -4,7 +4,7 @@ import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
 import xyz.ksharma.krail.park.ride.network.model.Location
 import xyz.ksharma.krail.park.ride.network.model.Occupancy
 import xyz.ksharma.krail.park.ride.network.model.Zone
-import xyz.ksharma.krail.sandook.NSWParkRideFacilityDetail
+import xyz.ksharma.krail.sandook.db.NSWParkRideFacilityDetail
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

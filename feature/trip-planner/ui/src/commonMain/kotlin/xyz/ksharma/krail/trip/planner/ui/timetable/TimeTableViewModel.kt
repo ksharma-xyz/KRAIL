@@ -50,7 +50,7 @@ import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.feature.track.TripDeepLinkEncoder
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
-import xyz.ksharma.krail.sandook.SelectServiceAlertsByJourneyId
+import xyz.ksharma.krail.sandook.db.SelectServiceAlertsByJourneyId
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
 import xyz.ksharma.krail.trip.planner.network.api.ratelimit.RateLimiter
 import xyz.ksharma.krail.trip.planner.network.api.service.DepArr

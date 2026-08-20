@@ -219,10 +219,14 @@ One merged report for the repo rather than one per module. Kover's report tasks 
 Three things the number does not mean, spelled out in [COVERAGE.md](docs/testing/COVERAGE.md):
 
 - **It measures execution, not assertion.** A test with no assertions covers every line it runs.
-- **On a Compose module it is mostly previews.** A snapshot test renders the composable tree and
-  marks it covered without checking anything beyond "did not crash".
+- **It excludes `@Composable` on purpose**, so it is a logic number, not a UI one. A snapshot
+  test renders the composable tree and would otherwise mark it covered without checking anything
+  beyond "did not crash". Nothing here tells you how well the UI is pinned; goldens do that.
 - **It says nothing about iOS.** Kover instruments JVM bytecode; Kotlin/Native is unsupported
   upstream. `commonMain` *is* counted — via the Android host run — but `iosMain` is invisible.
+
+The floors `koverVerify` enforces sit two points under the current measurement, so they catch a
+regression and are not targets.
 
 ---
 

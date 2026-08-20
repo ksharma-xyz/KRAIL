@@ -25,6 +25,17 @@
 # CI has exactly one device and omits the serial. Pass one when reproducing a CI
 # failure locally: with more than one device attached Maestro shards the flows
 # across all of them, which fails in ways that look like app bugs and are not.
+#
+# MAESTRO_RETRIES (default 0) retries the whole suite that many extra times.
+#
+# Only the NIGHTLY lane sets it, to 1, matching what the iOS nightly leg already
+# does. That lane reports rather than gates, so one retry buys signal without
+# hiding a real break: a genuine regression fails twice. The PR lane leaves it at
+# 0 on purpose — a flake that can block a merge gets fixed, not re-run.
+#
+# The emulator-runner action runs its `script:` one line at a time in separate
+# shells, so this has to be set as a same-line prefix on the invocation:
+#   MAESTRO_RETRIES=1 bash .maestro/ci/run-flows.sh ...
 
 set -u
 
@@ -32,6 +43,7 @@ APP_ID="$1"
 FLOWS="$2"
 LOGCAT="$3"
 DEVICE="${4:-}"
+RETRIES="${MAESTRO_RETRIES:-0}"
 
 MAESTRO_ARGS=()
 ADB_ARGS=()
@@ -42,8 +54,24 @@ fi
 
 # Deliberately no `set -e`: a failing flow is an expected outcome here, and its
 # exit code has to survive until the end of the script.
-maestro "${MAESTRO_ARGS[@]}" test -e APP_ID="$APP_ID" "$FLOWS"
-MAESTRO_EXIT=$?
+attempt=0
+while true; do
+  # Cleared before each attempt so the FATAL EXCEPTION check below reads the
+  # attempt that actually decided the result, not a crash from a discarded one.
+  adb "${ADB_ARGS[@]}" logcat -c 2>/dev/null || true
+
+  maestro "${MAESTRO_ARGS[@]}" test -e APP_ID="$APP_ID" "$FLOWS"
+  MAESTRO_EXIT=$?
+
+  if [ "$MAESTRO_EXIT" -eq 0 ] || [ "$attempt" -ge "$RETRIES" ]; then
+    break
+  fi
+  attempt=$((attempt + 1))
+  echo "::warning::Maestro suite failed; retry $attempt of $RETRIES."
+  # Stop the app so the retry starts from a launch, not from wherever the failed
+  # flow abandoned it.
+  adb "${ADB_ARGS[@]}" shell am force-stop "$APP_ID" 2>/dev/null || true
+done
 
 # Copied into the workspace, because actions/upload-artifact does not expand `~`
 # and would silently upload nothing from a path under the home directory.

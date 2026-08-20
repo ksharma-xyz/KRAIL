@@ -1,0 +1,84 @@
+# Codecov configuration.
+#
+# Nothing here blocks a merge. The real coverage gate is `koverVerify`, which runs inside the
+# code-quality workflow against floors set a couple of points under the current measurement
+# (gradle/build-logic/convention/src/main/kotlin/xyz/ksharma/krail/gradle/Coverage.kt).
+#
+# Codecov's job is the view: the trend, the per-component breakdown, and the PR comment that
+# says which lines this change left untested. A second gate that can fail a PR on a number
+# Codecov computes differently from Kover would produce arguments, not tests.
+#
+# Validate after editing:
+#   curl --data-binary @codecov.yml https://codecov.io/validate
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        # Under a point of drift is noise: shared code moving between modules shifts the total
+        # without anything becoming less tested.
+        threshold: 0.5%
+        informational: true
+        # Deleting untested code raises coverage; deleting tested code lowers it. Neither is a
+        # change in how well the app is tested, so the base is adjusted for removals before the
+        # comparison. Without this, the honest work of deleting dead code shows up as a win and
+        # deleting a well-covered feature shows up as a regression.
+        removed_code_behavior: adjust_base
+
+    patch:
+      default:
+        # New and changed lines only. This is the question a reviewer actually has — total
+        # coverage answers a question about the past.
+        target: 80%
+        informational: true
+        only_pulls: true
+
+comment:
+  layout: "condensed_header, condensed_files, components, condensed_footer"
+  behavior: default
+  require_changes: false
+
+# carryforward keeps a flag's last known coverage when a run did not produce it — otherwise a
+# workflow that skipped the host tests reads as a coverage collapse.
+flag_management:
+  default_rules:
+    carryforward: true
+
+# Components slice the same upload by path, so the dashboard shows where coverage actually
+# lives instead of one repo-wide number. These are the modules carrying real suites; add one
+# when a module grows a suite worth watching separately.
+component_management:
+  individual_components:
+    - component_id: trip-planner-ui
+      name: Trip planner UI
+      paths:
+        - feature/trip-planner/ui/**
+
+    - component_id: taj-theme
+      name: taj design system
+      paths:
+        - taj/**
+
+    - component_id: departures-ui
+      name: Departures UI
+      paths:
+        - feature/departures/ui/**
+
+    - component_id: track-ui
+      name: Track UI
+      paths:
+        - feature/track/ui/**
+
+    - component_id: core-date-time
+      name: Core date-time
+      paths:
+        - core/date-time/**
+
+# Test infrastructure and generated sources are already excluded from the Kover report by
+# Coverage.kt. Repeating the source-level ones here keeps Codecov's file browser honest even
+# when a report is uploaded from somewhere else.
+ignore:
+  - "core/testing/**"
+  - "**/build/generated/**"
+  - "**/screenshots/**"

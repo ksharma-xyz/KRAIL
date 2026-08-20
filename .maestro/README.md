@@ -18,11 +18,33 @@ maestro --version   # expect 2.x
 
 | Lane | Runs | Contents |
 |---|---|---|
-| `smoke/` | Every PR | Launch, plan a trip, rotation sweep. Fast enough to gate a merge. |
-| `nightly/` | Nightly cron, `prod/**`, manual dispatch | Process lifecycle and permission-denial cases. Slower, and not worth blocking a PR on. |
+| `smoke/` | Every PR | Launch, and plan a trip. Fast enough to gate a merge. |
+| `nightly/` | Nightly cron, `prod/**`, manual dispatch | Rotation, process lifecycle and permission-denial cases. Slower, and not worth blocking a PR on. |
+
+**Rotation moved out of the PR lane.** The sweep is a real test, but rotating a
+software-rendered CI emulator was the dominant source of flakes in a lane that must never
+retry, and a rotation flake blocking an unrelated merge costs more than the sweep buys per
+PR. What it covers is already covered per-PR host-side, where recreation is deterministic:
+`SavedTripsParkRideRestoreTest` and `TimeTableStopSheetRestoreTest` drive
+`StateRestorationTester` over the same screens, and `NavKeySerializationConfigTest` catches
+the unregistered-route crash that rotation would otherwise be the first to find. The sweep
+stays nightly, where it still exercises the real window-level path those cannot.
 
 `shared/` holds helper flows called via `runFlow`. It is deliberately outside both lanes so a
 directory run never picks it up as a test.
+
+### Retries
+
+| Lane | Retries | Why |
+|---|---|---|
+| PR smoke | **none** | A flake that can block a merge gets fixed, not re-run. |
+| Nightly Android | once | Reports rather than gates, so one retry buys signal without hiding a real break: a genuine regression fails twice. |
+| Nightly iOS | once | Same, plus simulator runs are meaningfully flakier than emulator runs (boot races, window-server hiccups). |
+
+Both nightly retries are one extra attempt, no more. The Android one is
+`MAESTRO_RETRIES=1` on the `run-flows.sh` invocation; the iOS leg wraps its own suite in
+bash. Each retry force-stops the app first, so the second attempt starts from a launch
+rather than from wherever the failed flow abandoned it.
 
 ## Running locally
 
@@ -54,7 +76,7 @@ maestro --device emulator-5554 test -e APP_ID=xyz.ksharma.krail.debug .maestro/s
 |---|---|
 | `smoke/01-launch-home.yaml` | Cold launch reaches home, the saved-trips list and the search row render, the title bar has its actions. |
 | `smoke/02-plan-trip.yaml` | The core journey: pick an origin, pick a destination, get real journey results back from the API. |
-| `smoke/03-rotation-sweep.yaml` | Home, search stop and the timetable each survive rotation, including with results and journey data loaded. |
+| `nightly/03-rotation-sweep.yaml` | Home, search stop and the timetable each survive rotation, including with results and journey data loaded. |
 | `nightly/04-background-foreground.yaml` | Backgrounding and returning lands the rider on the screen they left, not on home. |
 | `nightly/05-kill-relaunch.yaml` | After a force-stop the app recovers to home and navigation still works. |
 | `nightly/06-permissions-denied.yaml` | With location denied the app still runs and a trip can still be planned by typing. |

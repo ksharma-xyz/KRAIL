@@ -32,6 +32,7 @@ dependencies {
     compileOnly(libs.compose.gradlePlugin)
     compileOnly(libs.composeCompiler.gradlePlugin)
     compileOnly(libs.detekt.gradle.plugin)
+    compileOnly(libs.kover.gradle.plugin)
 
     implementation("io.github.frankois944.spmForKmp:io.github.frankois944.spmForKmp.gradle.plugin:${libs.versions.spmForKmp.get()}")
 }

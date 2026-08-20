@@ -74,6 +74,7 @@ private const val FIREBASE_WALL_AND_TEST_NAMES =
  */
 val IOS_TEST_EXCLUSIONS: Map<String, String> = mapOf(
     ":composeApp" to FIREBASE_WALL,
+    ":core:adaptive-ui" to FIREBASE_WALL,
     ":core:analytics" to FIREBASE_WALL,
     ":core:app-version" to FIREBASE_WALL,
     ":core:festival" to FIREBASE_WALL,

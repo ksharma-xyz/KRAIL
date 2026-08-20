@@ -14,6 +14,8 @@ kotlin {
         namespace = "xyz.ksharma.krail.core.adaptiveui"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+
+        withHostTest {}
     }
 
     iosArm64()
@@ -34,6 +36,13 @@ kotlin {
                 implementation(libs.material.adaptive)
                 implementation(projects.core.analytics)
                 implementation(projects.core.log)
+            }
+        }
+
+        commonTest {
+            dependencies {
+                implementation(libs.test.kotlin)
+                implementation(libs.compose.ui)
             }
         }
     }

@@ -170,6 +170,41 @@ data class AdaptiveLayoutInfo(
 }
 
 /**
+ * The breakpoint contract as a pure function, so it can be pinned at its exact boundaries.
+ *
+ * Deliberately separate from [rememberAdaptiveLayoutInfo]. The classification is the part with
+ * a contract (documented in `docs/TABLET_FOLDABLE_UX.md` §1 and depended on by every screen that
+ * splits into panes); reading the window size is the part that needs a composition. Keeping them
+ * apart means a test can drive 599 dp and 600 dp directly rather than restating the `when`
+ * blocks in a copy that could drift from the real ones.
+ *
+ * Every boundary is `<`, so the named constant is the FIRST value of the next class up:
+ * 600 dp is MEDIUM, not COMPACT.
+ */
+fun adaptiveLayoutInfoFor(widthDp: Int, heightDp: Int): AdaptiveLayoutInfo {
+    val widthSizeClass = when {
+        widthDp < AdaptiveBreakpoints.COMPACT_WIDTH -> WindowWidthSizeClass.COMPACT
+        widthDp < AdaptiveBreakpoints.MEDIUM_WIDTH -> WindowWidthSizeClass.MEDIUM
+        widthDp < AdaptiveBreakpoints.EXPANDED_WIDTH -> WindowWidthSizeClass.EXPANDED
+        widthDp < AdaptiveBreakpoints.LARGE_WIDTH -> WindowWidthSizeClass.LARGE
+        else -> WindowWidthSizeClass.EXTRA_LARGE
+    }
+
+    val heightSizeClass = when {
+        heightDp < AdaptiveBreakpoints.COMPACT_HEIGHT -> WindowHeightSizeClass.COMPACT
+        heightDp < AdaptiveBreakpoints.MEDIUM_HEIGHT -> WindowHeightSizeClass.MEDIUM
+        else -> WindowHeightSizeClass.EXPANDED
+    }
+
+    return AdaptiveLayoutInfo(
+        widthSizeClass = widthSizeClass,
+        heightSizeClass = heightSizeClass,
+        widthDp = widthDp,
+        heightDp = heightDp,
+    )
+}
+
+/**
  * Remember and calculate the current adaptive layout information.
  *
  * @return [AdaptiveLayoutInfo] with current window size classifications and helper properties.
@@ -178,39 +213,15 @@ data class AdaptiveLayoutInfo(
 fun rememberAdaptiveLayoutInfo(): AdaptiveLayoutInfo {
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
 
-    val widthSizeClass = when {
-        windowSizeClass.minWidthDp < AdaptiveBreakpoints.COMPACT_WIDTH ->
-            WindowWidthSizeClass.COMPACT
-        windowSizeClass.minWidthDp < AdaptiveBreakpoints.MEDIUM_WIDTH ->
-            WindowWidthSizeClass.MEDIUM
-        windowSizeClass.minWidthDp < AdaptiveBreakpoints.EXPANDED_WIDTH ->
-            WindowWidthSizeClass.EXPANDED
-        windowSizeClass.minWidthDp < AdaptiveBreakpoints.LARGE_WIDTH ->
-            WindowWidthSizeClass.LARGE
-        else ->
-            WindowWidthSizeClass.EXTRA_LARGE
-    }
-
-    val heightSizeClass = when {
-        windowSizeClass.minHeightDp < AdaptiveBreakpoints.COMPACT_HEIGHT ->
-            WindowHeightSizeClass.COMPACT
-        windowSizeClass.minHeightDp < AdaptiveBreakpoints.MEDIUM_HEIGHT ->
-            WindowHeightSizeClass.MEDIUM
-        else ->
-            WindowHeightSizeClass.EXPANDED
-    }
-
-    val info = AdaptiveLayoutInfo(
-        widthSizeClass = widthSizeClass,
-        heightSizeClass = heightSizeClass,
+    val info = adaptiveLayoutInfoFor(
         widthDp = windowSizeClass.minWidthDp,
         heightDp = windowSizeClass.minHeightDp,
     )
 
     SideEffect {
         log(
-            "[ADAPTIVE] windowSize=${windowSizeClass.minWidthDp}×${windowSizeClass.minHeightDp}dp " +
-                "| widthClass=$widthSizeClass heightClass=$heightSizeClass " +
+            "[ADAPTIVE] windowSize=${info.widthDp}×${info.heightDp}dp " +
+                "| widthClass=${info.widthSizeClass} heightClass=${info.heightSizeClass} " +
                 "| dualPane=${info.shouldShowDualPane}",
         )
     }

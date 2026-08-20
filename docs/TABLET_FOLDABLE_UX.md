@@ -50,18 +50,26 @@ Files:
   leaving ~25 % each. That is fixed.)
 - Dual-pane at ≥ 600 dp width (`shouldShowDualPane`, unchanged).
   COMPACT widths keep the existing single-pane list/map toggle.
-- **Pane ratio** in dual-pane: list pane = `widthIn(min = 320.dp,
-  max = 480.dp)`; map pane = `weight(1f)`. Stops list stays
-  ≈ phone-width so `StopSearchListItem` rows remain readable; map gets
-  whatever is left:
+- **Pane widths** come from the shared
+  [`DualPaneScaffold`](../core/adaptive-ui/src/commonMain/kotlin/xyz/ksharma/krail/core/adaptiveui/DualPaneScaffold.kt):
+  list pane = a **fixed** `DUAL_PANE_LIST_WIDTH` (480 dp); map pane =
+  `weight(1f)`, taking everything else. The list stays a constant
+  ≈ phone width at every window size, so `StopSearchListItem` rows read
+  the same on a 720 dp foldable and a 1280 dp tablet, and only the map
+  grows:
 
-  | Available width | List | Map  |
-  |-----------------|------|------|
-  | 720 dp          | 360  | ~360 |
-  | 840 dp          | 400  | ~440 |
-  | 1280 dp         | 480  | ~800 |
+  | Available width | List | Map   |
+  |-----------------|------|-------|
+  | 720 dp          | 480  | ~240  |
+  | 840 dp          | 480  | ~360  |
+  | 1280 dp         | 480  | ~800  |
 
-  Replaces today's `weight(1f) / weight(1f)`.
+  A flexible `widthIn(min = 320.dp, max = 480.dp)` list pane was tried
+  first and abandoned: a flexible-width sibling next to the map's
+  `weight(1f)` never lets iOS interop settle the native `MLNMapView`
+  frame in one measure pass, and the map renders blank on iOS with no
+  error anywhere. `DUAL_PANE_LIST_WIDTH` being a `Dp` and not a range is
+  the fix, pinned by `DualPaneScaffoldTest`.
 - "Select on map" CTA stays hidden in dual-pane (map is always visible).
   Already enforced via `isMapsAvailable = false` passed to
   `SearchStopListContent`.
@@ -114,7 +122,7 @@ SearchStop). `TimeTableRoute` navigation still works via back-stack push.
 
 ### Width rules (≥ 600 dp)
 
-- **Left pane** (≤ 480 dp): the saved-trips list, Park & Ride,
+- **Left pane** (a fixed 480 dp, `DUAL_PANE_LIST_WIDTH`): the saved-trips list, Park & Ride,
   Discover tiles, and the SearchStopRow pill at the bottom — same as
   portrait, just width-capped.
 - **Right pane** (`weight(1f)`): a **read-only nearby-stops map** powered by
@@ -205,6 +213,8 @@ Per-route `metadata` decides which pane each route lands in:
 | `ThemeSelectionRoute` | `detailPane()`      | unchanged                                         |
 | `OurStoryRoute`     | `detailPane()`        | unchanged                                         |
 | `TrackTripRoute`    | `detailPane()`        | unchanged                                         |
+| `ManageStopLabelsRoute` | **none**          | full-width list screen; no map or second pane to split into |
+| `AddParkRideRoute`  | **none**              | owns its own list+map split internally (`DualPaneScaffold`) |
 
 Screens themselves detect their dual-pane mode via
 `rememberAdaptiveLayoutInfo()` / `AdaptiveScreenContent` — route

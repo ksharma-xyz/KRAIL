@@ -199,22 +199,47 @@ add/remove) if directions turn out to matter on phones.
 File: [`KrailNavHost.kt`](../composeApp/src/commonMain/kotlin/xyz/ksharma/krail/KrailNavHost.kt)
 
 `KrailNavHost` uses `ListDetailSceneStrategy` from Navigation 3.
-Per-route `metadata` decides which pane each route lands in:
+Per-route `metadata` decides which pane each route lands in.
 
-| Route               | Metadata              | Notes                                             |
-|---------------------|-----------------------|---------------------------------------------------|
-| `SavedTripsRoute`   | **none**              | owns its own left/right split internally          |
-| `SearchStopRoute`   | **none**              | owns its own list+map split internally            |
-| `TimeTableRoute`    | **none**              | owns its own list+map split internally            |
-| `JourneyMapRoute`   | (none)                | phone-only; tablet uses JourneyMap inline in TimeTable |
-| `SettingsRoute`     | `detailPane()`        | unchanged                                         |
-| `IntroRoute`        | `detailPane()`        | unchanged                                         |
-| `DiscoverRoute`     | `detailPane()`        | unchanged                                         |
-| `ThemeSelectionRoute` | `detailPane()`      | unchanged                                         |
-| `OurStoryRoute`     | `detailPane()`        | unchanged                                         |
-| `TrackTripRoute`    | `detailPane()`        | unchanged                                         |
-| `ManageStopLabelsRoute` | **none**          | full-width list screen; no map or second pane to split into |
-| `AddParkRideRoute`  | **none**              | owns its own list+map split internally (`DualPaneScaffold`) |
+This table is **enforced**. `RoutePaneMetadataTest` (in `:composeApp` androidHostTest) walks
+every sealed route hierarchy by reflection, reads the `metadata` argument off each route's
+`entry<…>` declaration, and fails on any disagreement in either direction: a route missing
+from this table, a row naming a route that no longer exists, or a row claiming a metadata the
+code does not declare. The `Metadata` column is parsed, so it takes exactly one of `none`,
+`detailPane()`, `listPane()` or `no entry`.
+
+| Route                    | Metadata       | Notes                                             |
+|--------------------------|----------------|---------------------------------------------------|
+| `SavedTripsRoute`        | none           | owns its own left/right split internally          |
+| `SearchStopRoute`        | none           | owns its own list+map split internally            |
+| `TimeTableRoute`         | none           | owns its own list+map split internally            |
+| `JourneyMapRoute`        | none           | phone-only; tablet uses JourneyMap inline in TimeTable |
+| `SettingsRoute`          | `detailPane()` | unchanged                                         |
+| `IntroRoute`             | `detailPane()` | unchanged                                         |
+| `DiscoverRoute`          | `detailPane()` | unchanged                                         |
+| `ThemeSelectionRoute`    | `detailPane()` | unchanged                                         |
+| `OurStoryRoute`          | `detailPane()` | unchanged                                         |
+| `TrackTripRoute`         | `detailPane()` | unchanged                                         |
+| `ManageStopLabelsRoute`  | none           | full-width list screen; no map or second pane to split into |
+| `AddParkRideRoute`       | none           | owns its own list+map split internally (`DualPaneScaffold`) |
+| `DebugConfigHomeRoute`   | `detailPane()` | debug builds only                                 |
+| `DebugConfigNetworkRoute`| `detailPane()` | debug builds only                                 |
+| `ServiceAlertRoute`      | no entry       | see below                                         |
+| `DateTimeSelectorRoute`  | no entry       | see below                                         |
+
+### Two routes with no entry
+
+`ServiceAlertRoute` and `DateTimeSelectorRoute` are declared, serialised and reachable from
+`TripPlannerNavigatorImpl` (`navigateToServiceAlert`, `navigateToDateTimeSelector`), but
+neither has an `entry<…>` in any entry provider. Both surfaces are rendered as a
+`ModalBottomSheet` from inside `TimeTableEntry` instead, and nothing calls either navigate
+method today.
+
+That is safe only for as long as nothing calls them: pushing a key the entry provider has no
+entry for fails at navigation time, on a screen that compiles and reads correctly. If either
+surface ever becomes a real destination, it needs an entry and a metadata decision here in
+the same change. Until then the pair are kept in this table rather than deleted from it, so
+the guard keeps naming them.
 
 Screens themselves detect their dual-pane mode via
 `rememberAdaptiveLayoutInfo()` / `AdaptiveScreenContent` — route

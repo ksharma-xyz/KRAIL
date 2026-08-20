@@ -1,5 +1,17 @@
 package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingCommand
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.krail.core.log.log
@@ -24,6 +36,65 @@ import kotlin.time.Instant
  * rather than reading them from a holder object, so the unit-testable
  * surface stays a plain function call.
  */
+
+/**
+ * Runs [refresh] on a repeating beat for as long as an open Park & Ride card is being looked at.
+ *
+ * A card answers "can I still get a space", which changes minute to minute. Without a poll it is
+ * answered once, on the tap that opens the card, and then left standing however long the rider
+ * watches it.
+ *
+ * Two gates, both of which must hold:
+ *  - **The screen is being looked at.** Gated on the screen's own subscriber count through
+ *    [SharingStarted.WhileSubscribed], per `docs/POLLING_LIFECYCLE.md`, so backgrounding the app
+ *    stops the loop and returning restarts it. [subscriptionGraceMillis] keeps it alive across a
+ *    rotation.
+ *  - **At least one card is open.** [collectLatest] restarts the wait whenever [openStopIds]
+ *    changes, so collapsing the last card ends the loop and opening another begins a fresh
+ *    interval.
+ *
+ * A tick spends nothing on its own. [refresh] is the same call the tap makes, and the shared
+ * per-facility cooldown still decides which facilities are actually fetched — which is also why
+ * [interval] is that cooldown. Asking more often could not produce a newer number, only a
+ * bigger bill.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+internal suspend fun pollWhileCardsAreOpen(
+    screenCollectors: StateFlow<Int>,
+    subscriptionGraceMillis: Long,
+    openStopIds: Flow<Set<String>>,
+    interval: () -> Duration,
+    refresh: suspend () -> Unit,
+) {
+    SharingStarted.WhileSubscribed(subscriptionGraceMillis)
+        .command(screenCollectors)
+        .distinctUntilChanged()
+        .flatMapLatest { command ->
+            if (command == SharingCommand.START) {
+                openStopIds.distinctUntilChanged()
+            } else {
+                emptyFlow()
+            }
+        }
+        .collectLatest { openIds ->
+            if (openIds.isEmpty()) return@collectLatest
+            while (true) {
+                // The margin matters. The tick is timed from the last tick, the cooldown from
+                // the last successful fetch, and those are never quite the same instant — so a
+                // tick exactly one interval later lands a second or two *inside* the cooldown,
+                // finds nothing to do and leaves the card unrefreshed until the tick after
+                // that. Observed on device: alternate ticks logging "on cooldown for another 3
+                // seconds". A few seconds of slack costs nothing and makes every tick count.
+                delay(interval() + POLL_MARGIN)
+                currentCoroutineContext().ensureActive()
+                log("Park & Ride poll tick for open cards: $openIds")
+                refresh()
+            }
+        }
+}
+
+// Slack added to the poll interval so a tick always lands clear of the cooldown.
+private val POLL_MARGIN = 5.seconds
 
 /**
  * Peak hours are 5am to 10am, inclusive of 5am and exclusive of 10am — the window where

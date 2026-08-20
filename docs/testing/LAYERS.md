@@ -416,9 +416,17 @@ Verified against **Maestro 2.8.0**; `setOrientation` needs 2.x.
 `.maestro/shared/` holds helper flows called via `runFlow`. It sits outside both lanes so a
 directory run never treats one as a test.
 
-Smoke gates a merge and must stay fast. Nightly runs the **whole** tree on Android and, in a
-separate `macos-15` job, on an iPhone simulator — and gates nothing. Neither nightly job merges,
-tags or publishes anything; a red nightly is a signal for a human.
+Smoke gates a merge and must stay fast: two flows, cold launch and planning a trip against the
+real API. Nightly runs the **whole** tree on Android and, in a separate `macos-15` job, on an
+iPhone simulator — and gates nothing. Neither nightly job merges, tags or publishes anything; a
+red nightly is a signal for a human.
+
+**The rotation sweep is a nightly flow, not a smoke one.** Rotating a software-rendered CI
+emulator was the dominant flake source in a lane that must never retry. What it covers is
+already covered per-PR host-side, where recreation is deterministic: two `StateRestorationTester`
+tests drive the same screens, and `NavKeySerializationConfigTest` catches the unregistered-route
+crash rotation would otherwise be first to find. The sweep still runs nightly, where it exercises
+the real window-level path those cannot.
 
 ### The `APP_ID` convention
 
@@ -474,7 +482,8 @@ opt-in. The same `id:` selector works on both.
 are built for that: they wait rather than assert after anything asynchronous, and scroll to list
 items instead of asserting them in place, because Maestro matches only what is on screen.
 
-**The iOS nightly leg retries once**, hand-rolled in bash: on failure it terminates the app,
-warns, and runs the suite a second time. Simulator runs are meaningfully flakier than emulator
-runs (boot races, window-server hiccups) and that lane reports rather than gates, so one retry
-buys signal without hiding a real break — a genuine regression fails twice.
+**Both nightly legs retry once.** That lane reports rather than gates, so one retry buys signal
+without hiding a real break — a genuine regression fails twice. Android passes
+`MAESTRO_RETRIES=1` to `run-flows.sh`; the iOS leg wraps its suite in bash, and is the flakier
+of the two anyway (boot races, window-server hiccups). Each retry force-stops the app first, so
+the second attempt starts from a launch rather than from wherever the failed flow left off.

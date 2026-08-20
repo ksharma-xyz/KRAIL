@@ -107,7 +107,13 @@ jobs:
       # ran, so those are UP-TO-DATE here and this only does the merge — coverage costs a
       # report, not a second test run. Skipped when tests failed: partial coverage from a
       # broken run is worse than none.
-      - name: Generate coverage report
+      #
+      # koverVerify rides along in the same invocation for the same reason. The floors it
+      # checks sit a couple of points UNDER the current measurement (see Coverage.kt), so this
+      # catches a regression — a deleted suite, a large untested surface landing — rather than
+      # holding anyone to a target. warningInsteadOfFailure is deliberately not set: a floor
+      # that only warns is a comment.
+      - name: Generate coverage report and check floors
         id: coverage
         if: steps.tests.outcome == 'success'
         env:
@@ -116,10 +122,13 @@ jobs:
           CI: true
           GITHUB_ACTIONS: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew :koverXmlReport :koverHtmlReport -PciQuality=true
+        run: ./gradlew :koverXmlReport :koverHtmlReport koverVerify -PciQuality=true
 
+      # Uploaded whenever the step ran at all, including when koverVerify failed on a floor —
+      # that is precisely the run where someone needs the HTML report to see which module lost
+      # coverage.
       - name: Upload coverage report (HTML)
-        if: always() && steps.coverage.conclusion == 'success'
+        if: always() && steps.coverage.conclusion != 'skipped'
         uses: actions/upload-artifact@v7
         with:
           name: coverage-report-${{ github.run_id }}
@@ -134,7 +143,7 @@ jobs:
       # the secrets context, so the environment-only API keys above stop resolving.
       # Upload is best-effort — a missing token or a Codecov outage must not fail a PR.
       - name: Upload coverage to Codecov
-        if: always() && steps.coverage.conclusion == 'success'
+        if: always() && steps.coverage.conclusion != 'skipped'
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

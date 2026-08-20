@@ -79,39 +79,70 @@ Generated code is never written by hand and never meaningfully "covered" — a g
 | `*.ComposableSingletons*` | Compose compiler — one per file holding `@Composable` lambdas |
 | `*.BuildKonfig` | BuildKonfig |
 | `*.generated.resources` packages | Compose Resources (`Res.drawable.*`) |
-| SQLDelight query and table classes | SQLDelight |
+| `xyz.ksharma.krail.sandook.db` | SQLDelight query and table classes |
+| `app.krail.bff.proto`, `app.krail.kgtfs.proto`, `com.google.transit.realtime` | Wire, from the `.proto` definitions |
 
-> **Known gap as of this document.** The SQLDelight filter is written as
-> `packages("xyz.ksharma.krail.sandook.sandook")`, which matches exactly one generated file
-> (`KrailSandookImpl`). The other 36 generated query and table classes are emitted into
-> `xyz.ksharma.krail.sandook` — **the same package the hand-written repositories live in** —
-> so no package filter can separate them and they are all currently counted as covered
-> production code. Separating them needs the generated package moved, not a better glob.
+The SQLDelight filter is a package match only because the generated code was **moved** to make
+that possible. It used to be emitted into `xyz.ksharma.krail.sandook`, the same package the
+hand-written repositories live in, so no filter could separate the two and all but one
+generated file counted as covered production code.
+
+### Declarations, not logic
+
+Three more exclusions are not codegen. They are hand-written code whose *execution* proves
+nothing, so counting them measures whether a test happened to touch a file rather than whether
+anything is checked:
+
+| Excluded | Why |
+|---|---|
+| `*ModuleKt`, `*.di.*Kt` | A Koin `module { single { … } }` block is a wiring list. Running it proves the graph parses, which every test that starts Koin already proves. |
+| `*.Android*Service` | `expect`/`actual` wrappers around an Android SDK service. A host test cannot drive the real service, so these report as uncovered whatever anyone writes. |
+| `*.AnalyticsEvent$*` | Kotlin's generated `componentN`, `copy`, `equals`, `hashCode`, `toString` on a sealed hierarchy of data holders. None is hand-written; none can be wrong. |
+
+### `@Composable`
+
+The largest exclusion, and the one that changes what the number *means*:
+
+```kotlin
+annotatedBy("androidx.compose.runtime.Composable")
+```
+
+A snapshot test renders every `@PreviewComponent` / `@PreviewScreen`, which walks the composable
+tree and marks those lines covered — without asserting a single behaviour beyond "it did not
+crash and the pixels match". With composables counted, the number rises when a preview is added
+rather than when anything new is checked.
+
+What stays measured is the code where a wrong branch is a bug you can write an assertion about:
+reducers, mappers, repositories, ranking, date handling. That is the number worth gating on.
 
 ### Where the filters live
 
-Today the filter block sits in the **root `build.gradle.kts`**. That means it applies to the
-merged report and **not** to a per-module report: `./gradlew :taj:koverLog` and the taj slice
-of the merged report do not filter identically. Treat a per-module number as the rougher of
-the two.
+All of it lives in `configureCoverage()`, and is applied to **both** each module's own reports
+and the root's merged report. That matters: the filters used to sit in the root
+`build.gradle.kts` only, so `./gradlew :taj:koverLog` and the taj slice of the aggregate were
+computed over different sets of classes and quietly meant different things.
+
+Do not add a `kover { }` block to the root build file. It would apply to the merged report
+alone, which is exactly the split that let the two drift.
 
 ---
 
 ## Which modules are in the aggregate
 
-`configureCoverage()` applies the Kover plugin and registers a module into the root aggregate
-**if the module has test sources** (`commonTest`, `androidHostTest` or `androidUnitTest`
-containing at least one `.kt` file).
+**Every module with production code** — 58 of them. `configureCoverage()` applies the Kover
+plugin and registers a module if it has `.kt` files under `commonMain`, `androidMain` or
+`iosMain`. Only `:core:testing` is skipped.
 
-The stated reason for the "has tests" condition: a module with no tests would report 0%, which
-is true but drowns the signal from modules that do have suites, and `verifyTestWiring` is what
-stops a module quietly having none.
+It used to register a module only if that module had *test* sources, which meant 32 modules.
+The stated reason was that a module with no tests would report 0%, drowning the signal from
+modules that do have suites.
 
-That argument is load-bearing in one direction and misleading in the other. It is right that
-a wall of 0% rows makes the report harder to read. It is wrong that the aggregate should
-therefore *exclude* them — a module with no tests is precisely the thing an honest number
-should show. Excluding it means the headline percentage is computed over the friendly half of
-the repo. **See the roadmap below.**
+That is a readability argument doing duty as a measurement one. It is true that a wall of 0%
+rows makes a report harder to read. It does not follow that the aggregate should exclude them:
+the repo-wide percentage was being computed over the friendly half of the repo, and a module
+with no tests is precisely the thing an honest number should show. The 26 modules that joined
+are visible in the report now, and `verifyTestWiring` is what stops a module quietly having no
+suite at all.
 
 ---
 
@@ -146,46 +177,62 @@ never fail a pull request; coverage is a signal, not a gate at that layer.
 
 ---
 
+## The baseline, and what changed to get it
+
+| | Old measurement | Now |
+|---|---:|---:|
+| **Merged** | 51.43% over 32 modules | **63.48%** over 58 modules |
+| `:feature:trip-planner:ui` | 50.29% | 68.29% |
+| `:feature:departures:ui` | 86.87% | 89.12% |
+| `:feature:track:ui` | 76.12% | 84.54% |
+| `:core:date-time` | 65.00% | 70.27% |
+| `:taj` | 50.45% | 49.58% |
+
+Three changes produced that, and they pull in opposite directions:
+
+- Excluding `@Composable` **raises** it, a lot. Most composables in modules without snapshot
+  tests were counted and uncovered; removing them removes more uncovered lines than covered
+  ones. `:taj` is the exception and the proof — it is nearly all composables *and* has 114
+  goldens, so its exclusions were mostly covered lines, and its number went slightly down.
+- Registering 26 more modules **lowers** it, by adding whole modules of untested code.
+- Deleting 901 lines of unreferenced code raises it slightly, by removing code that was
+  uncovered and also unreachable.
+
+Net: up 12 points. **The number went up and the measurement got more honest at the same time,
+which is worth being explicit about** — the intuition that a more truthful number must be a
+lower one is wrong here. The old number was not flattering because it was too high; it was
+untrustworthy because it mixed "a preview rendered" with "a branch was checked", and computed
+the total over a hand-picked subset of modules. The new number answers a narrower, answerable
+question: **of the non-Composable, non-generated logic in the whole repo, how much does the
+host suite execute?**
+
 ## Policy: what coverage is allowed to gate
 
-**Today: raw line coverage, with floors that sit under the current number.**
+**`koverVerify` floors, and nothing else.**
 
-`koverVerify` enforces a minimum. The floors are set a couple of points below the measured
-baseline, so they catch a *regression* — someone deleting a suite, or landing a large
-untested surface — and never block ordinary work. They are not aspirational targets, and they
-are not `warningInsteadOfFailure`: a floor that only warns is a comment.
+The floors sit two points under the measured baseline: 61 merged, 87 on `:feature:departures:ui`,
+82 on `:feature:track:ui`, 68 on `:core:date-time`. They catch a *regression* — a deleted suite,
+a large untested surface landing — and never block ordinary work.
 
-Raising a floor is a deliberate act that goes in its own commit with the new measurement
-quoted. Lowering one requires saying what was given up.
+They are not targets. `warningInsteadOfFailure` is deliberately not set: a floor that only warns
+is a comment. They are wired into the existing coverage step of `code-quality.yml`, so they cost
+a report and no extra test run.
 
-### Raw line coverage overstates a Compose codebase
+Raising a floor is a deliberate act in its own commit, quoting the new measurement. Lowering one
+requires saying what was given up.
 
-This is the honest caveat on every number in this document. In a Compose Multiplatform app a
-large share of the lines are `@Composable` declarations, and a **snapshot test executes almost
-all of them**. Roborazzi renders every `@PreviewComponent` / `@PreviewScreen`, which walks the
-composable tree and marks those lines covered — without asserting a single behaviour beyond
-"it did not crash and the pixels match".
+Codecov gates nothing. Its project and patch statuses are both `informational`, because a second
+gate that can fail a PR on a number computed differently from Kover's produces arguments rather
+than tests. Codecov's job is the view: the trend, the per-component breakdown, and the PR comment
+saying which new lines went untested.
 
-So a rise in the number can mean a new preview was added, not that anything new is checked.
+### Still true, still the main caveat
 
-### Roadmap: the logic-only gate
-
-The direction is to gate on **logic coverage** and report raw line coverage alongside it as
-context.
-
-1. Add `annotatedBy("androidx.compose.runtime.Composable")` to the Kover exclusion filters.
-   Kover supports annotation-based filtering directly, so this needs no new tooling. What
-   remains measured is the code where a wrong branch is a bug you can write an assertion
-   about: reducers, mappers, repositories, ranking, date handling.
-2. Move the filters out of the root build file into `configureCoverage()`, so a per-module
-   report and the merged report filter identically.
-3. Register **every module with production code** into the aggregate, not only the ones that
-   already have tests, so the headline is computed over the whole app.
-4. Re-measure, and set the floors under the new honest baseline.
-
-Each of those makes the reported number **go down**. That is the point. A number that fell
-because the measurement got more honest is worth more than a number that stayed high because
-the measurement was flattering.
+Coverage measures execution, not assertion. Excluding composables removes the largest source of
+that gap, not the gap itself: a `krailRunTest { subject.doThing() }` with no assertion still
+covers every line it touches. Nothing in a percentage can see the difference. The
+discriminating-test rule in [LAYERS.md](LAYERS.md) and the guards in [GUARDS.md](GUARDS.md) are
+what push back on it.
 
 ### The golden-coverage companion metric
 
@@ -206,8 +253,9 @@ committed per module — so computing it is a matter of comparing two lists.
 
 ## Reading a coverage report without fooling yourself
 
-- **A high number on a UI module is mostly previews.** Check whether the covered lines are
-  `@Composable` before believing it.
+- **A UI module's number is about its non-UI code.** Composables are excluded, so
+  `:feature:trip-planner:ui` at 68% describes its ViewModels, mappers and resolvers, not its
+  screens. How well the screens are pinned is a goldens question, not a coverage one.
 - **A low number on a module full of `expect`/`actual` platform wiring is expected.** The
   `actual` side that matters on iOS is not measured at all (see above).
 - **Coverage never says a test asserts anything.** `krailRunTest { subject.doThing() }` with no

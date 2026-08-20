@@ -26,6 +26,7 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.DepartureBoardStopCard
+import xyz.ksharma.krail.trip.planner.ui.components.DeparturesRelativeTimeTicker
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.components.map.StopDetailsBottomSheet as SharedStopDetailsBottomSheet
 
@@ -42,6 +43,9 @@ fun StopDetailsBottomSheet(
 ) {
     val departuresViewModel = koinViewModel<DeparturesViewModel>()
     val departuresState by departuresViewModel.uiState.collectAsStateWithLifecycle()
+
+    // Without this the "in X mins" on every row freezes at whatever the last fetch computed.
+    DeparturesRelativeTimeTicker(departuresViewModel)
 
     SharedStopDetailsBottomSheet(
         stopId = stop.stopId,

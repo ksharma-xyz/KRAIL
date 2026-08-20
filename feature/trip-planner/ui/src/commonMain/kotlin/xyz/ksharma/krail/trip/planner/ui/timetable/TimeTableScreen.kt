@@ -85,6 +85,7 @@ import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.ActionData
 import xyz.ksharma.krail.trip.planner.ui.components.DepartureBoardStopCard
+import xyz.ksharma.krail.trip.planner.ui.components.DeparturesRelativeTimeTicker
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.JourneyCard
 import xyz.ksharma.krail.trip.planner.ui.components.JourneyCardState
@@ -450,6 +451,10 @@ fun TimeTableScreen(
             val departuresViewModel = koinViewModel<DeparturesViewModel>()
             val departuresState by departuresViewModel.uiState
                 .collectAsStateWithLifecycle()
+
+            // Without this the "in X mins" on every row freezes at whatever the last fetch
+            // computed.
+            DeparturesRelativeTimeTicker(departuresViewModel)
             StopDetailsBottomSheet(
                 stopId = stop.stopId,
                 stopName = stop.name,

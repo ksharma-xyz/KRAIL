@@ -32,13 +32,18 @@ import xyz.ksharma.krail.departures.ui.state.DeparturesState
 import xyz.ksharma.krail.departures.ui.state.DeparturesUiEvent
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, ExperimentalTime::class)
 @Suppress("TooManyFunctions", "")
 class DeparturesViewModel(
     private val repository: DepartureBoardRepository,
     private val analytics: Analytics,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    // "Now" is the only input to the relative-time recomputation below, so this is the seam a
+    // test moves instead of waiting on the wall clock. Same shape as the `nowInstant` parameter
+    // the Park & Ride cooldown helpers take.
+    private val now: () -> Instant = { Clock.System.now() },
 ) : ViewModel() {
 
     // Tracks which stop this ViewModel instance is responsible for polling.
@@ -134,19 +139,22 @@ class DeparturesViewModel(
         viewModelScope.launchWithExceptionHandler<DeparturesViewModel>(ioDispatcher) {
             val tick = ++relativeTimeTickCount
             val t = nowMs()
+            // One reading of the clock for the whole pass, so every row on screen is counted
+            // down from the same instant.
+            val asOf = now()
             _uiState.update { current ->
                 val updated = current.copy(
                     departures = current.departures.map { departure ->
                         departure.copy(
                             relativeTimeText = runCatching {
-                                departure.departureUtcDateTime.toDepartureRelativeString()
+                                departure.departureUtcDateTime.toDepartureRelativeString(asOf)
                             }.getOrDefault(""),
                         )
                     }.toImmutableList(),
                     previousDepartures = current.previousDepartures.map { departure ->
                         departure.copy(
                             relativeTimeText = runCatching {
-                                departure.departureUtcDateTime.toDepartureRelativeString()
+                                departure.departureUtcDateTime.toDepartureRelativeString(asOf)
                             }.getOrDefault(""),
                         )
                     }.toImmutableList(),

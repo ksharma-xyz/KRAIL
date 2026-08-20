@@ -104,11 +104,20 @@ class PollingLifecycleGuardTest {
         return found
     }
 
-    /** This file is skipped: it necessarily spells the banned call out as a search string. */
+    /**
+     * This file is skipped: it necessarily spells the banned call out as a search string.
+     *
+     * So is [BUILD_LOGIC_DIR], for the same reason one step removed. `CollectAsStateBan` is the
+     * detekt rule that bans the call, and a rule cannot match a string without containing it —
+     * nor can its test fixtures. Nothing under there is Compose: it is the build's own static
+     * analysis, so it can never hold a screen that collects state, and excluding it costs this
+     * guard no coverage of app code.
+     */
     private fun kotlinSources(): Sequence<File> =
         repoRoot.walkTopDown()
             .onEnter { it.name != "build" && it.name != ".git" }
             .filter { it.isFile && it.extension == "kt" && it.name != GUARD_SOURCE_FILE }
+            .filterNot { it.invariantPath().contains(BUILD_LOGIC_DIR) }
 
     private fun productionSources(): Sequence<File> =
         kotlinSources().filter { file ->
@@ -125,6 +134,9 @@ class PollingLifecycleGuardTest {
         const val COLLECT_AS_STATE = "collectAsState("
         const val COLLECT_AS_STATE_WITH_LIFECYCLE = "collectAsStateWithLifecycle"
         const val GUARD_SOURCE_FILE = "PollingLifecycleGuardTest.kt"
+
+        /** The included build holding this repo's own detekt rules. See [kotlinSources]. */
+        const val BUILD_LOGIC_DIR = "/gradle/build-logic/"
 
         val PRODUCTION_SOURCE_SETS =
             listOf("/src/commonMain/", "/src/androidMain/", "/src/iosMain/")

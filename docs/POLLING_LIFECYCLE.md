@@ -71,6 +71,7 @@ plain `LaunchedEffect` keeps it running behind the lock screen.
 | `TripPoller.countdownDisplay` | 1s countdown tick |
 | `DeparturesViewModel.isActive` | 10s relative-time-text refresh, activated by `DeparturesRelativeTimeTicker` |
 | `DeparturesViewModel.init` | departure board poll, gated on `_uiState.subscriptionCount` |
+| `SavedTripsViewModel.pollExpandedParkRideStops` | Park & Ride availability for cards the rider has open; gated on `uiState` subscribers AND on at least one card being open |
 | `SplashViewModel.isLoading` | app-start work triggered `onStart` |
 
 ### State-only flows — `collectAsStateWithLifecycle()` is enough

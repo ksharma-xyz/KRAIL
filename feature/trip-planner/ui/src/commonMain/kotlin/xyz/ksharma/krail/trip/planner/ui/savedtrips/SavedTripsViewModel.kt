@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
@@ -119,6 +120,9 @@ class SavedTripsViewModel(
      */
     private var observeParkRideFacilityFromDatabaseJob: Job? = null
 
+    // Keeps the numbers on open Park & Ride cards moving. See pollExpandedParkRideStops.
+    private var parkRidePollJob: Job? = null
+
     val trackedJourney: StateFlow<TrackedJourney?> = trackingManager.tracked
 
     // How many collectors uiState has RIGHT NOW, with no grace period.
@@ -149,6 +153,7 @@ class SavedTripsViewModel(
             seedDefaultLabelsIfEmpty()
             observeFacilityDetailsFromDb()
             refreshFacilityDetails()
+            pollExpandedParkRideStops()
             updateDiscoverState()
             updateInfoTilesUiState()
             updateSelectedStops()
@@ -677,24 +682,30 @@ class SavedTripsViewModel(
         return facilityIdList
     }
 
+    /** Keeps open Park & Ride cards fresh; the rules live on [pollWhileCardsAreOpen]. */
+    private fun pollExpandedParkRideStops() {
+        parkRidePollJob?.cancel()
+        parkRidePollJob = viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            pollWhileCardsAreOpen(
+                screenCollectors = screenCollectors,
+                subscriptionGraceMillis = SUBSCRIPTION_GRACE_MS,
+                openStopIds = _uiState.map { it.observeParkRideStopIdSet },
+                interval = ::getApiCooldownDuration,
+                refresh = ::refreshFacilityDetails,
+            )
+        }
+    }
+
     /**
      * Refreshes Park & Ride facility data for all currently expanded stops.
      *
-     * Business Logic:
-     * 1. Ensures fresh data is displayed for stops that users are actively viewing (expanded cards)
-     * 2. Provides automatic background updates without requiring user interaction
-     * 3. Handles several important scenarios:
-     *    - When a card is already expanded and the API cooldown period has elapsed
-     *    - When previous API calls failed and need to be retried
-     *    - When users navigate between different screens and return to expanded cards
+     * Called on arrival at the screen, on the tap that expands a card, and on every tick of
+     * [pollExpandedParkRideStops]. Each of those is only a trigger: the per-facility cooldown
+     * inside decides which facilities are actually worth an API call, so the three entry points
+     * share one budget rather than each having their own.
      *
-     * This method complements the on-demand updates triggered by card expansion, creating
-     * a dual refresh strategy:
-     * - Immediate refresh on user interaction (card expansion)
-     * - Background refresh for already-expanded cards
-     *
-     * API calls are managed with cooldown periods to prevent excessive network requests,
-     * with shorter cooldowns during peak hours and longer ones during off-peak times.
+     * Cooldowns are shorter during peak hours, when parking fills fastest and a stale number is
+     * most misleading, and longer off-peak.
      */
     private suspend fun refreshFacilityDetails() {
         log("onStart - refreshFacilityDetails called")
@@ -847,6 +858,8 @@ class SavedTripsViewModel(
         observeSavedTripsJob = null
         observeParkRideFacilityFromDatabaseJob?.cancel()
         observeParkRideFacilityFromDatabaseJob = null
+        parkRidePollJob?.cancel()
+        parkRidePollJob = null
         log("Cleanup jobs in SavedTripsViewModel completed.")
     }
 }

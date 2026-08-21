@@ -37,8 +37,6 @@ interface TripPlannerNavigator {
 
     fun navigateToAddParkRide()
     fun navigateToThemeSelection()
-    fun navigateToAlerts(journeyId: String)
-    fun navigateToDateTimeSelector(json: String?)
     fun navigateToOurStory()
     fun navigateToIntro()
     fun navigateToTrackTrip(encodedData: String? = null)

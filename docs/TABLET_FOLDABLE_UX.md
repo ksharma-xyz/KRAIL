@@ -224,22 +224,22 @@ code does not declare. The `Metadata` column is parsed, so it takes exactly one 
 | `AddParkRideRoute`       | none           | owns its own list+map split internally (`DualPaneScaffold`) |
 | `DebugConfigHomeRoute`   | `detailPane()` | debug builds only                                 |
 | `DebugConfigNetworkRoute`| `detailPane()` | debug builds only                                 |
-| `ServiceAlertRoute`      | no entry       | see below                                         |
-| `DateTimeSelectorRoute`  | no entry       | see below                                         |
 
-### Two routes with no entry
+### Surfaces that are sheets, not routes
 
-`ServiceAlertRoute` and `DateTimeSelectorRoute` are declared, serialised and reachable from
-`TripPlannerNavigatorImpl` (`navigateToServiceAlert`, `navigateToDateTimeSelector`), but
-neither has an `entry<…>` in any entry provider. Both surfaces are rendered as a
-`ModalBottomSheet` from inside `TimeTableEntry` instead, and nothing calls either navigate
-method today.
+Service alerts and the date/time selector are **not** routes. Both render as a
+`ModalBottomSheet` from inside `TimeTableEntry`, over the timetable that owns their state, so
+neither needs a pane decision and neither appears in the table above.
 
-That is safe only for as long as nothing calls them: pushing a key the entry provider has no
-entry for fails at navigation time, on a screen that compiles and reads correctly. If either
-surface ever becomes a real destination, it needs an entry and a metadata decision here in
-the same change. Until then the pair are kept in this table rather than deleted from it, so
-the guard keeps naming them.
+They used to be routes: `ServiceAlertRoute` and `DateTimeSelectorRoute` were declared,
+registered for serialisation and pushed by two `TripPlannerNavigator` methods, but no
+`entry<…>` anywhere rendered either of them, so calling those methods would have failed at
+navigation time on code that compiled and read correctly. Nothing called them, and they were
+deleted (#1916) rather than wired up, because the sheets are the intended shape.
+
+If either surface ever does become a real destination, it needs a route, an `entry<…>`, a
+`subclass(...)` line in `SerializationConfig.kt` and a row in the table above, all in the
+same change.
 
 Screens themselves detect their dual-pane mode via
 `rememberAdaptiveLayoutInfo()` / `AdaptiveScreenContent` — route

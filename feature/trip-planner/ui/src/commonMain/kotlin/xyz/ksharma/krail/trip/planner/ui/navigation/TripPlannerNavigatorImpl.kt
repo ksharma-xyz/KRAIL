@@ -76,14 +76,6 @@ internal class TripPlannerNavigatorImpl(
         baseNavigator.goTo(ThemeSelectionRoute)
     }
 
-    override fun navigateToAlerts(journeyId: String) {
-        baseNavigator.goTo(ServiceAlertRoute(journeyId))
-    }
-
-    override fun navigateToDateTimeSelector(json: String?) {
-        baseNavigator.goTo(DateTimeSelectorRoute(json))
-    }
-
     override fun navigateToOurStory() {
         baseNavigator.goTo(OurStoryRoute)
     }

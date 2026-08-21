@@ -73,11 +73,6 @@ data class JourneyMapRoute(
 data object ThemeSelectionRoute : TripPlannerRoute
 
 @Serializable
-data class ServiceAlertRoute(
-    val journeyId: String,
-) : TripPlannerRoute
-
-@Serializable
 data object SettingsRoute : TripPlannerRoute
 
 @Serializable
@@ -86,14 +81,12 @@ data object OurStoryRoute : TripPlannerRoute
 @Serializable
 data object IntroRoute : TripPlannerRoute
 
-@Serializable
-data class DateTimeSelectorRoute(
-    val dateTimeSelectionItemJson: String? = null,
-) : TripPlannerRoute {
-    companion object {
-        const val DATE_TIME_TEXT_KEY = "DateTimeSelectionKey"
-    }
-}
+/*
+ * Service alerts and the date/time selector are deliberately not routes. Both render as a
+ * `ModalBottomSheet` from inside `TimeTableEntry`, over the timetable that owns their state.
+ * Route declarations for them existed with no `entry<…>` to render them, so navigating to
+ * either would have failed at runtime; they were deleted rather than wired up (#1916).
+ */
 
 @Serializable
 data object DiscoverRoute : TripPlannerRoute

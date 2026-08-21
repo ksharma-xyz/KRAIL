@@ -42,8 +42,6 @@ internal class RecordingTripPlannerNavigator : TripPlannerNavigator {
     override fun navigateToManageStopLabels() = Unit
     override fun navigateToAddParkRide() = Unit
     override fun navigateToThemeSelection() = Unit
-    override fun navigateToAlerts(journeyId: String) = Unit
-    override fun navigateToDateTimeSelector(json: String?) = Unit
     override fun navigateToOurStory() = Unit
     override fun navigateToIntro() = Unit
     override fun navigateToTrackTrip(encodedData: String?) = Unit

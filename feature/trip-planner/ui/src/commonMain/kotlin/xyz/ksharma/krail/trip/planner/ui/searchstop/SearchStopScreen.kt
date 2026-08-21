@@ -514,15 +514,12 @@ private fun SearchStopScreenSinglePane(
                 }
             },
             onBackClick = onBackClick,
-            onTextChange = { value ->
-                // Typing while map is visible switches back to list.
-                // onFocusGained was removed — focus events fire on pane transitions and
-                // dark/light mode changes too, which would spuriously reset map mode.
-                if (showMap) {
-                    onShowMapChange(false)
-                }
-                onTextChange(value)
-            },
+            onTextChange = searchTextChangeHandler(
+                showMap = showMap,
+                currentText = initialText,
+                onShowMapChange = onShowMapChange,
+                onTextChange = onTextChange,
+            ),
             // The top bar floats at the TOP of the screen; the keyboard is at the BOTTOM.
             // They never overlap, so IME padding on the bar is wrong: it inflates topBarHeightDp
             // by the keyboard height, which pushes SearchStopListContent down by the same amount
@@ -637,6 +634,27 @@ private fun SearchStopScreenDualPane(
             }
         },
     )
+}
+
+/**
+ * The search field's value callback, wired so that typing over the map returns to the list.
+ *
+ * Only a real text change counts. `onFocusGained` was removed from this path because focus
+ * events fire on pane transitions and dark/light switches; the value callback needed the same
+ * treatment, because the field re-emits its restored text when the Activity is recreated. Taken
+ * for typing, that put the rider back on the list on every configuration change and took any
+ * open stop sheet with it.
+ */
+private fun searchTextChangeHandler(
+    showMap: Boolean,
+    currentText: String,
+    onShowMapChange: (Boolean) -> Unit,
+    onTextChange: (String) -> Unit,
+): (String) -> Unit = { value ->
+    if (showMap && value != currentText) {
+        onShowMapChange(false)
+    }
+    onTextChange(value)
 }
 
 /**

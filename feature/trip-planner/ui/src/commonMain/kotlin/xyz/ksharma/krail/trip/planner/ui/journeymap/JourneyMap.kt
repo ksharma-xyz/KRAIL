@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,7 +40,6 @@ import xyz.ksharma.krail.core.maps.ui.utils.MapCameraUtils
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.TrackUserLocation
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
-import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.StopType
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -90,9 +90,17 @@ private fun JourneyMapContent(
     onPermissionSettingsClick: () -> Unit = {},
     extraMapContent: @Composable () -> Unit = {},
 ) {
-    // Track selected stop for details bottom sheet
-    // Keyed to mapState so it resets when viewing a different journey
-    var selectedStop by remember(mapState) { mutableStateOf<JourneyStopFeature?>(null) }
+    // Which stop's details sheet is open, held as the stop id so it survives Activity
+    // recreation (rotation, theme switch, font-size change). The feature itself comes back
+    // from the journey the ViewModel still holds, which is also how the map layer resolves a
+    // tap, so a stop that is no longer on the displayed journey leaves the sheet closed —
+    // the same reset the old `remember(mapState)` key gave, without losing it on rotation.
+    var selectedStopId by rememberSaveable { mutableStateOf<String?>(null) }
+    val selectedStop = remember(selectedStopId, mapState.mapDisplay.stops) {
+        selectedStopId?.let { stopId ->
+            mapState.mapDisplay.stops.firstOrNull { it.stopId == stopId }
+        }
+    }
 
     // User location state
     var userLocation by remember { mutableStateOf<LatLng?>(null) }
@@ -174,7 +182,7 @@ private fun JourneyMapContent(
                 JourneyMapLayers(
                     mapState = mapState,
                     userLocation = userLocation,
-                    onStopSelect = { selectedStop = it },
+                    onStopSelect = { selectedStopId = it.stopId },
                 )
                 extraMapContent()
             }
@@ -223,7 +231,7 @@ private fun JourneyMapContent(
         selectedStop?.let { stop ->
             JourneyStopDetailsBottomSheet(
                 stop = stop,
-                onDismiss = { selectedStop = null },
+                onDismiss = { selectedStopId = null },
             )
         }
     }

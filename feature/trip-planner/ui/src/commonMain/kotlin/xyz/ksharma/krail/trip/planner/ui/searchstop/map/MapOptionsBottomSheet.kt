@@ -20,9 +20,10 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -46,6 +47,11 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.components.TransportModeChip
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 
+private val transportModeSetSaver: Saver<MutableSet<Int>, List<Int>> = Saver(
+    save = { modes -> modes.toList() },
+    restore = { ids -> ids.toMutableSet() },
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MapOptionsBottomSheet(
@@ -57,13 +63,16 @@ fun MapOptionsBottomSheet(
     onEvent: (SearchStopUiEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Local state to track pending changes
-    var pendingRadiusKm by remember { mutableDoubleStateOf(searchRadiusKm) }
-    var pendingTransportModes by remember {
+    // Pending changes, held until the rider taps Done. Saveable because the sheet itself
+    // already survives Activity recreation: in a plain `remember`, a rotation or theme switch
+    // mid-edit silently reverted every choice made since the sheet opened, on a sheet that
+    // stayed open as if nothing had happened.
+    var pendingRadiusKm by rememberSaveable { mutableStateOf(searchRadiusKm) }
+    var pendingTransportModes by rememberSaveable(stateSaver = transportModeSetSaver) {
         mutableStateOf(selectedTransportModes.toMutableSet())
     }
-    var pendingShowDistanceScale by remember { mutableStateOf(showDistanceScale) }
-    var pendingShowCompass by remember { mutableStateOf(showCompass) }
+    var pendingShowDistanceScale by rememberSaveable { mutableStateOf(showDistanceScale) }
+    var pendingShowCompass by rememberSaveable { mutableStateOf(showCompass) }
 
     val dim = KrailTheme.dimensions
     ModalBottomSheet(

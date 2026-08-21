@@ -41,15 +41,22 @@ private const val TIMETABLE_RESTORE_TEST_SDK = 34
  *
  * ## What this test cannot see
  *
- * On a device the sheet still closes, for a second and separate reason: `ModalBottomSheet`
- * hosts its content in a real `Dialog`, and that dialog fires `onDismissRequest` as it is
- * disposed during recreation — which runs the caller's dismiss handler and clears the state
- * this test is about. `StateRestorationTester` saves and restores the composition without ever
- * building that dialog window, so it does not reproduce it. Confirmed by hand: after a theme
- * switch the sheet is gone and one tap on the same stop reopens it, which it would not do if
- * the state had survived. Every sheet in the app is wired the same way, so the fix belongs
- * with the sheet rather than here. Saving the state is still required either way — without it
- * there would be nothing left to restore once that is fixed.
+ * It composes the screen, not the window around it, so anything that only happens to a real
+ * Activity is out of its reach: which pane the layout picks, and what other callbacks fire
+ * while the window is being rebuilt.
+ *
+ * An earlier version of this note claimed the sheet also closes on device because
+ * `ModalBottomSheet`'s dialog fires `onDismissRequest` as it is disposed during recreation.
+ * Measured on an emulator, that does not happen: a probe logging every `onDismissRequest`
+ * with its lifecycle state recorded none at all across a rotation, and the sheets whose
+ * visibility is saveable came back on screen. The dismissals it did record were scrim taps at
+ * `RESUMED`. What actually closed sheets was ordinary lost state, and on the search-stop map a
+ * text callback that re-fired with restored text and switched the screen back to the list.
+ * See `docs/learning/2026-08-21-sheet-closed-by-a-text-callback.md`.
+ *
+ * One case remains, and this test cannot reach it either: on a phone, rotating swaps single
+ * pane for dual pane, which are different composables, so a sheet open in one does not carry
+ * into the other.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)

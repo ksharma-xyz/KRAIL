@@ -25,6 +25,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.FlowPreview
@@ -122,6 +123,17 @@ private fun ErrorMessage(
     )
 }
 
+// Resolves the open sheet's stop id back to the stop the map is drawing, which is where the
+// tap that opened it came from in the first place. A stop that has since left the nearby set
+// leaves the sheet closed.
+@Composable
+private fun rememberStopForSheet(
+    selectedStopId: String?,
+    nearbyStops: ImmutableList<NearbyStopFeature>,
+): NearbyStopFeature? = remember(selectedStopId, nearbyStops) {
+    selectedStopId?.let { stopId -> nearbyStops.firstOrNull { it.stopId == stopId } }
+}
+
 @Composable
 private fun MapContent(
     mapState: MapUiState.Ready,
@@ -149,7 +161,13 @@ private fun MapContent(
             onShowOptionsSheet()
         }
     }
-    var selectedStop by remember { mutableStateOf<NearbyStopFeature?>(null) }
+    // Which stop's details sheet is open, held as the stop id because that is the part worth
+    // saving: the feature itself is map-rendering data the ViewModel still holds after the
+    // Activity is recreated, so it can be looked up again rather than serialised. Held in a
+    // plain `remember` this closed the sheet on every rotation, theme switch and font-size
+    // change (see SearchStopMapSheetRestoreTest).
+    var selectedStopId by rememberSaveable { mutableStateOf<String?>(null) }
+    val selectedStop = rememberStopForSheet(selectedStopId, mapState.mapDisplay.nearbyStops)
 
     // User location state
     var permissionStatus by remember { mutableStateOf<PermissionStatus>(PermissionStatus.NotDetermined) }
@@ -261,7 +279,7 @@ private fun MapContent(
                 cameraState = cameraState,
                 ornamentTopPadding = ornamentTopPadding,
                 onStopSelected = { stop ->
-                    selectedStop = stop
+                    selectedStopId = stop.stopId
                     onEvent(SearchStopUiEvent.NearbyStopClicked(stop))
                 },
             )
@@ -345,7 +363,7 @@ private fun MapContent(
             selectedStop?.let { stop ->
                 StopDetailsBottomSheet(
                     stop = stop,
-                    onDismiss = { selectedStop = null },
+                    onDismiss = { selectedStopId = null },
                     actionContent = {
                         StopActionButton(
                             text = "Select Stop",
@@ -377,7 +395,7 @@ private fun MapContent(
                                     ),
                                 )
 
-                                selectedStop = null
+                                selectedStopId = null
                             },
                         )
                     },

@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.taj.LocalTextColor
@@ -46,10 +47,15 @@ fun CollapsibleAlert(
     collapsed: Boolean = true,
 ) {
     val dim = KrailTheme.dimensions
-    val backgroundColor = KrailTheme.colors.alert.copy(alpha = 0.7f)
+    val backgroundColor = KrailTheme.colors.alert.copy(alpha = ALERT_BACKGROUND_ALPHA)
+    // getForegroundColor reads luminance(), which ignores alpha, so asking it about the
+    // translucent fill answers for a card that is never drawn: it would read `alert` as dark and
+    // pick light text, which then lands on the pale blend the rider actually sees. Choose against
+    // the flattened colour instead. The fill itself stays translucent — only the decision changes.
+    val contentColor = getForegroundColor(backgroundColor.compositeOver(KrailTheme.colors.surface))
 
     CompositionLocalProvider(
-        LocalTextColor provides getForegroundColor(backgroundColor),
+        LocalTextColor provides contentColor,
     ) {
         Column(
             modifier = modifier
@@ -101,8 +107,8 @@ fun CollapsibleAlert(
                     HtmlText(
                         text = serviceAlert.message,
                         onClick = onClick,
-                        color = getForegroundColor(backgroundColor),
-                        urlColor = getForegroundColor(backgroundColor),
+                        color = contentColor,
+                        urlColor = contentColor,
                         modifier = Modifier.padding(horizontal = dim.spacingXL),
                     )
                 } else {
@@ -113,17 +119,14 @@ fun CollapsibleAlert(
                     )
                 }
             } else if (serviceAlert.message.isNotBlank()) {
-                val buttonBackgroundColor by remember {
-                    mutableStateOf(getForegroundColor(backgroundColor))
-                }
-                val buttonContentColor by remember(buttonBackgroundColor) {
-                    mutableStateOf(getForegroundColor(buttonBackgroundColor))
+                val buttonContentColor by remember(contentColor) {
+                    mutableStateOf(getForegroundColor(contentColor))
                 }
                 Button(
                     colors = ButtonColors(
-                        containerColor = buttonBackgroundColor,
+                        containerColor = contentColor,
                         contentColor = buttonContentColor,
-                        disabledContainerColor = buttonBackgroundColor.copy(alpha = DisabledContentAlpha),
+                        disabledContainerColor = contentColor.copy(alpha = DisabledContentAlpha),
                         disabledContentColor = buttonContentColor.copy(alpha = DisabledContentAlpha),
                     ),
                     onClick = onClick,
@@ -182,3 +185,5 @@ private fun PreviewCollapsibleAlertExpanded() {
 }
 
 // endregion
+
+private const val ALERT_BACKGROUND_ALPHA = 0.7f

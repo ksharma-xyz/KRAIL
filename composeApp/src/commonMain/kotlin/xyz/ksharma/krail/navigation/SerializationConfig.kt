@@ -10,7 +10,6 @@ import xyz.ksharma.krail.feature.debug.settings.ui.navigation.DebugConfigHomeRou
 import xyz.ksharma.krail.feature.debug.settings.ui.navigation.DebugConfigNetworkRoute
 import xyz.ksharma.krail.feature.track.ui.navigation.TrackTripRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.AddParkRideRoute
-import xyz.ksharma.krail.trip.planner.ui.navigation.DateTimeSelectorRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.DiscoverRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.IntroRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.JourneyMapRoute
@@ -18,7 +17,6 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.ManageStopLabelsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.OurStoryRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopRoute
-import xyz.ksharma.krail.trip.planner.ui.navigation.ServiceAlertRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SettingsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.ThemeSelectionRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.TimeTableRoute
@@ -41,9 +39,7 @@ val krailNavSerializationConfig = SavedStateConfiguration {
             subclass(TimeTableRoute::class, TimeTableRoute.serializer())
             subclass(JourneyMapRoute::class, JourneyMapRoute.serializer())
             subclass(ThemeSelectionRoute::class, ThemeSelectionRoute.serializer())
-            subclass(ServiceAlertRoute::class, ServiceAlertRoute.serializer())
             subclass(SettingsRoute::class, SettingsRoute.serializer())
-            subclass(DateTimeSelectorRoute::class, DateTimeSelectorRoute.serializer())
             subclass(OurStoryRoute::class, OurStoryRoute.serializer())
             subclass(IntroRoute::class, IntroRoute.serializer())
             subclass(DiscoverRoute::class, DiscoverRoute.serializer())

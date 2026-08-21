@@ -10,7 +10,6 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.ManageStopLabelsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.OurStoryRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopRoute
-import xyz.ksharma.krail.trip.planner.ui.navigation.ServiceAlertRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SettingsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.ThemeSelectionRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.TimeTableRoute
@@ -23,7 +22,7 @@ const val UNMAPPED_SCREEN_NAME = "Unmapped"
  * `view_screen`, so window transitions can be joined to screen views without a second set
  * of screen names to reconcile.
  *
- * Routes with no [AnalyticsScreen] (Splash, Discover, DateTimeSelector, TrackTrip) report
+ * Routes with no [AnalyticsScreen] (Splash, Discover, TrackTrip) report
  * [UNMAPPED_SCREEN_NAME]. Minting names here instead would put strings into the analytics
  * vocabulary that no other event uses, which is worse than one honest bucket.
  */
@@ -38,7 +37,6 @@ fun NavKey.toAnalyticsScreenName(): String = when (this) {
     is IntroRoute -> AnalyticsScreen.Intro.name
     is ManageStopLabelsRoute -> AnalyticsScreen.ManageStopLabels.name
     is AddParkRideRoute -> AnalyticsScreen.AddParkRide.name
-    is ServiceAlertRoute -> AnalyticsScreen.ServiceAlerts.name
     else -> {
         // Logged, not sent: a route reaching this branch is either genuinely screenless
         // (Splash) or a gap in the mapping, and the two are indistinguishable in the data.

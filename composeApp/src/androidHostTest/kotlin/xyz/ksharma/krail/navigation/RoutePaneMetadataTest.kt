@@ -18,9 +18,9 @@ import kotlin.test.fail
  * screenshot can see it.
  *
  * The doc was the only place the intent was written down, and it had already drifted — two
- * routes were missing from it entirely, and two more exist with no `entry` at all. A table
- * that describes the code is a comment; a table the build compares against the code is a
- * contract, and this makes it the second.
+ * routes were missing from it entirely, and two more had no `entry` at all (those two were
+ * dead and have since been deleted, #1916). A table that describes the code is a comment; a
+ * table the build compares against the code is a contract, and this makes it the second.
  *
  * Bidirectional on purpose. A route missing from the table fails, because that is the new
  * route nobody made a pane decision for. A row naming a route that no longer exists fails too,

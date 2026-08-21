@@ -82,8 +82,9 @@ that does not need the prompt to have worked.
 
 ### Still to do on the time path
 
-- The chip clears on tap. It should open the existing date/time picker, which wants
-  `DateTimeSelectorRoute` reachable from the home screen.
+- The chip clears on tap. It should open the existing date/time picker, which today is a
+  `ModalBottomSheet` owned by `TimeTableEntry` and has no way to be opened from the home
+  screen.
 - A day on its own still resolves to nothing. A date with no time is not a departure, and
   picking an hour for it would be a guess.
 - Vague day-parts stay unresolved on purpose. "morning = 9am" is invented precision. If they

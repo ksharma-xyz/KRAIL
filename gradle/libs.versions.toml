@@ -62,16 +62,16 @@ mlkitTextRecognition = "16.0.1"
 reorderable = "2.5.1"
 
 # KRAIL-extracted libraries (published as separate KMP libs)
-aagya = "0.2.0"
-dhruva = "0.1.1"
+aagya = "0.3.0"
+dhruva = "0.2.0"
 krail-api-proto = "0.4.2"
 
 [libraries]
 # KRAIL-extracted libraries
-aagya-state = { module = "io.github.ksharma-xyz:aagya-state", version.ref = "aagya" }
-aagya-data = { module = "io.github.ksharma-xyz:aagya-data", version.ref = "aagya" }
-dhruva-state = { module = "io.github.ksharma-xyz:dhruva-state", version.ref = "dhruva" }
-dhruva-data = { module = "io.github.ksharma-xyz:dhruva-data", version.ref = "dhruva" }
+aagya-state = { module = "xyz.ksharma:aagya-state", version.ref = "aagya" }
+aagya-data = { module = "xyz.ksharma:aagya-data", version.ref = "aagya" }
+dhruva-state = { module = "xyz.ksharma:dhruva-state", version.ref = "dhruva" }
+dhruva-data = { module = "xyz.ksharma:dhruva-data", version.ref = "dhruva" }
 krail-api-proto = { module = "xyz.ksharma.krail:api-proto", version.ref = "krail-api-proto" }
 
 androidx-window = { module = "androidx.window:window", version.ref = "androidx-window" }

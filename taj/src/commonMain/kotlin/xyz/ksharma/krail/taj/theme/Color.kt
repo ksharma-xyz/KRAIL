@@ -12,15 +12,21 @@ val md_theme_light_surface = Color(0xFFFFFFFF)
 val md_theme_light_onSurface = Color(0xFF010101)
 val md_theme_light_onSurface_placeholder = Color(0xFF595959)
 val md_theme_light_scrim = Color(0xFF000000)
-val md_theme_light_alert = Color(0xFFFFBA27)
+
+// Alert amber, deepened far enough to clear 4.5:1 against the white surface it is drawn on
+// (#946500 measures 5.09). It is a container fill, so it has to work from both sides: at this
+// luminance getForegroundColor still finds near-white content on it with room to spare.
+val md_theme_light_alert = Color(0xFF946500)
 val md_theme_light_softLabel = Color(0xFF767676)
 val md_theme_light_secondary_label = Color(0xFF2E2E2E)
 val md_theme_light_discover_chip_background = Color(0xFFF5F5F5)
 val md_theme_light_discover_card_background = Color(0xFFF5F5F5)
 
 // Light theme (Deviations colors)
-val md_theme_light_early = Color(0xFF008913)
-val md_theme_light_late = Color(0xFFE72020)
+// Both are read as text ("2 min late") on the dimmed past-departure row as well as on the white
+// card, and that row is the tighter of the two: these clear 4.5:1 there, not just on white.
+val md_theme_light_early = Color(0xFF007A11)
+val md_theme_light_late = Color(0xFFCF1616)
 
 // Future and past journey colors
 val md_theme_light_future_journey = Color(0xFF3A3A3A)
@@ -33,7 +39,11 @@ val md_theme_light_theme_selection_background = Color(0xFFF5F5F5)
 val md_theme_light_modal_sheet_background = Color(0xFFF5F5F5)
 
 val md_theme_light_sheet_drag_handle = Color(0x66000000)
-val md_theme_light_outline_subtle = Color(0x33010101)
+
+// A hairline that is sometimes the only thing separating two controls, so it is held to the 3.0
+// non-text minimum rather than treated as decoration. Alpha is the whole lever here: composited
+// over the white surface this lands on a mid grey, the lightest value that clears the bar.
+val md_theme_light_outline_subtle = Color(0x6E010101)
 
 // past departure row surface — subtle grey tint against the white #FFFFFF surface card
 // Used for past/previous departure rows and past journey cards.
@@ -66,8 +76,11 @@ val md_theme_dark_discover_chip_background = Color(0xFF292929)
 val md_theme_dark_discover_card_background = Color(0xFF292929)
 
 // Dark theme (Deviations colors)
+// Lighter than the light-theme pair for the same reason, from the other direction: the dimmed
+// past-departure row is a step lighter than the surface, so the red has to lift to stay above
+// 4.5:1 on it.
 val md_theme_dark_early = Color(0xFF00B219)
-val md_theme_dark_late = Color(0xFFFF2B2B)
+val md_theme_dark_late = Color(0xFFFF5C5C)
 
 // Future and past journey colors
 val md_theme_dark_future_journey = Color(0xFFEEEEEE)
@@ -79,7 +92,9 @@ val md_theme_dark_theme_selection_background = Color(0xFF292929)
 // bottom sheet
 val md_theme_dark_modal_sheet_background = Color(0xFF292929)
 val md_theme_dark_sheet_drag_handle = Color(0x66FFFFFF)
-val md_theme_dark_outline_subtle = Color(0x33FCF6F1)
+
+// Same obligation as its light-theme twin; the dark surface needs less alpha to reach 3.0.
+val md_theme_dark_outline_subtle = Color(0x5AFCF6F1)
 
 // past departure row surface — warm dark one step above the #292929 sheet (contrast ≈ 13:1 for onSurface #FCF6F1)
 // Used for past/previous departure rows and past journey cards.

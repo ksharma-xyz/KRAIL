@@ -20,15 +20,17 @@ import kotlin.test.fail
  *
  * `Color.contrastRatio` (and therefore `ContrastAnalyzer`) reads `luminance()`, which ignores the
  * alpha channel. For a translucent token that is not a small inaccuracy, it is the wrong answer:
- * `outlineSubtle` is 20%-alpha near-black, so an alpha-blind ratio against white reports ~21:1 when
- * what the eye sees is closer to 1.6:1. Every pairing here is composited over its background first,
- * which is a no-op for the opaque tokens and the only honest reading for the translucent ones.
+ * `outlineSubtle` is a partially transparent near-black, so an alpha-blind ratio against white
+ * reports ~21:1 when what the eye sees is a mid grey hairline. Every pairing here is composited
+ * over its background first, which is a no-op for the opaque tokens and the only honest reading
+ * for the translucent ones.
  *
  * ## Failing pairings are recorded, not silenced
  *
  * [KNOWN_FAILURES] holds the pairings that do not clear their threshold today, each with the ratio
  * measured when it was added. Thresholds are never lowered to accommodate one. A pairing that
- * starts passing also fails this test, so a fix cannot quietly leave a stale entry behind.
+ * starts passing also fails this test, so a fix cannot quietly leave a stale entry behind. The set
+ * is empty — every pairing measured here clears its own threshold, and it stays that way.
  */
 class KrailColorTokenContrastTest {
 
@@ -227,26 +229,12 @@ class KrailColorTokenContrastTest {
          * Pairings that do not clear their threshold, with the ratio measured when recorded.
          * Every one is a real accessibility gap for the maintainer to decide on — not a licence
          * to lower a threshold.
+         *
+         * Empty since #1914, which moved the last six tokens above their bars rather than
+         * recording them here. Adding an entry means shipping a known accessibility gap: fix the
+         * colour first, and only record one when a maintainer has decided the design cannot give.
          */
-        val KNOWN_FAILURES = setOf(
-            // 1.71 — amber #FFBA27 on white. `alert` is only ever used as a container fill (the
-            // alert Button's background, CollapsibleAlert's 70%-alpha background), never as a
-            // foreground on the page surface, so this measures a boundary rather than text. It
-            // fails the non-text 3.0 minimum too.
-            "light|alert|surface",
-            // 3.95 / 3.91 — the early and late deviation colours pass on the white card surface
-            // (4.58 / 4.54) but fall under 4.5 on the dimmed past-departure row, which is a
-            // slightly darker grey. Both are read as text ("2 min late").
-            "light|deviationEarly|pastDepartureRowSurface",
-            "light|deviationLate|pastDepartureRowSurface",
-            // 3.79 — same pairing in dark mode; the early variant clears it at 4.97.
-            "dark|deviationLate|pastDepartureRowSurface",
-            // 1.60 / 1.85 — a 20%-alpha hairline cannot reach the 3.0 non-text minimum by
-            // construction. WCAG exempts purely decorative boundaries, but any of these outlines
-            // that is the ONLY thing separating two controls is not decorative.
-            "light|outlineSubtle|surface",
-            "dark|outlineSubtle|surface",
-        )
+        val KNOWN_FAILURES = emptySet<String>()
 
         fun Float.round(): String {
             val scaled = (this * 100).toInt()

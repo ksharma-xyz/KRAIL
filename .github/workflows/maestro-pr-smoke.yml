@@ -117,8 +117,17 @@ jobs:
           # script one line at a time in separate `sh -c` invocations. Nothing
           # that needs shell state to survive to the next line can live here;
           # that is what run-flows.sh is for.
+          # hide_error_dialogs: a system app that ANRs on the starved runner
+          # (seen live: "Pixel Launcher isn't responding") parks a system dialog
+          # over the app under test. Maestro's taps land on the dialog, the
+          # intro carousel never advances, and every flow dies on its first
+          # assertion while the app behind it is perfectly healthy. The flows
+          # never look at error dialogs, so hiding them costs no signal — the
+          # FATAL EXCEPTION logcat check in run-flows.sh is what detects real
+          # crashes, and it reads the log, not the screen.
           script: |
             adb install -r androidApp/build/outputs/apk/debug/androidApp-debug.apk
+            adb shell settings put global hide_error_dialogs 1
             adb shell settings put global window_animation_scale 0
             adb shell settings put global transition_animation_scale 0
             adb shell settings put global animator_duration_scale 0

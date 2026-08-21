@@ -125,9 +125,17 @@ jobs:
           # never look at error dialogs, so hiding them costs no signal — the
           # FATAL EXCEPTION logcat check in run-flows.sh is what detects real
           # crashes, and it reads the log, not the screen.
+          #
+          # The setting only stops dialogs that have not been shown yet, and the
+          # launcher ANR fires in the boot-settle window before this script
+          # runs (verified: a failed run's logcat, cleared at flow start, has no
+          # "ANR in" entry — the dialog predates the flows). Force-stopping the
+          # launcher kills the ANR'd process, which is what dismisses a dialog
+          # already on screen; the launcher restarts on demand.
           script: |
-            adb install -r androidApp/build/outputs/apk/debug/androidApp-debug.apk
             adb shell settings put global hide_error_dialogs 1
+            adb shell am force-stop com.google.android.apps.nexuslauncher
+            adb install -r androidApp/build/outputs/apk/debug/androidApp-debug.apk
             adb shell settings put global window_animation_scale 0
             adb shell settings put global transition_animation_scale 0
             adb shell settings put global animator_duration_scale 0

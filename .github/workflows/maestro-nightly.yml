@@ -97,13 +97,17 @@ jobs:
           # MAESTRO_RETRIES is a same-line prefix rather than an export — this
           # lane retries once, matching the iOS leg below. The script clears
           # logcat itself before each attempt.
-          # hide_error_dialogs: see maestro-pr-smoke.yml — a system app ANR
-          # ("Pixel Launcher isn't responding") otherwise parks a dialog over
-          # the app and steals every tap. Hides error dialogs only; the
-          # permission dialogs 06-permissions-denied drives are unaffected.
+          # hide_error_dialogs + launcher force-stop: see maestro-pr-smoke.yml —
+          # a system app ANR ("Pixel Launcher isn't responding") otherwise parks
+          # a dialog over the app and steals every tap, and the ANR fires before
+          # this script runs, so the setting alone cannot dismiss the dialog
+          # that is already up. Hides error dialogs only; the permission dialogs
+          # 06-permissions-denied drives are unaffected, and the launcher
+          # restarts on demand when 04-background-foreground goes home.
           script: |
-            adb install -r androidApp/build/outputs/apk/debug/androidApp-debug.apk
             adb shell settings put global hide_error_dialogs 1
+            adb shell am force-stop com.google.android.apps.nexuslauncher
+            adb install -r androidApp/build/outputs/apk/debug/androidApp-debug.apk
             adb shell settings put global window_animation_scale 0
             adb shell settings put global transition_animation_scale 0
             adb shell settings put global animator_duration_scale 0

@@ -26,10 +26,12 @@ sealed interface MicPermissionOutcome {
  * Requests the microphone permission, suspending until the rider answers, and reports how it
  * ended.
  *
- * Asking has to happen at the Compose layer rather than inside the service:
+ * Asking happens at the Compose layer, never inside the services:
  * [AndroidSpeechToTextService][xyz.ksharma.krail.core.speechtotext.AndroidSpeechToTextService]
- * is a plain singleton with no Activity to show the system dialog from, so on its own it can
- * only read the current status.
+ * is a plain singleton with no Activity to show the system dialog from, and
+ * [IosSpeechToTextService][xyz.ksharma.krail.core.speechtotext.IosSpeechToTextService]
+ * matches that contract so the microphone has exactly one asking path on both platforms.
+ * Both services only read the current status.
  *
  * Backed by aagya's [PermissionController][xyz.ksharma.aagya.permission.PermissionController],
  * the same one `UserLocationManager` uses for location, so both permissions ask the same way

@@ -5,6 +5,8 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
+import platform.AVFAudio.AVAudioApplication
+import platform.AVFAudio.AVAudioApplicationRecordPermissionGranted
 import platform.AVFAudio.AVAudioEngine
 import platform.AVFAudio.AVAudioSession
 import platform.AVFAudio.AVAudioSessionCategoryRecord
@@ -19,14 +21,16 @@ import kotlin.coroutines.resume
  * Swift-only surface like Foundation Models), so this is a direct Kotlin/Native cinterop
  * call with no Swift shim needed — see `IosAiTextService` for the contrasting case.
  *
- * Deployment target is iOS 15.3 (see `iosApp` build settings), so this deliberately uses
- * the older `AVAudioSession.requestRecordPermission` (deprecated in favour of
- * `AVAudioApplication` on iOS 17+, but still functional) rather than branching on OS
- * version for a still-working API.
+ * Microphone permission is owned by aagya at the Compose layer
+ * ([rememberRequestMicrophonePermission]), so this service only reads the current status,
+ * mirroring [AndroidSpeechToTextService] which likewise never shows the system dialog
+ * itself. `AVAudioApplication.recordPermission` is an iOS 17+ API, which the deployment
+ * target satisfies (see `iosApp` build settings).
  *
- * Per this project's `ios_permission_must_request.md` lesson: [checkAvailability] actively
- * calls `requestAuthorization`/`requestRecordPermission` when status is not yet determined,
- * it does not just inspect `authorizationStatus()` — otherwise the app never appears in
+ * Speech-recognizer authorization has no aagya family, so it is still requested here. Per
+ * this project's `ios_permission_must_request.md` lesson: [checkAvailability] actively
+ * calls `SFSpeechRecognizer.requestAuthorization` when status is not yet determined, it
+ * does not just inspect `authorizationStatus()` — otherwise the app never appears in
  * Settings for the rider to grant the permission from.
  */
 @OptIn(ExperimentalForeignApi::class)
@@ -38,10 +42,10 @@ internal class IosSpeechToTextService : SpeechToTextService {
 
     override suspend fun checkAvailability(): SpeechToTextAvailability {
         val speechAuthorized = requestSpeechAuthorizationIfNeeded()
-        val micAuthorized = requestMicAuthorizationIfNeeded()
+        val micAuthorized = microphoneAuthorized()
         val result = when {
             !speechAuthorized || !micAuthorized ->
-                SpeechToTextAvailability.Unavailable(reason = "permission_denied")
+                SpeechToTextAvailability.Unavailable(reason = SpeechUnavailableReasons.PERMISSION_REQUIRED)
 
             recognizer.available.not() ->
                 SpeechToTextAvailability.Unavailable(reason = SpeechUnavailableReasons.NOT_AVAILABLE)
@@ -132,10 +136,11 @@ internal class IosSpeechToTextService : SpeechToTextService {
         }
     }
 
-    private suspend fun requestMicAuthorizationIfNeeded(): Boolean =
-        suspendCancellableCoroutine { continuation ->
-            AVAudioSession.sharedInstance().requestRecordPermission { granted ->
-                continuation.resume(granted)
-            }
-        }
+    // Status read only. By the time this runs, aagya's controller has already raised the
+    // system dialog from the mic button (see rememberRequestMicrophonePermission), and only
+    // a granted answer starts listening. Anything but granted here means a caller skipped
+    // that flow, and the answer is the same one AndroidSpeechToTextService gives: report
+    // PERMISSION_REQUIRED rather than ask a second time from a layer that should not own it.
+    private fun microphoneAuthorized(): Boolean =
+        AVAudioApplication.sharedInstance().recordPermission == AVAudioApplicationRecordPermissionGranted
 }

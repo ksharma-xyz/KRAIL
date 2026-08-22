@@ -74,20 +74,48 @@ import FoundationModels
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
             Task {
+                // Kept deliberately in step with `buildExtractionPrompt` in
+                // AndroidAiTextService. This side used to be a shortened paraphrase of it
+                // with no examples, and the two drifted where it mattered: Android listed
+                // "let's go to X" in the lone-place rule and carried three worked examples,
+                // this one listed neither. "lets go to work" came back with work in BOTH
+                // fields and the rider got a trip from their work stop to their work stop.
+                // The deterministic guard in AiSearchInputViewModel is what actually stops
+                // that reaching the row; this is the half that stops the model producing it.
                 let instructions = """
-                Extract trip-planning fields from a rider's message for a public transport \
-                app. originText/destinationText are short place names as the rider said \
-                them (e.g. "home", "Central Station"), omitted if not mentioned. isArrival \
-                is true for "arrive by"/"need to be there by", false for "leave at"/ \
-                "leaving around" - omit the whole time field if the rider gave no time. \
-                timeText is the time phrase verbatim (e.g. "9am", "6:30pm"), never \
+                You extract structured trip-planning fields from a rider's message for a \
+                public transport app.
+
+                Rules:
+                - originText / destinationText are short place names as the rider said \
+                them (e.g. "home", "Central Station"), never a full sentence. Omitted if \
+                not mentioned.
+                - isArrival is true for "arrive by"/"need to be there by"/"by <time>", \
+                false for "leave at"/"leaving around"/"departing at". Omit the whole time \
+                field if the rider gave no time at all.
+                - timeText is the time phrase verbatim (e.g. "9am", "6:30pm"), never \
                 resolved, and includes any day word said with it ("tomorrow at 9am", \
-                "friday 6pm") because the day is resolved later from this same string. \
-                modeHints lists any transport mode words mentioned, verbatim, \
-                lowercase. Never invent a field the rider didn't actually say. If the \
-                rider names only one place, decide from the phrasing: "go home", "take \
-                me to X" and "heading to X" mean X is the destination and origin is \
-                omitted; only "from X" or "leaving X" makes a lone place the origin.
+                "friday 6pm") because the day is resolved later from this same string.
+                - modeHints lists any transport mode words mentioned, verbatim, lowercase. \
+                Empty if none mentioned.
+                - If the rider names only ONE place, decide which field it belongs in from \
+                the phrasing. "go home", "let's go to X", "lets go to X", "take me to X", \
+                "heading to X" and "I need to get to X" all mean X is the DESTINATION and \
+                originText is omitted. Only put a lone place in originText when the wording \
+                is clearly about leaving, such as "from X" or "leaving X". A rider saying \
+                where they are going is far more common than a rider saying only where they \
+                are.
+                - NEVER put the same place in both originText and destinationText. A rider \
+                who names one place has named one end of the trip, not both.
+                - Never invent a field the rider didn't actually say. Omit it instead.
+
+                Examples:
+                "let's go home" -> destinationText "home", originText omitted.
+                "lets go to work" -> destinationText "work", originText omitted.
+                "leaving home around 9" -> originText "home", destinationText omitted, \
+                isArrival false, timeText "around 9".
+                "town hall to bondi junction by 6pm friday" -> originText "town hall", \
+                destinationText "bondi junction", isArrival true, timeText "6pm friday".
                 """
                 do {
                     let session = LanguageModelSession(instructions: instructions)

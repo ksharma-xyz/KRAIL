@@ -577,6 +577,80 @@ class AiSearchInputViewModelTest {
         assertFalse(viewModel.uiState.value.isDeviceCapable)
     }
 
+    /**
+     * "lets go to work" on iOS came back with "work" in BOTH fields, both resolved to the
+     * rider's Work stop, and the home row was filled Work to Work. A trip from a stop to
+     * itself is never something a rider asked for.
+     */
+    @Test
+    fun `the same place in both fields never becomes a trip from a stop to itself`() =
+        runTest(testDispatcher) {
+            sandook.upsertStopLabel(
+                label = "work",
+                emoji = "💼",
+                stopId = "10102",
+                stopName = "Town Hall",
+                sortOrder = 0L,
+            )
+            aiTextService.extractionResult = TripIntentExtraction(
+                originText = "work",
+                destinationText = "work",
+                timeIntent = null,
+            )
+            viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("lets go to work"))
+
+            viewModel.onEvent(AiSearchInputEvent.Submit)
+            advanceUntilIdle()
+
+            val resolved = viewModel.uiState.value.resolved
+            assertEquals(StopItem(stopName = "Town Hall", stopId = "10102"), resolved?.toStopItem)
+            // The destination is kept and the origin dropped, never the other way round: the
+            // rider said where they were going.
+            assertNull(resolved?.fromStopItem)
+        }
+
+    @Test
+    fun `two different names for the same station are still one station`() =
+        runTest(testDispatcher) {
+            // Same station, two ids: a label pinned to the parent and a search result on a
+            // platform. An id comparison alone let this through.
+            sandook.upsertStopLabel(
+                label = "work",
+                emoji = "💼",
+                stopId = "10102A",
+                stopName = "Town Hall",
+                sortOrder = 0L,
+            )
+            aiTextService.extractionResult = TripIntentExtraction(
+                originText = "work",
+                destinationText = "Town Hall",
+                timeIntent = null,
+            )
+            viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("work to town hall"))
+
+            viewModel.onEvent(AiSearchInputEvent.Submit)
+            advanceUntilIdle()
+
+            assertNull(viewModel.uiState.value.resolved?.fromStopItem)
+        }
+
+    @Test
+    fun `a genuinely different origin is left alone`() = runTest(testDispatcher) {
+        aiTextService.extractionResult = TripIntentExtraction(
+            originText = "Central Station",
+            destinationText = "Town Hall",
+            timeIntent = null,
+        )
+        viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("central to town hall"))
+
+        viewModel.onEvent(AiSearchInputEvent.Submit)
+        runCurrent()
+
+        val resolved = viewModel.uiState.value.resolved
+        assertEquals(StopItem(stopName = "Central Station", stopId = "10101"), resolved?.fromStopItem)
+        assertEquals(StopItem(stopName = "Town Hall", stopId = "10102"), resolved?.toStopItem)
+    }
+
     @Test
     fun `no time mentioned means no time, not a time we chose`() = runTest(testDispatcher) {
         aiTextService.extractionResult = TripIntentExtraction(

@@ -87,6 +87,33 @@ maintainer rather than suppressing. There is no "genuinely not possible" escape 
 `LongMethod` is exempt only on `@Composable` functions (already configured); never suppress
 it elsewhere — refactor instead.
 
+## The rider's theme colour has four roles
+
+Before drawing anything in the theme colour, read
+[`taj/THEME_COLOUR_ROLES.md`](taj/THEME_COLOUR_ROLES.md).
+
+One accessor per role, because a call site that does not say which role it means cannot be
+checked:
+
+| Accessor | For | Adapted |
+|---|---|---|
+| `themeGroundColor()` | a fill with content drawn on top | no |
+| `themeInkColor()` | text, icons, strokes drawn onto a surface | **yes** |
+| `themeBackgroundColor()` | the translucent card wash | no |
+| `themeDecorColor()` | gradients, ripples, nothing read off it | no |
+
+Pick with one question: is something drawn **on top of** this colour (ground), or is this colour
+drawn **on top of** something (ink)? Pass `UI_COMPONENT_CONTRAST_AA` to `themeInkColor()` for
+strokes and icons; the 4.5 default is for text. A chip's label is text even though the chip is a
+control.
+
+`themeColor()` is deprecated and `ThemeColorRoleRule` flags it. Ink is **derived**, so adding a
+theme needs no new colour and no new test.
+
+Two traps, both documented in full in that file: `contrastRatio` ignores alpha, so composite a
+translucent ground before measuring against it; and never key a derivation on
+`KrailTheme.colors.surface`, which animates for 1500 ms during a theme switch.
+
 ## LazyColumn / LazyRow item keys
 
 **Always provide an explicit `key` for every `item {}` call** — this is critical for correct
@@ -422,6 +449,8 @@ that contradicts the doc should also update the doc in the same change.
   `onAddressSearchTextChanged` or the `search_stop_address_*` Remote Config contract.
 - `docs/TABLET_FOLDABLE_UX.md` — adaptive layout rules for tablets, foldables, and phone
   landscape (per-screen dual-pane behaviour, compact-height adaptations, breakpoint contract).
+- `taj/THEME_COLOUR_ROLES.md` — the four theme-colour roles, when to use which, how ink is
+  derived, and what each guard holds; read before drawing in the rider's theme colour.
 - `docs/LAYOUT_AND_INSETS.md` — inset authority, `adjustResize`, `weight` vs `fillMaxSize`,
   and how to tell a layout bug from the window moving; read before changing a screen root or
   a bottom-anchored input.

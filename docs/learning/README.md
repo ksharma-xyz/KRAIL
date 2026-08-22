@@ -64,3 +64,4 @@ Rules, scripts, tests or docs added. Link them. Unchecked boxes if not done yet.
 |---|---|---|
 | 2026-08-16 | [IME pan and the unbounded Column child](2026-08-16-ime-pan-and-unbounded-column.md) | Layout / window insets |
 | 2026-08-16 | [Clipped inside its own parent](2026-08-16-clipped-inside-its-own-parent.md) | Layout / test that could not fail |
+| 2026-08-22 | [Three contrast guards, and the theme colour that fell between them](2026-08-22-three-contrast-guards-and-the-gap-between-them.md) | Design system / a guard that measured the wrong pairing |

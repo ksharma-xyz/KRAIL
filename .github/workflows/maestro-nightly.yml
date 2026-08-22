@@ -221,12 +221,17 @@ jobs:
       # rather than gates, so one retry buys signal without hiding a real break:
       # a genuine regression fails twice. The PR lane gets no retry on purpose —
       # a flake that blocks a merge should be fixed, not papered over.
+      # --exclude-tags=android-only skips 03-rotation-sweep here. setOrientation
+      # is a no-op on the simulator: it reports success, the app stays portrait,
+      # and the accessibility tree empties for that moment, so the flow fails
+      # against a screen that is drawn correctly. See that file's own header.
       - name: Run smoke and nightly flows
         run: |
           set -o pipefail
           run_suite() {
             maestro --device "${{ steps.sim.outputs.udid }}" \
-              test -e APP_ID=xyz.ksharma.krail .maestro/smoke/ .maestro/nightly/
+              test --exclude-tags=android-only \
+              -e APP_ID=xyz.ksharma.krail .maestro/smoke/ .maestro/nightly/
           }
           if ! run_suite; then
             echo "::warning::Maestro suite failed on iOS; retrying once."

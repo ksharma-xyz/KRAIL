@@ -410,16 +410,21 @@ Verified against **Maestro 2.8.0**; `setOrientation` needs 2.x.
 
 | Lane | Runs | Workflow |
 |---|---|---|
-| `.maestro/smoke/` | every non-draft PR to `main` / `prod/*` | `maestro-pr-smoke.yml` |
+| `.maestro/smoke/` | as part of the nightly run | `maestro-nightly.yml` |
 | `.maestro/nightly/` | 03:00 AEST cron, `prod/**`, manual dispatch | `maestro-nightly.yml` |
 
 `.maestro/shared/` holds helper flows called via `runFlow`. It sits outside both lanes so a
 directory run never treats one as a test.
 
-Smoke gates a merge and must stay fast: two flows, cold launch and planning a trip against the
-real API. Nightly runs the **whole** tree on Android and, in a separate `macos-15` job, on an
-iPhone simulator — and gates nothing. Neither nightly job merges, tags or publishes anything; a
-red nightly is a signal for a human.
+Smoke is two flows, cold launch and planning a trip against the real API. It **no longer runs
+on pull requests**: the lane ran a full emulator per PR, was never a required check, and by
+August 2026 was failing on every PR regardless of the change in it, so the only thing it
+reliably produced was a red mark people learned to ignore. Nightly runs the **whole** tree,
+smoke flows included, on Android and, in a separate `macos-15` job, on an iPhone simulator.
+
+Nightly gates nothing. It merges, tags and publishes nothing; a red nightly is a signal for a
+human. Nothing in CI gates a merge on a Maestro flow any more, so an end-to-end regression is
+caught by reading the nightly, not by a blocked PR.
 
 **The rotation sweep is a nightly flow, not a smoke one.** Rotating a software-rendered CI
 emulator was the dominant flake source in a lane that must never retry. What it covers is

@@ -1,8 +1,14 @@
 package xyz.ksharma.krail.taj.modifier
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -16,8 +22,13 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.animations.AiSpinDefaults
 import xyz.ksharma.krail.taj.animations.rememberAiSpinAngle
+import xyz.ksharma.krail.taj.preview.PreviewComponent
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.tokens.AiGradientTokens
 import xyz.ksharma.krail.taj.tokens.StrokeTokens
 import kotlin.math.hypot
@@ -72,6 +83,20 @@ fun Modifier.aiGradientBorder(
         val ringTopLeft = Offset(half, half)
         val ringSize = Size(size.width - strokePx, size.height - strokePx)
 
+        // The centreline's radius, not the shape's.
+        //
+        // [cornerRadius] is the radius of the surface this ring sits on, which is the radius
+        // its OUTER edge has to follow. The stroke is centred on a rect inset by half its
+        // width, and a stroke's outer edge curves at the centreline radius plus that same
+        // half. Passing the shape's radius straight through therefore drew the outer edge at
+        // `cornerRadius + half`: a tighter-cornered ring than the card it was tracing, so at
+        // every corner the ring pulled inward and the card's own background showed as a pale
+        // rim outside it. At the dialog's working stroke that rim was 3dp of white.
+        //
+        // Floored at zero, so a stroke thicker than the radius degrades to a square-cornered
+        // ring rather than inverting into a negative radius.
+        val ringCornerRadius = (cornerRadius.toPx() - half).coerceAtLeast(0f)
+
         // The gradient-filled square must fully cover the ring's bounding box at every
         // rotation angle, so its side is the card's own diagonal, centered on the card.
         val coverSide = hypot(size.width, size.height)
@@ -90,7 +115,7 @@ fun Modifier.aiGradientBorder(
                 // fading the mask fades the ring.
                 color = Color.Black.copy(alpha = alpha),
                 style = Stroke(width = strokePx),
-                cornerRadius = CornerRadius(cornerRadius.toPx()),
+                cornerRadius = CornerRadius(ringCornerRadius),
                 topLeft = ringTopLeft,
                 size = ringSize,
             )
@@ -110,3 +135,44 @@ fun Modifier.aiGradientBorder(
         }
     }
 }
+
+// region Previews
+
+/**
+ * The exact stack the Ask KRAIL dialog wears: a clipped, filled, rounded surface with this ring
+ * on top of it, over a dark backdrop that makes any gap between the two visible.
+ *
+ * It exists because a gap was there and nobody could see it in a preview. The ring kept the
+ * shape's corner radius for its own centreline, so its outer edge curved at a tighter radius
+ * than the card, and the card's white background showed through at every corner. On a white
+ * card against a grey scrim that reads as a pale rim, which is easy to mistake for a shadow.
+ *
+ * The backdrop is deliberately dark and the surface deliberately light: the failure is invisible
+ * when both are the same colour, which is exactly how it survived.
+ */
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun PreviewAiGradientBorderOnFilledSurface() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Train) {
+        Box(
+            modifier = Modifier
+                .background(Color(0xFF404040))
+                .padding(16.dp),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(width = 220.dp, height = 96.dp)
+                    .clip(RoundedCornerShape(28.dp))
+                    .background(Color.White)
+                    .aiGradientBorder(
+                        spinning = false,
+                        cornerRadius = 28.dp,
+                        strokeWidth = 6.dp,
+                    ),
+            )
+        }
+    }
+}
+
+// endregion

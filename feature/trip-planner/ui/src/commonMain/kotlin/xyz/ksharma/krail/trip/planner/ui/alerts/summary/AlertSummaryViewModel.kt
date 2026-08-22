@@ -11,16 +11,21 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.aitext.AiAvailability
 import xyz.ksharma.krail.core.aitext.AiTextService
+import xyz.ksharma.krail.core.aitext.AiUnavailableReasons
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.components.AlertFeedbackVoteChoice
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 
 private const val GENERATING_MIN_DURATION_MS = 1000L
 
-// Same transient-reason convention AiSearchInputViewModel's DOWNLOADING phase check uses -
-// these mean "not ready yet", not "never available", so a dedupe key set for one of these
-// must not permanently block a later retry of the same alert set.
-private val RETRIABLE_REASONS = setOf("downloadable", "downloading")
+// "Not ready yet", not "never available", so a dedupe key set for one of these must not
+// permanently block a later retry of the same alert set.
+//
+// These were the two raw ML Kit spellings, which meant iOS never matched: Foundation Models
+// reports its own words for a model that is still downloading, and a rider on an iPhone had
+// every retry treated as a permanent failure. Both platforms now report the shared
+// AiUnavailableReasons vocabulary, which is the whole reason that object exists.
+private val RETRIABLE_REASONS = setOf(AiUnavailableReasons.MODEL_DOWNLOADING)
 
 /**
  * Owns the trip's single aggregate AI summary card: request lifecycle and the vote feedback

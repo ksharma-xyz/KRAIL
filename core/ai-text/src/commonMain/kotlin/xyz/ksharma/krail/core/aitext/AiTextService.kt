@@ -27,11 +27,12 @@ interface AiTextService {
      * specifically. Unlike [summarize] (which degrades silently — see [AiAvailability]'s
      * doc), a rider who typed something into the AI search-input flow and hit submit needs
      * to see *something* happen, so callers here are expected to actually branch on
-     * [AiAvailability.Unavailable.reason] — `"downloadable"`/`"downloading"` should render a
-     * distinct "setting up on-device AI" state rather than the generic "couldn't understand
-     * that" a genuine parse failure gets. Calling this also kicks off the on-demand model
-     * download as a side effect when the reason is `"downloadable"`, same fire-and-forget
-     * shape as [checkAvailability]'s own summarizer download trigger.
+     * [AiAvailability.Unavailable.reason], which is one of [AiUnavailableReasons]:
+     * [AiUnavailableReasons.MODEL_DOWNLOADING] should render a distinct "setting up on-device
+     * AI" state rather than the generic "couldn't understand that" a genuine parse failure
+     * gets, and the two permanent reasons should say which of them it was. Calling this also
+     * kicks off the on-demand model download as a side effect when one is available, same
+     * fire-and-forget shape as [checkAvailability]'s own summarizer download trigger.
      */
     suspend fun checkExtractionAvailability(): AiAvailability
 
@@ -90,9 +91,45 @@ data class TimeIntent(
 )
 
 /**
- * Whether [AiTextService] can be used right now. [Unavailable.reason] is for logging only —
- * never shown to the user, since both features this backs are additive and must degrade
- * silently to today's UI.
+ * The reasons both platform implementations report, and the only ones a caller may branch on.
+ *
+ * Modelled on [xyz.ksharma.krail.core.speechtotext.SpeechUnavailableReasons], and added for
+ * the same failure it was added for. The Android service reported ML Kit's own words
+ * ("downloadable", "downloading", "unsupported_device") and the iOS service reported Swift's
+ * string interpolation of `SystemLanguageModel.Availability.UnavailableReason`
+ * ("deviceNotEligible", "appleIntelligenceNotEnabled", "modelNotReady"). The one caller that
+ * branches on these tested for the Android spellings only, so on iOS *every* unavailability,
+ * including the temporary "still downloading" one, fell through to the generic could-not-read
+ * message and told riders to reword a sentence that was never the problem.
+ *
+ * Anything a platform reports that is not one of these is passed through as its own string
+ * for logs, and callers treat it as an unknown failure rather than guessing.
+ */
+object AiUnavailableReasons {
+
+    /** Temporary and retriable: the on-device model is downloading, or is about to. */
+    const val MODEL_DOWNLOADING = "model_downloading"
+
+    /** Permanent for this device: no hardware support, or an OS too old to have the API. */
+    const val DEVICE_UNSUPPORTED = "device_unsupported"
+
+    /**
+     * The device could do it and the rider has it switched off. The only reason with a fix the
+     * rider can actually carry out, which is why it is not folded into [DEVICE_UNSUPPORTED].
+     */
+    const val NEEDS_DEVICE_SETTING = "needs_device_setting"
+
+    /** The availability check itself failed. Says nothing about the device either way. */
+    const val CHECK_FAILED = "check_failed"
+}
+
+/**
+ * Whether [AiTextService] can be used right now.
+ *
+ * [Unavailable.reason] is one of [AiUnavailableReasons] wherever a platform can map onto one.
+ * For [AiTextService.summarize] it stays log-only — that feature is additive and degrades
+ * silently. For [AiTextService.checkExtractionAvailability] the caller is expected to branch
+ * on it, because a rider who typed a sentence and pressed send is owed a reason.
  */
 sealed interface AiAvailability {
     data object Available : AiAvailability

@@ -10,6 +10,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import xyz.ksharma.krail.core.aitext.AiAvailability
+import xyz.ksharma.krail.core.aitext.AiUnavailableReasons
 import xyz.ksharma.krail.taj.components.AlertFeedbackVoteChoice
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAiTextService
@@ -109,7 +110,7 @@ class AlertSummaryViewModelTest {
         advanceUntilIdle()
         assertTrue(viewModel.uiState.value is AlertSummaryUiState.Resolved)
 
-        aiTextService.availability = AiAvailability.Unavailable(reason = "unsupported_device")
+        aiTextService.availability = AiAvailability.Unavailable(reason = AiUnavailableReasons.DEVICE_UNSUPPORTED)
         viewModel.onEvent(AlertSummaryEvent.SummaryRequested(persistentSetOf(ALERT_TWO)))
         advanceUntilIdle()
 
@@ -118,7 +119,7 @@ class AlertSummaryViewModelTest {
 
     @Test
     fun `downloading reason resets the dedupe key so a later retry actually runs`() = runTest(testDispatcher) {
-        aiTextService.availability = AiAvailability.Unavailable(reason = "downloading")
+        aiTextService.availability = AiAvailability.Unavailable(reason = AiUnavailableReasons.MODEL_DOWNLOADING)
         viewModel.onEvent(AlertSummaryEvent.SummaryRequested(persistentSetOf(ALERT_ONE)))
         advanceUntilIdle()
         assertNull(viewModel.uiState.value)
@@ -132,7 +133,7 @@ class AlertSummaryViewModelTest {
 
     @Test
     fun `unsupported_device reason does not reset the dedupe key`() = runTest(testDispatcher) {
-        aiTextService.availability = AiAvailability.Unavailable(reason = "unsupported_device")
+        aiTextService.availability = AiAvailability.Unavailable(reason = AiUnavailableReasons.DEVICE_UNSUPPORTED)
         viewModel.onEvent(AlertSummaryEvent.SummaryRequested(persistentSetOf(ALERT_ONE)))
         advanceUntilIdle()
         assertNull(viewModel.uiState.value)

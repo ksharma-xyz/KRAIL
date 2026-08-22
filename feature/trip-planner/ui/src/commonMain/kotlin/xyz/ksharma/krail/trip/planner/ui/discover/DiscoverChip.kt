@@ -24,13 +24,15 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.discover.state.DiscoverCardType
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.contrast.ContrastAnalyzer.Companion.UI_COMPONENT_CONTRAST_AA
 import xyz.ksharma.krail.taj.darken
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
-import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.taj.themeGroundColor
+import xyz.ksharma.krail.taj.themeInkColor
 
 @Composable
 fun DiscoverChip(
@@ -43,7 +45,7 @@ fun DiscoverChip(
     val dim = KrailTheme.dimensions
     val textColor = if (selected) {
         getForegroundColor(
-            backgroundColor = if (isAppInDarkMode()) themeColor().darken() else themeColor(),
+            backgroundColor = if (isAppInDarkMode()) themeGroundColor().darken() else themeGroundColor(),
         )
     } else {
         KrailTheme.colors.label
@@ -98,12 +100,12 @@ fun DiscoverChip(
             .clip(RoundedCornerShape(dim.radiusFull))
             .border(
                 width = dim.strokeThin,
-                color = if (selected) Color.Transparent else themeColor(),
+                color = if (selected) Color.Transparent else themeInkColor(UI_COMPONENT_CONTRAST_AA),
                 shape = RoundedCornerShape(dim.radiusFull),
             )
             .background(
                 color = if (selected) {
-                    if (isAppInDarkMode()) themeColor().darken() else themeColor()
+                    if (isAppInDarkMode()) themeGroundColor().darken() else themeGroundColor()
                 } else {
                     KrailTheme.colors.discoverChipBackground
                 },

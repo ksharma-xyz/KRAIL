@@ -37,10 +37,9 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.taj.theme.ensureMinimumContrast
 import xyz.ksharma.krail.taj.theme.getForegroundColor
-import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.taj.themeContentColor
+import xyz.ksharma.krail.taj.themeInkColor
 
 private val ToggleSize = 32.dp
 private val GlyphStrokeWidth = 2.dp
@@ -64,7 +63,7 @@ fun ParkRideAddToggle(
     // Not-added is an outline ring on the surface, so the row stays quiet and the accent is
     // the only colour in it. Added flips to a filled disc, which reads as "done" at a glance
     // rather than relying on telling a plus from a tick.
-    val accent = themeColor().ensureMinimumContrast(background = KrailTheme.colors.surface)
+    val accent = themeInkColor()
     val glyphColor = if (added) {
         getForegroundColor(backgroundColor = accent, foregroundColor = themeContentColor())
     } else {

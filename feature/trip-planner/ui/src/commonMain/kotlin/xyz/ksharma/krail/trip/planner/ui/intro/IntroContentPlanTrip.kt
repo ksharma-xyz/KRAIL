@@ -23,8 +23,11 @@ import xyz.ksharma.krail.core.datetime.rememberCurrentDateTime
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.taj.LocalThemeColor
+import xyz.ksharma.krail.taj.contrast.ContrastAnalyzer.Companion.UI_COMPONENT_CONTRAST_AA
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.asThemeInk
+import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.JourneyTimeOptionsGroup
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.TimeSelection
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptions
@@ -76,7 +79,9 @@ fun IntroContentPlanTrip(
             Column(verticalArrangement = Arrangement.spacedBy(dim.spacingL)) {
                 JourneyTimeOptionsGroup(
                     selectedOption = journeyTimeOption,
-                    themeColor = style.hexToComposeColor(),
+                    groundColor = style.hexToComposeColor(),
+                    inkColor = style.hexToComposeColor()
+                        .asThemeInk(darkMode = isAppInDarkMode(), minContrast = UI_COMPONENT_CONTRAST_AA),
                     onOptionSelected = {
                         journeyTimeOption = it
                     },

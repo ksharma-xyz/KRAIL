@@ -32,8 +32,10 @@ import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.SheetTitleBar
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextButton
+import xyz.ksharma.krail.taj.contrast.ContrastAnalyzer.Companion.UI_COMPONENT_CONTRAST_AA
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.themeInkColor
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptions
 import kotlin.time.Clock
@@ -50,6 +52,15 @@ fun DateTimeSelectorScreen(
     // Colors
     val themeColorHex by LocalThemeColor.current
     val themeColor = remember(themeColorHex) { themeColorHex.hexToComposeColor() }
+
+    // The sheet is a lighter ground than the surface, so the raw theme colour is at its least
+    // legible here. The selected chip stays the raw colour because content is drawn on top of it.
+    //
+    // Two inks, because the two things are not the same kind of thing: the unselected chip's
+    // label is text a rider reads, so it is held to 4.5, while the date chevrons are icons and
+    // are held to the 3.0 non-text minimum.
+    val themeTextInk = themeInkColor()
+    val themeIconInk = themeInkColor(UI_COMPONENT_CONTRAST_AA)
 
     // Journey Time Options
     var journeyTimeOption by rememberSaveable {
@@ -133,7 +144,8 @@ fun DateTimeSelectorScreen(
         item("time_options_group") {
             JourneyTimeOptionsGroup(
                 selectedOption = journeyTimeOption,
-                themeColor = themeColor,
+                groundColor = themeColor,
+                inkColor = themeTextInk,
                 onOptionSelected = {
                     journeyTimeOption = it
                 },
@@ -143,7 +155,7 @@ fun DateTimeSelectorScreen(
 
         item("date_selection") {
             DateSelection(
-                themeColor = themeColor,
+                themeColor = themeIconInk,
                 date = toReadableDate(selectedDate),
                 onNextClicked = {
                     if (selectedDate < maxDate) {

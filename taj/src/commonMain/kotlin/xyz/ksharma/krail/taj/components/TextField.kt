@@ -54,7 +54,7 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.taj.themeInkColor
 import xyz.ksharma.krail.taj.tokens.RadiusTokens
 import xyz.ksharma.krail.taj.tokens.SpacingTokens
 import xyz.ksharma.krail.taj.tokens.TextFieldTokens
@@ -384,7 +384,7 @@ object TextFieldPlaceholderDefaults {
 
     @Composable
     fun colors(
-        activeColor: Color = themeColor(),
+        activeColor: Color = themeInkColor(),
         inactiveColor: Color = KrailTheme.colors.onSurface,
     ): TextFieldPlaceholderColors {
         return TextFieldPlaceholderColors(

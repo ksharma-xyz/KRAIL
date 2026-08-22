@@ -28,7 +28,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
-import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.taj.themeDecorColor
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -76,7 +76,7 @@ import kotlin.math.sin
 @Composable
 fun CloudGradientBackground(
     modifier: Modifier = Modifier,
-    themeColor: Color = themeColor(),
+    themeColor: Color = themeDecorColor(),
     spec: CloudFieldSpec = CloudFieldSpec.Ambient,
     content: @Composable BoxScope.() -> Unit = {},
 ) {

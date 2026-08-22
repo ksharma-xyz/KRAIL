@@ -26,7 +26,7 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.krailRipple
 import xyz.ksharma.krail.taj.themeBackgroundColor
-import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.taj.themeDecorColor
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopDisplay
 
 @Composable
@@ -47,7 +47,7 @@ fun SavedTripCard(
     } else if (onLongClick != null) {
         Modifier.combinedClickable(
             interactionSource = interactionSource,
-            indication = krailRipple(color = themeColor()),
+            indication = krailRipple(color = themeDecorColor()),
             onLongClick = onLongClick,
             onClick = onCardClick,
         )

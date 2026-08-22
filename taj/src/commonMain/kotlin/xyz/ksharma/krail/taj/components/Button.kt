@@ -45,6 +45,7 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.themeBackgroundColor
+import xyz.ksharma.krail.taj.themeInkColor
 import xyz.ksharma.krail.taj.tokens.ComponentTokens
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.DisabledContentAlpha
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.EnabledContentAlpha
@@ -298,10 +299,9 @@ object ButtonDefaults {
 
     @Composable
     fun textButtonColors(): ButtonColors {
-        val hexThemeColor: String by LocalThemeColor.current
-        val themeColor: Color by remember(hexThemeColor) {
-            mutableStateOf(hexThemeColor.hexToComposeColor())
-        }
+        // A text button has a transparent container, so its label is ink read straight against
+        // whatever surface is behind it — the one role that has to be adapted.
+        val themeColor = themeInkColor()
         return ButtonColors(
             containerColor = Color.Transparent,
             contentColor = themeColor,

@@ -21,7 +21,7 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.taj.themeGroundColor
 
 private val ParkRideIconCornerRadius = 6.dp // no token equivalent (between RadiusXS=4 and RadiusS=8)
 
@@ -37,7 +37,7 @@ internal fun ParkRideIcon(
         ),
     ) {
         ParkRideIconContainer(
-            backgroundColor = themeColor(),
+            backgroundColor = themeGroundColor(),
             modifier = modifier,
         ) {
             Text(

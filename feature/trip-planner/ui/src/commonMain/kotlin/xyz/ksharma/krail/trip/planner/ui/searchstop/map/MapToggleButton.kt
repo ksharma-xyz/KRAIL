@@ -32,7 +32,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
-import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.taj.themeGroundColor
 
 @Composable
 fun MapToggleButton(
@@ -58,7 +58,7 @@ fun MapToggleButton(
         targetValue = if (selected) {
             KrailTheme.colors.onSurface
         } else {
-            getForegroundColor(themeColor())
+            getForegroundColor(themeGroundColor())
         },
         animationSpec = tween(durationMillis = 400),
     )

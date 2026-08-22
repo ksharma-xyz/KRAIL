@@ -50,7 +50,7 @@ import xyz.ksharma.krail.taj.magicBorderColors
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.taj.themeInkColor
 
 @Composable
 fun AppUpgradeScreen(
@@ -118,7 +118,7 @@ fun AppUpgradeScreen(
                 style = KrailTheme.typography.displayLarge.copy(
                     fontWeight = FontWeight.Black,
                 ),
-                color = themeColor(),
+                color = themeInkColor(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(vertical = 24.dp),

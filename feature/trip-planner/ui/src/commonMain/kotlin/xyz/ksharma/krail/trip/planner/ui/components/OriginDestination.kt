@@ -37,6 +37,7 @@ import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.contrast.ContrastAnalyzer.Companion.UI_COMPONENT_CONTRAST_AA
 import xyz.ksharma.krail.taj.modifier.CardShape
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.preview.PreviewComponent
@@ -44,7 +45,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
-import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.taj.themeInkColor
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopDisplay
 
 private val ORIGIN_CIRCLE_SIZE = 10.dp
@@ -220,7 +221,7 @@ private fun PreviewOriginDestination_Unlabelled() {
         OriginDestination(
             origin = StopDisplay(stopId = "1", name = "Central Station"),
             destination = StopDisplay(stopId = "2", name = "Town Hall Station"),
-            timeLineColor = themeColor(),
+            timeLineColor = themeInkColor(UI_COMPONENT_CONTRAST_AA),
         )
     }
 }
@@ -233,7 +234,7 @@ private fun PreviewOriginDestination_BothLabelled() {
         OriginDestination(
             origin = StopDisplay(stopId = "1", name = "Central Station", label = "Home"),
             destination = StopDisplay(stopId = "2", name = "Town Hall Station", label = "Work"),
-            timeLineColor = themeColor(),
+            timeLineColor = themeInkColor(UI_COMPONENT_CONTRAST_AA),
         )
     }
 }
@@ -246,7 +247,7 @@ private fun PreviewOriginDestination_OriginLabelledOnly() {
         OriginDestination(
             origin = StopDisplay(stopId = "1", name = "Manly Wharf", label = "Home"),
             destination = StopDisplay(stopId = "2", name = "Circular Quay Wharf"),
-            timeLineColor = themeColor(),
+            timeLineColor = themeInkColor(UI_COMPONENT_CONTRAST_AA),
         )
     }
 }

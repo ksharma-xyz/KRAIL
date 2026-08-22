@@ -5,8 +5,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import xyz.ksharma.krail.taj.contrast.ContrastAnalyzer.Companion.UI_COMPONENT_CONTRAST_AA
 import xyz.ksharma.krail.taj.themeBackgroundColor
-import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.taj.themeInkColor
 import xyz.ksharma.krail.taj.tokens.ComponentTokens
 import xyz.ksharma.krail.taj.tokens.StrokeTokens
 
@@ -16,7 +17,7 @@ val CardShape = RoundedCornerShape(ComponentTokens.CardCornerRadius)
 fun Modifier.cardBorder(): Modifier = this.border(
     shape = CardShape,
     width = StrokeTokens.Thin,
-    color = themeColor(),
+    color = themeInkColor(UI_COMPONENT_CONTRAST_AA),
 )
 
 @Composable

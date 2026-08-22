@@ -9,7 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import xyz.ksharma.krail.taj.theme.krailRipple
-import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.taj.themeDecorColor
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeSource
@@ -28,7 +28,7 @@ import kotlin.time.TimeSource
 fun Modifier.klickable(
     role: Role = Role.Button,
     enabled: Boolean = true,
-    indication: Indication? = krailRipple(color = themeColor()),
+    indication: Indication? = krailRipple(color = themeDecorColor()),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     onClick: () -> Unit,
 ): Modifier {
@@ -66,7 +66,7 @@ fun Modifier.debouncedKlickable(
     debounceMs: Duration = 500.milliseconds,
     role: Role = Role.Button,
     enabled: Boolean = true,
-    indication: Indication? = krailRipple(color = themeColor()),
+    indication: Indication? = krailRipple(color = themeDecorColor()),
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     onClick: () -> Unit,
 ): Modifier {

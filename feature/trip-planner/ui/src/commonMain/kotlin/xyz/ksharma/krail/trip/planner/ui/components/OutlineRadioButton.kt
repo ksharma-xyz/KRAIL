@@ -28,7 +28,8 @@ private val SmallRadioButtonHeight = 32.dp // no token equivalent
 @Composable
 fun OutlineRadioButton(
     text: String,
-    themeColor: Color,
+    groundColor: Color,
+    inkColor: Color,
     modifier: Modifier = Modifier,
     type: RadioButtonType = RadioButtonType.DEFAULT,
     selected: Boolean = false,
@@ -43,11 +44,15 @@ fun OutlineRadioButton(
     ) {
         val dim = KrailTheme.dimensions
         val contentAlpha = LocalContentAlpha.current
-        val backgroundColor = remember(selected, themeColor, contentAlpha) {
-            if (selected) themeColor.copy(alpha = contentAlpha) else Color.Transparent
+        // Selected fills with the theme colour and puts content on it, so it is a ground.
+        // Unselected draws only a label and a border onto the sheet, so both are ink and have
+        // to be adapted or they are unreadable on a dark ground.
+        val backgroundColor = remember(selected, groundColor, contentAlpha) {
+            if (selected) groundColor.copy(alpha = contentAlpha) else Color.Transparent
         }
-        val borderColor =
-            remember(themeColor, contentAlpha) { themeColor.copy(alpha = contentAlpha) }
+        val borderColor = remember(selected, groundColor, inkColor, contentAlpha) {
+            (if (selected) groundColor else inkColor).copy(alpha = contentAlpha)
+        }
 
         Box(
             modifier = modifier
@@ -77,7 +82,7 @@ fun OutlineRadioButton(
             Text(
                 text = text,
                 style = KrailTheme.typography.title,
-                color = if (selected) themeContentColor() else themeColor,
+                color = if (selected) themeContentColor() else inkColor,
             )
         }
     }

@@ -22,9 +22,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import xyz.ksharma.krail.taj.contrast.ContrastAnalyzer.Companion.UI_COMPONENT_CONTRAST_AA
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.taj.themeInkColor
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -45,7 +46,7 @@ fun LoadingDotsPill(
     isLoading: Boolean,
     modifier: Modifier = Modifier,
     backgroundColor: Color = KrailTheme.colors.onSurface,
-    dotsColor: Color = themeColor(),
+    dotsColor: Color = themeInkColor(UI_COMPONENT_CONTRAST_AA),
     minVisibleMillis: Long = 600L,
 ) {
     val internalVisibleState = remember { mutableStateOf(false) }

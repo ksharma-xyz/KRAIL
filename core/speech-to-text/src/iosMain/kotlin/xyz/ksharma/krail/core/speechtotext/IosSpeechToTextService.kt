@@ -18,6 +18,7 @@ import platform.AVFAudio.setActive
 import platform.Foundation.NSLocale
 import platform.Foundation.currentLocale
 import platform.Speech.SFSpeechAudioBufferRecognitionRequest
+import platform.Speech.SFSpeechRecognitionTaskHintDictation
 import platform.Speech.SFSpeechRecognizer
 import platform.Speech.SFSpeechRecognizerAuthorizationStatus
 import xyz.ksharma.krail.core.log.log
@@ -88,6 +89,7 @@ internal class IosSpeechToTextService : SpeechToTextService {
         }
 
         val request = SFSpeechAudioBufferRecognitionRequest().also { recognitionRequest = it }
+        configureRequest(request = request, recognizer = speechRecognizer)
         val engine = startAudioEngineFeeding(request)
         val inputNode = engine.inputNode
 
@@ -148,6 +150,36 @@ internal class IosSpeechToTextService : SpeechToTextService {
     }
 
     /**
+     * The request settings that mirror Android's recognizer intent extras.
+     *
+     * Two of them had no counterpart here at all, which is why the same sentence behaved
+     * differently on the two platforms even with identical silence windows.
+     *
+     * `EXTRA_PREFER_OFFLINE` maps to [requiresOnDeviceRecognition]. Left unset, iOS defaults
+     * it to false and streams the rider's audio to Apple's servers: a network round trip in
+     * the middle of a spoken sentence, partial results arriving in a different rhythm from
+     * the on-device path, and audio leaving the phone for a feature whose Android half never
+     * sends it anywhere. Android's extra is a preference and falls back silently; this flag
+     * is a hard requirement that fails the session outright when no on-device model is
+     * installed, so it is set only when the recogniser reports one. Same "prefer, do not
+     * require" intent, written the way this platform expresses it.
+     *
+     * `LANGUAGE_MODEL_FREE_FORM` maps to the dictation task hint. The default, unspecified,
+     * leaves the recogniser guessing at the shape of what it is hearing; a rider saying where
+     * they are going is dictation, not a search term and not a yes/no confirmation.
+     */
+    private fun configureRequest(
+        request: SFSpeechAudioBufferRecognitionRequest,
+        recognizer: SFSpeechRecognizer,
+    ) {
+        request.shouldReportPartialResults = true
+        if (recognizer.supportsOnDeviceRecognition()) {
+            request.requiresOnDeviceRecognition = true
+        }
+        request.taskHint = SFSpeechRecognitionTaskHintDictation
+    }
+
+    /**
      * Opens the microphone and points it at [request].
      *
      * `setActive` is called explicitly rather than relied on as a side effect of starting the
@@ -161,7 +193,6 @@ internal class IosSpeechToTextService : SpeechToTextService {
         AVAudioSession.sharedInstance().setActive(true, error = null)
 
         val engine = AVAudioEngine().also { audioEngine = it }
-        request.shouldReportPartialResults = true
 
         val inputNode = engine.inputNode
         inputNode.installTapOnBus(

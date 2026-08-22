@@ -47,7 +47,7 @@ Ruleset id `krail`, in the `gradle/build-logic` included build:
 as `detektPlugins "xyz.ksharma.krail.gradle:detekt-rules:unspecified"` — a coordinate, not a
 project reference, because composite-build substitution resolves it.
 
-All seven run in `./gradlew detekt`. Config lives in the `krail:` block of
+All eight run in `./gradlew detekt`. Config lives in the `krail:` block of
 [`config/detekt.yml`](../../config/detekt.yml).
 
 ### `ClockSystemBan`
@@ -148,6 +148,28 @@ dark-mode contrast regression or a 2×-font clipping bug lands green.
 |---|---|
 | Baseline | [`config/screenshot-annotation-baseline.txt`](../../config/screenshot-annotation-baseline.txt) — 33 rows, `path\|function` |
 | Ratchet | Shrink-only by header rule. Fixing one means swapping the annotation, **re-recording the goldens**, and deleting the line in the same change. |
+
+### `ThemeColorRoleRule`
+
+Two things, both about the rider's theme colour:
+
+1. `themeColor()`, the deprecated accessor. It could not say which of the colour's four roles it
+   meant, so nothing could check any of them.
+2. `themeGroundColor()` — the deliberately unadapted fill colour — passed to a `color =`, `tint =`,
+   `textColor =` or `contentColor =` argument, or into `BorderStroke(`. Those positions draw ink
+   onto a surface, and some theme colours do not clear WCAG AA there: Purple Drip measured 2.95:1
+   on the dark surface and 2.49:1 on a bottom sheet.
+
+**Instead:** `themeInkColor()`, or `themeInkColorOn(background)` when the ground is not one of the
+app's own surfaces. `themeDecorColor()` is the sanctioned way out for a gradient stop or ripple
+that nothing is read off — saying so explicitly is what lets this rule stay an unconditional gate
+instead of accumulating a baseline.
+
+No type resolution, so the check is syntactic and misses a ground colour laundered through a local
+`val` first. `ThemeInkContrastTest` in `:taj` covers the values themselves; this covers the shape
+of the call.
+
+No baseline — zero offenders, unconditional gate.
 
 ### `SnackbarBan`
 

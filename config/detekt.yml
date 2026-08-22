@@ -110,6 +110,11 @@ krail:
     # source-set check reads it as production. Its fakes build fixture timestamps off the real
     # clock on purpose — same reasoning as the test-source exemption.
     excludes: ['**/core/testing/**']
+  # The theme colour has four roles with four different contrast obligations, so taj exposes four
+  # accessors. Flags the deprecated themeColor() and the unadapted themeGroundColor() in an ink
+  # position. themeDecorColor() is the sanctioned way out, so there is no baseline.
+  ThemeColorRoleRule:
+    active: true
   # collectAsState() keeps collecting while backgrounded — collectAsStateWithLifecycle() only.
   # See docs/POLLING_LIFECYCLE.md.
   CollectAsStateBan:

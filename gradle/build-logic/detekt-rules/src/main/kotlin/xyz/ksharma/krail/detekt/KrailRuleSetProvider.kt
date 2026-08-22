@@ -18,6 +18,7 @@ class KrailRuleSetProvider : RuleSetProvider {
             PublicImplementationClass(config),
             ScreenshotPreviewAnnotation(config),
             SnackbarBan(config),
+            ThemeColorRoleRule(config),
         ),
     )
 }

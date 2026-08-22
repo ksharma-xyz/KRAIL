@@ -81,7 +81,7 @@ import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.taj.themeInkColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.ai.AskKrailScreen
 import xyz.ksharma.krail.trip.planner.ui.components.ai.rememberAiGreeting
@@ -208,7 +208,7 @@ fun SavedTripsScreen(
                 ) {
                     TitleBar(
                         title = {
-                            Text(text = "KRAIL", color = themeColor())
+                            Text(text = "KRAIL", color = themeInkColor())
                         },
                         actions = {
                             SavedTripsTitleBarActions(

@@ -25,8 +25,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import xyz.ksharma.krail.taj.contrast.ContrastAnalyzer.Companion.UI_COMPONENT_CONTRAST_AA
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
-import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.taj.themeInkColor
 import xyz.ksharma.krail.taj.tokens.RadiusTokens
 import xyz.ksharma.krail.taj.tokens.SpacingTokens
 import xyz.ksharma.krail.taj.tokens.StrokeTokens
@@ -126,7 +127,7 @@ fun <T> DiscoverCardVerticalPager(
                                 shape = RoundedCornerShape(RadiusTokens.L),
                                 shadow = Shadow(
                                     radius = RadiusTokens.XL,
-                                    color = themeColor(),
+                                    color = themeInkColor(UI_COMPONENT_CONTRAST_AA),
                                     spread = StrokeTokens.Regular,
                                     alpha = animatedShadowAlpha,
                                 ),

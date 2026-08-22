@@ -13,7 +13,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptio
 @Composable
 fun JourneyTimeOptionsGroup(
     selectedOption: JourneyTimeOptions = JourneyTimeOptions.LEAVE,
-    themeColor: Color,
+    groundColor: Color,
+    inkColor: Color,
     modifier: Modifier = Modifier,
     onOptionSelected: (JourneyTimeOptions) -> Unit,
 ) {
@@ -25,7 +26,8 @@ fun JourneyTimeOptionsGroup(
             OutlineRadioButton(
                 text = option.text,
                 selected = option == selectedOption,
-                themeColor = themeColor,
+                groundColor = groundColor,
+                inkColor = inkColor,
                 onClick = { onOptionSelected(option) },
             )
         }

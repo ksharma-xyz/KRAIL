@@ -56,7 +56,7 @@ import xyz.ksharma.krail.taj.getImageHeightRatio
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.taj.themeBackgroundColor
-import xyz.ksharma.krail.taj.themeColor
+import xyz.ksharma.krail.taj.themeGroundColor
 import app.krail.taj.resources.Res as TajRes
 
 @Suppress("LongMethod", "LongParameterList")
@@ -164,7 +164,7 @@ fun DiscoverCard(
 
 @Composable
 fun createAdaptiveBackground(): Color {
-    val themeColor = themeColor()
+    val themeColor = themeGroundColor()
     val surfaceColor = KrailTheme.colors.surface
 
     return if (isAppInDarkMode()) {

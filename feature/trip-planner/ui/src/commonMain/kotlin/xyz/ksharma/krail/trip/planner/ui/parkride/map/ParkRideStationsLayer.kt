@@ -21,8 +21,8 @@ import xyz.ksharma.krail.core.maps.state.GeoJsonFeatureTypes
 import xyz.ksharma.krail.core.maps.state.GeoJsonPropertyKeys
 import xyz.ksharma.krail.core.maps.state.geoJsonProperties
 import xyz.ksharma.krail.taj.theme.getForegroundColor
-import xyz.ksharma.krail.taj.themeColor
 import xyz.ksharma.krail.taj.themeContentColor
+import xyz.ksharma.krail.taj.themeGroundColor
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRideStationPickerItem
 import org.maplibre.spatialk.geojson.Feature as GeoJsonFeature
 
@@ -54,7 +54,7 @@ fun ParkRideStationsLayer(
         data = GeoJsonData.Features(plottable.toFeatureCollection()),
     )
 
-    val discColor = themeColor()
+    val discColor = themeGroundColor()
     val glyphColor = getForegroundColor(
         backgroundColor = discColor,
         foregroundColor = themeContentColor(),

@@ -95,14 +95,23 @@ done
 
 # `dumpsys cpuinfo` prints the same "N% TOTAL" line the ANR dump above did, over
 # a window since the previous call, and unlike /proc/pressure it is readable by
-# the shell user (SELinux denies that one, which is why this does not use the
-# figure the dump quoted).
+# the shell user (SELinux denies that one).
 #
-# 85 rather than something tighter: an idle emulator still reads around 60% here,
-# because software rendering and the emulated kernel are themselves the load. The
-# state being excluded is the 99% one, not ordinary emulator overhead.
-SETTLE_TARGET=85
-SETTLE_TIMEOUT=120
+# Waits for the reading to PLATEAU rather than to drop below a fixed number.
+# The first version of this waited for CPU under 85% and never got it: a
+# software-rendered emulator on a two-core runner reported a flat 100% for the
+# whole two minutes, every sample, so the wait was pure dead time and the flows
+# started against exactly the same machine they would have anyway. An absolute
+# threshold is only meaningful if the idle figure is known, and here it is a
+# property of the runner, not of the work.
+#
+# A plateau is the thing actually worth waiting for: while the image is still
+# bringing services up the number moves, and once it stops moving the device is
+# as quiet as it is going to get. That holds whether the plateau is at 30% or at
+# 100%.
+SETTLE_TOLERANCE=5
+SETTLE_TIMEOUT=90
+previous=""
 settled=0
 # Discarded: the first call reports a window stretching back to boot, which is
 # exactly the busy period being waited out.
@@ -118,19 +127,20 @@ for _ in $(seq 1 $((SETTLE_TIMEOUT / 5))); do
     settled=1
     break
   fi
-  if awk "BEGIN { exit !($total < $SETTLE_TARGET) }"; then
-    echo "Device settled: CPU ${total}%."
+  if [ -n "$previous" ] && awk "BEGIN { d = $total - $previous; if (d < 0) d = -d; exit !(d <= $SETTLE_TOLERANCE) }"; then
+    echo "Device settled: CPU ${total}% (was ${previous}%)."
     settled=1
     break
   fi
   echo "Waiting for device to settle: CPU ${total}%."
+  previous="$total"
   sleep 5
 done
 # A warning, not a failure. A loaded runner still produces a usable result more
 # often than not, and turning this into a hard stop would replace a flaky lane
 # with one that refuses to run.
 if [ "$settled" -eq 0 ]; then
-  echo "::warning::Device still busy after ${SETTLE_TIMEOUT}s; running anyway."
+  echo "::warning::Device CPU still moving after ${SETTLE_TIMEOUT}s; running anyway."
 fi
 
 # Deliberately no `set -e`: a failing flow is an expected outcome here, and its

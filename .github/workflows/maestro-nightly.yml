@@ -86,7 +86,15 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
-          target: google_apis
+          # google_atd, not google_apis. The ATD ("Automated Test Device") images
+          # are Google's own CI build: Play Services kept, because Firebase needs
+          # them, and the rest of the Google app suite stripped out. On the
+          # google_apis image the emulator sat at 100% CPU for the entire two
+          # minutes the runner waited for it, with TTS, YouTube Music, the
+          # launcher and quicksearch between them taking more of the machine than
+          # anything under test. That is not a boot storm that passes, which is
+          # what the previous attempt at this assumed; it is the image.
+          target: google_atd
           arch: x86_64
           profile: pixel_6
           disable-animations: true

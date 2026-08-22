@@ -1,0 +1,44 @@
+# Gets past the first-run map options sheet, and is safe to call on a device that
+# has already seen it.
+#
+# SearchStopViewModel opens this sheet by itself the first time a rider ever
+# reaches the stop search screen, gated on KEY_HAS_SEEN_MAP_OPTIONS_SHEET. While
+# it is up it covers `searchstop.query`, so on a fresh device the search field is
+# not slow to appear, it is unreachable.
+#
+# That is what failed the nightly's 02-plan-trip on every run and survived the
+# timeouts being doubled: waiting longer for a field behind a modal sheet never
+# helps. It passes on a developer emulator because that device saw the sheet
+# once, months ago, and CI is fresh every time. The screenshot Maestro captured
+# at the failure is a full-screen map with this sheet over it.
+#
+# Same shape as dismiss-intro.yaml, and for the same reasons: unconditional at
+# the call site, `optional` here, so a device that has already dismissed it pays
+# one timeout and moves on.
+#
+# Tapping Done rather than the scrim or the drag handle, because Done is what
+# writes KEY_HAS_SEEN_MAP_OPTIONS_SHEET. Dismissing any other way leaves the flag
+# unset and the sheet returns on the next visit, which within one run means the
+# destination half of 02-plan-trip hits it all over again.
+#
+# Not a test. It has no assertions, and a directory run does not pick it up
+# because `.maestro/shared/` sits outside both `smoke/` and `nightly/`.
+appId: ${APP_ID}
+---
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.mapoptions.done"
+    timeout: 10000
+    optional: true
+
+- runFlow:
+    when:
+      visible:
+        id: "searchstop.mapoptions.done"
+    commands:
+      - tapOn:
+          id: "searchstop.mapoptions.done"
+      # The sheet slides out. Tapping through that animation lands the next
+      # command on a screen that is still moving.
+      - waitForAnimationToEnd:
+          timeout: 5000

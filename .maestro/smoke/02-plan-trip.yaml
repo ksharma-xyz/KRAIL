@@ -34,6 +34,10 @@ appId: ${APP_ID}
 - tapOn:
     id: "searchrow.from"
 
+# The map options sheet opens itself the first time this screen is ever reached
+# and covers the query field while it is up. See dismiss-map-options.yaml.
+- runFlow: ../shared/dismiss-map-options.yaml
+
 - extendedWaitUntil:
     visible:
       id: "searchstop.query"
@@ -61,6 +65,10 @@ appId: ${APP_ID}
 # --- Destination ---
 - tapOn:
     id: "searchrow.to"
+
+# A no-op by now on a device that took the branch above, but this flow is also
+# run on its own, and the sheet returns if Done was never tapped.
+- runFlow: ../shared/dismiss-map-options.yaml
 
 - extendedWaitUntil:
     visible:

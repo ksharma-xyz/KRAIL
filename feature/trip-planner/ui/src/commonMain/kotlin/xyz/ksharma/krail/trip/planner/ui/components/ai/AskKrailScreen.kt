@@ -14,7 +14,11 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,7 +29,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
@@ -43,9 +49,11 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.shadow.Shadow
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -54,14 +62,18 @@ import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import xyz.ksharma.krail.core.appinfo.DevicePlatformType
+import xyz.ksharma.krail.core.appinfo.getAppPlatformType
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.AiWheelMark
+import xyz.ksharma.krail.taj.components.CloseIcon
 import xyz.ksharma.krail.taj.components.CloudFieldSpec
 import xyz.ksharma.krail.taj.components.CloudGradientBackground
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.aiGradientBorder
+import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.taj.tokens.AiThemeGradientTokens
@@ -333,7 +345,30 @@ private fun AskKrailDialog(
         // measured once at its final size and nothing reflows mid animation.
         val visibleState = remember { MutableTransitionState(false).apply { targetState = true } }
 
-        Box(modifier = Modifier.fillMaxSize().imePadding(), contentAlignment = Alignment.Center) {
+        // The scrim tap, done here rather than left to the Dialog.
+        //
+        // Compose Multiplatform decides "outside" geometrically: the dialog layer's
+        // boundsInWindow is set to the MEASURED SIZE OF THIS CONTENT, and only pointers
+        // landing outside that rectangle reach the outside-pointer listener that calls
+        // onDismissRequest. This content fills the window (it has to, to centre the card and
+        // own the keyboard inset), so the bounds were the whole screen and no tap was ever
+        // outside anything. Android got away with it because a Compose dialog there is a real
+        // platform window with a working back press; iOS has neither, so the card was a room
+        // with no door and the only way out was a sentence that resolved.
+        //
+        // No indication and no interaction source: this is a scrim, not a button, and a ripple
+        // spreading across the whole screen on the way out is not what a dismissal looks like.
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onDismiss,
+                )
+                .imePadding(),
+            contentAlignment = Alignment.Center,
+        ) {
             AnimatedVisibility(
                 visibleState = visibleState,
                 enter = fadeIn(tween(ENTER_MILLIS)) + scaleIn(
@@ -347,6 +382,12 @@ private fun AskKrailDialog(
             ) {
                 Column(
                     modifier = modifier
+                        // The card is not the scrim. Without this, a tap on the card's own
+                        // padding travels up to the dismiss handler on the box behind it and
+                        // closes the surface the rider was reaching for. detectTapGestures
+                        // rather than a no-op clickable so nothing announces the card itself
+                        // as a control.
+                        .pointerInput(Unit) { detectTapGestures { } }
                         // Fixed on a tablet, edge-margined on a phone: the padding narrows the
                         // incoming constraint first, then widthIn caps what fillMaxWidth may
                         // take, so a phone gets the screen minus its margins and anything wider
@@ -398,6 +439,7 @@ private fun AskKrailDialog(
                         suggestion = suggestion,
                         busyVisible = state.isListening || workingBorder.spinning,
                         onEvent = onEvent,
+                        onDismiss = onDismiss,
                     )
                 }
             }
@@ -425,6 +467,7 @@ internal fun AiDialogContent(
     busyVisible: Boolean,
     onEvent: (AiSearchInputEvent) -> Unit,
     modifier: Modifier = Modifier,
+    onDismiss: () -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
     val themeColorHex by LocalThemeColor.current
@@ -433,15 +476,47 @@ internal fun AiDialogContent(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(dim.spacingL),
     ) {
-        Text(
-            text = AI_INPUT_QUESTION,
-            style = KrailTheme.typography.titleMedium,
-            color = KrailTheme.colors.onSurface,
-            textAlign = TextAlign.Center,
-            // Extra air between the ring and the title: at the container's own padding the
-            // name sat against the border and read as underlined by it.
-            modifier = Modifier.fillMaxWidth().padding(top = dim.spacingM),
-        )
+        // Title centred in the full width, close button laid over the end of it rather than
+        // in a Row beside it, so the button does not shift the name off centre.
+        //
+        // iOS only, and that is the whole reason it exists. A Compose dialog on iOS has no
+        // back press and no swipe, so before the scrim tap below it there was no way out of
+        // this card at all; a drawn control is what makes the way out discoverable rather
+        // than something a rider has to think to try. Android already has the system back
+        // gesture, so there the scrim tap is the addition and a second control would be
+        // clutter on a card this small.
+        Box(modifier = Modifier.fillMaxWidth()) {
+            val showsCloseButton = getAppPlatformType() == DevicePlatformType.IOS
+            Text(
+                text = AI_INPUT_QUESTION,
+                style = KrailTheme.typography.titleMedium,
+                color = KrailTheme.colors.onSurface,
+                textAlign = TextAlign.Center,
+                // Cleared past the button, so a title long enough to wrap wraps instead of
+                // running under it. Symmetric so the name stays centred, and only claimed
+                // where there is a button to clear.
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = if (showsCloseButton) dim.spacingXXL else dim.spacingNone)
+                    .padding(top = dim.spacingM),
+            )
+            if (showsCloseButton) {
+                Image(
+                    imageVector = CloseIcon,
+                    contentDescription = "Close",
+                    colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .clip(CircleShape)
+                        .klickable(onClick = onDismiss)
+                        // The padding is the touch target, not decoration: a 20dp glyph alone
+                        // is a quarter of what a finger needs, and this is the control a rider
+                        // reaches for when they have changed their mind.
+                        .padding(dim.spacingL)
+                        .size(dim.iconSmall),
+                )
+            }
+        }
 
         // The line's three states, resolved in one place so their handover is auditable:
         // resolved beats busy (the border's beat outlives the answer, and "Found it" is what

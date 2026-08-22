@@ -165,9 +165,15 @@ app's own surfaces. `themeDecorColor()` is the sanctioned way out for a gradient
 that nothing is read off — saying so explicitly is what lets this rule stay an unconditional gate
 instead of accumulating a baseline.
 
-No type resolution, so the check is syntactic and misses a ground colour laundered through a local
-`val` first. `ThemeInkContrastTest` in `:taj` covers the values themselves; this covers the shape
-of the call.
+`color =` means a fill on some callees and a stroke on others: `Modifier.background()` takes a
+ground, `Modifier.border()` takes ink, and both name the argument `color`. So the callee is part of
+the decision and fill-taking callees are skipped. Without that the rule flags a chip's selected
+background, where the ground accessor is right and the call site has no correct fix available.
+
+No type resolution, so the check is syntactic. Two limits: a ground colour laundered through a
+local `val` first is invisible to it, and a fill-taking callee outside the listed set would
+false-positive. `ThemeInkContrastTest` in `:taj` covers the values themselves; this covers the
+shape of the call.
 
 No baseline — zero offenders, unconditional gate.
 

@@ -1,6 +1,19 @@
-# Taj Design System - Snapshot Tests
+# Taj Design System
 
-This directory contains snapshot tests for the Taj design system components.
+## Drawing in the rider's theme colour
+
+Read **[THEME_COLOUR_ROLES.md](THEME_COLOUR_ROLES.md)** before using the theme colour for
+anything. It has the four accessors, which one to pick, and why ink is derived rather than
+declared. Picking the wrong one is not caught by the compiler and ships as unreadable text for
+some themes and not others.
+
+Short version: something drawn **on top of** the colour means `themeGroundColor()`; the colour
+drawn **on top of** something means `themeInkColor()`; nothing read off it means
+`themeDecorColor()`.
+
+## Snapshot tests
+
+The rest of this file covers snapshot tests for the Taj design system components.
 
 ## Quick Start
 

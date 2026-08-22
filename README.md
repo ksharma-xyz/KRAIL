@@ -1,12 +1,17 @@
-# KRAIL <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Kotlin_Icon.png/1200px-Kotlin_Icon.png" height="30">  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Android_robot_head.svg/1100px-Android_robot_head.svg.png" height="30">  <img src="https://upload.wikimedia.org/wikipedia/commons/c/ca/IOS_logo.svg" height="30">
+# KRAIL
 
 KRAIL is a modern, Compose Multiplatform app providing a seamless trip-planning experience across
 Android and iOS. Built using Kotlin and Swift (for minor iOS-specific parts), the app offers
 real-time public transport information, personalised features like trip-saving and themes, and
 modular architecture for maintainability.
 
-[![Krail App CI](https://github.com/ksharma-xyz/Krail/actions/workflows/build.yml/badge.svg)](https://github.com/ksharma-xyz/Krail/actions/workflows/build.yml)
-[![codecov](https://codecov.io/gh/ksharma-xyz/Krail/branch/main/graph/badge.svg)](https://codecov.io/gh/ksharma-xyz/Krail)
+![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?logo=kotlin&logoColor=white)
+![Compose Multiplatform](https://img.shields.io/badge/Compose%20Multiplatform-4285F4?logo=jetpackcompose&logoColor=white)
+![Android](https://img.shields.io/badge/Android-3DDC84?logo=android&logoColor=white)
+![iOS](https://img.shields.io/badge/iOS-000000?logo=apple&logoColor=white)
+
+[![Krail App CI](https://github.com/ksharma-xyz/KRAIL/actions/workflows/build.yml/badge.svg)](https://github.com/ksharma-xyz/KRAIL/actions/workflows/build.yml)
+[![codecov](https://codecov.io/gh/ksharma-xyz/KRAIL/branch/main/graph/badge.svg)](https://codecov.io/gh/ksharma-xyz/KRAIL)
 
 ## Table of Contents
 

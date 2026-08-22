@@ -3,6 +3,17 @@
 # Every selector is a testTag, and results are chosen by index rather than by
 # name, so the flow does not break when NSW renames a stop or reorders results.
 # The stop names typed in are inputs, not assertions.
+#
+# The waits here are sized for a software-rendered CI emulator, not for a
+# developer machine. That emulator reports pinned CPU for the whole run, and this
+# is the only flow in either lane long enough to be affected: it was the only one
+# failing while the other five passed, and it failed at a DIFFERENT step on each
+# attempt of the same run, once on the search screen appearing and once on the
+# journey list. Two different steps timing out in one run is the signature of a
+# budget that is too tight, not of a broken screen.
+#
+# The journey wait is the longest because it is the only one that includes a live
+# NSW API round trip on top of the render.
 appId: ${APP_ID}
 ---
 - launchApp:
@@ -26,7 +37,7 @@ appId: ${APP_ID}
 - extendedWaitUntil:
     visible:
       id: "searchstop.query"
-    timeout: 15000
+    timeout: 30000
 
 - tapOn:
     id: "searchstop.query"
@@ -45,7 +56,7 @@ appId: ${APP_ID}
 - extendedWaitUntil:
     visible:
       id: "searchrow.root"
-    timeout: 15000
+    timeout: 30000
 
 # --- Destination ---
 - tapOn:
@@ -54,7 +65,7 @@ appId: ${APP_ID}
 - extendedWaitUntil:
     visible:
       id: "searchstop.query"
-    timeout: 15000
+    timeout: 30000
 
 - tapOn:
     id: "searchstop.query"
@@ -72,7 +83,7 @@ appId: ${APP_ID}
 - extendedWaitUntil:
     visible:
       id: "searchrow.root"
-    timeout: 15000
+    timeout: 30000
 
 # --- Timetable ---
 - tapOn:
@@ -102,4 +113,4 @@ appId: ${APP_ID}
     element:
       id: "timetable.journey..*"
     direction: DOWN
-    timeout: 45000
+    timeout: 90000

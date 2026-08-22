@@ -1,9 +1,9 @@
 package xyz.ksharma.krail.taj.tokens
 
 import androidx.compose.ui.graphics.Color
+import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
-import xyz.ksharma.krail.taj.theme.magic_yellow
 
 /**
  * The gradient the AI search surface wears: the rider's own theme colour, plus one other
@@ -16,8 +16,10 @@ import xyz.ksharma.krail.taj.theme.magic_yellow
  * theme so the surface still belongs to the app the rider chose to look at.
  *
  * The partner is not the nearest colour. Anything under roughly 40 degrees of hue apart
- * blends into one muddy band, so each pair here sits between 97 and 134 degrees apart: far
- * enough that the gradient has somewhere to travel, near enough to stay related.
+ * blends into one muddy band, so every pair sits far enough that the gradient has somewhere
+ * to travel while staying related: 96.8 degrees at the tightest (Purple Drip into Bus) and
+ * 147.5 at the widest (Bus into Magic Yellow, the one deliberate cool-to-warm crossing).
+ * `ThemeGradientPairTest` holds that window, which is what a new theme's partner has to land in.
  *
  * Three stops, not two. A straight RGB blend across that much hue passes near grey in the
  * middle (teal into violet is the worst of them). [midStop] bends the path around that dull
@@ -26,37 +28,15 @@ import xyz.ksharma.krail.taj.theme.magic_yellow
  */
 object AiThemeGradientTokens {
 
-    private val Train = Color(0xFFF6891F)
-    private val Metro = Color(0xFF009B77)
-    private val Bus = Color(0xFF00B5EF)
-    private val PurpleDrip = Color(0xFFAC00C9)
-    private val Ferry = Color(0xFF5AB031)
-    private val BarbiePink = Color(0xFFE0218A)
-    private val MagicYellow = magic_yellow
-
-    private val partners: Map<KrailThemeStyle, Pair<Color, Color>> = mapOf(
-        KrailThemeStyle.Train to (Train to PurpleDrip),
-        // Teal into yellow, not into purple. Purple Drip is a magenta, so the teal theme's
-        // gradient read as teal and pink, and the two ends fought rather than travelled. Yellow
-        // is the same cool-to-warm crossing that works for Bus, at 119 degrees.
-        KrailThemeStyle.Metro to (Metro to MagicYellow),
-        // Yellow, not pink. Blue into pink travels through purple and reads as somebody
-        // else's AI product; blue into yellow is the one pair here that crosses from cool to
-        // warm, so the two ends stay told apart wherever the gradient is in its drift. It is
-        // also KRAIL's own yellow rather than a colour invented for this.
-        KrailThemeStyle.Bus to (Bus to MagicYellow),
-        KrailThemeStyle.PurpleDrip to (PurpleDrip to Bus),
-        KrailThemeStyle.Ferry to (Ferry to BarbiePink),
-        KrailThemeStyle.BarbiePink to (BarbiePink to Bus),
-    )
-
     /**
-     * Theme colour first, so the gradient starts on the colour the rider picked and travels
-     * away from it. Bus and Purple Drip share a pair led from opposite ends, which is the
-     * point: the theme end is what changes.
+     * Theme colour first, so the gradient starts on the colour the rider picked and travels away
+     * from it. The partner is declared on [KrailThemeStyle] itself, so a theme cannot exist
+     * without one. This used to be a map with a default, which meant a theme missing from the map
+     * silently wore the default theme's gradient rather than failing to build.
      */
     fun stopsFor(style: KrailThemeStyle): List<Color> {
-        val (start, end) = partners[style] ?: partners.getValue(DEFAULT_THEME_STYLE)
+        val start = style.hexColorCode.hexToComposeColor()
+        val end = style.aiGradientPartner
         return listOf(start, midStop(start, end), end)
     }
 

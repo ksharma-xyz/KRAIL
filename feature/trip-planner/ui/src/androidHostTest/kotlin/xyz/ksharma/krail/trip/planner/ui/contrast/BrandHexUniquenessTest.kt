@@ -106,8 +106,6 @@ class BrandHexUniquenessTest {
                 "taj cannot depend on :core:transport; these are the theme tokens themselves.",
             "taj/src/commonMain/kotlin/xyz/ksharma/krail/taj/tokens/AiGradientTokens.kt" to
                 "Same: the AI gradient's stops are mode colours, declared taj-side.",
-            "taj/src/commonMain/kotlin/xyz/ksharma/krail/taj/tokens/AiThemeGradientTokens.kt" to
-                "Same, for the per-theme variant of that gradient.",
             // Preview and sample fixtures. Each should take the colour from TransportMode.
             "feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/" +
                 "components/DepartureBoardStopCard.kt" to "Preview fixture.",

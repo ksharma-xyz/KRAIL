@@ -52,6 +52,87 @@ if [ -n "$DEVICE" ]; then
   ADB_ARGS+=(-s "$DEVICE")
 fi
 
+# Quiet the machine before asking it to do anything timed.
+#
+# The nightly lane failed every run from 20 Aug 2026 on `02-plan-trip`, timing
+# out after 15s waiting for the search screen to appear. The app was not the
+# problem: the same flow passes on a developer emulator, and KRAIL does not even
+# appear in the CPU table the ANR dump printed. The runner does:
+#
+#     ANR in com.google.android.gms.persistent
+#     some avg10=85.50   (/proc/pressure/cpu)
+#     99% TOTAL: 58% user + 38% kernel
+#       20% com.google.android.tts
+#       12% com.google.android.apps.nexuslauncher
+#       11% com.google.android.apps.youtube.music
+#       11% com.google.android.googlequicksearchbox:search
+#       10% com.google.android.gms
+#
+# The `google_apis` system image brings a full Google app suite, and on a
+# two-core runner they all wake at once and saturate it for the first minutes.
+# Every timed assertion in every flow is measured against that.
+#
+# Two things happen here rather than one. The known-noisy packages are stopped,
+# same treatment the launcher already gets in the workflow. Then the script
+# waits for the ten-second CPU pressure average to actually come down, because
+# stopping them is not instant and the next thing this script does is start a
+# stopwatch.
+#
+# Deliberately not a fixed sleep: the settle time varies with how the runner was
+# provisioned, so a sleep long enough to be safe would be wasted on every good
+# run. Deliberately not longer flow timeouts either: padding them hides the load
+# rather than removing it, and a flow that needs 40s on an idle device is a flow
+# with a real problem worth seeing.
+NOISY_PACKAGES=(
+  com.google.android.tts
+  com.google.android.apps.youtube.music
+  com.google.android.googlequicksearchbox
+  com.google.android.apps.nexuslauncher
+)
+for pkg in "${NOISY_PACKAGES[@]}"; do
+  adb "${ADB_ARGS[@]}" shell am force-stop "$pkg" 2>/dev/null || true
+done
+
+# `dumpsys cpuinfo` prints the same "N% TOTAL" line the ANR dump above did, over
+# a window since the previous call, and unlike /proc/pressure it is readable by
+# the shell user (SELinux denies that one, which is why this does not use the
+# figure the dump quoted).
+#
+# 85 rather than something tighter: an idle emulator still reads around 60% here,
+# because software rendering and the emulated kernel are themselves the load. The
+# state being excluded is the 99% one, not ordinary emulator overhead.
+SETTLE_TARGET=85
+SETTLE_TIMEOUT=120
+settled=0
+# Discarded: the first call reports a window stretching back to boot, which is
+# exactly the busy period being waited out.
+adb "${ADB_ARGS[@]}" shell dumpsys cpuinfo >/dev/null 2>&1 || true
+sleep 2
+for _ in $(seq 1 $((SETTLE_TIMEOUT / 5))); do
+  total=$(adb "${ADB_ARGS[@]}" shell dumpsys cpuinfo 2>/dev/null \
+    | awk '/TOTAL:/ {gsub(/%.*/, "", $1); print $1; exit}')
+  # Missing or unreadable is not a reason to block the suite: this is a
+  # pre-flight, not a check.
+  if [ -z "$total" ]; then
+    echo "CPU usage unavailable; continuing without waiting."
+    settled=1
+    break
+  fi
+  if awk "BEGIN { exit !($total < $SETTLE_TARGET) }"; then
+    echo "Device settled: CPU ${total}%."
+    settled=1
+    break
+  fi
+  echo "Waiting for device to settle: CPU ${total}%."
+  sleep 5
+done
+# A warning, not a failure. A loaded runner still produces a usable result more
+# often than not, and turning this into a hard stop would replace a flaky lane
+# with one that refuses to run.
+if [ "$settled" -eq 0 ]; then
+  echo "::warning::Device still busy after ${SETTLE_TIMEOUT}s; running anyway."
+fi
+
 # Deliberately no `set -e`: a failing flow is an expected outcome here, and its
 # exit code has to survive until the end of the script.
 attempt=0

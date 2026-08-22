@@ -18,7 +18,18 @@ appId: ${APP_ID}
     clearState: false
     stopApp: true
     permissions:
-      location: deny
+      # `never`, not `deny`. Both drivers accept `never`; only Android accepts
+      # `deny`, and on iOS it does not fail the assertion, it throws out of
+      # launchApp itself:
+      #
+      #   IllegalArgumentException: wrong argument value 'deny' was provided
+      #   for 'location' permission
+      #     at util.LocalSimulatorUtils.setLocationPermission
+      #
+      # That is why this flow died in under a second on the iOS leg of the
+      # nightly while every assertion below it went unread. Verified against
+      # both a simulator and an emulator.
+      location: never
 
 # Unconditional. The shared flow settles the app and no-ops on a device that has
 # already been through the carousel; guarding it here raced the first frame.

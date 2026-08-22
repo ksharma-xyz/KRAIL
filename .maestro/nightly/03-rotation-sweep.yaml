@@ -18,6 +18,22 @@
 # are not on screen. That is exactly how this file was first written, and the
 # two cascading failures it caused are the reason for the hook.
 appId: ${APP_ID}
+# Android only, and excluded from the iOS leg by tag.
+#
+# Not a preference: setOrientation does not work on the iOS simulator. It reports
+# COMPLETED, the app stays in portrait (the screenshot at the failure is a
+# fully drawn portrait home screen with the search row plainly on it), and the
+# accessibility tree comes back EMPTY for that moment, so every id assertion
+# after the rotate fails against a screen that is actually fine. Reproduced on
+# an iPhone 17 simulator; the app's Info.plist does allow landscape, so this is
+# the driver, not the app.
+#
+# It would be Android-only regardless. What this flow exists to catch is Activity
+# recreation: a route missing from the NavKey SerializersModule, or state in
+# `remember` instead of `rememberSaveable`. iOS does not destroy and rebuild the
+# world on rotation, so there is no equivalent failure for it to find.
+tags:
+  - android-only
 onFlowComplete:
   - setOrientation: PORTRAIT
 ---

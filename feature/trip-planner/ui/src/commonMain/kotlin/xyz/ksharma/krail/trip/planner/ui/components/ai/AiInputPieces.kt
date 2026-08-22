@@ -275,6 +275,17 @@ private fun AiSearchInputUiState.unresolvedMessage(): String = when (unresolvedR
     UnresolvedReason.COULD_NOT_READ ->
         "That did not come through. Have another go, or use fewer words."
 
+    // Neither the sentence nor anything the rider can do. Saying so and pointing at the way
+    // that does work beats an apology, and beats the advice this used to give, which was to
+    // reword a sentence nothing had read.
+    UnresolvedReason.MODEL_UNAVAILABLE ->
+        "This phone cannot run the on device AI that Ask KRAIL needs. Tap the stops to plan a " +
+            "trip instead."
+
+    // The one model problem with a fix the rider owns, so it names the switch.
+    UnresolvedReason.MODEL_NEEDS_SETTING ->
+        "Ask KRAIL needs Apple Intelligence turned on. Switch it on in Settings, then try again."
+
     null -> "Something is missing there. Name where you are going, and where from."
 }
 

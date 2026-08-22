@@ -12,8 +12,18 @@ enum class AiSearchInputPhase { IDLE, EXTRACTING, DOWNLOADING, RESOLVED, UNRESOL
  * @property NO_PLACE_MENTIONED The sentence was read fine and named no place at all.
  * @property STOP_NOT_FOUND A place was named and no stop matches it.
  * @property COULD_NOT_READ The model itself gave nothing usable back.
+ * @property MODEL_UNAVAILABLE This device cannot run the on-device model at all. Nothing about
+ * the sentence is the problem and no rewording will help.
+ * @property MODEL_NEEDS_SETTING The device could run it and the rider has it switched off. The
+ * only one of these with a fix the rider can carry out themselves.
  */
-enum class UnresolvedReason { NO_PLACE_MENTIONED, STOP_NOT_FOUND, COULD_NOT_READ }
+enum class UnresolvedReason {
+    NO_PLACE_MENTIONED,
+    STOP_NOT_FOUND,
+    COULD_NOT_READ,
+    MODEL_UNAVAILABLE,
+    MODEL_NEEDS_SETTING,
+}
 
 /**
  * @param isInputOpen Whether the AI search sheet is showing over the home screen. Owned here
@@ -24,6 +34,10 @@ enum class UnresolvedReason { NO_PLACE_MENTIONED, STOP_NOT_FOUND, COULD_NOT_READ
  * flag reached the ViewModel, which refused to submit, but never reached the UI, so with the
  * feature off the wheel still rendered and did nothing when tapped. A button that does
  * nothing is worse than no button.
+ * @param isDeviceCapable Whether this device can run the on-device model at all. Same argument
+ * as [isFeatureEnabled], one layer down: the flag can be on for a rider whose phone has no
+ * on-device AI, and for them the wheel was a button that always failed. True until the
+ * asynchronous check says otherwise, so the button does not appear late on every launch.
  */
 data class AiSearchInputUiState(
     val typedText: String = "",
@@ -37,7 +51,19 @@ data class AiSearchInputUiState(
     /** The place the rider named that no stop matched, quoted back to them. */
     val unmatchedPlace: String? = null,
     val isFeatureEnabled: Boolean = false,
+    val isDeviceCapable: Boolean = true,
 )
+
+/**
+ * Whether to offer the way in at all. The flag says the feature is switched on for this rider;
+ * [AiSearchInputUiState.isDeviceCapable] says their phone can actually run it.
+ *
+ * The gate used to be the flag alone, so on a device with no on-device AI the wheel rendered,
+ * accepted a sentence, and failed every time. A button that always fails is worse than no
+ * button, which is the same reason the flag reached the UI in the first place.
+ */
+val AiSearchInputUiState.isWayInAvailable: Boolean
+    get() = isFeatureEnabled && isDeviceCapable
 
 /**
  * @param fromText / [toText] The raw extracted text, kept alongside the resolved stops so a

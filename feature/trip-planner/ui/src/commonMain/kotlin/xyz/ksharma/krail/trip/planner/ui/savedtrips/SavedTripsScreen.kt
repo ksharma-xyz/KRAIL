@@ -88,6 +88,7 @@ import xyz.ksharma.krail.trip.planner.ui.components.ai.rememberAiGreeting
 import xyz.ksharma.krail.trip.planner.ui.navigation.savers.parkRideExpansionSaver
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
+import xyz.ksharma.krail.trip.planner.ui.search.ai.isWayInAvailable
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
@@ -273,7 +274,7 @@ fun SavedTripsScreen(
                     toButtonClick = toButtonClick,
                     onSearchButtonClick = { onSearchButtonClick() },
                     onAiEvent = onAiEvent,
-                    isAiSearchAvailable = aiState.isFeatureEnabled,
+                    isAiSearchAvailable = aiState.isWayInAvailable,
                     isAiHandoffSettling = askKrailFocus.handoffSpin,
                     dateTimeSelectionText = savedTripsState.dateTimeSelectionItem?.toDateTimeText(),
                     onDateTimeSelectionClear = { onEvent(SavedTripUiEvent.DateTimeSelectionChanged(null)) },

@@ -1,0 +1,24 @@
+# Which directories under .maestro/ hold Flows.
+#
+# Maestro does not recurse into subdirectories on its own. Pointed at a directory
+# whose Flows all live one level down, it does not run a reduced set or warn: it
+# finds nothing and exits non-zero with
+#
+#     Top-level directories do not contain any Flows: .../.maestro
+#
+# The nightly lane passes `.maestro/` in order to run the whole tree, so without
+# this file it has never executed a single Flow. It failed on flow discovery, and
+# because that still exits 1 the lane looked like a red test suite rather than a
+# lane that never started. The PR smoke lane never hit this because it passes
+# `.maestro/smoke/`, a directory with Flows directly in it.
+#
+# `shared/` is deliberately absent. It holds helper Flows invoked through
+# `runFlow`, and listing it here would run each of them as a test in its own
+# right, which is exactly what keeping them outside the two lanes was meant to
+# prevent.
+#
+# `ci/` is absent for the same reason: it holds this lane's shell runner, not
+# Flows.
+flows:
+  - "smoke/*"
+  - "nightly/*"

@@ -79,7 +79,11 @@ class AiSearchInputViewModel(
     private val speechToTextService: SpeechToTextService,
     // A chain of capabilities rather than one search call, so what counts as "smart" about
     // resolving a place is declared in one ordered list (see StopTextResolver) instead of
-    // growing branches in here.
+    // growing branches in here. Its chain decides which capability answers: the rider's own
+    // labels first, then the same stop search the search-stop screen uses. The answer is
+    // treated as a guess - no auto-pick concept exists anywhere else in this codebase, and it
+    // stays deliberately scoped to this AI context - so a miss resolves to null and leaves the
+    // field for the rider to fill by hand.
     private val stopTextResolver: StopTextResolver,
     // Where a journey starts when the rider did not say. One collaborator rather than a
     // location lambda, a nearby repository and a label locator sitting side by side: they only
@@ -107,6 +111,7 @@ class AiSearchInputViewModel(
         // entry, so this is re-read often enough, and [AiSearchInputEvent.OpenInput] reads it
         // again at the moment it matters.
         _uiState.update { it.copy(isFeatureEnabled = isAiSearchInputEnabled()) }
+        checkDeviceCapability()
     }
 
     private var listeningJob: Job? = null
@@ -114,6 +119,10 @@ class AiSearchInputViewModel(
 
     // Only ever compared against an earlier reading of itself, never read as a total.
     private var wordsHeardSoFar: Int = 0
+
+    // Held outside the state as well as in it, because every reset below rebuilds the state
+    // from scratch and this is the one fact about the device that a reset must not forget.
+    private var isDeviceCapable: Boolean = true
 
     fun onEvent(event: AiSearchInputEvent) {
         when (event) {
@@ -170,7 +179,11 @@ class AiSearchInputViewModel(
             AiSearchInputEvent.OpenInput -> {
                 val enabled = isAiSearchInputEnabled()
                 _uiState.update {
-                    AiSearchInputUiState(isInputOpen = enabled, isFeatureEnabled = enabled)
+                    AiSearchInputUiState(
+                        isInputOpen = enabled,
+                        isFeatureEnabled = enabled,
+                        isDeviceCapable = isDeviceCapable,
+                    )
                 }
             }
             AiSearchInputEvent.CloseInput -> closeInput()
@@ -178,7 +191,12 @@ class AiSearchInputViewModel(
             // Everything the rider produced is thrown away; what the app knows about itself
             // is not, or starting over would hide the way back in.
             AiSearchInputEvent.StartOver ->
-                _uiState.update { AiSearchInputUiState(isFeatureEnabled = it.isFeatureEnabled) }
+                _uiState.update {
+                    AiSearchInputUiState(
+                        isFeatureEnabled = it.isFeatureEnabled,
+                        isDeviceCapable = isDeviceCapable,
+                    )
+                }
             AiSearchInputEvent.StartListening -> startListening()
             AiSearchInputEvent.StopListening -> stopListening()
         }
@@ -200,7 +218,12 @@ class AiSearchInputViewModel(
         listeningTimeoutJob?.cancel()
         listeningTimeoutJob = null
         if (_uiState.value.isListening) speechToTextService.stopListening()
-        _uiState.update { AiSearchInputUiState(isFeatureEnabled = it.isFeatureEnabled) }
+        _uiState.update {
+            AiSearchInputUiState(
+                isFeatureEnabled = it.isFeatureEnabled,
+                isDeviceCapable = isDeviceCapable,
+            )
+        }
     }
 
     /**
@@ -349,10 +372,8 @@ class AiSearchInputViewModel(
 
             val availability = aiTextService.checkExtractionAvailability()
             if (availability is AiAvailability.Unavailable) {
-                val isTemporary = availability.reason == "downloadable" || availability.reason == "downloading"
-                _uiState.update {
-                    it.copy(phase = if (isTemporary) AiSearchInputPhase.DOWNLOADING else AiSearchInputPhase.UNRESOLVED)
-                }
+                isDeviceCapable = availability.reason.canBecomeAvailable()
+                _uiState.update { it.withUnavailableModel(availability.reason) }
                 logOutcome(reason = "model_unavailable_${availability.reason}")
                 return@launch
             }
@@ -375,10 +396,10 @@ class AiSearchInputViewModel(
                 .withSinglePlaceInTheRightField(text)
                 .withLabelWordAsDestination(riderText = text, labels = riderLabels())
 
-            val toStopItem = extraction.destinationText?.let { resolveStop(it) }
+            val toStopItem = extraction.destinationText?.let { stopTextResolver.resolve(it) }
             val originText = extraction.originText
             val (fromText, fromStopItem) = when {
-                originText != null -> originText to resolveStop(originText)
+                originText != null -> originText to stopTextResolver.resolve(originText)
 
                 // Only fall back to the nearest stop when a destination was actually
                 // understood. Without that condition, a sentence about nothing at all ("hey
@@ -463,15 +484,6 @@ class AiSearchInputViewModel(
     }
 
     /**
-     * Hands the extracted text to [stopTextResolver], whose chain decides which capability
-     * answers: the rider's own labels first, then the same stop search the search-stop screen
-     * uses. The answer is treated as a guess — no auto-pick concept exists anywhere else in
-     * this codebase, and it stays deliberately scoped to this AI context — so a miss resolves
-     * to `null` and leaves the field for the rider to fill by hand.
-     */
-    private suspend fun resolveStop(query: String): StopItem? = stopTextResolver.resolve(query)
-
-    /**
      * The rider didn't say where they're leaving from ("need to be at Central by 6:30pm" —
      * no "from X") — falls back to the nearest transit stop to their current GPS location
      * via [resolveNearbyStop], same as tapping a "near me" pill would, rather than leaving
@@ -484,6 +496,27 @@ class AiSearchInputViewModel(
     private suspend fun resolveCurrentLocationStop(excludeStopId: String?): Pair<String?, StopItem?> {
         val stop = riderOriginLocator.originStop(excludeStopId = excludeStopId)
         return stop?.stopName to stop
+    }
+
+    /**
+     * Asked once on entry so the wheel is not offered on a phone that cannot run the model.
+     * The gate used to be the remote-config flag alone, so a rider whose device has no
+     * on-device AI saw the button, typed a sentence, and got a failure every single time.
+     *
+     * Optimistic until it answers: [isDeviceCapable] starts true, so the button is there for
+     * the fraction of a second this takes rather than appearing late on every launch. Both
+     * platform implementations cache the underlying check, so this is one real call per
+     * process, not one per screen entry.
+     */
+    private fun checkDeviceCapability() {
+        viewModelScope.launch {
+            val available = aiTextService.checkExtractionAvailability()
+            val capable = available !is AiAvailability.Unavailable ||
+                available.reason.canBecomeAvailable()
+            isDeviceCapable = capable
+            _uiState.update { it.copy(isDeviceCapable = capable) }
+            log("$AI_OUTCOME_TAG deviceCapable=$capable")
+        }
     }
 }
 

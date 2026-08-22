@@ -11,6 +11,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import xyz.ksharma.dhruva.location.Location
 import xyz.ksharma.krail.core.aitext.AiAvailability
+import xyz.ksharma.krail.core.aitext.AiUnavailableReasons
 import xyz.ksharma.krail.core.aitext.TimeIntent
 import xyz.ksharma.krail.core.aitext.TripIntentExtraction
 import xyz.ksharma.krail.core.maps.data.model.NearbyStop
@@ -439,7 +440,7 @@ class AiSearchInputViewModelTest {
 
     @Test
     fun `model downloadable lands in DOWNLOADING, not the generic unresolved state`() = runTest(testDispatcher) {
-        aiTextService.extractionAvailability = AiAvailability.Unavailable(reason = "downloadable")
+        aiTextService.extractionAvailability = AiAvailability.Unavailable(reason = AiUnavailableReasons.MODEL_DOWNLOADING)
         viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("central to town hall"))
 
         viewModel.onEvent(AiSearchInputEvent.Submit)
@@ -450,7 +451,7 @@ class AiSearchInputViewModelTest {
 
     @Test
     fun `model downloading lands in DOWNLOADING too`() = runTest(testDispatcher) {
-        aiTextService.extractionAvailability = AiAvailability.Unavailable(reason = "downloading")
+        aiTextService.extractionAvailability = AiAvailability.Unavailable(reason = AiUnavailableReasons.MODEL_DOWNLOADING)
         viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("central to town hall"))
 
         viewModel.onEvent(AiSearchInputEvent.Submit)
@@ -461,13 +462,119 @@ class AiSearchInputViewModelTest {
 
     @Test
     fun `unsupported device lands in UNRESOLVED, not DOWNLOADING`() = runTest(testDispatcher) {
-        aiTextService.extractionAvailability = AiAvailability.Unavailable(reason = "unsupported_device")
+        aiTextService.extractionAvailability =
+            AiAvailability.Unavailable(reason = AiUnavailableReasons.DEVICE_UNSUPPORTED)
         viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("central to town hall"))
 
         viewModel.onEvent(AiSearchInputEvent.Submit)
         advanceUntilIdle()
 
         assertEquals(AiSearchInputPhase.UNRESOLVED, viewModel.uiState.value.phase)
+    }
+
+    /**
+     * The phase alone was asserted here for a long time, and the phase alone was right while
+     * the rider was being told the wrong thing: UNRESOLVED with no reason renders as "Something
+     * is missing there. Name where you are going, and where from.", which is advice about a
+     * sentence nothing had read. These pin the reason, because the reason is the message.
+     */
+    @Test
+    fun `a device that cannot run the model says so, rather than blaming the sentence`() =
+        runTest(testDispatcher) {
+            aiTextService.extractionAvailability =
+                AiAvailability.Unavailable(reason = AiUnavailableReasons.DEVICE_UNSUPPORTED)
+            viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("central to town hall"))
+
+            viewModel.onEvent(AiSearchInputEvent.Submit)
+            advanceUntilIdle()
+
+            assertEquals(UnresolvedReason.MODEL_UNAVAILABLE, viewModel.uiState.value.unresolvedReason)
+        }
+
+    @Test
+    fun `a model switched off in settings is told apart from one that can never run`() =
+        runTest(testDispatcher) {
+            aiTextService.extractionAvailability =
+                AiAvailability.Unavailable(reason = AiUnavailableReasons.NEEDS_DEVICE_SETTING)
+            viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("central to town hall"))
+
+            viewModel.onEvent(AiSearchInputEvent.Submit)
+            advanceUntilIdle()
+
+            assertEquals(UnresolvedReason.MODEL_NEEDS_SETTING, viewModel.uiState.value.unresolvedReason)
+        }
+
+    @Test
+    fun `a failed availability check is worth retrying, not a verdict on the device`() =
+        runTest(testDispatcher) {
+            // Android suffixes the throwable message onto this one, so it is matched by
+            // fallthrough rather than by equality. Written with the suffix on purpose.
+            aiTextService.extractionAvailability =
+                AiAvailability.Unavailable(reason = "${AiUnavailableReasons.CHECK_FAILED}: boom")
+            viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("central to town hall"))
+
+            viewModel.onEvent(AiSearchInputEvent.Submit)
+            advanceUntilIdle()
+
+            assertEquals(UnresolvedReason.COULD_NOT_READ, viewModel.uiState.value.unresolvedReason)
+            assertTrue(viewModel.uiState.value.isDeviceCapable)
+        }
+
+    @Test
+    fun `a phone that cannot run the model loses the way in`() = runTest(testDispatcher) {
+        aiTextService.extractionAvailability =
+            AiAvailability.Unavailable(reason = AiUnavailableReasons.DEVICE_UNSUPPORTED)
+        viewModel = AiSearchInputViewModel(
+            aiTextService = aiTextService,
+            speechToTextService = speechToTextService,
+            stopTextResolver = stopTextResolver,
+            riderOriginLocator = RiderOriginLocator(nearbyStopsRepository = nearbyStopsRepository),
+            isAiSearchInputEnabled = { true },
+        )
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isFeatureEnabled)
+        assertFalse(viewModel.uiState.value.isDeviceCapable)
+        assertFalse(viewModel.uiState.value.isWayInAvailable)
+    }
+
+    @Test
+    fun `a model still downloading keeps the way in`() = runTest(testDispatcher) {
+        aiTextService.extractionAvailability =
+            AiAvailability.Unavailable(reason = AiUnavailableReasons.MODEL_DOWNLOADING)
+        viewModel = AiSearchInputViewModel(
+            aiTextService = aiTextService,
+            speechToTextService = speechToTextService,
+            stopTextResolver = stopTextResolver,
+            riderOriginLocator = RiderOriginLocator(nearbyStopsRepository = nearbyStopsRepository),
+            isAiSearchInputEnabled = { true },
+        )
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isWayInAvailable)
+    }
+
+    @Test
+    fun `a device verdict survives the reset that opening the box does`() = runTest(testDispatcher) {
+        aiTextService.extractionAvailability =
+            AiAvailability.Unavailable(reason = AiUnavailableReasons.DEVICE_UNSUPPORTED)
+        viewModel = AiSearchInputViewModel(
+            aiTextService = aiTextService,
+            speechToTextService = speechToTextService,
+            stopTextResolver = stopTextResolver,
+            riderOriginLocator = RiderOriginLocator(nearbyStopsRepository = nearbyStopsRepository),
+            isAiSearchInputEnabled = { true },
+        )
+        advanceUntilIdle()
+
+        // OpenInput, StartOver and CloseInput each rebuild the state from scratch. The
+        // device's answer is not something a reset may forget.
+        viewModel.onEvent(AiSearchInputEvent.OpenInput)
+        assertFalse(viewModel.uiState.value.isDeviceCapable)
+        viewModel.onEvent(AiSearchInputEvent.StartOver)
+        assertFalse(viewModel.uiState.value.isDeviceCapable)
+        viewModel.onEvent(AiSearchInputEvent.CloseInput)
+        assertFalse(viewModel.uiState.value.isDeviceCapable)
     }
 
     @Test

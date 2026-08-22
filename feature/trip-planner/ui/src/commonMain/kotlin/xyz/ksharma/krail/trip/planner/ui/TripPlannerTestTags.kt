@@ -48,6 +48,15 @@ object TripPlannerTestTags {
     const val SEARCH_STOP_RESULTS_LIST = "searchstop.results"
     const val SEARCH_STOP_RECENTS_LIST = "searchstop.recents"
 
+    /**
+     * The confirm button on the first-run map options sheet.
+     *
+     * Tagged so a flow can get past that sheet by name. It opens itself the first time a
+     * rider ever reaches this screen and covers [SEARCH_STOP_QUERY_FIELD] while it is up,
+     * which on a fresh device makes the search field unreachable rather than slow.
+     */
+    const val SEARCH_STOP_MAP_OPTIONS_DONE = "searchstop.mapoptions.done"
+
     // Timetable
     const val TIME_TABLE_SCREEN = "timetable.screen"
     const val TIME_TABLE_DATE_TIME_SELECTOR = "timetable.action.datetime"

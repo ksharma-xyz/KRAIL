@@ -27,6 +27,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.toPersistentSet
@@ -44,6 +45,7 @@ import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.TransportModeChip
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 
@@ -103,7 +105,9 @@ fun MapOptionsBottomSheet(
 
                 TextButton(
                     dimensions = ButtonDefaults.largeButtonSize(),
-                    modifier = Modifier.alignByBaseline(),
+                    modifier = Modifier
+                        .alignByBaseline()
+                        .testTag(TripPlannerTestTags.SEARCH_STOP_MAP_OPTIONS_DONE),
                     onClick = {
                         // Apply all pending changes
                         if (pendingRadiusKm != searchRadiusKm) {

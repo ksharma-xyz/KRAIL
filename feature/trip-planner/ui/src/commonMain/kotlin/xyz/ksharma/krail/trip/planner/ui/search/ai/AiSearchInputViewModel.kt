@@ -398,19 +398,13 @@ class AiSearchInputViewModel(
 
             val toStopItem = extraction.destinationText?.let { stopTextResolver.resolve(it) }
             val originText = extraction.originText
-            val (fromText, fromStopItem) = when {
-                originText != null -> originText to stopTextResolver.resolve(originText)
+            val (fromText, fromStopItem) = resolveTripOrigin(
+                originText = originText,
+                namedOrigin = originText?.let { stopTextResolver.resolve(it) },
+                toStopItem = toStopItem,
+                nearbyOrigin = ::resolveCurrentLocationStop,
+            )
 
-                // Only fall back to the nearest stop when a destination was actually
-                // understood. Without that condition, a sentence about nothing at all ("hey
-                // how are you") resolved to no places, took the fallback anyway, and filled
-                // the From field with wherever the rider happened to be standing. That reads
-                // as the app having understood something, which is the one thing it must not
-                // fake.
-                toStopItem != null -> resolveCurrentLocationStop(excludeStopId = toStopItem.stopId)
-
-                else -> null to null
-            }
             // No fallback to "leave now". A rider who mentioned no time gets no time, because
             // the home screen now shows this as a chip: falling back produced "Leave Today
             // 12:29 AM" on a sentence that said nothing about when, which is the app inventing

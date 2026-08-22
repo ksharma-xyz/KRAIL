@@ -2,10 +2,14 @@ package xyz.ksharma.krail.taj
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import xyz.ksharma.krail.taj.contrast.ContrastAnalyzer.Companion.TEXT_CONTRAST_AA
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.taj.theme.asThemeInk
+import xyz.ksharma.krail.taj.theme.ensureContrastWith
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import kotlin.math.absoluteValue
 
@@ -55,8 +59,89 @@ private fun String.isValidHexColorCode(): Boolean {
     return hexColorRegex.matches(this)
 }
 
+/**
+ * The rider's theme colour, unadapted.
+ *
+ * Prefer one of the four role accessors below. They exist because this one is asked for in four
+ * situations with four different contrast obligations, and the call site never says which:
+ *
+ * - [themeGroundColor] fills a shape that content is drawn on top of.
+ * - [themeInkColor] is text, an icon or a stroke drawn onto one of the app's own grounds.
+ * - [themeBackgroundColor] is the translucent wash used for card fills.
+ * - [themeDecorColor] is a gradient or ripple with no legibility obligation at all.
+ *
+ * Only the ink role needs adapting, and only the split makes that checkable.
+ */
+@Deprecated(
+    "Pick the role: themeGroundColor, themeInkColor, themeBackgroundColor or themeDecorColor.",
+    ReplaceWith("themeGroundColor()"),
+)
 @Composable
 fun themeColor(): Color {
+    val themeColor by LocalThemeColor.current
+    return themeColor.hexToComposeColor()
+}
+
+/**
+ * The theme colour as a **ground**: a filled shape with content drawn on top of it, where the
+ * content colour comes from [getForegroundColor]. `ThemeContrastTest` holds that pairing.
+ *
+ * Unadapted on purpose. This is the colour the rider picked, and it is what makes the Save
+ * button, the `P` badge and a selected chip look like the theme.
+ */
+@Composable
+fun themeGroundColor(): Color {
+    val themeColor by LocalThemeColor.current
+    return themeColor.hexToComposeColor()
+}
+
+/**
+ * The theme colour as **ink**: text, an icon or a stroke drawn straight onto an app ground.
+ *
+ * Adapted so it is legible on every ground in the current scheme, and identical across all of
+ * them so a sheet opened over a screen does not show two shades of the same theme. See
+ * [asThemeInk] for why it is derived once per scheme rather than per ground.
+ *
+ * @param minContrast 4.5 for anything a rider reads, 3.0 for strokes, tracks and icons.
+ */
+@Composable
+fun themeInkColor(minContrast: Float = TEXT_CONTRAST_AA): Color {
+    val themeColor by LocalThemeColor.current
+    val darkMode = isAppInDarkMode()
+    return remember(themeColor, darkMode, minContrast) {
+        themeColor.hexToComposeColor().asThemeInk(darkMode = darkMode, minContrast = minContrast)
+    }
+}
+
+/**
+ * The theme colour as ink on a ground that is **not** one of the app's own surfaces — today only
+ * the time picker's hand, which sits on a dial filled with [themeBackgroundColor].
+ *
+ * Every other ink call site wants [themeInkColor], which keeps one shade across the whole app.
+ * Reach for this only when the ground genuinely differs, and pass the ground you are drawing on.
+ */
+@Composable
+fun themeInkColorOn(background: Color, minContrast: Float = TEXT_CONTRAST_AA): Color {
+    val themeColor by LocalThemeColor.current
+    val onBackground = KrailTheme.colors.onSurface
+    return remember(themeColor, background, onBackground, minContrast) {
+        themeColor.hexToComposeColor().ensureContrastWith(
+            background = background,
+            toward = onBackground,
+            minContrast = minContrast,
+        )
+    }
+}
+
+/**
+ * The theme colour as **decoration**: a gradient stop, a ripple, the cloud field. Nothing is read
+ * off it, so it carries no contrast obligation and is never adapted.
+ *
+ * Saying so explicitly is the point. It is how a call site records that the raw colour is a
+ * decision rather than an oversight, which is what lets the ink rule stay an unconditional gate.
+ */
+@Composable
+fun themeDecorColor(): Color {
     val themeColor by LocalThemeColor.current
     return themeColor.hexToComposeColor()
 }

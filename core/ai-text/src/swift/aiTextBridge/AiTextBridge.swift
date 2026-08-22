@@ -5,6 +5,12 @@ import FoundationModels
 
 @objcMembers public class AiTextBridge: NSObject {
 
+    /// Reason strings are the shared vocabulary in `AiUnavailableReasons`, not Swift's
+    /// interpolation of `UnavailableReason`. Interpolating the enum sent Kotlin
+    /// "deviceNotEligible"/"appleIntelligenceNotEnabled"/"modelNotReady", which matched
+    /// nothing the caller tested for, so a model that was merely still downloading was
+    /// reported to riders as a sentence they had written wrong. Keep these in step with
+    /// `AiUnavailableReasons` in commonMain.
     public func checkAvailability(completion: @escaping (Bool, String) -> Void) {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
@@ -12,15 +18,24 @@ import FoundationModels
             case .available:
                 completion(true, "available")
             case .unavailable(let reason):
-                completion(false, "\(reason)")
+                switch reason {
+                case .appleIntelligenceNotEnabled:
+                    completion(false, "needs_device_setting")
+                case .modelNotReady:
+                    completion(false, "model_downloading")
+                case .deviceNotEligible:
+                    completion(false, "device_unsupported")
+                @unknown default:
+                    completion(false, "device_unsupported")
+                }
             @unknown default:
-                completion(false, "unknown")
+                completion(false, "check_failed")
             }
         } else {
-            completion(false, "ios_version_unsupported")
+            completion(false, "device_unsupported")
         }
         #else
-        completion(false, "foundation_models_unavailable")
+        completion(false, "device_unsupported")
         #endif
     }
 

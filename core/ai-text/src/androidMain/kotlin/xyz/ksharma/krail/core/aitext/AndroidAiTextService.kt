@@ -17,6 +17,9 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.guava.await
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import xyz.ksharma.krail.core.aitext.AiUnavailableReasons.CHECK_FAILED
+import xyz.ksharma.krail.core.aitext.AiUnavailableReasons.DEVICE_UNSUPPORTED
+import xyz.ksharma.krail.core.aitext.AiUnavailableReasons.MODEL_DOWNLOADING
 import xyz.ksharma.krail.core.log.log
 
 /**
@@ -67,15 +70,15 @@ internal class AndroidAiTextService(private val context: Context) : AiTextServic
                 // never block this call on it — a slow/failed download must not delay or
                 // break alert rendering.
                 runCatching { summarizer.downloadFeature(noOpDownloadCallback) }
-                AiAvailability.Unavailable(reason = "downloadable")
+                AiAvailability.Unavailable(reason = MODEL_DOWNLOADING)
             }
 
-            FeatureStatus.DOWNLOADING -> AiAvailability.Unavailable(reason = "downloading")
+            FeatureStatus.DOWNLOADING -> AiAvailability.Unavailable(reason = MODEL_DOWNLOADING)
 
-            else -> AiAvailability.Unavailable(reason = "unsupported_device")
+            else -> AiAvailability.Unavailable(reason = DEVICE_UNSUPPORTED)
         }
     }.getOrElse { throwable ->
-        AiAvailability.Unavailable(reason = "check_failed: ${throwable.message}")
+        AiAvailability.Unavailable(reason = "$CHECK_FAILED: ${throwable.message}")
     }.also { result ->
         // Deliberately unconditional, not debug-gated: `adb logcat | grep AiTextService`
         // is the one line that answers "why is nothing showing" (flag off vs. device
@@ -98,13 +101,19 @@ internal class AndroidAiTextService(private val context: Context) : AiTextServic
             FeatureStatus.AVAILABLE -> AiAvailability.Available
             FeatureStatus.DOWNLOADABLE -> {
                 triggerPromptModelDownload()
-                AiAvailability.Unavailable(reason = "downloadable")
+                AiAvailability.Unavailable(reason = MODEL_DOWNLOADING)
             }
-            FeatureStatus.DOWNLOADING -> AiAvailability.Unavailable(reason = "downloading")
-            else -> AiAvailability.Unavailable(reason = "unsupported_device (status=$status)")
+            FeatureStatus.DOWNLOADING -> AiAvailability.Unavailable(reason = MODEL_DOWNLOADING)
+            // The raw status stays in the log line below, not in the reason: the reason is a
+            // contract the UI branches on, and gluing a number onto it broke every equality
+            // check that ever tried to read it.
+            else -> {
+                log("AiTextService: extraction unsupported, status=$status")
+                AiAvailability.Unavailable(reason = DEVICE_UNSUPPORTED)
+            }
         }
     }.getOrElse { throwable ->
-        AiAvailability.Unavailable(reason = "check_failed: ${throwable.message}")
+        AiAvailability.Unavailable(reason = "$CHECK_FAILED: ${throwable.message}")
     }.also { result ->
         log("AiTextService: checkExtractionAvailability -> $result")
     }

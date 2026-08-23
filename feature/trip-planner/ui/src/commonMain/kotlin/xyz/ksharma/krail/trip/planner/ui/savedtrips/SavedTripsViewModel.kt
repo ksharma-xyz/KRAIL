@@ -43,7 +43,6 @@ import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.feature.track.TrackedJourney
 import xyz.ksharma.krail.feature.track.TrackingManager
 import xyz.ksharma.krail.info.tile.network.api.InfoTileManager
-import xyz.ksharma.krail.info.tile.state.InfoTileData
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
 import xyz.ksharma.krail.park.ride.network.model.NswParkRideFacility
 import xyz.ksharma.krail.park.ride.network.model.ParkingStopBatchResponse
@@ -58,7 +57,6 @@ import xyz.ksharma.krail.sandook.db.SavedParkRide
 import xyz.ksharma.krail.sandook.db.SavedTrip
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchSessionStore
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
-import xyz.ksharma.krail.trip.planner.ui.settings.ReferFriendManager.getReferText
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
@@ -76,8 +74,8 @@ import kotlin.time.Instant
 @Suppress("LongParameterList")
 class SavedTripsViewModel(
     private val sandook: Sandook,
-    private val analytics: Analytics,
-    private val ioDispatcher: CoroutineDispatcher,
+    internal val analytics: Analytics,
+    internal val ioDispatcher: CoroutineDispatcher,
     private val nswParkRideFacilityManager: NswParkRideFacilityManager,
     private val parkRideService: ParkRideService,
     private val parkRideSandook: NswParkRideSandook,
@@ -85,8 +83,8 @@ class SavedTripsViewModel(
     private val searchSessionStore: SearchSessionStore,
     private val flag: Flag,
     private val preferences: SandookPreferences,
-    private val infoTileManager: InfoTileManager,
-    private val platformOps: PlatformOps,
+    internal val infoTileManager: InfoTileManager,
+    internal val platformOps: PlatformOps,
     private val inviteFriendsTileManager: InviteFriendsTileManager,
     private val trackingManager: TrackingManager,
     private val appReviewManager: AppReviewManager,
@@ -302,55 +300,65 @@ class SavedTripsViewModel(
         )
 
         if (isExpanded) {
-            log(
-                "Park Ride card expanded for stopId: ${parkRideState.stopId} , facilities: ${parkRideState.facilities.joinToString()}",
-            )
-            updateUiState {
-                copy(
-                    observeParkRideStopIdSet = (observeParkRideStopIdSet + parkRideState.stopId).toImmutableSet(),
-                    parkRideUiState = parkRideUiState.map { uiState ->
-                        // Loading is dictated by totalSpots being -1 because, when we do not have
-                        // any facility detail data for first time, we set totalSpots to -1.
-                        if (uiState.stopId == parkRideState.stopId && parkRideState.facilities.any {
-                                it.totalSpots == -1 || it.spotsAvailable == -1
-                            }
-                        ) {
-                            uiState.copy(isLoading = true)
-                        } else if (parkRideState.facilities.any { it.totalSpots >= 0 }) {
-                            uiState.copy(isLoading = false)
-                        } else {
-                            uiState
-                        }
-                    }.toImmutableList(),
-                )
-            }
-            viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
-                log("Fetching Park Ride facility for stopId: ${parkRideState.stopId}")
-                fetchAndSaveParkRideFacilityIfNeeded(stopId = parkRideState.stopId)
-            }
-            armParkRideCardReviewMoment()
-            log("Park Ride card expanded done")
+            onParkRideCardExpanded(parkRideState)
         } else {
-            log(
-                "Park Ride card collapsed for stopId: ${parkRideState.stopId} , facilities: ${parkRideState.facilities.joinToString()}",
-            )
-            updateUiState {
-                copy(
-                    observeParkRideStopIdSet = (observeParkRideStopIdSet - parkRideState.stopId).toImmutableSet(),
-                    parkRideUiState = parkRideUiState.map { uiState ->
-                        // Loading is dictated by totalSpots being -1 because, when we do not have
-                        // any facility detail data for first time, we set totalSpots to -1.
-                        if (uiState.stopId == parkRideState.stopId && parkRideState.facilities.any {
-                                it.totalSpots == -1 || it.spotsAvailable == -1
-                            }
-                        ) {
-                            uiState.copy(isLoading = true)
-                        } else {
-                            uiState
+            onParkRideCardCollapsed(parkRideState)
+        }
+    }
+
+    private fun onParkRideCardExpanded(parkRideState: ParkRideUiState) {
+        log(
+            "Park Ride card expanded for stopId: ${parkRideState.stopId} , facilities: ${parkRideState.facilities.joinToString()}",
+        )
+        updateUiState {
+            copy(
+                observeParkRideStopIdSet = (observeParkRideStopIdSet + parkRideState.stopId).toImmutableSet(),
+                parkRideUiState = parkRideUiState.map { uiState ->
+                    // Loading is dictated by totalSpots being -1 because, when we do not have
+                    // any facility detail data for first time, we set totalSpots to -1.
+                    if (uiState.stopId == parkRideState.stopId && parkRideState.facilities.any {
+                            it.totalSpots == -1 || it.spotsAvailable == -1
                         }
-                    }.toImmutableList(),
-                )
-            }
+                    ) {
+                        uiState.copy(isLoading = true)
+                    } else if (parkRideState.facilities.any { it.totalSpots >= 0 }) {
+                        uiState.copy(isLoading = false)
+                    } else {
+                        uiState
+                    }
+                }.toImmutableList(),
+            )
+        }
+        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            log("Fetching Park Ride facility for stopId: ${parkRideState.stopId}")
+            fetchAndSaveParkRideFacilityIfNeeded(stopId = parkRideState.stopId)
+        }
+        armParkRideCardReviewMoment()
+        log("Park Ride card expanded done")
+    }
+
+    // Deliberately not the expanded branch with the sign flipped: collapsing has no
+    // "spots have arrived, stop showing loading" arm, because nothing is fetched here.
+    private fun onParkRideCardCollapsed(parkRideState: ParkRideUiState) {
+        log(
+            "Park Ride card collapsed for stopId: ${parkRideState.stopId} , facilities: ${parkRideState.facilities.joinToString()}",
+        )
+        updateUiState {
+            copy(
+                observeParkRideStopIdSet = (observeParkRideStopIdSet - parkRideState.stopId).toImmutableSet(),
+                parkRideUiState = parkRideUiState.map { uiState ->
+                    // Loading is dictated by totalSpots being -1 because, when we do not have
+                    // any facility detail data for first time, we set totalSpots to -1.
+                    if (uiState.stopId == parkRideState.stopId && parkRideState.facilities.any {
+                            it.totalSpots == -1 || it.spotsAvailable == -1
+                        }
+                    ) {
+                        uiState.copy(isLoading = true)
+                    } else {
+                        uiState
+                    }
+                }.toImmutableList(),
+            )
         }
     }
 
@@ -765,84 +773,7 @@ class SavedTripsViewModel(
         }
     }
 
-    // region - Info Tiles
-
-    private suspend fun updateInfoTilesUiState() {
-        log("Updating info tiles in UI state")
-        val activeTiles = infoTileManager.getInfoTiles()
-        log("Active info tiles: ${activeTiles.map { it.key }}")
-        updateUiState {
-            copy(infoTiles = activeTiles.toImmutableList())
-        }
-    }
-
-    private fun onDismissInfoTile(infoTileData: InfoTileData) {
-        log("onDismissInfoTile: ${infoTileData.key}")
-        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
-            log("Dismissing info tile: ${infoTileData.key}")
-            infoTileManager.markInfoTileDismissed(infoTileData)
-            updateInfoTilesUiState()
-            trackInfoTileInteraction(
-                key = infoTileData.key,
-                dismiss = true,
-            )
-        }
-    }
-
-    private fun onInfoTileCtaClick(infoTile: InfoTileData) {
-        when (infoTile.type) {
-            InfoTileData.InfoTileType.INVITE_FRIENDS -> {
-                platformOps.sharePlainText(
-                    text = getReferText(),
-                    title = "Invite your Friends",
-                )
-                analytics.track(
-                    event = AnalyticsEvent.ReferFriend(
-                        entryPoint = AnalyticsEvent.ReferFriend.EntryPoint.SAVED_TRIPS,
-                    ),
-                )
-            }
-
-            InfoTileData.InfoTileType.CRITICAL_ALERT,
-            InfoTileData.InfoTileType.INFO,
-            InfoTileData.InfoTileType.APP_UPDATE,
-            -> {
-                infoTile.primaryCta?.url?.let { url ->
-                    platformOps.openUrl(url)
-                    trackInfoTileInteraction(
-                        key = infoTile.key,
-                        url = url,
-                    )
-                }
-            }
-        }
-    }
-
-    private fun onInfoTileExpand(key: String) {
-        trackInfoTileInteraction(key = key, expand = true)
-    }
-
-    private fun trackInfoTileInteraction(
-        key: String,
-        url: String? = null,
-        dismiss: Boolean? = null,
-        expand: Boolean? = null,
-    ) {
-        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
-            analytics.track(
-                event = AnalyticsEvent.InfoTileInteraction(
-                    key = key,
-                    ctaUrl = url,
-                    dismiss = dismiss,
-                    expand = expand,
-                ),
-            )
-        }
-    }
-
-    // endregion
-
-    private fun updateUiState(block: SavedTripsState.() -> SavedTripsState) {
+    internal fun updateUiState(block: SavedTripsState.() -> SavedTripsState) {
         _uiState.update(block)
     }
 

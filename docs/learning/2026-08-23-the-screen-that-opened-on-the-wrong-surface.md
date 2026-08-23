@@ -75,7 +75,7 @@ every check on those layouts was a check that could not fail.
 - [x] `02-plan-trip` and `03-rotation-sweep` assert `searchstop.recents` immediately after
       tapping the field: the landing surface is now pinned end to end, on both routes into the
       screen.
-- [x] The two `dismiss-map-options.yaml` calls removed from `02-plan-trip` — the sheet is opened
+- [x] The two `.maestro/shared/dismiss-map-options.yaml` calls removed from `02-plan-trip` — the sheet is opened
       by the map, which is now opt-in, so they were two dead ten-second waits in the one flow
       whose whole history is timing. The shared flow stays, with a header saying when it is
       needed again.

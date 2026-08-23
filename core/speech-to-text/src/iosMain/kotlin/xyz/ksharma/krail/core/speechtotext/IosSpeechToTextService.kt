@@ -23,8 +23,6 @@ import platform.Speech.SFSpeechRecognizer
 import platform.Speech.SFSpeechRecognizerAuthorizationStatus
 import xyz.ksharma.krail.core.log.log
 import kotlin.coroutines.resume
-import kotlin.time.TimeMark
-import kotlin.time.TimeSource
 
 /**
  * `SFSpeechRecognizer` + `AVAudioEngine`, both plain Objective-C-compatible frameworks (no
@@ -96,9 +94,7 @@ internal class IosSpeechToTextService : SpeechToTextService {
         // What the silence watcher below reads. Written from the recognition callback, read
         // from a coroutine: both run on the main dispatcher, so no synchronisation is needed
         // beyond them not being able to interleave mid-statement.
-        var lastTranscript = ""
-        var lastChangeAt = TimeSource.Monotonic.markNow()
-        var heardAnything = false
+        val session = TranscriptWatch()
 
         speechRecognizer.recognitionTaskWithRequest(request) { result, error ->
             when {
@@ -108,30 +104,16 @@ internal class IosSpeechToTextService : SpeechToTextService {
                 }
 
                 result != null -> {
-                    val text = result.bestTranscription.formattedString
-                    if (text != lastTranscript) {
-                        lastTranscript = text
-                        lastChangeAt = TimeSource.Monotonic.markNow()
-                        if (text.isNotBlank()) heardAnything = true
-                    }
-                    if (result.isFinal()) {
-                        trySend(SpeechToTextResult.Final(text = text))
-                        close()
-                    } else {
-                        trySend(SpeechToTextResult.Partial(text = text))
-                    }
+                    val isFinal = result.isFinal()
+                    session.record(text = result.bestTranscription.formattedString, isFinal = isFinal)
+                        ?.let { trySend(it) }
+                    if (isFinal) close()
                 }
             }
         }
 
         // The end-of-speech detection iOS does not have. See watchForSilence.
-        launch {
-            watchForSilence(
-                lastChangeAt = { lastChangeAt },
-                heardAnything = { heardAnything },
-                request = request,
-            )
-        }
+        launch { watchForSilence(session = session) }
 
         awaitClose {
             engine.stop()
@@ -143,7 +125,17 @@ internal class IosSpeechToTextService : SpeechToTextService {
         }
     }
 
-    override fun stopListening() {
+    override fun stopListening() = stopFeedingAudio()
+
+    /**
+     * Takes the microphone away and tells the request that was all the audio there is, in that
+     * order. Both are needed and the order is the point: `endAudio` on a request still being
+     * appended to leaves the recogniser waiting on audio nobody meant to send.
+     *
+     * The recogniser still owes a final transcript afterwards, so this ends the *listening*, not
+     * the flow — see [watchForSilence], which is the other caller.
+     */
+    private fun stopFeedingAudio() {
         audioEngine?.stop()
         audioEngine?.inputNode?.removeTapOnBus(0u)
         recognitionRequest?.endAudio()
@@ -218,34 +210,44 @@ internal class IosSpeechToTextService : SpeechToTextService {
      * second ceiling here. That ceiling is a backstop for a recogniser that never reports an
      * end, and on iOS it had quietly become the only thing ending any session at all.
      *
-     * Watches for an unchanging transcript rather than for quiet audio: the audio tap sees room
-     * noise on every buffer, while the transcript only moves when words are recognised, which
-     * is the thing actually being waited on.
+     * Watches for words rather than for quiet audio: the audio tap sees room noise on every
+     * buffer, while the transcript only gains a word when one is recognised, which is the thing
+     * actually being waited on. Words, not changes — see [TranscriptWatch.record].
      *
-     * The windows are deliberately in step with SILENCE_THAT_ENDS_THE_SESSION_MILLIS on the
-     * Android side. Kept by hand, since the two live in different source sets on purpose.
+     * One window, where Android has two: four seconds of quiet after a phrase that sounds
+     * unfinished, three after one that sounds complete. A trip said out loud almost always ends
+     * on a complete-sounding phrase, so three is the window that fires there. iOS cannot tell
+     * those two apart, so it gets the one that matches the common case, and it used to copy the
+     * other one - which is the second of extra waiting this used to have.
+     *
+     * The two platforms are still not measuring the same event, so the numbers being equal is a
+     * coincidence worth not relying on: Android measures silence, this measures the recogniser's
+     * last word ARRIVING, which lags the rider's last word by however long recognition takes.
      */
-    private suspend fun watchForSilence(
-        lastChangeAt: () -> TimeMark,
-        heardAnything: () -> Boolean,
-        request: SFSpeechAudioBufferRecognitionRequest,
-    ) {
+    private suspend fun watchForSilence(session: TranscriptWatch) {
         while (currentCoroutineContext().isActive) {
             delay(SILENCE_POLL_MILLIS)
-            val quietFor = lastChangeAt().elapsedNow().inWholeMilliseconds
+            val quietFor = session.quietForMillis()
             // Nothing recognised yet earns a longer grace period: that window covers a rider
             // who tapped the mic and is still drawing breath, not one who has trailed off mid
             // sentence.
-            val longEnough = if (heardAnything()) {
+            val longEnough = if (session.heardAnything) {
                 SILENCE_THAT_ENDS_THE_SESSION_MILLIS
             } else {
                 SILENCE_BEFORE_ANY_SPEECH_MILLIS
             }
             if (quietFor >= longEnough) {
                 log("SpeechToTextService: ${quietFor}ms without new words, ending audio")
-                // endAudio, not close: the recogniser still owes a final transcript, and this
-                // is the same graceful finish stopListening asks for.
-                request.endAudio()
+                // The exact finish stopListening asks for, and for the same reason it takes the
+                // microphone away first. `endAudio` means "that was all the audio there is", and
+                // the tap was still running underneath it, appending room noise to a request
+                // that had been told it was closed. The recogniser is under no obligation to
+                // finish a request still being written to, which is how a session that had
+                // decided the rider was done still ran to the ViewModel's ceiling.
+                //
+                // Not close(): the recogniser still owes a final transcript, and the flow stays
+                // open to receive it.
+                stopFeedingAudio()
                 return
             }
         }
@@ -291,10 +293,18 @@ internal class IosSpeechToTextService : SpeechToTextService {
         AVAudioApplication.sharedInstance().recordPermission == AVAudioApplicationRecordPermissionGranted
 }
 
-// Matches SILENCE_THAT_ENDS_THE_SESSION_MILLIS in AndroidSpeechToTextService, so a sentence
-// takes the same time to finish on both platforms. A trip said out loud has thinking pauses in
-// it, which is why this is four seconds and not one.
-private const val SILENCE_THAT_ENDS_THE_SESSION_MILLIS = 4_000L
+// The same number as Android's SILENCE_AFTER_A_COMPLETE_SOUNDING_PHRASE_MILLIS, which is the
+// window that actually fires over there: a trip said out loud almost always ends on a
+// complete-sounding phrase. NOT Android's other window, the four-second one this used to copy,
+// which is why iOS took about a second longer to finish the same sentence.
+//
+// What this measures is not the same event Android measures, and that is worth knowing before
+// tuning it: iOS waits on the recogniser's last word ARRIVING, which already lags the rider's
+// last word being spoken, so three seconds here is felt as a little more than Android's three.
+// Two was tried and is the floor - below it, "from Central to..." <thinking> starts being cut
+// off, which is a rider-reported bug on the Android side already and the reason those windows
+// were widened rather than narrowed.
+private const val SILENCE_THAT_ENDS_THE_SESSION_MILLIS = 3_000L
 
 // Before the first word. Longer than the mid-sentence window: the rider has just tapped the
 // mic and may still be deciding what to ask for. Still well inside the ViewModel's ten second

@@ -142,6 +142,12 @@ adb shell pm revoke xyz.ksharma.krail.debug android.permission.ACCESS_COARSE_LOC
 Maestro writes the hierarchy, logs and screenshots for every run to `~/.maestro/tests/<timestamp>/`.
 CI copies that into the workspace and uploads it as an artifact on every run, pass or fail.
 
+**[`docs/MAESTRO_TRIAGE.md`](../docs/MAESTRO_TRIAGE.md) is the procedure**: what the artifact
+holds, the order to read it in, what it deliberately does not capture, and a table of failure
+signatures that have each already cost a wrong diagnosis. Read that first when a lane is red.
+
+The rest of this section is about why the artifact exists at all, which is a separate trap:
+
 Two things had to be true before that artifact actually appeared, and both are easy to
 reintroduce:
 

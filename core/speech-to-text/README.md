@@ -5,9 +5,9 @@ On-device speech-to-text for the "Speak" tab of the AI search-input flow
 Wraps each platform's own speech recognizer behind [`SpeechToTextService`](src/commonMain/kotlin/xyz/ksharma/krail/core/speechtotext/SpeechToTextService.kt),
 the same `expect`/`actual`-per-platform shape as `core:ai-text`'s `AiTextService`.
 
-**Status: interface + module boundary only. Neither platform actual is implemented yet** —
-both `AndroidSpeechToTextService` and `IosSpeechToTextService` always report `Unavailable`.
-See the doc comment on each actual for exactly what real implementation needs.
+**Status: both platforms implemented.** iOS has two, chosen at runtime by
+`PreferredSpeechToTextService`: `SpeechAnalyzerSpeechToTextService` on iOS 26 and
+`IosSpeechToTextService` (`SFSpeechRecognizer`) everywhere else. See "The two iOS paths" below.
 
 ## Why a new module, not an existing library
 
@@ -45,10 +45,39 @@ real Android/iOS actuals is reasonable; taking it as a live dependency is not.
   `RecognizerIntent.EXTRA_PREFER_OFFLINE` requests on-device recognition where the device
   supports it, falling back to network otherwise. Needs the `RECORD_AUDIO` runtime
   permission.
-- **iOS**: `SFSpeechRecognizer` + `AVAudioEngine`. Unlike Foundation Models (Swift-only, no
-  Objective-C header — the reason `IosAiTextService` needs an SPM cinterop bridge),
-  `SFSpeechRecognizer` is a plain Objective-C-compatible framework and is directly callable
-  from Kotlin/Native — **no SPM bridge needed for this one**. Needs both
-  `NSSpeechRecognitionUsageDescription` and `NSMicrophoneUsageDescription` in Info.plist,
-  and per this project's `ios_permission_must_request.md` lesson, the wrapper must actually
-  call `requestAuthorization`, not just inspect `authorizationStatus()`.
+- **iOS**: two implementations. See below.
+
+## The two iOS paths
+
+`SFSpeechRecognizer` is a plain Objective-C-compatible framework, directly callable from
+Kotlin/Native with no bridge. It is also, as a design, a transcription **stream**: it never
+decides a speaker has finished, because `isFinal` arrives only after the app calls
+`endAudio()`. Everything about end-of-speech therefore had to be inferred from how text
+happened to arrive, and every fault in
+[the 2026-08-23 learning entry](../../docs/learning/2026-08-23-the-blank-transcript-that-cleared-the-field.md)
+came from that inference.
+
+iOS 26 replaced it with `SpeechAnalyzer`, a modular analyzer. Two of its modules are exactly
+the jobs that were being done by hand:
+
+| Module | What it does | Replaces |
+|---|---|---|
+| `DictationTranscriber` | short queries, same on-device model `SFSpeechRecognizer` uses | the transcription half |
+| `SpeechDetector` | voice activity detection, reported in **audio time** | the hand-rolled silence watcher |
+
+`SpeechAnalyzer` is a Swift `actor` with `AsyncSequence` results and no Objective-C surface,
+so unlike `SFSpeechRecognizer` it **does** need an SPM cinterop bridge: `src/swift/speechBridge/`,
+same shape and same reason as `AiTextBridge` in `core:ai-text`.
+
+The bridge owns mechanism only. It reports what Apple's modules say and never decides when the
+rider has finished; that rule is [`SpeechActivityWatch`](src/commonMain/kotlin/xyz/ksharma/krail/core/speechtotext/SpeechActivityWatch.kt)
+in `commonMain`, because Swift source here has no test task. Same reason
+[`TranscriptWatch`](src/commonMain/kotlin/xyz/ksharma/krail/core/speechtotext/TranscriptWatch.kt)
+lives there and is shared by both paths.
+
+Permissions differ between the two, which is a rider-visible difference: `SFSpeechRecognizer`
+needs both `NSSpeechRecognitionUsageDescription` and `NSMicrophoneUsageDescription`, and per
+this project's `ios_permission_must_request.md` lesson its wrapper must actually call
+`requestAuthorization` rather than only inspecting `authorizationStatus()`. `SpeechAnalyzer`
+needs the microphone alone, so the iOS 26 path shows one system prompt where the legacy path
+shows two. Both Info.plist keys stay, because the legacy path is still live below iOS 26.

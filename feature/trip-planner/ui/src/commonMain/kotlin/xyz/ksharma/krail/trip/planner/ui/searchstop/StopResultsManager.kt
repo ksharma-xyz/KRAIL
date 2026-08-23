@@ -30,6 +30,11 @@ interface StopResultsManager {
     fun setSelectedToStop(stopItem: StopItem?)
 
     /**
+     * Swaps the selected 'from' and 'to' stops.
+     */
+    fun reverseSelectedStops()
+
+    /**
      * Clears both selected 'from' and 'to' stops.
      */
     fun clearSelectedStops()

@@ -107,6 +107,12 @@ internal class FakeStopResultsManager : StopResultsManager {
         }
     }
 
+    override fun reverseSelectedStops() {
+        val tempFrom = _selectedFromStop
+        _selectedFromStop = _selectedToStop
+        _selectedToStop = tempFrom
+    }
+
     override fun clearSelectedStops() {
         _selectedFromStop = null
         _selectedToStop = null

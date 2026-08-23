@@ -40,6 +40,7 @@ object TripPlannerTestTags {
     const val SEARCH_ROW_TO = "searchrow.to"
     const val SEARCH_ROW_SEARCH = "searchrow.search"
     const val SEARCH_ROW_ASK_KRAIL = "searchrow.askkrail"
+    const val SEARCH_ROW_REVERSE = "searchrow.reverse"
     const val SEARCH_ROW_COLLAPSED_PILL = "searchrow.collapsedpill"
 
     // Search stop

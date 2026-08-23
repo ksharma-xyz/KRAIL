@@ -52,6 +52,8 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
             rawProperties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
         )
 
+    data object ReverseStopClickEvent : AnalyticsEvent(name = "reverse_stop_click")
+
     /**
      * @param searchSessionId Set when this trip was loaded off the back of a stop the
      *                        rider had just searched for, which is what closes the search

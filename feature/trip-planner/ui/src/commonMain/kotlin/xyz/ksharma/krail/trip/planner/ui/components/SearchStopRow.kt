@@ -7,6 +7,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.InfiniteRepeatableSpec
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -52,6 +53,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import krail.feature.trip_planner.ui.generated.resources.Res
+import krail.feature.trip_planner.ui.generated.resources.ic_reverse
 import krail.feature.trip_planner.ui.generated.resources.ic_search
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContentColor
@@ -86,6 +88,7 @@ fun SearchStopRow(
     onExpandRequest: () -> Unit = {},
     onCollapseRequest: (() -> Unit)? = null,
     onSearchButtonClick: () -> Unit = {},
+    onReverseButtonClick: () -> Unit = {},
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
     isAiSearchAvailable: Boolean = false,
     // True for the beat after the Ask KRAIL dialog closes onto this row with an answer: the
@@ -149,6 +152,7 @@ fun SearchStopRow(
                 toButtonClick = toButtonClick,
                 onCollapseRequest = onCollapseRequest,
                 onSearchButtonClick = onSearchButtonClick,
+                onReverseButtonClick = onReverseButtonClick,
                 onAiEvent = onAiEvent,
                 isAiSearchAvailable = isAiSearchAvailable,
                 isAiHandoffSettling = isAiHandoffSettling,
@@ -252,6 +256,7 @@ private fun ExpandedSearchRow(
     toButtonClick: () -> Unit,
     onSearchButtonClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onReverseButtonClick: () -> Unit = {},
     onCollapseRequest: (() -> Unit)? = null,
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
     isAiSearchAvailable: Boolean = false,
@@ -326,8 +331,14 @@ private fun ExpandedSearchRow(
                     )
                 }
 
-                // Action buttons (AI wheel + search) - same RoundIconButton, same size, for
-                // both so the column stays visually symmetric.
+                // Action buttons - same RoundIconButton, same size, for both so the column
+                // stays visually symmetric.
+                //
+                // The top slot is always filled: Ask KRAIL where on-device AI can run,
+                // reverse where it cannot. Leaving it empty let Search rise into the slot,
+                // which put the one button that commits the trip next to the From field
+                // instead of beside To, and made the row a different shape on devices that
+                // differ only in a capability the rider never chose.
                 Column(
                     modifier = Modifier.padding(start = dim.spacingXL),
                     verticalArrangement = Arrangement.spacedBy(SearchFieldSpacing),
@@ -337,6 +348,8 @@ private fun ExpandedSearchRow(
                             onAiEvent = onAiEvent,
                             spinning = isAiHandoffSettling,
                         )
+                    } else {
+                        ReverseButton(onReverseButtonClick = onReverseButtonClick)
                     }
 
                     SearchButton(onSearchButtonClick = onSearchButtonClick)
@@ -476,6 +489,47 @@ private fun AiSheetEntryButton(
         modifier = Modifier.testTag(TripPlannerTestTags.SEARCH_ROW_ASK_KRAIL),
     )
 }
+
+/**
+ * Swaps From and To. Shown in the top action slot only when on-device AI is unavailable, so
+ * the slot is never empty and Search never moves.
+ *
+ * The icon half-turns on every tap and stays where it lands: the arrow ends up pointing the
+ * way the stops now run, so the button reads as the state it produced rather than as an
+ * animation that played. `rememberSaveable` keeps that resting angle across rotation, which a
+ * plain `remember` would snap back to zero.
+ */
+@Composable
+private fun ReverseButton(onReverseButtonClick: () -> Unit) {
+    val dim = KrailTheme.dimensions
+    var isRotated by rememberSaveable { mutableStateOf(false) }
+    val rotation by animateFloatAsState(
+        targetValue = if (isRotated) REVERSE_ICON_ROTATED_DEGREES else 0f,
+        animationSpec = tween(durationMillis = REVERSE_ROTATION_DURATION_MILLIS),
+        label = "reverseRotation",
+    )
+
+    RoundIconButton(
+        content = {
+            Image(
+                painter = painterResource(Res.drawable.ic_reverse),
+                contentDescription = "Reverse",
+                colorFilter = ColorFilter.tint(LocalContentColor.current),
+                modifier = Modifier.size(dim.iconDefault),
+            )
+        },
+        onClick = {
+            isRotated = !isRotated
+            onReverseButtonClick()
+        },
+        modifier = Modifier
+            .testTag(TripPlannerTestTags.SEARCH_ROW_REVERSE)
+            .graphicsLayer { rotationZ = rotation },
+    )
+}
+
+private const val REVERSE_ICON_ROTATED_DEGREES = 180f
+private const val REVERSE_ROTATION_DURATION_MILLIS = 300
 
 @Composable
 private fun SearchButton(onSearchButtonClick: () -> Unit) {

@@ -66,6 +66,13 @@ internal class RealStopResultsManager(
         log("StopResultsManager - setSelectedToStop: $stopItem")
     }
 
+    override fun reverseSelectedStops() {
+        val temp = selectedFromStop
+        selectedFromStop = selectedToStop
+        selectedToStop = temp
+        log("StopResultsManager - reverseSelectedStops: from=$selectedFromStop, to=$selectedToStop")
+    }
+
     override fun clearSelectedStops() {
         selectedFromStop = null
         selectedToStop = null

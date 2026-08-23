@@ -277,7 +277,13 @@ class AiSearchInputViewModel(
                         // so writing only the transcript meant a rider watched an empty box
                         // while they talked and everything appeared at once when they stopped.
                         // Partials are what make speaking feel like it is being heard.
-                        _uiState.update { it.copy(speechTranscript = result.text, typedText = result.text) }
+                        //
+                        // Blank is not a transcript. A recogniser that reports one is saying it
+                        // has nothing to add, not that the rider unsaid what they said, and
+                        // writing it through erases words already in the field.
+                        if (result.text.isNotBlank()) {
+                            _uiState.update { it.copy(speechTranscript = result.text, typedText = result.text) }
+                        }
                     }
 
                     is SpeechToTextResult.Final -> {
@@ -287,8 +293,24 @@ class AiSearchInputViewModel(
                         // saying one, and a mis-heard word was already on its way to a search
                         // before they could look at it. Speaking is a way of typing; send is
                         // still theirs to press.
+                        //
+                        // A blank final stops the session and leaves the field exactly as the
+                        // partials left it. iOS ends a session by asking the recogniser to
+                        // finish, and the result that comes back can carry an empty
+                        // transcription — a session boundary, not a correction. Writing it in
+                        // wiped the sentence the rider had just watched arrive, with nothing on
+                        // screen to say why. Android never reaches this because its recogniser
+                        // reports a missing result as an error instead.
                         _uiState.update {
-                            it.copy(isListening = false, speechTranscript = result.text, typedText = result.text)
+                            if (result.text.isBlank()) {
+                                it.copy(isListening = false)
+                            } else {
+                                it.copy(
+                                    isListening = false,
+                                    speechTranscript = result.text,
+                                    typedText = result.text,
+                                )
+                            }
                         }
                     }
 

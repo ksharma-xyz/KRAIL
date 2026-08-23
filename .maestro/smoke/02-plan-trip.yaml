@@ -34,9 +34,21 @@ appId: ${APP_ID}
 - tapOn:
     id: "searchrow.from"
 
-# The map options sheet opens itself the first time this screen is ever reached
-# and covers the query field while it is up. See dismiss-map-options.yaml.
-- runFlow: ../shared/dismiss-map-options.yaml
+# Stop search lands on the LIST, never the map. Asserted rather than assumed: the
+# flag behind it (`showMap` in SearchStopScreen) was once flipped to map-first in an
+# unrelated commit and shipped, because while the map is uninitialised the list
+# renders either way and nothing here noticed. See SEARCH_STOP_UX.md.
+#
+# `searchstop.recents` is the Recent-mode list itself, so it is present on a fresh
+# device with no recents at all — it still holds the "Select on map" row.
+#
+# This also replaces the dismiss-map-options.yaml call that used to sit here. That
+# sheet is opened by the map, and the map is now opt-in, so it cannot appear on the
+# way in any more. The shared flow stays for any flow that does open the map.
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.recents"
+    timeout: 30000
 
 - extendedWaitUntil:
     visible:
@@ -66,9 +78,12 @@ appId: ${APP_ID}
 - tapOn:
     id: "searchrow.to"
 
-# A no-op by now on a device that took the branch above, but this flow is also
-# run on its own, and the sheet returns if Done was never tapped.
-- runFlow: ../shared/dismiss-map-options.yaml
+# Same assertion on the second entry: this one arrives with a recent stop already
+# saved, which is a different branch of the list from the first-open one above.
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.recents"
+    timeout: 30000
 
 - extendedWaitUntil:
     visible:

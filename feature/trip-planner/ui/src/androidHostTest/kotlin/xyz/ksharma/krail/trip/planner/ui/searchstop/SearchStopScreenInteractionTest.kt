@@ -19,6 +19,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -94,6 +95,78 @@ class SearchStopScreenInteractionTest {
         // Station's own inline pill) — see assignedStop_showsLabelPillInline.
         composeRule.onAllNodesWithText("Home").assertCountEquals(2)
         composeRule.onNodeWithText("Manage").assertIsDisplayed()
+    }
+
+    // endregion
+
+    // region Landing surface
+
+    @Test
+    fun singlePane_opensOnTheList_evenWhenAMapIsAlreadyInitialised() {
+        // An initialised map is the case that matters: while `mapUiState` is null the list
+        // renders regardless of the map/list flag, so a fixture without one cannot tell the
+        // two apart. This is how the flag was flipped to map-first in an unrelated commit
+        // and no test noticed.
+        composeRule.setContent {
+            PreviewTheme {
+                SearchStopScreen(
+                    searchStopState = SearchStopFixtures.recentWithDefaults().copy(
+                        isMapsAvailable = true,
+                        mapUiState = MapUiState.Ready(),
+                    ),
+                    onEvent = {},
+                )
+            }
+        }
+
+        // The rider's recents, not a map. The map is reached from the button in this list.
+        composeRule.onNodeWithText("Central Station").assertIsDisplayed()
+        composeRule.onNodeWithText("Town Hall").assertIsDisplayed()
+    }
+
+    @Test
+    fun selectOnMap_isOfferedInTheList_whenMapsAreAvailable() {
+        composeRule.setContent {
+            PreviewTheme {
+                SearchStopScreen(
+                    searchStopState = SearchStopFixtures.recentWithDefaults()
+                        .copy(isMapsAvailable = true),
+                    onEvent = {},
+                )
+            }
+        }
+
+        // The only way into the map: the top-bar map pill was removed, so if this row
+        // stops rendering the map becomes unreachable rather than merely opt-in.
+        composeRule.onNodeWithText("Select on map").assertIsDisplayed()
+    }
+
+    @Test
+    fun selectOnMap_asksForTheMap_whenTapped() {
+        val events = mutableListOf<SearchStopUiEvent>()
+        composeRule.setContent {
+            PreviewTheme {
+                SearchStopScreen(
+                    // mapUiState stays null so the map never composes here — this test is
+                    // about the request, and MapLibre does not belong in Robolectric.
+                    searchStopState = SearchStopFixtures.recentWithDefaults()
+                        .copy(isMapsAvailable = true),
+                    onEvent = { events += it },
+                )
+            }
+        }
+
+        composeRule.onNodeWithText("Select on map").performClick()
+
+        // Both halves matter: the analytics event says a rider asked for the map, and
+        // InitializeMap is what actually builds it, since nothing initialises it on open
+        // any more.
+        assert(events.contains(SearchStopUiEvent.SelectOnMapButtonClicked)) {
+            "expected SelectOnMapButtonClicked, got $events"
+        }
+        assert(events.contains(SearchStopUiEvent.InitializeMap)) {
+            "expected InitializeMap, got $events"
+        }
     }
 
     // endregion
@@ -317,9 +390,10 @@ class SearchStopScreenInteractionTest {
         // callback fires, otherwise it stays up mid-navigation.
         composeRule.onNodeWithText("Manage").performClick()
 
-        // The screen also hides the keyboard once on first composition (the
-        // showMap LaunchedEffect, unrelated to this click), so assert ordering
-        // rather than an exact call count: a "hide" must precede "manageClicked".
+        // Assert ordering rather than an exact call count: a "hide" must precede
+        // "manageClicked". The screen lands on the list, so its showMap effect calls
+        // show() on first composition, not hide() — but that is incidental here, and
+        // ordering stays the right assertion either way.
         val manageIndex = events.indexOf("manageClicked")
         assert(manageIndex > 0) { "expected onManageLabelsClick to fire, got $events" }
         assert(events.subList(0, manageIndex).contains("hide")) {

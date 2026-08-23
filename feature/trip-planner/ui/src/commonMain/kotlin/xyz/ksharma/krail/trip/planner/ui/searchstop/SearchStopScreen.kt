@@ -131,7 +131,16 @@ fun SearchStopScreen(
     // rememberSaveable so text survives rotation and dark/light mode config changes.
     var textFieldText: String by rememberSaveable { mutableStateOf(searchQuery) }
     // Hoisted here so it survives any config change regardless of which pane is active.
-    var showMap by rememberSaveable { mutableStateOf(true) }
+    //
+    // Starts on the LIST, never the map. The list is what the rider came for: recents, the
+    // curated first-open stops, and the search field with focus and the keyboard already up.
+    // The map is opt-in from the "Select on map" button inside that list — which is the only
+    // way in, since the top-bar map pill was removed. Opening straight onto the map meant the
+    // field was neither focused nor typed into (see the LaunchedEffect below, which hides the
+    // keyboard whenever the map is up), and MapLibre was initialised on every visit to stop
+    // search whether or not anyone wanted a map. Only the single-pane layout reads this at
+    // all; dual-pane always draws the map in its right pane.
+    var showMap by rememberSaveable { mutableStateOf(false) }
     val keyboard = LocalSoftwareKeyboardController.current
     val focusRequester = remember { FocusRequester() }
     var backClicked by rememberSaveable { mutableStateOf(false) }

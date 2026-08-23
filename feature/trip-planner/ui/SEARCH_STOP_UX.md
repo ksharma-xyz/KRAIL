@@ -10,6 +10,36 @@ below are covered by tests. Anything not yet tested is in the
 
 ---
 
+## The landing surface is the list, never the map
+
+Opening the screen — from either the From or the To field — lands on the **list**: recents,
+or the curated first-open stops when there are none, with the search field focused and the
+keyboard up. The map is opt-in, reached only from the **"Select on map"** button inside that
+list; the top-bar map pill was removed, so there is no other way in.
+
+This is one flag, `showMap` in `SearchStopScreen`, and it must start `false`:
+
+- The `LaunchedEffect(showMap)` beside it **hides the keyboard and drops field focus**
+  whenever the map is up. Landing on the map therefore lands on a screen the rider cannot
+  type into until they tap the field.
+- `MapAutoInitEffect` initialises MapLibre when the map is showing, so a map-first default
+  pays for the whole map stack on every visit to stop search, wanted or not.
+- Only the **single-pane** (phone portrait) layout reads the flag. Tablet, foldable and phone
+  landscape use `SearchStopScreenDualPane`, which always draws the list left and the map
+  right, and never consults it. A phone-portrait regression is therefore invisible on the
+  layouts most likely to be checked.
+
+It was flipped to `true` in `8122380db`, a commit about stop labels that had no reason to
+touch it, and shipped unnoticed: while `mapUiState` is null the list renders either way, and
+every test used a fixture with no map. `singlePane_opensOnTheList_evenWhenAMapIsAlreadyInitialised`
+now pins it with an initialised map, which is the only state that can tell the two apart.
+
+The first-run map-options sheet is unaffected and slightly better placed: `showMapOptionsOnOpen`
+is consumed by `MapOptionsFirstTimeShown`, which the map itself fires, so the sheet now appears
+the first time a rider actually opens the map rather than over a map they did not ask for.
+
+---
+
 ## Labels
 
 ### Defaults & lifecycle

@@ -1,10 +1,16 @@
 # Gets past the first-run map options sheet, and is safe to call on a device that
 # has already seen it.
 #
-# SearchStopViewModel opens this sheet by itself the first time a rider ever
-# reaches the stop search screen, gated on KEY_HAS_SEEN_MAP_OPTIONS_SHEET. While
-# it is up it covers `searchstop.query`, so on a fresh device the search field is
-# not slow to appear, it is unreachable.
+# SearchStopViewModel arms this sheet the first time a rider ever reaches the stop
+# search screen, gated on KEY_HAS_SEEN_MAP_OPTIONS_SHEET, and the MAP is what opens
+# it: `showMapOptionsOnOpen` is read only by SearchStopMap. While it is up it covers
+# `searchstop.query`.
+#
+# Since stop search lands on the list and the map is opt-in behind "Select on map",
+# no flow that only searches for a stop can meet this sheet, and none of them call
+# this any more. Call it from a flow that opens the map, before touching anything
+# underneath. If stop search is ever made map-first again, every such flow needs this
+# call back — see SEARCH_STOP_UX.md for why it should not be.
 #
 # That is what failed the nightly's 02-plan-trip on every run and survived the
 # timeouts being doubled: waiting longer for a field behind a modal sheet never

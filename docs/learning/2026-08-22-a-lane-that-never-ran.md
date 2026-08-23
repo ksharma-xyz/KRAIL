@@ -71,6 +71,10 @@ leaves.
 
 ## What would have caught it sooner
 
+The reusable form of all of this is now
+[`docs/MAESTRO_TRIAGE.md`](../MAESTRO_TRIAGE.md): the artifact map, the order to read it in,
+and a signature table carrying every trap below.
+
 - **Read the artifact before theorising.** Both wrong turns were theories built on a log line.
   The screenshot and the hierarchy JSON were in the uploaded artifact from the first failure
   onward and answered the question in one look. Same lesson as
@@ -102,3 +106,5 @@ leaves.
 - [ ] The Android leg still needs its retry to go green: one attempt failed with an **empty
       view hierarchy and a black screenshot**, which is the emulator's compositor stalling
       under load, not the app and not the NSW API. Unexplained.
+      Recorded as a signature in [`docs/MAESTRO_TRIAGE.md`](../MAESTRO_TRIAGE.md) so the next
+      person to see it does not re-diagnose it from scratch.

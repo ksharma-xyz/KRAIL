@@ -57,6 +57,18 @@ Full testing doctrine lives in [`TESTING.md`](TESTING.md), with the detail split
 [`docs/testing/COVERAGE.md`](docs/testing/COVERAGE.md) (what the coverage number does and does not
 mean).
 
+## End-to-end flows (Maestro)
+
+`.maestro/` holds two lanes: `smoke/` (three flows) and `nightly/` (lifecycle, rotation and
+permission-denial flows too slow to gate a PR on). The nightly runs both on Android and iOS and
+**reports only** — a red nightly is a signal for a human, never a trigger for a machine.
+
+**When a lane is red, read [`docs/MAESTRO_TRIAGE.md`](docs/MAESTRO_TRIAGE.md) before
+theorising.** It has the artifact map, the order to read it in (`commands.json` first, the
+screenshot last), what the run deliberately does not capture (no video, no frames on a passing
+step, no device log on iOS), and a table of failure signatures that have each already cost a
+wrong diagnosis. Lane conventions and selectors are in [`.maestro/README.md`](.maestro/README.md).
+
 ## Detekt
 
 ```
@@ -454,6 +466,8 @@ that contradicts the doc should also update the doc in the same change.
 - `docs/LAYOUT_AND_INSETS.md` — inset authority, `adjustResize`, `weight` vs `fillMaxSize`,
   and how to tell a layout bug from the window moving; read before changing a screen root or
   a bottom-anchored input.
+- `docs/MAESTRO_TRIAGE.md` — how to diagnose a red Maestro lane: artifact layout, the order to
+  read it in, what is not captured, and the known failure signatures.
 - `docs/POLLING_LIFECYCLE.md` — WhileSubscribed polling rules: `repeatOnLifecycle(STARTED)`
   pattern, why plain `LaunchedEffect` breaks background gating, all polling flows listed.
 - `docs/investigations/NSW_715_WALK_LEG_INVESTIGATION.md` — why `TripResponseMapper.kt`'s

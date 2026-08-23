@@ -69,3 +69,4 @@ Rules, scripts, tests or docs added. Link them. Unchecked boxes if not done yet.
 | 2026-08-22 | [A lane that never ran](2026-08-22-a-lane-that-never-ran.md) | CI / a non-zero exit that named nothing |
 | 2026-08-22 | [Two platforms, two vocabularies](2026-08-22-two-platforms-two-vocabularies.md) | KMP / expect-actual behavioural drift |
 | 2026-08-23 | [The screen that opened on the wrong surface](2026-08-23-the-screen-that-opened-on-the-wrong-surface.md) | UI / a default no test could see |
+| 2026-08-23 | [The blank transcript that cleared the field](2026-08-23-the-blank-transcript-that-cleared-the-field.md) | KMP / a value one platform never produces |

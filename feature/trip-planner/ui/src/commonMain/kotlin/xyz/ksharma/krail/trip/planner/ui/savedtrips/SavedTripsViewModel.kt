@@ -164,7 +164,7 @@ class SavedTripsViewModel(
         }
         .stateIn(viewModelScope, whileScreenSubscribed, SavedTripsState())
 
-    private suspend fun updateSelectedStops() {
+    private fun updateSelectedStops() {
         updateUiState {
             copy(
                 fromStop = stopResultsManager.selectedFromStop,
@@ -184,6 +184,11 @@ class SavedTripsViewModel(
         when (event) {
             is SavedTripUiEvent.DeleteSavedTrip -> onDeleteSavedTrip(event.trip)
             is SavedTripUiEvent.AnalyticsSavedTripCardClick -> onSavedTripCardClick(event)
+            SavedTripUiEvent.ReverseStopClick -> {
+                stopResultsManager.reverseSelectedStops()
+                updateSelectedStops()
+                analytics.track(AnalyticsEvent.ReverseStopClickEvent)
+            }
             is SavedTripUiEvent.AnalyticsLoadTimeTableClick ->
                 analytics.trackLoadTimeTableClick(
                     fromStopId = event.fromStopId,

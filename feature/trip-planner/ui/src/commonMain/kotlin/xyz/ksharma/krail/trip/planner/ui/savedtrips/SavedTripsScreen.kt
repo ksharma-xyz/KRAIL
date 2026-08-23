@@ -273,6 +273,7 @@ fun SavedTripsScreen(
                     },
                     toButtonClick = toButtonClick,
                     onSearchButtonClick = { onSearchButtonClick() },
+                    onReverseButtonClick = { onEvent(SavedTripUiEvent.ReverseStopClick) },
                     onAiEvent = onAiEvent,
                     isAiSearchAvailable = aiState.isWayInAvailable,
                     isAiHandoffSettling = askKrailFocus.handoffSpin,

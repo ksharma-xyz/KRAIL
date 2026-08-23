@@ -37,6 +37,7 @@ import xyz.ksharma.krail.trip.planner.ui.searchstop.RealSearchSessionStore
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAppReviewManager
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeInviteFriendsTileManager
@@ -978,6 +979,59 @@ class SavedTripsViewModelTest {
                 assertNotNull(parkRide)
                 // "2153478" here would be the raw ID leaking into the UI.
                 assertEquals("Bella Vista", parkRide.stopName)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN both stops selected WHEN ReverseStopClick THEN stops are swapped and event tracked`() =
+        runTest {
+            // GIVEN both from and to stops are selected
+            val fromStop = StopItem(stopName = "Central Station", stopId = "10101")
+            val toStop = StopItem(stopName = "Town Hall", stopId = "10102")
+            fakeStopResultsManager.setSelectedFromStop(fromStop)
+            fakeStopResultsManager.setSelectedToStop(toStop)
+
+            viewModel.uiState.test {
+                skipItems(1) // Initial state, which loads the selected stops.
+
+                // WHEN the stops are reversed
+                viewModel.onEvent(SavedTripUiEvent.ReverseStopClick)
+
+                // THEN the UI state holds them the other way round
+                val item = awaitItem()
+                assertEquals(toStop.stopId, item.fromStop?.stopId)
+                assertEquals(fromStop.stopId, item.toStop?.stopId)
+
+                // AND so does the manager, which owns the selection the next screen reads
+                assertEquals(toStop, fakeStopResultsManager.selectedFromStop)
+                assertEquals(fromStop, fakeStopResultsManager.selectedToStop)
+
+                assertTrue(
+                    (fakeAnalytics as FakeAnalytics)
+                        .isEventTracked(AnalyticsEvent.ReverseStopClickEvent.name),
+                )
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN only a from stop WHEN ReverseStopClick THEN it becomes the destination`() =
+        runTest {
+            // GIVEN a half-filled pair, which is the state the row spends most of its time in
+            val fromStop = StopItem(stopName = "Central Station", stopId = "10101")
+            fakeStopResultsManager.setSelectedFromStop(fromStop)
+            fakeStopResultsManager.setSelectedToStop(null)
+
+            viewModel.uiState.test {
+                skipItems(1)
+
+                viewModel.onEvent(SavedTripUiEvent.ReverseStopClick)
+
+                // THEN the null travels with the swap rather than being treated as "no change"
+                val item = awaitItem()
+                assertNull(item.fromStop)
+                assertEquals(fromStop.stopId, item.toStop?.stopId)
                 cancelAndIgnoreRemainingEvents()
             }
         }

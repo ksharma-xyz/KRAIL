@@ -13,6 +13,8 @@ sealed interface SavedTripUiEvent {
     data class AnalyticsLoadTimeTableClick(val fromStopId: String, val toStopId: String) :
         SavedTripUiEvent
 
+    data object ReverseStopClick : SavedTripUiEvent
+
     data object AnalyticsSettingsButtonClick : SavedTripUiEvent
 
     data object AnalyticsFromButtonClick : SavedTripUiEvent

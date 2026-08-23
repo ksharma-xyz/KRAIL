@@ -217,6 +217,11 @@ fallback cannot be deleted casually.
   appearance from whatever happens to be behind it, and behind this is a gradient that moves.
 - **`ImeAction.Default`, never `Search`.** Search makes the IME replace its enter key, so a
   rider writing more than one line has no way to start one.
+- **The way-in slot is never empty.** The wheel is the top of a two-button column in
+  `SearchStopRow`, with Search below it. Where `isWayInAvailable` is false the slot holds the
+  reverse-stops button instead, so Search does not rise into the wheel's place. Two devices
+  differing only in a capability the rider never chose should not have differently shaped rows,
+  and the button that commits the trip should not move next to a different field.
 - **No second speak control.** A worded `Speak` button used to appear below the bar at large
   font scales, from when the actions were a row underneath the field. Once mic and send folded
   into the bar it became a second way to do the same thing directly under the first.

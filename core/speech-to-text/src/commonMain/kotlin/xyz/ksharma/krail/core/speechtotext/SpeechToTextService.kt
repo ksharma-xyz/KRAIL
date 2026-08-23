@@ -52,6 +52,15 @@ sealed interface SpeechToTextAvailability {
     data class Unavailable(val reason: String) : SpeechToTextAvailability
 }
 
+/**
+ * [Partial] and [Final] always carry words. A recogniser reporting a blank transcription is
+ * saying it has nothing to add, never that the rider unsaid what they said, so an
+ * implementation drops it rather than emitting it: the caller writes each transcript straight
+ * into the field the rider is looking at, and a blank one erases the sentence they just watched
+ * arrive. A session that heard nothing at all ends as [Error] with
+ * [SpeechUnavailableReasons.NO_RESULT], which is a session with no result rather than a session
+ * whose result is nothing.
+ */
 sealed interface SpeechToTextResult {
     data class Partial(val text: String) : SpeechToTextResult
     data class Final(val text: String) : SpeechToTextResult

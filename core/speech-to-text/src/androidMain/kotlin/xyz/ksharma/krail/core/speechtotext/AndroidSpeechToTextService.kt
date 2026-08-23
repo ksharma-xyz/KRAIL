@@ -147,5 +147,9 @@ internal class AndroidSpeechToTextService(private val context: Context) : Speech
             PackageManager.PERMISSION_GRANTED
 }
 
+// A blank candidate counts as no candidate, so a result of "" is reported as the session having
+// no result rather than being written into the rider's field as an empty sentence. An OEM
+// recogniser returning one is rare; iOS returns one routinely, and the two platforms answer the
+// same shape the same way.
 private fun Bundle.firstRecognitionCandidate(): String? =
-    getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
+    getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()?.takeIf { it.isNotBlank() }

@@ -1055,6 +1055,60 @@ class AiSearchInputViewModelTest {
 
             assertEquals(false, viewModel.uiState.value.isListening)
         }
+
+    @Test
+    fun `a blank final does not wipe the sentence the rider watched arrive`() =
+        runTest(testDispatcher) {
+            // The iOS bug this guards: ending a session asks the recogniser to finish, and the
+            // result that comes back can carry an empty transcription rather than a repeat of
+            // the sentence. Written through, it cleared the field a beat after the rider
+            // finished speaking, with nothing on screen to say why, and no way back to the
+            // words except saying them again. Android could not reach it, because its
+            // recogniser reports a missing result as an error instead.
+            viewModel.onEvent(AiSearchInputEvent.StartListening)
+            runCurrent()
+            speechToTextService.results.emit(SpeechToTextResult.Partial("central to town hall"))
+            runCurrent()
+
+            speechToTextService.results.emit(SpeechToTextResult.Final(""))
+            runCurrent()
+
+            assertEquals("central to town hall", viewModel.uiState.value.typedText)
+            assertEquals(false, viewModel.uiState.value.isListening)
+        }
+
+    @Test
+    fun `a whitespace-only final does not wipe it either`() = runTest(testDispatcher) {
+        // Blank, not empty. A recogniser reporting a single space is reporting the same nothing,
+        // and a field holding " " is still the rider's sentence gone.
+        viewModel.onEvent(AiSearchInputEvent.StartListening)
+        runCurrent()
+        speechToTextService.results.emit(SpeechToTextResult.Partial("central to town hall"))
+        runCurrent()
+
+        speechToTextService.results.emit(SpeechToTextResult.Final("   "))
+        runCurrent()
+
+        assertEquals("central to town hall", viewModel.uiState.value.typedText)
+        assertEquals(false, viewModel.uiState.value.isListening)
+    }
+
+    @Test
+    fun `a blank partial does not wipe the words already heard`() = runTest(testDispatcher) {
+        // Same shape mid-sentence: a recogniser opening a fresh segment after a pause reports
+        // an empty transcript for it. It is saying it has nothing to add, not that the rider
+        // unsaid what they said.
+        viewModel.onEvent(AiSearchInputEvent.StartListening)
+        runCurrent()
+        speechToTextService.results.emit(SpeechToTextResult.Partial("central to town hall"))
+        runCurrent()
+
+        speechToTextService.results.emit(SpeechToTextResult.Partial(""))
+        runCurrent()
+
+        assertEquals("central to town hall", viewModel.uiState.value.typedText)
+        assertTrue(viewModel.uiState.value.isListening)
+    }
 }
 
 private const val LISTENING_CEILING_IN_TEST = 10_000L

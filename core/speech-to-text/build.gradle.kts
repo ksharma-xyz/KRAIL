@@ -1,3 +1,4 @@
+import io.github.frankois944.spmForKmp.swiftPackageConfig
 import xyz.ksharma.krail.gradle.AndroidVersion
 
 plugins {
@@ -5,6 +6,7 @@ plugins {
     alias(libs.plugins.krail.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.krail.android.kmp.library)
+    alias(libs.plugins.spmForKmp)
 }
 
 kotlin {
@@ -17,8 +19,9 @@ kotlin {
         withHostTest {}
     }
 
-    iosArm64()
-    iosSimulatorArm64()
+    listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
+        target.swiftPackageConfig(cinteropName = "speechBridge") {}
+    }
 
     java {
         toolchain {

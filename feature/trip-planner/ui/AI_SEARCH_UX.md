@@ -40,9 +40,20 @@ Every way this can fail, what the rider gets, and whether a test holds it in pla
 | 8 | Only one end resolves | That field fills, the other is left | `one stop resolving is still a result` |
 | 9 | Origin unstated, destination found, GPS off or denied | From left empty | `nearby-stop resolver failure leaves origin unresolved, not a crash` |
 | 10 | Microphone denied, blocked, unsupported, or the recogniser errors | A different message for each; a blocked mic opens Settings | `speech unavailable surfaces the reason`, `a recogniser error is reported as itself` |
-| 11 | Recogniser never reports an end | Stops itself at 10s, or 15s if words were still arriving | `listening stops itself once it hits the ceiling`, `a rider still speaking at the ceiling is given longer`, `words that stopped before the ceiling do not earn the extension` |
+| 11 | Recogniser never reports an end | Stops itself at 10s, or 15s if words were still arriving. This is a backstop: both platforms end an ordinary session on their own, Android on its own silence windows (3s after a complete-sounding phrase, 4s otherwise) and iOS on 3s without a new word | `listening stops itself once it hits the ceiling`, `a rider still speaking at the ceiling is given longer`, `words that stopped before the ceiling do not earn the extension` |
 | 12 | Time understood ("by 6pm") | Shown on the search row, and the timetable opens with it | `resolves a time intent into the confirm state`, plus three in `TimeTableViewModelTest` covering the route carrying it, no time meaning now, and unreadable JSON falling back to now |
 | 13 | Dismissed mid-flight | Mic stopped, draft discarded | `closing the box while listening stops the mic`, `closing the box throws the draft away` |
+| 14 | Recogniser reports a blank transcript | Nothing. The words already heard stay in the field; a session that heard nothing at all ends as a recogniser error | `a blank final does not wipe the sentence the rider watched arrive`, `a blank partial does not wipe the words already heard` |
+
+**#14 was iOS only, and rider-facing.** `endAudio` asks `SFSpeechRecognizer` to finish, and the
+result that comes back can carry an empty transcription for the segment that was open rather
+than a repeat of the sentence — the same shape a pause mid-sentence produces, and this service
+waits seconds of quiet before finishing, so it was the ordinary ending rather than a rare one. Written through, it cleared the rider's sentence a beat after they watched it arrive.
+Android never reached it because its recogniser reports a missing result as an error instead.
+Held in three places now: `SpeechToTextResult` says transcripts always carry words,
+`IosSpeechToTextService` sends the last words heard instead of a blank final (and
+`NO_RESULT` when there were none), and the ViewModel refuses to write a blank transcript into
+the field whichever platform produced it.
 
 Both of the open defects recorded here are now fixed.
 

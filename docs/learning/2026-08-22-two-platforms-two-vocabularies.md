@@ -105,7 +105,12 @@ the phrase the rider used.
 - [x] `AiUnavailableReasonCoverageTest` walks the vocabulary and fails if any reason falls
       through to the generic banner, or decides the wrong thing about hiding the entry point.
       Mutation-checked: reverting the DEVICE_UNSUPPORTED arm to `null` fails it.
-- [ ] Android's `POSSIBLY_COMPLETE_SILENCE_LENGTH` has no iOS equivalent, so iOS stays about a
-      second slower to finish. No way to close it from here; documented in the service.
+- [x] Android's `POSSIBLY_COMPLETE_SILENCE_LENGTH` has no iOS equivalent, so iOS stayed about a
+      second slower to finish. Closed the following day, and the fix was to stop matching the
+      numbers: iOS measures a different event (the recogniser's last word *arriving*, which lags
+      the rider's last word), so its single window is now deliberately shorter than either
+      Android window rather than equal to one of them. See
+      [the blank transcript entry](2026-08-23-the-blank-transcript-that-cleared-the-field.md),
+      which is where the rest of that session's ending bugs are written up.
 - [ ] Nothing yet compares the two extraction prompts. They are two string literals in two
       languages and will drift again.

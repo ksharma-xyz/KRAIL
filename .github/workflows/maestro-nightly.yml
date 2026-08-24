@@ -225,6 +225,13 @@ jobs:
       # is a no-op on the simulator: it reports success, the app stays portrait,
       # and the accessibility tree empties for that moment, so the flow fails
       # against a screen that is drawn correctly. See that file's own header.
+      #
+      # The retry restarts the simulator itself, not just the app: a run seen on
+      # 2026-08-24 (Actions run 32757573292) hit an IOSDriverTimeoutException on
+      # the first attempt ("iOS driver not ready in time"), and terminating only
+      # the app left the retry's XCTest driver session equally wedged — every
+      # flow failed within seconds on the retry. A full shutdown/boot between
+      # attempts gives the retry a clean simulator to attach to.
       - name: Run smoke and nightly flows
         run: |
           set -o pipefail
@@ -234,8 +241,11 @@ jobs:
               -e APP_ID=xyz.ksharma.krail .maestro/smoke/ .maestro/nightly/
           }
           if ! run_suite; then
-            echo "::warning::Maestro suite failed on iOS; retrying once."
+            echo "::warning::Maestro suite failed on iOS; restarting simulator and retrying once."
             xcrun simctl terminate "${{ steps.sim.outputs.udid }}" xyz.ksharma.krail || true
+            xcrun simctl shutdown "${{ steps.sim.outputs.udid }}" || true
+            xcrun simctl boot "${{ steps.sim.outputs.udid }}"
+            xcrun simctl bootstatus "${{ steps.sim.outputs.udid }}" -b
             run_suite
           fi
 

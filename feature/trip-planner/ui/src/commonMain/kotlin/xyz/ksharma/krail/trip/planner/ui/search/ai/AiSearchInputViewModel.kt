@@ -120,6 +120,11 @@ class AiSearchInputViewModel(
     // Only ever compared against an earlier reading of itself, never read as a total.
     private var wordsHeardSoFar: Int = 0
 
+    // What the field held when the rider tapped the mic. Spoken words are added to it rather
+    // than replacing it, so a half-typed sentence survives being spoken into. Held outside the
+    // state because it is not something the screen renders, and cleared wherever the draft is.
+    private var textBeforeSpeaking: String = ""
+
     // Held outside the state as well as in it, because every reset below rebuilds the state
     // from scratch and this is the one fact about the device that a reset must not forget.
     private var isDeviceCapable: Boolean = true
@@ -177,6 +182,7 @@ class AiSearchInputViewModel(
             // (phase RESOLVED, the resolved intent, the sentence) — reopening onto that would
             // show a stale answer for a row the rider may have edited since.
             AiSearchInputEvent.OpenInput -> {
+                textBeforeSpeaking = ""
                 val enabled = isAiSearchInputEnabled()
                 _uiState.update {
                     AiSearchInputUiState(
@@ -190,13 +196,16 @@ class AiSearchInputViewModel(
             AiSearchInputEvent.Submit -> submit()
             // Everything the rider produced is thrown away; what the app knows about itself
             // is not, or starting over would hide the way back in.
-            AiSearchInputEvent.StartOver ->
+            AiSearchInputEvent.StartOver -> {
+                textBeforeSpeaking = ""
                 _uiState.update {
                     AiSearchInputUiState(
                         isFeatureEnabled = it.isFeatureEnabled,
                         isDeviceCapable = isDeviceCapable,
                     )
                 }
+            }
+
             AiSearchInputEvent.StartListening -> startListening()
             AiSearchInputEvent.StopListening -> stopListening()
         }
@@ -217,6 +226,7 @@ class AiSearchInputViewModel(
         listeningJob = null
         listeningTimeoutJob?.cancel()
         listeningTimeoutJob = null
+        textBeforeSpeaking = ""
         if (_uiState.value.isListening) speechToTextService.stopListening()
         _uiState.update {
             AiSearchInputUiState(
@@ -258,8 +268,19 @@ class AiSearchInputViewModel(
                 return@launch
             }
 
-            // Clears any previous failure message as the new attempt begins, so a retry does
-            // not start under the last attempt's error.
+            // Whatever is already in the field is kept, and the spoken words are added to it.
+            //
+            // Speaking used to replace it. A rider who typed half a sentence, tapped the mic
+            // and watched their own words disappear had no way back to them: the field is the
+            // only copy. Every mic that lives inside a text field works this way, from the iOS
+            // keyboard's own dictation to Gboard's, because a mic beside a keyboard is another
+            // way to type rather than a different way to ask.
+            //
+            // Replacing does have one case going for it, a rider re-tapping the mic to redo a
+            // mis-heard sentence, and adding gives them the sentence twice. That is a worse
+            // reading of the same tap but a far better failure: it is on screen, it is
+            // obviously wrong, and it is one gesture to clear. Losing typed words is silent.
+            textBeforeSpeaking = _uiState.value.typedText
             _uiState.update {
                 it.copy(isListening = true, speechTranscript = "", speechUnavailableReason = null)
             }
@@ -282,7 +303,12 @@ class AiSearchInputViewModel(
                         // has nothing to add, not that the rider unsaid what they said, and
                         // writing it through erases words already in the field.
                         if (result.text.isNotBlank()) {
-                            _uiState.update { it.copy(speechTranscript = result.text, typedText = result.text) }
+                            _uiState.update {
+                                it.copy(
+                                    speechTranscript = result.text,
+                                    typedText = joinSpokenText(textBeforeSpeaking, result.text),
+                                )
+                            }
                         }
                     }
 
@@ -308,7 +334,7 @@ class AiSearchInputViewModel(
                                 it.copy(
                                     isListening = false,
                                     speechTranscript = result.text,
-                                    typedText = result.text,
+                                    typedText = joinSpokenText(textBeforeSpeaking, result.text),
                                 )
                             }
                         }

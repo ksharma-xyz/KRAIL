@@ -1057,6 +1057,69 @@ class AiSearchInputViewModelTest {
         }
 
     @Test
+    fun `speaking adds to what the rider already typed instead of replacing it`() =
+        runTest(testDispatcher) {
+            // Reported from a device: type a little, tap the mic, and the typed words were
+            // gone. The field is the only copy, so replacing it destroys input with no undo.
+            viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("meet me at"))
+            viewModel.onEvent(AiSearchInputEvent.StartListening)
+            runCurrent()
+
+            speechToTextService.results.emit(SpeechToTextResult.Partial("central"))
+            runCurrent()
+            assertEquals("meet me at central", viewModel.uiState.value.typedText)
+
+            speechToTextService.results.emit(SpeechToTextResult.Final("central station"))
+            runCurrent()
+            assertEquals("meet me at central station", viewModel.uiState.value.typedText)
+        }
+
+    @Test
+    fun `speaking into an empty field adds no leading space`() = runTest(testDispatcher) {
+        // The ordinary case, and the one a naive join gets wrong.
+        viewModel.onEvent(AiSearchInputEvent.StartListening)
+        runCurrent()
+
+        speechToTextService.results.emit(SpeechToTextResult.Final("central to town hall"))
+        runCurrent()
+
+        assertEquals("central to town hall", viewModel.uiState.value.typedText)
+    }
+
+    @Test
+    fun `a second session adds to the first one's words, not to a stale copy`() =
+        runTest(testDispatcher) {
+            // The text captured when the mic is tapped has to be re-read every session. Held
+            // from the first one, the second would append to what the field looked like before
+            // the rider ever spoke.
+            viewModel.onEvent(AiSearchInputEvent.StartListening)
+            runCurrent()
+            speechToTextService.results.emit(SpeechToTextResult.Final("central"))
+            runCurrent()
+
+            viewModel.onEvent(AiSearchInputEvent.StartListening)
+            runCurrent()
+            speechToTextService.results.emit(SpeechToTextResult.Final("to town hall"))
+            runCurrent()
+
+            assertEquals("central to town hall", viewModel.uiState.value.typedText)
+        }
+
+    @Test
+    fun `starting over drops the text a later session would have added to`() =
+        runTest(testDispatcher) {
+            viewModel.onEvent(AiSearchInputEvent.TypedTextChanged("meet me at"))
+            viewModel.onEvent(AiSearchInputEvent.StartOver)
+            viewModel.onEvent(AiSearchInputEvent.StartListening)
+            runCurrent()
+
+            speechToTextService.results.emit(SpeechToTextResult.Final("central station"))
+            runCurrent()
+
+            assertEquals("central station", viewModel.uiState.value.typedText)
+        }
+
+    @Test
     fun `a blank final does not wipe the sentence the rider watched arrive`() =
         runTest(testDispatcher) {
             // The iOS bug this guards: ending a session asks the recogniser to finish, and the

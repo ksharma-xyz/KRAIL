@@ -5,6 +5,7 @@ import androidx.compose.runtime.remember
 import kotlinx.datetime.DayOfWeek
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.HOME_STOP_LABEL
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.LabelSynonyms
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
@@ -43,8 +44,6 @@ internal data class AiGreeting(val suggestion: String)
 // commute for the weekend rule exactly as "Work" does. Two lists would have drifted the moment
 // one of them gained a word.
 private val COMMUTE_LABELS = LabelSynonyms.commuteLabels
-
-private const val HOME_LABEL = "home"
 
 // The label is home by definition here, so the sentence says home rather than quoting whatever
 // casing the rider typed. "Get me home" is also what somebody would actually say out loud.
@@ -149,9 +148,9 @@ private fun eligibleTrip(savedTrips: List<Trip>, labels: List<StopLabel>, allows
  */
 private fun labelPair(labels: List<StopLabel>, allowsCommute: Boolean): Pair<String, String>? {
     val set = labels.filter { it.isSet }
-    val home = set.firstOrNull { it.label.equals(HOME_LABEL, ignoreCase = true) }
+    val home = set.firstOrNull { it.label.equals(HOME_STOP_LABEL, ignoreCase = true) }
 
-    val others = set.filterNot { it.label.equals(HOME_LABEL, ignoreCase = true) }
+    val others = set.filterNot { it.label.equals(HOME_STOP_LABEL, ignoreCase = true) }
     val eligible = if (allowsCommute) {
         others.sortedByDescending { it.label.lowercase() in COMMUTE_LABELS }
     } else {
@@ -164,7 +163,7 @@ private fun labelPair(labels: List<StopLabel>, allowsCommute: Boolean): Pair<Str
 
 /** Whether the rider has a home pinned to a stop, which is all the home-bound line needs. */
 private fun homeLabel(labels: List<StopLabel>): String? =
-    labels.firstOrNull { it.isSet && it.label.equals(HOME_LABEL, ignoreCase = true) }?.label
+    labels.firstOrNull { it.isSet && it.label.equals(HOME_STOP_LABEL, ignoreCase = true) }?.label
 
 /**
  * `Seven Hills Station` reads as `Seven Hills`. Only the trailing word goes: everything else in

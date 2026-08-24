@@ -58,7 +58,7 @@ import krail.feature.trip_planner.ui.generated.resources.ic_search
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalThemeColor
-import xyz.ksharma.krail.taj.components.AiWheelMark
+import xyz.ksharma.krail.taj.components.AiMicButton
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.RoundIconButton
@@ -459,6 +459,12 @@ private fun StopFieldText(text: String, isActive: Boolean, slideUp: Boolean, lab
  * and every failure they can hit, so this button has one job and one look. It used to change
  * into a mic and back, which meant the row had to explain a mode it was not showing.
  *
+ * A mic that stays a mic, rather than the wheel that used to sit here. The wheel is KRAIL's
+ * mark for *on-device AI produced this*, which is exactly right on the alert-summary card and
+ * wrong on a door: it named the technology to a rider who was looking for a way to say where
+ * they are going. The gradient moved to the button's ring, so the surface still announces
+ * itself without the glyph having to.
+ *
  * Not rendered at all when the feature is off. It used to render regardless, because the flag
  * stopped at the ViewModel — the sheet opened, the rider typed a sentence, and Continue did
  * nothing.
@@ -468,24 +474,19 @@ private fun AiSheetEntryButton(
     onAiEvent: (AiSearchInputEvent) -> Unit,
     spinning: Boolean = false,
 ) {
-    val dim = KrailTheme.dimensions
     val themeColorHex by LocalThemeColor.current
 
-    RoundIconButton(
-        content = {
-            // The theme's own pair, not the fixed cool gradient the mark defaults to. This
-            // button is the door to a surface that is now painted in these exact colours, so a
-            // wheel in somebody else's blue and violet reads as a different product's button.
-            //
-            // It spins exactly once outside that surface: the settle beat after the dialog
-            // closes onto this row with an answer, so the motion lands where the answer did.
-            AiWheelMark(
-                spinning = spinning,
-                markSize = dim.iconDefault,
-                colors = AiThemeGradientTokens.stopsFor(themeColorHex),
-            )
-        },
+    // The theme's own pair, not the fixed gradient the ring defaults to. This button is the
+    // door to a surface painted in these exact colours, so a ring in somebody else's blue and
+    // violet reads as a different product's button.
+    //
+    // It turns exactly once outside that surface: the settle beat after the dialog closes onto
+    // this row with an answer, so the motion lands where the answer did.
+    AiMicButton(
         onClick = { onAiEvent(AiSearchInputEvent.OpenInput) },
+        spinning = spinning,
+        colors = AiThemeGradientTokens.stopsFor(themeColorHex),
+        contentDescription = "Ask KRAIL",
         modifier = Modifier.testTag(TripPlannerTestTags.SEARCH_ROW_ASK_KRAIL),
     )
 }

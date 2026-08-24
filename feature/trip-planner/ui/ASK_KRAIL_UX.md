@@ -154,6 +154,16 @@ commute exactly as `Work` does. Two lists would have drifted the moment one gain
 - **Partial transcripts go into `typedText`**, not just `speechTranscript`. The field renders
   `typedText`; writing only the transcript meant a rider watched an empty box while they talked
   and everything appeared at once when they stopped.
+- **Speaking adds to the field, it does not replace it.** Whatever is already there when the mic
+  is tapped is kept, and the spoken words are joined onto it (`joinSpokenText`). Replacing meant
+  a rider who typed half a sentence and then tapped the mic watched their own words vanish, and
+  the field is the only copy. Every mic that lives inside a text field works this way, from the
+  iOS keyboard's own dictation to Gboard's, because a mic beside a keyboard is another way to
+  type rather than a different way to ask. Re-tapping to redo a mis-heard sentence therefore
+  gives the sentence twice: the worse reading of that tap, but the better failure, because it is
+  on screen and one gesture to clear where lost typing is silent.
+- **A blank transcript is never written in.** A recogniser reporting one is saying it has nothing
+  to add, not that the rider unsaid what they said. See failure mode 14 in `AI_SEARCH_UX.md`.
 - **Listening stops itself** at 10 seconds, extended to 15 if words were still arriving in the
   last 4. The recogniser does not always report an end, and a mic that stays open with no way
   out is worse than one that closes early. The rider's stop button is the real control; the
@@ -177,7 +187,7 @@ card taller than the screen is worse than the screen.
 **A resolve is a handoff.** The stops and the time are written into the home row on the
 RESOLVED emission (`SavedTripsEntry`), the dialog stays up for one settle beat
 (`closeAfterHandoff`, 1.5s) so the border can finish, then closes itself onto the row it
-filled. The row's wheel spins once as it lands (`isAiHandoffSettling`), so the eye follows
+filled. The row's mic ring turns once as it lands (`isAiHandoffSettling`), so the eye follows
 the answer. There is no result card: the row IS the result, and a copy of it inside the
 dialog was a second thing to keep in step with the first.
 
@@ -217,9 +227,16 @@ fallback cannot be deleted casually.
   appearance from whatever happens to be behind it, and behind this is a gradient that moves.
 - **`ImeAction.Default`, never `Search`.** Search makes the IME replace its enter key, so a
   rider writing more than one line has no way to start one.
-- **The way-in slot is never empty.** The wheel is the top of a two-button column in
+- **The way in is a mic, not the wheel.** `AiMicButton` keeps the glyph and the fill in the
+  theme's own content and surface colours and puts the AI gradient in a ring around the button's
+  edge, so the control reads as a mic first and an AI surface second. The wheel (`AiWheelMark`)
+  is KRAIL's mark for *on-device AI produced this*, which is right on the alert-summary card and
+  wrong on a door: on the way in it named the technology to a rider looking for a way to say
+  where they are going. The ring is drawn at rest and turns for one beat on handoff, which is
+  the same motion the wheel had.
+- **The way-in slot is never empty.** That mic is the top of a two-button column in
   `SearchStopRow`, with Search below it. Where `isWayInAvailable` is false the slot holds the
-  reverse-stops button instead, so Search does not rise into the wheel's place. Two devices
+  reverse-stops button instead, so Search does not rise into the mic's place. Two devices
   differing only in a capability the rider never chose should not have differently shaped rows,
   and the button that commits the trip should not move next to a different field.
 - **No second speak control.** A worded `Speak` button used to appear below the bar at large

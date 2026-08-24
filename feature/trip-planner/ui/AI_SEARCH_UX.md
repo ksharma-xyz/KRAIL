@@ -30,7 +30,7 @@ Every way this can fail, what the rider gets, and whether a test holds it in pla
 
 | # | Failure | Rider sees | Test |
 |---|---|---|---|
-| 1 | Feature flag off | **No way in.** The wheel is not drawn | `with the flag off there is no way in`, `with the flag on the way in is there and opens`, `starting over keeps the way in`, plus `submit while flag is off does nothing` |
+| 1 | Feature flag off | **No way in.** The mic is not drawn | `with the flag off there is no way in`, `with the flag on the way in is there and opens`, `starting over keeps the way in`, plus `submit while flag is off does nothing` |
 | 2 | Model not downloaded, or downloading | "still downloading… try again in a moment" | `model downloadable lands in DOWNLOADING`, `model downloading lands in DOWNLOADING too` |
 | 3 | Device unsupported | Generic unresolved message | `unsupported device lands in UNRESOLVED, not DOWNLOADING` — reads as a parse failure rather than "not available here" |
 | 4 | Model returns nothing usable | "did not come through, have another go" | `failed extraction resolves to UNRESOLVED`, `a model that gives nothing back is its own kind of failure` |
@@ -40,10 +40,27 @@ Every way this can fail, what the rider gets, and whether a test holds it in pla
 | 8 | Only one end resolves | That field fills, the other is left | `one stop resolving is still a result` |
 | 9 | Origin unstated, destination found, GPS off or denied | From left empty | `nearby-stop resolver failure leaves origin unresolved, not a crash` |
 | 10 | Microphone denied, blocked, unsupported, or the recogniser errors | A different message for each; a blocked mic opens Settings | `speech unavailable surfaces the reason`, `a recogniser error is reported as itself` |
-| 11 | Recogniser never reports an end | Stops itself at 10s, or 15s if words were still arriving. This is a backstop: both platforms end an ordinary session on their own, Android on its own silence windows (3s after a complete-sounding phrase, 4s otherwise) and iOS on 3s without a new word | `listening stops itself once it hits the ceiling`, `a rider still speaking at the ceiling is given longer`, `words that stopped before the ceiling do not earn the extension` |
+| 11 | Recogniser never reports an end | Stops itself at 10s, or 15s if words were still arriving. This is a backstop: every path ends an ordinary session on its own. See "How each platform decides you stopped" below | `listening stops itself once it hits the ceiling`, `a rider still speaking at the ceiling is given longer`, `words that stopped before the ceiling do not earn the extension` |
 | 12 | Time understood ("by 6pm") | Shown on the search row, and the timetable opens with it | `resolves a time intent into the confirm state`, plus three in `TimeTableViewModelTest` covering the route carrying it, no time meaning now, and unreadable JSON falling back to now |
 | 13 | Dismissed mid-flight | Mic stopped, draft discarded | `closing the box while listening stops the mic`, `closing the box throws the draft away` |
 | 14 | Recogniser reports a blank transcript | Nothing. The words already heard stay in the field; a session that heard nothing at all ends as a recogniser error | `a blank final does not wipe the sentence the rider watched arrive`, `a blank partial does not wipe the words already heard` |
+
+### How each platform decides you stopped
+
+Three code paths, and they do not measure the same thing. The numbers being equal is a
+coincidence worth not relying on.
+
+| Path | What it measures | Window | Where |
+|---|---|---|---|
+| Android | silence, inside the OS recogniser | 3s after a complete-sounding phrase, 4s otherwise | `AndroidSpeechToTextService` intent extras |
+| iOS 26 | silence, from Apple's `SpeechDetector`, in audio time | 3s | `SpeechActivityWatch` |
+| iOS below 26 | the transcript gaining a **word**, which lags speech by however long recognition takes | 3s | `TranscriptWatch` |
+
+The third is the weakest and is the fallback for exactly that reason:
+`SFSpeechAudioBufferRecognitionRequest` never decides a speaker has finished, so the end of a
+sentence has to be inferred from how text arrives. iOS 26's `SpeechAnalyzer` supplies the real
+signal, which is why the app prefers it wherever it exists (`PreferredSpeechToTextService`).
+`core/speech-to-text/README.md` has the full comparison.
 
 **#14 was iOS only, and rider-facing.** `endAudio` asks `SFSpeechRecognizer` to finish, and the
 result that comes back can carry an empty transcription for the segment that was open rather
@@ -57,7 +74,7 @@ the field whichever platform produced it.
 
 Both of the open defects recorded here are now fixed.
 
-**#1.** The flag now reaches the state as `isFeatureEnabled`, the row does not draw the wheel
+**#1.** The flag now reaches the state as `isFeatureEnabled`, the row does not draw the mic
 without it, and `OpenInput` refuses as well as the button being absent — a caller that has not
 been told cannot open a sheet whose only action would be inert.
 

@@ -75,8 +75,8 @@ the other is left to them.
 ## What it looks like
 
 The surface is painted from the rider's chosen theme: two colours from that theme drifting
-behind the input, the same pair on the AI wheel, the border, and the search screen's background.
-Change the theme and all of it follows.
+behind the input, the same pair on the mic ring that opens it, the border, and the search
+screen's background. Change the theme and all of it follows.
 
 ---
 

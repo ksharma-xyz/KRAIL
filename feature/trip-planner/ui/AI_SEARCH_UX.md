@@ -45,6 +45,41 @@ Every way this can fail, what the rider gets, and whether a test holds it in pla
 | 13 | Dismissed mid-flight | Mic stopped, draft discarded | `closing the box while listening stops the mic`, `closing the box throws the draft away` |
 | 14 | Recogniser reports a blank transcript | Nothing. The words already heard stay in the field; a session that heard nothing at all ends as a recogniser error | `a blank final does not wipe the sentence the rider watched arrive`, `a blank partial does not wipe the words already heard` |
 
+### How the From stop is decided
+
+The rider names one end far more often than two ("get me home", "I want to go to Bondi"), so
+the other end is worked out. The ladder is ordered by how much each signal knows about **right
+now**, and a guess never overrules something known.
+
+| | Signal | Knows | Where |
+|---|---|---|---|
+| 1 | What the rider said | Their intent, certainly | `StopTextResolver` chain, via `resolveTripOrigin` |
+| 2 | A labelled stop within walking distance | Their position, certainly. The label is the platform they actually use, where the nearest stop is often a shelter nobody uses | `LabelledStopLocator.nearestLabelledStop` |
+| 3 | The nearest stop | Their position | `NearbyStopsRepository` |
+| 4 | **Home, if set** | Only their habit | `LabelledStopLocator.homeStop` |
+| 5 | Nothing. Field left blank | | |
+
+**Location always beats Home.** A trip starts where you are: a rider at work asking for the
+airport is served correctly by position and wrongly by habit. Home is reached only when there is
+no location at all, which is the same null whether permission was denied, restricted, or the fix
+timed out.
+
+**Two cases deliberately stay blank rather than reaching for Home.** Standing at the destination,
+and a known location with no stop near it. Both are things the app knows about the rider right
+now, and a guess must not contradict them.
+
+**Home is the only label used this way**, because with no location there is no distance by which
+to rank any other. It is also the one label the app treats as permanent: it cannot be renamed,
+only reassigned or cleared, which is what makes keying behaviour on it safe. One spelling of it,
+in `HOME_STOP_LABEL`.
+
+Filling this in is answering a question the rider asked, not inventing one: it happens only when
+a destination was actually understood. A sentence that resolved to no places takes no fallback
+at all, which is failure mode 5.
+
+Every branch logs under `[AI_ORIGIN]`, including why a location was unavailable, because all of
+them otherwise arrive as the same blank field with nothing to tell them apart.
+
 ### How each platform decides you stopped
 
 Three code paths, and they do not measure the same thing. The numbers being equal is a

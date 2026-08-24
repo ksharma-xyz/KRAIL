@@ -8,6 +8,7 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.navigation.ResultEffect
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionPane
@@ -50,7 +51,20 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
         // Composable-supplied param.
         val userLocationManager = rememberUserLocationManager()
         val aiSearchInputViewModel: AiSearchInputViewModel = koinViewModel(
-            parameters = { parametersOf(suspend { userLocationManager.getCurrentLocation().getOrNull() }) },
+            parameters = {
+                parametersOf(
+                    suspend {
+                        // The Result is unwrapped here and nowhere else, so this is the only
+                        // place that can say WHY a location was not available. Downstream all
+                        // three causes (denied, restricted, timed out) arrive as the same null
+                        // and produce the same blank From field, which is what made the
+                        // reported bug impossible to tell apart from "no stops nearby".
+                        userLocationManager.getCurrentLocation()
+                            .onFailure { log("[AI_ORIGIN] location unavailable: $it") }
+                            .getOrNull()
+                    },
+                )
+            },
         )
         val aiSearchInputState by aiSearchInputViewModel.uiState.collectAsStateWithLifecycle()
 

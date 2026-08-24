@@ -28,6 +28,25 @@ class LabelledStopLocator(
 ) {
 
     /**
+     * The stop pinned as Home, or null when the rider has not set one.
+     *
+     * Deliberately not distance-aware, because it is asked only when there is no location to
+     * measure against: it is the last thing tried before leaving the field blank. Home is the
+     * one label this app treats as permanent (it cannot be renamed, only reassigned or
+     * cleared), which is what makes "is Home set" a question worth asking at all.
+     *
+     * [excludeStopId] is the destination, so "home to home" cannot be produced here either.
+     */
+    suspend fun homeStop(excludeStopId: String?): StopItem? =
+        sandook.observeStopLabels().first()
+            .firstOrNull { it.label.equals(HOME_STOP_LABEL, ignoreCase = true) }
+            ?.let { label ->
+                val id = label.stop_id ?: return@let null
+                val name = label.stop_name ?: return@let null
+                if (id == excludeStopId) null else StopItem(stopId = id, stopName = name)
+            }
+
+    /**
      * The nearest labelled stop within [RADIUS_KM], or null.
      *
      * [excludeStopId] is the destination. Standing at home and saying "get me home" must not

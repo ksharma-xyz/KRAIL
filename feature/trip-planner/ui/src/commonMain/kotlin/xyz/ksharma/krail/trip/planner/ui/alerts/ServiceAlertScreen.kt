@@ -39,7 +39,7 @@ fun ServiceAlertScreen(
     onSummaryEvent: (AlertSummaryEvent) -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
-    var expandedAlertId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var expandedAlertId by rememberSaveable { mutableStateOf<String?>(null) }
 
     // Fires an event up to the owning ViewModel rather than calling AiTextService here —
     // this composable never touches DI directly. The ViewModel dedupes per alert-set
@@ -83,23 +83,23 @@ fun ServiceAlertScreen(
 
         itemsIndexed(
             items = serviceAlerts.toImmutableList(),
-            // ServiceAlert has no stable id from the feed - heading alone isn't unique
-            // (NSW's real feed can send two distinct alerts with an identical heading),
-            // so the index is prefixed in to guarantee uniqueness rather than crashing on
-            // the first duplicate heading, matching this repo's LazyColumn key convention.
-            key = { index, item -> "${index}_${item.heading.lowercase()}" },
+            // ServiceAlert.alertId, not the index. Prefixing the index would also be unique,
+            // but it makes identity positional: reordering or inserting an alert renumbers
+            // every key after it, so Compose treats untouched rows as new ones and drops
+            // their animation and state. The alerts arrive as a Set, so (heading, message)
+            // is distinct by construction and survives reordering. Prefixed to keep it clear
+            // of this list's static item keys.
+            key = { _, item -> "alert_${item.alertId}" },
         ) { index, alert ->
             CollapsibleAlert(
                 serviceAlert = alert,
                 index = index + 1,
                 modifier = Modifier.padding(horizontal = dim.spacingXL, vertical = dim.spacingM),
-                collapsed = expandedAlertId != alert.hashCode(),
+                // Same identity as the list key. hashCode() was an Int over unbounded
+                // text, so two alerts could collide and expand together.
+                collapsed = expandedAlertId != alert.alertId,
                 onClick = {
-                    expandedAlertId = if (expandedAlertId == alert.hashCode()) {
-                        null
-                    } else {
-                        alert.hashCode()
-                    }
+                    expandedAlertId = if (expandedAlertId == alert.alertId) null else alert.alertId
                 },
             )
         }

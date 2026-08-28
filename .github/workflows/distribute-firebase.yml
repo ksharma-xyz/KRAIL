@@ -36,7 +36,22 @@ jobs:
         run: ls
 
       - name: Download Firebase CLI
-        run: curl -sL https://firebase.tools | bash
+        # The firebase.tools install script is occasionally served corrupted
+        # (e.g. an error page instead of the shell script), which the script
+        # itself detects and exits non-zero on. Retry a few times before
+        # failing the job, since this is a transient CDN issue, not an app
+        # or CI configuration problem.
+        run: |
+          for attempt in 1 2 3; do
+            if curl -sL https://firebase.tools | bash && firebase --version >/dev/null 2>&1; then
+              echo "Firebase CLI installed successfully on attempt $attempt"
+              exit 0
+            fi
+            echo "Firebase CLI install attempt $attempt failed, retrying in $((attempt * 5))s..."
+            sleep $((attempt * 5))
+          done
+          echo "Firebase CLI install failed after 3 attempts"
+          exit 1
 
       - name: Authenticate with Firebase
         env:

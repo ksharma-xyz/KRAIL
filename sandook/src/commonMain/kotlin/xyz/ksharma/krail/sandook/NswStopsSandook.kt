@@ -55,7 +55,8 @@ interface NswStopsSandook {
      * Get stops by stop ID or name with their product classes.
      *
      * @param stopId Exact stop ID to match
-     * @param stopName Stop name to partially match (case-insensitive)
+     * @param stopName Stop name to partially match. Matching is case- and punctuation-insensitive
+     *   and order-preserving; the query's spaces become wildcards. See [stopNameLikePattern].
      * @return List of stops with their product classes
      */
     fun selectProductClassesForStop(
@@ -165,8 +166,9 @@ internal class RealNswStopsSandook(
         stopName: String,
     ): List<SelectProductClassesForStop> {
         return nswStopsQueries.selectProductClassesForStop(
+            // stopId stays raw — it is an exact-equality match, not a pattern.
             stopId = stopId,
-            stopName = stopName,
+            stopNamePattern = stopNameLikePattern(stopName),
         ).executeAsList()
     }
 

@@ -69,7 +69,7 @@ class StopSearchPipelineReproTest {
         val sandook = object : Sandook {
             // Real SQL: exact id OR case-insensitive substring, file order, distinct by id.
             override fun selectStops(stopName: String, excludeProductClassList: List<Int>) =
-                stops.filter { it.stopId == stopName || it.stopName.contains(stopName, ignoreCase = true) }
+                stops.filter { it.stopId == stopName || it.stopName.matchesStopQuery(stopName) }
             override fun selectStopsByIds(stopIds: List<String>) =
                 stops.filter { it.stopId in stopIds.toSet() }
             override fun selectStopCoordinatesBatch(stopIds: List<String>) = emptyMap<String, Pair<Double, Double>>()
@@ -183,6 +183,11 @@ class StopSearchPipelineReproTest {
             "victoria cross station" to "Victoria Cross Station",
             "macquary park" to "Macquarie Park Station",
             "hutstville" to "Hurstville Station",
+            // NSW names are punctuated ("Wollongong Central, Burelli St") and riders are
+            // not. Typing the name without its comma used to return nothing at all while
+            // typing it with the comma worked.
+            "wollongong central burell" to "Wollongong Central, Burelli St",
+            "central station eddy" to "Central Station, Eddy Ave",
         )
         val misses = mutableListOf<String>()
         cases.forEach { (q, expect) ->
@@ -313,4 +318,22 @@ class StopSearchPipelineReproTest {
             )
         }
     }
+}
+
+/**
+ * Ordered-token containment — the Kotlin equivalent of the `%tok1%tok2%` pattern
+ * `stopNameLikePattern` builds, so this fake matches what SQLite actually does.
+ */
+private fun String.matchesStopQuery(query: String): Boolean {
+    var searchFrom = 0
+    val tokens = query.lowercase()
+        .replace(Regex("[^a-z0-9 ]"), " ")
+        .split(" ")
+        .filter { it.isNotEmpty() }
+    for (token in tokens) {
+        val found = indexOf(token, startIndex = searchFrom, ignoreCase = true)
+        if (found < 0) return false
+        searchFrom = found + token.length
+    }
+    return true
 }

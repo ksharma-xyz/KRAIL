@@ -166,8 +166,9 @@ internal class RealSandook(
         excludeProductClassList: List<Int>,
     ): List<SelectProductClassesForStop> {
         return nswStopsQueries.selectProductClassesForStop(
+            // stopId stays raw — it is an exact-equality match, not a pattern.
             stopId = stopName,
-            stopName = stopName,
+            stopNamePattern = stopNameLikePattern(stopName),
         ).executeAsList()
     }
 

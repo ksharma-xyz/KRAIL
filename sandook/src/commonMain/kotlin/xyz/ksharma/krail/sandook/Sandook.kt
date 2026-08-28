@@ -85,6 +85,10 @@ interface Sandook {
     /**
      * Retrieves stops by matching an exact stop \id\ or partially matching a stop \name\.
      * Excludes stops having product classes in the given \excludeProductClassList\.
+     *
+     * Name matching is punctuation-insensitive and order-preserving: the query's spaces become
+     * wildcards, so "wollongong central burell" finds "Wollongong Central, Burelli St" without
+     * the rider having to type the comma. See [stopNameLikePattern].
      */
     fun selectStops(
         stopName: String,

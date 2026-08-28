@@ -161,9 +161,14 @@ object RemoteConfigDefaults {
                 first = FlagKeys.TRIP_TRACKING_ENABLED.key,
                 second = true,
             ),
+            // Matches the value served by Remote Config. These defaults only apply before the
+            // first fetch completes, so a default that disagrees with the served value makes
+            // the shipped behaviour unreadable from source: fuzzy search reads as off here
+            // while every install actually runs it. Keep this in step when the served value
+            // changes, and read `fetchFuzzyCandidates` as live code, not a dormant path.
             Pair(
                 first = FlagKeys.ENABLE_FUZZY_STOP_SEARCH.key,
-                second = false,
+                second = true,
             ),
             Pair(
                 first = FlagKeys.ENABLE_PROTO_BFF.key,

@@ -926,11 +926,16 @@ private fun LazyListScope.searchResultsList(
 ) {
     items(
         items = searchResults,
+        // Prefixed per type. The three id spaces come from unrelated sources - stop ids from
+        // the GTFS stop table, trip ids raw from the routes proto, address ids from the
+        // geocoder - and nothing makes them disjoint, so an unprefixed key would let a trip
+        // and a stop collide and crash the list. Matches the prefixing the address and
+        // empty-state sections already use.
         key = { result ->
             when (result) {
-                is SearchStopState.SearchResult.Stop -> result.stopId
-                is SearchStopState.SearchResult.Trip -> result.tripId
-                is SearchStopState.SearchResult.Address -> result.addressId
+                is SearchStopState.SearchResult.Stop -> "stop_${result.stopId}"
+                is SearchStopState.SearchResult.Trip -> "trip_${result.tripId}"
+                is SearchStopState.SearchResult.Address -> "address_${result.addressId}"
             }
         },
     ) { result ->

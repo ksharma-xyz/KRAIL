@@ -7,48 +7,75 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlin.test.assertTrue
+import kotlin.test.assertNull
 import kotlin.test.fail
 
 /**
- * A typed search query can be a street address, and a street address is a home. The rule in
- * `docs/SEARCH_QUERY_TELEMETRY_SPEC.md` is that raw text leaves the device only under the
- * zero-result carve-out: nothing found anywhere, no digits, short.
+ * From 1.27 the typed query is sent for every settled search, disclosed by the privacy
+ * policy. What the policy also promises is that house and unit numbers are masked, and
+ * because analytics goes straight to Firebase there is no later stage that could do it -
+ * whatever these helpers build is what a third party stores.
  *
- * `SearchQueryAnalyticsRedactionTest` already pins the carve-out predicate. This test guards the
- * step after it — the event that actually goes out. It drives the production track helpers and
- * reads the built property map, because that map is what ships, and a leak could arrive through
- * a parameter nobody thought of rather than through a wrong carve-out decision.
+ * A query that is nothing but digits is a route number or a stop id, not an address, and
+ * goes out as typed. Everything else has its digits masked.
  *
- * The assertion deliberately checks **every** property value rather than just the `query` key,
- * and checks the query's individual words as well as the whole string, because the spec calls
- * out that "a first token, a normalised query or a hash of the text are all the text".
+ * `SearchQueryAnalyticsRedactionTest` pins the masking function. This test guards the step
+ * after it - the event that actually goes out. It drives the production track helpers and
+ * reads the built property map, because that map is what ships, and a digit could arrive
+ * through a parameter nobody thought of rather than through a broken mask.
  *
- * What it cannot see: a hash or an encoding of the query, which by construction does not
- * contain the query as a substring. That would have to be caught in review.
+ * What it cannot see: a hash or an encoding of the query, which by construction contains
+ * no digit and no substring of the text. That would have to be caught in review.
  */
 class SearchQueryTextEgressTest {
 
     @Test
-    fun `a local query that found results never leaves as text`() {
+    fun `no digit leaves an address-shaped query on a resolved local search`() {
         val analytics = FakeAnalytics()
 
         analytics.trackLocalSearchResolved(
-            query = QUERY,
+            query = ADDRESS_QUERY,
             searchSessionId = SESSION_ID,
             localResultsCount = 4,
             addressSearchGate = AddressSearchGate.DISABLED,
         )
 
-        assertNoRawQuery(analytics.searchEvent())
+        assertNoDigitAnywhere(analytics.searchEvent())
     }
 
     @Test
-    fun `an address query that found results never leaves as text`() {
+    fun `no digit leaves an address-shaped query on a failed local search`() {
+        val analytics = FakeAnalytics()
+
+        analytics.trackLocalSearchFailed(query = ADDRESS_QUERY, searchSessionId = SESSION_ID)
+
+        assertNoDigitAnywhere(analytics.searchEvent())
+    }
+
+    @Test
+    fun `the street survives so the query is still diagnosable`() {
+        // Control. Without this, every assertion above would also pass if the event stopped
+        // carrying any query at all, and the guard would be measuring nothing.
+        val analytics = FakeAnalytics()
+
+        analytics.trackLocalSearchResolved(
+            query = ADDRESS_QUERY,
+            searchSessionId = SESSION_ID,
+            localResultsCount = 0,
+            addressSearchGate = AddressSearchGate.BELOW_THRESHOLD,
+        )
+
+        assertEquals("# fulton place", analytics.searchEvent().properties?.get("query"))
+    }
+
+    @Test
+    fun `the address firing carries no query text at all`() {
+        // The local firing happens for every settled query and already carries the text.
+        // Sending it here too would double the egress and double-count the eval corpus.
         val analytics = FakeAnalytics()
 
         analytics.trackAddressSearchResolved(
-            normalizedQuery = QUERY,
+            normalizedQuery = ADDRESS_QUERY,
             searchSessionId = SESSION_ID,
             localResultsCount = 0,
             addressResults = listOf(
@@ -60,47 +87,40 @@ class SearchQueryTextEgressTest {
             ),
         )
 
-        assertNoRawQuery(analytics.searchEvent())
+        val event = analytics.searchEvent()
+        assertNull(event.properties?.get("query"))
+        assertNoDigitAnywhere(event)
     }
 
     @Test
-    fun `a failed local search never leaves as text`() {
-        val analytics = FakeAnalytics()
-
-        analytics.trackLocalSearchFailed(query = QUERY, searchSessionId = SESSION_ID)
-
-        assertNoRawQuery(analytics.searchEvent())
-    }
-
-    @Test
-    fun `an address-eligible query defers rather than leaking on the local event`() {
-        // The local site does not know the address count yet, so it must not decide.
+    fun `a query too long to send carries no text rather than a truncated one`() {
         val analytics = FakeAnalytics()
 
         analytics.trackLocalSearchResolved(
-            query = QUERY,
+            query = "unit ${"a".repeat(SearchQueryAnalyticsRedaction.MAX_QUERY_LENGTH)}",
             searchSessionId = SESSION_ID,
             localResultsCount = 0,
             addressSearchGate = AddressSearchGate.ELIGIBLE,
         )
 
-        assertNoRawQuery(analytics.searchEvent())
+        assertNull(analytics.searchEvent().properties?.get("query"))
     }
 
     @Test
-    fun `the carve-out itself still works`() {
-        // Control. Without this, every assertion above would also pass if the event stopped
-        // carrying any query at all, and the guard would be measuring nothing.
+    fun `an all-digit query goes out as typed - it is a route number, not an address`() {
+        // Masking these would collapse "861" and "200060" into "###" and "######", which
+        // erases the whole class of search rather than protecting anything: a number with
+        // no street beside it identifies no home.
         val analytics = FakeAnalytics()
 
         analytics.trackLocalSearchResolved(
-            query = QUERY,
+            query = "861",
             searchSessionId = SESSION_ID,
             localResultsCount = 0,
-            addressSearchGate = AddressSearchGate.DISABLED,
+            addressSearchGate = AddressSearchGate.BELOW_THRESHOLD,
         )
 
-        assertEquals(QUERY, analytics.searchEvent().properties?.get("query"))
+        assertEquals("861", analytics.searchEvent().properties?.get("query"))
     }
 
     private fun FakeAnalytics.searchEvent(): AnalyticsEvent.SearchStopQuery {
@@ -109,30 +129,33 @@ class SearchQueryTextEgressTest {
         return event
     }
 
-    private fun assertNoRawQuery(event: AnalyticsEvent.SearchStopQuery) {
-        val needles = listOf(QUERY) + QUERY.split(" ").filter { it.length >= MIN_TOKEN_LENGTH }
-        val values = event.properties.orEmpty().entries
+    /**
+     * Numeric parameters (`queryLength`, counts) are numbers, not text, so only String
+     * values are inspected - a digit inside a count is the count.
+     */
+    private fun assertNoDigitAnywhere(event: AnalyticsEvent.SearchStopQuery) {
+        val leaking = event.properties.orEmpty()
+            .filterKeys { it != PROP_SEARCH_SESSION_ID }
+            .filter { (_, value) -> value is String && value.any(Char::isDigit) }
 
-        needles.forEach { needle ->
-            val leaking = values.filter { it.value.toString().contains(needle, ignoreCase = true) }
-            if (leaking.isNotEmpty()) {
-                fail(
-                    "search_stop_query carried the rider's typed text for a query that found " +
-                        "results. Raw text may only ship under the zero-result carve-out in " +
-                        "SearchQueryAnalyticsRedaction.zeroResultQueryOrNull; see " +
-                        "docs/SEARCH_QUERY_TELEMETRY_SPEC.md.\n" +
-                        "  leaked '$needle' via " +
-                        leaking.joinToString { "${it.key}=${it.value}" },
-                )
-            }
+        if (leaking.isNotEmpty()) {
+            fail(
+                "search_stop_query carried a digit from a query that was not all digits. " +
+                    "A house or unit number is what makes a query identify a home, and the " +
+                    "privacy policy promises it is masked before it is stored. Masking " +
+                    "happens in SearchQueryAnalyticsRedaction.maskedQueryOrNull; see " +
+                    "docs/SEARCH_QUERY_TELEMETRY_SPEC.md.\n" +
+                    "  leaked via " + leaking.entries.joinToString { "${it.key}=${it.value}" },
+            )
         }
-        assertTrue(event.properties.orEmpty().isNotEmpty(), "event carried no properties at all")
     }
 
     private companion object {
-        const val QUERY = "wynyard quaybridge"
+        const val ADDRESS_QUERY = "4 fulton place"
         const val SESSION_ID = "session-egress"
         const val EVENT_NAME = "search_stop_query"
-        const val MIN_TOKEN_LENGTH = 4
+
+        /** A random hex id, unrelated to anything the rider typed. */
+        const val PROP_SEARCH_SESSION_ID = "searchSessionId"
     }
 }

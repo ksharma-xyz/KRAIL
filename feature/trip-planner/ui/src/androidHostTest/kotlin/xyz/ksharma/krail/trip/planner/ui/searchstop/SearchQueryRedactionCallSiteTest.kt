@@ -8,10 +8,11 @@ import kotlin.test.fail
  * The other half of `SearchQueryTextEgressTest`, which can only prove that the call sites that
  * exist today behave. This proves no new one appears that skips the redaction.
  *
- * `AnalyticsEvent.SearchStopQuery.zeroResultQuery` is the single parameter allowed to carry a
- * rider's typed text, and only when `SearchQueryAnalyticsRedaction.zeroResultQueryOrNull` says
- * so. Passing the raw query straight into it compiles, type-checks and reads plausibly, so the
- * only thing standing between that and shipping addresses is a reviewer noticing.
+ * `AnalyticsEvent.SearchStopQuery.maskedQuery` is the single parameter allowed to carry a
+ * rider's typed text, and only after `SearchQueryAnalyticsRedaction.maskedQueryOrNull` has
+ * masked the digits out of it. Passing the raw query straight into it compiles, type-checks and
+ * reads plausibly, so the only thing standing between that and shipping house numbers to
+ * Firebase is a reviewer noticing.
  *
  * Lives in androidHostTest rather than commonTest because it reads source files off disk, which
  * commonTest cannot do.
@@ -23,21 +24,20 @@ import kotlin.test.fail
  *
  * ## What it cannot see
  *
- *  - An assignment whose redaction call is further away than [WINDOW] lines.
+ *  - An assignment whose masking call is further away than [WINDOW] lines.
  *  - A wrapper function that itself returns the raw query. It checks the name at the call site,
- *    not what that name does; `resolveLocalZeroResultQuery` is trusted by name and pinned
- *    separately by its own tests.
+ *    not what that name does.
  */
 class SearchQueryRedactionCallSiteTest {
 
     @Test
-    fun `zeroResultQuery is only ever assigned from the redaction functions`() {
+    fun `maskedQuery is only ever assigned from the masking function`() {
         val offenders = mutableListOf<String>()
 
         productionSources().forEach { file ->
             val lines = file.readLines()
             lines.forEachIndexed { index, line ->
-                if (!line.isAssignmentToZeroResultQuery()) return@forEachIndexed
+                if (!line.isAssignmentToMaskedQuery()) return@forEachIndexed
                 val window = lines.subList(index, minOf(index + WINDOW, lines.size))
                     .joinToString("\n")
                 if (SANCTIONED.none { window.contains(it) }) {
@@ -48,18 +48,19 @@ class SearchQueryRedactionCallSiteTest {
 
         if (offenders.isNotEmpty()) {
             fail(
-                "zeroResultQuery is the one analytics parameter allowed to carry a rider's " +
-                    "typed text, and only through the redaction carve-out. These assignments " +
+                "maskedQuery is the one analytics parameter allowed to carry a rider's typed " +
+                    "text, and only with the digits masked out of it first. These assignments " +
                     "do not go through ${SANCTIONED.joinToString(" or ")}:\n" +
                     offenders.joinToString("\n") { "  - $it" } +
-                    "\n\nSee docs/SEARCH_QUERY_TELEMETRY_SPEC.md. A query that found results is " +
-                    "never sent, whatever else is true of it.",
+                    "\n\nSee docs/SEARCH_QUERY_TELEMETRY_SPEC.md. Analytics is sent straight to " +
+                    "Firebase, so a house number that reaches this parameter is a house number " +
+                    "a third party has stored.",
             )
         }
     }
 
-    /** The parameter's own declaration (`val zeroResultQuery: String? = null`) is not one. */
-    private fun String.isAssignmentToZeroResultQuery(): Boolean {
+    /** The parameter's own declaration (`val maskedQuery: String? = null`) is not one. */
+    private fun String.isAssignmentToMaskedQuery(): Boolean {
         val trimmed = trimStart()
         val isComment = trimmed.startsWith("//") || trimmed.startsWith("*")
         return !isComment &&
@@ -80,13 +81,10 @@ class SearchQueryRedactionCallSiteTest {
 
         const val WINDOW = 8
 
-        val SANCTIONED = listOf(
-            "SearchQueryAnalyticsRedaction.zeroResultQueryOrNull(",
-            "resolveLocalZeroResultQuery(",
-        )
+        val SANCTIONED = listOf("SearchQueryAnalyticsRedaction.maskedQueryOrNull(")
 
-        val ASSIGNMENT = Regex("\\bzeroResultQuery\\s*=")
-        val DECLARATION = Regex("\\b(?:val|var)\\s+zeroResultQuery\\b")
+        val ASSIGNMENT = Regex("\\bmaskedQuery\\s*=")
+        val DECLARATION = Regex("\\b(?:val|var)\\s+maskedQuery\\b")
 
         val PRODUCTION_SOURCE_SETS =
             listOf("/src/commonMain/", "/src/androidMain/", "/src/iosMain/")

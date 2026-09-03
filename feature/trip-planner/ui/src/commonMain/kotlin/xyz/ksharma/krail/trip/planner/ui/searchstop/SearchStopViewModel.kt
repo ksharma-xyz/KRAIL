@@ -534,18 +534,37 @@ class SearchStopViewModel(
 
         searchJob?.cancel()
         searchJob = viewModelScope.launch {
-            delay(100) // debounce / small throttle on VM side
-            runCatching {
-                val stopResults = stopResultsManager.fetchStopResults(query)
+            delay(SEARCH_DEBOUNCE_MS)
+
+            // suspendSafeResult, not runCatching: every keystroke cancels this job, and
+            // runCatching swallows the CancellationException it throws - which reported a
+            // cancelled keystroke as a failed search, and would now send its text too.
+            val stopResults = suspendSafeResult(ioDispatcher) {
+                stopResultsManager.fetchStopResults(query)
+            }.getOrNull()
+
+            if (stopResults != null) {
                 updateUiState { displayData(stopResults) }
+            } else {
+                updateUiState { displayError() }
+            }
+
+            // The screen is now up to date; analytics deliberately is not yet. Sitting out
+            // a quiet period first means a burst of typing reports the query the rider
+            // finished, not one row per prefix - "4", "4 f", "4 fu" are keystrokes, not
+            // searches, and counting them as failed searches skewed every read of the
+            // address gate. Cancellation does the work: the next keystroke cancels this
+            // job while it waits here.
+            delay(SEARCH_ANALYTICS_QUIET_MS)
+
+            if (stopResults != null) {
                 analytics.trackLocalSearchResolved(
                     query = query,
                     searchSessionId = searchSessionId,
                     localResultsCount = stopResults.size,
                     addressSearchGate = currentAddressSearchGate(normalizeAddressQuery(query)),
                 )
-            }.getOrElse {
-                updateUiState { displayError() }
+            } else {
                 analytics.trackLocalSearchFailed(
                     query = query,
                     searchSessionId = searchSessionId,
@@ -782,9 +801,23 @@ class SearchStopViewModel(
     }
 
     private companion object {
+        /** How long typing must pause before the local stop list is refreshed. */
+        const val SEARCH_DEBOUNCE_MS = 100L
+
         // Longer than local search's 100ms debounce - network round-trip is inherently
         // slower, and there's no benefit to firing it as eagerly as the local DB query.
         const val ADDRESS_SEARCH_DEBOUNCE_MS = 350L
+
+        /**
+         * Extra quiet time after the results are on screen before `search_stop_query`
+         * fires. Deliberately far longer than [SEARCH_DEBOUNCE_MS]: the screen must keep
+         * up with each keystroke, but an event per keystroke is a different thing - it
+         * inflates the failed-search count with prefixes of searches that then succeeded,
+         * and from 1.27 it would send each of those prefixes' text as well. Long enough to
+         * outlast a typing pause, short enough that a rider who types and reads still
+         * reports before they move on.
+         */
+        const val SEARCH_ANALYTICS_QUIET_MS = 600L
 
         fun newSearchSessionId(): String = Random.nextLong().toULong().toString(radix = 16)
     }

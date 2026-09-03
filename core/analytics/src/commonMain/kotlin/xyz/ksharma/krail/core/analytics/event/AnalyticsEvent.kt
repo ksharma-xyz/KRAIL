@@ -230,23 +230,22 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
     }
 
     /**
-     * Fired when a settled search query finishes resolving. Never carries the raw
-     * typed text by default: a query can be a street address, which identifies a home
-     * or workplace, and the privacy policy promises analytics hold no personally
-     * identifiable data.
+     * Fired when a settled search query finishes resolving.
      *
-     * [zeroResultQuery] is the single, deliberately narrow exception, kept for
-     * fuzzy-matcher diagnostics (the "townhall returned nothing" workflow). Callers
-     * must resolve it through `SearchQueryAnalyticsRedaction.zeroResultQueryOrNull`,
-     * which requires zero results everywhere, no digits, and a short length. It lands
-     * in the same "query" property historical dashboards already read.
+     * [maskedQuery] carries what the rider typed, with every digit replaced by `#`. The
+     * privacy policy discloses the collection and promises the masking; callers must
+     * resolve it through `SearchQueryAnalyticsRedaction.maskedQueryOrNull` rather than
+     * passing the raw query, because analytics is sent straight to Firebase and there is
+     * no later point at which a house number could be removed. It lands in the same
+     * "query" property historical dashboards already read - rows before 1.27 hold only
+     * the queries that found nothing anywhere.
      *
      * @param queryLength     Character count of the typed query - shape signal, no text.
      * @param searchSessionId Random ID minted per settled query; joins this event to
      *                        [StopSelectedEvent] so funnels work without query text.
      * @param resultsCount    Result count on success.
      * @param isError         True when the search pipeline threw.
-     * @param zeroResultQuery Raw text only under the redaction carve-out, else null.
+     * @param maskedQuery     Typed text with digits masked; null when nothing was typed\n     *                        or the query was too long to send.
      * @param resultSource    Which pipeline resolved: local stop search or the remote
      *                        NSW address/POI pipeline. One firing per pipeline per
      *                        settled query; join on [searchSessionId].
@@ -267,7 +266,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         val searchSessionId: String,
         val resultsCount: Int? = null,
         val isError: Boolean = false,
-        val zeroResultQuery: String? = null,
+        val maskedQuery: String? = null,
         val resultSource: ResultSource = ResultSource.LOCAL,
         val localResultsCount: Int? = null,
         val addressSearchGate: AddressGate? = null,
@@ -283,7 +282,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
             } else if (resultsCount != null) {
                 put("resultsCount", resultsCount)
             }
-            zeroResultQuery?.let { put("query", it) }
+            maskedQuery?.let { put("query", it) }
             localResultsCount?.let { put("localResultsCount", it) }
             addressSearchGate?.let { put("addressSearchGate", it.name) }
             queryHasDigit?.let { put("queryHasDigit", it) }

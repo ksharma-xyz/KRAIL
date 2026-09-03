@@ -5,6 +5,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -36,6 +37,9 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
+// Slower than the list debounce, faster than the analytics quiet period.
+private const val KEYSTROKE_GAP_MS = 200L
+
 class SearchStopViewModelTest {
 
     private val fakeAnalytics: Analytics = FakeAnalytics()
@@ -468,7 +472,7 @@ class SearchStopViewModelTest {
     // region Search query analytics redaction
 
     @Test
-    fun `GIVEN a query with results WHEN search completes THEN search_stop_query carries no raw text`() =
+    fun `GIVEN a query with results WHEN search completes THEN search_stop_query carries the text`() =
         runTest {
             viewModel.uiState.test {
                 skipItems(1)
@@ -481,14 +485,15 @@ class SearchStopViewModelTest {
                 assertEquals("Central".length, event.queryLength)
                 assertEquals(1, event.resultsCount)
                 assertTrue(event.searchSessionId.isNotBlank())
-                assertFalse(event.properties.orEmpty().containsKey("query"))
+                // 1.26 sent nothing here; 1.27 sends every settled query, results or not.
+                assertEquals("Central", event.properties?.get("query"))
 
                 cancelAndIgnoreRemainingEvents()
             }
         }
 
     @Test
-    fun `GIVEN zero results and address pipeline off WHEN query has no digits THEN carve-out keeps the query`() =
+    fun `GIVEN zero results and no digits WHEN search completes THEN the query is sent as typed`() =
         runTest {
             viewModel.uiState.test {
                 skipItems(1)
@@ -499,7 +504,7 @@ class SearchStopViewModelTest {
                 val event = fakeAnalytics.getTrackedEvent("search_stop_query")
                 assertIs<AnalyticsEvent.SearchStopQuery>(event)
                 assertEquals(0, event.resultsCount)
-                assertEquals("townhall", event.zeroResultQuery)
+                assertEquals("townhall", event.maskedQuery)
                 assertEquals("townhall", event.properties?.get("query"))
 
                 cancelAndIgnoreRemainingEvents()
@@ -507,7 +512,7 @@ class SearchStopViewModelTest {
         }
 
     @Test
-    fun `GIVEN zero results WHEN query contains digits THEN carve-out never keeps the query`() =
+    fun `GIVEN a query with digits WHEN search completes THEN the house number is masked out`() =
         runTest {
             viewModel.uiState.test {
                 skipItems(1)
@@ -518,34 +523,58 @@ class SearchStopViewModelTest {
                 val event = fakeAnalytics.getTrackedEvent("search_stop_query")
                 assertIs<AnalyticsEvent.SearchStopQuery>(event)
                 assertEquals(0, event.resultsCount)
-                assertEquals(null, event.zeroResultQuery)
-                assertFalse(event.properties.orEmpty().containsKey("query"))
+                // The street is kept - it is what the fuzzy matcher has to be fixed against.
+                assertEquals("# fulton place", event.maskedQuery)
+                assertEquals(true, event.queryHasDigit)
 
                 cancelAndIgnoreRemainingEvents()
             }
         }
 
     @Test
-    fun `GIVEN address pipeline eligible WHEN local results are zero THEN local event defers the carve-out`() =
+    fun `GIVEN address pipeline eligible WHEN local results are zero THEN the local event still carries the text`() =
         runTest {
+            // The local firing owns the text outright now - there is no deferral to the
+            // address site, because masking needs neither pipeline's result count.
             val addressViewModel = addressAwareViewModel(minQueryLength = 6)
             addressViewModel.uiState.test {
                 skipItems(1)
                 addressViewModel.onEvent(SearchStopUiEvent.SearchTextChanged("townhall"))
                 advanceUntilIdle()
 
-                assertTrue(fakeAnalytics is FakeAnalytics)
-                val event = fakeAnalytics.getTrackedEvent("search_stop_query")
-                assertIs<AnalyticsEvent.SearchStopQuery>(event)
-                assertEquals(null, event.zeroResultQuery)
-                assertFalse(event.properties.orEmpty().containsKey("query"))
+                assertEquals("townhall", localEvents().single().maskedQuery)
 
                 cancelAndIgnoreRemainingEvents()
             }
         }
 
     @Test
-    fun `GIVEN search fails WHEN error event fires THEN it carries no raw text`() =
+    fun `GIVEN a burst of keystrokes WHEN typing settles THEN only the finished query is reported`() =
+        runTest {
+            viewModel.uiState.test {
+                skipItems(1)
+
+                // Each keystroke is far enough apart to refresh the list on screen, and
+                // close enough that none of them is a query the rider finished typing.
+                viewModel.onEvent(SearchStopUiEvent.SearchTextChanged("cen"))
+                advanceTimeBy(KEYSTROKE_GAP_MS)
+                viewModel.onEvent(SearchStopUiEvent.SearchTextChanged("cent"))
+                advanceTimeBy(KEYSTROKE_GAP_MS)
+                viewModel.onEvent(SearchStopUiEvent.SearchTextChanged("Central"))
+                advanceUntilIdle()
+
+                // One row, not three. Prefixes are keystrokes, not searches - counting them
+                // as searches overstated the failed-search rate and the address gate with it.
+                val event = localEvents().single()
+                assertEquals("Central", event.maskedQuery)
+                assertEquals("Central".length, event.queryLength)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN search fails WHEN the error event fires THEN it carries the masked query`() =
         runTest {
             fakeStopResultsManager.shouldThrowError = true
             viewModel.uiState.test {
@@ -557,7 +586,8 @@ class SearchStopViewModelTest {
                 val event = fakeAnalytics.getTrackedEvent("search_stop_query")
                 assertIs<AnalyticsEvent.SearchStopQuery>(event)
                 assertTrue(event.isError)
-                assertFalse(event.properties.orEmpty().containsKey("query"))
+                // A search that threw is exactly the one worth having the text for.
+                assertEquals("townhall", event.properties?.get("query"))
 
                 cancelAndIgnoreRemainingEvents()
             }
@@ -761,6 +791,16 @@ class SearchStopViewModelTest {
             .filterIsInstance<AnalyticsEvent.SearchStopQuery>()
             .filter { it.resultSource == AnalyticsEvent.SearchStopQuery.ResultSource.ADDRESS }
 
+    /**
+     * The local firing waits out [SearchStopViewModel] analytics quiet time, so when the
+     * address pipeline is eligible its firing lands first - selecting by name alone picks
+     * the address event.
+     */
+    private fun localEvents(): List<AnalyticsEvent.SearchStopQuery> =
+        (fakeAnalytics as FakeAnalytics).getTrackedEvents("search_stop_query")
+            .filterIsInstance<AnalyticsEvent.SearchStopQuery>()
+            .filter { it.resultSource == AnalyticsEvent.SearchStopQuery.ResultSource.LOCAL }
+
     @Test
     fun `GIVEN an address fetch WHEN it resolves THEN one address-source event fires with the local session id`() =
         runTest {
@@ -794,8 +834,10 @@ class SearchStopViewModelTest {
         }
 
     @Test
-    fun `GIVEN zero results in both pipelines WHEN query has no digits THEN address event carries the carve-out`() =
+    fun `GIVEN zero results in both pipelines WHEN the address event fires THEN it carries no text`() =
         runTest {
+            // The local firing already carries the query for this same searchSessionId.
+            // Sending it here too would double the egress and double-count the eval corpus.
             fakeRemoteAddressResultsManager.results = emptyList()
             val addressViewModel = addressAwareViewModel(minQueryLength = 6)
 
@@ -806,14 +848,15 @@ class SearchStopViewModelTest {
 
                 val addressEvent = addressEvents().single()
                 assertEquals(0, addressEvent.resultsCount)
-                assertEquals("fulton place", addressEvent.zeroResultQuery)
+                assertEquals(null, addressEvent.maskedQuery)
+                assertFalse(addressEvent.properties.orEmpty().containsKey("query"))
 
                 cancelAndIgnoreRemainingEvents()
             }
         }
 
     @Test
-    fun `GIVEN the address pipeline recognises the query WHEN results return THEN the carve-out stays off`() =
+    fun `GIVEN the address pipeline recognises the query WHEN results return THEN it still carries no text`() =
         runTest {
             fakeRemoteAddressResultsManager.results = listOf(
                 SearchStopState.SearchResult.Address(
@@ -830,7 +873,7 @@ class SearchStopViewModelTest {
                 advanceUntilIdle()
 
                 val addressEvent = addressEvents().single()
-                assertEquals(null, addressEvent.zeroResultQuery)
+                assertEquals(null, addressEvent.maskedQuery)
                 assertFalse(addressEvent.properties.orEmpty().containsKey("query"))
 
                 cancelAndIgnoreRemainingEvents()
@@ -850,7 +893,7 @@ class SearchStopViewModelTest {
 
                 val addressEvent = addressEvents().single()
                 assertTrue(addressEvent.isError)
-                assertEquals(null, addressEvent.zeroResultQuery)
+                assertEquals(null, addressEvent.maskedQuery)
                 assertFalse(addressEvent.properties.orEmpty().containsKey("query"))
 
                 cancelAndIgnoreRemainingEvents()
@@ -877,11 +920,6 @@ class SearchStopViewModelTest {
                 cancelAndIgnoreRemainingEvents()
             }
         }
-
-    private fun localEvents(): List<AnalyticsEvent.SearchStopQuery> =
-        (fakeAnalytics as FakeAnalytics).getTrackedEvents("search_stop_query")
-            .filterIsInstance<AnalyticsEvent.SearchStopQuery>()
-            .filter { it.resultSource == AnalyticsEvent.SearchStopQuery.ResultSource.LOCAL }
 
     @Test
     fun `GIVEN an address fetch WHEN it resolves THEN the address event carries the local count`() =

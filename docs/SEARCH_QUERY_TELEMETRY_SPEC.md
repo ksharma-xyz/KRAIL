@@ -1,7 +1,7 @@
 # Search query telemetry — the spec
 
 What KRAIL may learn about what a rider types into search, why the line sits where it does, and
-how the little we keep is used. Read this before changing `SearchQueryAnalytics`,
+how what we keep is used. Read this before changing `SearchQueryAnalytics`,
 `SearchQueryAnalyticsRedaction`, or any `search_stop_query` parameter.
 
 This file states rules and shapes only. Real queries, counts and rates live in the private
@@ -9,78 +9,137 @@ KRAIL-Analytics repo and never appear here, in a PR, or in a commit message.
 
 ## The rule
 
-**A typed search query is treated as personal data.** It can be a street address, and a street
-address is a home or a workplace. The privacy policy promises analytics carry nothing
-personally identifying, so the default for the text itself is: never send it.
+**The typed query is collected, with every digit masked out of it before it leaves the
+device.** The privacy policy (updated 2026-08-28) discloses this: search text is kept to
+improve search, and it promises that house and unit numbers are masked.
 
-What we send instead describes the *shape* of the query, never its content:
+```
+"4 fulton place"   ->  "# fulton place"
+"12/345 smith st"  ->  "##/### smith st"
+"T80"              ->  "T##"
+"861"              ->  "861"             // all digits - see below
+"wynyard"          ->  "wynyard"
+```
+
+A house or unit number is the part of an address that identifies a home. The street is the part
+the fuzzy stop matcher has to be fixed against. Masking destroys the first and keeps the second.
+
+### The all-digit exception
+
+**A query that is nothing but digits is sent as typed.** Riders search bus and train route
+numbers and stop IDs, and those are digits with nothing else in them.
+
+A number on its own is not an address. A house number identifies a home only in combination with
+the street beside it, and in an all-digit query there is no street to combine with. Masking these
+would erase a whole class of search while protecting nothing: `861` and `200060` would both
+arrive as a run of `#`, indistinguishable from each other and from every other number typed.
+
+The moment a query carries a single character that is not a digit, it can carry a street, so
+every digit in it is masked. `T80` becomes `T##` - the cost of a rule with no soft edge, and the
+right side to err on.
+
+### Why masking happens on the device and nowhere else
+
+`RealAnalytics` calls `firebaseAnalytics.logEvent` directly. There is no server of ours between
+the app and Google, so **whatever the client sends is what a third party stores**. A masking step
+further down the pipeline would be masking data that had already been sent. The client is the
+only place the policy's promise can actually be kept.
+
+`SearchQueryAnalyticsRedaction.maskedQueryOrNull` is the only place this happens.
+
+### The pipeline masking script is still required
+
+KRAIL-Analytics keeps its own digit-masking step on every pull and snapshot write. It is no
+longer the guarantee, but it is not redundant either:
+
+- 1.26 and earlier are in the field for months and keep sending under the rule they shipped with.
+- It is the backstop if a future call site ever bypasses the client masking.
+
+**Do not delete it because the client masks.** Two layers, and neither one is allowed to assume
+the other ran.
+
+## What else is sent
+
+Everything here describes the *shape* of the query rather than its content, and predates 1.27:
 
 | Signal | What it is | Why it is safe |
 |---|---|---|
-| `queryLength` | Character count | A number cannot be geocoded |
-| `queryHasDigit` | Bool | A house number is the cheapest address signal there is, and a bool carries no address |
+| `queryLength` | Character count of the typed query | A number cannot be geocoded |
+| `queryHasDigit` | Bool | Kept even though the mask now shows digit positions: dashboards read it directly |
 | `resultsCount`, `localResultsCount` | How many stops or addresses came back | Says nothing about what was asked |
 | `searchSessionId` | Random per settled query | Joins a query to its selection without identifying a person |
 | `addressSearchGate` | Which branch the address pipeline took | The only record of address calls *not* made |
 | `resultIndex` | Which row the rider picked | A row number describes the ranking, not the rider |
 
-## The one carve-out
+## The two limits that remain
 
-Raw text is sent for a query that found **nothing anywhere**. All four conditions, together:
+1. **Length cap.** A query longer than `MAX_QUERY_LENGTH` (40) is dropped, not truncated. Digits
+   are not the only identifying thing in a query: street plus suburb together identify a home
+   even with no number in them, and that pair only fits in a long query. Dropping rather than
+   truncating keeps a silently shortened query from entering the eval corpus as a real one. The
+   cap has to clear the stop names riders actually type - "north sydney interchange stand c" is
+   32 characters - or the longest queries, which are the ones most likely to be failing, would be
+   exactly the ones never reported.
+2. **One firing carries it.** Only the local firing carries the text. It happens for every
+   settled query, so the address firing would only ever duplicate it — same `searchSessionId`,
+   twice the egress, double-counted eval cases.
 
-1. zero local stop results, and
-2. zero address results, or the address pipeline never ran, and
-3. no digits in the query, and
-4. no longer than `MAX_ZERO_RESULT_QUERY_LENGTH` characters.
+## Text is attached once per typing burst, not once per keystroke
 
-`SearchQueryAnalyticsRedaction.zeroResultQueryOrNull` is the only place this decision is made.
+The local search debounce is 100 ms because the list on screen has to keep up with typing. The
+analytics firing deliberately waits `SEARCH_ANALYTICS_QUIET_MS` **after** the results are on
+screen, and the next keystroke cancels the job while it waits. So `4`, `4 f`, `4 fu` never fire —
+only the query the rider stopped typing does.
 
-The reasoning: a query that matched nothing is, by definition, not a place we know — so it is
-far more likely to be a misspelling of a stop than a real address. The condition that makes
-this safe is the *conjunction*: something that finds nothing, has no house number in it, and is
-short is a fuzzy-matcher diagnostic, not a location. A query that finds something is a
-different thing entirely, and is never sent whatever else is true of it.
-
-**Which pipeline owns the decision.** When the address pipeline is eligible for a query, the
-local site must not decide, because the address API may well recognise as a real address what
-the local stop search did not. The decision moves to the address completion site, which is the
-only place that knows both counts. `resolveLocalZeroResultQuery` returns null in that case,
-deliberately.
-
-### Known gap
-
-`#` is not a digit. A rider writing a unit or house number as "# 12" style text can pass
-condition 3 while having written exactly the thing the condition exists to exclude. The digit
-test is a cheap filter, not a proof, and this is where it is thin.
+This is not only an egress rule. Before it, a prefix of a search that then succeeded was counted
+as a failed search in its own right, which inflated every read of the address gate: a
+`BELOW_THRESHOLD` zero-result row was as likely to be a keystroke as an abandoned search, and
+nothing in the data separated them.
 
 ## What the data is for
 
 One thing: making the fuzzy stop search find what riders actually type.
 
 `FuzzyStopSearchEvalTest` (in `:feature:trip-planner:ui` androidHostTest) scores the ranker
-against every real NSW stop, and its case list is built from these zero-result queries plus
-false-positive guards from manual QA. The loop is: riders type something that finds nothing,
-that query becomes an eval case, the ranker is changed until it finds the right stop, and the
-case stays as a regression test.
+against every real NSW stop, and its case list is built from these queries plus false-positive
+guards from manual QA. The loop is: riders type something that finds nothing, that query becomes
+an eval case, the ranker is changed until it finds the right stop, and the case stays as a
+regression test.
 
-This is why the carve-out earns its place. Without it the ranker can only be tuned by guessing
-at what people type.
+Before 1.27 only queries that found nothing anywhere were available for this, which meant the
+ranker could never be scored on the near-misses — the queries that returned *something*, just
+not the right thing. Those are the interesting ones.
 
 `resultIndex` on `stop_selected` is the other half, and it needs no text at all: a rider who
-scrolls past eight results to reach the one they meant has told you the ranking is wrong for
-that query without telling you what the query was. Read it against `displayedLocalCount`, and
-remember that zero is the common case and a real value, not a missing one.
+scrolls past eight results to reach the one they meant has told you the ranking is wrong for that
+query without telling you what the query was. Read it against `displayedLocalCount`, and remember
+that zero is the common case and a real value, not a missing one.
 
 ## Rules for anyone changing this
 
-- **Never widen the carve-out to queries that returned results.** That is the whole line.
+- **A digit only ever leaves as part of a query that is nothing but digits.** That is the whole
+  line, and it is the one the privacy policy states out loud. `SearchQueryTextEgressTest` and
+  `SearchQueryRedactionCallSiteTest` hold it; neither may be weakened.
 - **Never add a parameter carrying query text under another name.** A "first token", a
-  "normalised query" or a hash of the text are all the text.
+  "normalised query" or a hash of the text are all the text, and none of them is masked.
+- **Never attach the text to a second event.** One firing per settled query, joined on
+  `searchSessionId`.
 - Any change to what a `search_stop_query` parameter means needs a row in
   `docs/ANALYTICS_REGISTRY_HANDOFF.md` in the same PR (see `CLAUDE.md`).
 - Old app versions keep sending the format they shipped with. Anything that looks like a rule
   being broken in the data should be checked against the app version on the row before it is
-  called a defect: the fix can only ever apply to builds that have it.
+  called a defect: the fix can only ever apply to builds that have it. Queries with real digits
+  in them can still arrive from 1.26 and earlier — that is what the pipeline backstop is for.
 - The AI trip-search path (`search/ai/`) resolves stops through the same stop search, so its
-  matching problems show up in the same eval corpus. It sends no query text of its own, and
-  its outcome logging is local only, never analytics. See `feature/trip-planner/ui/AI_SEARCH_UX.md`.
+  matching problems show up in the same eval corpus. It sends no query text of its own, and its
+  outcome logging is local only, never analytics. See `feature/trip-planner/ui/AI_SEARCH_UX.md`.
+
+### Known gaps
+
+- Masking covers digits. It does not cover a number written as a word — "unit four" survives
+  whole. The mask is a cheap and complete filter for the way house numbers are actually typed,
+  not a proof that no number can ever be expressed.
+- A route number with a letter in it (`T1`, `M20`, `861X`) is masked like any other mixed query,
+  so those searches arrive as `T#`, `M##`, `###X`. The letter still separates them from a street
+  query, but which line was searched for is lost. Reconsider only with a rule that cannot also
+  admit a house number.

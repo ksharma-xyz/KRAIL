@@ -8,44 +8,76 @@ stated rather than filed as a bug.
 Figures stay in KRAIL-Analytics (private). This file is qualitative on purpose —
 this repo is public.
 
+**Item 1 was corrected on 2026-09-05 and is no longer a defect.** It was a
+measurement artifact of how `search_stop_query` used to fire. Read that section
+before acting on anything about the address gate.
+
 ---
 
-## 1. The address gate suppresses the queries most likely to need it — P1
+## 1. The address gate finding was a measurement artifact — corrected, no action
 
-**What the data shows.** On the shipped release, genuine zero-result searches —
-those that returned nothing from *either* pipeline — split into two roughly
-comparable groups by what `AddressSearchGate` decided:
+**Corrected 2026-09-05. It is kept here rather than deleted, because the bucket it
+describes is still in the data and still looks like the largest group of failed
+searches to anyone who queries it cold.** Delete the section and the same wrong
+conclusion gets re-derived from the same rows next quarter.
+
+### What was originally raised
+
+On the shipped release, genuine zero-result searches — those returning nothing from
+*either* pipeline — split into two roughly comparable groups by what
+`AddressSearchGate` decided:
 
 - `BELOW_THRESHOLD` — the address call was never made.
 - `ELIGIBLE` — the address call ran and genuinely found nothing.
 
-The first group is the interesting one. **Most of its zero-result queries
-contain a digit.** They are the single largest identifiable bucket of failed
-searches on the shipped release.
+Most of the first group's zero-result queries contain a digit, and they looked like
+the single largest identifiable bucket of failed searches. Since `queryHasDigit`
+exists precisely because a house number is the cheapest address signal there is, the
+reading was: the strongest signal that a query *is* an address sits on exactly the
+queries the length threshold turns away. Someone types a house number, the gate
+suppresses the only pipeline that could have answered, and they get an empty screen.
 
-**Why that matters.** `AnalyticsEvent.SearchStopQuery` already documents the
-reasoning:
+That was filed P1, and the suggested fix was to let a digit-bearing query bypass or
+lower the threshold in `AddressSearchGate`.
 
-> `queryHasDigit` — Whether the typed query contains a digit - a house number is
-> the cheapest address signal there is.
+### Why it was wrong
 
-So the strongest available signal that a query *is* an address is present on
-exactly the queries the length threshold turns away. Someone types a house
-number, the gate suppresses the only pipeline that could have answered, and they
-get an empty screen.
+**`search_stop_query` fired once per settled keystroke, not once per search.** The
+local search debounce was 100 ms, so anyone typing slower than that produced a firing
+per character. A rider typing `4 fulton place` emitted `4`, `4 f`, `4 fu`, `4 ful` and
+so on, and every one of those prefixes is short enough to be `BELOW_THRESHOLD`,
+contains a digit, and finds nothing locally.
 
-**Suggested fix.** Let a digit-bearing query bypass (or use a lower) length
-threshold in `AddressSearchGate`. The telemetry to confirm the effect already
-ships — `addressSearchGate` and `queryHasDigit` ride on the local firing, which
-fires for every settled query, so a before/after read needs no new events.
+So the bucket was mostly people mid-typing on the way to a search that then worked.
+Nothing in the payload distinguished a keystroke from a settled search, so there was
+no way to tell the two apart from the data alone. Re-measured on the analytics side
+after the firing rule changed: the great majority of that bucket is mid-typing.
 
-**This interacts with `docs/SEARCH_TELEMETRY_1.27_TODO.md`.** That document's
-open decision is whether to keep the client-side no-digit guard when 1.27 starts
-sending query text. Note what the guard costs: digit-bearing queries are where
-the failures concentrate, so keeping it means the one class of query most in
-need of diagnosis is also the one class that never reports its text. That is a
-real trade, not a free safety margin — worth deciding deliberately rather than
-by default.
+The remainder is not obviously addresses either. A short all-digit query is far more
+likely a bus or train route number, or a stop ID, which an address geocoder cannot
+answer any better than the local search can.
+
+### What changed
+
+`search_stop_query` now fires once per typing burst: it waits for typing to stop
+before reporting, and the next keystroke cancels the pending report. Prefixes no
+longer appear as searches in their own right.
+
+A second defect in the same path inflated the error side: a cancelled keystroke was
+being reported as an error, because the cancellation was caught as one. Error rates
+on this event before that fix are overstated.
+
+### What to do
+
+**Nothing to `AddressSearchEligibility`.** The threshold stays as it is.
+
+If the gate is revisited, read the bucket on post-fix data only, and treat a
+digit-bearing short query as a possible route number before assuming it is an address.
+The assumption is tracked as `address-gate-digit-queries` in
+`docs/ANALYTICS_ASSUMPTIONS.md`; check that row before changing the gate.
+
+The same class of defect elsewhere was audited and found nowhere else — see
+`docs/learning/2026-09-05-a-bucket-that-was-mostly-typing.md`.
 
 ---
 
@@ -115,9 +147,11 @@ analytics side.
 
 | # | Item | Kind | Priority |
 |---|---|---|---|
-| 1 | Address gate turns away digit-bearing queries | Real defect, user-visible | **P1** |
+| 1 | Address gate turns away digit-bearing queries | ~~Real defect~~ Measurement artifact, corrected | — |
 | 2 | Reorder never observed | Product / discoverability question | P2 |
 | 3 | `ADDRESS_RESULT` + `EMPTY_STATE` creation surfaces silent | Measurement blind spot | P3 |
 | 4 | Free-text `labelName` | Already fixed | — |
 
-Only item 1 is a defect users are feeling today.
+Item 1 was originally filed as the one defect users were feeling. It was not: the
+bucket behind it was mostly keystroke prefixes, and the reporting rule that produced
+it has since changed. Nothing in this table is a user-visible defect today.

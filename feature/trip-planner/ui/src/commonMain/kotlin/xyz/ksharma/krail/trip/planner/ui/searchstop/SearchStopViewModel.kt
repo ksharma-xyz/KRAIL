@@ -105,9 +105,14 @@ class SearchStopViewModel(
     // and hiding a result the rider asked for costs more than the saved request.
     private var addressSearchRequestToken = 0
 
-    // Random ID minted per settled query; sent on search analytics events so funnels
-    // can be joined per query instance without carrying the typed text (which can be
-    // a street address — see SearchQueryAnalyticsRedaction).
+    // Random ID minted here on every query change, not once per search. Sent on search
+    // analytics events so funnels can be joined without carrying the typed text (which can
+    // be a street address — see SearchQueryAnalyticsRedaction).
+    //
+    // Only the firing that outlives SEARCH_ANALYTICS_QUIET_MS reports one, so a typing burst
+    // yields a single reported id even though it minted several. Do not restore a per-firing
+    // report without also giving a burst its own key: an id that changes per keystroke, on an
+    // event that fires per keystroke, makes every rate derived from it count keystrokes.
     private var currentSearchSessionId: String = newSearchSessionId()
 
     @Suppress("LongMethod", "ReturnCount")

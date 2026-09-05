@@ -241,8 +241,16 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      * the queries that found nothing anywhere.
      *
      * @param queryLength     Character count of the typed query - shape signal, no text.
-     * @param searchSessionId Random ID minted per settled query; joins this event to
-     *                        [StopSelectedEvent] so funnels work without query text.
+     * @param searchSessionId Random ID joining this event to [StopSelectedEvent], so funnels
+     *                        work without query text. **It is minted on every query change,
+     *                        not once per search.** Only the firing that survives the
+     *                        analytics quiet period reports one, so on current builds there
+     *                        is one id per reported search. That was not always true:
+     *                        before the per-burst change every keystroke both minted an id
+     *                        and fired, so on older rows grouping by this counts keystrokes,
+     *                        not searches. Reading it as "one search" across a typing burst
+     *                        is what turned prefixes into an apparent bucket of failed
+     *                        searches - see docs/learning/2026-09-05-a-bucket-that-was-mostly-typing.md.
      * @param resultsCount    Result count on success.
      * @param isError         True when the search pipeline threw.
      * @param maskedQuery     Typed text with digits masked; null when nothing was typed\n     *                        or the query was too long to send.

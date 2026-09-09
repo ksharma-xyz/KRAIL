@@ -69,6 +69,20 @@ screenshot last), what the run deliberately does not capture (no video, no frame
 step, no device log on iOS), and a table of failure signatures that have each already cost a
 wrong diagnosis. Lane conventions and selectors are in [`.maestro/README.md`](.maestro/README.md).
 
+## "KRAIL is missing a service" reports
+
+When a rider reports a departure the app does not show, a wrong duration or an unexpected
+interchange, **load the `transit-3-source-check` skill before reading any code**. It queries
+the same trip from the NSW trip planner API (what KRAIL is given), the NSW departure monitor
+(what actually runs) and transportnsw.info (what the official site shows), and the diff
+decides whether the defect is ours at all.
+
+Most of these reports are not KRAIL bugs. `/v1/tp/trip` returns an optimised itinerary set,
+not a departure list, and drops services for two reasons that are invisible in the response:
+a connection tighter than the default interchange allowance, and Pareto dominance. The skill
+has the query that tells them apart. Reaching for `TripResponseMapper.kt` first skips the
+step that decides whether the mapper is involved.
+
 ## Detekt
 
 ```

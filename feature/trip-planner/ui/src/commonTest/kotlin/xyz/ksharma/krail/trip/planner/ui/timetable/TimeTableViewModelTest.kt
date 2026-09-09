@@ -1492,6 +1492,158 @@ class TimeTableViewModelTest {
         }
 
     @Test
+    fun `GIVEN loaded journeys WHEN LoadPreviousTrips THEN request is anchored on the earliest journey arrival`() =
+        runTest {
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            tripPlanningService.isSuccess = true
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            // Earliest shown journey departs 8:47 AEST and arrives 9:31 AEST on 25 Sep 2024.
+            val earliest = buildPagingTestJourney(
+                tripId = "EARLIEST",
+                originUtcDateTime = "2024-09-24T22:47:00Z",
+                destinationUtcDateTime = "2024-09-24T23:31:00Z",
+            )
+            viewModel.previousJourneysCache[earliest.journeyId] = earliest
+
+            viewModel.onEvent(TimeTableUiEvent.LoadPreviousTrips)
+            advanceUntilIdle()
+
+            assertEquals(DepArr.ARR, tripPlanningService.lastCalledDepArr)
+            assertEquals("20240925", tripPlanningService.lastCalledDate)
+            assertEquals("0931", tripPlanningService.lastCalledTime)
+        }
+
+    @Test
+    fun `GIVEN loaded journeys WHEN LoadPreviousTrips THEN request is not anchored an hour behind the departure`() =
+        runTest {
+            // Regression guard. The old anchor was depArr=dep at (earliest departure - 60 min),
+            // which asks the API for the FIRST page of trips after that instant. On a route
+            // running more often than a page holds, the departures closest to the list — the
+            // ones the rider wants — fall off the end of that page and are never fetched.
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            tripPlanningService.isSuccess = true
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            val earliest = buildPagingTestJourney(
+                tripId = "EARLIEST",
+                originUtcDateTime = "2024-09-24T22:47:00Z",
+                destinationUtcDateTime = "2024-09-24T23:31:00Z",
+            )
+            viewModel.previousJourneysCache[earliest.journeyId] = earliest
+
+            viewModel.onEvent(TimeTableUiEvent.LoadPreviousTrips)
+            advanceUntilIdle()
+
+            assertFalse(
+                tripPlanningService.lastCalledDepArr == DepArr.DEP,
+                "Previous trips must not be requested with a forward-walking dep anchor",
+            )
+            assertFalse(
+                tripPlanningService.lastCalledTime == "0747",
+                "Previous trips must not be anchored 60 minutes behind the earliest departure",
+            )
+        }
+
+    @Test
+    fun `GIVEN previous trips already fetched WHEN LoadPreviousTrips again THEN anchor moves further back`() =
+        runTest {
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            tripPlanningService.isSuccess = true
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            val first = buildPagingTestJourney(
+                tripId = "FIRST",
+                originUtcDateTime = "2024-09-24T22:47:00Z",
+                destinationUtcDateTime = "2024-09-24T23:31:00Z",
+            )
+            viewModel.previousJourneysCache[first.journeyId] = first
+
+            viewModel.onEvent(TimeTableUiEvent.LoadPreviousTrips)
+            advanceUntilIdle()
+            assertEquals("0931", tripPlanningService.lastCalledTime)
+
+            // The page that call returns lands in the cache and becomes the new earliest.
+            val earlier = buildPagingTestJourney(
+                tripId = "EARLIER",
+                originUtcDateTime = "2024-09-24T21:47:00Z",
+                destinationUtcDateTime = "2024-09-24T22:31:00Z",
+            )
+            viewModel.previousJourneysCache[earlier.journeyId] = earlier
+
+            viewModel.onEvent(TimeTableUiEvent.LoadPreviousTrips)
+            advanceUntilIdle()
+
+            assertEquals(DepArr.ARR, tripPlanningService.lastCalledDepArr)
+            assertEquals("0831", tripPlanningService.lastCalledTime)
+        }
+
+    @Test
+    fun `GIVEN earliest journey has an unparseable arrival WHEN LoadPreviousTrips THEN anchor falls back to departure`() =
+        runTest {
+            val trip = Trip(fromStopId = "stop1", fromStopName = "S1", toStopId = "stop2", toStopName = "S2")
+            tripPlanningService.isSuccess = true
+
+            viewModel.onEvent(TimeTableUiEvent.LoadTimeTable(trip))
+            viewModel.fetchTrip()
+            advanceUntilIdle()
+
+            val earliest = buildPagingTestJourney(
+                tripId = "BROKENARRIVAL",
+                originUtcDateTime = "2024-09-24T22:47:00Z",
+                destinationUtcDateTime = "not-a-timestamp",
+            )
+            viewModel.previousJourneysCache[earliest.journeyId] = earliest
+
+            viewModel.onEvent(TimeTableUiEvent.LoadPreviousTrips)
+            advanceUntilIdle()
+
+            assertEquals(DepArr.ARR, tripPlanningService.lastCalledDepArr)
+            assertEquals("20240925", tripPlanningService.lastCalledDate)
+            assertEquals("0847", tripPlanningService.lastCalledTime)
+        }
+
+    /**
+     * A journey card with explicit origin/destination instants, so a pagination anchor can be
+     * asserted against a fixed value instead of whatever the wall clock happens to be.
+     */
+    private fun buildPagingTestJourney(
+        tripId: String,
+        originUtcDateTime: String,
+        destinationUtcDateTime: String,
+    ): TimeTableState.JourneyCardInfo {
+        val modeLine = TransportModeLine(transportMode = NswTransportMode.Train, lineName = "T2")
+        return TimeTableState.JourneyCardInfo(
+            originUtcDateTime = originUtcDateTime,
+            destinationUtcDateTime = destinationUtcDateTime,
+            timeText = "5 hours ago",
+            originTime = "8:47 AM",
+            destinationTime = "9:31 AM",
+            travelTime = "44 mins",
+            transportModeLines = persistentListOf(modeLine),
+            legs = persistentListOf(
+                TimeTableState.JourneyCardInfo.Leg.TransportLeg(
+                    transportModeLine = modeLine,
+                    displayText = "towards Central",
+                    totalDuration = "44 mins",
+                    stops = persistentListOf(),
+                    tripId = tripId,
+                ),
+            ),
+            totalUniqueServiceAlerts = 0,
+        )
+    }
+
+    @Test
     fun `GIVEN loaded journeys WHEN LoadMoreTrips fires THEN load_more_click is tracked with trip pair and pre-increment count`() =
         runTest {
             val trip = Trip(

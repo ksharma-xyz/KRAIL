@@ -869,26 +869,41 @@ class TimeTableViewModel(
     }
 
     /**
-     * Fetches past trips in the [PREVIOUS_TRIPS_WINDOW_MINUTES] window before the earliest
-     * currently shown departure. Results are stored in [previousJourneysCache].
+     * Fetches the services running immediately before the earliest one currently shown.
+     * Results are stored in [previousJourneysCache].
+     *
+     * The request is anchored with [DepArr.ARR] on the earliest shown journey's *arrival*
+     * time, so the API walks backwards from that point and the page it returns is contiguous
+     * with what is already on screen.
+     *
+     * It used to be anchored with [DepArr.DEP] a fixed hour behind the earliest departure,
+     * which asked the API for the *first* page of trips departing after that instant. A page
+     * holds at most six journeys, so on any route running more often than that the trips
+     * nearest the current list — the ones a rider is actually looking for — fell off the end
+     * of the page and were never fetched. Central to Town Hall lost a 46-minute block of
+     * departures that way. Raising the page size does not fix it: the API silently drops back
+     * to four journeys above `calcNumberOfTrips=10`, so the hole shrinks but never closes.
      */
     @OptIn(ExperimentalTime::class)
     private fun onLoadPreviousTrips() {
         trackLoadPreviousClick()
         val allJourneys = (previousJourneysCache.values + journeys.values + loadMoreJourneys.values)
-        val firstInstant = allJourneys
+        val earliestJourney = allJourneys
             .minByOrNull { Instant.parse(it.originUtcDateTime) }
-            ?.let { Instant.parse(it.originUtcDateTime) }
             ?: return
+        val firstInstant = Instant.parse(earliestJourney.originUtcDateTime)
 
-        val windowStart = firstInstant.minus(PREVIOUS_TRIPS_WINDOW_MINUTES.minutes)
-        val date = windowStart.toApiDateString()
-        val time = windowStart.toApiTimeString()
+        // Anchor on arrival because depArr=arr is measured at the destination. Falling back to
+        // the departure instant only costs one page's worth of overlap, never a gap.
+        val anchorInstant = runCatching { Instant.parse(earliestJourney.destinationUtcDateTime) }
+            .getOrDefault(firstInstant)
+        val date = anchorInstant.toApiDateString()
+        val time = anchorInstant.toApiTimeString()
 
         updateUiState { copy(isLoadingPrevious = true) }
         loadPreviousFetchJob?.cancel()
         loadPreviousFetchJob = viewModelScope.launch(ioDispatcher) {
-            loadTripAtTime(date = date, time = time).onSuccess { response ->
+            loadTripAtTime(date = date, time = time, depArr = DepArr.ARR).onSuccess { response ->
                 val (newJourneys, newRawDataMap) = response.buildJourneyListWithRawData()
                 // Keep raw journey data so the journey map can resolve coordinates for
                 // previous journeys via getRawJourneyById(). Without this the map is empty.
@@ -1450,10 +1465,6 @@ class TimeTableViewModel(
         /** How many "Load More" taps are allowed per session before the button is hidden. */
         @VisibleForTesting
         const val MAX_LOAD_MORE_COUNT = 3
-
-        /** How many minutes before the first shown trip the "Show Previous" window covers. */
-        @VisibleForTesting
-        val PREVIOUS_TRIPS_WINDOW_MINUTES = 60L
 
         /**
          * Set to false to hide Show-Previous / Load-More UI globally.

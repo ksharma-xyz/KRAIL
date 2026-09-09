@@ -109,6 +109,40 @@ minutes of coverage. Call it repeatedly at 15-minute anchors and union the resul
 keyed by timestamp, or you will conclude a service does not exist when you simply
 did not fetch far enough.
 
+### Onward stops: the param that is not in the docs
+
+By default each stop event carries no route. Append **`&depType=stopEvents&includeCompleteStopSeq=1`**
+and every event gains `onwardLocations` and `previousLocations`: the full remaining
+stop list through to the terminus, each with `arrivalTimePlanned` and a platform.
+
+That turns the board into a direct answer to "which of these actually goes where I am
+going", without the trip planner and therefore without either of its filters:
+
+```sh
+curl -s -H "Authorization: apikey $KEY" \
+ "https://api.transport.nsw.gov.au/v1/tp/departure_mon?outputFormat=rapidJSON\
+&coordOutputFormat=EPSG:4326&mode=direct&type_dm=stop&name_dm=$ORIGIN\
+&itdDate=$YYYYMMDD&itdTime=$HHMM&departureMonitorMacro=true&TfNSWDM=true&version=10.2.1.42\
+&depType=stopEvents&includeCompleteStopSeq=1" \
+ | python3 -c "
+import json,sys
+TARGET='Seven Hills'
+for e in (json.load(sys.stdin).get('stopEvents') or []):
+    ow=[(o.get('disassembledName') or o.get('name','')) for o in (e.get('onwardLocations') or [])]
+    hit=[x for x in ow if TARGET in x]
+    if not hit: continue
+    tr=e.get('transportation',{})
+    t=(e.get('departureTimeEstimated') or e.get('departureTimePlanned'))[11:16]
+    print(t,'|',tr.get('disassembledName'),'to',tr.get('destination',{}).get('name'),'|',hit[0])
+"
+```
+
+The three other spellings tried (`includeCompleteStopSeq` alone, `useAllStops`,
+`itdLPxx_showOnward`) are silently ignored. Only the pair works.
+
+Caveat before building on it: `onwardLocations` carries `arrivalTimePlanned` but
+`arrivalTimeEstimated` is null. The departure is real-time, the arrival is not.
+
 Run it at the **destination** too. A service the trip API never offers still appears
 on the destination board, which is how you prove the service is real.
 

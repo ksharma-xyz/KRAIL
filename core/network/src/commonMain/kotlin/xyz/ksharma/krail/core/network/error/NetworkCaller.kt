@@ -80,6 +80,26 @@ class NetworkCaller(
         }
     }
 
+    /**
+     * Records that the retry plugin re-sent a request.
+     *
+     * Not deduped, unlike failures: the interesting number is how many retries happened,
+     * and comparing that against FAILURE rows is what says whether retrying earns its cost
+     * or just multiplies load during an incident. The plugin caps at two attempts per
+     * request, so this cannot run away.
+     */
+    fun recordRetry(endpoint: String, upstream: String) {
+        analytics.track(
+            AnalyticsEvent.NetworkStatusEvent(
+                action = AnalyticsEvent.NetworkStatusEvent.Action.RETRY,
+                errorKind = "none",
+                transportUp = true,
+                upstream = upstream,
+                endpoint = endpoint,
+            ),
+        )
+    }
+
     private suspend fun recordFailure(
         endpoint: String,
         upstream: String,

@@ -7,4 +7,5 @@ import xyz.ksharma.krail.core.connectivity.ConnectivityObserver
 expect fun baseHttpClient(
     appInfoProvider: AppInfoProvider,
     connectivity: ConnectivityObserver,
+    onRetry: (endpoint: String, upstream: String) -> Unit,
 ): HttpClient

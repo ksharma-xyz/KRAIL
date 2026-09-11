@@ -8,9 +8,16 @@ import xyz.ksharma.krail.core.network.error.NetworkCaller
 
 val coreNetworkModule = module {
     single<HttpClient> {
+        // NetworkCaller is resolved inside the lambda, not captured here. The retry hook
+        // fires from inside the Ktor pipeline long after construction, and resolving it
+        // eagerly would make the client and the caller depend on each other at build time.
+        val networkCaller: () -> NetworkCaller = { get() }
         baseHttpClient(
             appInfoProvider = get(),
             connectivity = get(),
+            onRetry = { endpoint, upstream ->
+                networkCaller().recordRetry(endpoint = endpoint, upstream = upstream)
+            },
         )
     }
     single {

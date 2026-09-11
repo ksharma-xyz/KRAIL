@@ -10,6 +10,7 @@ val coreNetworkModule = module {
     single<HttpClient> {
         baseHttpClient(
             appInfoProvider = get(),
+            connectivity = get(),
         )
     }
     single {

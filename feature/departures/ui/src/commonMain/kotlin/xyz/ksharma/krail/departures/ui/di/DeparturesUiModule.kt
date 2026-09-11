@@ -13,6 +13,7 @@ val departuresUiModule = module {
     single {
         DepartureBoardRepository(
             departuresService = get(),
+            connectivity = get(),
             config = get(),
             clock = get(),
         )

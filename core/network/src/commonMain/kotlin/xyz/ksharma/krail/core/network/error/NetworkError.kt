@@ -1,5 +1,7 @@
 package xyz.ksharma.krail.core.network.error
 
+import androidx.compose.runtime.Immutable
+
 /**
  * Why a network call failed, in terms the app can act on.
  *
@@ -22,7 +24,12 @@ package xyz.ksharma.krail.core.network.error
  * Neither can be identified from the thrown exception alone: on Android both
  * airplane mode and a genuine DNS failure surface as `UnknownHostException`. That
  * is why the classifier takes the observed transport state as a second input.
+ *
+ * [Immutable] because a screen's state holds one of these. Every case is a data object
+ * or holds a single [Int]; the one exception is [Unknown], whose `cause` is written to
+ * logs and never read by rendering code. Nothing here is mutated after construction.
  */
+@Immutable
 sealed interface NetworkError {
 
     /**

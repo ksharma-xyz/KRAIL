@@ -22,6 +22,8 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
+import xyz.ksharma.krail.core.connectivity.TransportState
+import xyz.ksharma.krail.core.testing.fakes.FakeConnectivityObserver
 import xyz.ksharma.krail.core.testing.fakes.FakeDeparturesService
 import xyz.ksharma.krail.departures.ui.DepartureBoardRepository
 import xyz.ksharma.krail.departures.ui.DeparturesViewModel
@@ -76,6 +78,7 @@ class TimeTableStopSheetRestoreTest {
     fun setUp() {
         val departuresViewModel = DeparturesViewModel(
             repository = DepartureBoardRepository(
+                connectivity = FakeConnectivityObserver(initial = TransportState.Up),
                 departuresService = FakeDeparturesService(),
             ),
             analytics = NoOpAnalytics,

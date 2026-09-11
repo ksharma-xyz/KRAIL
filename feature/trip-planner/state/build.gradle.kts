@@ -34,6 +34,7 @@ kotlin {
                 implementation(projects.core.dateTime)
                 implementation(projects.core.festival)
                 implementation(projects.core.maps.state)
+                api(projects.core.network) // NetworkError on the public state surface
                 implementation(projects.core.transport)
                 implementation(projects.infoTile.state)
                 implementation(projects.taj)

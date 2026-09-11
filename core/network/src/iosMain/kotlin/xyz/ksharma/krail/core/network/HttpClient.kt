@@ -13,10 +13,12 @@ import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
+import xyz.ksharma.krail.core.connectivity.ConnectivityObserver
 import xyz.ksharma.krail.core.log.log as krailLog
 
 actual fun baseHttpClient(
     appInfoProvider: AppInfoProvider,
+    connectivity: ConnectivityObserver,
 ): HttpClient {
     return HttpClient(Darwin) {
         expectSuccess = true
@@ -48,6 +50,10 @@ actual fun baseHttpClient(
                 level = LogLevel.NONE
             }
         }
+        // Retry policy lives in one place so a future upstream inherits it rather than
+        // opting in. It declines entirely while transport is down.
+        installKrailRetry(connectivity)
+
         install(HttpTimeout) {
             requestTimeoutMillis = DEFAULT_TIMEOUTS.requestTimeoutMillis
             connectTimeoutMillis = DEFAULT_TIMEOUTS.connectTimeoutMillis

@@ -9,15 +9,19 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import xyz.ksharma.krail.core.connectivity.ConnectivityObserver
+import xyz.ksharma.krail.core.connectivity.shouldAttemptRequest
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiDateString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiTimeString
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.core.network.error.asNetworkError
 import xyz.ksharma.krail.departures.network.api.service.DeparturesService
 import xyz.ksharma.krail.departures.ui.business.toStopDepartures
 import xyz.ksharma.krail.departures.ui.state.DeparturesState
@@ -41,6 +45,7 @@ import kotlin.time.Instant
  */
 class DepartureBoardRepository(
     private val departuresService: DeparturesService,
+    private val connectivity: ConnectivityObserver,
     private val config: DepartureBoardConfig = DepartureBoardConfig(),
     /**
      * Wall-clock seam for the refresh window. It has to be injectable: the window is
@@ -113,6 +118,12 @@ class DepartureBoardRepository(
             var iteration = 0
             while (true) {
                 ensureActive()
+                // Suspend the loop while the OS reports no transport. Polling a stop every
+                // 30 seconds from inside a tunnel spends battery to collect a connect
+                // timeout, and the reconnect resumes this within a tick of transport
+                // returning. TransportState.Unknown counts as connected: we have not heard
+                // from the OS yet and must not refuse to try on no evidence.
+                connectivity.state.first { it.shouldAttemptRequest }
                 if (iteration > 0) {
                     log(
                         "[$LOG_TAG] t=${nowMs()} session=#$sessionId auto-refresh #$iteration " +
@@ -219,6 +230,7 @@ class DepartureBoardRepository(
                         isLoading = false,
                         silentLoading = false,
                         isError = false,
+                        networkError = null,
                         departures = departures,
                         previousDepartures = if (isPrevStale) persistentListOf() else current.previousDepartures,
                         isPreviousLoading = if (isPrevStale) false else current.isPreviousLoading,
@@ -237,7 +249,11 @@ class DepartureBoardRepository(
                     it.copy(
                         isLoading = false,
                         silentLoading = false,
+                        // Same rule as the timetable: a failed background refresh must not
+                        // wipe departures already on screen. Only claim the error surface
+                        // when there is nothing left to show.
                         isError = it.departures.isEmpty(),
+                        networkError = throwable.asNetworkError(),
                     )
                 }
             }

@@ -31,6 +31,8 @@ import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.appinfo.KRAIL_WEBSITE_URL
 import xyz.ksharma.krail.core.appreview.AppReviewManager
 import xyz.ksharma.krail.core.appreview.DelightMoment
+import xyz.ksharma.krail.core.connectivity.ConnectivityObserver
+import xyz.ksharma.krail.core.connectivity.reconnections
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.isBefore
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiDateString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiTimeString
@@ -42,6 +44,8 @@ import xyz.ksharma.krail.core.festival.model.NoFestival
 import xyz.ksharma.krail.core.festival.model.greetingAndEmoji
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.core.network.error.asNetworkError
+import xyz.ksharma.krail.core.network.error.recoversOnReconnect
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
@@ -81,6 +85,7 @@ class TimeTableViewModel(
     private val festivalManager: FestivalManager,
     val flag: Flag,
     private val appReviewManager: AppReviewManager,
+    private val connectivity: ConnectivityObserver,
     private val tripTrackingDebugOverride: Boolean = true,
     /**
      * Wall-clock seam. Everything on this screen that asks "has this departed yet?",
@@ -92,6 +97,23 @@ class TimeTableViewModel(
 
     private val _uiState: MutableStateFlow<TimeTableState> = MutableStateFlow(TimeTableState())
     val uiState: StateFlow<TimeTableState> = _uiState
+
+    private var isWaitingForTransportToRefetch: Boolean = false
+
+    init {
+        // A rider walking out of a tunnel should get their board back without tapping
+        // anything. reconnections() drops the current value, so this never fires on
+        // subscription, only on a genuine transition back into connected.
+        viewModelScope.launch {
+            connectivity.reconnections().collect {
+                if (isWaitingForTransportToRefetch) {
+                    log("Transport returned after an offline failure, refetching")
+                    isWaitingForTransportToRefetch = false
+                    fetchTrip()
+                }
+            }
+        }
+    }
 
     private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
@@ -508,25 +530,35 @@ class TimeTableViewModel(
     private suspend fun handleTripResult(result: Result<TripResponse>) {
         updateUiState { copy(silentLoading = false) }
         result.onSuccess { response ->
+            isWaitingForTransportToRefetch = false
+            updateUiState { copy(networkError = null) }
             updateTripsCache(response)
             updateUiStateWithFilteredTrips()
             // The timetable loaded without error: arm a review ask to fire once the user
             // navigates back to the calm Saved Trips screen. Idempotent, so a background
             // auto-refresh re-arming the same moment is harmless.
             appReviewManager.onDelightMoment(DelightMoment.TIMETABLE_VIEWED)
-        }.onFailure {
+        }.onFailure { throwable ->
             // fetchTrip() runs on every screen-visible (onStart) and every auto-refresh.
             // A failure on one of those silent/background refreshes must NOT blow away
             // journeys already on screen, otherwise returning to the app or a flaky
             // 30s refresh flips the whole screen to the error state. Only surface the
             // full error screen when there is nothing to show.
             val hasData = _uiState.value.journeyList.isNotEmpty()
+            val networkError = throwable.asNetworkError()
             // Track the error screen as a screen view, but only on the transition
             // into the error state (not on every failed auto-refresh while errored).
             if (!hasData && !_uiState.value.isError) {
                 analytics.trackScreenViewEvent(screen = AnalyticsScreen.TimeTableError)
             }
-            updateUiState { copy(isLoading = false, isError = !hasData) }
+            // Only NetworkError.Offline sets this. An NSW outage or a changed response
+            // shape is not fixed by reconnecting, because the connection was never the
+            // problem. Set even when journeys are still on screen: a stale board the rider
+            // can read is exactly the case worth refreshing the moment transport returns.
+            isWaitingForTransportToRefetch = networkError.recoversOnReconnect
+            updateUiState {
+                copy(isLoading = false, isError = !hasData, networkError = networkError)
+            }
         }
     }
 

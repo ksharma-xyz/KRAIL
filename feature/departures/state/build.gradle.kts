@@ -36,6 +36,7 @@ kotlin {
                 implementation(libs.kotlinx.datetime)
 
                 implementation(projects.core.analytics)
+                api(projects.core.network) // NetworkError on the public state surface
             }
         }
     }

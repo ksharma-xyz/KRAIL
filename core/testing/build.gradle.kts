@@ -60,6 +60,7 @@ kotlin {
                 api(projects.feature.tripPlanner.network) // TripPlanningService, Stop/TripResponse, StopType, DepArr
                 api(projects.feature.departures.network) // DeparturesService + DepartureMonitorResponse
                 api(projects.core.appInfo) // AppInfo + AppInfoProvider + DevicePlatformType
+                api(projects.core.connectivity) // ConnectivityObserver + TransportState
                 api(projects.core.appVersion) // AppVersionManager + AppVersionUpdateState
                 api(projects.core.festival) // FestivalManager + Festival model
                 api(projects.core.share) // ShareManager

@@ -161,12 +161,28 @@ Every network-calling service and the contract it returns. This table exists bec
 the app previously had two incompatible error contracts in the same layer, added one
 service at a time by people who each made a reasonable local choice.
 
-Populated as the services migrate; the guard test that holds it lands with the
-migration.
+`NetworkServiceRegisterTest` reads this table, scans for `Real*Service` classes, and fails
+when the two disagree. Adding a service is therefore a deliberate choice about its contract
+rather than a copy of whatever the module next door did.
 
-| Service | Returns | Errors it can produce |
+| Service | Contract | Notes |
 |---|---|---|
-| _to be populated during the service migration_ | | |
+| `RealTripPlanningService` | `Result<T>` via `NetworkCaller` | `trip()` and `stopFinder()`. |
+| `RealDeparturesService` | `Result<T>` via `NetworkCaller` | `departures()`. |
+| `RealParkRideService` | `Result<T>` via `NetworkCaller` | `fetchCarParkFacilities()` both overloads. `fetchAvailabilityForStops()` throws instead: its `null` already means "BFF off, use the per-facility path", and a `Result<T?>` would give callers two ways to say nothing. It still routes through `NetworkCaller`, so what escapes is a `NetworkException`. |
+| `RealNswGtfsService` | throws | **Not migrated.** Downloads static GTFS schedule archives at app start, not rider-facing request/response traffic: nothing renders a message when it fails and a retry is the next app start. Surfaced by the register guard rather than by anybody noticing, which is the register working. Migrate it if its failures ever reach a screen. |
+| `RealGtfsRealtimeService` | `GtfsRealtimeResult` sealed class | **Deliberate exception.** It already returns a typed result with a `Unchanged` case that `Result<T>` cannot express, and its failures are consumed by a poller that falls back to direct polling rather than surfacing them. Folding it into `Result<T>` would lose the third case for no gain. If it ever needs to tell a rider why it failed, `Error.cause` becomes a `NetworkError`. |
+
+### Why `NetworkCaller` and not each service
+
+Classification needs the transport state observed **at the moment the call failed**. Four
+services each reaching for the observer would be four separate decisions about how to read it,
+which is exactly how the app came to have two error contracts. One class does it, every service
+goes through it.
+
+`suspendSafeResult` in `:core:coroutines-ext` is not deprecated by this. It stays the right
+tool for non-network work; `NetworkCaller` exists only where a throwable needs classifying
+against connectivity.
 
 ---
 

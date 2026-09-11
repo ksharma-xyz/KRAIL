@@ -77,7 +77,6 @@ class TimeTableStopSheetRestoreTest {
         val departuresViewModel = DeparturesViewModel(
             repository = DepartureBoardRepository(
                 departuresService = FakeDeparturesService(),
-                ioDispatcher = Dispatchers.Main,
             ),
             analytics = NoOpAnalytics,
             ioDispatcher = Dispatchers.Main,

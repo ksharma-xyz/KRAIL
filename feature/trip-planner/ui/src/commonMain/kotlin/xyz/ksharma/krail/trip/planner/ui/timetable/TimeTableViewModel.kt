@@ -793,23 +793,20 @@ class TimeTableViewModel(
             tripInfo != null && tripInfo!!.fromStopId.isNotEmpty() && tripInfo!!.toStopId.isNotEmpty(),
         ) { "Trip Info is null or empty" }
 
-        runCatching {
-            val tripResponse = tripPlanningService.trip(
-                originStopId = tripInfo!!.fromStopId,
-                destinationStopId = tripInfo!!.toStopId,
-                date = dateTimeSelectionItem?.toYYYYMMDD(),
-                time = dateTimeSelectionItem?.toHHMM(),
-                depArr = when (dateTimeSelectionItem?.option) {
-                    JourneyTimeOptions.LEAVE -> DepArr.DEP
-                    JourneyTimeOptions.ARRIVE -> DepArr.ARR
-                    else -> DepArr.DEP
-                },
-                excludeProductClassSet = unselectedModes,
-            )
-            Result.success(tripResponse)
-        }.getOrElse { error ->
-            Result.failure(error)
-        }
+        // The service returns the Result now, so the runCatching/Result.success/getOrElse
+        // dance this used to do is gone. Its failure carries a typed NetworkError.
+        tripPlanningService.trip(
+            originStopId = tripInfo!!.fromStopId,
+            destinationStopId = tripInfo!!.toStopId,
+            date = dateTimeSelectionItem?.toYYYYMMDD(),
+            time = dateTimeSelectionItem?.toHHMM(),
+            depArr = when (dateTimeSelectionItem?.option) {
+                JourneyTimeOptions.LEAVE -> DepArr.DEP
+                JourneyTimeOptions.ARRIVE -> DepArr.ARR
+                else -> DepArr.DEP
+            },
+            excludeProductClassSet = unselectedModes,
+        )
     }
 
     /** Clears load-more and previous-trip caches and resets the pagination counter. */
@@ -973,16 +970,14 @@ class TimeTableViewModel(
         require(
             tripInfo != null && tripInfo!!.fromStopId.isNotEmpty() && tripInfo!!.toStopId.isNotEmpty(),
         ) { "Trip Info is null or empty" }
-        runCatching {
-            tripPlanningService.trip(
-                originStopId = tripInfo!!.fromStopId,
-                destinationStopId = tripInfo!!.toStopId,
-                date = date,
-                time = time,
-                depArr = depArr,
-                excludeProductClassSet = unselectedModes,
-            )
-        }.mapCatching { it }
+        tripPlanningService.trip(
+            originStopId = tripInfo!!.fromStopId,
+            destinationStopId = tripInfo!!.toStopId,
+            date = date,
+            time = time,
+            depArr = depArr,
+            excludeProductClassSet = unselectedModes,
+        )
     }
 
     private fun onSaveTripButtonClicked() {

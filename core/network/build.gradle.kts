@@ -33,6 +33,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(projects.core.appInfo)
+                implementation(projects.core.connectivity)
                 implementation(projects.core.di)
                 implementation(projects.core.log)
                 implementation(projects.core.remoteConfig)

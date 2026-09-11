@@ -82,7 +82,6 @@ class DeparturesRelativeTimeTickerTest {
                 departuresService = service,
                 // Robolectric's main looper, so every fetch and every tick lands on the queue
                 // the test drives rather than on a real background thread.
-                ioDispatcher = Dispatchers.Main,
                 // Far longer than anything this test advances: a re-fetch would recompute the
                 // text through the mapper and hide whether the ticker ever ran.
                 config = DepartureBoardConfig(refreshIntervalMs = NO_REFETCH_INTERVAL_MS),

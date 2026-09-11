@@ -62,6 +62,9 @@ kotlin {
         commonTest {
             dependencies {
                 implementation(libs.test.kotlin)
+                // Mock engine so the captive-portal validator can be driven through a
+                // real Ktor pipeline rather than called directly.
+                implementation(libs.ktor.client.mock)
                 implementation(libs.test.turbine)
                 implementation(libs.test.kotlinxCoroutineTest)
             }

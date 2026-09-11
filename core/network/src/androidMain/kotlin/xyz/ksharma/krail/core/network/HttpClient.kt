@@ -14,6 +14,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.connectivity.ConnectivityObserver
+import xyz.ksharma.krail.core.network.error.installCaptivePortalValidator
 import xyz.ksharma.krail.core.log.log as krailLog
 
 actual fun baseHttpClient(
@@ -53,6 +54,11 @@ actual fun baseHttpClient(
         // Retry policy lives in one place so a future upstream inherits it rather than
         // opting in. It declines entirely while transport is down.
         installKrailRetry(connectivity)
+
+        // Turns a Wi-Fi login page into NetworkError.CaptivePortal while the response
+        // headers still exist. Without it a portal is indistinguishable from a schema
+        // change by the time deserialisation fails.
+        installCaptivePortalValidator()
 
         install(HttpTimeout) {
             requestTimeoutMillis = DEFAULT_TIMEOUTS.requestTimeoutMillis

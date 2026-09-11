@@ -32,6 +32,7 @@ kotlin {
 
         commonMain {
             dependencies {
+                implementation(projects.core.analytics)
                 implementation(projects.core.appInfo)
                 implementation(projects.core.connectivity)
                 implementation(projects.core.di)

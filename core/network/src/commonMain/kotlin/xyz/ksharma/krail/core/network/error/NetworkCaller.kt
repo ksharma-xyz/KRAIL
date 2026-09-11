@@ -2,7 +2,11 @@ package xyz.ksharma.krail.core.network.error
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import xyz.ksharma.krail.core.analytics.Analytics
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.connectivity.ConnectivityObserver
 import xyz.ksharma.krail.core.connectivity.mayClaimOffline
 import xyz.ksharma.krail.core.log.logError
@@ -31,16 +35,30 @@ import kotlin.coroutines.coroutineContext
 class NetworkCaller(
     private val connectivity: ConnectivityObserver,
     private val ioDispatcher: CoroutineDispatcher,
+    private val analytics: Analytics,
 ) {
 
+    private val endpointsCurrentlyFailing = mutableSetOf<String>()
+    private val failingEndpointsLock = Mutex()
+
     /**
+     * @param endpoint path only, never a query string. Query strings carry stop ids, and
+     *   those are not sent to analytics. Used to key the failed-state transition.
+     * @param upstream `nsw` or `bff`, so our infrastructure's failures can be told apart
+     *   from NSW's.
      * @param block the request. Anything it throws is classified; anything it returns is the
      *   success value.
      */
     @Suppress("TooGenericExceptionCaught")
-    suspend fun <T> call(block: suspend () -> T): Result<T> = withContext(ioDispatcher) {
+    suspend fun <T> call(
+        endpoint: String,
+        upstream: String,
+        block: suspend () -> T,
+    ): Result<T> = withContext(ioDispatcher) {
         try {
-            Result.success(block())
+            val value = block()
+            recordSuccess(endpoint = endpoint, upstream = upstream)
+            Result.success(value)
         } catch (throwable: Throwable) {
             // Before anything else: a cancellation is not a failure to classify.
             coroutineContext.ensureActive()
@@ -52,7 +70,49 @@ class NetworkCaller(
             val error = throwable.toNetworkError(isTransportDown = transportDown)
 
             logError("network call failed: ${error.kind} (transportDown=$transportDown)", throwable)
+            recordFailure(
+                endpoint = endpoint,
+                upstream = upstream,
+                error = error,
+                transportDown = transportDown,
+            )
             Result.failure(NetworkException(error = error, cause = throwable))
         }
+    }
+
+    private suspend fun recordFailure(
+        endpoint: String,
+        upstream: String,
+        error: NetworkError,
+        transportDown: Boolean,
+    ) {
+        val isNewFailure = failingEndpointsLock.withLock { endpointsCurrentlyFailing.add(endpoint) }
+        if (!isNewFailure) return
+
+        analytics.track(
+            AnalyticsEvent.NetworkStatusEvent(
+                action = AnalyticsEvent.NetworkStatusEvent.Action.FAILURE,
+                errorKind = error.kind,
+                transportUp = !transportDown,
+                upstream = upstream,
+                endpoint = endpoint,
+            ),
+        )
+    }
+
+    private suspend fun recordSuccess(endpoint: String, upstream: String) {
+        val wasFailing = failingEndpointsLock.withLock { endpointsCurrentlyFailing.remove(endpoint) }
+        if (!wasFailing) return
+
+        analytics.track(
+            AnalyticsEvent.NetworkStatusEvent(
+                action = AnalyticsEvent.NetworkStatusEvent.Action.RECOVERED,
+                // No error to report on the way back up; the pair is joined on endpoint.
+                errorKind = "none",
+                transportUp = true,
+                upstream = upstream,
+                endpoint = endpoint,
+            ),
+        )
     }
 }

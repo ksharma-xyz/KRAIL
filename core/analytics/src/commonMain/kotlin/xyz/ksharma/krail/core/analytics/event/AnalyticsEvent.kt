@@ -22,6 +22,10 @@ private const val PROP_LEG_COUNT = "legCount"
 private const val PROP_TRANSPORT_MODES = "transportModes"
 private const val PROP_SEARCH_SESSION_ID = "searchSessionId"
 private const val PROP_PANE_MODE = "paneMode"
+private const val PROP_ERROR_KIND = "errorKind"
+private const val PROP_TRANSPORT_UP = "transportUp"
+private const val PROP_UPSTREAM = "upstream"
+private const val PROP_ENDPOINT = "endpoint"
 
 /**
  * Every event's [properties] pass through [AnalyticsParamSanitizer] before they are
@@ -1634,6 +1638,62 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         name = "review_prompt_requested",
         rawProperties = mapOf(PROP_SOURCE to source),
     )
+
+    // endregion
+
+    // region Network
+
+    /**
+     * Fired when a network call fails, and again when the app recovers from it.
+     *
+     * One event name, not one per surface and not one per error kind, following the
+     * aggregation pattern in `docs/ANALYTICS_EVENTS.md`. The 500-name budget does not
+     * survive a name per failure mode.
+     *
+     * The parameter worth having is [transportUp]. It is the classifier checking its own
+     * work: a run of `errorKind=offline` rows carrying `transportUp=true` means the
+     * classifier is calling a working connection offline, and a classifier that is
+     * confidently wrong is worse than the single boolean it replaced. Nothing else in the
+     * app can detect that drift.
+     *
+     * **Volume:** an offline device on a polling screen would fire this every 30 seconds.
+     * Emit [Action.FAILURE] once per transition into the failed state, not once per failed
+     * request, matching how [DepartureBoardStatusEvent] already counts errors.
+     *
+     * @param action Whether a call failed, the app recovered on its own, or a retry ran.
+     * @param errorKind The `NetworkError` case name, e.g. `offline`, `upstream`.
+     *                  Deliberately not the HTTP status: upstream failures aggregate.
+     * @param transportUp What the OS reported about transport when the call failed.
+     * @param upstream `nsw` or `bff`, separating our infrastructure's failures from NSW's.
+     * @param endpoint Path only, never a query string. Query strings carry stop ids.
+     */
+    data class NetworkStatusEvent(
+        val action: Action,
+        val errorKind: String,
+        val transportUp: Boolean,
+        val upstream: String,
+        val endpoint: String,
+    ) : AnalyticsEvent(
+        name = "network_status",
+        rawProperties = mapOf(
+            PROP_ACTION to action.value,
+            PROP_ERROR_KIND to errorKind,
+            PROP_TRANSPORT_UP to transportUp,
+            PROP_UPSTREAM to upstream,
+            PROP_ENDPOINT to endpoint,
+        ),
+    ) {
+        enum class Action(val value: String) {
+            /** A call failed. Once per transition into the failed state. */
+            FAILURE("failure"),
+
+            /** Transport returned and the app refetched without the rider tapping. */
+            RECOVERED("recovered"),
+
+            /** A retry ran. Compare against FAILURE to see whether retrying earns its cost. */
+            RETRY("retry"),
+        }
+    }
 
     // endregion
 }

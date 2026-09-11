@@ -107,6 +107,7 @@ fails the analytics build, so this class of gap cannot silently reopen.
 | 2024-12-17 | `back_click` | `fromScreen` | `AnalyticsScreen` name | Back navigation from a tracked screen | Registered |
 | 2024-12-17 | `reverse_stop_click` | — | — | From/To stops swapped on the Save Trips screen | Registered |
 | 2024-12-17 | `reverse_time_table_click` | `fromStopId`, `toStopId` | Stop IDs | Trip reversed from the timetable | Registered |
+| 2026-09-11 | `network_status` (NEW EVENT) | `action`, `errorKind`, `transportUp`, `upstream`, `endpoint` | `action`: `failure｜recovered｜retry`; `errorKind`: NetworkError case name (`offline｜unreachable｜timeout｜captive_portal｜malformed｜upstream｜request｜unknown`); `transportUp`: Bool; `upstream`: `nsw｜bff`; `endpoint`: path only, no query | Network call fails (once per transition into the failed state, not per request); app refetches after transport returns; a retry runs | #1992 | Pending |  |
 
 ## Open items for KRAIL-Analytics maintainers
 

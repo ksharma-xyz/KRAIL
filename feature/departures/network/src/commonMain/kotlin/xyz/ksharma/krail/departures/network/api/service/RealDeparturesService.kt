@@ -26,67 +26,72 @@ internal class RealDeparturesService(
         stopId: String,
         date: String?,
         time: String?,
-    ): Result<DepartureMonitorResponse> = networkCaller.call {
-        // Resolver picks NSW vs BFF (debug-store in debug builds, Firebase RC
-        // in release). When BFF is chosen AND the proto flag is on, hit the
-        // proto endpoint and decode a DepartureBoardResponse, then map to the
-        // existing DepartureMonitorResponse so downstream UI is unchanged.
-        // Otherwise hit the JSON endpoint on whichever base URL the resolver
-        // chose (NSW direct or BFF JSON pass-through).
+    ): Result<DepartureMonitorResponse> {
+        // Resolved outside the call: reads the debug store and a Remote Config flag, not
+        // the network, so a failure here is not a network failure to classify.
         val baseUrl = resolver.resolveBaseUrl()
         val upstream = baseUrl.toNetworkUpstream()
+        return networkCaller.call(endpoint = DEPARTURES_ENDPOINT, upstream = upstream.label) {
+            // Resolver picks NSW vs BFF (debug-store in debug builds, Firebase RC
+            // in release). When BFF is chosen AND the proto flag is on, hit the
+            // proto endpoint and decode a DepartureBoardResponse, then map to the
+            // existing DepartureMonitorResponse so downstream UI is unchanged.
+            // Otherwise hit the JSON endpoint on whichever base URL the resolver
+            // chose (NSW direct or BFF JSON pass-through).
+            if (upstream == NetworkUpstream.BFF && IS_BFF_PROTO_ENABLED) {
+                logNetworkCall(
+                    target = NetworkUpstream.BFF,
+                    method = "GET",
+                    path = "/api/v1/stops/$stopId/departures-proto",
+                )
+                val bytes: ByteArray = httpClient.get(
+                    "$baseUrl/api/v1/stops/$stopId/departures-proto",
+                ) {
+                    url {
+                        date?.let { parameters.append("date", it) }
+                        time?.let { parameters.append("time", it) }
+                    }
+                    accept(ContentType("application", "x-protobuf"))
+                }.body()
+                return@call DepartureBoardResponse.ADAPTER.decode(bytes)
+                    .toDepartureMonitorResponse()
+            }
 
-        if (upstream == NetworkUpstream.BFF && IS_BFF_PROTO_ENABLED) {
-            logNetworkCall(
-                target = NetworkUpstream.BFF,
-                method = "GET",
-                path = "/api/v1/stops/$stopId/departures-proto",
-            )
-            val bytes: ByteArray = httpClient.get(
-                "$baseUrl/api/v1/stops/$stopId/departures-proto",
-            ) {
-                url {
-                    date?.let { parameters.append("date", it) }
-                    time?.let { parameters.append("time", it) }
-                }
-                accept(ContentType("application", "x-protobuf"))
-            }.body()
-            return@call DepartureBoardResponse.ADAPTER.decode(bytes)
-                .toDepartureMonitorResponse()
-        }
+            if (upstream == NetworkUpstream.BFF) {
+                logNetworkCall(
+                    target = NetworkUpstream.BFF,
+                    method = "GET",
+                    path = "/v1/stops/$stopId/departures",
+                )
+                httpClient.get("$baseUrl/v1/stops/$stopId/departures") {
+                    url {
+                        date?.let { parameters.append("date", it) }
+                        time?.let { parameters.append("time", it) }
+                    }
+                }.body()
+            } else {
+                logNetworkCall(
+                    target = NetworkUpstream.NSW,
+                    method = "GET",
+                    path = "/v1/tp/departure_mon",
+                )
+                httpClient.get("$NSW_TRANSPORT_BASE_URL/v1/tp/departure_mon") {
+                    url {
+                        parameters.append(DepartureRequestParams.OUTPUT_FORMAT, "rapidJSON")
+                        parameters.append(DepartureRequestParams.COORD_OUTPUT_FORMAT, "EPSG:4326")
+                        parameters.append(DepartureRequestParams.MODE, "direct")
+                        parameters.append(DepartureRequestParams.TYPE_DM, "stop")
+                        parameters.append(DepartureRequestParams.NAME_DM, stopId)
+                        parameters.append(DepartureRequestParams.DEPARTURE_MONITOR_MACRO, "true")
+                        parameters.append(DepartureRequestParams.TF_NSW_DM, "true")
 
-        if (upstream == NetworkUpstream.BFF) {
-            logNetworkCall(
-                target = NetworkUpstream.BFF,
-                method = "GET",
-                path = "/v1/stops/$stopId/departures",
-            )
-            httpClient.get("$baseUrl/v1/stops/$stopId/departures") {
-                url {
-                    date?.let { parameters.append("date", it) }
-                    time?.let { parameters.append("time", it) }
-                }
-            }.body()
-        } else {
-            logNetworkCall(
-                target = NetworkUpstream.NSW,
-                method = "GET",
-                path = "/v1/tp/departure_mon",
-            )
-            httpClient.get("$NSW_TRANSPORT_BASE_URL/v1/tp/departure_mon") {
-                url {
-                    parameters.append(DepartureRequestParams.OUTPUT_FORMAT, "rapidJSON")
-                    parameters.append(DepartureRequestParams.COORD_OUTPUT_FORMAT, "EPSG:4326")
-                    parameters.append(DepartureRequestParams.MODE, "direct")
-                    parameters.append(DepartureRequestParams.TYPE_DM, "stop")
-                    parameters.append(DepartureRequestParams.NAME_DM, stopId)
-                    parameters.append(DepartureRequestParams.DEPARTURE_MONITOR_MACRO, "true")
-                    parameters.append(DepartureRequestParams.TF_NSW_DM, "true")
-
-                    date?.let { parameters.append(DepartureRequestParams.ITD_DATE, it) }
-                    time?.let { parameters.append(DepartureRequestParams.ITD_TIME, it) }
-                }
-            }.body()
+                        date?.let { parameters.append(DepartureRequestParams.ITD_DATE, it) }
+                        time?.let { parameters.append(DepartureRequestParams.ITD_TIME, it) }
+                    }
+                }.body()
+            }
         }
     }
 }
+
+private const val DEPARTURES_ENDPOINT = "/v1/tp/departure_mon"

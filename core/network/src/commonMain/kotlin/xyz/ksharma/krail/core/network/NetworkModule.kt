@@ -17,6 +17,7 @@ val coreNetworkModule = module {
         NetworkCaller(
             connectivity = get(),
             ioDispatcher = get(named(IODispatcher)),
+            analytics = get(),
         )
     }
     single {

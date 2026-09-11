@@ -173,6 +173,13 @@ rather than a copy of whatever the module next door did.
 | `RealNswGtfsService` | throws | **Not migrated.** Downloads static GTFS schedule archives at app start, not rider-facing request/response traffic: nothing renders a message when it fails and a retry is the next app start. Surfaced by the register guard rather than by anybody noticing, which is the register working. Migrate it if its failures ever reach a screen. |
 | `RealGtfsRealtimeService` | `GtfsRealtimeResult` sealed class | **Deliberate exception.** It already returns a typed result with a `Unchanged` case that `Result<T>` cannot express, and its failures are consumed by a poller that falls back to direct polling rather than surfacing them. Folding it into `Result<T>` would lose the third case for no gain. If it ever needs to tell a rider why it failed, `Error.cause` becomes a `NetworkError`. |
 
+### The `endpoint` label is not the routed path
+
+Every service passes `NetworkCaller` a stable label, e.g. `/v1/tp/trip`, rather than the URL
+it actually hit. A trip can go to NSW direct, to the BFF's JSON pass-through, or to the BFF's
+proto endpoint, and labelling by the real path would split one metric three ways. The
+`upstream` parameter already carries that distinction, so the label stays constant.
+
 ### Why `NetworkCaller` and not each service
 
 Classification needs the transport state observed **at the moment the call failed**. Four

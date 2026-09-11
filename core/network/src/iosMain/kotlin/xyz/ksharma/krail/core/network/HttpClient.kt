@@ -20,6 +20,7 @@ import xyz.ksharma.krail.core.log.log as krailLog
 actual fun baseHttpClient(
     appInfoProvider: AppInfoProvider,
     connectivity: ConnectivityObserver,
+    onRetry: (endpoint: String, upstream: String) -> Unit,
 ): HttpClient {
     return HttpClient(Darwin) {
         expectSuccess = true
@@ -53,7 +54,7 @@ actual fun baseHttpClient(
         }
         // Retry policy lives in one place so a future upstream inherits it rather than
         // opting in. It declines entirely while transport is down.
-        installKrailRetry(connectivity)
+        installKrailRetry(connectivity = connectivity, onRetry = onRetry)
 
         // Turns a Wi-Fi login page into NetworkError.CaptivePortal while the response
         // headers still exist. Without it a portal is indistinguishable from a schema

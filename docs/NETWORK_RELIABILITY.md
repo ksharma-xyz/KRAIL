@@ -192,6 +192,18 @@ rather than a copy of whatever the module next door did.
 | `RealNswGtfsService` | throws | **Not migrated.** Downloads static GTFS schedule archives at app start, not rider-facing request/response traffic: nothing renders a message when it fails and a retry is the next app start. Surfaced by the register guard rather than by anybody noticing, which is the register working. Migrate it if its failures ever reach a screen. |
 | `RealGtfsRealtimeService` | `GtfsRealtimeResult` sealed class | **Deliberate exception.** It already returns a typed result with a `Unchanged` case that `Result<T>` cannot express, and its failures are consumed by a poller that falls back to direct polling rather than surfacing them. Folding it into `Result<T>` would lose the third case for no gain. If it ever needs to tell a rider why it failed, `Error.cause` becomes a `NetworkError`. |
 
+### Retries are observable
+
+The plugin retries inside the Ktor pipeline, where nothing else in the app can see it. A
+silent retry means `network_status(action=retry)` can never fire, and without those rows
+there is no way to tell whether retrying earns its cost or just multiplies load on NSW during
+the outage that caused it. So the policy takes an observation hook and `NetworkCaller` turns
+it into the event.
+
+Retry rows are **not** deduped, unlike failures. The interesting number is how many retries
+happened; comparing it against `failure` rows is the whole point. The plugin caps at two
+retries per request, so this cannot run away.
+
 ### The `endpoint` label is not the routed path
 
 Every service passes `NetworkCaller` a stable label, e.g. `/v1/tp/trip`, rather than the URL

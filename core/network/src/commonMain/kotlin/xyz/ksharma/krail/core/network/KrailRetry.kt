@@ -27,7 +27,10 @@ import kotlin.time.Duration.Companion.seconds
  * retrying poll doubles load on NSW during exactly the outage that caused the retry, so the
  * ceiling is deliberately low.
  */
-internal fun HttpClientConfig<*>.installKrailRetry(connectivity: ConnectivityObserver) {
+internal fun HttpClientConfig<*>.installKrailRetry(
+    connectivity: ConnectivityObserver,
+    onRetry: (endpoint: String, upstream: String) -> Unit,
+) {
     install(HttpRequestRetry) {
         maxRetries = MAX_RETRIES
 
@@ -51,9 +54,19 @@ internal fun HttpClientConfig<*>.installKrailRetry(connectivity: ConnectivityObs
             randomizationMs = JITTER.inWholeMilliseconds,
         )
 
-        // Honour the upstream when it says how long to wait. Nothing KRAIL guesses beats
-        // being told.
-        modifyRequest { it.headers.remove(RETRY_ATTEMPT_HEADER) }
+        // The one place a retry is observable. Without this the plugin retries silently
+        // and NetworkStatusEvent.Action.RETRY can never fire, so there is no way to tell
+        // whether retrying earns its cost or just doubles load during an incident.
+        //
+        // The path is read from the request rather than passed in, because the retry
+        // happens inside the Ktor pipeline where the service's stable label is not in
+        // scope. Path only, never the query string: query strings carry stop ids.
+        modifyRequest { request ->
+            onRetry(
+                request.url.pathSegments.joinToString("/"),
+                if (request.url.host.endsWith(NSW_HOST)) NSW_LABEL else BFF_LABEL,
+            )
+        }
     }
 }
 
@@ -75,4 +88,6 @@ private const val BACKOFF_BASE = 2.0
 private val MAX_BACKOFF = 4.seconds
 private val JITTER = 250.milliseconds
 private val SERVER_ERROR_RANGE = HttpStatusCode.InternalServerError.value..599
-private const val RETRY_ATTEMPT_HEADER = "x-krail-retry-attempt"
+private const val NSW_HOST = "api.transport.nsw.gov.au"
+private const val NSW_LABEL = "NSW"
+private const val BFF_LABEL = "BFF"

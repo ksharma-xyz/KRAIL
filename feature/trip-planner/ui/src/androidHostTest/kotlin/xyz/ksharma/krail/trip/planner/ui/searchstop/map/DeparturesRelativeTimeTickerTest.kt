@@ -21,7 +21,9 @@ import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DepartureBoardSource
+import xyz.ksharma.krail.core.connectivity.TransportState
 import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.core.testing.fakes.FakeConnectivityObserver
 import xyz.ksharma.krail.core.testing.fakes.FakeDeparturesService
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.departures.network.api.model.DepartureMonitorResponse
@@ -79,6 +81,7 @@ class DeparturesRelativeTimeTickerTest {
         service.response = responseDepartingAt(departureAt)
         departuresViewModel = DeparturesViewModel(
             repository = DepartureBoardRepository(
+                connectivity = FakeConnectivityObserver(initial = TransportState.Up),
                 departuresService = service,
                 // Robolectric's main looper, so every fetch and every tick lands on the queue
                 // the test drives rather than on a real background thread.

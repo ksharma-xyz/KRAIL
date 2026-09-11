@@ -38,6 +38,7 @@ kotlin {
         commonMain {
             dependencies {
                 implementation(projects.core.analytics)
+                implementation(projects.core.connectivity)
                 implementation(projects.core.coroutinesExt)
                 implementation(projects.core.dateTime)
                 implementation(projects.core.di)
@@ -59,6 +60,7 @@ kotlin {
                 implementation(libs.test.turbine)
                 implementation(libs.kotlinx.serialization.json)
                 implementation(projects.core.analytics)
+                implementation(projects.core.connectivity)
                 implementation(projects.core.testing)
             }
         }

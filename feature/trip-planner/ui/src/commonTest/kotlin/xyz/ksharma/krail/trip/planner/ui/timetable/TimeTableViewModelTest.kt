@@ -16,8 +16,10 @@ import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
+import xyz.ksharma.krail.core.connectivity.TransportState
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.formatTo12HourTime
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
+import xyz.ksharma.krail.core.testing.fakes.FakeConnectivityObserver
 import xyz.ksharma.krail.core.testing.fakes.FakeFestivalManager
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.testing.fakes.FakeImageBitmap
@@ -86,6 +88,7 @@ class TimeTableViewModelTest {
         Dispatchers.setMain(testDispatcher)
         TimeTableViewModel.resetSavePromptSessionFlagForTest()
         viewModel = TimeTableViewModel(
+            connectivity = FakeConnectivityObserver(initial = TransportState.Up),
             tripPlanningService = tripPlanningService,
             rateLimiter = rateLimiter,
             sandook = sandook,

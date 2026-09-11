@@ -3,6 +3,7 @@ package xyz.ksharma.krail.departures.ui.state
 import androidx.compose.runtime.Stable
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
+import xyz.ksharma.krail.core.network.error.NetworkError
 import xyz.ksharma.krail.departures.ui.state.model.StopDeparture
 
 /**
@@ -38,6 +39,14 @@ data class DeparturesState(
      * True when the departures request has failed and no data is available.
      */
     val isError: Boolean = false,
+
+    /**
+     * Why the last request failed, when it did. Null whenever [isError] is false.
+     *
+     * [isError] decides whether to show an error surface; this says what it should say.
+     * See docs/NETWORK_RELIABILITY.md.
+     */
+    val networkError: NetworkError? = null,
 
     /**
      * The ordered list of upcoming departures. Empty during loading / error states.

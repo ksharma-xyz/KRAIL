@@ -7,6 +7,7 @@ import kotlinx.collections.immutable.ImmutableSet
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
+import xyz.ksharma.krail.core.network.error.NetworkError
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
@@ -24,6 +25,14 @@ data class TimeTableState(
     val previousJourneyList: ImmutableList<JourneyCardInfo> = persistentListOf(),
     val trip: Trip? = null,
     val isError: Boolean = false,
+    /**
+     * Why the last request failed, when it did. Null whenever [isError] is false.
+     *
+     * [isError] stays because it is what decides whether to show an error surface at all;
+     * this says what that surface should say. Airplane mode, an NSW outage and a changed
+     * response shape used to be indistinguishable here. See docs/NETWORK_RELIABILITY.md.
+     */
+    val networkError: NetworkError? = null,
     /**
      * True when the API returned journeys but the user's mode selection filtered all of them
      * out. Lets the screen show a mode-specific hint instead of the generic "no route found".

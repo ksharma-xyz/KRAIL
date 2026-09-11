@@ -26,7 +26,9 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import kotlinx.datetime.TimeZone.Companion.currentSystemDefault
 import kotlinx.datetime.toLocalDateTime
+import xyz.ksharma.krail.core.connectivity.TransportState
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
+import xyz.ksharma.krail.core.testing.fakes.FakeConnectivityObserver
 import xyz.ksharma.krail.core.testing.fakes.FakeFestivalManager
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.testing.fakes.FakeRateLimiter
@@ -76,6 +78,7 @@ class TimeTableViewModelCacheTest {
         Dispatchers.setMain(testDispatcher)
         TimeTableViewModel.resetSavePromptSessionFlagForTest()
         viewModel = TimeTableViewModel(
+            connectivity = FakeConnectivityObserver(initial = TransportState.Up),
             tripPlanningService = tripPlanningService,
             rateLimiter = rateLimiter,
             sandook = FakeSandook(),

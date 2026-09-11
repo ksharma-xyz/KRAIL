@@ -13,7 +13,9 @@ import kotlinx.coroutines.test.setMain
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DepartureBoardSource
+import xyz.ksharma.krail.core.connectivity.TransportState
 import xyz.ksharma.krail.core.testing.coroutines.virtualClock
+import xyz.ksharma.krail.core.testing.fakes.FakeConnectivityObserver
 import xyz.ksharma.krail.core.testing.fakes.FakeDeparturesService
 import xyz.ksharma.krail.departures.network.api.model.DepartureMonitorResponse
 import xyz.ksharma.krail.departures.ui.state.DeparturesUiEvent
@@ -77,6 +79,7 @@ class DeparturesViewModelTest {
         Dispatchers.setMain(testDispatcher)
         fakeService = FakeDeparturesService(response = buildResponse(2))
         repository = DepartureBoardRepository(
+            connectivity = FakeConnectivityObserver(initial = TransportState.Up),
             departuresService = fakeService,
             config = testConfig,
             // The refresh window is compared against delay-driven ticks, so it must read
@@ -350,6 +353,7 @@ class DeparturesViewModelAnalyticsTest {
         fakeService = FakeDeparturesService(response = buildResponse(2))
         analytics = CapturingAnalytics()
         repository = DepartureBoardRepository(
+            connectivity = FakeConnectivityObserver(initial = TransportState.Up),
             departuresService = fakeService,
             config = testConfig,
             // The refresh window is compared against delay-driven ticks, so it must read

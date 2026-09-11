@@ -78,6 +78,7 @@ kotlin {
                 implementation(projects.core.appReview)
                 implementation(projects.core.appVersion)
                 implementation(projects.core.analytics)
+                implementation(projects.core.connectivity)
                 implementation(projects.core.coroutinesExt)
                 implementation(projects.core.dateTime)
                 implementation(projects.core.di)

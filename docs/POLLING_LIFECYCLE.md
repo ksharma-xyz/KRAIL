@@ -3,6 +3,11 @@
 All polling flows use `SharingStarted.WhileSubscribed(threshold)` so they stop when no UI
 is collecting them. This only works if the UI collects with lifecycle awareness.
 
+**Lifecycle is no longer the only gate.** Polling is now suspended while the OS reports no
+network transport as well, so a screen that is open but offline does not spend battery
+collecting connect timeouts. The two gates are independent and both must be open for a
+poll to run. See [`NETWORK_RELIABILITY.md`](NETWORK_RELIABILITY.md).
+
 ## Rule: use `repeatOnLifecycle(STARTED)` to activate side-effect flows
 
 `LaunchedEffect` is Composition-scoped — it keeps subscribers alive through background and
@@ -42,11 +47,34 @@ any `StateFlow` that a `WhileSubscribed` poll depends on.
 
 ```
 UI subscribes via collectAsStateWithLifecycle() or repeatOnLifecycle(STARTED)
-  → Activity goes to background → subscriber count drops to 0
-  → WhileSubscribed(threshold) fires after threshold ms
-  → onStart coroutine (while-true poll loop) is cancelled
-  → no more API calls
+  Activity goes to background, so subscriber count drops to 0
+  WhileSubscribed(threshold) fires after threshold ms
+  onStart coroutine (while-true poll loop) is cancelled
+  no more API calls
 ```
+
+## The second gate: transport state
+
+A poll loop can also be suspended while the app has a subscriber and the screen is open, if
+the OS reports no usable network:
+
+```
+DepartureBoardRepository.pollStop
+  each iteration awaits connectivity.state.first { it.shouldAttemptRequest }
+  TransportState.Down suspends the loop
+  transport returns, the loop resumes within a tick
+```
+
+Three things about this are deliberate and easy to get wrong:
+
+- **`TransportState.Unknown` counts as connected.** Before the first OS callback arrives,
+  nothing is known, and refusing to poll on no evidence is the same bug as a naive
+  `isOnline = false` default.
+- **It suspends rather than cancels.** The loop keeps its place, so reconnecting does not
+  restart a polling session or reset the refresh window.
+- **It does not replace the lifecycle gate.** A backgrounded screen with a perfect connection
+  must still stop polling, and that is still `WhileSubscribed` doing the work. Both gates are
+  needed; neither implies the other.
 
 ## The register
 

@@ -10,10 +10,12 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.plus
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
+import xyz.ksharma.krail.core.connectivity.TransportState
 import xyz.ksharma.krail.core.festival.model.FixedDateFestival
 import xyz.ksharma.krail.core.testing.coroutines.KrailTestScope
 import xyz.ksharma.krail.core.testing.coroutines.krailRunTest
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
+import xyz.ksharma.krail.core.testing.fakes.FakeConnectivityObserver
 import xyz.ksharma.krail.core.testing.fakes.FakeFestivalManager
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.testing.fakes.FakeRateLimiter
@@ -124,6 +126,7 @@ class TimeTableGreetingTest {
     )
 
     private fun KrailTestScope.buildViewModel() = TimeTableViewModel(
+        connectivity = FakeConnectivityObserver(initial = TransportState.Up),
         tripPlanningService = tripPlanningService,
         rateLimiter = rateLimiter,
         sandook = sandook,

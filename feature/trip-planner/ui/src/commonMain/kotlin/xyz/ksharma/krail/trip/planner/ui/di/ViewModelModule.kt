@@ -193,6 +193,7 @@ val viewModelsModule = module {
             flag = get(),
             shareManager = get(),
             appReviewManager = get(),
+            connectivity = get(),
             tripTrackingDebugOverride = tripTrackingDebugOverride,
             clock = get(),
         )

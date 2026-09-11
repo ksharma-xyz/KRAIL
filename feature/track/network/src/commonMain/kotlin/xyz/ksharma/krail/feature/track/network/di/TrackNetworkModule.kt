@@ -1,18 +1,20 @@
 package xyz.ksharma.krail.feature.track.network.di
 
+import io.ktor.client.HttpClient
 import kotlinx.coroutines.Dispatchers
 import org.koin.dsl.module
+import xyz.ksharma.krail.core.network.ApiCredential
+import xyz.ksharma.krail.core.network.forApi
 import xyz.ksharma.krail.feature.track.GtfsRealtimeRepository
 import xyz.ksharma.krail.feature.track.network.BffGtfsRealtimeRepository
 import xyz.ksharma.krail.feature.track.network.GtfsRealtimeService
 import xyz.ksharma.krail.feature.track.network.RealGtfsRealtimeRepository
 import xyz.ksharma.krail.feature.track.network.RealGtfsRealtimeService
-import xyz.ksharma.krail.feature.track.network.gtfsRealtimeHttpClient
 
 val trackNetworkModule = module {
     single<GtfsRealtimeService> {
         RealGtfsRealtimeService(
-            httpClient = gtfsRealtimeHttpClient(get()),
+            httpClient = get<HttpClient>().forApi(ApiCredential.NswApiKey),
             resolver = get(),
         )
     }
@@ -21,7 +23,7 @@ val trackNetworkModule = module {
     // BFF failure falls back to direct polling for that poll.
     single<GtfsRealtimeRepository> {
         BffGtfsRealtimeRepository(
-            httpClient = gtfsRealtimeHttpClient(get()),
+            httpClient = get<HttpClient>().forApi(ApiCredential.NswApiKey),
             resolver = get(),
             flag = get(),
             direct = RealGtfsRealtimeRepository(service = get(), ioDispatcher = Dispatchers.Default),

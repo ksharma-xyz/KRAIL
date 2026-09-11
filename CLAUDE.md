@@ -83,6 +83,25 @@ a connection tighter than the default interchange allowance, and Pareto dominanc
 has the query that tells them apart. Reaching for `TripResponseMapper.kt` first skips the
 step that decides whether the mapper is involved.
 
+## Networking
+
+Read [`docs/NETWORK_RELIABILITY.md`](docs/NETWORK_RELIABILITY.md) before changing anything
+under `core/network/`, adding a `Real*Service`, or adding a new upstream API. Two rules
+from it are absolute:
+
+- **Never add a per-feature `HttpClient`.** There is one factory in `:core:network`. A new
+  API that needs a credential adds an `ApiCredential` case, not an `expect`/`actual` pair.
+  The app once carried five near-identical pairs whose entire body appended one header.
+- **Never present the OS connectivity flag as the truth.** `ConnectivityManager` and
+  `NWPathMonitor` report the local transport, which is `true` behind a captive portal, on a
+  dropped VPN and on a blackholing carrier. Transport state is an *input* to classifying a
+  failure; the request outcome is the authority. "You are offline" requires a failed request
+  **and** transport down, never the flag alone.
+
+Failures are typed. Every service returns `Result<T>` whose failure is a `NetworkException`
+carrying a `NetworkError`. Never let a raw Ktor exception reach a ViewModel, and never widen
+a screen's error handling to a boolean again.
+
 ## Detekt
 
 ```
@@ -484,6 +503,11 @@ that contradicts the doc should also update the doc in the same change.
   read it in, what is not captured, and the known failure signatures.
 - `docs/POLLING_LIFECYCLE.md` — WhileSubscribed polling rules: `repeatOnLifecycle(STARTED)`
   pattern, why plain `LaunchedEffect` breaks background gating, all polling flows listed.
+- `docs/NETWORK_RELIABILITY.md` — why a request failed and what the app may say about it:
+  the transport-state-is-an-input rule, the failure taxonomy every classifier branch and
+  test is written from, the service register, and the decisions with their revisit
+  triggers. Read before changing `core/network/`, adding a `Real*Service`, or adding an
+  upstream API.
 - `docs/investigations/NSW_715_WALK_LEG_INVESTIGATION.md` — why `TripResponseMapper.kt`'s
   `collapseSameRouteQuickWalks()` merges same-route-number legs split by a trivial walk;
   read before changing leg-merge/split logic in `TripResponseMapper.kt` or

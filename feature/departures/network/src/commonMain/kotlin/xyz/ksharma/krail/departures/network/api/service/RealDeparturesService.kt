@@ -6,12 +6,11 @@ import io.ktor.client.call.body
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.http.ContentType
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.withContext
 import xyz.ksharma.krail.core.network.BffEndpointResolver
 import xyz.ksharma.krail.core.network.IS_BFF_PROTO_ENABLED
 import xyz.ksharma.krail.core.network.NSW_TRANSPORT_BASE_URL
 import xyz.ksharma.krail.core.network.NetworkUpstream
+import xyz.ksharma.krail.core.network.error.NetworkCaller
 import xyz.ksharma.krail.core.network.logNetworkCall
 import xyz.ksharma.krail.core.network.toNetworkUpstream
 import xyz.ksharma.krail.departures.network.api.mapper.toDepartureMonitorResponse
@@ -19,7 +18,7 @@ import xyz.ksharma.krail.departures.network.api.model.DepartureMonitorResponse
 
 internal class RealDeparturesService(
     private val httpClient: HttpClient,
-    private val ioDispatcher: CoroutineDispatcher,
+    private val networkCaller: NetworkCaller,
     private val resolver: BffEndpointResolver,
 ) : DeparturesService {
 
@@ -27,7 +26,7 @@ internal class RealDeparturesService(
         stopId: String,
         date: String?,
         time: String?,
-    ): DepartureMonitorResponse = withContext(ioDispatcher) {
+    ): Result<DepartureMonitorResponse> = networkCaller.call {
         // Resolver picks NSW vs BFF (debug-store in debug builds, Firebase RC
         // in release). When BFF is chosen AND the proto flag is on, hit the
         // proto endpoint and decode a DepartureBoardResponse, then map to the
@@ -52,7 +51,7 @@ internal class RealDeparturesService(
                 }
                 accept(ContentType("application", "x-protobuf"))
             }.body()
-            return@withContext DepartureBoardResponse.ADAPTER.decode(bytes)
+            return@call DepartureBoardResponse.ADAPTER.decode(bytes)
                 .toDepartureMonitorResponse()
         }
 

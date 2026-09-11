@@ -23,10 +23,13 @@ interface DeparturesService {
      *             Defaults to the current server date when null.
      * @param time Reference time in HHMM 24-hour format (e.g. "1430" for 2:30 PM).
      *             Defaults to the current server time when null.
+     *
+     * @return the departures, or a failure carrying a NetworkException whose NetworkError
+     *   says why. See docs/NETWORK_RELIABILITY.md.
      */
     suspend fun departures(
         stopId: String,
         date: String? = null,
         time: String? = null,
-    ): DepartureMonitorResponse
+    ): Result<DepartureMonitorResponse>
 }

@@ -2,7 +2,6 @@ package xyz.ksharma.krail.departures.ui
 
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
@@ -19,7 +18,6 @@ import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiDateString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiTimeString
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
-import xyz.ksharma.krail.coroutines.ext.suspendSafeResult
 import xyz.ksharma.krail.departures.network.api.service.DeparturesService
 import xyz.ksharma.krail.departures.ui.business.toStopDepartures
 import xyz.ksharma.krail.departures.ui.state.DeparturesState
@@ -43,7 +41,6 @@ import kotlin.time.Instant
  */
 class DepartureBoardRepository(
     private val departuresService: DeparturesService,
-    private val ioDispatcher: CoroutineDispatcher,
     private val config: DepartureBoardConfig = DepartureBoardConfig(),
     /**
      * Wall-clock seam for the refresh window. It has to be injectable: the window is
@@ -196,52 +193,54 @@ class DepartureBoardRepository(
         } else {
             flow.update { it.copy(silentLoading = true) }
         }
-        departuresService.suspendSafeResult(ioDispatcher) {
-            departures(stopId = stopId, date = null, time = null)
-        }.onSuccess { response ->
-            val fetchEnd = nowMs()
-            mutex.withLock { lastFetchTime[stopId] = fetchEnd }
-            currentCoroutineContext().ensureActive()
-            val departures = response.toStopDepartures()
-            val prevFetchTime = mutex.withLock { lastPreviousFetchTime[stopId] ?: 0L }
-            val prevWindowMs = config.previousDeparturesWindowMinutes * 60_000L
-            val isPrevStale = prevFetchTime > 0L && (fetchEnd - prevFetchTime) > prevWindowMs
-            if (isPrevStale) {
+        // No suspendSafeResult wrapper: the service already returns a Result whose failure
+        // carries a typed NetworkError, and it already runs on the IO dispatcher.
+        departuresService.departures(stopId = stopId, date = null, time = null)
+            .onSuccess { response ->
+                val fetchEnd = nowMs()
+                mutex.withLock { lastFetchTime[stopId] = fetchEnd }
+                currentCoroutineContext().ensureActive()
+                val departures = response.toStopDepartures()
+                val prevFetchTime = mutex.withLock { lastPreviousFetchTime[stopId] ?: 0L }
+                val prevWindowMs = config.previousDeparturesWindowMinutes * 60_000L
+                val isPrevStale = prevFetchTime > 0L && (fetchEnd - prevFetchTime) > prevWindowMs
+                if (isPrevStale) {
+                    log(
+                        "[$LOG_TAG] t=$fetchEnd session=#$sessionId previousDepartures STALE —" +
+                            " clearing (age=${fetchEnd - prevFetchTime}ms > window=${prevWindowMs}ms)",
+                    )
+                }
                 log(
-                    "[$LOG_TAG] t=$fetchEnd session=#$sessionId previousDepartures STALE —" +
-                        " clearing (age=${fetchEnd - prevFetchTime}ms > window=${prevWindowMs}ms)",
+                    "[$LOG_TAG] t=$fetchEnd session=#$sessionId fetchDepartures SUCCESS stopId=$stopId " +
+                        "count=${departures.size} durationMs=${fetchEnd - fetchStart}",
                 )
+                flow.update { current ->
+                    DeparturesState(
+                        isLoading = false,
+                        silentLoading = false,
+                        isError = false,
+                        departures = departures,
+                        previousDepartures = if (isPrevStale) persistentListOf() else current.previousDepartures,
+                        isPreviousLoading = if (isPrevStale) false else current.isPreviousLoading,
+                        previousWindowMinutes = current.previousWindowMinutes,
+                    )
+                }
             }
-            log(
-                "[$LOG_TAG] t=$fetchEnd session=#$sessionId fetchDepartures SUCCESS stopId=$stopId " +
-                    "count=${departures.size} durationMs=${fetchEnd - fetchStart}",
-            )
-            flow.update { current ->
-                DeparturesState(
-                    isLoading = false,
-                    silentLoading = false,
-                    isError = false,
-                    departures = departures,
-                    previousDepartures = if (isPrevStale) persistentListOf() else current.previousDepartures,
-                    isPreviousLoading = if (isPrevStale) false else current.isPreviousLoading,
-                    previousWindowMinutes = current.previousWindowMinutes,
+            .onFailure { throwable ->
+                val fetchEnd = nowMs()
+                logError(
+                    message = "[$LOG_TAG] t=$fetchEnd session=#$sessionId fetchDepartures FAILURE " +
+                        "stopId=$stopId durationMs=${fetchEnd - fetchStart}",
+                    throwable = throwable,
                 )
+                flow.update {
+                    it.copy(
+                        isLoading = false,
+                        silentLoading = false,
+                        isError = it.departures.isEmpty(),
+                    )
+                }
             }
-        }.onFailure { throwable ->
-            val fetchEnd = nowMs()
-            logError(
-                message = "[$LOG_TAG] t=$fetchEnd session=#$sessionId fetchDepartures FAILURE " +
-                    "stopId=$stopId durationMs=${fetchEnd - fetchStart}",
-                throwable = throwable,
-            )
-            flow.update {
-                it.copy(
-                    isLoading = false,
-                    silentLoading = false,
-                    isError = it.departures.isEmpty(),
-                )
-            }
-        }
     }
 
     /**
@@ -275,13 +274,11 @@ class DepartureBoardRepository(
         )
         flow.update { it.copy(isPreviousLoading = true) }
         val fromTime = clock.now() - config.previousDeparturesWindowMinutes.minutes
-        departuresService.suspendSafeResult(ioDispatcher) {
-            departures(
-                stopId = stopId,
-                date = fromTime.toApiDateString(),
-                time = fromTime.toApiTimeString(),
-            )
-        }.onSuccess { response ->
+        departuresService.departures(
+            stopId = stopId,
+            date = fromTime.toApiDateString(),
+            time = fromTime.toApiTimeString(),
+        ).onSuccess { response ->
             currentCoroutineContext().ensureActive()
             val now = clock.now()
             val allFromResponse = response.toStopDepartures()

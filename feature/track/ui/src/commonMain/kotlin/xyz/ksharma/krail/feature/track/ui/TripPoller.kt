@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiDateString
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toApiTimeString
 import xyz.ksharma.krail.core.log.log
@@ -347,15 +346,16 @@ internal class TripPoller(
             val time = depInstant.toApiTimeString()
             log("TrackTrip: fetchAndUpdate — calling API date=$date time=$time")
 
-            val response = withContext(ioDispatcher) {
-                tripPlanningService.trip(
-                    originStopId = deepLink.fromStopId,
-                    destinationStopId = deepLink.toStopId,
-                    date = date,
-                    time = time,
-                    excludeProductClassSet = deepLink.excludedProductClasses.toSet(),
-                )
-            }
+            // getOrThrow inside the existing runCatching: the service's failure is a
+            // NetworkException, so the surrounding handler still sees a typed error and
+            // behaviour here is unchanged. NetworkCaller already applies the IO dispatcher.
+            val response = tripPlanningService.trip(
+                originStopId = deepLink.fromStopId,
+                destinationStopId = deepLink.toStopId,
+                date = date,
+                time = time,
+                excludeProductClassSet = deepLink.excludedProductClasses.toSet(),
+            ).getOrThrow()
             val journeyCount = response.journeys?.size ?: 0
             val deepLinkLegIds = deepLink.legs.map { it.transportationId }
             log(

@@ -7,13 +7,12 @@ import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.http.ContentType
 import io.ktor.http.ParametersBuilder
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.withContext
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.network.BffEndpointResolver
 import xyz.ksharma.krail.core.network.IS_BFF_PROTO_ENABLED
 import xyz.ksharma.krail.core.network.NSW_TRANSPORT_BASE_URL
 import xyz.ksharma.krail.core.network.NetworkUpstream
+import xyz.ksharma.krail.core.network.error.NetworkCaller
 import xyz.ksharma.krail.core.network.logNetworkCall
 import xyz.ksharma.krail.core.network.toNetworkUpstream
 import xyz.ksharma.krail.core.transport.TransportMode
@@ -26,7 +25,7 @@ import xyz.ksharma.krail.trip.planner.network.api.service.trip.TripRequestParams
 
 internal class RealTripPlanningService(
     private val httpClient: HttpClient,
-    private val ioDispatcher: CoroutineDispatcher,
+    private val networkCaller: NetworkCaller,
     private val resolver: BffEndpointResolver,
 ) : TripPlanningService {
 
@@ -37,7 +36,7 @@ internal class RealTripPlanningService(
         date: String?,
         time: String?,
         excludeProductClassSet: Set<Int>,
-    ): TripResponse = withContext(ioDispatcher) {
+    ): Result<TripResponse> = networkCaller.call {
         // Phase C integrated with the BffEndpointResolver pattern. Resolver
         // decides NSW vs BFF (debug builds via DebugNetworkConfigStore,
         // release via Firebase RC `enable_proto_bff`). If the resolver picks
@@ -67,7 +66,7 @@ internal class RealTripPlanningService(
                 url { appendTripQueryParams(spec) }
                 accept(ContentType("application", "x-protobuf"))
             }.body()
-            return@withContext journeyListToTripResponse(JourneyList.ADAPTER.decode(bytes))
+            return@call journeyListToTripResponse(JourneyList.ADAPTER.decode(bytes))
         }
 
         logNetworkCall(
@@ -128,7 +127,7 @@ internal class RealTripPlanningService(
     override suspend fun stopFinder(
         stopSearchQuery: String,
         stopType: StopType,
-    ): StopFinderResponse = withContext(ioDispatcher) {
+    ): Result<StopFinderResponse> = networkCaller.call {
         // stop_finder always goes to NSW direct. BFF has no equivalent endpoint.
         // Phase D will replace this with local search against a stops dataset.
         logNetworkCall(

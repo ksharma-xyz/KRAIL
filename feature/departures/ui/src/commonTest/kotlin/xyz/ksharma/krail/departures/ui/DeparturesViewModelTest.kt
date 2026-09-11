@@ -78,7 +78,6 @@ class DeparturesViewModelTest {
         fakeService = FakeDeparturesService(response = buildResponse(2))
         repository = DepartureBoardRepository(
             departuresService = fakeService,
-            ioDispatcher = testDispatcher,
             config = testConfig,
             // The refresh window is compared against delay-driven ticks, so it must read
             // the same virtual time those ticks run on.
@@ -352,7 +351,6 @@ class DeparturesViewModelAnalyticsTest {
         analytics = CapturingAnalytics()
         repository = DepartureBoardRepository(
             departuresService = fakeService,
-            ioDispatcher = testDispatcher,
             config = testConfig,
             // The refresh window is compared against delay-driven ticks, so it must read
             // the same virtual time those ticks run on.

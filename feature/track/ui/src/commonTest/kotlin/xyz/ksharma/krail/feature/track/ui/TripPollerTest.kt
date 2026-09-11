@@ -10,6 +10,8 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import xyz.ksharma.krail.core.network.error.NetworkError
+import xyz.ksharma.krail.core.network.error.NetworkException
 import xyz.ksharma.krail.core.testing.fakes.FakeClock
 import xyz.ksharma.krail.feature.track.GtfsRealtimeRepository
 import xyz.ksharma.krail.feature.track.LegTrackingInfo
@@ -448,16 +450,22 @@ private class ConfigurableTripService : TripPlanningService {
         date: String?,
         time: String?,
         excludeProductClassSet: Set<Int>,
-    ): TripResponse {
+    ): Result<TripResponse> {
         callCount++
-        if (shouldThrow) error("Simulated network error")
-        return responseProvider()
+        if (shouldThrow) {
+            return Result.failure(
+                NetworkException(
+                    error = NetworkError.Unknown(cause = RuntimeException("Simulated network error")),
+                ),
+            )
+        }
+        return Result.success(responseProvider())
     }
 
     override suspend fun stopFinder(
         stopSearchQuery: String,
         stopType: StopType,
-    ): StopFinderResponse = StopFinderResponse()
+    ): Result<StopFinderResponse> = Result.success(StopFinderResponse())
 }
 
 private object NoopGtfsRealtimeRepository : GtfsRealtimeRepository {

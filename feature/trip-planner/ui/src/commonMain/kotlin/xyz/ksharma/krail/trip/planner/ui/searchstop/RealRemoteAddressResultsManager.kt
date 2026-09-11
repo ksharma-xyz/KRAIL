@@ -28,7 +28,11 @@ internal class RealRemoteAddressResultsManager(
         val safeQuery = query.take(MAX_QUERY_LENGTH).trim()
         if (safeQuery.length < MIN_QUERY_LENGTH) return@withContext emptyList()
 
+        // getOrThrow: this manager's contract is to return a list or throw, and its caller
+        // already wraps the call. The throwable is now a NetworkException, so that caller
+        // sees a typed error rather than a raw Ktor one.
         tripPlanningService.stopFinder(stopSearchQuery = safeQuery, stopType = StopType.ANY)
+            .getOrThrow()
             .locations
             ?.filter { location -> location.type != STOP_TYPE && location.id != null }
             ?.map { location ->

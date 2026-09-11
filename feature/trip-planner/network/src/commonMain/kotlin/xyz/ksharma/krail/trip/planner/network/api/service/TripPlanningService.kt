@@ -9,6 +9,12 @@ import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
  */
 interface TripPlanningService {
 
+    /*
+     * Both methods return Result. The failure is always a NetworkException carrying a typed
+     * NetworkError, so a caller can tell airplane mode from an NSW outage from a shape change.
+     * See docs/NETWORK_RELIABILITY.md.
+     */
+
     suspend fun trip(
         originStopId: String,
         destinationStopId: String,
@@ -32,12 +38,12 @@ interface TripPlanningService {
          * product classes.
          */
         excludeProductClassSet: Set<Int>,
-    ): TripResponse
+    ): Result<TripResponse>
 
     suspend fun stopFinder(
         stopSearchQuery: String,
         stopType: StopType = StopType.STOP,
-    ): StopFinderResponse
+    ): Result<StopFinderResponse>
 }
 
 /**

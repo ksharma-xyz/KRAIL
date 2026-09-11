@@ -52,6 +52,7 @@ private val SHARED_TEST_SOURCE_DIRS = listOf("commonTest", "iosTest")
  * expected to stay green — a failure here is a real Kotlin/Native behaviour difference.
  */
 val IOS_TEST_MODULES: List<String> = listOf(
+    ":core:connectivity",
     ":core:date-time",
     ":core:deeplink",
     ":core:navigation",

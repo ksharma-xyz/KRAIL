@@ -36,47 +36,50 @@ internal class RealTripPlanningService(
         date: String?,
         time: String?,
         excludeProductClassSet: Set<Int>,
-    ): Result<TripResponse> = networkCaller.call {
-        // Phase C integrated with the BffEndpointResolver pattern. Resolver
-        // decides NSW vs BFF (debug builds via DebugNetworkConfigStore,
-        // release via Firebase RC `enable_proto_bff`). If the resolver picks
-        // BFF AND the proto flag is on, hit /api/v1/trip/plan-proto and decode
-        // a JourneyList via Wire — that path carries the polyline data the
-        // journey-map needs. Otherwise hit the NSW-shaped JSON endpoint on
-        // whichever base URL the resolver chose (NSW direct, or BFF JSON
-        // pass-through when the proto flag is off).
-        val spec = TripRequestSpec(
-            originStopId = originStopId,
-            destinationStopId = destinationStopId,
-            depArr = depArr,
-            date = date,
-            time = time,
-            excludeProductClassSet = excludeProductClassSet,
-        )
+    ): Result<TripResponse> {
+        // Resolved outside the call: this reads the debug store and a Remote Config flag,
+        // not the network, so a failure here is not a network failure to classify.
         val baseUrl = resolver.resolveBaseUrl()
         val upstream = baseUrl.toNetworkUpstream()
-
-        if (upstream == NetworkUpstream.BFF && IS_BFF_PROTO_ENABLED) {
-            logNetworkCall(
-                target = NetworkUpstream.BFF,
-                method = "GET",
-                path = "/api/v1/trip/plan-proto",
+        return networkCaller.call(endpoint = TRIP_ENDPOINT, upstream = upstream.label) {
+            // Phase C integrated with the BffEndpointResolver pattern. Resolver
+            // decides NSW vs BFF (debug builds via DebugNetworkConfigStore,
+            // release via Firebase RC `enable_proto_bff`). If the resolver picks
+            // BFF AND the proto flag is on, hit /api/v1/trip/plan-proto and decode
+            // a JourneyList via Wire — that path carries the polyline data the
+            // journey-map needs. Otherwise hit the NSW-shaped JSON endpoint on
+            // whichever base URL the resolver chose (NSW direct, or BFF JSON
+            // pass-through when the proto flag is off).
+            val spec = TripRequestSpec(
+                originStopId = originStopId,
+                destinationStopId = destinationStopId,
+                depArr = depArr,
+                date = date,
+                time = time,
+                excludeProductClassSet = excludeProductClassSet,
             )
-            val bytes: ByteArray = httpClient.get("$baseUrl/api/v1/trip/plan-proto") {
-                url { appendTripQueryParams(spec) }
-                accept(ContentType("application", "x-protobuf"))
-            }.body()
-            return@call journeyListToTripResponse(JourneyList.ADAPTER.decode(bytes))
-        }
+            if (upstream == NetworkUpstream.BFF && IS_BFF_PROTO_ENABLED) {
+                logNetworkCall(
+                    target = NetworkUpstream.BFF,
+                    method = "GET",
+                    path = "/api/v1/trip/plan-proto",
+                )
+                val bytes: ByteArray = httpClient.get("$baseUrl/api/v1/trip/plan-proto") {
+                    url { appendTripQueryParams(spec) }
+                    accept(ContentType("application", "x-protobuf"))
+                }.body()
+                return@call journeyListToTripResponse(JourneyList.ADAPTER.decode(bytes))
+            }
 
-        logNetworkCall(
-            target = upstream,
-            method = "GET",
-            path = "/v1/tp/trip",
-        )
-        httpClient.get("$baseUrl/v1/tp/trip") {
-            url { appendTripQueryParams(spec) }
-        }.body()
+            logNetworkCall(
+                target = upstream,
+                method = "GET",
+                path = "/v1/tp/trip",
+            )
+            httpClient.get("$baseUrl/v1/tp/trip") {
+                url { appendTripQueryParams(spec) }
+            }.body()
+        }
     }
 
     private fun io.ktor.http.URLBuilder.appendTripQueryParams(spec: TripRequestSpec) {
@@ -127,7 +130,11 @@ internal class RealTripPlanningService(
     override suspend fun stopFinder(
         stopSearchQuery: String,
         stopType: StopType,
-    ): Result<StopFinderResponse> = networkCaller.call {
+    ): Result<StopFinderResponse> = networkCaller.call(
+        endpoint = STOP_FINDER_ENDPOINT,
+        // stop_finder always goes to NSW direct; the BFF has no equivalent.
+        upstream = NetworkUpstream.NSW.label,
+    ) {
         // stop_finder always goes to NSW direct. BFF has no equivalent endpoint.
         // Phase D will replace this with local search against a stops dataset.
         logNetworkCall(
@@ -175,6 +182,9 @@ internal fun buildExclusionParams(excludeProductClassSet: Set<Int>): Map<String,
         if (excludeProductClassSet.contains(TransportMode.Ferry.productClass)) put(TripRequestParams.exclMOT9, "1")
     }
 }
+
+private const val TRIP_ENDPOINT = "/v1/tp/trip"
+private const val STOP_FINDER_ENDPOINT = "/v1/tp/stop_finder"
 
 enum class DepArr(val macro: String) {
     DEP("dep"),

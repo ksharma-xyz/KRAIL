@@ -25,49 +25,55 @@ internal class RealParkRideService(
 
     override suspend fun fetchCarParkFacilities(
         facilityId: String,
-    ): Result<CarParkFacilityDetailResponse> = networkCaller.call {
+    ): Result<CarParkFacilityDetailResponse> {
         require(facilityId.isNotBlank()) { "Facility ID must not be blank" }
 
         log("API Call: Fetching car park details for facility ID: $facilityId")
 
+        // Resolved outside the call: reads the debug store and a Remote Config flag, not
+        // the network, so a failure here is not a network failure to classify.
         val baseUrl = resolver.resolveBaseUrl()
-        val isBff = baseUrl.toNetworkUpstream() == NetworkUpstream.BFF
-        val requestUrl = buildParkRideDetailUrl(
-            isBffOverrideSet = isBff,
-            bffBaseUrl = baseUrl,
-            nswBaseUrl = baseUrl,
-            facilityId = facilityId,
-        )
+        val upstream = baseUrl.toNetworkUpstream()
+        val isBff = upstream == NetworkUpstream.BFF
+        return networkCaller.call(endpoint = DETAIL_ENDPOINT, upstream = upstream.label) {
+            val requestUrl = buildParkRideDetailUrl(
+                isBffOverrideSet = isBff,
+                bffBaseUrl = baseUrl,
+                nswBaseUrl = baseUrl,
+                facilityId = facilityId,
+            )
 
-        val response: CarParkFacilityDetailResponse = if (isBff) {
-            // BFF embeds the facility id in the path; no query param.
-            logNetworkCall(
-                target = NetworkUpstream.BFF,
-                method = "GET",
-                path = "/v1/parking/facilities/$facilityId/availability",
-            )
-            httpClient.get(requestUrl) {}.body()
-        } else {
-            // NSW takes a single carpark endpoint plus a `facility` query param.
-            logNetworkCall(
-                target = NetworkUpstream.NSW,
-                method = "GET",
-                path = "/v1/carpark",
-            )
-            httpClient.get(requestUrl) {
-                url {
-                    parameters.append("facility", facilityId)
-                }
-            }.body()
+            val response: CarParkFacilityDetailResponse = if (isBff) {
+                // BFF embeds the facility id in the path; no query param.
+                logNetworkCall(
+                    target = NetworkUpstream.BFF,
+                    method = "GET",
+                    path = "/v1/parking/facilities/$facilityId/availability",
+                )
+                httpClient.get(requestUrl) {}.body()
+            } else {
+                // NSW takes a single carpark endpoint plus a `facility` query param.
+                logNetworkCall(
+                    target = NetworkUpstream.NSW,
+                    method = "GET",
+                    path = DETAIL_ENDPOINT,
+                )
+                httpClient.get(requestUrl) {
+                    url {
+                        parameters.append("facility", facilityId)
+                    }
+                }.body()
+            }
+
+            response
         }
-
-        response
     }
 
-    override suspend fun fetchCarParkFacilities(): Result<Map<String, String>> =
-        networkCaller.call {
-            val baseUrl = resolver.resolveBaseUrl()
-            val isBff = baseUrl.toNetworkUpstream() == NetworkUpstream.BFF
+    override suspend fun fetchCarParkFacilities(): Result<Map<String, String>> {
+        val baseUrl = resolver.resolveBaseUrl()
+        val upstream = baseUrl.toNetworkUpstream()
+        val isBff = upstream == NetworkUpstream.BFF
+        return networkCaller.call(endpoint = LIST_ENDPOINT, upstream = upstream.label) {
             val requestUrl = buildParkRideListUrl(
                 isBffOverrideSet = isBff,
                 bffBaseUrl = baseUrl,
@@ -76,11 +82,12 @@ internal class RealParkRideService(
             logNetworkCall(
                 target = if (isBff) NetworkUpstream.BFF else NetworkUpstream.NSW,
                 method = "GET",
-                path = if (isBff) "/v1/parking/facilities" else "/v1/carpark",
+                path = if (isBff) BFF_FACILITIES_PATH else DETAIL_ENDPOINT,
             )
             val response: Map<String, String> = httpClient.get(requestUrl) {}.body()
             response
         }
+    }
 
     override suspend fun fetchAvailabilityForStops(
         stopIds: List<String>,
@@ -106,7 +113,11 @@ internal class RealParkRideService(
     private suspend fun fetchBatch(
         baseUrl: String,
         stopIds: List<String>,
-    ): ParkingStopBatchResponse = networkCaller.call {
+    ): ParkingStopBatchResponse = networkCaller.call(
+        endpoint = BATCH_ENDPOINT,
+        // The batch endpoint exists only on the BFF; the caller returns null for NSW.
+        upstream = NetworkUpstream.BFF.label,
+    ) {
         // getOrThrow at the end: fetchAvailabilityForStops throws rather than returning a
         // Result, because its null already means "BFF off, use the per-facility path" and a
         // Result<T?> would give callers two ways to say nothing. Routing through
@@ -190,3 +201,8 @@ internal fun buildParkRideDetailUrl(
 internal fun buildParkRideBatchByStopsUrl(
     bffBaseUrl: String,
 ): String = "$bffBaseUrl/v1/parking/availability"
+
+private const val DETAIL_ENDPOINT = "/v1/carpark"
+private const val BFF_FACILITIES_PATH = "/v1/parking/facilities"
+private const val LIST_ENDPOINT = "/v1/carpark/list"
+private const val BATCH_ENDPOINT = "/v1/parking/availability"

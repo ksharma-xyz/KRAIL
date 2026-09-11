@@ -6,28 +6,26 @@ import io.ktor.client.call.body
 import io.ktor.client.request.accept
 import io.ktor.client.request.get
 import io.ktor.http.ContentType
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.withContext
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.network.BffEndpointResolver
 import xyz.ksharma.krail.core.network.IS_BFF_PROTO_ENABLED
 import xyz.ksharma.krail.core.network.NetworkUpstream
+import xyz.ksharma.krail.core.network.error.NetworkCaller
 import xyz.ksharma.krail.core.network.logNetworkCall
 import xyz.ksharma.krail.core.network.toNetworkUpstream
-import xyz.ksharma.krail.coroutines.ext.suspendSafeResult
 import xyz.ksharma.krail.park.ride.network.mapper.toStopBatchResponse
 import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse
 import xyz.ksharma.krail.park.ride.network.model.ParkingStopBatchResponse
 
 internal class RealParkRideService(
     private val httpClient: HttpClient,
-    private val ioDispatcher: CoroutineDispatcher,
+    private val networkCaller: NetworkCaller,
     private val resolver: BffEndpointResolver,
 ) : ParkRideService {
 
     override suspend fun fetchCarParkFacilities(
         facilityId: String,
-    ): Result<CarParkFacilityDetailResponse> = suspendSafeResult(ioDispatcher) {
+    ): Result<CarParkFacilityDetailResponse> = networkCaller.call {
         require(facilityId.isNotBlank()) { "Facility ID must not be blank" }
 
         log("API Call: Fetching car park details for facility ID: $facilityId")
@@ -67,7 +65,7 @@ internal class RealParkRideService(
     }
 
     override suspend fun fetchCarParkFacilities(): Result<Map<String, String>> =
-        suspendSafeResult(ioDispatcher) {
+        networkCaller.call {
             val baseUrl = resolver.resolveBaseUrl()
             val isBff = baseUrl.toNetworkUpstream() == NetworkUpstream.BFF
             val requestUrl = buildParkRideListUrl(
@@ -108,7 +106,12 @@ internal class RealParkRideService(
     private suspend fun fetchBatch(
         baseUrl: String,
         stopIds: List<String>,
-    ): ParkingStopBatchResponse = withContext(ioDispatcher) {
+    ): ParkingStopBatchResponse = networkCaller.call {
+        // getOrThrow at the end: fetchAvailabilityForStops throws rather than returning a
+        // Result, because its null already means "BFF off, use the per-facility path" and a
+        // Result<T?> would give callers two ways to say nothing. Routing through
+        // networkCaller still classifies the throwable, so what escapes is a
+        // NetworkException rather than a raw Ktor one.
         val joinedStopIds = stopIds.joinToString(",")
         if (IS_BFF_PROTO_ENABLED) {
             logNetworkCall(
@@ -122,7 +125,7 @@ internal class RealParkRideService(
                 url { parameters.append("stopIds", joinedStopIds) }
                 accept(ContentType("application", "x-protobuf"))
             }.body()
-            return@withContext ParkingAvailabilityResponse.ADAPTER.decode(bytes)
+            return@call ParkingAvailabilityResponse.ADAPTER.decode(bytes)
                 .toStopBatchResponse()
         }
         val requestUrl = buildParkRideBatchByStopsUrl(bffBaseUrl = baseUrl)
@@ -134,7 +137,7 @@ internal class RealParkRideService(
         httpClient.get(requestUrl) {
             url { parameters.append("stopIds", joinedStopIds) }
         }.body()
-    }
+    }.getOrThrow()
 }
 
 /**

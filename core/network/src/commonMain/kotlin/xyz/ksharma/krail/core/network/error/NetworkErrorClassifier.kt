@@ -2,10 +2,8 @@ package xyz.ksharma.krail.core.network.error
 
 import io.ktor.client.network.sockets.ConnectTimeoutException
 import io.ktor.client.network.sockets.SocketTimeoutException
-import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.ResponseException
-import io.ktor.client.plugins.ServerResponseException
 import io.ktor.serialization.JsonConvertException
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -69,13 +67,19 @@ internal fun Throwable.toSharedNetworkError(): NetworkError? = when (this) {
     // validator, which still has the headers.
     is CaptivePortalException -> NetworkError.CaptivePortal
 
-    is ClientRequestException -> NetworkError.Request(code = response.status.value)
-    is ServerResponseException -> NetworkError.Upstream(code = response.status.value)
-
-    // Any other non-2xx that expectSuccess turned into an exception.
-    is ResponseException -> response.status.value.let { code ->
-        if (code in SERVER_ERROR_RANGE) NetworkError.Upstream(code) else NetworkError.Request(code)
-    }
+    // 511 before the 4xx/5xx branches below. RFC 6585 defines it as "the client needs to
+    // authenticate to gain network access", which is a captive portal by definition. It is
+    // a 5xx numerically, so without this it would be reported as an NSW outage, telling the
+    // rider the transport network is down when they only need to sign in to a Wi-Fi.
+    //
+    // Checked here rather than in the response validator because expectSuccess throws on
+    // non-2xx before validateResponse runs, so the validator never sees a 511 at all.
+    is ResponseException ->
+        if (response.status.value == NETWORK_AUTH_REQUIRED) {
+            NetworkError.CaptivePortal
+        } else {
+            response.status.value.toHttpNetworkError()
+        }
 
     is JsonConvertException -> NetworkError.Malformed
 
@@ -83,6 +87,11 @@ internal fun Throwable.toSharedNetworkError(): NetworkError? = when (this) {
 }
 
 private val SERVER_ERROR_RANGE = 500..599
+
+private const val NETWORK_AUTH_REQUIRED = 511
+
+private fun Int.toHttpNetworkError(): NetworkError =
+    if (this in SERVER_ERROR_RANGE) NetworkError.Upstream(this) else NetworkError.Request(this)
 
 /**
  * Raised by the response validator when an endpoint that serves JSON or protobuf

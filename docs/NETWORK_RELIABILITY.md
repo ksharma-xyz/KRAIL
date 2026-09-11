@@ -88,7 +88,8 @@ tests, and the copy any screen shows. Keep one copy, here.
 | Whole request over 30s | `HttpRequestTimeoutException` | same | either | `Timeout` | yes, once |
 | Upstream 5xx | `ServerResponseException` | same | up | `Upstream(code)` | yes, backoff |
 | 4xx: bad key, bad stop id | `ClientRequestException` | same | up | `Request(code)` | never |
-| Captive portal login page | `CaptivePortalException` from the response validator | same | up | `CaptivePortal` | no, needs the rider |
+| Captive portal, HTML login page | `CaptivePortalException` from the response validator | same | up | `CaptivePortal` | no, needs the rider |
+| Captive portal, HTTP 511 | `ServerResponseException` with status 511 | same | up | `CaptivePortal` | no, needs the rider |
 | Response shape changed | `JsonConvertException` | same | up | `Malformed` | never |
 | TLS failure | `SSLException` | `NSURLErrorSecureConnectionFailed` (-1200) | up | `Unknown` | never |
 | Screen left, job cancelled | `CancellationException` | same | either | **not a failure, rethrown** | n/a |
@@ -113,6 +114,24 @@ branch is wired and proves nothing about whether OkHttp actually throws that typ
 for the condition in question. Every Android case drives a real request at a real
 address, so an engine upgrade that changes the exception surface fails the build
 instead of silently reclassifying live failures.
+
+### Captive portals arrive two ways, and only one reaches the validator
+
+**HTML body, 2xx status.** The common shape. `expectSuccess` is satisfied, so nothing objects
+until the body fails to parse, and by then the headers are gone. The response validator
+catches it while the `Content-Type` still exists.
+
+The validator checks for HTML specifically rather than "not the type we expected". A stricter
+rule would also fire on an upstream that legitimately changed its type, on a `text/plain`
+error body, and on any endpoint added later with a different shape, turning a schema change
+into a confident "sign in to this Wi-Fi". Portals are HTML; nothing KRAIL calls serves HTML.
+Keeping the signal narrow is what stops false accusations.
+
+**HTTP 511.** RFC 6585 defines it as "the client needs to authenticate to gain network
+access", so it is a portal by definition. It is handled in the classifier, not the validator,
+because `expectSuccess` throws on non-2xx *before* `validateResponse` runs, so the validator
+never sees it. Without that branch it would land in the 5xx range and be reported as an NSW
+outage, telling a rider the transport network is down when they only need to join a Wi-Fi.
 
 ### Captive portal versus malformed
 

@@ -76,25 +76,46 @@ Emulator or device. `adb` commands are in `CLAUDE.md`.
 | 1.1.3 | Disable airplane mode | `KrailConnectivity: transport=Up` followed within a tick by `Transport returned after an offline failure, refetching`. No tap needed | |
 | 1.1.4 | Repeat 1.1.1 but rotate the device while offline | No crash, no process restart, and exactly **one** refetch on reconnect. Two means the reconnect is firing on resubscription | |
 | 1.1.5 | Open a departure board, enable airplane mode, leave it 3 minutes | Polling stops. Logcat shows no repeated request lines while transport is down | |
+| 1.1.7 | Open a **timetable** (not a departure board), enable airplane mode, leave it 2 minutes | Known asymmetry: the timetable auto-refresh is **not** connectivity-gated and keeps firing every 30s. Each attempt fails fast because retry declines, so it is cheap, but it is not the departure board's behaviour. Observed on iOS 2026-09-12: two failures, 30s apart | |
 | 1.1.6 | Cold-start the app with airplane mode already on | `transport=Down` at launch from the seed read, not after a delay. No offline claim before the first OS callback | |
 
 ### 1.2 iOS, airplane mode
 
-**Blocked on hardware.** A simulator shares the Mac's network stack and has no airplane
-mode, so the no-transport case cannot be produced on one at all.
+Needs real hardware. A simulator shares the Mac's network stack and has no airplane mode,
+so the no-transport case cannot be produced on one at all.
 
-The entire iOS column of the taxonomy table is written from Apple's documented
-`NSURLErrorDomain` codes and **has never been observed**. These cases are how that gets
-corrected.
+**Partly run.** 1.2.1 and 1.2.2 passed on an iPhone 11, iOS 26.6, on 2026-09-12. The rest
+of the iOS taxonomy is still written from Apple's documented codes and has never been
+observed.
 
 | # | Steps | Expect | Result |
 |---|---|---|---|
-| 1.2.1 | Real iPhone. Open a timetable, enable airplane mode, wait for the auto-refresh | A failure classified as `offline` | |
-| 1.2.2 | Capture the underlying `DarwinHttpRequestException.origin.code` for that failure | Compare against `NSURLErrorNotConnectedToInternet` (-1009). **Correct the taxonomy table if it differs** | |
+| 1.2.1 | Real iPhone. Open a timetable, enable airplane mode, wait for the auto-refresh | A failure classified as `offline` | **pass** 2026-09-12 |
+| 1.2.2 | Capture the underlying `DarwinHttpRequestException.origin.code` for that failure | Compare against `NSURLErrorNotConnectedToInternet` (-1009). **Correct the taxonomy table if it differs** | **pass** `Code=-1009`, matches |
 | 1.2.3 | Join a Wi-Fi with no internet route (hotspot with mobile data off), then request a trip | Classified `unreachable`, not `offline`: the transport is up | |
 | 1.2.4 | Capture `origin.code` for 1.2.3 | Compare against `NSURLErrorCannotFindHost` (-1003) / `NSURLErrorDNSLookupFailed` (-1006) | |
-| 1.2.5 | Disable airplane mode with the timetable open | Board refills without a tap | |
+| 1.2.5 | Disable airplane mode with the timetable open | Board refills without a tap | **pass** 10 clean auto-refresh cycles over 5 min |
 | 1.2.6 | Once 1.2.1 to 1.2.4 pass | Flip the iOS row in the doc's **Verification status** table to yes, and say which build verified it | |
+
+#### Capturing the evidence on iOS
+
+Kermit's debug lines do **not** reach stdout on a device; only `logError` does, because
+`Log.ios.kt` calls `NSLog` explicitly. That is enough for these cases, because the
+classification line and the underlying throwable are both logged at error level.
+
+```sh
+xcrun devicectl list devices                       # find the UDID
+cd iosApp && xcodebuild -project iosApp.xcodeproj -scheme iosApp \
+  -configuration Debug -destination 'id=<UDID>' -derivedDataPath <dir> build
+xcrun devicectl device install app --device <UDID> "<dir>/Build/Products/Debug-iphoneos/Krail App.app"
+xcrun devicectl device process launch --device <UDID> --terminate-existing --console xyz.ksharma.krail
+```
+
+The last command streams `NSLog` output. `--terminate-existing` matters: attaching to an
+already-running process captures nothing.
+
+**Airplane mode cannot be toggled from the Mac.** iOS exposes no API for it and
+`devicectl` has no such command, so this case always needs a person holding the phone.
 
 ### 1.3 Captive portal
 
@@ -185,7 +206,7 @@ These are known and not worth rediscovering each pass:
 
 | Case | Blocked on |
 |---|---|
-| 1.2 (all) | A real iPhone. Not reproducible on a simulator at all |
+| 1.2.3, 1.2.4, 1.2.6 | A real iPhone plus a routeless Wi-Fi. 1.2.1, 1.2.2 and 1.2.5 passed 2026-09-12 |
 | 1.3 | A network that intercepts |
 | 1.4 | A tunnel, a lift, or a Faraday bag |
 | 1.5 | An actual NSW incident |

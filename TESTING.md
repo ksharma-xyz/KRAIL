@@ -140,6 +140,11 @@ The KMP Android plugin's host test task is `testAndroidHostTest` — **not** `jv
 Six of them. Pick the cheapest layer that can actually fail for the reason you care about.
 Full detail in [LAYERS.md](docs/testing/LAYERS.md).
 
+A seventh exists and is deliberately not automated: a catalogue of scenarios no layer here
+can reach, in [MANUAL_TEST_CASES.md](docs/testing/MANUAL_TEST_CASES.md). Airplane mode on a
+real radio, a captive portal, a tunnel, an iPhone. A case only belongs there once every
+layer below has been ruled out; if it can be automated, automate it instead.
+
 | Layer | Catches | Where |
 |---|---|---|
 | Unit (`krailRunTest`) | logic, state reduction, mapping, time | every module |
@@ -265,5 +270,6 @@ Concrete bug classes the current setup makes hard or impossible:
 - Custom detekt rules: [`gradle/build-logic/detekt-rules/`](gradle/build-logic/detekt-rules/)
 - Snapshot infra: [`core/snapshot-testing/`](core/snapshot-testing/) and [`core/snapshot-testing-annotations/`](core/snapshot-testing-annotations/)
 - E2E flows: [`.maestro/README.md`](.maestro/README.md)
+- Manual sanity cases for what no layer reaches: [`docs/testing/MANUAL_TEST_CASES.md`](docs/testing/MANUAL_TEST_CASES.md)
 - Integration-testing rationale and the discriminating-test procedure: [`docs/INTEGRATION_TESTING_PLAN.md`](docs/INTEGRATION_TESTING_PLAN.md)
 - Per-feature UX invariants worth keeping tests in sync with: e.g. [`feature/trip-planner/ui/SEARCH_STOP_UX.md`](feature/trip-planner/ui/SEARCH_STOP_UX.md)

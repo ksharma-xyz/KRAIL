@@ -57,6 +57,11 @@ Full testing doctrine lives in [`TESTING.md`](TESTING.md), with the detail split
 [`docs/testing/COVERAGE.md`](docs/testing/COVERAGE.md) (what the coverage number does and does not
 mean).
 
+[`docs/testing/MANUAL_TEST_CASES.md`](docs/testing/MANUAL_TEST_CASES.md) is the catalogue of
+scenarios **no** layer can reach: airplane mode on a real radio, a captive portal, a tunnel, an
+iPhone. It is a sanity-pass catalogue, not a per-PR checklist, and a case only belongs in it
+once every automated layer has been ruled out.
+
 ## End-to-end flows (Maestro)
 
 `.maestro/` holds two lanes: `smoke/` (three flows) and `nightly/` (lifecycle, rotation and

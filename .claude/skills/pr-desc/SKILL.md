@@ -101,6 +101,36 @@ One or two sentences: what this PR changes, in code terms.
   full-size images; large images bloat the PR description and slow review.
 - New screens with no "before" state: use a single After column or note "new screen".
 
+## Submitting: the description is always a second step
+
+**`gt submit` cannot set a PR body.** It has no `--body` flag. It seeds a new PR from
+`.github/PULL_REQUEST_TEMPLATE.md` and never touches it again, so a PR raised with Graphite
+ships the template verbatim, comment placeholders and all.
+
+Nothing about that looks wrong from the terminal. `gt submit` reports success and prints the
+PR URL. The description is only visibly empty on GitHub, and by the time anyone notices, the
+branch is usually merged and the reasoning is gone.
+
+So raising a PR is two commands, never one:
+
+```sh
+gt submit --stack --publish                 # creates the PR with the bare template
+gh pr edit <number> --body-file <path>      # the actual description
+```
+
+Write the body to a file rather than passing it inline: bodies contain backticks, tables and
+code fences that a shell will mangle.
+
+Then verify, because forgetting the second command is the whole failure mode:
+
+```sh
+python3 scripts/check_pr_descriptions.py    # your open PRs; non-zero if any is unfilled
+```
+
+It flags an empty body, leftover template placeholders, a missing `## What` / `## Changes` /
+`## Testing`, and anything under 200 characters. Run it after submitting a stack, when it
+catches every PR you skipped in one pass.
+
 ## Checklist before submitting
 
 1. Re-read the draft: would any line be fine on the repo's public front page? If not, cut it.

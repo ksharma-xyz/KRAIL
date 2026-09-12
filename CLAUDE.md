@@ -194,6 +194,13 @@ business/strategy context. The skill has the template and full content policy.
 
 **Always use Graphite (`gt submit`) to raise PRs — never `gh pr create` directly.**
 
+**Raising a PR is two commands, never one.** `gt submit` has no `--body` flag: it seeds the
+PR from `.github/PULL_REQUEST_TEMPLATE.md` and never replaces it, so the description ships
+with unfilled placeholders and nothing in the terminal looks wrong. Follow every submit with
+`gh pr edit <n> --body-file <path>`, then verify with
+`python3 scripts/check_pr_descriptions.py`, which fails on an empty body, leftover
+placeholders, or a missing section.
+
 Exception: the automated docs gardener (single, non-stacked, docs-only PRs labeled
 `docs-gardener`, policy in `.github/docs-gardener/CHARTER.md`) may use `gh pr create`.
 

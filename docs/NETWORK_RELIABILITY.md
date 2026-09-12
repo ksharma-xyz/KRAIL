@@ -99,13 +99,34 @@ tests, and the copy any screen shows. Keep one copy, here.
 | Platform | Verified | How |
 |---|---|---|
 | Android | **yes** | `NetworkErrorClassifierTest` drives a real Ktor OkHttp client at an unresolvable `.invalid` host (RFC 2606), an unrouted TEST-NET-3 address (RFC 5737) and a closed loopback port, and classifies whatever the engine genuinely throws. |
-| iOS | **no** | Written from Apple's documented `NSURLErrorDomain` codes and never exercised against a real network change. |
+| iOS | **partly** | `Offline` verified on an iPhone 11, iOS 26.6, 2026-09-12: airplane mode produced `NSURLErrorDomain Code=-1009` and classified as `offline` with `transportDown=true`. The remaining iOS rows are still unobserved. See `docs/testing/MANUAL_TEST_CASES.md` case 1.2. |
 
-**The iOS column is a hypothesis, not an observation.** An iOS simulator shares the
-host machine's network stack and has no airplane mode, so the no-transport case
-cannot be produced on one at all. The first person to run this on a real iPhone
-should log the actual `DarwinHttpRequestException.origin.code` for each row, correct
-whatever is wrong, and flip this table's iOS row to yes.
+**Most of the iOS column is still a hypothesis.** A simulator shares the host machine's
+network stack and has no airplane mode, so these cases can only be produced on real
+hardware.
+
+One row is now observed. On an iPhone 11 running iOS 26.6, airplane mode with the
+timetable open produced:
+
+```
+ERROR: network call failed: offline (transportDown=true)
+DarwinHttpRequestException: Error Domain=NSURLErrorDomain Code=-1009
+  "The Internet connection appears to be offline."
+  _NSURLErrorNWPathKey=unsatisfied (No network route)
+```
+
+Three things at once: the code matches the documented `-1009`, the classifier took the
+`Offline` branch rather than `Unreachable`, and `nw_path_monitor` independently agreed
+there was no route. The iOS observer had never been exercised before, because a
+simulator cannot produce the state.
+
+Recovery was verified in the same run: after airplane mode was turned off, the failure
+count was sampled every 25 seconds for five minutes and never moved. That is ten
+consecutive 30-second auto-refresh cycles completing with no further failures.
+
+Everything else in the iOS column remains unobserved. Anyone with a device to hand
+should work through `docs/testing/MANUAL_TEST_CASES.md` case 1.2 and correct whatever
+differs.
 
 ### Why the tests use a real client
 

@@ -8,6 +8,10 @@ Read this before changing anything under `core/network/`, before adding a new
 
 ---
 
+> The client that produces these failures is documented separately in
+> [`KTOR_CLIENT_ARCHITECTURE.md`](KTOR_CLIENT_ARCHITECTURE.md): engine seam,
+> plugin order, and the Ktor version policy.
+
 ## The one rule
 
 **Transport state is an input to classifying a failure. The request outcome is the

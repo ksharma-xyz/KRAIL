@@ -515,6 +515,10 @@ that contradicts the doc should also update the doc in the same change.
   read it in, what is not captured, and the known failure signatures.
 - `docs/POLLING_LIFECYCLE.md` — WhileSubscribed polling rules: `repeatOnLifecycle(STARTED)`
   pattern, why plain `LaunchedEffect` breaks background gating, all polling flows listed.
+- `docs/KTOR_CLIENT_ARCHITECTURE.md` — how the one Ktor client is assembled: the
+  engine seam, the plugin order and why it is that order, which parts of Ktor were
+  evaluated and declined, and what to re-check when the version moves. Read before
+  bumping the `ktor` version or changing `baseHttpClient`.
 - `docs/NETWORK_RELIABILITY.md` — why a request failed and what the app may say about it:
   the transport-state-is-an-input rule, the failure taxonomy every classifier branch and
   test is written from, the service register, and the decisions with their revisit

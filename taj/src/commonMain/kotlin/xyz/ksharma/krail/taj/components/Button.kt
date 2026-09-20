@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -44,6 +45,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
+import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeInkColor
 import xyz.ksharma.krail.taj.tokens.ComponentTokens
@@ -212,6 +214,13 @@ fun AlertButton(
                     color = LocalContainerColor.current.copy(alpha = LocalContentAlpha.current),
                     shape = dimensions.shape,
                 )
+                .border(
+                    width = ALERT_OUTLINE_WIDTH,
+                    color = ButtonDefaults
+                        .alertOutlineColor(LocalContainerColor.current, isAppInDarkMode())
+                        .copy(alpha = LocalContentAlpha.current),
+                    shape = dimensions.shape,
+                )
                 .padding(dimensions.padding),
             contentAlignment = Alignment.Center,
         ) {
@@ -309,6 +318,25 @@ object ButtonDefaults {
             disabledContentColor = themeColor.copy(alpha = DisabledContentAlpha),
         )
     }
+
+    /**
+     * The edge that lets the alert fill stay bright.
+     *
+     * A filled control has to be distinguishable from the surface behind it. On a white card the
+     * amber cannot do that alone without going dark enough to flip its own label to white, which
+     * is exactly the mistake this replaces. A rim supplies the boundary instead, so the fill is
+     * free to stay the colour riders know.
+     *
+     * On a dark card the amber already stands well clear of the surface, so there is nothing for
+     * a rim to add and the fill is returned unchanged. The rim exists where it is needed rather
+     * than as decoration that happens to be there.
+     *
+     * Takes [isDark] rather than the surface colour on purpose: `KrailTheme.colors.surface`
+     * animates for 1500 ms during a theme switch, and keying a derivation on it would make the
+     * rim crawl through the transition.
+     */
+    fun alertOutlineColor(fill: Color, isDark: Boolean): Color =
+        if (isDark) fill else lerp(fill, Color.Black, ALERT_OUTLINE_DARKEN)
 
     @Composable
     fun alertButtonColors(): ButtonColors {
@@ -933,3 +961,7 @@ private fun OutlinedButtonDisabled() {
 }
 
 // endregion
+
+private val ALERT_OUTLINE_WIDTH = 1.5.dp
+
+private const val ALERT_OUTLINE_DARKEN = 0.45f

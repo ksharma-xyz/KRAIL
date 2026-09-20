@@ -16,6 +16,13 @@ on:
   push:
     branches: [ 'prod/**' ]
 
+permissions:
+  contents: read
+  # settings.gradle.kts resolves the KRAIL-API-PROTO sources JAR from GitHub
+  # Packages using GITHUB_TOKEN, which needs read:packages. Without this the
+  # narrowed token cannot see the repository and Gradle fails to resolve.
+  packages: read
+
 concurrency:
   # Keyed on ref rather than pull request number: this runs on a schedule and on
   # prod branches, where there is no pull request to key on.

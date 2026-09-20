@@ -35,6 +35,7 @@ Every row in both tables below traces back to this list. Nothing else leaves the
 | App start and network timings | Firebase Performance | |
 | Trip, departure, stop and Park &amp; Ride requests | NSW Transport API | Stop identifiers and times. No coordinate is ever sent: `StopType.COORD` exists in the model but is never used as a trip origin. |
 | Map tile requests | `tiles.openfreemap.org` | Carries the viewport being drawn. This is the **only** thing in the app that reveals anything positional, and it is why location is declared. |
+| Spoken audio, while the rider holds the mic in stop search | The platform speech recogniser, Google's on Android and Apple's on iOS | KRAIL never receives, stores or forwards the audio. It hands the microphone to the platform and gets text back. Both platforms prefer on-device transcription and fall back to the vendor's servers when no local model is installed, which is the case where the audio leaves the phone. |
 
 Read on the device and never transmitted:
 
@@ -43,9 +44,9 @@ Read on the device and never transmitted:
   SQLite query, not a network call. No analytics event carries a latitude or longitude.
 - **Saved trips, stop labels, Park &amp; Ride selections, recent searches, preferences.**
   Local database only.
-- **Microphone.** `RECORD_AUDIO` is declared, but the only feature that uses it is behind a
-  flag that is off. See "Judgement calls" below, which is the one entry here most likely to
-  become wrong without anyone editing a line of code.
+Microphone used to sit in this list. It does not any more: `ai_search_input_enabled` was
+turned on for 1.27, so voice input reaches riders and the audio can leave the device. See
+judgement call 2.
 
 Not collected at all:
 
@@ -54,10 +55,21 @@ Not collected at all:
   `FirebaseAnalyticsWithoutAdIdSupport` and declares no `NSUserTrackingUsageDescription`, so
   there is no IDFA to read.
 
+  **The Play Console declaration nonetheless answers Yes**, with purpose Analytics only and
+  "turn off release errors" ticked. That question asks about imported SDKs, not about what
+  the app reads, and four GMS libraries declare the permission in their own manifests:
+  `play-services-measurement-api`, `play-services-measurement-impl`,
+  `play-services-ads-identifier` and `play-services-measurement-sdk-api`. Answering No while
+  those are on the classpath is what blocked every 1.27 upload for a day. With the permission
+  absent the identifier reads back as zeroes, so the behaviour above is unchanged; the
+  declaration simply over-reports, which is the safe direction.
+
 ## Google Play, Data safety
 
-**Nothing is shared.** Firebase is a processor acting for us, not a recipient. Nothing is
-sold, and there is no ad network or data broker in the app.
+**Only the spoken audio is shared.** Firebase is a processor acting for us, not a recipient.
+Nothing is sold, and there is no ad network or data broker in the app. Voice input is the one
+exception: the platform recogniser is the vendor's service rather than ours, so audio that
+falls back off-device counts as shared.
 
 | Category and type | Purpose | Required | Why it is declared |
 |---|---|---|---|
@@ -68,6 +80,7 @@ sold, and there is no ad network or data broker in the app.
 | Device or other IDs | Analytics | Required | The Firebase app-instance ID. Random, and we never read it, but it is an identifier and it leaves the device. Under-declaring identifiers is the most common cause of a Data safety rejection. |
 | Location / Approximate | App functionality | Optional | The map tile request. See judgement call 1. |
 | Location / Precise | App functionality | Optional | Same. At close zoom the viewport is a small box, so claiming only Approximate would be the under-report. |
+| Audio / Voice or sound recordings | App functionality | Optional | Declared **collected and shared**. Only while the rider is speaking into stop search, and only reaching the platform recogniser. See judgement call 2. |
 
 Everything else is answered No, and the reasoning is worth keeping because the form asks
 about all of it every time:
@@ -78,7 +91,6 @@ about all of it every time:
 | Financial info | No payments. |
 | Health and fitness | Nothing read. |
 | Messages, Photos and videos, Files and docs, Calendar, Contacts | No permission requested, nothing read. |
-| Audio / Voice or sound recordings | True only while the voice feature stays flagged off. See judgement call 2. |
 | App activity / Installed apps | Not queried. |
 | Web browsing history | Stop search is App activity. There is no browser in the app. |
 
@@ -92,7 +104,7 @@ Security practices:
 
 ## App Store Connect, App Privacy
 
-All eight types land under **Data Not Linked to You**, and there is no *Data Used to Track
+All nine types land under **Data Not Linked to You**, and there is no *Data Used to Track
 You* section. That grouping is the fastest proof that every "linked to identity" answer is
 No and every "used for tracking" answer is No.
 
@@ -106,6 +118,7 @@ No and every "used for tracking" answer is No.
 | Identifiers / Device ID | Analytics |
 | Location / Precise | App Functionality |
 | Location / Coarse | App Functionality |
+| User Content / Audio Data | App Functionality |
 
 **User Privacy Choices URL is deliberately blank.** It is Apple's field for a page where
 people manage or delete their data, and it is the counterpart of answering No to deletion on
@@ -137,21 +150,35 @@ over-reports is only a scarier label.
 each turn this from a tile-drawing artefact into a real location feature, and the
 "App functionality" purpose would stop covering it on its own.
 
-### 2. The microphone answer expires the day a flag flips
+### 2. Voice input is declared because the audio can leave the phone
 
-Voice input ships switched off. `AI_SEARCH_INPUT_ENABLED` defaults to `false` in
-`RemoteConfigDefaults`, so no audio is captured and "not collected" is the truthful answer.
+`ai_search_input_enabled` was turned on for 1.27, so this stopped being hypothetical. The
+microphone answer that used to read "not collected" was true only while the flag was off.
 
-**But that flag is Remote Config.** Turning it on changes what the app collects with no new
-build, no submission and no review. There is a second edge underneath it: Android asks the
-platform recogniser for on-device transcription with `EXTRA_PREFER_OFFLINE`, which is a
-preference, not a requirement. On a device that cannot satisfy it, audio goes off-device to
-the platform recogniser, which makes the answer **shared**, not merely collected.
+**KRAIL itself never receives the audio.** It hands the microphone to the platform
+recogniser and gets text back, and the transcribed words land in the search field where the
+existing masked `search_stop_query` rules apply. Nothing records, stores or uploads a
+recording to us.
 
-**Before `ai_search_input_enabled` is turned on for anyone:** declare Audio / Voice or sound
-recordings on Play and Audio Data on Apple, and decide whether to require on-device
-recognition rather than prefer it. Requiring it keeps the answer at collected-not-shared and
-is the smaller declaration.
+That is still collection under both stores' definitions, because the audio leaves the device.
+It is also **sharing** on Play, because the recogniser belongs to the platform vendor rather
+than acting as our processor. Both answers are declared.
+
+**Both platforms prefer on-device transcription and fall back.** Android passes
+`EXTRA_PREFER_OFFLINE`, which is a preference the system may ignore silently. iOS sets
+`requiresOnDeviceRecognition = true` only when `recognizer.supportsOnDeviceRecognition()`
+reports a local model, because that flag is a hard requirement there and would fail the
+session outright on a device without one. So on a device with no local model, audio goes to
+the vendor's servers on either platform.
+
+**The open decision:** requiring on-device recognition instead of preferring it would keep
+every recording on the phone and drop the Play answer from shared back to collected. The cost
+is that voice search stops working on devices with no local model rather than degrading. That
+trade has not been made; it is a product call, not a documentation one.
+
+**Revisit when:** the flag is turned off again, in which case both audio declarations can come
+back out; or the app starts sending audio anywhere of its own accord, such as a server-side
+transcriber, which would make the audio ours and change who the recipient is.
 
 ### 3. Deletion is answered No because there is nothing to delete against
 

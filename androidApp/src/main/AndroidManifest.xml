@@ -12,12 +12,24 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!--
-      The Firebase Analytics SDK merges in the AD_ID permission by default.
-      KRAIL shows no ads and does not use the Advertising ID, so it is removed
-      here rather than declared and left unused.
+      The Firebase Analytics SDK merges in two advertising ID permissions by
+      default. KRAIL shows no ads and reads no advertising ID, so both are
+      removed rather than declared and left unused.
+
+      The second one is the Privacy Sandbox permission, and it was deliberately
+      left in place once on the reasoning that removing it is not part of
+      Google's documented opt-out. Play disagreed: an upload on 20 Sep 2026 was
+      rejected for using an advertising ID while the console declaration says it
+      does not, and the gms permission was already provably absent from the
+      merged manifest. This was the only ad ID permission left in the build, so
+      it is what the check was reading. Play's error text names the gms one
+      regardless of which is present, which is what made it hard to find.
     -->
     <uses-permission
         android:name="com.google.android.gms.permission.AD_ID"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.ACCESS_ADSERVICES_AD_ID"
         tools:node="remove" />
 
     <!-- Location permissions for foreground location tracking -->

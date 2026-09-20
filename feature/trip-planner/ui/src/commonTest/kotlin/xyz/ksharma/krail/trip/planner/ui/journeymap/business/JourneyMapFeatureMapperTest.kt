@@ -194,6 +194,39 @@ class JourneyMapFeatureMapperTest {
         assertTrue(assertIs<Point>(feature.geometry).coordinates.longitude != 0.0)
     }
 
+    @Test
+    fun `GIVEN a path leg with a single point WHEN converted THEN the leg is dropped`() {
+        val state = ready(
+            legs = listOf(pathLeg(points = listOf(LatLng(latitude = -33.87, longitude = 151.21)))),
+            stops = listOf(stop()),
+        )
+
+        // A one-point leg used to reach LineString, which throws "LineString must contain at least
+        // two positions" and took the whole map down with it.
+        val features = state.toFeatureCollection().features
+
+        assertEquals(listOf("journey_stop"), features.map { it.props().str("type") })
+    }
+
+    @Test
+    fun `GIVEN a single-point leg beside a drawable one WHEN converted THEN only the drawable leg survives`() {
+        val state = ready(
+            legs = listOf(
+                pathLeg(points = listOf(LatLng(latitude = -33.87, longitude = 151.21))),
+                pathLeg(
+                    points = listOf(
+                        LatLng(latitude = -33.88, longitude = 151.22),
+                        LatLng(latitude = -33.89, longitude = 151.23),
+                    ),
+                ),
+            ),
+        )
+
+        val feature = state.toFeatureCollection().features.single()
+
+        assertEquals(listOf(151.22, 151.23), assertIs<LineString>(feature.geometry).coordinates.map { it.longitude })
+    }
+
     // region fixtures
 
     private fun ready(

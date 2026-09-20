@@ -21,6 +21,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.journeymap.RouteSegment
  */
 object JourneyMapFeatureMapper {
 
+    private const val MIN_LINE_POSITIONS = 2
+
     /**
      * Converts JourneyMapUiState.Ready to a FeatureCollection for MapLibre.
      */
@@ -70,17 +72,16 @@ object JourneyMapFeatureMapper {
     private fun JourneyLegFeature.createPathSegmentFeature(
         segment: RouteSegment.PathSegment,
     ): Feature<*, *>? {
-        if (segment.points.isEmpty()) return null
-
         // IMPORTANT: Position expects (longitude, latitude) - REVERSED from API!
         val positions = segment.points.map { latLng ->
             Position(longitude = latLng.longitude, latitude = latLng.latitude)
         }
+        val line = lineStringOrNull(positions, legId) ?: return null
 
         val isWalking = transportMode == null
 
         return Feature(
-            geometry = LineString(positions),
+            geometry = line,
             properties = geoJsonProperties {
                 property(GeoJsonPropertyKeys.TYPE, GeoJsonFeatureTypes.JOURNEY_LEG)
                 property(GeoJsonPropertyKeys.LEG_ID, legId)
@@ -100,18 +101,16 @@ object JourneyMapFeatureMapper {
     private fun JourneyLegFeature.createStopConnectorFeature(
         segment: RouteSegment.StopConnectorSegment,
     ): Feature<*, *>? {
-        val validStops = segment.stops.filter { it.position != null }
-        if (validStops.size < 2) return null
-
         // IMPORTANT: Position expects (longitude, latitude) - REVERSED from API!
-        val positions = validStops.mapNotNull { stop ->
+        val positions = segment.stops.mapNotNull { stop ->
             stop.position?.let { pos ->
                 Position(longitude = pos.longitude, latitude = pos.latitude)
             }
         }
+        val line = lineStringOrNull(positions, legId) ?: return null
 
         return Feature(
-            geometry = LineString(positions),
+            geometry = line,
             properties = geoJsonProperties {
                 property(GeoJsonPropertyKeys.TYPE, GeoJsonFeatureTypes.JOURNEY_LEG)
                 property(GeoJsonPropertyKeys.LEG_ID, legId)
@@ -123,6 +122,23 @@ object JourneyMapFeatureMapper {
                 }
             },
         )
+    }
+
+    /**
+     * Build the line for a leg, or drop the leg when the geometry has degraded below a line.
+     *
+     * GeoJSON requires at least two positions and `LineString` throws on fewer, so every source of
+     * leg geometry - leg coordinates, an interchange path, and a stop sequence - funnels through
+     * here rather than each one remembering the rule. A leg can arrive with a single locatable
+     * point when the NSW response carries one usable coordinate, or when only one stop in a
+     * sequence has a known position.
+     */
+    private fun lineStringOrNull(positions: List<Position>, legId: String): LineString? {
+        if (positions.size < MIN_LINE_POSITIONS) {
+            log("JourneyMapFeatureMapper: dropping leg $legId, ${positions.size} position(s) cannot form a line")
+            return null
+        }
+        return LineString(positions)
     }
 
     /**

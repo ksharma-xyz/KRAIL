@@ -27,6 +27,13 @@ on:
       - 'gradle.properties'
       - '.github/workflows/ios-unit-tests.yml'
 
+permissions:
+  contents: read
+  # settings.gradle.kts resolves the KRAIL-API-PROTO sources JAR from GitHub
+  # Packages using GITHUB_TOKEN, which needs read:packages. Without this the
+  # narrowed token cannot see the repository and Gradle fails to resolve.
+  packages: read
+
 concurrency:
   # Same rule as build.yml: main pushes all share refs/heads/main, so cancelling in progress
   # would let each merge kill the previous commit's run.

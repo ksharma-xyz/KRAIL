@@ -115,7 +115,7 @@ No and every "used for tracking" answer is No.
 | Diagnostics / Crash Data | App Functionality |
 | Diagnostics / Performance Data | Analytics, App Functionality |
 | Diagnostics / Other Diagnostic Data | Analytics, App Functionality |
-| Identifiers / Device ID | Analytics |
+| Identifiers / Device ID | Analytics, App Functionality |
 | Location / Precise | App Functionality |
 | Location / Coarse | App Functionality |
 | User Content / Audio Data | App Functionality |

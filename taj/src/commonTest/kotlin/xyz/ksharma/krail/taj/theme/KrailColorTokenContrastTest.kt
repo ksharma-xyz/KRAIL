@@ -2,6 +2,8 @@ package xyz.ksharma.krail.taj.theme
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.luminance
+import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.contrast.ContrastAnalyzer.Companion.TEXT_CONTRAST_AA
 import xyz.ksharma.krail.taj.contrast.ContrastAnalyzer.Companion.UI_COMPONENT_CONTRAST_AA
 import kotlin.test.Test
@@ -96,13 +98,13 @@ class KrailColorTokenContrastTest {
                 "NOT_A_CONTRAST_PAIR with the reason it can never be one.",
         )
 
-        val stale = classified - declared
+        val stale = classified - declared - DERIVED_NAMES
         assertTrue(
             stale.isEmpty(),
             "${stale.joinToString()} is listed here but no longer exists on KrailColors — " +
                 "delete the entry.",
         )
-        assertEquals(declared.size, classified.size)
+        assertEquals(declared.size, (classified - DERIVED_NAMES).size)
     }
 
     private class Pairing(
@@ -119,6 +121,13 @@ class KrailColorTokenContrastTest {
     }
 
     private companion object {
+
+        // Computed from a token rather than being one, so the staleness check must not demand
+        // a KrailColors property for either. Being derived is the point: they cannot drift from
+        // the token they come from.
+        private val DERIVED_NAMES = setOf("alertOutline", "onAlert")
+
+        private const val HALF_LUMINANCE = 0.5f
 
         val SCHEMES = listOf("light" to KrailLightColors, "dark" to KrailDarkColors)
 
@@ -159,7 +168,30 @@ class KrailColorTokenContrastTest {
                 { it.onStopLabelSurface },
                 { it.stopLabelSurface },
             ),
-            Pairing("alert", "surface", TEXT_CONTRAST_AA, { it.alert }, { it.surface }),
+            // The alert token is a chip fill, not text, and this pairing used to hold it to
+            // TEXT_CONTRAST_AA against the surface. That is the wrong bar for a filled control
+            // and it had real consequences: chasing 4.5 drove the amber to #946500, dark enough
+            // that a black label no longer cleared, so getForegroundColor flipped the label to
+            // near-white and the chip stopped reading as an alert.
+            //
+            // What actually has to hold is two things. The pill has to be distinguishable from
+            // the card, which is the 3.0 non-text minimum and is carried by the rim rather than
+            // the fill. And the label on it has to be readable, which is the 4.5 text bar. Both
+            // are measured here, so the fill is free to stay the amber riders know.
+            Pairing(
+                "alertOutline",
+                "surface",
+                UI_COMPONENT_CONTRAST_AA,
+                { ButtonDefaults.alertOutlineColor(it.alert, it.surface.luminance() < HALF_LUMINANCE) },
+                { it.surface },
+            ),
+            Pairing(
+                "onAlert",
+                "alert",
+                TEXT_CONTRAST_AA,
+                { getForegroundColor(it.alert) },
+                { it.alert },
+            ),
             Pairing(
                 "deviationEarly",
                 "surface",

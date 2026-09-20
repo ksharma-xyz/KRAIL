@@ -13,10 +13,12 @@ val md_theme_light_onSurface = Color(0xFF010101)
 val md_theme_light_onSurface_placeholder = Color(0xFF595959)
 val md_theme_light_scrim = Color(0xFF000000)
 
-// Alert amber, deepened far enough to clear 4.5:1 against the white surface it is drawn on
-// (#946500 measures 5.09). It is a container fill, so it has to work from both sides: at this
-// luminance getForegroundColor still finds near-white content on it with room to spare.
-val md_theme_light_alert = Color(0xFF946500)
+// Alert amber, the colour riders already know. A fill is not text, so it is held to the 3.0
+// non-text minimum rather than 4.5, and it does not carry that on its own: at 1.71 against the
+// white card the pill edge would vanish. The edge is supplied by alertOutlineColor() instead,
+// which leaves the fill free to stay bright and keep a black label. Deepening the fill to carry
+// its own edge was tried and is what inverted the chip to white-on-brown.
+val md_theme_light_alert = Color(0xFFFFBA27)
 val md_theme_light_softLabel = Color(0xFF767676)
 val md_theme_light_secondary_label = Color(0xFF2E2E2E)
 val md_theme_light_discover_chip_background = Color(0xFFF5F5F5)

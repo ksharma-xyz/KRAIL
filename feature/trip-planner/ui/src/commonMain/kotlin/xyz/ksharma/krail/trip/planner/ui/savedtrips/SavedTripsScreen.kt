@@ -81,7 +81,7 @@ import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.taj.themeInkColor
+import xyz.ksharma.krail.taj.themeDecorColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.ai.AskKrailScreen
 import xyz.ksharma.krail.trip.planner.ui.components.ai.rememberAiGreeting
@@ -208,7 +208,12 @@ fun SavedTripsScreen(
                 ) {
                     TitleBar(
                         title = {
-                            Text(text = "KRAIL", color = themeInkColor())
+                            // The wordmark is the brand, not a label: nobody reads it to use
+                            // the app, so it carries no contrast obligation and must not be
+                            // adapted. Ink pulled it away from the rider's chosen colour on
+                            // the themes that needed adapting, which made the one element
+                            // that should be exactly their colour the one element that wasn't.
+                            Text(text = "KRAIL", color = themeDecorColor())
                         },
                         actions = {
                             SavedTripsTitleBarActions(

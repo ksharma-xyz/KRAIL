@@ -66,10 +66,10 @@ Not collected at all:
 
 ## Google Play, Data safety
 
-**Only the spoken audio is shared.** Firebase is a processor acting for us, not a recipient.
-Nothing is sold, and there is no ad network or data broker in the app. Voice input is the one
-exception: the platform recogniser is the vendor's service rather than ours, so audio that
-falls back off-device counts as shared.
+**Nothing is shared.** Firebase is a processor acting for us, not a recipient. Nothing is
+sold, and there is no ad network or data broker in the app. Voice audio is declared collected
+but not shared; judgement call 2 has the reasoning, because it is the one row where that
+distinction took an argument.
 
 | Category and type | Purpose | Required | Why it is declared |
 |---|---|---|---|
@@ -80,7 +80,7 @@ falls back off-device counts as shared.
 | Device or other IDs | Analytics | Required | The Firebase app-instance ID. Random, and we never read it, but it is an identifier and it leaves the device. Under-declaring identifiers is the most common cause of a Data safety rejection. |
 | Location / Approximate | App functionality | Optional | The map tile request. See judgement call 1. |
 | Location / Precise | App functionality | Optional | Same. At close zoom the viewport is a small box, so claiming only Approximate would be the under-report. |
-| Audio / Voice or sound recordings | App functionality | Optional | Declared **collected and shared**. Only while the rider is speaking into stop search, and only reaching the platform recogniser. See judgement call 2. |
+| Audio / Voice or sound recordings | App functionality | Optional | Only while the rider is speaking into stop search, and only reaching the platform recogniser. Answered **processed ephemerally**: the audio is streamed, transcribed and discarded, and nothing is written anywhere. Ephemeral rows are disclosed but do not appear on the public store listing. See judgement call 2. |
 
 Everything else is answered No, and the reasoning is worth keeping because the form asks
 about all of it every time:
@@ -160,9 +160,19 @@ recogniser and gets text back, and the transcribed words land in the search fiel
 existing masked `search_stop_query` rules apply. Nothing records, stores or uploads a
 recording to us.
 
-That is still collection under both stores' definitions, because the audio leaves the device.
-It is also **sharing** on Play, because the recogniser belongs to the platform vendor rather
-than acting as our processor. Both answers are declared.
+That is still **collection** under both stores' definitions, because the audio leaves the
+device. Play's own wording is explicit that ephemeral processing counts.
+
+**It is declared collected but not shared,** and that answer took an argument. Sharing covers
+a transfer to a third party, on the device or off it, and read literally the platform
+recogniser is a third party. Two things pull the other way and decided it: the transfer only
+happens because the rider pressed the mic, which is the user-initiated action Play's own
+exemptions describe, and on Android the handoff is to a system speech service on the same
+device rather than to a recipient we chose. It is also answered **processed ephemerally**,
+since the audio is streamed, transcribed and discarded with nothing written anywhere.
+
+This is the one row in this file where the safer-looking answer was not taken, so it is worth
+knowing it was a decision rather than an oversight.
 
 **Both platforms prefer on-device transcription and fall back.** Android passes
 `EXTRA_PREFER_OFFLINE`, which is a preference the system may ignore silently. iOS sets
@@ -172,13 +182,16 @@ session outright on a device without one. So on a device with no local model, au
 the vendor's servers on either platform.
 
 **The open decision:** requiring on-device recognition instead of preferring it would keep
-every recording on the phone and drop the Play answer from shared back to collected. The cost
-is that voice search stops working on devices with no local model rather than degrading. That
-trade has not been made; it is a product call, not a documentation one.
+every recording on the phone, which would retire the collected answer entirely rather than
+merely justify it. The cost is that voice search stops working on devices with no local model
+instead of degrading. That trade has not been made; it is a product call, not a documentation
+one.
 
 **Revisit when:** the flag is turned off again, in which case both audio declarations can come
 back out; or the app starts sending audio anywhere of its own accord, such as a server-side
-transcriber, which would make the audio ours and change who the recipient is.
+transcriber. That last one would make the audio ours and change the recipient from a system
+service the rider invoked to one we chose, which is exactly what the not-shared answer rests
+on.
 
 ### 3. Deletion is answered No because there is nothing to delete against
 

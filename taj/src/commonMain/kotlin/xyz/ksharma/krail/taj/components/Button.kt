@@ -188,10 +188,13 @@ fun AlertButton(
     val contentAlphaProvider =
         rememberSaveable(enabled) { if (enabled) EnabledContentAlpha else DisabledContentAlpha }
 
+    val fill = ButtonDefaults.alertButtonColors().containerColor
+    val rim = ButtonDefaults.alertOutlineColor(fill, isAppInDarkMode())
+
     CompositionLocalProvider(
         LocalContentAlpha provides contentAlphaProvider,
         LocalTextStyle provides buttonTextStyle(dimensions),
-        LocalContainerColor provides ButtonDefaults.alertButtonColors().containerColor,
+        LocalContainerColor provides fill,
         LocalTextColor provides ButtonDefaults.alertButtonColors().contentColor,
     ) {
         Box(
@@ -211,15 +214,22 @@ fun AlertButton(
                 )
                 .heightIn(dimensions.height)
                 .background(
-                    color = LocalContainerColor.current.copy(alpha = LocalContentAlpha.current),
+                    color = fill.copy(alpha = LocalContentAlpha.current),
                     shape = dimensions.shape,
                 )
-                .border(
-                    width = ALERT_OUTLINE_WIDTH,
-                    color = ButtonDefaults
-                        .alertOutlineColor(LocalContainerColor.current, isAppInDarkMode())
-                        .copy(alpha = LocalContentAlpha.current),
-                    shape = dimensions.shape,
+                .then(
+                    // The derivation returns the fill itself where the fill already carries
+                    // its own edge. Painting a rim in the fill colour would add nothing and
+                    // still redraw the rounded corner, so skip it rather than paint it.
+                    if (rim == fill) {
+                        Modifier
+                    } else {
+                        Modifier.border(
+                            width = ALERT_OUTLINE_WIDTH,
+                            color = rim.copy(alpha = LocalContentAlpha.current),
+                            shape = dimensions.shape,
+                        )
+                    },
                 )
                 .padding(dimensions.padding),
             contentAlignment = Alignment.Center,

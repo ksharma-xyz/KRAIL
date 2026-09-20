@@ -532,6 +532,12 @@ that contradicts the doc should also update the doc in the same change.
   search: length and shape always, raw text only under the zero-result carve-out, and the four
   conditions that carve-out requires. Read before touching `SearchQueryAnalytics`,
   `SearchQueryAnalyticsRedaction` or any `search_stop_query` parameter.
+- `docs/STORE_DATA_DECLARATIONS.md` — what KRAIL declares on the Play Data safety and Apple
+  App Privacy forms and why each answer follows from the code, including the three judgement
+  calls (location is declared because of map tiles, the microphone answer expires the day
+  `ai_search_input_enabled` is turned on, deletion is No because nothing can be traced to a
+  person). Update it in the same PR as any change to what leaves the device: a new SDK, a new
+  upstream API, a new permission, or a flag that unlocks a data type.
 - `docs/ANALYTICS_REGISTRY_SYNC.md` — how new-event rows in
   `docs/ANALYTICS_REGISTRY_HANDOFF.md` auto-flip from `Pending` to `Registered`; read
   before touching `.github/workflows/analytics-registry-sync.yml` or its scripts.

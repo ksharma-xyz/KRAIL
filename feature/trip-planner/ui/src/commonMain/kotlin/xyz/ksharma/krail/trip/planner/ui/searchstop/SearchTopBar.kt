@@ -113,7 +113,11 @@ fun SearchTopBar(
                 .weight(1f)
                 .focusRequester(focusRequester)
                 .testTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD),
-            maxLength = 30,
+            // The redaction cap, not a second number. A query longer than this is dropped
+            // from analytics entirely, so a field that accepted more would collect text the
+            // rider could never see reported, and one that accepts less makes that branch
+            // unreachable. They have to be the same value.
+            maxLength = SearchQueryAnalyticsRedaction.MAX_QUERY_LENGTH,
             filter = { input ->
                 input.filter { it.isLetterOrDigit() || it.isWhitespace() || it == ',' }
             },

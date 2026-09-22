@@ -22,7 +22,9 @@ import kotlin.test.assertTrue
 class MapAttributionTest {
 
     @Test
-    fun `attribution is enabled, because the tile licence requires it`() {
+    // No comma in the name: Kotlin/Native rejects "," inside a backtick identifier where the
+    // JVM accepts it, and this module runs in the iOS lane. See IOS_TEST_MODULES.
+    fun `attribution is enabled because the tile licence requires it`() {
         assertTrue(
             MapConfig.Ornaments.ATTRIBUTION_ENABLED,
             "OpenStreetMap tiles are shown without credit. This is a licence breach, " +

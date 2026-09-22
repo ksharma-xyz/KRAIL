@@ -36,6 +36,41 @@ fi
 
 echo "pre-push: structural checks (test wiring, iOS lane, boundary fakes)..."
 
+# Commas in backtick test names, for modules that run on the iOS lane.
+#
+# Kotlin/Native rejects `,` inside a backtick identifier where the JVM accepts it, so a test
+# named `a thing, and another` compiles for Android and fails the iOS lane with
+# "Name contains illegal characters". IosUnitTests.kt documents this and calls it cheap to fix
+# per module, which it is — once you know. Finding out costs a CI round trip.
+#
+# Grepped rather than compiled because on a machine whose Xcode is newer than Kotlin supports,
+# the iOS test compile cannot run locally at all, so this is the only local signal there is.
+#
+# Module list is read from IosUnitTests.kt so the two cannot drift.
+ios_lane_file="gradle/build-logic/convention/src/main/kotlin/xyz/ksharma/krail/gradle/IosUnitTests.kt"
+if [ -f "$ios_lane_file" ]; then
+  offenders=""
+  # Only the IOS_TEST_MODULES block: the exclusions do not run on Native and may keep commas.
+  lane_modules=$(sed -n '/^val IOS_TEST_MODULES/,/^)/p' "$ios_lane_file" \
+    | grep -oE '":[^"]+"' | tr -d '"')
+
+  for module in $lane_modules; do
+    dir=$(echo "$module" | sed 's|^:||; s|:|/|g')
+    for src in "$dir/src/commonTest" "$dir/src/iosTest"; do
+      [ -d "$src" ] || continue
+      hits=$(grep -rn 'fun `[^`]*,[^`]*`' "$src" 2>/dev/null || true)
+      [ -n "$hits" ] && offenders="$offenders$hits\n"
+    done
+  done
+
+  if [ -n "$offenders" ]; then
+    printf >&2 "\npre-push: comma in a backtick test name, in a module on the iOS lane.\n"
+    printf >&2 "Kotlin/Native rejects these; Android does not, so local tests pass and CI fails.\n\n"
+    printf >&2 "%b\n" "$offenders"
+    exit 1
+  fi
+fi
+
 # --continue so all four report at once rather than one per run, matching the
 # "Verify test wiring" step in code-quality.yml and fullQualityChecks.sh.
 #

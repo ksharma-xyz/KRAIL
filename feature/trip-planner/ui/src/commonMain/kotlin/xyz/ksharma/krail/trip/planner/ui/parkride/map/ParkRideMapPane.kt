@@ -41,6 +41,7 @@ import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.state.UserLocationConfig
 import xyz.ksharma.krail.core.maps.ui.components.LocationPermissionBanner
 import xyz.ksharma.krail.core.maps.ui.components.UserLocationButton
+import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.ATTRIBUTION_ALIGNMENT
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.ATTRIBUTION_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.LOGO_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider.OPEN_FREE_MAP_LIBERTY
@@ -138,7 +139,7 @@ internal fun ParkRideMapPane(
                     padding = PaddingValues(),
                     isLogoEnabled = LOGO_ENABLED,
                     isAttributionEnabled = ATTRIBUTION_ENABLED,
-                    attributionAlignment = Alignment.BottomEnd,
+                    attributionAlignment = ATTRIBUTION_ALIGNMENT,
                     isCompassEnabled = false,
                     isScaleBarEnabled = false,
                 ),

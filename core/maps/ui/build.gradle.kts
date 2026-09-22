@@ -19,6 +19,8 @@ kotlin {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
         }
+
+        withHostTest {}
     }
 
     iosArm64()
@@ -41,6 +43,12 @@ kotlin {
                 implementation(libs.maplibre.compose)
                 implementation(libs.compose.runtime)
                 implementation(libs.compose.components.resources)
+            }
+        }
+
+        commonTest {
+            dependencies {
+                implementation(libs.test.kotlin)
             }
         }
     }

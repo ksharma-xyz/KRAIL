@@ -21,9 +21,11 @@ import kotlin.test.assertTrue
  */
 class MapAttributionTest {
 
+    // No comma in the name. Kotlin/Native rejects "," inside a backtick identifier where the
+    // JVM accepts it, so a comma compiles for Android and fails the iOS lane. Kept even though
+    // this module now sits in IOS_TEST_EXCLUSIONS: that entry records the MapLibre framework
+    // wall, and is not a licence to reintroduce a separate problem underneath it.
     @Test
-    // No comma in the name: Kotlin/Native rejects "," inside a backtick identifier where the
-    // JVM accepts it, and this module runs in the iOS lane. See IOS_TEST_MODULES.
     fun `attribution is enabled because the tile licence requires it`() {
         assertTrue(
             MapConfig.Ornaments.ATTRIBUTION_ENABLED,

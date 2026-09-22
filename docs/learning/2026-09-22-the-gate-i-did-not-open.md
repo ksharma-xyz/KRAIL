@@ -88,11 +88,16 @@ full structural verdict, which is exactly what was missed here.
 
 ## Actions taken
 
-- [x] `:core:maps:ui` classified into `IOS_TEST_MODULES`, in the lane rather than the
-      exclusions, because nothing is known to block it and every exclusion entry records a
-      specific verified wall. If the MapLibre cinterop turns out to block linking the
-      Kotlin/Native test binary the way the Firebase frameworks do, CI will say so and it moves
-      across with the real error as its reason.
+- [x] `:core:maps:ui` classified. Put in `IOS_TEST_MODULES` first, because nothing was *known*
+      to block it and every exclusion entry records a specific verified wall rather than a
+      guess. CI then produced the evidence, in two stages: first a comma in a backtick test
+      name, which Kotlin/Native rejects and which was cheap to fix, and then, once it compiled,
+      an abort at launch with `MapLibre.framework/MapLibre (no such file)`. So it moved to
+      `IOS_TEST_EXCLUSIONS` with that error as its reason.
+
+      Worth keeping as a small method note: guessing the exclusion reason up front would have
+      recorded the right *outcome* for the wrong reason, since the first failure was the comma
+      and had nothing to do with MapLibre. Two CI runs bought an entry that is true.
 - [x] This entry, as the record of a check that existed and was not run.
 - [x] `scripts/pre_push_structural_checks.sh`, run from a `pre-push` hook. The four structural
       tasks only, which complete in about two seconds. Mutation-tested by removing

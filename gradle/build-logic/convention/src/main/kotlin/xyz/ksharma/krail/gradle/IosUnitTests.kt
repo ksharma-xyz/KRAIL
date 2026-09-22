@@ -54,13 +54,19 @@ private val SHARED_TEST_SOURCE_DIRS = listOf("commonTest", "iosTest")
 val IOS_TEST_MODULES: List<String> = listOf(
     ":core:connectivity",
     ":core:date-time",
-    ":core:maps:ui",
     ":core:deeplink",
     ":core:navigation",
     ":core:transport",
     ":feature:debug-settings:store",
     ":taj",
 )
+
+private const val MAPLIBRE_WALL =
+    "links the MapLibre Swift package through spmForKmp. The framework is supplied by the " +
+        "Xcode project's SPM integration, so a Gradle-linked test binary links cleanly and " +
+        "then aborts at launch: dyld reports `MapLibre.framework/MapLibre (no such file)` and " +
+        "the process dies with signal 6. Same root cause as the Firebase wall, one stage " +
+        "later — that one fails at link, this one at load."
 
 private const val FIREBASE_WALL =
     "links the GitLive Firebase Kotlin SDK (directly or via :core:testing); its iOS klibs " +
@@ -81,6 +87,7 @@ val IOS_TEST_EXCLUSIONS: Map<String, String> = mapOf(
     ":core:analytics" to FIREBASE_WALL,
     ":core:app-version" to FIREBASE_WALL,
     ":core:festival" to FIREBASE_WALL,
+    ":core:maps:ui" to MAPLIBRE_WALL,
     ":core:network" to FIREBASE_WALL,
     ":core:remote-config" to FIREBASE_WALL,
     ":core:testing" to FIREBASE_WALL,

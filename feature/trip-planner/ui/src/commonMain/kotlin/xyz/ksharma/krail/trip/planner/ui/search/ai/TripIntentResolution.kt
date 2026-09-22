@@ -1,6 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.search.ai
 
 import xyz.ksharma.krail.core.aitext.AiUnavailableReasons
+import xyz.ksharma.krail.core.aitext.TripIntentExtraction
+import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.StopTextResolver
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
@@ -111,3 +113,47 @@ internal fun AiSearchInputUiState.withUnavailableModel(reason: String): AiSearch
  * and settings get switched on; a device with no on-device AI stays that way.
  */
 internal fun String.canBecomeAvailable(): Boolean = this != AiUnavailableReasons.DEVICE_UNSUPPORTED
+
+/**
+ * Extraction to stops: both ends through the ordinary stop search, the origin through the ladder
+ * in [resolveTripOrigin] when the rider did not name one, and the time through the grammar.
+ *
+ * A top-level function rather than a method on `AiSearchInputViewModel`, and in this file rather
+ * than a nested block, for two reasons that pull the same way. Detekt counts branches in a local
+ * function toward its enclosing one, so nesting would not have shortened `submit`; and the class
+ * sits at its `TooManyFunctions` limit, so a new method there would trade one violation for
+ * another. It also belongs here, beside the origin ladder it calls.
+ *
+ * @param onOriginDecided told whether the rider named the origin themselves. Why the ladder
+ * answered as it did is reported by the locator directly, since only it knows.
+ */
+internal suspend fun resolveStopsAndTime(
+    extraction: TripIntentExtraction,
+    riderText: String,
+    stopTextResolver: StopTextResolver,
+    nearbyOrigin: suspend (String?) -> Pair<String?, StopItem?>,
+    onOriginDecided: (saidByRider: Boolean) -> Unit,
+): ResolvedTripIntent {
+    val toStopItem = extraction.destinationText?.let { stopTextResolver.resolve(it) }
+    val originText = extraction.originText
+    val (fromText, fromStopItem) = resolveTripOrigin(
+        originText = originText,
+        namedOrigin = originText?.let { stopTextResolver.resolve(it) },
+        toStopItem = toStopItem,
+        nearbyOrigin = nearbyOrigin,
+    )
+    onOriginDecided(originText != null)
+
+    // No fallback to "leave now". A rider who mentioned no time gets no time, because the home
+    // screen shows this as a chip: falling back produced "Leave Today 12:29 AM" on a sentence
+    // that said nothing about when, which is the app inventing a decision and then displaying it
+    // back as though the rider had made it. Null already means now everywhere downstream.
+    return ResolvedTripIntent(
+        fromText = fromText,
+        fromStopItem = fromStopItem,
+        toText = extraction.destinationText,
+        toStopItem = toStopItem,
+        dateTimeSelectionItem = resolveTimeIntent(extraction.timeIntent, riderText = riderText),
+        modeHints = extraction.modeHints,
+    )
+}

@@ -111,6 +111,54 @@ class RiderOriginLocatorTest {
     }
 
     @Test
+    fun `standing at the destination is reported as a deliberate blank`() = runTest {
+        // The three empty outcomes point in opposite directions, so they are reported apart.
+        // This one and the next are the app declining to fill a field because of something it
+        // knows right now; UNKNOWN below is a rider left with an empty field. One value for all
+        // three answers nothing, which is what the first cut of the analytics param did.
+        putLabel("Home", "SEVEN_HILLS", "Seven Hills Station", sevenHillsLat, sevenHillsLon)
+        putLabel("Work", "WYNYARD", "Wynyard Station", wynyard.latitude, wynyard.longitude)
+
+        val outcome = locator(location = wynyard).locateOrigin(excludeStopId = "WYNYARD")
+
+        assertNull(outcome.stop)
+        assertEquals(RiderOriginLocator.Origin.AT_DESTINATION, outcome.origin)
+    }
+
+    @Test
+    fun `a known location with nothing near it is reported apart from knowing nothing`() =
+        runTest {
+            // Location known, Home far away, no stop nearby. Distinct from UNKNOWN: the app
+            // holds a fact about the rider here and is declining to contradict it.
+            putLabel("Home", "SEVEN_HILLS", "Seven Hills Station", sevenHillsLat, sevenHillsLon)
+
+            val outcome = locator(location = wynyard).locateOrigin(excludeStopId = "TOWN_HALL")
+
+            assertNull(outcome.stop)
+            assertEquals(RiderOriginLocator.Origin.NO_STOP_NEAR, outcome.origin)
+        }
+
+    @Test
+    fun `no location and no Home reports knowing nothing`() = runTest {
+        putLabel("Work", "WYNYARD", "Wynyard Station", wynyard.latitude, wynyard.longitude)
+
+        val outcome = locator(location = null).locateOrigin(excludeStopId = "TOWN_HALL")
+
+        assertNull(outcome.stop)
+        assertEquals(RiderOriginLocator.Origin.UNKNOWN, outcome.origin)
+    }
+
+    @Test
+    fun `a stop found any of the three ways reports as located`() = runTest {
+        putLabel("Home", "SEVEN_HILLS", "Seven Hills Station", sevenHillsLat, sevenHillsLon)
+
+        val outcome = locator(location = null).locateOrigin(excludeStopId = "TOWN_HALL")
+
+        assertEquals("SEVEN_HILLS", outcome.stop?.stopId)
+        assertEquals(RiderOriginLocator.Origin.LOCATED, outcome.origin)
+    }
+
+    @Test
     fun `the Home label is matched whatever case it was stored in`() = runTest {
         putLabel("home", "SEVEN_HILLS", "Seven Hills Station", sevenHillsLat, sevenHillsLon)
 

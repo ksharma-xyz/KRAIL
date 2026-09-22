@@ -177,7 +177,7 @@ These match the addendum in KRAIL-Analytics' `docs/TRACKING_REQUEST_SCREEN_SIZE.
 
 `AnalyticsEvent.kt` is the only thing this repo owns for analytics — it defines the event
 names and their params, and that is the whole job here. There is **no contract file, no
-per-PR analytics test, and no registration step** in KRAIL.
+per-PR analytics test, and no gating registration step** in KRAIL.
 
 The **KRAIL-Analytics** repo reads `AnalyticsEvent.kt` at the latest **published release
 tag** (never `main`, so unreleased events are not surfaced early), on a periodic schedule,
@@ -186,10 +186,14 @@ into dashboard metrics, and rename/deprecation history — lives in KRAIL-Analyt
 those are display decisions the app has no opinion on. KRAIL-Analytics detects a released
 event it has not yet handled and fails its own build until it is; nothing here gates on it.
 
-**So, to add or change an event:** just edit `AnalyticsEvent.kt` following the naming and
-budget rules above. Nothing else in this repo. It becomes visible to analytics after it
+**So, to add or change an event:** edit `AnalyticsEvent.kt` following the naming and
+budget rules above, and add the ledger row described below. It becomes visible to analytics after it
 ships in a release.
 
-`docs/ANALYTICS_REGISTRY_HANDOFF.md` is kept only as a historical audit trail of the
-registration handshake that predated this model; it is no longer a gate and new events do
-not need a row.
+One courtesy step remains, and it is not a gate: add a `Pending` row to
+`docs/ANALYTICS_REGISTRY_HANDOFF.md` in the same PR for a new event name, a new or changed
+param on an existing event, or a new user property. That ledger is how KRAIL tells
+KRAIL-Analytics what is coming before a release; their drift lint reads it, report-only.
+A changed shape on an existing event matters most, because unlike a new name it does not
+announce itself by arriving. Nothing blocks on a missing row. What keeps the analytics build
+green is a label there before the release publishes, so ping that side when one is close.

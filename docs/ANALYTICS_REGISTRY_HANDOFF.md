@@ -19,13 +19,18 @@ and similar per-feature docs stay accurate: **update it in the same PR** that ch
 table will never be large (Firebase caps the app at 500 event names, ever — see
 `docs/ANALYTICS_EVENTS.md`).
 
-New-event rows (`Event` column marked `(NEW EVENT)`, or `Param(s)` starting `NEW
-event:`) get flipped automatically: when KRAIL-Analytics labels the event, its CI
-fires a `repository_dispatch` naming it, and `.github/workflows/analytics-registry-sync.yml`
-opens a PR here flipping the row (labeled `analytics-sync`). Param and user-property
-rows are never touched by the bot — they have no per-item registry surface on the
-analytics side to check against, so mark those `Documented` by hand instead once
-their shape is final (see `Status = Documented` below).
+**This ledger is not a gate.** Nothing in KRAIL blocks on a row, and nothing in
+KRAIL-Analytics fails because one is missing. It is how KRAIL tells KRAIL-Analytics what is
+coming: their drift lint reads it and reports staged changes as work to do, report-only.
+Enforcement lives on the analytics side, in a check that compares `AnalyticsEvent.kt` **at the
+latest published release tag** against that repo's own registry. What keeps that check green
+is a label on the analytics side before a release publishes, not a row here, so ping the
+analytics side when a release carrying a new event is close.
+
+**Statuses are maintained by hand.** New-event rows become `Registered` once the analytics side
+labels the event. Param and user-property rows are marked `Documented` once their shape is
+final. An automated flip bot used to be described here; it never ran and was removed on
+2026-09-23 (see `docs/ANALYTICS_REGISTRY_SYNC.md`).
 
 **New event name vs new param on an existing event** — both go in this ledger the same
 way, distinguished by the `Event` column. Read `docs/ANALYTICS_EVENTS.md` before adding
@@ -74,6 +79,7 @@ until they have a label.
 | 2026-08-06 | `search_stop_query` | `queryHasDigit` | Bool | Whether the typed query contains a digit, on the local firing (success and error). A house number is the cheapest address signal there is; a bool, never the text | (local) | Documented | — |
 | 2026-08-15 | `stop_selected` | `resultIndex` | Int, zero-based; omitted without a live query | Row the picked result was sitting at inside its own section (`locationKind` says which section). The ranking-quality signal: `displayedLocalCount` says how many rows were showing, only this says the rider had to scroll to number nine. Raw rather than bucketed because first-versus-second is the whole question, and a number costs no string cardinality. A stop tapped inside an expanded trip card reports the trip's row. **Zero is a real value, not a missing one** - a top-result pick is the common case, so `resultIndex = 0` and `resultIndex IS NULL` must never be folded together | (local) | Pending | — |
 | 2026-07-22 | `review_prompt_requested` (NEW EVENT) | `source` | `saved_trip_open` | App asks the platform for its review sheet (Play In-App Review / StoreKit). Counts asks, not ratings: neither platform reports whether the sheet appeared or what the user did, so no companion "shown"/"rated" event exists or can be built | TBD | Registered | [#1739](https://github.com/ksharma-xyz/KRAIL/issues/1739) |
+| 2026-09-23 | `ask_krail_attempt` (NEW EVENT) | NEW event: `phase`, `reason`, `endsResolved`, `extractedEnds`, `originSource`, `inputMode`, `timeShape`, `hadLabelWord`, `spanMatchedVerbatim`, `attemptIndex`, `askSessionId`, `templateKept`; optional `extractMs`, `unmatchedKind`, `sentenceTemplate`, `fromStopId`, `toStopId` | Enums and precedence documented in the event's KDoc in `AnalyticsEvent.kt`. `extractMs` is raw milliseconds, never bucketed. `sentenceTemplate` holds only allowlisted words plus `<PLACE>`/`<TIME>` (`AiSentenceTemplateRedaction`); it is omitted when a gate fails, while the event still fires. `unmatchedKind` describes the shape of an unresolved place, never the text | One row per Ask KRAIL attempt that reached an outcome, resolved or not. `askSessionId` is per dialog opening; `attemptIndex` restarts at 1 per session | [#2019](https://github.com/ksharma-xyz/KRAIL/pull/2019) | Pending | `docs/plans/ASK_KRAIL_ANALYTICS_PLAN.md` |
 
 ## Backfill: events that shipped before this ledger existed
 

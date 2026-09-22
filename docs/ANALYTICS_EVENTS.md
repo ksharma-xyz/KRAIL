@@ -18,7 +18,7 @@ this app is not the one people reach for. Measured on `main`, 2026-08-05:
 
 | Cap | Limit | Where we are |
 |---|---|---|
-| Params per event | 25 custom | **11** on the widest (`device_window`, `app_start` at 10 each, plus `pane`). Everything else is 7 or below |
+| Params per event | 25 custom | **18** on the widest (`ask_krail_attempt` at 17, plus `pane`). Then `app_start` at 12 and `device_window` at 10. Everything else is 7 or below |
 | Event-scoped custom dimensions | 50 per GA4 property | **118 distinct param names** across 52 events |
 | User-scoped custom dimensions | 25 per property | **3** used (`device_form_factor`, `window_width_class`, `pane_mode`) |
 

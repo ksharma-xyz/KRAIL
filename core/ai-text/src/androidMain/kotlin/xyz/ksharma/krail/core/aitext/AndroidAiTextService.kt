@@ -96,27 +96,34 @@ internal class AndroidAiTextService(private val context: Context) : AiTextServic
         log("AiTextService: summarize -> ${if (result == null) "null" else "${result.length} chars"}")
     }
 
-    override suspend fun checkExtractionAvailability(): AiAvailability = runCatching {
-        when (val status = promptModel.checkStatus()) {
-            FeatureStatus.AVAILABLE -> AiAvailability.Available
-            FeatureStatus.DOWNLOADABLE -> {
-                triggerPromptModelDownload()
-                AiAvailability.Unavailable(reason = MODEL_DOWNLOADING)
+    override suspend fun checkExtractionAvailability(): AiAvailability =
+        extractionAvailability(startDownload = true)
+            .also { result -> log("AiTextService: checkExtractionAvailability -> $result") }
+
+    override suspend fun peekExtractionAvailability(): AiAvailability =
+        extractionAvailability(startDownload = false)
+            .also { result -> log("AiTextService: peekExtractionAvailability -> $result") }
+
+    private suspend fun extractionAvailability(startDownload: Boolean): AiAvailability =
+        runCatching {
+            when (val status = promptModel.checkStatus()) {
+                FeatureStatus.AVAILABLE -> AiAvailability.Available
+                FeatureStatus.DOWNLOADABLE -> {
+                    if (startDownload) triggerPromptModelDownload()
+                    AiAvailability.Unavailable(reason = MODEL_DOWNLOADING)
+                }
+                FeatureStatus.DOWNLOADING -> AiAvailability.Unavailable(reason = MODEL_DOWNLOADING)
+                // The raw status stays in the log line below, not in the reason: the reason is
+                // a contract the UI branches on, and gluing a number onto it broke every
+                // equality check that ever tried to read it.
+                else -> {
+                    log("AiTextService: extraction unsupported, status=$status")
+                    AiAvailability.Unavailable(reason = DEVICE_UNSUPPORTED)
+                }
             }
-            FeatureStatus.DOWNLOADING -> AiAvailability.Unavailable(reason = MODEL_DOWNLOADING)
-            // The raw status stays in the log line below, not in the reason: the reason is a
-            // contract the UI branches on, and gluing a number onto it broke every equality
-            // check that ever tried to read it.
-            else -> {
-                log("AiTextService: extraction unsupported, status=$status")
-                AiAvailability.Unavailable(reason = DEVICE_UNSUPPORTED)
-            }
+        }.getOrElse { throwable ->
+            AiAvailability.Unavailable(reason = "$CHECK_FAILED: ${throwable.message}")
         }
-    }.getOrElse { throwable ->
-        AiAvailability.Unavailable(reason = "$CHECK_FAILED: ${throwable.message}")
-    }.also { result ->
-        log("AiTextService: checkExtractionAvailability -> $result")
-    }
 
     override suspend fun extractTripIntent(text: String): TripIntentExtraction? = runCatching {
         if (checkExtractionAvailability() !is AiAvailability.Available) {

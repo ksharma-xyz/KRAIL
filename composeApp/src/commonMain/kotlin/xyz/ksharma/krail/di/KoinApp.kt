@@ -7,8 +7,10 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.KoinAppDeclaration
 import org.koin.dsl.includes
 import org.koin.dsl.module
+import xyz.ksharma.krail.core.aitext.AiTextService
 import xyz.ksharma.krail.core.aitext.di.aiTextModule
 import xyz.ksharma.krail.core.analytics.di.analyticsModule
+import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.appinfo.di.appInfoModule
 import xyz.ksharma.krail.core.appreview.di.appReviewModule
 import xyz.ksharma.krail.core.appstart.di.appStartModule
@@ -22,12 +24,14 @@ import xyz.ksharma.krail.core.festival.di.festivalModule
 import xyz.ksharma.krail.core.maps.data.di.mapsDataModule
 import xyz.ksharma.krail.core.network.coreNetworkModule
 import xyz.ksharma.krail.core.remoteconfig.di.remoteConfigModule
+import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.share.di.shareModule
 import xyz.ksharma.krail.core.speechtotext.di.speechToTextModule
 import xyz.ksharma.krail.core.textrecognition.di.textRecognitionModule
 import xyz.ksharma.krail.departures.network.api.di.departuresNetworkModule
 import xyz.ksharma.krail.departures.ui.di.departuresUiModule
 import xyz.ksharma.krail.discover.network.real.di.discoverModule
+import xyz.ksharma.krail.feature.debug.settings.store.DebugNetworkConfigStore
 import xyz.ksharma.krail.feature.debug.settings.store.di.debugSettingsStoreModule
 import xyz.ksharma.krail.feature.debug.settings.ui.di.debugSettingsUiModule
 import xyz.ksharma.krail.feature.track.di.trackStateModule
@@ -39,11 +43,13 @@ import xyz.ksharma.krail.navigation.di.appNavigationModule
 import xyz.ksharma.krail.park.ride.network.di.parkRideNetworkModule
 import xyz.ksharma.krail.platform.ops.di.opsModule
 import xyz.ksharma.krail.sandook.di.sandookModule
+import xyz.ksharma.krail.splash.AppStartTracker
 import xyz.ksharma.krail.splash.SplashViewModel
 import xyz.ksharma.krail.theme.di.themeManagerModule
 import xyz.ksharma.krail.trip.planner.network.api.di.tripPlannerNetworkModule
 import xyz.ksharma.krail.trip.planner.ui.di.tripPlannerNavigationModule
 import xyz.ksharma.krail.trip.planner.ui.di.viewModelsModule
+import xyz.ksharma.krail.trip.planner.ui.search.ai.isAiSearchInputEnabled
 
 fun initKoin(config: KoinAppDeclaration? = null) {
     startKoin {
@@ -95,15 +101,29 @@ fun initKoin(config: KoinAppDeclaration? = null) {
 }
 
 val splashModule = module {
+    factory {
+        AppStartTracker(
+            analytics = get(),
+            appInfoProvider = get(),
+            peekAiAvailability = get<AiTextService>()::peekExtractionAvailability,
+            isAiSearchEnabled = {
+                isAiSearchInputEnabled(
+                    isDebug = get<AppInfoProvider>().getAppInfo().isDebug,
+                    debugNetworkConfigStore = get<DebugNetworkConfigStore>(),
+                    flag = get<Flag>(),
+                )
+            },
+            ioDispatcher = get(named(IODispatcher)),
+        )
+    }
     viewModel {
         SplashViewModel(
             sandook = get(),
-            analytics = get(),
-            appInfoProvider = get(),
             ioDispatcher = get(named(IODispatcher)),
             appStart = get(),
             preferences = get(),
             appVersionManager = get(),
+            appStartTracker = get(),
         )
     }
 }

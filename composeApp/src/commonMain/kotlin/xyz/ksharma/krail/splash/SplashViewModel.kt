@@ -10,9 +10,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import xyz.ksharma.krail.core.analytics.Analytics
-import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
-import xyz.ksharma.krail.core.appinfo.AppInfoProvider
 import xyz.ksharma.krail.core.appstart.AppStart
 import xyz.ksharma.krail.core.appversion.AppVersionManager
 import xyz.ksharma.krail.core.appversion.AppVersionUpdateState
@@ -33,12 +30,11 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 
 class SplashViewModel(
     private val sandook: Sandook,
-    private val analytics: Analytics,
-    private val appInfoProvider: AppInfoProvider,
     private val ioDispatcher: CoroutineDispatcher,
     private val appStart: AppStart,
     private val preferences: SandookPreferences,
     private val appVersionManager: AppVersionManager,
+    private val appStartTracker: AppStartTracker,
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<SplashState> = MutableStateFlow(SplashState())
@@ -72,21 +68,8 @@ class SplashViewModel(
         }
     }
 
-    private fun trackAppStartEvent() = with(appInfoProvider.getAppInfo()) {
-        log("AppInfo: $this, krailTheme: ${_uiState.value.themeStyle.id}")
-        analytics.track(
-            AnalyticsEvent.AppStart(
-                platformType = devicePlatformType.name,
-                osVersion = osVersion,
-                appVersion = appVersion,
-                fontSize = fontSize,
-                isDarkTheme = isDarkTheme,
-                deviceModel = deviceModel,
-                krailTheme = _uiState.value.themeStyle.id,
-                locale = locale,
-                timeZone = timeZone,
-            ),
-        )
+    private fun trackAppStartEvent() {
+        appStartTracker.track(viewModelScope, krailThemeId = _uiState.value.themeStyle.id)
     }
 
     private suspend fun loadKrailThemeStyle() = safeResult(ioDispatcher) {

@@ -37,6 +37,17 @@ interface AiTextService {
     suspend fun checkExtractionAvailability(): AiAvailability
 
     /**
+     * [checkExtractionAvailability] without the side effect: reports the same state and
+     * **never starts a model download**. For telemetry, which runs on every launch whether or
+     * not the rider ever opens Ask KRAIL, and must not pull a model onto a device just by
+     * asking about it. Never throws.
+     *
+     * Deliberately abstract rather than defaulting to [checkExtractionAvailability]: a default
+     * would quietly restore the download on any implementation that forgot to override it.
+     */
+    suspend fun peekExtractionAvailability(): AiAvailability
+
+    /**
      * Produces a short summary of [text], or `null` if the model is unavailable or the
      * call fails for any reason (guardrail rejection, timeout, OOM, SDK error). Callers
      * must treat `null` as "render nothing" — never surface an error to the user for this.

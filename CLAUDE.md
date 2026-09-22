@@ -388,6 +388,28 @@ green while the bug was live, or when diagnosis needed instrumentation rather th
 code. `docs/learning/README.md` has the format and the rules; prefer adding a check over
 adding a paragraph.
 
+## The pre-push structural hook
+
+`.git/hooks` is not tracked, so install it once per clone:
+
+```sh
+ln -sf ../../scripts/pre_push_structural_checks.sh .git/hooks/pre-push-structural
+```
+
+and call it from `.git/hooks/pre-push` **before** the existing `git lfs pre-push` line, which
+must stay: this repo keeps screenshots in LFS, and dropping it pushes pointers with no objects.
+
+The hook runs only the four structural tasks (`verifyTestWiring`, `verifyTestingModuleUsage`,
+`verifyNoAdHocBoundaryFakes`, `verifyIosTestClassification`) and takes about two seconds. They
+catch what a change-shaped test run cannot: a module that grew test sources without a host-test
+task or an iOS lane classification, or a new ad-hoc boundary fake.
+
+Bypass with `git push --no-verify` or `SKIP_STRUCTURAL_CHECKS=1`.
+
+It exists because `verifyIosTestClassification` once failed in CI on a change whose author had
+run a compile, detekt and the touched modules' tests, all green, and skipped the script that
+wraps these. See `docs/learning/2026-09-22-the-gate-i-did-not-open.md`.
+
 ## Full Quality Checks
 
 To verify a branch compiles on both platforms and passes static analysis, run:

@@ -94,10 +94,19 @@ full structural verdict, which is exactly what was missed here.
       Kotlin/Native test binary the way the Firebase frameworks do, CI will say so and it moves
       across with the real error as its reason.
 - [x] This entry, as the record of a check that existed and was not run.
-- [ ] Optional, not done: a `pre-push` hook running only the four structural tasks. They are
-      seconds long and order-independent, so the cost is small. Not added unilaterally, since a
-      hook changes the workflow of everyone who clones the repo and that is a decision rather
-      than a fix.
+- [x] `scripts/pre_push_structural_checks.sh`, run from a `pre-push` hook. The four structural
+      tasks only, which complete in about two seconds. Mutation-tested by removing
+      `:core:maps:ui` from the lane again: it failed with the same message CI produced.
+      Bypass with `--no-verify` or `SKIP_STRUCTURAL_CHECKS=1`, so skipping stays possible but
+      becomes a decision rather than an oversight.
+- [x] The hook preserves the existing `git-lfs pre-push` call. This repo stores screenshots in
+      LFS, and a hook that replaced rather than extended it would push pointers with no
+      objects behind them: a failure that surfaces as broken images for someone else, long
+      after the push. The previous hook is kept at `.git/hooks/pre-push.lfs-only.bak`.
+- [ ] `.git/hooks` is not tracked, so the hook is per-clone. Install is one command, documented
+      in `CLAUDE.md`. Moving the repo to `core.hooksPath` would version it, but that disables
+      `.git/hooks` wholesale and every git-lfs hook would have to be ported at the same time,
+      which is a bigger change than this entry should make.
 
 ## The transferable part
 

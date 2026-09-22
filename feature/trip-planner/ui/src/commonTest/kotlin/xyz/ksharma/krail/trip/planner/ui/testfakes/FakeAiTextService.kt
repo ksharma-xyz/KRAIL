@@ -19,6 +19,8 @@ internal class FakeAiTextService : AiTextService {
 
     override suspend fun checkExtractionAvailability(): AiAvailability = extractionAvailability
 
+    override suspend fun peekExtractionAvailability(): AiAvailability = extractionAvailability
+
     override suspend fun summarize(text: String): String? {
         summarizeCallCount++
         return summarizeResult

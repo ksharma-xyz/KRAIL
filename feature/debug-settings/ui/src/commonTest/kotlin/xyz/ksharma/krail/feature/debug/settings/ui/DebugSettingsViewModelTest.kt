@@ -184,6 +184,7 @@ private class FakeAiTextService(
 ) : AiTextService {
     override suspend fun checkAvailability(): AiAvailability = availability
     override suspend fun checkExtractionAvailability(): AiAvailability = availability
+    override suspend fun peekExtractionAvailability(): AiAvailability = availability
     override suspend fun summarize(text: String) = null
     override suspend fun extractTripIntent(text: String) = null
 }

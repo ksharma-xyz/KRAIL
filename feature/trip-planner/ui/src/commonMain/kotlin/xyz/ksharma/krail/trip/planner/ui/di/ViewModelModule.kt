@@ -34,6 +34,7 @@ import xyz.ksharma.krail.trip.planner.ui.savedtrips.RealInviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiAttemptReporter
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputViewModel
+import xyz.ksharma.krail.trip.planner.ui.search.ai.isAiSearchInputEnabled
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.ChainedStopTextResolver
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.LabelWordGuard
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.LabelledStopLocator
@@ -86,11 +87,7 @@ val viewModelsModule = module {
         val flag = get<Flag>()
         // Read live, not once — same reasoning as isAlertSummaryEnabled above.
         val isAiSearchInputEnabled = {
-            if (isDebug) {
-                debugNetworkConfigStore.state.value.aiSearchInputEnabled
-            } else {
-                flag.getFlagValue(FlagKeys.AI_SEARCH_INPUT_ENABLED.key).asBoolean(false)
-            }
+            isAiSearchInputEnabled(isDebug, debugNetworkConfigStore, flag)
         }
         // Composable-supplied — see AiSearchInputViewModel's constructor doc for why this
         // can't be a plain Koin `get()`.

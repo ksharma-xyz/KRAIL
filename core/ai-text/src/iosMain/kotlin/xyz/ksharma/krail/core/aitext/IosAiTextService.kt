@@ -38,6 +38,10 @@ internal class IosAiTextService : AiTextService {
 
     override suspend fun checkExtractionAvailability(): AiAvailability = checkAvailability()
 
+    // Already side-effect free here: Apple manages the model download itself, and asking
+    // `SystemLanguageModel.default.availability` starts nothing.
+    override suspend fun peekExtractionAvailability(): AiAvailability = checkAvailability()
+
     override suspend fun summarize(text: String): String? =
         suspendCancellableCoroutine { continuation ->
             bridge.summarizeWithText(text) { summary ->

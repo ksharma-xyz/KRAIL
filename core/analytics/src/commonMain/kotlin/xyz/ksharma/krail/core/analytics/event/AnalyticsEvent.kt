@@ -1043,6 +1043,18 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         ),
     )
 
+    /**
+     * @param aiCapability Whether this device can run Ask KRAIL at launch: `available`, or one
+     * of `model_downloading`, `device_unsupported`, `needs_device_setting`, `check_failed`,
+     * `timeout`, `unknown`. Reported on every launch **whatever the flag says**, because it is
+     * the denominator for `ask_krail_attempt` and the only record of rider state
+     * (`needs_device_setting` is a rider who switched it off). A per-launch param rather than a
+     * user property on purpose: a user property overwrites, so a device that later became
+     * capable would erase that it was not at the time. `needs_device_setting` is iOS only;
+     * Android has no equivalent setting to report.
+     * @param aiSearchEnabled Whether Ask KRAIL was switched on for this launch (Remote Config,
+     * or the debug override). Omitted when the flag could not be read.
+     */
     @OptIn(ExperimentalTime::class)
     data class AppStart(
         val platformType: String,
@@ -1054,20 +1066,24 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         val krailTheme: Int,
         val locale: String,
         val timeZone: String,
+        val aiCapability: String? = null,
+        val aiSearchEnabled: Boolean? = null,
     ) : AnalyticsEvent(
         name = "app_start",
-        rawProperties = mapOf(
-            "platformType" to platformType.trim(),
-            "appVersion" to appVersion.trim(),
-            "osVersion" to osVersion.trim(),
-            "deviceModel" to deviceModel.trim(),
-            "fontSize" to fontSize.trim(),
-            "isDarkTheme" to isDarkTheme,
-            "krailTheme" to krailTheme,
-            "timeStamp" to Clock.System.now().toString(),
-            "locale" to locale.trim(),
-            "timeZone" to timeZone.trim(),
-        ),
+        rawProperties = buildMap {
+            put("platformType", platformType.trim())
+            put("appVersion", appVersion.trim())
+            put("osVersion", osVersion.trim())
+            put("deviceModel", deviceModel.trim())
+            put("fontSize", fontSize.trim())
+            put("isDarkTheme", isDarkTheme)
+            put("krailTheme", krailTheme)
+            put("timeStamp", Clock.System.now().toString())
+            put("locale", locale.trim())
+            put("timeZone", timeZone.trim())
+            aiCapability?.let { put("aiCapability", it) }
+            aiSearchEnabled?.let { put("aiSearchEnabled", it) }
+        },
     )
     // endregion
 

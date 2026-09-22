@@ -33,14 +33,53 @@ class RiderOriginLocator(
      * resolve Home to Home, which is a journey of no distance and reads as the app not having
      * understood at all.
      */
-    suspend fun originStop(excludeStopId: String?): StopItem? {
+    suspend fun originStop(excludeStopId: String?): StopItem? =
+        locateOrigin(excludeStopId).stop
+
+    /**
+     * The same answer as [originStop], plus **why** the field was left empty when it was.
+     *
+     * Two of the blanks are deliberate: the rider is standing at the destination, or their
+     * location is known and no stop is near it. Both are things the app knows about them right
+     * now, and filling the field would contradict what it knows. The third blank is not knowing
+     * anything at all.
+     *
+     * Those point in opposite directions for anyone reading them later. "Chose not to fill" is
+     * the design working; "could not fill" is a rider left with an empty field and no way to
+     * tell which happened. Collapsed into one value they cancel out, so the locator reports
+     * which one rather than leaving the caller to guess from a null.
+     */
+    suspend fun locateOrigin(excludeStopId: String?): OriginOutcome {
         val location = resolveCurrentLocation()
         return if (location == null) {
-            homeAsALastGuess(excludeStopId)
+            val home = homeAsALastGuess(excludeStopId)
+            OriginOutcome(home, if (home == null) Origin.UNKNOWN else Origin.LOCATED)
+        } else if (standingAt(location, excludeStopId)) {
+            // "To home by 9pm" while standing at home used to fill the origin with the next stop
+            // along the road, which is a journey from one bus stop to its neighbour.
+            log("$ORIGIN_TAG standing at the destination, origin left blank")
+            OriginOutcome(stop = null, origin = Origin.AT_DESTINATION)
         } else {
-            whereTheRiderIsStanding(location = location, excludeStopId = excludeStopId)
+            val stop = nearestNamedOrOtherwise(location, excludeStopId)
+            OriginOutcome(stop, if (stop == null) Origin.NO_STOP_NEAR else Origin.LOCATED)
         }
     }
+
+    /**
+     * @property stop the origin, or null when the field is left for the rider.
+     * @property origin why, for telemetry. Never shown to anyone.
+     */
+    data class OriginOutcome(val stop: StopItem?, val origin: Origin)
+
+    /**
+     * Why the origin ended up as it did, at the granularity the caller can act on.
+     *
+     * [LOCATED] deliberately covers all three ways a stop was found: a labelled stop within
+     * walking distance, the nearest stop, and Home. Splitting those answers a different
+     * question ("is the labelled-stop preference earning its place") which needs traffic that
+     * does not exist yet, and adding values later is a pure addition.
+     */
+    enum class Origin { LOCATED, AT_DESTINATION, NO_STOP_NEAR, UNKNOWN }
 
     /**
      * No location at all: denied, restricted, or the fix timed out. All three arrive as the same
@@ -66,31 +105,24 @@ class RiderOriginLocator(
      * deliberately blank: both are things the app knows about the rider right now, and Home
      * would contradict them.
      */
-    private suspend fun whereTheRiderIsStanding(
+    private suspend fun nearestNamedOrOtherwise(
         location: Location,
         excludeStopId: String?,
-    ): StopItem? = when {
-        // Already there. "To home by 9pm" while standing at home used to fill the origin with
-        // the next stop along the road, which is a journey from one bus stop to its neighbour.
-        standingAt(location, excludeStopId) ->
-            null.also { log("$ORIGIN_TAG standing at the destination, origin left blank") }
-
-        else -> {
-            val labelled = labelledStopLocator?.nearestLabelledStop(
-                latitude = location.latitude,
-                longitude = location.longitude,
-                excludeStopId = excludeStopId,
-            )
-            val stop = labelled ?: nearestStop(location, excludeStopId)
-            log(
-                "$ORIGIN_TAG " + when {
-                    labelled != null -> "using a labelled stop within walking distance"
-                    stop != null -> "using the nearest stop"
-                    else -> "no stop near the rider, origin left blank"
-                },
-            )
-            stop
-        }
+    ): StopItem? {
+        val labelled = labelledStopLocator?.nearestLabelledStop(
+            latitude = location.latitude,
+            longitude = location.longitude,
+            excludeStopId = excludeStopId,
+        )
+        val stop = labelled ?: nearestStop(location, excludeStopId)
+        log(
+            "$ORIGIN_TAG " + when {
+                labelled != null -> "using a labelled stop within walking distance"
+                stop != null -> "using the nearest stop"
+                else -> "no stop near the rider, origin left blank"
+            },
+        )
+        return stop
     }
 
     private suspend fun standingAt(location: Location, excludeStopId: String?): Boolean =

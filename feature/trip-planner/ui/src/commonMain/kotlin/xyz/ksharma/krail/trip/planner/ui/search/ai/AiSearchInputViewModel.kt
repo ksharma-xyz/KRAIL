@@ -19,6 +19,7 @@ import xyz.ksharma.krail.core.speechtotext.SpeechToTextService
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.RiderOriginLocator
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.StopTextResolver
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import kotlin.time.TimeSource
 
 // Ceiling on one listening session. The rider's stop button is the real control; ending it
 // otherwise is normally the recogniser's call, since it stops when they stop talking, with the
@@ -95,11 +96,18 @@ class AiSearchInputViewModel(
     // layer builds the lambda and passes it through koinViewModel's parametersOf, the same
     // pattern TrackTripViewModel already uses.
     private val riderOriginLocator: RiderOriginLocator = RiderOriginLocator(),
-    // The rider's own label words, for the case where the model reads a sentence correctly and
-    // still finds no place in it because the place is a word like "work".
-    private val riderLabels: suspend () -> List<String> = { emptyList() },
     private val isAiSearchInputEnabled: () -> Boolean = { false },
+    // Owns the askSessionId, the attempt counter and the rider's labels as well as the
+    // reporting: when those counters reset IS the metric's definition, so they belong with it
+    // rather than beside it. See its KDoc.
+    private val reporter: AiAttemptReporter = AiAttemptReporter(analytics = null),
 ) : ViewModel() {
+
+    // Set by the origin ladder on its way past. Only meaningful when the rider did not name an
+    // origin, since that is the only case reaching the locator at all.
+    private var lastOriginOutcome: RiderOriginLocator.Origin? = null
+
+    private val timeSource = TimeSource.Monotonic
 
     private val _uiState = MutableStateFlow(AiSearchInputUiState())
     val uiState: StateFlow<AiSearchInputUiState> = _uiState.asStateFlow()
@@ -183,6 +191,7 @@ class AiSearchInputViewModel(
             // show a stale answer for a row the rider may have edited since.
             AiSearchInputEvent.OpenInput -> {
                 textBeforeSpeaking = ""
+                reporter.startSession()
                 val enabled = isAiSearchInputEnabled()
                 _uiState.update {
                     AiSearchInputUiState(
@@ -404,6 +413,7 @@ class AiSearchInputViewModel(
     private fun submit() {
         val flagEnabled = isAiSearchInputEnabled()
         val text = _uiState.value.typedText.trim()
+        reporter.beginAttempt()
         if (!flagEnabled || text.isEmpty()) {
             logOutcome(reason = if (!flagEnabled) "flag_off" else "empty_text")
             return
@@ -426,7 +436,10 @@ class AiSearchInputViewModel(
                 return@launch
             }
 
+            lastOriginOutcome = null
+            val startedAt = timeSource.markNow()
             val rawExtraction = aiTextService.extractTripIntent(text)
+            val extractMs = startedAt.elapsedNow().inWholeMilliseconds
             if (rawExtraction == null) {
                 _uiState.update {
                     it.copy(
@@ -434,42 +447,28 @@ class AiSearchInputViewModel(
                         unresolvedReason = UnresolvedReason.COULD_NOT_READ,
                     )
                 }
-                logOutcome()
+                logOutcome(riderText = text, extractMs = extractMs)
                 return@launch
             }
             // "work by 9am tomm" came back with no place at all: to the model, "work" is an
             // ordinary noun, not this rider's stop. Their own word, from their own text, matched
             // against their own labels — nothing here comes from the model.
+            val labels = reporter.labelsForThisAttempt()
             val extraction = rawExtraction
                 .withSinglePlaceInTheRightField(text)
-                .withLabelWordAsDestination(riderText = text, labels = riderLabels())
+                .withLabelWordAsDestination(riderText = text, labels = labels)
 
-            val toStopItem = extraction.destinationText?.let { stopTextResolver.resolve(it) }
-            val originText = extraction.originText
-            val (fromText, fromStopItem) = resolveTripOrigin(
-                originText = originText,
-                namedOrigin = originText?.let { stopTextResolver.resolve(it) },
-                toStopItem = toStopItem,
+            val intent = resolveStopsAndTime(
+                extraction = extraction,
+                riderText = text,
+                stopTextResolver = stopTextResolver,
                 nearbyOrigin = ::resolveCurrentLocationStop,
-            )
-
-            // No fallback to "leave now". A rider who mentioned no time gets no time, because
-            // the home screen now shows this as a chip: falling back produced "Leave Today
-            // 12:29 AM" on a sentence that said nothing about when, which is the app inventing
-            // a decision and then displaying it back as though the rider had made it. Null
-            // already means now everywhere downstream.
-            val dateTimeSelectionItem = resolveTimeIntent(extraction.timeIntent, riderText = text)
-
-            val intent = ResolvedTripIntent(
-                fromText = fromText,
-                fromStopItem = fromStopItem,
-                toText = extraction.destinationText,
-                toStopItem = toStopItem,
-                dateTimeSelectionItem = dateTimeSelectionItem,
-                modeHints = extraction.modeHints,
+                onOriginDecided = { saidByRider ->
+                    reporter.rememberOrigin(saidByRider, lastOriginOutcome)
+                },
             )
             _uiState.update { it.withResolution(intent, namedAnyPlace = extraction.namesAPlace()) }
-            logOutcome()
+            logOutcome(riderText = text, extraction = extraction, extractMs = extractMs)
             closeAfterHandoff()
         }
     }
@@ -513,15 +512,28 @@ class AiSearchInputViewModel(
      * place name quoted back at them. Phases, reasons and booleans say what happened without
      * saying where anyone is going.
      */
-    private fun logOutcome(reason: String? = null) {
+    private fun logOutcome(
+        reason: String? = null,
+        riderText: String = "",
+        extraction: TripIntentExtraction? = null,
+        extractMs: Long? = null,
+    ) {
         val state = _uiState.value
         val resolved = state.resolved
+        val why = reason ?: state.unresolvedReason?.name ?: "none"
         log(
             "$AI_OUTCOME_TAG phase=${state.phase}" +
-                " reason=${reason ?: state.unresolvedReason?.name ?: "none"}" +
+                " reason=$why" +
                 " speechProblem=${state.speechUnavailableReason ?: "none"}" +
                 " from=${resolved?.fromStopItem != null} to=${resolved?.toStopItem != null}" +
                 " spokeIt=${state.speechTranscript.isNotEmpty()}",
+        )
+        reporter.report(
+            state = state,
+            reason = why,
+            riderText = riderText,
+            extraction = extraction,
+            extractMs = extractMs,
         )
     }
 
@@ -536,8 +548,9 @@ class AiSearchInputViewModel(
      * blocking prompt the rider didn't ask for by typing into this flow in the first place.
      */
     private suspend fun resolveCurrentLocationStop(excludeStopId: String?): Pair<String?, StopItem?> {
-        val stop = riderOriginLocator.originStop(excludeStopId = excludeStopId)
-        return stop?.stopName to stop
+        val outcome = riderOriginLocator.locateOrigin(excludeStopId = excludeStopId)
+        lastOriginOutcome = outcome.origin
+        return outcome.stop?.stopName to outcome.stop
     }
 
     /**

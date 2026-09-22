@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.di
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.core.qualifier.named
@@ -17,6 +18,7 @@ import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.feature.debug.settings.store.DebugNetworkConfigStore
 import xyz.ksharma.krail.feature.track.TrackingManager
 import xyz.ksharma.krail.io.gtfs.GtfsQualifiers
+import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertsViewModel
 import xyz.ksharma.krail.trip.planner.ui.alerts.summary.AlertSummaryViewModel
 import xyz.ksharma.krail.trip.planner.ui.alerts.summary.isAlertSummaryEnabled
@@ -30,6 +32,7 @@ import xyz.ksharma.krail.trip.planner.ui.parkride.RealParkRideCatalogue
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.InviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.RealInviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
+import xyz.ksharma.krail.trip.planner.ui.search.ai.AiAttemptReporter
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputViewModel
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.ChainedStopTextResolver
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.LabelWordGuard
@@ -92,6 +95,7 @@ val viewModelsModule = module {
         // Composable-supplied — see AiSearchInputViewModel's constructor doc for why this
         // can't be a plain Koin `get()`.
         val resolveCurrentLocation = params.getOrNull<suspend () -> Location?>() ?: { null }
+        val sandook = get<Sandook>()
         AiSearchInputViewModel(
             aiTextService = get(),
             speechToTextService = get(),
@@ -114,6 +118,17 @@ val viewModelsModule = module {
                 nearbyStopsRepository = get(),
             ),
             isAiSearchInputEnabled = isAiSearchInputEnabled,
+            reporter = AiAttemptReporter(
+                analytics = get(),
+                // The rider's own words for their places. Never wired before, so it defaulted
+                // to an empty list: `withLabelWordAsDestination` could never fire, and the
+                // rescue for a sentence whose only place is a word like "work" has never run
+                // for a rider. Wiring it makes that fallback live and `hadLabelWord` report
+                // something other than false.
+                riderLabels = {
+                    sandook.observeStopLabels().first().map { label -> label.label }
+                },
+            ),
         )
     }
 

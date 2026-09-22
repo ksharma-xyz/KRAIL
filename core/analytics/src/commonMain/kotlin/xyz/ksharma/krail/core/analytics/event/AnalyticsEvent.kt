@@ -27,6 +27,11 @@ private const val PROP_TRANSPORT_UP = "transportUp"
 private const val PROP_UPSTREAM = "upstream"
 private const val PROP_ENDPOINT = "endpoint"
 
+// Shared across the Ask KRAIL surfaces on purpose: GA4 registers an event-scoped dimension per
+// PARAMETER NAME, so one registration covers every event that sends it. Divergent vocabulary is
+// what costs, not shared vocabulary.
+private const val PROP_REASON = "reason"
+
 /**
  * Every event's [properties] pass through [AnalyticsParamSanitizer] before they are
  * exposed, so no subclass can leak an address as text or hand Firebase a parameter value
@@ -1694,6 +1699,114 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
             RETRY("retry"),
         }
     }
+
+    // endregion
+
+    // region Ask KRAIL
+
+    /**
+     * One row per Ask KRAIL submit, fired at the end of the attempt. Promoted from the local
+     * `[AI_OUTCOME]` log line, which was already written to carry no rider text.
+     *
+     * Wide on purpose: one row per attempt beats a handful of narrow events someone has to
+     * stitch back together, and this is the event that replaces collecting the rider's
+     * sentence, so the density is bought with a privacy decision rather than spent carelessly.
+     *
+     * @param phase where the attempt ended.
+     * @param reason why, when it did not resolve. Absorbs the pre-submit refusals and the phase
+     * a dismissal happened at, rather than those taking dimensions of their own.
+     * @param endsResolved which ends found a stop. One enum rather than two booleans: two get
+     * summed independently and the from-only versus to-only distinction disappears into two
+     * marginal rates that do not reconstruct the joint.
+     * @param extractedEnds what the **model** found, before any stop lookup. The gap against
+     * [endsResolved] is the diagnostic that separates a model failure from a stop-search
+     * failure, which today arrive as the same unresolved attempt.
+     * @param originSource which rung of the origin ladder answered when the rider did not say.
+     * Previously visible only in logcat, and the rider cannot tell a blank field from a guess.
+     * @param inputMode typed, spoken, or both. Crossed with [reason] and [attemptIndex] this
+     * answers whether speech is working, which reading transcripts could not: a transcript has
+     * no ground truth beside it, two populations doing the same task do.
+     * @param timeShape which kind of time the grammar read, if any.
+     * @param hadLabelWord whether the sentence contained a label word. Never which one.
+     *
+     * Also the counter-signal for any future loosening of the stop search's word-boundary
+     * guard. That guard exists because "work" reached *Powderworks Rd*, and relaxing it to
+     * admit typos would let that class back in. The two move in opposite directions, so a
+     * readout that only watches the miss rate would record the fix and miss the regression.
+     * @param spanMatchedVerbatim whether the model echoed the rider's words rather than
+     * rewriting them. A measurement, not a safety property - see
+     * `AiSentenceTemplateRedaction`.
+     * @param attemptIndex which attempt this is within one dialog session. One
+     * [askSessionId] is one question; both reset on handoff settle and on dialog close, and
+     * neither resets on the app being backgrounded, because a rider who switches out to check
+     * an address and returns would otherwise book as a first attempt and inflate first-attempt
+     * success for exactly the riders who struggled.
+     * @param extractMs how long extraction took, raw. Not bucketed: boundaries chosen now would
+     * be stuck on every row collected under them, and the bands can be computed downstream from
+     * a raw value at any time.
+     * @param unmatchedKind the shape of a place that matched no stop: `single_word`,
+     * `multi_word` or `has_digit`. A classification made on device specifically to avoid
+     * sending the word itself, so it is redaction rather than an interpretation the app has no
+     * business making.
+     *
+     * **The values are ordered, not disjoint.** `has_digit` is tested first, so a multi-word
+     * place containing a digit reports `has_digit` and never `multi_word`. Deliberate, since
+     * the digit is the more actionable signal, but it makes `multi_word` a partial category:
+     * read it as "several words and no digit", not as every multi-word failure.
+     * @param templateKept whether the sentence survived both redaction gates. **The row's only
+     * permanent record of that**, because [sentenceTemplate] is dropped before it reaches any
+     * durable store, so from history "absent because a gate failed" and "absent because it was
+     * dropped on purpose" are otherwise the same thing. The design rests on the second gate, and
+     * a model update could shift its pass rate with nothing visible changing, so the gate's own
+     * behaviour has to stay measurable. The drops are also biased rather than random, which
+     * makes this the denominator any phrasing readout has to be quoted against.
+     * @param sentenceTemplate the rider's phrasing with places and times replaced by
+     * placeholders, or null whenever either gate in `AiSentenceTemplateRedaction` failed. Null
+     * is the common case and is not an error.
+     * @param fromStopId / [toStopId] what the attempt resolved to. Carried so a rider
+     * correcting a field afterwards produces a labelled pair - resolved Y, meant X - which is
+     * the only obtainable evidence of a confidently wrong match.
+     */
+    data class AskKrailAttemptEvent(
+        val phase: String,
+        val reason: String,
+        val endsResolved: String,
+        val extractedEnds: String,
+        val originSource: String,
+        val inputMode: String,
+        val timeShape: String,
+        val hadLabelWord: Boolean,
+        val spanMatchedVerbatim: Boolean,
+        val attemptIndex: Int,
+        val extractMs: Long?,
+        val unmatchedKind: String? = null,
+        val templateKept: Boolean,
+        val sentenceTemplate: String? = null,
+        val fromStopId: String? = null,
+        val toStopId: String? = null,
+        val askSessionId: String,
+    ) : AnalyticsEvent(
+        name = "ask_krail_attempt",
+        rawProperties = buildMap {
+            put("phase", phase)
+            put(PROP_REASON, reason)
+            put("endsResolved", endsResolved)
+            put("extractedEnds", extractedEnds)
+            put("originSource", originSource)
+            put("inputMode", inputMode)
+            put("timeShape", timeShape)
+            put("hadLabelWord", hadLabelWord)
+            put("spanMatchedVerbatim", spanMatchedVerbatim)
+            put("attemptIndex", attemptIndex)
+            put("askSessionId", askSessionId)
+            extractMs?.let { put("extractMs", it) }
+            put("templateKept", templateKept)
+            unmatchedKind?.let { put("unmatchedKind", it) }
+            sentenceTemplate?.let { put("sentenceTemplate", it) }
+            fromStopId?.let { put(PROP_FROM_STOP_ID, it) }
+            toStopId?.let { put(PROP_TO_STOP_ID, it) }
+        },
+    )
 
     // endregion
 }

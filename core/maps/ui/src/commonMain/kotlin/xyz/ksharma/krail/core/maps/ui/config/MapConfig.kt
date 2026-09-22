@@ -1,5 +1,7 @@
 package xyz.ksharma.krail.core.maps.ui.config
 
+import androidx.compose.ui.Alignment
+
 /**
  * Map tile provider configuration.
  * Centralized place for all map style URLs.
@@ -7,6 +9,11 @@ package xyz.ksharma.krail.core.maps.ui.config
 object MapTileProvider {
     /**
      * OpenFreeMap Liberty style - default map style.
+     *
+     * These tiles are built from OpenStreetMap data. The ODbL requires visible credit to
+     * "OpenStreetMap contributors" **wherever the map is shown**, and OpenFreeMap asks for
+     * credit of its own, so [MapConfig.Ornaments.ATTRIBUTION_ENABLED] is not a display
+     * preference: it is the licence being met. Held by `MapAttributionTest`.
      */
     const val OPEN_FREE_MAP_LIBERTY = "https://tiles.openfreemap.org/styles/liberty"
 
@@ -34,8 +41,32 @@ object MapConfig {
      */
     object Ornaments {
         const val DEFAULT_PADDING_DP = 16
+
+        /**
+         * MapLibre's own wordmark. Not required by any licence, unlike [ATTRIBUTION_ENABLED].
+         */
         const val LOGO_ENABLED = false
-        const val ATTRIBUTION_ENABLED = false
+
+        /**
+         * The ⓘ button that opens the style's attribution, which for
+         * [MapTileProvider.OPEN_FREE_MAP_LIBERTY] credits OpenStreetMap contributors and
+         * OpenFreeMap.
+         *
+         * **Never turn this off.** The tiles are OpenStreetMap data and the ODbL requires the
+         * credit to be visible wherever the map is. It shipped `false`, so every map in the app
+         * displayed OSM data with no attribution anywhere, including no licences screen. A
+         * future ornament tidy-up must not be able to do that again quietly, which is what
+         * `MapAttributionTest` is for.
+         */
+        const val ATTRIBUTION_ENABLED = true
+
+        /**
+         * Bottom left, the corner the OSM community conventionally uses and the one least
+         * likely to sit under a control: the compass and the scale bar take the top corners,
+         * and bottom right is where a floating action button would go.
+         */
+        val ATTRIBUTION_ALIGNMENT: Alignment = Alignment.BottomStart
+
         const val COMPASS_ENABLED = true
         const val SCALE_BAR_ENABLED = false
     }

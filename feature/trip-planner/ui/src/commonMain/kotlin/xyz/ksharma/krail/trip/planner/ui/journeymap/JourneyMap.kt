@@ -172,7 +172,7 @@ private fun JourneyMapContent(
                         padding = PaddingValues(MapConfig.Ornaments.DEFAULT_PADDING_DP.dp),
                         isLogoEnabled = MapConfig.Ornaments.LOGO_ENABLED,
                         isAttributionEnabled = MapConfig.Ornaments.ATTRIBUTION_ENABLED,
-                        attributionAlignment = Alignment.BottomEnd,
+                        attributionAlignment = MapConfig.Ornaments.ATTRIBUTION_ALIGNMENT,
                         isCompassEnabled = MapConfig.Ornaments.COMPASS_ENABLED,
                         compassAlignment = Alignment.TopEnd,
                         isScaleBarEnabled = MapConfig.Ornaments.SCALE_BAR_ENABLED,

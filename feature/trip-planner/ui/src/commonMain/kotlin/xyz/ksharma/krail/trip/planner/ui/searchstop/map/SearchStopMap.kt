@@ -47,6 +47,7 @@ import xyz.ksharma.krail.core.maps.state.NearbyStopsConfig
 import xyz.ksharma.krail.core.maps.state.UserLocationConfig
 import xyz.ksharma.krail.core.maps.ui.components.LocationPermissionBanner
 import xyz.ksharma.krail.core.maps.ui.components.MapTimetableDataBadge
+import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.ATTRIBUTION_ALIGNMENT
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.ATTRIBUTION_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.LOGO_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider.OPEN_FREE_MAP_LIBERTY
@@ -451,7 +452,7 @@ private fun MapSurface(
                         padding = PaddingValues(top = ornamentTopPadding),
                         isLogoEnabled = LOGO_ENABLED,
                         isAttributionEnabled = ATTRIBUTION_ENABLED,
-                        attributionAlignment = Alignment.BottomEnd,
+                        attributionAlignment = ATTRIBUTION_ALIGNMENT,
                         isCompassEnabled = mapState.mapDisplay.showCompass,
                         compassAlignment = Alignment.TopEnd,
                         isScaleBarEnabled = mapState.mapDisplay.showDistanceScale,

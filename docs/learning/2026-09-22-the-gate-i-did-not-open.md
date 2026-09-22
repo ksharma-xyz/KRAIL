@@ -110,7 +110,7 @@ full structural verdict, which is exactly what was missed here.
       after the push. The previous hook is kept at `.git/hooks/pre-push.lfs-only.bak`.
 - [x] `.git/hooks` is not tracked, so the hook was per-clone. It is now versioned at
       `scripts/git-hooks/pre-push` and installed by `scripts/install_git_hooks.sh`, which
-      `fullQualityChecks.sh` runs first. A clone that runs the gate once gets the hook. It
+      `scripts/fullQualityChecks.sh` runs first. A clone that runs the gate once gets the hook. It
       still does not use `core.hooksPath`, for the reason above: that would replace
       `.git/hooks` wholesale and orphan the git-lfs hooks.
 

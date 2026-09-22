@@ -390,14 +390,21 @@ adding a paragraph.
 
 ## The pre-push structural hook
 
-`.git/hooks` is not tracked, so install it once per clone:
+The hook is versioned at `scripts/git-hooks/pre-push`. `.git/hooks` is not tracked, so it is
+copied into place by:
 
 ```sh
-ln -sf ../../scripts/pre_push_structural_checks.sh .git/hooks/pre-push-structural
+./scripts/install_git_hooks.sh
 ```
 
-and call it from `.git/hooks/pre-push` **before** the existing `git lfs pre-push` line, which
-must stay: this repo keeps screenshots in LFS, and dropping it pushes pointers with no objects.
+`./scripts/fullQualityChecks.sh` runs that first, so a clone that has run the pre-PR gate once
+has the hook. It installs into the common git dir, which covers every worktree of the clone. It
+does not set `core.hooksPath`, which would replace a machine-wide hooks path instead of adding to
+it. Edit the versioned copy, never the installed one. The installer keeps any different hook it
+replaces as `<name>.bak`.
+
+The hook keeps the `git lfs pre-push` line, and it must stay: this repo keeps screenshots in LFS,
+and without it a push sends the pointers but not the objects.
 
 The hook runs only the four structural tasks (`verifyTestWiring`, `verifyTestingModuleUsage`,
 `verifyNoAdHocBoundaryFakes`, `verifyIosTestClassification`) and takes about two seconds. They

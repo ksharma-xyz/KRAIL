@@ -13,6 +13,10 @@ set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+# Idempotent and silent when nothing changed. Here so that any clone which runs the pre-PR
+# gate once also gets the pre-push hook, rather than depending on someone remembering to.
+./scripts/install_git_hooks.sh
+
 echo "▶ Layout invariants..."
 python3 scripts/check_layout_invariants.py
 

@@ -108,10 +108,11 @@ full structural verdict, which is exactly what was missed here.
       LFS, and a hook that replaced rather than extended it would push pointers with no
       objects behind them: a failure that surfaces as broken images for someone else, long
       after the push. The previous hook is kept at `.git/hooks/pre-push.lfs-only.bak`.
-- [ ] `.git/hooks` is not tracked, so the hook is per-clone. Install is one command, documented
-      in `CLAUDE.md`. Moving the repo to `core.hooksPath` would version it, but that disables
-      `.git/hooks` wholesale and every git-lfs hook would have to be ported at the same time,
-      which is a bigger change than this entry should make.
+- [x] `.git/hooks` is not tracked, so the hook was per-clone. It is now versioned at
+      `scripts/git-hooks/pre-push` and installed by `scripts/install_git_hooks.sh`, which
+      `fullQualityChecks.sh` runs first. A clone that runs the gate once gets the hook. It
+      still does not use `core.hooksPath`, for the reason above: that would replace
+      `.git/hooks` wholesale and orphan the git-lfs hooks.
 
 ## The transferable part
 

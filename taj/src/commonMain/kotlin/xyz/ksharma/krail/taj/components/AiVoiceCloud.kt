@@ -3,7 +3,6 @@ package xyz.ksharma.krail.taj.components
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.withInfiniteAnimationFrameMillis
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.padding
@@ -17,35 +16,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Outline
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import kotlin.math.PI
-import kotlin.math.abs
 import kotlin.math.cos
-import kotlin.math.pow
-import kotlin.math.sign
 import kotlin.math.sin
 
 /**
- * A cloud of the AI colours around a steady core, for a surface that is listening.
- *
- * The rings are the part that moves: soft blobs of [colors] drifting round the core's edge,
+ * A cloud of the AI colours, for a surface that is listening. The cloud IS the surface: there
+ * is no card or core under the content, only soft blobs of [colors] spread under all of it,
  * swelling with [voiceLevel] while the rider speaks, orbiting together while [orbiting], and
- * dimming to a whisper while [quiet]. The core is the part that does not. It is opaque in both
- * themes and its outline only breathes by a few percent, because the rider's words and the
- * surface's controls sit on it, and text on an edge that keeps changing shape is text that
- * cannot be read.
+ * dimming while [quiet].
+ *
+ * It had an opaque squircle core once, with the blobs ringing its edge. On a phone the core
+ * read as a dark slab and hid most of the colour, which was the whole point of the surface.
+ * Every blob has no edge of its own, so the cloud has no outline that could move under text.
  *
  * Drawn the way [CloudGradientBackground] is, for the same reasons: three-stop radial blobs
  * with no `Modifier.blur`, and one draw lambda re-run per frame.
@@ -70,7 +58,6 @@ fun AiVoiceCloud(
     reduceMotion: Boolean = false,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    val coreColor = KrailTheme.colors.surface
     val peakAlpha = if (isAppInDarkMode()) DARK_PEAK_ALPHA else LIGHT_PEAK_ALPHA
     val strength by animateFloatAsState(
         targetValue = when {
@@ -117,16 +104,7 @@ fun AiVoiceCloud(
             .padding(RingSpace),
         contentAlignment = Alignment.Center,
     ) {
-        Box(
-            modifier = Modifier
-                .graphicsLayer {
-                    shape = CloudCoreShape(phase = clock.time.floatValue)
-                    clip = true
-                }
-                .background(coreColor),
-            contentAlignment = Alignment.Center,
-            content = content,
-        )
+        content()
     }
 }
 
@@ -161,9 +139,12 @@ private fun DrawScope.drawRings(
     if (colors.isEmpty()) return
     val centre = Offset(size.width / 2f, size.height / 2f)
     val blobRadius = size.minDimension * (BLOB_RADIUS_FRAC + BLOB_ENERGY_GAIN * energy)
-    colors.forEachIndexed { index, color ->
+    // Each colour twice, on opposite sides, so a wide surface is covered end to end rather
+    // than lit in four patches.
+    val blobs = colors + colors
+    blobs.forEachIndexed { index, color ->
         val seed = index.toFloat()
-        val home = seed / colors.size * TWO_PI
+        val home = seed / blobs.size * TWO_PI
         val drift = DRIFT_RADIANS * sin(time * TWO_PI / (BASE_PERIOD_SECONDS + seed * PERIOD_STEP_SECONDS))
         val angle = home + drift + orbitAngle
         val reach = RING_REACH + RING_REACH_WOBBLE * cos(time * TWO_PI / (BREATHE_SECONDS + seed))
@@ -187,57 +168,25 @@ private fun DrawScope.drawRings(
     }
 }
 
-/**
- * A squircle whose edge breathes by a few percent.
- *
- * A superellipse rather than a rounded rectangle, so the corners read as soft rather than as
- * a card; a wobble that small, so the rider's words never meet the moving edge. The wobble is
- * two low-frequency waves on coprime cycles, so the outline never visibly repeats.
- */
-private class CloudCoreShape(private val phase: Float) : Shape {
-    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
-        val path = Path()
-        val halfWidth = size.width / 2f
-        val halfHeight = size.height / 2f
-        for (step in 0..OUTLINE_STEPS) {
-            val theta = step.toFloat() / OUTLINE_STEPS * TWO_PI
-            // Inward only, between 1 - CORE_WOBBLE and 1. The core's fill is its own bounds, so
-            // an outward bulge would show nothing and read as a flat spot.
-            val waves = (
-                sin(theta * WOBBLE_LOBES_A + phase * WOBBLE_SPEED_A) +
-                    sin(theta * WOBBLE_LOBES_B - phase * WOBBLE_SPEED_B)
-                ) / 2f
-            val wobble = 1f - CORE_WOBBLE * (1f + waves) / 2f
-            val c = cos(theta)
-            val s = sin(theta)
-            val x = halfWidth + halfWidth * wobble * sign(c) * abs(c).pow(SUPERELLIPSE_POWER)
-            val y = halfHeight + halfHeight * wobble * sign(s) * abs(s).pow(SUPERELLIPSE_POWER)
-            if (step == 0) path.moveTo(x, y) else path.lineTo(x, y)
-        }
-        path.close()
-        return Outline.Generic(path)
-    }
-}
-
-// Room around the core for the rings to show in. The core is laid out inside it, so the rings
-// never sit under the rider's words.
+// Room around the content for the cloud's soft edge, so the colour fades out past the words
+// rather than stopping at them.
 private val RingSpace = 28.dp
 
 private const val TWO_PI = (2 * PI).toFloat()
 private const val MILLIS_PER_SECOND = 1_000f
 private const val MAX_FRAME_SECONDS = 0.1f
 
-private const val LIGHT_PEAK_ALPHA = 0.7f
-private const val DARK_PEAK_ALPHA = 0.55f
+private const val LIGHT_PEAK_ALPHA = 0.55f
+private const val DARK_PEAK_ALPHA = 0.5f
 private const val MID_ALPHA_RATIO = 0.45f
 private const val BLOB_MID_STOP = 0.45f
 private const val QUIET_STRENGTH = 0.35f
 private const val ORBIT_STRENGTH = 1.15f
 private const val STRENGTH_MILLIS = 500
 
-private const val BLOB_RADIUS_FRAC = 0.42f
-private const val BLOB_ENERGY_GAIN = 0.16f
-private const val RING_REACH = 0.62f
+private const val BLOB_RADIUS_FRAC = 0.5f
+private const val BLOB_ENERGY_GAIN = 0.18f
+private const val RING_REACH = 0.42f
 private const val RING_REACH_WOBBLE = 0.06f
 private const val DRIFT_RADIANS = 0.35f
 private const val BASE_PERIOD_SECONDS = 9f
@@ -249,11 +198,3 @@ private const val ORBIT_EASE_PER_SECOND = 3f
 private const val LEVEL_RISE_PER_SECOND = 14f
 private const val LEVEL_FALL_PER_SECOND = 3f
 
-// 2 / n for a superellipse of order n; 0.5 is n = 4, a squircle.
-private const val SUPERELLIPSE_POWER = 0.5f
-private const val OUTLINE_STEPS = 96
-private const val CORE_WOBBLE = 0.025f
-private const val WOBBLE_LOBES_A = 3f
-private const val WOBBLE_LOBES_B = 2f
-private const val WOBBLE_SPEED_A = 0.7f
-private const val WOBBLE_SPEED_B = 0.45f

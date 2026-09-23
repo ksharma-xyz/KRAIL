@@ -357,14 +357,7 @@ class AiSearchInputViewModel(
                     }
 
                     is SpeechToTextResult.Error -> {
-                        // Android can end a session with no match AFTER partials have already
-                        // landed. The words the rider watched arrive are still their sentence,
-                        // so that ending is just the end, not "didn't catch that" over it.
-                        val heardSomething = result.reason == SpeechUnavailableReasons.NO_RESULT &&
-                            _uiState.value.speechTranscript.isNotBlank()
-                        _uiState.update {
-                            if (heardSomething) it.copy(isListening = false) else it.withSpeechProblem(result.reason)
-                        }
+                        _uiState.update { it.withSessionError(result.reason) }
                         logOutcome(reason = "speech_error")
                     }
                 }
@@ -651,3 +644,15 @@ internal fun AiSearchInputUiState.withSpeechProblem(reason: String): AiSearchInp
         isSpeechAvailable = isSpeechAvailable && !phoneCannotListen,
     )
 }
+
+/**
+ * A listening session ended in an error. Android can end one with no match AFTER partials have
+ * already landed; the words the rider watched arrive are still their sentence, so that ending
+ * is just the end, not "didn't catch that" written over it.
+ */
+internal fun AiSearchInputUiState.withSessionError(reason: String): AiSearchInputUiState =
+    if (reason == SpeechUnavailableReasons.NO_RESULT && speechTranscript.isNotBlank()) {
+        copy(isListening = false)
+    } else {
+        withSpeechProblem(reason)
+    }

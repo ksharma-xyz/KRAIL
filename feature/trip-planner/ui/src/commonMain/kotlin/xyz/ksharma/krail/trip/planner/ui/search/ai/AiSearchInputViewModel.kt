@@ -16,6 +16,7 @@ import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.speechtotext.SpeechToTextAvailability
 import xyz.ksharma.krail.core.speechtotext.SpeechToTextResult
 import xyz.ksharma.krail.core.speechtotext.SpeechToTextService
+import xyz.ksharma.krail.core.speechtotext.SpeechUnavailableReasons
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.RiderOriginLocator
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.StopTextResolver
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
@@ -173,14 +174,15 @@ class AiSearchInputViewModel(
                 )
             }
 
-            AiSearchInputEvent.MicPermissionDenied ->
-                _uiState.update { it.copy(isListening = false, speechUnavailableReason = MIC_DENIED) }
+            AiSearchInputEvent.MicPermissionDenied -> _uiState.update {
+                it.copy(isListening = false, speechUnavailableReason = MIC_DENIED, listenOnOpenPending = false)
+            }
 
-            AiSearchInputEvent.MicPermissionBlocked ->
-                _uiState.update { it.copy(isListening = false, speechUnavailableReason = MIC_NEEDS_SETTINGS) }
+            AiSearchInputEvent.MicPermissionBlocked -> _uiState.update {
+                it.copy(isListening = false, speechUnavailableReason = MIC_NEEDS_SETTINGS, listenOnOpenPending = false)
+            }
 
-            AiSearchInputEvent.SpeechUnsupported ->
-                _uiState.update { it.copy(isListening = false, speechUnavailableReason = MIC_UNSUPPORTED) }
+            AiSearchInputEvent.SpeechUnsupported -> _uiState.update { it.withSpeechProblem(MIC_UNSUPPORTED) }
             // Guarded as well as hidden. The button is gone when the feature is off, so this
             // can only be reached by a caller that has not been told; opening a sheet whose
             // only action is inert is the failure this is here to prevent.
@@ -198,6 +200,8 @@ class AiSearchInputViewModel(
                         isInputOpen = enabled,
                         isFeatureEnabled = enabled,
                         isDeviceCapable = isDeviceCapable,
+                        isSpeechAvailable = it.isSpeechAvailable,
+                        listenOnOpenPending = enabled,
                     )
                 }
             }
@@ -211,6 +215,7 @@ class AiSearchInputViewModel(
                     AiSearchInputUiState(
                         isFeatureEnabled = it.isFeatureEnabled,
                         isDeviceCapable = isDeviceCapable,
+                        isSpeechAvailable = it.isSpeechAvailable,
                     )
                 }
             }
@@ -241,6 +246,7 @@ class AiSearchInputViewModel(
             AiSearchInputUiState(
                 isFeatureEnabled = it.isFeatureEnabled,
                 isDeviceCapable = isDeviceCapable,
+                isSpeechAvailable = it.isSpeechAvailable,
             )
         }
     }
@@ -268,11 +274,12 @@ class AiSearchInputViewModel(
         }
         listeningJob = null
         listeningTimeoutJob?.cancel()
+        _uiState.update { it.copy(listenOnOpenPending = false) }
 
         listeningJob = viewModelScope.launch {
             val availability = speechToTextService.checkAvailability()
             if (availability is SpeechToTextAvailability.Unavailable) {
-                _uiState.update { it.copy(speechUnavailableReason = availability.reason) }
+                _uiState.update { it.withSpeechProblem(availability.reason) }
                 logOutcome(reason = "speech_unavailable")
                 return@launch
             }
@@ -350,7 +357,7 @@ class AiSearchInputViewModel(
                     }
 
                     is SpeechToTextResult.Error -> {
-                        _uiState.update { it.copy(isListening = false, speechUnavailableReason = result.reason) }
+                        _uiState.update { it.withSpeechProblem(result.reason) }
                         logOutcome(reason = "speech_error")
                     }
                 }
@@ -617,3 +624,23 @@ private fun TripIntentExtraction.namesAPlace(): Boolean =
 
 private fun ResolvedTripIntent.firstNamedPlace(): String? =
     listOfNotNull(toText, fromText).firstOrNull { it.isNotBlank() }
+
+/**
+ * A speech problem, and whether it is a verdict on the phone.
+ *
+ * Most are about this attempt: a refused microphone, a session that heard nothing. Two are
+ * about the phone, and it will not be able to listen next time either: no recogniser, or a
+ * microphone the device itself restricts. For those the message stays on the open surface and
+ * the way in goes, because on a surface that only listens the mic is now a button that can only
+ * fail. [AiSearchInputUiState.isSpeechAvailable] survives every reset because each one copies
+ * it forward.
+ */
+internal fun AiSearchInputUiState.withSpeechProblem(reason: String): AiSearchInputUiState {
+    val phoneCannotListen = reason == SpeechUnavailableReasons.NOT_AVAILABLE || reason == MIC_UNSUPPORTED
+    return copy(
+        isListening = false,
+        speechUnavailableReason = reason,
+        listenOnOpenPending = false,
+        isSpeechAvailable = isSpeechAvailable && !phoneCannotListen,
+    )
+}

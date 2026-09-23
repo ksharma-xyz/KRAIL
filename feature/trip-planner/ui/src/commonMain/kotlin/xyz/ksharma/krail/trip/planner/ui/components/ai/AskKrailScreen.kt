@@ -173,6 +173,10 @@ fun AskKrailScreen(
     val fontScale = LocalDensity.current.fontScale
     val asDialog = fontScale < ACTIONS_STACK_SCALE
 
+    // Both presentations listen on open, so the effect lives above the split rather than in
+    // each of them.
+    ListenOnOpenEffect(state = state, onEvent = onEvent)
+
     val textFieldState = rememberTextFieldState()
     LaunchedEffect(state.typedText) {
         if (state.typedText != textFieldState.text.toString()) {
@@ -614,6 +618,7 @@ internal fun AiDialogContent(
                 )
             }
         }
+        AiSpeechProblemAction(state = state, onEvent = onEvent)
 
         // Theme wash, not grey: see FIELD_TINT_*'s comment for why grey fails in both modes.
         val fieldTintAlpha = if (isAppInDarkMode()) FIELD_TINT_DARK_ALPHA else FIELD_TINT_LIGHT_ALPHA

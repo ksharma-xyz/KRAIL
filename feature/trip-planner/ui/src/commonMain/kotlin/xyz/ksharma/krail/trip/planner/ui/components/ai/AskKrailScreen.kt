@@ -92,10 +92,9 @@ private const val PARTIAL_PULSE_MILLIS = 600
 
 // One line of hint or one busy word, in a slot that never changes height so the field below
 // never moves. Two lines of bodyMedium fit; anything longer ellipsises.
-private val DialogStatusLineHeight = 44.dp
 private val DialogStatusWheelSize = 18.dp
 private const val STATUS_LINE_FADE_MILLIS = 200
-private const val DIALOG_LISTENING_WORD = "Listening"
+private const val DIALOG_LISTENING_WORD = "Listening…"
 
 // "Thinking", not "Working it out": shorter, and it reads as the app considering the sentence
 // rather than labouring over it.
@@ -460,31 +459,15 @@ internal fun AiDialogContent(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(dim.spacingL),
     ) {
-        // Title centred in the full width, close button laid over the end of it rather than
-        // in a Row beside it, so the button does not shift the name off centre.
+        // No title. "Ask KRAIL" named a surface the rider had just opened with its own mic, and
+        // it was the largest text on a cloud whose job is one sentence.
         //
-        // iOS only, and that is the whole reason it exists. A Compose dialog on iOS has no
-        // back press and no swipe, so before the scrim tap below it there was no way out of
-        // this card at all; a drawn control is what makes the way out discoverable rather
-        // than something a rider has to think to try. Android already has the system back
-        // gesture, so there the scrim tap is the addition and a second control would be
-        // clutter on a card this small.
-        Box(modifier = Modifier.fillMaxWidth()) {
-            val showsCloseButton = getAppPlatformType() == DevicePlatformType.IOS
-            Text(
-                text = AI_INPUT_QUESTION,
-                style = KrailTheme.typography.titleMedium,
-                color = KrailTheme.colors.onSurface,
-                textAlign = TextAlign.Center,
-                // Cleared past the button, so a title long enough to wrap wraps instead of
-                // running under it. Symmetric so the name stays centred, and only claimed
-                // where there is a button to clear.
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = if (showsCloseButton) dim.spacingXXL else dim.spacingNone)
-                    .padding(top = dim.spacingM),
-            )
-            if (showsCloseButton) {
+        // The close button stays, on iOS only, and that is the whole reason it exists. A Compose
+        // dialog on iOS has no back press and no swipe, so before the scrim tap there was no way
+        // out of this surface at all; a drawn control makes the way out discoverable. Android
+        // has the system back gesture, and a second control there would be clutter.
+        if (getAppPlatformType() == DevicePlatformType.IOS) {
+            Box(modifier = Modifier.fillMaxWidth()) {
                 Image(
                     imageVector = CloseIcon,
                     contentDescription = "Close",
@@ -493,9 +476,7 @@ internal fun AiDialogContent(
                         .align(Alignment.TopEnd)
                         .clip(CircleShape)
                         .klickable(onClick = onDismiss)
-                        // The padding is the touch target, not decoration: a 20dp glyph alone
-                        // is a quarter of what a finger needs, and this is the control a rider
-                        // reaches for when they have changed their mind.
+                        // The padding is the touch target, not decoration.
                         .padding(dim.spacingL)
                         .size(dim.iconSmall),
                 )
@@ -508,65 +489,45 @@ internal fun AiDialogContent(
         // nothing is happening. Success stays visible until the dialog closes onto the row —
         // it is the last thing the rider reads here, never the hint flashing back.
         val resolvedShowing = state.phase == AiSearchInputPhase.RESOLVED
-        val statusVisible = busyVisible || resolvedShowing
-        Box(
-            modifier = Modifier.fillMaxWidth().height(DialogStatusLineHeight),
-            contentAlignment = Alignment.Center,
+        // One short line or nothing. The example lives under "Listening" in the sentence slot
+        // (AiSpokenSentence) for the moment before words arrive; repeating it here once the
+        // rider has stopped was a third line saying what they had already done.
+        AnimatedVisibility(
+            visible = busyVisible || resolvedShowing,
+            enter = fadeIn(tween(STATUS_LINE_FADE_MILLIS)),
+            exit = fadeOut(tween(STATUS_LINE_FADE_MILLIS)),
+            modifier = Modifier.fillMaxWidth(),
         ) {
-            this@Column.AnimatedVisibility(
-                visible = statusVisible,
-                enter = fadeIn(tween(STATUS_LINE_FADE_MILLIS)),
-                exit = fadeOut(tween(STATUS_LINE_FADE_MILLIS)),
+            // The wheel beside the word, spinning in the shared rhythm. On resolve the same
+            // wheel decelerates to a stop: found is a wheel settling, not one switched off.
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(dim.spacingS, Alignment.CenterHorizontally),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                // The wheel beside the word, spinning in the shared rhythm: a bare word with
-                // no motion read as a stuck label rather than as thought happening. On
-                // resolve the same wheel decelerates to a stop — found is a wheel settling,
-                // not a wheel switched off.
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(dim.spacingS),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    AiWheelMark(
-                        spinning = busyVisible && !resolvedShowing,
-                        markSize = DialogStatusWheelSize,
-                        colors = AiThemeGradientTokens.stopsFor(themeColorHex),
-                    )
-                    val word = when {
-                        state.isListening -> DIALOG_LISTENING_WORD
-                        resolvedShowing -> DIALOG_FOUND_WORD
-                        else -> DIALOG_WORKING_WORD
-                    }
-                    AnimatedContent(
-                        targetState = word,
-                        transitionSpec = {
-                            fadeIn(tween(STATUS_LINE_FADE_MILLIS)) togetherWith
-                                fadeOut(tween(STATUS_LINE_FADE_MILLIS))
-                        },
-                    ) { targetWord ->
-                        Text(
-                            text = targetWord,
-                            style = KrailTheme.typography.bodyLarge,
-                            color = KrailTheme.colors.onSurface,
-                            textAlign = TextAlign.Center,
-                        )
-                    }
-                }
-            }
-            this@Column.AnimatedVisibility(
-                visible = !statusVisible,
-                enter = fadeIn(tween(STATUS_LINE_FADE_MILLIS)),
-                exit = fadeOut(tween(STATUS_LINE_FADE_MILLIS)),
-            ) {
-                // "Try" and quotes: a demonstration, not a prediction — same framing rule as
-                // the full screen's greeting, at caption size.
-                Text(
-                    text = "Try “$suggestion”",
-                    style = KrailTheme.typography.bodyMedium,
-                    color = KrailTheme.colors.secondaryLabel,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
+                AiWheelMark(
+                    spinning = busyVisible && !resolvedShowing,
+                    markSize = DialogStatusWheelSize,
+                    colors = AiThemeGradientTokens.stopsFor(themeColorHex),
                 )
+                val word = when {
+                    state.isListening -> DIALOG_LISTENING_WORD
+                    resolvedShowing -> DIALOG_FOUND_WORD
+                    else -> DIALOG_WORKING_WORD
+                }
+                AnimatedContent(
+                    targetState = word,
+                    transitionSpec = {
+                        fadeIn(tween(STATUS_LINE_FADE_MILLIS)) togetherWith
+                            fadeOut(tween(STATUS_LINE_FADE_MILLIS))
+                    },
+                ) { targetWord ->
+                    Text(
+                        text = targetWord,
+                        style = KrailTheme.typography.bodyLarge,
+                        color = KrailTheme.colors.onSurface,
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
         }
 

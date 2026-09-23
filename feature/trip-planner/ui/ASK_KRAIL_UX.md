@@ -148,6 +148,23 @@ commute exactly as `Work` does. Two lists would have drifted the moment one gain
 
 ## 6. Speaking
 
+- **The surface listens as it opens.** The mic in the search row is the rider asking to speak,
+  so the surface does not make them find a second mic inside it. No focus and no keyboard on
+  open either: a keyboard over half the screen covered the thing telling them they were being
+  heard. The request is a flag in state (`listenOnOpenPending`), cleared by the first permission
+  outcome, so a rotation after they have finished speaking does not start the microphone again.
+- **Ask KRAIL is spoken, not typed.** A rider who wants to type a trip has the search screen.
+  The field stays only so a misheard word can be fixed before Send; tapping it brings the
+  keyboard up the ordinary way. No problem message says "you can still type".
+- **A refused microphone is asked again, never routed to typing.** Refused: the message says
+  why the mic is needed and an `Allow microphone` button asks the system again. Refused for
+  good: the same message and `Open Settings`. A session that heard nothing (`NO_RESULT`) says
+  so with `Try again`; it used to fall through to the permission message and tell a rider who
+  had granted the mic to grant it.
+- **A phone that cannot listen has no way in.** The first time it reports no recogniser, or a
+  mic the device restricts, `isSpeechAvailable` goes false, the message stays on the open
+  surface, and the row stops offering the mic from then on. It is learnt, not checked up front,
+  because on iOS the availability check is also what raises the speech permission prompt.
 - **Speech never submits.** It fills the field and stops. The recogniser deciding it has heard a
   full sentence is not the rider deciding they have finished saying one, and a mis-heard word
   was already on its way to a search before they could look at it. Send stays theirs to press.

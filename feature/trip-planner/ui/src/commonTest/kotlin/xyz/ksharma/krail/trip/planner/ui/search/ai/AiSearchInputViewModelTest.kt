@@ -17,6 +17,7 @@ import xyz.ksharma.krail.core.aitext.TripIntentExtraction
 import xyz.ksharma.krail.core.maps.data.model.NearbyStop
 import xyz.ksharma.krail.core.speechtotext.SpeechToTextAvailability
 import xyz.ksharma.krail.core.speechtotext.SpeechToTextResult
+import xyz.ksharma.krail.core.speechtotext.SpeechUnavailableReasons
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.ChainedStopTextResolver
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.RiderOriginLocator
@@ -575,6 +576,71 @@ class AiSearchInputViewModelTest {
         assertFalse(viewModel.uiState.value.isDeviceCapable)
         viewModel.onEvent(AiSearchInputEvent.CloseInput)
         assertFalse(viewModel.uiState.value.isDeviceCapable)
+    }
+
+    @Test
+    fun `opening the box asks to listen, once`() = runTest(testDispatcher) {
+        viewModel.onEvent(AiSearchInputEvent.OpenInput)
+        assertTrue(viewModel.uiState.value.listenOnOpenPending)
+
+        // The screen answers with the permission outcome. Once it has, a rotation must not
+        // find the request still pending and start the microphone again.
+        viewModel.onEvent(AiSearchInputEvent.StartListening)
+        assertFalse(viewModel.uiState.value.listenOnOpenPending)
+    }
+
+    @Test
+    fun `a refused microphone clears the request and leaves the way in`() = runTest(testDispatcher) {
+        viewModel.onEvent(AiSearchInputEvent.OpenInput)
+
+        viewModel.onEvent(AiSearchInputEvent.MicPermissionDenied)
+
+        assertFalse(viewModel.uiState.value.listenOnOpenPending)
+        assertEquals(MIC_DENIED, viewModel.uiState.value.speechUnavailableReason)
+        // Refused is not unable. The rider can still say yes, from the button that asks again.
+        assertTrue(viewModel.uiState.value.isWayInAvailable)
+    }
+
+    @Test
+    fun `a phone that cannot listen loses the way in, and keeps it lost`() = runTest(testDispatcher) {
+        viewModel.onEvent(AiSearchInputEvent.OpenInput)
+
+        viewModel.onEvent(AiSearchInputEvent.SpeechUnsupported)
+
+        // Still open, so the rider reads why.
+        assertTrue(viewModel.uiState.value.isInputOpen)
+        assertFalse(viewModel.uiState.value.isWayInAvailable)
+        viewModel.onEvent(AiSearchInputEvent.CloseInput)
+        assertFalse(viewModel.uiState.value.isWayInAvailable)
+        viewModel.onEvent(AiSearchInputEvent.StartOver)
+        assertFalse(viewModel.uiState.value.isWayInAvailable)
+    }
+
+    @Test
+    fun `no recogniser on the phone loses the way in`() = runTest(testDispatcher) {
+        speechToTextService.availability =
+            SpeechToTextAvailability.Unavailable(reason = SpeechUnavailableReasons.NOT_AVAILABLE)
+        viewModel.onEvent(AiSearchInputEvent.OpenInput)
+
+        viewModel.onEvent(AiSearchInputEvent.StartListening)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isSpeechAvailable)
+        assertFalse(viewModel.uiState.value.isWayInAvailable)
+    }
+
+    @Test
+    fun `a session that heard nothing is not a phone that cannot listen`() = runTest(testDispatcher) {
+        viewModel.onEvent(AiSearchInputEvent.OpenInput)
+        viewModel.onEvent(AiSearchInputEvent.StartListening)
+        runCurrent()
+
+        speechToTextService.results.emit(SpeechToTextResult.Error(SpeechUnavailableReasons.NO_RESULT))
+        runCurrent()
+
+        assertEquals(SpeechUnavailableReasons.NO_RESULT, viewModel.uiState.value.speechUnavailableReason)
+        assertFalse(viewModel.uiState.value.isListening)
+        assertTrue(viewModel.uiState.value.isWayInAvailable)
     }
 
     /**

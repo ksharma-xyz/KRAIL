@@ -11,16 +11,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.ColorFilter
-import kotlinx.coroutines.launch
-import xyz.ksharma.krail.core.speechtotext.MicPermissionOutcome
 import xyz.ksharma.krail.core.speechtotext.SpeechUnavailableReasons
 import xyz.ksharma.krail.core.speechtotext.rememberOpenAppSettings
-import xyz.ksharma.krail.core.speechtotext.rememberRequestMicrophonePermission
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.AiActivity
@@ -99,13 +95,13 @@ internal const val AI_INPUT_QUESTION = "Ask KRAIL"
 internal const val AI_INPUT_PLACEHOLDER = "Where to, and when?"
 
 /**
- * Speaking is behind an explicit tap rather than the surface opening into a live microphone:
- * taking the mic before the rider has said they want to speak is not something that can be
- * undone quietly.
+ * Stop while listening, speak again after. The surface starts listening by itself on open
+ * ([ListenOnOpenEffect]), because the mic that opened it was already the rider asking to speak;
+ * this is the control for everything after that first session.
  *
- * A refusal is answered, not swallowed. The first tap raises the system prompt; once the
- * system has stopped asking, the same button opens this app's settings page instead, so the
- * button never silently does nothing.
+ * A refusal is answered, not swallowed. A tap raises the system prompt; once the system has
+ * stopped asking, the same button opens this app's settings page instead, so the button never
+ * silently does nothing.
  */
 @Composable
 internal fun AiVoiceControl(
@@ -115,9 +111,8 @@ internal fun AiVoiceControl(
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
-    val requestMicPermission = rememberRequestMicrophonePermission()
+    val startListening = rememberStartListening(onEvent)
     val openAppSettings = rememberOpenAppSettings()
-    val coroutineScope = rememberCoroutineScope()
     // Listening counts as busy everywhere else, but this control is how a rider stops.
     val enabled = (state.isListening || !state.isBusy) && !state.isSpeechUnsupported
 
@@ -130,16 +125,7 @@ internal fun AiVoiceControl(
             // button doing nothing a second time.
             openAppSettings()
         } else {
-            coroutineScope.launch {
-                onEvent(
-                    when (requestMicPermission()) {
-                        MicPermissionOutcome.Granted -> AiSearchInputEvent.StartListening
-                        MicPermissionOutcome.Denied -> AiSearchInputEvent.MicPermissionDenied
-                        MicPermissionOutcome.NeedsSettings -> AiSearchInputEvent.MicPermissionBlocked
-                        MicPermissionOutcome.Restricted -> AiSearchInputEvent.SpeechUnsupported
-                    },
-                )
-            }
+            startListening()
         }
     }
 
@@ -237,11 +223,20 @@ internal fun AiSearchInputUiState.problemMessage(): String? = when {
         "KRAIL is still downloading the on device model. Try again in a moment."
     phase == AiSearchInputPhase.UNRESOLVED -> unresolvedMessage()
     speechUnavailableReason == null -> null
+    // No "you can still type" on any of these. Ask KRAIL is spoken; typing a trip is what the
+    // search screen is for, and pointing at a field here suggested this was a typing surface
+    // with a microphone attached.
     needsSettingsForMic ->
-        "Microphone is off for KRAIL. Tap the mic again to open Settings."
+        "The microphone is turned off for KRAIL. Turn it on in Settings, then come back."
     isSpeechUnsupported ->
-        "Speaking is not available on this device. You can still type."
-    else -> "KRAIL needs the microphone to hear you. You can still type."
+        "Speaking is not available on this phone. Tap the stops to plan a trip instead."
+    needsMicPermission ->
+        "Ask KRAIL works by listening, so it needs the microphone. It only listens while this is open."
+    // A session that heard nothing. It used to fall through to the permission line below it,
+    // telling a rider who had granted the microphone that they needed to grant it.
+    speechUnavailableReason == SpeechUnavailableReasons.NO_RESULT ->
+        "Didn't catch that. Say where you are going, like \"Home to Work by 9am\"."
+    else -> "That did not come through. Try again."
 }
 
 /**

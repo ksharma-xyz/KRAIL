@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.verticalScroll
@@ -133,6 +134,11 @@ internal fun AiInputContent(
         // cannot do the thing the message just told them to do is worse than no button, so the
         // message names the real route and the shortcut waits until it can point at it.
         state.problemMessage()?.let { AiProblemBanner(message = it) }
+        AiSpeechProblemAction(
+            state = state,
+            onEvent = onEvent,
+            modifier = Modifier.padding(top = dim.spacingL),
+        )
 
         // The banner and the box are two different things and used to sit close enough to read
         // as one block.

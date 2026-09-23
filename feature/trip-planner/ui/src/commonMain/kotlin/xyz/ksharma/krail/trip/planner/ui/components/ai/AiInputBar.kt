@@ -20,17 +20,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.TextField
@@ -109,17 +104,12 @@ internal fun AiInputBar(
     val themeColorHex by LocalThemeColor.current
     val workingBorder = rememberWorkingBorder(isWorking = state.isWorking)
     val hasText = textFieldState.text.isNotBlank()
-    val focusRequester = remember { FocusRequester() }
-    val keyboard = LocalSoftwareKeyboardController.current
 
-    // Opens with the caret already in the field and the keyboard up, the way SearchStopScreen
-    // does. This surface exists to be typed or spoken into: making a rider tap a field that is
-    // the only thing on the screen is a step that asks them to confirm what they already said
-    // by opening it.
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-        keyboard?.show()
-    }
+    // No focus and no keyboard on open. It used to open with both, the way SearchStopScreen
+    // does, from when this surface was typed into first. It is spoken into now and starts
+    // listening by itself, and a keyboard rising over half the screen covered the thing
+    // telling the rider they were being heard. The field is still here to fix a word the
+    // recogniser got wrong: tapping it brings the keyboard up the ordinary way.
 
     Column(
         modifier = modifier
@@ -189,8 +179,7 @@ internal fun AiInputBar(
             // See docs/learning/2026-08-16-clipped-inside-its-own-parent.md.
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(weight = 1f, fill = false)
-                .focusRequester(focusRequester),
+                .weight(weight = 1f, fill = false),
             onTextChange = { onEvent(AiSearchInputEvent.TypedTextChanged(it.toString())) },
         )
 

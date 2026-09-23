@@ -38,6 +38,17 @@ enum class UnresolvedReason {
  * as [isFeatureEnabled], one layer down: the flag can be on for a rider whose phone has no
  * on-device AI, and for them the wheel was a button that always failed. True until the
  * asynchronous check says otherwise, so the button does not appear late on every launch.
+ * @param isSpeechAvailable Whether this phone can listen at all. Ask KRAIL is spoken, so a
+ * phone with no recogniser has no way in, and the mic that opens it is a button that can only
+ * fail. True until the phone says otherwise, and it only ever says so the first time the rider
+ * tries: asking up front is not free on iOS, where the availability check is also what raises
+ * the speech permission prompt, and a prompt at app launch for a feature nobody reached for is
+ * the wrong trade.
+ * @param listenOnOpenPending The dialog has just opened and has not yet asked to listen. The
+ * mic that opens this surface IS the request to speak, so the surface starts listening by
+ * itself rather than making the rider find a second mic. Held here, not as a one-off effect in
+ * the screen, so a rotation after the rider has finished speaking does not start them again:
+ * the first answer to the permission request clears it, whatever that answer was.
  */
 data class AiSearchInputUiState(
     val typedText: String = "",
@@ -52,18 +63,21 @@ data class AiSearchInputUiState(
     val unmatchedPlace: String? = null,
     val isFeatureEnabled: Boolean = false,
     val isDeviceCapable: Boolean = true,
+    val isSpeechAvailable: Boolean = true,
+    val listenOnOpenPending: Boolean = false,
 )
 
 /**
  * Whether to offer the way in at all. The flag says the feature is switched on for this rider;
- * [AiSearchInputUiState.isDeviceCapable] says their phone can actually run it.
+ * [AiSearchInputUiState.isDeviceCapable] says their phone can actually run it, and
+ * [AiSearchInputUiState.isSpeechAvailable] that it can hear them say anything.
  *
  * The gate used to be the flag alone, so on a device with no on-device AI the wheel rendered,
  * accepted a sentence, and failed every time. A button that always fails is worse than no
  * button, which is the same reason the flag reached the UI in the first place.
  */
 val AiSearchInputUiState.isWayInAvailable: Boolean
-    get() = isFeatureEnabled && isDeviceCapable
+    get() = isFeatureEnabled && isDeviceCapable && isSpeechAvailable
 
 /**
  * @param fromText / [toText] The raw extracted text, kept alongside the resolved stops so a

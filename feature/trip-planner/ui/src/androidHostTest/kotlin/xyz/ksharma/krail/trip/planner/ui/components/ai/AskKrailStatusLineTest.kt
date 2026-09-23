@@ -17,8 +17,9 @@ import xyz.ksharma.krail.trip.planner.ui.search.ai.UnresolvedReason
 
 /**
  * The dialog's status line has exactly one voice at a time, and the order of precedence is
- * the contract: resolved beats busy, busy beats the hint, and the hint only ever holds the
- * stage when nothing is happening.
+ * the contract: resolved beats busy, and when nothing is happening there is no line at all.
+ * The "Try" example is shown only while listening before any words arrive, under the status
+ * line; it never comes back once the rider has spoken or something has failed.
  *
  * The regression that motivates this: the working border keeps turning for a beat after the
  * answer, then stops — and the busy word used to leave with it, so the "Try …" hint flashed
@@ -53,10 +54,11 @@ class AskKrailStatusLineTest {
     }
 
     @Test
-    fun idle_showsTheHintAndNothingElse() {
+    fun idle_showsNoStatusAndNoHint() {
         setContent(AiSearchInputUiState(isInputOpen = true), busyVisible = false)
 
-        composeRule.onNodeWithText(SUGGESTION, substring = true).assertExists()
+        composeRule.onNodeWithText(SUGGESTION, substring = true).assertDoesNotExist()
+        composeRule.onNodeWithText(LISTENING).assertDoesNotExist()
         composeRule.onNodeWithText(THINKING).assertDoesNotExist()
         composeRule.onNodeWithText(FOUND).assertDoesNotExist()
     }
@@ -81,6 +83,8 @@ class AskKrailStatusLineTest {
 
         composeRule.onNodeWithText(LISTENING).assertExists()
         composeRule.onNodeWithText(THINKING).assertDoesNotExist()
+        // Before the first word, the example sits under the status line.
+        composeRule.onNodeWithText(SUGGESTION, substring = true).assertExists()
     }
 
     @Test
@@ -109,7 +113,7 @@ class AskKrailStatusLineTest {
     }
 
     @Test
-    fun unresolved_bringsTheHintBackAlongsideTheProblem() {
+    fun unresolved_showsTheProblemWithoutTheHint() {
         setContent(
             AiSearchInputUiState(
                 isInputOpen = true,
@@ -120,13 +124,13 @@ class AskKrailStatusLineTest {
         )
 
         composeRule.onNodeWithText("did not come through", substring = true).assertExists()
-        composeRule.onNodeWithText(SUGGESTION, substring = true).assertExists()
+        composeRule.onNodeWithText(SUGGESTION, substring = true).assertDoesNotExist()
     }
 
     private companion object {
         const val SUGGESTION = "Home to Work by 9am"
         const val THINKING = "Thinking…"
         const val FOUND = "Found it"
-        const val LISTENING = "Listening"
+        const val LISTENING = "Listening…"
     }
 }

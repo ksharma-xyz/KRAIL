@@ -154,7 +154,7 @@ jobs:
       - name: Set up Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '~27'
+          xcode-version: '27.0'  # exact: '~27' also matches the 27.1 beta installed on the image
 
       - name: Setup environment variables
         run: |

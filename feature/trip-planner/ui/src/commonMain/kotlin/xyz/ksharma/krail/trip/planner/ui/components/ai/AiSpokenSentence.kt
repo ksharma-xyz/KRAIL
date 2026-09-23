@@ -57,20 +57,12 @@ internal fun AiSpokenSentence(
                     .klickable(enabled = !state.isBusy, onClick = onStartEditing)
                     .padding(dim.spacingS),
             )
-            if (!state.isBusy) {
-                Text(
-                    text = EDIT_HINT,
-                    style = KrailTheme.typography.bodySmall,
-                    color = KrailTheme.colors.secondaryLabel,
-                    textAlign = TextAlign.Center,
-                )
-            }
         } else if (state.isListening) {
             // The status line says Listening, so the example moves down here for the few
             // seconds before the first word arrives. "Try" and quotes: a demonstration.
             Text(
                 text = "Try “$suggestion”",
-                style = KrailTheme.typography.bodyMedium,
+                style = KrailTheme.typography.bodySmall,
                 color = KrailTheme.colors.secondaryLabel,
                 textAlign = TextAlign.Center,
             )
@@ -95,4 +87,3 @@ internal fun AiSpokenSentence(
     }
 }
 
-private const val EDIT_HINT = "Tap the words to change them"

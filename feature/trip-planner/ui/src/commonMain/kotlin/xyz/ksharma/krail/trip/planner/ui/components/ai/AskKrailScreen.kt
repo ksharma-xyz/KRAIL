@@ -3,9 +3,10 @@ package xyz.ksharma.krail.trip.planner.ui.components.ai
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -32,7 +33,6 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
@@ -42,29 +42,27 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.lerp
-import androidx.compose.ui.util.lerp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import xyz.ksharma.krail.core.appinfo.DevicePlatformType
 import xyz.ksharma.krail.core.appinfo.getAppPlatformType
 import xyz.ksharma.krail.taj.LocalThemeColor
+import xyz.ksharma.krail.taj.components.AiVoiceCloud
 import xyz.ksharma.krail.taj.components.AiWheelMark
 import xyz.ksharma.krail.taj.components.CloseIcon
 import xyz.ksharma.krail.taj.components.CloudFieldSpec
@@ -72,8 +70,8 @@ import xyz.ksharma.krail.taj.components.CloudGradientBackground
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.hexToComposeColor
-import xyz.ksharma.krail.taj.modifier.aiGradientBorder
 import xyz.ksharma.krail.taj.modifier.klickable
+import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.taj.tokens.AiThemeGradientTokens
@@ -83,32 +81,14 @@ import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
 import kotlin.math.max
 
 private val DialogWidth = 420.dp
-private val DialogCornerRadius = 28.dp
 
-// The ring at rest. Strong enough to read as the surface's own colour against either theme's
-// scrim, quiet enough that the working state still has somewhere to go when it lifts to full.
-private const val DIALOG_BORDER_REST_ALPHA = 0.55f
+// The edit field's ring while the rider types. Quiet enough that the working state, when they
+// send, still has somewhere to go.
+private const val FIELD_BORDER_REST_ALPHA = 0.55f
 
-// The ring at rest and the ring at work. Half thickness while nothing is happening — at 6dp a
-// resting border read as permanently excited — and the full stroke while listening, thinking
-// or showing the answer, animated between the two so the lift reads as the card waking up.
-private val DialogBorderStrokeRest = 3.dp
-private val DialogBorderStroke = 6.dp
-private const val DIALOG_EMPHASIS_MILLIS = 300
-
-// The glow behind the card: the same gradient as the ring, blurred out as a drop shadow.
-// InfoTile's drop shadow is one flat theme colour; here the halo carries both pair colours,
-// so the card reads as lit by its own border rather than sitting on a grey smudge.
-private val DialogGlowRadius = 24.dp
-private val DialogGlowSpread = 2.dp
-
-// Half strength at rest, full while the surface is alive (listening, thinking, found).
-private const val DIALOG_GLOW_REST_ALPHA = 0.3f
-
-// One full turn of the border paint while working. Deliberately quicker than
-// AiSpinDefaults.SPIN_DURATION_MILLIS: on the wheel mark and the alert card the spin is an
-// accent, here it is the whole working state, and at the shared speed it read as idling.
-private const val DIALOG_SPIN_DURATION_MILLIS = 2_200
+// A new partial transcript swells the cloud this far, then lets go.
+private const val PARTIAL_PULSE_PEAK = 0.7f
+private const val PARTIAL_PULSE_MILLIS = 600
 
 // One line of hint or one busy word, in a slot that never changes height so the field below
 // never moves. Two lines of bodyMedium fit; anything longer ellipsises.
@@ -169,6 +149,7 @@ fun AskKrailScreen(
     onEvent: (AiSearchInputEvent) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    voiceLevel: () -> Float = { 0f },
 ) {
     val fontScale = LocalDensity.current.fontScale
     val asDialog = fontScale < ACTIONS_STACK_SCALE
@@ -189,6 +170,7 @@ fun AskKrailScreen(
             state = state,
             textFieldState = textFieldState,
             suggestion = suggestion,
+            voiceLevel = voiceLevel,
             onEvent = onEvent,
             onDismiss = onDismiss,
             modifier = modifier,
@@ -306,17 +288,19 @@ private fun AskKrailFullScreen(
  * authority; without it the two mechanisms run at once, which is the jumping this pattern is
  * known for.
  *
- * The AI gradient is the dialog's own border: present at a low alpha from the moment it opens
- * (this surface's identity, the same pair the wheel that opened it wears), and brought to full
- * strength and spun while a sentence is being worked out. The border used to live on the input
- * bar inside; on a card this small two nested rings read as clutter, so the frame wears it and
- * the bar stays plain (see [AiInputBar]'s `showWorkingBorder`).
+ * A cloud of the AI colours around a steady core ([AiVoiceCloud]), not a card with a border.
+ * The surface listens as it opens, and a card's border had nothing to say while it did; rings
+ * that swell with the rider's voice say "I can hear you" without a word. They orbit while a
+ * sentence is worked out, which is the job the spinning border did, and go quiet while a
+ * problem is on screen. Only one working surface runs at a time: once the rider is editing, the
+ * field wears the spinning border and the rings stay out of it.
  */
 @Composable
 private fun AskKrailDialog(
     state: AiSearchInputUiState,
     textFieldState: TextFieldState,
     suggestion: String,
+    voiceLevel: () -> Float,
     onEvent: (AiSearchInputEvent) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
@@ -324,18 +308,10 @@ private fun AskKrailDialog(
     val dim = KrailTheme.dimensions
     val themeColorHex by LocalThemeColor.current
     val workingBorder = rememberWorkingBorder(isWorking = state.isWorking)
-    val gradientColors = AiThemeGradientTokens.stopsFor(themeColorHex)
-    val glowBrush = remember(gradientColors) { Brush.linearGradient(gradientColors) }
-
-    // How awake the frame is, 0 at rest and 1 while the surface is alive: listening, showing
-    // the answer, or anywhere inside the working border's own arc (which already fades itself
-    // in and out). Stroke width and glow both ride this one value so they move together.
-    val stateEmphasis by animateFloatAsState(
-        targetValue = if (state.isListening || state.phase == AiSearchInputPhase.RESOLVED) 1f else 0f,
-        animationSpec = tween(durationMillis = DIALOG_EMPHASIS_MILLIS),
-        label = "askKrailDialogEmphasis",
-    )
-    val emphasis = max(stateEmphasis, workingBorder.alpha)
+    // Saveable, so a rotation mid-edit keeps the keyboard's field rather than folding it back
+    // to text. Reset by leaving composition, which is what closing the dialog does.
+    var editing by rememberSaveable { mutableStateOf(false) }
+    val partialPulse = rememberPartialPulse(transcript = state.speechTranscript)
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -345,7 +321,7 @@ private fun AskKrailDialog(
         // dialog window is left with its defaults.
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-        // Enter and exit animate scale and alpha only. Both are draw properties, so the card is
+        // Enter and exit animate scale and alpha only. Both are draw properties, so the cloud is
         // measured once at its final size and nothing reflows mid animation.
         val visibleState = remember { MutableTransitionState(false).apply { targetState = true } }
 
@@ -354,7 +330,7 @@ private fun AskKrailDialog(
         // Compose Multiplatform decides "outside" geometrically: the dialog layer's
         // boundsInWindow is set to the MEASURED SIZE OF THIS CONTENT, and only pointers
         // landing outside that rectangle reach the outside-pointer listener that calls
-        // onDismissRequest. This content fills the window (it has to, to centre the card and
+        // onDismissRequest. This content fills the window (it has to, to centre the cloud and
         // own the keyboard inset), so the bounds were the whole screen and no tap was ever
         // outside anything. Android got away with it because a Compose dialog there is a real
         // platform window with a working back press; iOS has neither, so the card was a room
@@ -384,71 +360,73 @@ private fun AskKrailDialog(
                     animationSpec = tween(EXIT_MILLIS),
                 ),
             ) {
-                Column(
+                AiVoiceCloud(
+                    colors = AiThemeGradientTokens.stopsFor(themeColorHex),
+                    voiceLevel = { max(voiceLevel(), partialPulse.value) },
+                    orbiting = workingBorder.spinning && !editing,
+                    quiet = state.problemMessage() != null && !state.isListening,
+                    reduceMotion = isReduceMotionEnabled(),
                     modifier = modifier
-                        // The card is not the scrim. Without this, a tap on the card's own
-                        // padding travels up to the dismiss handler on the box behind it and
-                        // closes the surface the rider was reaching for. detectTapGestures
-                        // rather than a no-op clickable so nothing announces the card itself
+                        // The cloud is not the scrim. Without this, a tap on the rings or the
+                        // core's padding travels up to the dismiss handler on the box behind it
+                        // and closes the surface the rider was reaching for. detectTapGestures
+                        // rather than a no-op clickable so nothing announces the cloud itself
                         // as a control.
                         .pointerInput(Unit) { detectTapGestures { } }
                         // Fixed on a tablet, edge-margined on a phone: the padding narrows the
                         // incoming constraint first, then widthIn caps what fillMaxWidth may
-                        // take, so a phone gets the screen minus its margins and anything wider
-                        // gets the same card a tablet always had.
+                        // take.
                         .padding(horizontal = dim.pageHorizontalPadding)
                         .widthIn(max = DialogWidth)
-                        .fillMaxWidth()
-                        // Before clip, like InfoTile: the shadow draws outside the card's own
-                        // bounds. It brightens with the border, so "working" is one light
-                        // getting stronger rather than two separate effects.
-                        .dropShadow(
-                            shape = RoundedCornerShape(DialogCornerRadius),
-                            shadow = Shadow(
-                                radius = DialogGlowRadius,
-                                brush = glowBrush,
-                                spread = DialogGlowSpread,
-                                alpha = lerp(DIALOG_GLOW_REST_ALPHA, 1f, emphasis),
-                            ),
-                        )
-                        .clip(RoundedCornerShape(DialogCornerRadius))
-                        .background(KrailTheme.colors.surface)
-                        .aiGradientBorder(
-                            spinning = workingBorder.spinning,
-                            cornerRadius = DialogCornerRadius,
-                            strokeWidth = lerp(DialogBorderStrokeRest, DialogBorderStroke, emphasis),
-                            colors = gradientColors,
-                            // Never zero: at rest the ring is the surface's identity at a
-                            // whisper, and emphasis raises it to full while the surface is
-                            // alive, handing it back down as the work settles.
-                            alpha = lerp(DIALOG_BORDER_REST_ALPHA, 1f, emphasis),
-                            spinDurationMillis = DIALOG_SPIN_DURATION_MILLIS,
-                        )
-                        // After the drawing modifiers, before the content: the shadow, clip,
-                        // background and ring all sit outside this node, so when the content
-                        // changes height (a banner arriving, a sentence gaining a line) they
-                        // follow the eased size instead of snapping to the new one.
-                        .animateContentSize(
-                            animationSpec = tween(
-                                durationMillis = DIALOG_RESIZE_MILLIS,
-                                easing = FastOutSlowInEasing,
-                            ),
-                        )
-                        .padding(dim.spacingXL),
-                    verticalArrangement = Arrangement.spacedBy(dim.spacingL),
+                        .fillMaxWidth(),
                 ) {
-                    AiDialogContent(
-                        state = state,
-                        textFieldState = textFieldState,
-                        suggestion = suggestion,
-                        busyVisible = state.isListening || workingBorder.spinning,
-                        onEvent = onEvent,
-                        onDismiss = onDismiss,
-                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            // Inside the core, so the core follows the eased size when a
+                            // banner arrives or the sentence gains a line.
+                            .animateContentSize(
+                                animationSpec = tween(
+                                    durationMillis = DIALOG_RESIZE_MILLIS,
+                                    easing = FastOutSlowInEasing,
+                                ),
+                            )
+                            .padding(dim.spacingXL),
+                        verticalArrangement = Arrangement.spacedBy(dim.spacingL),
+                    ) {
+                        AiDialogContent(
+                            state = state,
+                            textFieldState = textFieldState,
+                            suggestion = suggestion,
+                            busyVisible = state.isListening || workingBorder.spinning,
+                            editing = editing,
+                            onStartEditing = { editing = true },
+                            onEvent = onEvent,
+                            onDismiss = onDismiss,
+                        )
+                    }
                 }
             }
         }
     }
+}
+
+/**
+ * A short swell each time new words arrive, for platforms that cannot report a voice level.
+ * Words only ever arrive while someone is speaking, so the cloud still answers the rider when
+ * [SpeechToTextService.voiceLevel][xyz.ksharma.krail.core.speechtotext.SpeechToTextService]
+ * stays at zero, which it does for the iOS SpeechAnalyzer path.
+ */
+@Composable
+private fun rememberPartialPulse(transcript: String): Animatable<Float, AnimationVector1D> {
+    val pulse = remember { Animatable(0f) }
+    LaunchedEffect(transcript) {
+        if (transcript.isNotBlank()) {
+            pulse.snapTo(PARTIAL_PULSE_PEAK)
+            pulse.animateTo(0f, animationSpec = tween(durationMillis = PARTIAL_PULSE_MILLIS))
+        }
+    }
+    return pulse
 }
 
 /**
@@ -471,6 +449,8 @@ internal fun AiDialogContent(
     busyVisible: Boolean,
     onEvent: (AiSearchInputEvent) -> Unit,
     modifier: Modifier = Modifier,
+    editing: Boolean = false,
+    onStartEditing: () -> Unit = {},
     onDismiss: () -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
@@ -620,18 +600,32 @@ internal fun AiDialogContent(
         }
         AiSpeechProblemAction(state = state, onEvent = onEvent)
 
-        // Theme wash, not grey: see FIELD_TINT_*'s comment for why grey fails in both modes.
-        val fieldTintAlpha = if (isAppInDarkMode()) FIELD_TINT_DARK_ALPHA else FIELD_TINT_LIGHT_ALPHA
-        AiInputBar(
-            state = state,
-            textFieldState = textFieldState,
-            placeholder = AI_INPUT_PLACEHOLDER,
-            onEvent = onEvent,
-            // The dialog's frame wears the working border; a second ring inside it is clutter.
-            showWorkingBorder = false,
-            containerColor = themeColorHex.hexToComposeColor()
-                .copy(alpha = fieldTintAlpha)
-                .compositeOver(KrailTheme.colors.surface),
-        )
+        if (editing) {
+            // Theme wash, not grey: see FIELD_TINT_*'s comment for why grey fails in both modes.
+            val fieldTintAlpha = if (isAppInDarkMode()) FIELD_TINT_DARK_ALPHA else FIELD_TINT_LIGHT_ALPHA
+            AiInputBar(
+                state = state,
+                textFieldState = textFieldState,
+                placeholder = AI_INPUT_PLACEHOLDER,
+                onEvent = onEvent,
+                // The rider asked for the keyboard by tapping their words, so it comes up.
+                autoFocus = true,
+                // The field is the working surface while it is showing: a quiet ring while
+                // they type, full strength and turning after Send. The rings leave it alone.
+                showWorkingBorder = true,
+                restBorderAlpha = FIELD_BORDER_REST_ALPHA,
+                containerColor = themeColorHex.hexToComposeColor()
+                    .copy(alpha = fieldTintAlpha)
+                    .compositeOver(KrailTheme.colors.surface),
+            )
+        } else {
+            AiSpokenSentence(
+                state = state,
+                text = textFieldState.text.toString(),
+                suggestion = suggestion,
+                onStartEditing = onStartEditing,
+                onEvent = onEvent,
+            )
+        }
     }
 }

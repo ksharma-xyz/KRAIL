@@ -194,12 +194,23 @@ commute exactly as `Work` does. Two lists would have drifted the moment one gain
 
 ## 7. The surface is a dialog, and it closes itself only on success
 
-`AskKrailScreen` is a centred dialog on every device, wearing the theme's AI pair as its own
-border: a quiet ring at rest, brought to full strength and spun while a sentence is worked
-out (`rememberWorkingBorder` drives both the dialog frame and, on the full-screen fallback,
-the input bar — never both at once, see `AiInputBar.showWorkingBorder`). The one exception is
+`AskKrailScreen` is a centred dialog on every device, drawn as a cloud of the theme's AI
+colours around a steady core (`AiVoiceCloud` in `:taj`), not as a card with a border. The
+rings swell with the rider's voice while listening (`SpeechToTextService.voiceLevel`, with a
+short swell per partial transcript for the platforms that report no level), orbit while a
+sentence is worked out, and go quiet while a problem is on screen. The core is opaque and its
+outline only moves inward by a few percent, because the words sit on it. The one exception is
 font scales past `ACTIONS_STACK_SCALE`, where the full screen comes back because a floating
-card taller than the screen is worse than the screen.
+cloud taller than the screen is worse than the screen.
+
+The sentence is shown as words, not as a field (`AiSpokenSentence`), with stop or speak again
+and Send below it. Tapping the words turns them into the field, with the keyboard, to fix a
+misheard word. While the field is showing it is the working surface: a quiet ring at rest,
+the spinning `rememberWorkingBorder` after Send, and the rings do not orbit. One working
+surface at a time, as before.
+
+Reduce Motion (iOS) or a zero animator duration scale (Android) stops the rings moving;
+listening is still shown by the status word and the wheel.
 
 **A resolve is a handoff.** The stops and the time are written into the home row on the
 RESOLVED emission (`SavedTripsEntry`), the dialog stays up for one settle beat

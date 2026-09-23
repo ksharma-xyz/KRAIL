@@ -10,7 +10,9 @@ jobs:
     # key. The gate sits on this inner job so the required status context
     # "build-ios / build" is still reported (as skipped) on those pull requests.
     if: github.actor != 'dependabot[bot]'
-    runs-on: macos-latest
+    # Xcode 27 is only on GitHub's preview image so far, not on macos-latest.
+    # See docs/ci_cd/XCODE_AND_IOS_TOOLCHAIN.md before moving it back or on.
+    runs-on: xcode-27
     environment: Firebase
 
     steps:
@@ -32,7 +34,7 @@ jobs:
       - name: Set up Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '~26'
+          xcode-version: '~27'
 
       - name: Verify Selection
         run: |

@@ -1,0 +1,6 @@
+# Runner labels actionlint does not know yet. GitHub's preview images get their own labels
+# before they reach macos-latest; list them here while a workflow uses one, and remove them
+# when it moves back to a standard label. See docs/ci_cd/XCODE_AND_IOS_TOOLCHAIN.md.
+self-hosted-runner:
+  labels:
+    - xcode-27

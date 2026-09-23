@@ -56,6 +56,8 @@ app's 17.0, so the app's setting can be fine while the bridges are not.
 - **You cannot always go back.** macOS 27 refuses to run Xcode 26. If the laptop moves first,
   local iOS builds stay broken until the tooling supports the new Xcode, and iOS is verified by
   CI and TestFlight in the meantime. Say so in the PR rather than implying a local run.
+- **Pin the exact Xcode, not a range.** `setup-xcode` with `'~27'` picked `27.1` because the
+  image also carries a `27.1` beta, so CI built with a beta. Use `'27.0'` and move it on purpose.
 - **A preview runner is not a release runner.** Expect queueing and instability on a preview
   image; do not put the release pipeline on one.
 

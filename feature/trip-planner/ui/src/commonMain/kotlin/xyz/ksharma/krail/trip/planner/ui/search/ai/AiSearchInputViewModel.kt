@@ -357,7 +357,14 @@ class AiSearchInputViewModel(
                     }
 
                     is SpeechToTextResult.Error -> {
-                        _uiState.update { it.withSpeechProblem(result.reason) }
+                        // Android can end a session with no match AFTER partials have already
+                        // landed. The words the rider watched arrive are still their sentence,
+                        // so that ending is just the end, not "didn't catch that" over it.
+                        val heardSomething = result.reason == SpeechUnavailableReasons.NO_RESULT &&
+                            _uiState.value.speechTranscript.isNotBlank()
+                        _uiState.update {
+                            if (heardSomething) it.copy(isListening = false) else it.withSpeechProblem(result.reason)
+                        }
                         logOutcome(reason = "speech_error")
                     }
                 }

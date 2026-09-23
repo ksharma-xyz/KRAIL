@@ -289,6 +289,14 @@ do not describe a change as verified when only the static checks ran.
 
 Claude may run build/compile/install commands directly (assembleDebug, installDebug, etc.) — no need to ask the user to run them instead.
 
+## Xcode and the iOS toolchain
+
+When a new Xcode or iOS SDK arrives (locally or on the CI runners), run
+`./scripts/ios_toolchain_report.sh` and read **`docs/ci_cd/XCODE_AND_IOS_TOOLCHAIN.md`** before
+changing anything. Four things pin the toolchain (Kotlin, spmForKmp, the CI Xcode, the app's
+deployment target) and a new Xcode can break any one of them. Read the official compatibility
+table, never a summary of it, and never ship a local-only workaround.
+
 ## Submodules
 
 KRAIL pulls in the `krail-api-proto` repo as a git submodule at `krail-api-proto/`.

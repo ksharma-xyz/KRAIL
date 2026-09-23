@@ -167,6 +167,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             },
             aiState = aiSearchInputState,
             onAiEvent = aiSearchInputViewModel::onEvent,
+            aiVoiceLevel = { aiSearchInputViewModel.voiceLevel.value },
             onSettingsButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsSettingsButtonClick)
                 tripPlannerNavigator.navigateToSettings()

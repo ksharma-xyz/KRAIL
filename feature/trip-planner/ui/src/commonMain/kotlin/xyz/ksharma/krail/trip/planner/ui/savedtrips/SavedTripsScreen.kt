@@ -108,6 +108,8 @@ fun SavedTripsScreen(
     onSearchButtonClick: () -> Unit = {},
     aiState: AiSearchInputUiState = AiSearchInputUiState(),
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
+    // Read while drawing, not collected: it changes many times a second while a rider speaks.
+    aiVoiceLevel: () -> Float = { 0f },
     onSettingsButtonClick: () -> Unit = {},
     onDiscoverButtonClick: () -> Unit = {},
     onEvent: (SavedTripUiEvent) -> Unit = {},
@@ -332,6 +334,7 @@ fun SavedTripsScreen(
                 suggestion = greeting.suggestion,
                 onEvent = onAiEvent,
                 onDismiss = { onAiEvent(AiSearchInputEvent.CloseInput) },
+                voiceLevel = aiVoiceLevel,
             )
         }
     }

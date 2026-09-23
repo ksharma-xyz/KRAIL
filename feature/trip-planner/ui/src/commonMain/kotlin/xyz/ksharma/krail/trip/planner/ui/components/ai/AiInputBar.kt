@@ -20,12 +20,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.TextField
@@ -36,6 +41,7 @@ import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.taj.tokens.AiThemeGradientTokens
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
+import kotlin.math.max
 
 private val BarCornerRadius = 28.dp
 private const val BAR_DARKEN_DARK = 0.45f
@@ -99,13 +105,27 @@ internal fun AiInputBar(
     // own theme-tinted container because the default was tuned against the cloud field, not
     // against a plain card, and read as grey-on-grey there.
     containerColor: Color? = null,
+    // Opens with the caret in the field and the keyboard up. Only where the rider has asked for
+    // it by tapping their words; the surface itself opens listening, never typing.
+    autoFocus: Boolean = false,
+    // The border's alpha while nothing is being worked out. Zero on the full screen, where the
+    // bar sits on the cloud field; the dialog's edit field wears it quietly at rest.
+    restBorderAlpha: Float = 0f,
 ) {
     val dim = KrailTheme.dimensions
     val themeColorHex by LocalThemeColor.current
     val workingBorder = rememberWorkingBorder(isWorking = state.isWorking)
     val hasText = textFieldState.text.isNotBlank()
+    val focusRequester = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+    LaunchedEffect(autoFocus) {
+        if (autoFocus) {
+            focusRequester.requestFocus()
+            keyboard?.show()
+        }
+    }
 
-    // No focus and no keyboard on open. It used to open with both, the way SearchStopScreen
+    // No focus and no keyboard on open by default. It used to open with both, the way SearchStopScreen
     // does, from when this surface was typed into first. It is spoken into now and starts
     // listening by itself, and a keyboard rising over half the screen covered the thing
     // telling the rider they were being heard. The field is still here to fix a word the
@@ -134,7 +154,7 @@ internal fun AiInputBar(
                 spinning = workingBorder.spinning,
                 cornerRadius = BarCornerRadius,
                 colors = AiThemeGradientTokens.stopsFor(themeColorHex),
-                alpha = if (showWorkingBorder) workingBorder.alpha else 0f,
+                alpha = if (showWorkingBorder) max(restBorderAlpha, workingBorder.alpha) else 0f,
             )
             .padding(horizontal = dim.spacingM, vertical = dim.spacingM),
         // The controls are a separate band from the sentence, and at 6dp they read as one
@@ -179,7 +199,8 @@ internal fun AiInputBar(
             // See docs/learning/2026-08-16-clipped-inside-its-own-parent.md.
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(weight = 1f, fill = false),
+                .weight(weight = 1f, fill = false)
+                .focusRequester(focusRequester),
             onTextChange = { onEvent(AiSearchInputEvent.TypedTextChanged(it.toString())) },
         )
 

@@ -44,4 +44,4 @@ reached the Gradle log. spmForKmp 1.9.7 adds Xcode 27 support and fixes it with 
   failure signatures.
 - [x] `scripts/ios_toolchain_report.sh`: prints every pin and warns when local Xcode and CI
   disagree.
-- [ ] CI moved to the `xcode-27` runner image, in its own PR.
+- [x] CI moved to the `xcode-27` runner image, in its own PR. TestFlight deliberately stays on Xcode 26 until that image is out of preview.

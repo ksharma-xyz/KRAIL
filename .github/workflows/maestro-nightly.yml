@@ -139,7 +139,9 @@ jobs:
           retention-days: 7
 
   ios:
-    runs-on: macos-15
+    # Xcode 27 is only on GitHub's preview image so far, not on macos-latest.
+    # See docs/ci_cd/XCODE_AND_IOS_TOOLCHAIN.md before moving it back or on.
+    runs-on: xcode-27
     environment: Firebase
     # The iOS leg pays for a Kotlin/Native compile and an xcodebuild before it
     # runs a single flow, and it retries the suite once.
@@ -152,7 +154,7 @@ jobs:
       - name: Set up Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '~26'
+          xcode-version: '~27'
 
       - name: Setup environment variables
         run: |

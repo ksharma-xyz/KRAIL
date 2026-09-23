@@ -1,6 +1,9 @@
 package xyz.ksharma.krail.core.speechtotext
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * On-device speech-to-text for the "Speak" tab of the AI search-input flow
@@ -14,6 +17,13 @@ import kotlinx.coroutines.flow.Flow
  * identically to the feature not existing, never a surfaced error.
  */
 interface SpeechToTextService {
+    /**
+     * How loud the rider is right now, 0 for silence to 1 for a raised voice, while a session
+     * started by [startListening] is live, and 0 otherwise. For drawing only: it says nothing
+     * about whether words were recognised, and a platform that cannot measure it reports 0
+     * throughout, so a caller must look fine with a silent level.
+     */
+    val voiceLevel: StateFlow<Float> get() = SilentVoiceLevel
 
     /**
      * Cheap enough to call before every use — implementations cache the underlying
@@ -31,6 +41,8 @@ interface SpeechToTextService {
     /** Stops listening early (e.g. the rider tapped away) without waiting for a final result. */
     fun stopListening()
 }
+
+private val SilentVoiceLevel: StateFlow<Float> = MutableStateFlow(0f).asStateFlow()
 
 /**
  * The reasons both platform implementations report, and the only ones a caller may branch on.

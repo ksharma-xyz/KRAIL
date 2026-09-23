@@ -11,6 +11,9 @@ import android.speech.SpeechRecognizer
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import xyz.ksharma.krail.core.log.log
 
@@ -28,6 +31,9 @@ private const val EARLIEST_THE_RECOGNISER_MAY_FINISH_MILLIS = 3_000L
 private const val SILENCE_THAT_ENDS_THE_SESSION_MILLIS = 4_000L
 private const val SILENCE_AFTER_A_COMPLETE_SOUNDING_PHRASE_MILLIS = 3_000L
 
+private const val RMS_QUIET_DB = -2f
+private const val RMS_LOUD_DB = 10f
+
 /**
  * `android.speech.SpeechRecognizer`, not ML Kit — see this module's README for why.
  *
@@ -40,6 +46,9 @@ private const val SILENCE_AFTER_A_COMPLETE_SOUNDING_PHRASE_MILLIS = 3_000L
 internal class AndroidSpeechToTextService(private val context: Context) : SpeechToTextService {
 
     private var activeRecognizer: SpeechRecognizer? = null
+
+    private val level = MutableStateFlow(0f)
+    override val voiceLevel: StateFlow<Float> = level.asStateFlow()
 
     override suspend fun checkAvailability(): SpeechToTextAvailability {
         val result = when {
@@ -74,7 +83,13 @@ internal class AndroidSpeechToTextService(private val context: Context) : Speech
             object : RecognitionListener {
                 override fun onReadyForSpeech(params: Bundle?) = Unit
                 override fun onBeginningOfSpeech() = Unit
-                override fun onRmsChanged(rmsdB: Float) = Unit
+
+                // The recogniser reports roughly -2 dB in a quiet room to 10 dB for a raised
+                // voice. Not calibrated and not promised by the API, which is fine for a
+                // level that only moves a drawing.
+                override fun onRmsChanged(rmsdB: Float) {
+                    level.value = ((rmsdB - RMS_QUIET_DB) / (RMS_LOUD_DB - RMS_QUIET_DB)).coerceIn(0f, 1f)
+                }
                 override fun onBufferReceived(buffer: ByteArray?) = Unit
                 override fun onEndOfSpeech() = Unit
                 override fun onEvent(eventType: Int, params: Bundle?) = Unit
@@ -141,6 +156,7 @@ internal class AndroidSpeechToTextService(private val context: Context) : Speech
         )
 
         awaitClose {
+            level.value = 0f
             speechRecognizer.stopListening()
             speechRecognizer.destroy()
             if (activeRecognizer === speechRecognizer) activeRecognizer = null

@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.core.speechtotext
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import xyz.ksharma.krail.core.log.log
 
 /**
@@ -32,6 +33,9 @@ internal class PreferredSpeechToTextService(
     private var chosen: SpeechToTextService? = null
 
     private val current: SpeechToTextService get() = chosen ?: fallback
+
+    // Read after checkAvailability has chosen, which every listening session starts with.
+    override val voiceLevel: StateFlow<Float> get() = current.voiceLevel
 
     override suspend fun checkAvailability(): SpeechToTextAvailability {
         val fromPreferred = preferred.checkAvailability()

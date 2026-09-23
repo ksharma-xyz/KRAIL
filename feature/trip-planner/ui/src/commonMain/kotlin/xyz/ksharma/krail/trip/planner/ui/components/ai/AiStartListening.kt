@@ -62,7 +62,8 @@ internal fun ListenOnOpenEffect(state: AiSearchInputUiState, onEvent: (AiSearchI
  *
  * Ask KRAIL only listens, so none of these fall back to typing: a rider who wants to type has
  * the search screen. A refused microphone asks again, one the system will no longer ask about
- * goes to Settings, and a session that heard nothing listens again.
+ * goes to Settings, and anything else (a session that heard nothing, a recogniser error)
+ * listens again.
  */
 @Composable
 internal fun AiSpeechProblemAction(
@@ -76,7 +77,10 @@ internal fun AiSpeechProblemAction(
         state.isListening || state.isSpeechUnsupported -> null
         state.needsSettingsForMic -> OPEN_SETTINGS_LABEL to openAppSettings
         state.needsMicPermission -> ALLOW_MIC_LABEL to startListening
-        state.speechUnavailableReason == SpeechUnavailableReasons.NO_RESULT -> TRY_AGAIN_LABEL to startListening
+        // Heard nothing, or any recogniser failure that is not a verdict on the phone. The mic
+        // row is hidden while a speech problem shows, so this button is the only way to speak
+        // again: an unrecognised error code with no action here left the rider stuck.
+        state.speechUnavailableReason != null -> TRY_AGAIN_LABEL to startListening
         else -> null
     } ?: return
 

@@ -80,7 +80,16 @@ internal class AndroidSpeechToTextService(private val context: Context) : Speech
                 override fun onEvent(eventType: Int, params: Bundle?) = Unit
 
                 override fun onError(error: Int) {
-                    trySend(SpeechToTextResult.Error(reason = "recognizer_error_$error"))
+                    // No match and speech timeout are both a session that heard nothing, which
+                    // is NO_RESULT's contract. Reported as a bare error code, the caller could
+                    // not tell them from a broken recogniser and offered nothing to try again.
+                    val reason = when (error) {
+                        SpeechRecognizer.ERROR_NO_MATCH,
+                        SpeechRecognizer.ERROR_SPEECH_TIMEOUT,
+                        -> SpeechUnavailableReasons.NO_RESULT
+                        else -> "recognizer_error_$error"
+                    }
+                    trySend(SpeechToTextResult.Error(reason = reason))
                     close()
                 }
 

@@ -630,6 +630,22 @@ class AiSearchInputViewModelTest {
     }
 
     @Test
+    fun `no result after words have arrived keeps the sentence and shows no problem`() =
+        runTest(testDispatcher) {
+            viewModel.onEvent(AiSearchInputEvent.OpenInput)
+            viewModel.onEvent(AiSearchInputEvent.StartListening)
+            runCurrent()
+
+            speechToTextService.results.emit(SpeechToTextResult.Partial("central to town hall"))
+            speechToTextService.results.emit(SpeechToTextResult.Error(SpeechUnavailableReasons.NO_RESULT))
+            runCurrent()
+
+            assertEquals("central to town hall", viewModel.uiState.value.typedText)
+            assertNull(viewModel.uiState.value.speechUnavailableReason)
+            assertFalse(viewModel.uiState.value.isListening)
+        }
+
+    @Test
     fun `a session that heard nothing is not a phone that cannot listen`() = runTest(testDispatcher) {
         viewModel.onEvent(AiSearchInputEvent.OpenInput)
         viewModel.onEvent(AiSearchInputEvent.StartListening)

@@ -197,4 +197,3 @@ private const val ORBIT_RADIANS_PER_SECOND = TWO_PI / 1.6f
 private const val ORBIT_EASE_PER_SECOND = 3f
 private const val LEVEL_RISE_PER_SECOND = 14f
 private const val LEVEL_FALL_PER_SECOND = 3f
-

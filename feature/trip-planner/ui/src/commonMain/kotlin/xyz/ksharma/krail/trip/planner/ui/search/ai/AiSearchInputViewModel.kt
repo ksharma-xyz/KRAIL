@@ -7,6 +7,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.aitext.AiAvailability
@@ -112,6 +113,11 @@ class AiSearchInputViewModel(
 
     private val _uiState = MutableStateFlow(AiSearchInputUiState())
     val uiState: StateFlow<AiSearchInputUiState> = _uiState.asStateFlow()
+
+    // Kept out of uiState on purpose. It changes many times a second while a rider speaks and
+    // only ever moves a drawing; in uiState every change would recompose the whole surface.
+    private val _voiceLevel = MutableStateFlow(0f)
+    val voiceLevel: StateFlow<Float> = _voiceLevel.asStateFlow()
 
     init {
         // Read here rather than through `stateIn(WhileSubscribed)`: this state is read
@@ -303,7 +309,12 @@ class AiSearchInputViewModel(
 
             startListeningTimeout()
 
-            speechToTextService.startListening().collect { result ->
+            // Read only now: which implementation answers is decided by the availability check.
+            val levelForwarding = launch { speechToTextService.voiceLevel.collect { _voiceLevel.value = it } }
+            speechToTextService.startListening().onCompletion {
+                levelForwarding.cancel()
+                _voiceLevel.value = 0f
+            }.collect { result ->
                 when (result) {
                     is SpeechToTextResult.Partial -> {
                         // Counted, not timestamped: the ceiling only needs to know whether new

@@ -1,10 +1,14 @@
 package xyz.ksharma.krail.core.speechtotext
 
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.get
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -12,6 +16,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import platform.AVFAudio.AVAudioApplication
 import platform.AVFAudio.AVAudioApplicationRecordPermissionGranted
 import platform.AVFAudio.AVAudioEngine
+import platform.AVFAudio.AVAudioPCMBuffer
 import platform.AVFAudio.AVAudioSession
 import platform.AVFAudio.AVAudioSessionCategoryRecord
 import platform.AVFAudio.setActive
@@ -23,6 +28,8 @@ import platform.Speech.SFSpeechRecognizer
 import platform.Speech.SFSpeechRecognizerAuthorizationStatus
 import xyz.ksharma.krail.core.log.log
 import kotlin.coroutines.resume
+import kotlin.math.log10
+import kotlin.math.sqrt
 
 /**
  * `SFSpeechRecognizer` + `AVAudioEngine`, both plain Objective-C-compatible frameworks (no
@@ -60,6 +67,9 @@ internal class IosSpeechToTextService : SpeechToTextService {
     }
 
     private var audioEngine: AVAudioEngine? = null
+
+    private val level = MutableStateFlow(0f)
+    override val voiceLevel: StateFlow<Float> = level.asStateFlow()
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest? = null
 
     override suspend fun checkAvailability(): SpeechToTextAvailability {
@@ -116,6 +126,7 @@ internal class IosSpeechToTextService : SpeechToTextService {
         launch { watchForSilence(session = session) }
 
         awaitClose {
+            level.value = 0f
             engine.stop()
             inputNode.removeTapOnBus(0u)
             request.endAudio()
@@ -136,6 +147,7 @@ internal class IosSpeechToTextService : SpeechToTextService {
      * the flow — see [watchForSilence], which is the other caller.
      */
     private fun stopFeedingAudio() {
+        level.value = 0f
         audioEngine?.stop()
         audioEngine?.inputNode?.removeTapOnBus(0u)
         recognitionRequest?.endAudio()
@@ -192,7 +204,11 @@ internal class IosSpeechToTextService : SpeechToTextService {
             bufferSize = AUDIO_TAP_BUFFER_SIZE,
             format = inputNode.outputFormatForBus(0u),
         ) { buffer, _ ->
-            buffer?.let { request.appendAudioPCMBuffer(it) }
+            buffer?.let {
+                request.appendAudioPCMBuffer(it)
+                // On the audio thread. MutableStateFlow is safe to write from any thread.
+                level.value = it.normalisedLevel()
+            }
         }
 
         engine.prepare()
@@ -314,6 +330,30 @@ private const val SILENCE_BEFORE_ANY_SPEECH_MILLIS = 6_000L
 // How often the watcher looks. Fine enough that the end of a sentence is not noticeably late,
 // coarse enough to be free.
 private const val SILENCE_POLL_MILLIS = 250L
+
+/**
+ * RMS of the first channel as a 0 to 1 level, over the range a voice across a table actually
+ * spans. Room noise sits near the bottom, a raised voice near the top.
+ */
+@OptIn(ExperimentalForeignApi::class)
+private fun AVAudioPCMBuffer.normalisedLevel(): Float {
+    val channel = floatChannelData?.get(0) ?: return 0f
+    val frames = frameLength.toInt()
+    if (frames == 0) return 0f
+    var sumOfSquares = 0f
+    for (index in 0 until frames) {
+        val sample = channel[index]
+        sumOfSquares += sample * sample
+    }
+    val rms = sqrt(sumOfSquares / frames).coerceAtLeast(SILENCE_FLOOR)
+    val dbfs = DB_PER_DECADE * log10(rms)
+    return ((dbfs - QUIET_DBFS) / (LOUD_DBFS - QUIET_DBFS)).coerceIn(0f, 1f)
+}
+
+private const val SILENCE_FLOOR = 1e-6f
+private const val DB_PER_DECADE = 20f
+private const val QUIET_DBFS = -50f
+private const val LOUD_DBFS = -10f
 
 // One tap buffer. The recogniser is fed whatever arrives; this only sets how often.
 private const val AUDIO_TAP_BUFFER_SIZE: UInt = 1024u

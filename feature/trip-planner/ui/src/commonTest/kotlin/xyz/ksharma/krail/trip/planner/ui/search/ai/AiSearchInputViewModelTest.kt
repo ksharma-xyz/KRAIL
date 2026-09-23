@@ -630,6 +630,19 @@ class AiSearchInputViewModelTest {
     }
 
     @Test
+    fun `the voice level follows the recogniser while a session is live`() = runTest(testDispatcher) {
+        viewModel.onEvent(AiSearchInputEvent.OpenInput)
+        viewModel.onEvent(AiSearchInputEvent.StartListening)
+        runCurrent()
+
+        speechToTextService.level.value = 0.6f
+        runCurrent()
+
+        assertEquals(0.6f, viewModel.voiceLevel.value)
+        viewModel.onEvent(AiSearchInputEvent.CloseInput)
+    }
+
+    @Test
     fun `no result after words have arrived keeps the sentence and shows no problem`() =
         runTest(testDispatcher) {
             viewModel.onEvent(AiSearchInputEvent.OpenInput)

@@ -145,6 +145,8 @@ it elsewhere — refactor instead.
 Before drawing anything in the theme colour, read
 [`taj/THEME_COLOUR_ROLES.md`](taj/THEME_COLOUR_ROLES.md).
 
+For everything else about colour and light/dark, read [`taj/THEMING.md`](taj/THEMING.md).
+
 One accessor per role, because a call site that does not say which role it means cannot be
 checked:
 

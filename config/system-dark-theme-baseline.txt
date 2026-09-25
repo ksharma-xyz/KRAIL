@@ -1,0 +1,15 @@
+# SystemDarkThemeBan baseline — SHRINK-ONLY.
+#
+# Pre-existing isSystemInDarkTheme() reads outside taj's theme package, grandfathered so the
+# rule could be switched on without changing behaviour in the same change. Each one reads the
+# phone's dark setting instead of the rider's in-app ThemeMode, so it is wrong whenever the
+# phone and the app disagree. Fixing one means switching it to isAppInDarkMode() and
+# DECREMENTING its count here in the SAME change; delete the line at zero, and delete the file
+# when it is empty.
+#
+# Each line: <path relative to repo root>|<number of reads allowed in that file>
+
+# Reads system dark instead of the in-app ThemeMode; fix tracked separately. Status bar icons
+# on the list/themed background, and the restore on dispose, follow the phone rather than the
+# app, so a light phone with the app set to Dark gets dark icons on a dark screen.
+feature/trip-planner/ui/src/androidMain/kotlin/xyz/ksharma/krail/trip/planner/ui/searchstop/StatusBarAppearanceEffect.kt|1

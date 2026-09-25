@@ -177,6 +177,27 @@ shape of the call.
 
 No baseline — zero offenders, unconditional gate.
 
+### `SystemDarkThemeBan`
+
+Flags `isSystemInDarkTheme()` anywhere outside taj's theme package
+(`xyz.ksharma.krail.taj.theme`). It is the phone's dark setting; the rider chooses light, dark or
+system in the app (`ThemeMode`), and everything that decides light or dark must follow that, so it
+asks `isAppInDarkMode()`. The theme package is exempt because that is where `ThemeMode.SYSTEM` is
+turned into a boolean and the iOS stale-value override is applied. Test sources are exempt.
+
+The call that motivated it: `StatusBarAppearanceEffect` on Android followed the phone, so a light
+phone with the app set to Dark got dark status-bar icons on a dark screen after leaving the map.
+
+**Instead:** `isAppInDarkMode()`. See `taj/THEMING.md`.
+
+Syntactic, no type resolution: a callee named `isSystemInDarkTheme`, qualified or not. Commented-out
+code is not flagged.
+
+| | |
+|---|---|
+| Baseline | [`config/system-dark-theme-baseline.txt`](../../config/system-dark-theme-baseline.txt) — 1 row, `path\|count` |
+| Ratchet | Shrink-only. Fixing one means switching it to `isAppInDarkMode()` and decrementing its count in the same change. |
+
 ### `SnackbarBan`
 
 Flags any callee or import whose name contains `snackbar`, case-insensitively — so `Snackbar`,
@@ -315,6 +336,7 @@ assumption falling due is not a reason to block an unrelated PR. A scheduled job
 |---|---:|---|
 | `clock-system-baseline.txt` | 14 | `ClockSystemBan` (detekt) |
 | `lazy-item-key-baseline.txt` | 2 | `LazyItemKeyRule` (detekt) |
+| `system-dark-theme-baseline.txt` | 1 | `SystemDarkThemeBan` (detekt) |
 | `screenshot-annotation-baseline.txt` | 33 | `ScreenshotPreviewAnnotation` (detekt) |
 | `test-wiring-baseline.txt` | 8 — **at its cap** | `verifyNoAdHocBoundaryFakes` (Gradle) |
 | `no-saved-state-allowlist.txt` | 19 | `ViewModelStateDurabilityTest` (`:composeApp`) |

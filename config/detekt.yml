@@ -115,6 +115,10 @@ krail:
   # position. themeDecorColor() is the sanctioned way out, so there is no baseline.
   ThemeColorRoleRule:
     active: true
+  # isSystemInDarkTheme() outside taj's theme package ignores the rider's ThemeMode.
+  # See taj/THEMING.md and config/system-dark-theme-baseline.txt.
+  SystemDarkThemeBan:
+    active: true
   # collectAsState() keeps collecting while backgrounded — collectAsStateWithLifecycle() only.
   # See docs/POLLING_LIFECYCLE.md.
   CollectAsStateBan:

@@ -411,7 +411,7 @@ Verified against **Maestro 2.8.0**; `setOrientation` needs 2.x.
 | Lane | Runs | Workflow |
 |---|---|---|
 | `.maestro/smoke/` | as part of the nightly run | `maestro-nightly.yml` |
-| `.maestro/nightly/` | 03:00 AEST cron, `prod/**`, manual dispatch | `maestro-nightly.yml` |
+| `.maestro/nightly/` | weekly cron (Sunday 03:00 AEST), `prod/**`, manual dispatch | `maestro-nightly.yml` |
 
 `.maestro/shared/` holds helper flows called via `runFlow`. It sits outside both lanes so a
 directory run never treats one as a test.

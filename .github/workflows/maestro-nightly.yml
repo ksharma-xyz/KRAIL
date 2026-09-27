@@ -8,10 +8,12 @@ name: Maestro Nightly
 
 on:
   schedule:
-    # 17:00 UTC is 03:00 AEST, which is the quiet end of a Sydney night: after
-    # the last services and well before the morning peak, so a flow that reads
+    # Weekly, not daily. The "nightly" name is kept for the lane, the
+    # .maestro/nightly/ directory and the artifact names.
+    # Saturday 17:00 UTC is Sunday 03:00 AEST, the quiet end of a Sydney night:
+    # after the last services and well before the morning, so a flow that reads
     # live timetable data is not competing with real load.
-    - cron: '0 17 * * *'
+    - cron: '0 17 * * 6'
   workflow_dispatch:
   push:
     branches: [ 'prod/**' ]

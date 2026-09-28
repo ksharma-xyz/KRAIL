@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -43,8 +44,10 @@ internal fun AiSpokenSentence(
 
     Column(
         modifier = modifier.fillMaxWidth(),
+        // No spacedBy. The sentence slot is always composed now, so it can crossfade, and an
+        // empty slot still took a gap above the mic. The gap belongs to the mic row instead, and
+        // only when there is something above it.
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
         // Crossfaded rather than swapped: the hint dissolving into the first heard word is the
         // moment the rider learns they are being understood, and a hard cut there read as the
@@ -95,6 +98,7 @@ internal fun AiSpokenSentence(
             visible = state.speechUnavailableReason == null,
             enter = foldIn(),
             exit = foldOut(),
+            modifier = Modifier.padding(top = if (showing == SentenceSlot.NONE) 0.dp else dim.spacingM),
         ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(dim.spacingXL, Alignment.CenterHorizontally),

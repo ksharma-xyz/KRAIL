@@ -19,16 +19,18 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
 /**
  * A cloud of the AI colours, for a surface that is listening. The cloud IS the surface: there
  * is no card or core under the content, only soft blobs of [colors] spread under all of it,
- * swelling with [voiceLevel] while the rider speaks, orbiting together while [orbiting], and
+ * swelling with [voiceLevel] while the rider speaks, stirring in place with colour flowing through it while [orbiting], and
  * dimming while [quiet].
  *
  * It had an opaque squircle core once, with the blobs ringing its edge. On a phone the core
@@ -96,9 +98,7 @@ fun AiVoiceCloud(
                 drawRings(
                     colors = colors,
                     peakAlpha = peakAlpha * strength,
-                    time = clock.time.floatValue,
-                    orbitAngle = clock.orbitAngle.floatValue,
-                    energy = clock.energy.floatValue,
+                    clock = clock,
                 )
             }
             .padding(RingSpace),
@@ -108,57 +108,86 @@ fun AiVoiceCloud(
     }
 }
 
-/** Frame-driven state, read only in draw and layer lambdas so a frame never recomposes. */
+/**
+ * Frame-driven state, read only in draw and layer lambdas so a frame never recomposes.
+ *
+ * [flow] and [colourPhase] are plain fields rather than state: [time] changes on every frame the
+ * loop runs, and reading it in draw is what invalidates the draw. Only the loop writes them.
+ */
 private class CloudClock {
     val time = mutableFloatStateOf(0f)
-    val orbitAngle = mutableFloatStateOf(0f)
     val energy = mutableFloatStateOf(0f)
-    private var orbitSpeed = 0f
+
+    /** How far into the working look the cloud is, 0 at rest and 1 fully working. */
+    val think = mutableFloatStateOf(0f)
+
+    /**
+     * The clock the blobs drift and breathe on. It runs faster while working, so the same
+     * motions the cloud makes at rest simply quicken: the cloud stirs in place. It never
+     * orbits. Blobs swept around the ring separated from one another as they went, and each
+     * one read as a disc of colour rather than as part of a cloud.
+     */
+    var flow = 0f
+        private set
+    var colourPhase = 0f
+        private set
 
     fun advance(dtSeconds: Float, orbitTarget: Float, levelTarget: Float) {
         // A dropped frame after a pause would otherwise jump the whole cloud at once.
         val dt = dtSeconds.coerceIn(0f, MAX_FRAME_SECONDS)
         time.floatValue += dt
-        orbitSpeed += (orbitTarget - orbitSpeed) * (dt * ORBIT_EASE_PER_SECOND).coerceAtMost(1f)
-        orbitAngle.floatValue = (orbitAngle.floatValue + orbitSpeed * ORBIT_RADIANS_PER_SECOND * dt) % TWO_PI
+
+        // Eases in quickly, so Send is answered at once, and out slowly, so the cloud settles
+        // back to listening instead of stopping.
+        val current = think.floatValue
+        val thinkRate = if (orbitTarget > current) THINK_RISE_PER_SECOND else THINK_FALL_PER_SECOND
+        val thinking = current + (orbitTarget - current) * (dt * thinkRate).coerceAtMost(1f)
+        think.floatValue = thinking
+
+        flow += dt * (1f + FLOW_SPEEDUP * thinking)
+        colourPhase = (colourPhase + thinking * dt / COLOUR_CYCLE_SECONDS) % 1f
+
         // Quick to rise and slow to fall, which is how a voice looks: syllables arrive as
         // bursts, and the cloud should hang on to each one for a moment rather than blink.
         val rate = if (levelTarget > energy.floatValue) LEVEL_RISE_PER_SECOND else LEVEL_FALL_PER_SECOND
-        val current = energy.floatValue
-        energy.floatValue = current + (levelTarget - current) * (dt * rate).coerceAtMost(1f)
+        val level = energy.floatValue
+        energy.floatValue = level + (levelTarget - level) * (dt * rate).coerceAtMost(1f)
     }
 }
 
-private fun DrawScope.drawRings(
-    colors: List<Color>,
-    peakAlpha: Float,
-    time: Float,
-    orbitAngle: Float,
-    energy: Float,
-) {
+private fun DrawScope.drawRings(colors: List<Color>, peakAlpha: Float, clock: CloudClock) {
     if (colors.isEmpty()) return
+    // Read here, inside draw, so each frame re-draws without recomposing. time is read only to
+    // subscribe the draw to the frame loop; the motion itself runs on flow.
+    clock.time.floatValue
+    val think = clock.think.floatValue
+    val energy = clock.energy.floatValue
+    val flow = clock.flow
+    val colourPhase = clock.colourPhase
     val centre = Offset(size.width / 2f, size.height / 2f)
     val blobRadius = size.minDimension * (BLOB_RADIUS_FRAC + BLOB_ENERGY_GAIN * energy)
+    val driftRadians = DRIFT_RADIANS + THINK_DRIFT_RADIANS * think
     // Each colour twice, on opposite sides, so a wide surface is covered end to end rather
     // than lit in four patches.
     val blobs = colors + colors
-    blobs.forEachIndexed { index, color ->
+    blobs.forEachIndexed { index, restColour ->
         val seed = index.toFloat()
         val home = seed / blobs.size * TWO_PI
-        val drift = DRIFT_RADIANS * sin(time * TWO_PI / (BASE_PERIOD_SECONDS + seed * PERIOD_STEP_SECONDS))
-        val angle = home + drift + orbitAngle
-        val reach = RING_REACH + RING_REACH_WOBBLE * cos(time * TWO_PI / (BREATHE_SECONDS + seed))
+        val drift = driftRadians * sin(flow * TWO_PI / (BASE_PERIOD_SECONDS + seed * PERIOD_STEP_SECONDS))
+        val angle = home + drift
+        val reach = RING_REACH + RING_REACH_WOBBLE * cos(flow * TWO_PI / (BREATHE_SECONDS + seed))
         val blobCentre = Offset(
             x = centre.x + size.width / 2f * reach * cos(angle),
             y = centre.y + size.height / 2f * reach * sin(angle),
         )
+        // While working, each blob travels along the gradient instead of holding its one
+        // colour, offset from its neighbours so the colour flows through the cloud while the
+        // shapes stay put. Blended by think so the change in and out is gradual.
+        val travelling = colors.sampleThereAndBack(seed / blobs.size + colourPhase)
+        val colour = lerp(restColour, travelling, think)
         drawCircle(
             brush = Brush.radialGradient(
-                colorStops = arrayOf(
-                    0f to color.copy(alpha = peakAlpha),
-                    BLOB_MID_STOP to color.copy(alpha = peakAlpha * MID_ALPHA_RATIO),
-                    1f to Color.Transparent,
-                ),
+                colorStops = softFalloff(colour, peakAlpha),
                 center = blobCentre,
                 radius = blobRadius,
             ),
@@ -166,6 +195,27 @@ private fun DrawScope.drawRings(
             center = blobCentre,
         )
     }
+}
+
+/**
+ * A falloff that eases to nothing rather than ramping to it. A straight ramp from a mid stop to
+ * transparent left a faint rim where the slope changed, and a blob moving over the others
+ * showed that rim as the outline of a circle.
+ */
+private fun softFalloff(colour: Color, peakAlpha: Float): Array<Pair<Float, Color>> =
+    FALLOFF_STOPS.map { (stop, share) -> stop to colour.copy(alpha = peakAlpha * share) }.toTypedArray()
+
+/**
+ * A colour from the gradient at [position], going from the first stop to the last and back
+ * again rather than wrapping. Wrapping would blend the last stop straight into the first, the
+ * one pair the gradient's middle stop exists to keep apart (see AiThemeGradientTokens).
+ */
+private fun List<Color>.sampleThereAndBack(position: Float): Color {
+    if (size == 1) return first()
+    val cycle = ((position % 1f) + 1f) % 1f
+    val along = (1f - abs(2f * cycle - 1f)) * (size - 1)
+    val index = along.toInt().coerceAtMost(size - 2)
+    return lerp(this[index], this[index + 1], along - index)
 }
 
 // Room around the content for the cloud's soft edge, so the colour fades out past the words
@@ -178,10 +228,8 @@ private const val MAX_FRAME_SECONDS = 0.1f
 
 private const val LIGHT_PEAK_ALPHA = 0.55f
 private const val DARK_PEAK_ALPHA = 0.5f
-private const val MID_ALPHA_RATIO = 0.45f
-private const val BLOB_MID_STOP = 0.45f
 private const val QUIET_STRENGTH = 0.35f
-private const val ORBIT_STRENGTH = 1.15f
+private const val ORBIT_STRENGTH = 1.05f
 private const val STRENGTH_MILLIS = 500
 
 private const val BLOB_RADIUS_FRAC = 0.5f
@@ -193,7 +241,24 @@ private const val BASE_PERIOD_SECONDS = 9f
 private const val PERIOD_STEP_SECONDS = 2f
 private const val BREATHE_SECONDS = 7f
 
-private const val ORBIT_RADIANS_PER_SECOND = TWO_PI / 1.6f
-private const val ORBIT_EASE_PER_SECOND = 3f
+private const val THINK_RISE_PER_SECOND = 3f
+private const val THINK_FALL_PER_SECOND = 1.6f
+
+// While working the drift clock runs this much faster and each blob wanders a little further
+// either side of home. Still well short of a neighbour's home, so no blob ever leaves its place.
+private const val FLOW_SPEEDUP = 2.5f
+private const val THINK_DRIFT_RADIANS = 0.2f
+
+private const val COLOUR_CYCLE_SECONDS = 3.2f
+
+// Roughly a Gaussian: full at the centre, most of the colour gone by the middle, and a long
+// tail to nothing, so the edge never shows.
+private val FALLOFF_STOPS = listOf(
+    0f to 1f,
+    0.25f to 0.8f,
+    0.5f to 0.42f,
+    0.75f to 0.12f,
+    1f to 0f,
+)
 private const val LEVEL_RISE_PER_SECOND = 14f
 private const val LEVEL_FALL_PER_SECOND = 3f

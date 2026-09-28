@@ -197,7 +197,7 @@ commute exactly as `Work` does. Two lists would have drifted the moment one gain
 `AskKrailScreen` is a centred dialog on every device, drawn as a cloud of the theme's AI
 colours around a steady core (`AiVoiceCloud` in `:taj`), not as a card with a border. The
 rings swell with the rider's voice while listening (`SpeechToTextService.voiceLevel`, with a
-short swell per partial transcript for the platforms that report no level), orbit while a
+short swell per partial transcript for the platforms that report no level), churn while a
 sentence is worked out, and go quiet while a problem is on screen. The core is opaque and its
 outline only moves inward by a few percent, because the words sit on it. The one exception is
 font scales past `ACTIONS_STACK_SCALE`, where the full screen comes back because a floating
@@ -211,6 +211,18 @@ surface at a time, as before.
 
 Reduce Motion (iOS) or a zero animator duration scale (Android) stops the rings moving;
 listening is still shown by the status word and the wheel.
+
+**While a sentence is worked out the cloud churns, it does not spin.** Each blob orbits at its
+own speed, so they overtake one another, walks its colour along the theme gradient and back,
+and pulses slightly. All three are weighted by one eased value that rises quickly on Send and
+falls slowly after, so the cloud settles back into listening instead of stopping. A ring of
+blobs turning at one rate read as a loading spinner.
+
+**No state change on this surface is a cut.** Every swap in place (the hint and the heard
+words, the words and the field) crossfades with `swapInPlace()`, and every block arriving or
+leaving (the banner, its action, the mic row) folds with `foldIn()`/`foldOut()`, all from
+`AskKrailMotion.kt`. The core's `animateContentSize` is the only thing that animates size, so
+swaps snap their own size rather than nesting a second size animation inside it.
 
 **A resolve is a handoff.** The stops and the time are written into the home row on the
 RESOLVED emission (`SavedTripsEntry`), the dialog stays up for one settle beat

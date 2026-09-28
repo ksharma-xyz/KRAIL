@@ -8,12 +8,10 @@ import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -113,8 +111,6 @@ private const val FIELD_TINT_DARK_ALPHA = 0.16f
 
 // The card resizing (a banner arriving, a sentence growing a line) eases rather than snaps.
 private const val DIALOG_RESIZE_MILLIS = 400
-private const val BANNER_ENTER_MILLIS = 350
-private const val BANNER_EXIT_MILLIS = 250
 private const val ENTER_SCALE = 0.94f
 private const val EXIT_SCALE = 0.96f
 private const val ENTER_MILLIS = 280
@@ -540,12 +536,8 @@ internal fun AiDialogContent(
         }
         AnimatedVisibility(
             visible = problemMessage != null,
-            enter = expandVertically(
-                animationSpec = tween(BANNER_ENTER_MILLIS, easing = FastOutSlowInEasing),
-            ) + fadeIn(tween(BANNER_ENTER_MILLIS)),
-            exit = shrinkVertically(
-                animationSpec = tween(BANNER_EXIT_MILLIS, easing = FastOutSlowInEasing),
-            ) + fadeOut(tween(BANNER_EXIT_MILLIS)),
+            enter = foldIn(),
+            exit = foldOut(),
         ) {
             (problemMessage ?: heldProblem.value)?.let {
                 // Bottom padding inside the animated block, not the column's gap: it doubles
@@ -559,32 +551,42 @@ internal fun AiDialogContent(
         }
         AiSpeechProblemAction(state = state, onEvent = onEvent)
 
-        if (editing) {
-            // Theme wash, not grey: see FIELD_TINT_*'s comment for why grey fails in both modes.
-            val fieldTintAlpha = if (isAppInDarkMode()) FIELD_TINT_DARK_ALPHA else FIELD_TINT_LIGHT_ALPHA
-            AiInputBar(
-                state = state,
-                textFieldState = textFieldState,
-                placeholder = AI_INPUT_PLACEHOLDER,
-                onEvent = onEvent,
-                // The rider asked for the keyboard by tapping their words, so it comes up.
-                autoFocus = true,
-                // The field is the working surface while it is showing: a quiet ring while
-                // they type, full strength and turning after Send. The rings leave it alone.
-                showWorkingBorder = true,
-                restBorderAlpha = FIELD_BORDER_REST_ALPHA,
-                containerColor = themeColorHex.hexToComposeColor()
-                    .copy(alpha = fieldTintAlpha)
-                    .compositeOver(KrailTheme.colors.surface),
-            )
-        } else {
-            AiSpokenSentence(
-                state = state,
-                text = textFieldState.text.toString(),
-                suggestion = suggestion,
-                onStartEditing = onStartEditing,
-                onEvent = onEvent,
-            )
+        // Crossfaded, not swapped. Tapping the words to fix one is a small act, and the sentence
+        // vanishing for a field in one frame made it look like the dialog had reset.
+        AnimatedContent(
+            targetState = editing,
+            transitionSpec = { swapInPlace() },
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+            label = "aiDialogSentenceOrField",
+        ) { showField ->
+            if (showField) {
+                // Theme wash, not grey: see FIELD_TINT_*'s comment for why grey fails in both modes.
+                val fieldTintAlpha = if (isAppInDarkMode()) FIELD_TINT_DARK_ALPHA else FIELD_TINT_LIGHT_ALPHA
+                AiInputBar(
+                    state = state,
+                    textFieldState = textFieldState,
+                    placeholder = AI_INPUT_PLACEHOLDER,
+                    onEvent = onEvent,
+                    // The rider asked for the keyboard by tapping their words, so it comes up.
+                    autoFocus = true,
+                    // The field is the working surface while it is showing: a quiet ring while
+                    // they type, full strength and turning after Send. The rings leave it alone.
+                    showWorkingBorder = true,
+                    restBorderAlpha = FIELD_BORDER_REST_ALPHA,
+                    containerColor = themeColorHex.hexToComposeColor()
+                        .copy(alpha = fieldTintAlpha)
+                        .compositeOver(KrailTheme.colors.surface),
+                )
+            } else {
+                AiSpokenSentence(
+                    state = state,
+                    text = textFieldState.text.toString(),
+                    suggestion = suggestion,
+                    onStartEditing = onStartEditing,
+                    onEvent = onEvent,
+                )
+            }
         }
     }
 }

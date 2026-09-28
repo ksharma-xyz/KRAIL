@@ -17,8 +17,10 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -133,7 +135,16 @@ internal fun AiInputContent(
         // finding a stop and saving it under a name. A button landing a rider on a screen that
         // cannot do the thing the message just told them to do is worse than no button, so the
         // message names the real route and the shortcut waits until it can point at it.
-        state.problemMessage()?.let { AiProblemBanner(message = it) }
+        // Folds in and out on the dialog banner's clock, holding the last message through the
+        // exit so the fold shows words rather than an emptying box.
+        val problemMessage = state.problemMessage()
+        val heldProblem = remember { mutableStateOf(problemMessage) }
+        SideEffect {
+            if (problemMessage != null) heldProblem.value = problemMessage
+        }
+        AnimatedVisibility(visible = problemMessage != null, enter = foldIn(), exit = foldOut()) {
+            (problemMessage ?: heldProblem.value)?.let { AiProblemBanner(message = it) }
+        }
         AiSpeechProblemAction(
             state = state,
             onEvent = onEvent,

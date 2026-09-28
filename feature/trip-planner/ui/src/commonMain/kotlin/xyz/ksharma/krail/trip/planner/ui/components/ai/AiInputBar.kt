@@ -1,13 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.components.ai
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -45,12 +38,6 @@ import kotlin.math.max
 
 private val BarCornerRadius = 28.dp
 private const val BAR_DARKEN_DARK = 0.45f
-private const val SEND_ENTER_SCALE = 0.5f
-private const val SEND_EXIT_SCALE = 0.35f
-private const val SEND_FADE_MILLIS = 140
-
-// Slower than the entry fade, so the shrink is still visible as the button goes.
-private const val SEND_EXIT_FADE_MILLIS = 200
 
 /**
  * Opaque, and a different shade from the screen in each theme for a different reason.
@@ -212,29 +199,11 @@ internal fun AiInputBar(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Springs in from half size and settles, rather than fading. A send button
-            // appearing is the app answering the rider's first character, and a fade reads as
-            // something that was always there and is only now catching up.
+            // The spacer absorbs the width, so only the button itself moves (AskKrailMotion).
             AnimatedVisibility(
                 visible = hasText,
-                enter = scaleIn(
-                    initialScale = SEND_ENTER_SCALE,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMediumLow,
-                    ),
-                ) + fadeIn(animationSpec = tween(durationMillis = SEND_FADE_MILLIS)),
-                // Leaves on the same spring it arrived on, rather than a flat tween. An exit
-                // that only fades reads as the button having been switched off; the spring
-                // makes it pull back as deliberately as it appeared, and shrinking further
-                // (0.35 rather than 0.6) means it reads as leaving rather than as dimming.
-                exit = scaleOut(
-                    targetScale = SEND_EXIT_SCALE,
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness = Spring.StiffnessMedium,
-                    ),
-                ) + fadeOut(animationSpec = tween(durationMillis = SEND_EXIT_FADE_MILLIS)),
+                enter = sendButtonEnter(),
+                exit = sendButtonExit(),
             ) {
                 AiSendButton(
                     enabled = !state.isBusy,

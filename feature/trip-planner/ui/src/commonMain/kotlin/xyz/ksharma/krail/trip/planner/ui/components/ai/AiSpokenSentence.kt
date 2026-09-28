@@ -1,5 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.components.ai
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -44,39 +46,68 @@ internal fun AiSpokenSentence(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
-        if (hasText) {
-            Text(
-                text = text,
-                style = KrailTheme.typography.titleMediumRegular,
-                color = KrailTheme.colors.onSurface,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(dim.radiusM))
-                    // Not while it is being heard or worked out: the words are still arriving,
-                    // or already on their way to a search.
-                    .klickable(enabled = !state.isBusy, onClick = onStartEditing)
-                    .padding(dim.spacingS),
-            )
-        } else if (state.isListening) {
-            // The status line says Listening, so the example moves down here for the few
-            // seconds before the first word arrives. "Try" and quotes: a demonstration.
-            Text(
-                text = "Try “$suggestion”",
-                style = KrailTheme.typography.bodySmall,
-                color = KrailTheme.colors.secondaryLabel,
-                textAlign = TextAlign.Center,
-            )
+        // Crossfaded rather than swapped: the hint dissolving into the first heard word is the
+        // moment the rider learns they are being understood, and a hard cut there read as the
+        // screen resetting. Keyed on which thing is showing, not on the words, so the sentence
+        // growing as words arrive updates in place instead of fading on every partial.
+        val showing = when {
+            hasText -> SentenceSlot.WORDS
+            state.isListening -> SentenceSlot.HINT
+            else -> SentenceSlot.NONE
+        }
+        AnimatedContent(
+            targetState = showing,
+            transitionSpec = { swapInPlace() },
+            contentAlignment = Alignment.Center,
+            label = "aiSpokenSentence",
+        ) { slot ->
+            when (slot) {
+                SentenceSlot.WORDS -> Text(
+                    text = text,
+                    style = KrailTheme.typography.titleMediumRegular,
+                    color = KrailTheme.colors.onSurface,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(dim.radiusM))
+                        // Not while it is being heard or worked out: the words are still
+                        // arriving, or already on their way to a search.
+                        .klickable(enabled = !state.isBusy, onClick = onStartEditing)
+                        .padding(dim.spacingS),
+                )
+
+                // The status line says Listening, so the example moves down here for the few
+                // seconds before the first word arrives. "Try" and quotes: a demonstration.
+                SentenceSlot.HINT -> Text(
+                    text = "Try \u201C$suggestion\u201D",
+                    style = KrailTheme.typography.bodySmall,
+                    color = KrailTheme.colors.secondaryLabel,
+                    textAlign = TextAlign.Center,
+                )
+
+                SentenceSlot.NONE -> Unit
+            }
         }
 
         // A speech problem brings its own single action (AiSpeechProblemAction), and a mic
-        // beside it would be a second button for the same thing.
-        if (state.speechUnavailableReason == null) {
+        // beside it would be a second button for the same thing. It folds away on the same
+        // clock as the banner arriving above it, so the two read as one change.
+        AnimatedVisibility(
+            visible = state.speechUnavailableReason == null,
+            enter = foldIn(),
+            exit = foldOut(),
+        ) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(dim.spacingXL, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 AiVoiceControl(state = state, onEvent = onEvent, labelled = false)
-                if (hasText && !state.isListening) {
+                // Opens its own width as it springs in, so the mic slides aside to make room
+                // rather than jumping when the rider stops speaking.
+                AnimatedVisibility(
+                    visible = hasText && !state.isListening,
+                    enter = sendButtonEnter(expandFrom = Alignment.Start),
+                    exit = sendButtonExit(shrinkTowards = Alignment.Start),
+                ) {
                     AiSendButton(
                         enabled = !state.isBusy,
                         onClick = { onEvent(AiSearchInputEvent.Submit) },
@@ -86,3 +117,5 @@ internal fun AiSpokenSentence(
         }
     }
 }
+
+private enum class SentenceSlot { WORDS, HINT, NONE }

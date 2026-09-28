@@ -1,8 +1,12 @@
 package xyz.ksharma.krail.trip.planner.ui.components.ai
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import kotlinx.coroutines.launch
@@ -73,7 +77,7 @@ internal fun AiSpeechProblemAction(
 ) {
     val startListening = rememberStartListening(onEvent)
     val openAppSettings = rememberOpenAppSettings()
-    val action: Pair<String, () -> Unit> = when {
+    val action: Pair<String, () -> Unit>? = when {
         state.isListening || state.isSpeechUnsupported -> null
         state.needsSettingsForMic -> OPEN_SETTINGS_LABEL to openAppSettings
         state.needsMicPermission -> ALLOW_MIC_LABEL to startListening
@@ -82,10 +86,26 @@ internal fun AiSpeechProblemAction(
         // again: an unrecognised error code with no action here left the rider stuck.
         state.speechUnavailableReason != null -> TRY_AGAIN_LABEL to startListening
         else -> null
-    } ?: return
+    }
 
-    Button(onClick = action.second, modifier = modifier.fillMaxWidth()) {
-        Text(text = action.first)
+    // Folds on the banner's clock rather than popping under it. The last action is held through
+    // the exit, the way the banner holds its message, so what folds away is the button the rider
+    // just pressed and not an empty box.
+    val heldAction = remember { mutableStateOf(action) }
+    SideEffect {
+        if (action != null) heldAction.value = action
+    }
+    AnimatedVisibility(
+        visible = action != null,
+        enter = foldIn(),
+        exit = foldOut(),
+        modifier = modifier,
+    ) {
+        (action ?: heldAction.value)?.let { (label, onClick) ->
+            Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+                Text(text = label)
+            }
+        }
     }
 }
 

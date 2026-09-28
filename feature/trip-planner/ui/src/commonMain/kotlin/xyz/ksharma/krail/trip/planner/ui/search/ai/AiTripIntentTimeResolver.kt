@@ -11,7 +11,16 @@ import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptio
 import kotlin.time.Clock
 import kotlin.time.Instant
 
-private val CLOCK_TIME_REGEX = Regex("""\b(\d{1,2})(?::(\d{2}))?\s*(am|pm|AM|PM)?\b""")
+// The meridiem is captured as its first letter so every spelling reads the same: "pm", "PM",
+// and the dotted "p.m." that Android speech recognition writes. Only "am" and "pm" used to
+// match, so "6:30 p.m." kept no meridiem, and its explicit minutes still made it a plausible
+// time: a rider who said half six in the evening was sent a morning trip.
+private val CLOCK_TIME_REGEX = Regex(
+    """\b(\d{1,2})(?::(\d{2}))?(?:\s*([ap])\.?\s?m\b\.?|\b)""",
+    RegexOption.IGNORE_CASE,
+)
+private const val MERIDIEM_AM = "a"
+private const val MERIDIEM_PM = "p"
 private val RELATIVE_MINUTES_REGEX = Regex("""\bin\s+(\d{1,3})\s*(minutes?|mins?)\b""", RegexOption.IGNORE_CASE)
 private val RELATIVE_HOURS_REGEX = Regex("""\bin\s+(\d{1,2})\s*(hours?|hrs?)\b""", RegexOption.IGNORE_CASE)
 private const val NOON_HOUR = 12
@@ -52,8 +61,8 @@ private data class ClockMatch(val hour: Int, val minute: Int, val meridiem: Stri
         hour in HOUR_RANGE && minute in MINUTE_RANGE && (meridiem.isNotEmpty() || hasExplicitMinutes)
 
     fun toHour24(): Int = when {
-        meridiem == "am" && hour == NOON_HOUR -> MIDNIGHT_HOUR
-        meridiem == "pm" && hour != NOON_HOUR -> hour + HOURS_PER_HALF_DAY
+        meridiem == MERIDIEM_AM && hour == NOON_HOUR -> MIDNIGHT_HOUR
+        meridiem == MERIDIEM_PM && hour != NOON_HOUR -> hour + HOURS_PER_HALF_DAY
         else -> hour
     }
 }

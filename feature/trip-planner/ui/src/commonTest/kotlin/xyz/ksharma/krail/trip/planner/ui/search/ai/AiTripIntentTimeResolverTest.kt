@@ -39,6 +39,39 @@ class AiTripIntentTimeResolverTest {
         assertEquals(30, result?.minute)
     }
 
+    // Android speech recognition writes the meridiem with dots ("6:30 p.m."). Read without the
+    // dots understood, the explicit minutes still made the match plausible and it resolved to
+    // the morning.
+    @Test
+    fun `dotted p m from speech resolves to the afternoon`() {
+        val result = resolveTimeIntent(TimeIntent(isArrival = true, timeText = "6:30 p.m."), fixedNow, utc)
+
+        assertEquals(18, result?.hour)
+        assertEquals(30, result?.minute)
+    }
+
+    @Test
+    fun `dotted p m without minutes resolves to the afternoon`() {
+        val result = resolveTimeIntent(TimeIntent(isArrival = false, timeText = "at 6 p.m. tomorrow"), fixedNow, utc)
+
+        assertEquals(18, result?.hour)
+        assertEquals(0, result?.minute)
+        assertEquals(LocalDate(2026, 8, 11), result?.date)
+    }
+
+    @Test
+    fun `upper case and partly dotted meridiems resolve`() {
+        assertEquals(18, resolveTimeIntent(TimeIntent(false, "6:30 P.M."), fixedNow, utc)?.hour)
+        assertEquals(18, resolveTimeIntent(TimeIntent(false, "6:30 p.m"), fixedNow, utc)?.hour)
+        assertEquals(18, resolveTimeIntent(TimeIntent(false, "6:30 p m"), fixedNow, utc)?.hour)
+        assertEquals(10, resolveTimeIntent(TimeIntent(false, "10:15 a.m."), fixedNow, utc)?.hour)
+    }
+
+    @Test
+    fun `dotted 12 a m resolves to midnight`() {
+        assertEquals(0, resolveTimeIntent(TimeIntent(false, "12 a.m."), fixedNow, utc)?.hour)
+    }
+
     @Test
     fun `noon via 12pm resolves to hour 12, not 0`() {
         val result = resolveTimeIntent(TimeIntent(isArrival = true, timeText = "12pm"), fixedNow, utc)

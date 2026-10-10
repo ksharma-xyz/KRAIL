@@ -19,7 +19,7 @@ maestro --version   # expect 2.x
 | Lane | Runs | Contents |
 |---|---|---|
 | `smoke/` | Every PR | Launch, and plan a trip. Fast enough to gate a merge. |
-| `nightly/` | Nightly cron, `prod/**`, manual dispatch | Rotation, process lifecycle and permission-denial cases. Slower, and not worth blocking a PR on. |
+| `nightly/` | Weekly cron (Sunday 03:00 AEST), `prod/**`, manual dispatch | Rotation, process lifecycle and permission-denial cases. Slower, and not worth blocking a PR on. |
 
 **Rotation moved out of the PR lane.** The sweep is a real test, but rotating a
 software-rendered CI emulator was the dominant source of flakes in a lane that must never

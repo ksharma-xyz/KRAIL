@@ -411,7 +411,7 @@ Verified against **Maestro 2.8.0**; `setOrientation` needs 2.x.
 | Lane | Runs | Workflow |
 |---|---|---|
 | `.maestro/smoke/` | as part of the nightly run | `maestro-nightly.yml` |
-| `.maestro/nightly/` | 03:00 AEST cron, `prod/**`, manual dispatch | `maestro-nightly.yml` |
+| `.maestro/nightly/` | Weekly cron, Sunday 03:00 AEST, `prod/**`, manual dispatch | `maestro-nightly.yml` |
 
 `.maestro/shared/` holds helper flows called via `runFlow`. It sits outside both lanes so a
 directory run never treats one as a test.
@@ -430,7 +430,7 @@ caught by reading the nightly, not by a blocked PR.
 emulator was the dominant flake source in a lane that must never retry. What it covers is
 already covered per-PR host-side, where recreation is deterministic: two `StateRestorationTester`
 tests drive the same screens, and `NavKeySerializationConfigTest` catches the unregistered-route
-crash rotation would otherwise be first to find. The sweep still runs nightly, where it exercises
+crash rotation would otherwise be first to find. The sweep still runs in the weekly lane, where it exercises
 the real window-level path those cannot.
 
 ### The `APP_ID` convention

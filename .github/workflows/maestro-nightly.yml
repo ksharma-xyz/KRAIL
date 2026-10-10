@@ -8,10 +8,11 @@ name: Maestro Nightly
 
 on:
   schedule:
-    # 17:00 UTC is 03:00 AEST, which is the quiet end of a Sydney night: after
-    # the last services and well before the morning peak, so a flow that reads
-    # live timetable data is not competing with real load.
-    - cron: '0 17 * * *'
+    # Weekly, not nightly: Saturday 17:00 UTC is Sunday 03:00 AEST, the quiet end
+    # of a Sydney night, after the last services and well before the morning
+    # peak, so a flow that reads live timetable data is not competing with real
+    # load. prod/** pushes and manual dispatch still run it on demand.
+    - cron: '0 17 * * 6'
   workflow_dispatch:
   push:
     branches: [ 'prod/**' ]

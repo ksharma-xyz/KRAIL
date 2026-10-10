@@ -539,7 +539,7 @@ private const val WIGGLE_DURATION_VARIANCE_STEP_MS = 70
 private const val WIGGLE_OFFSET_MULTIPLIER = 47
 private const val WIGGLE_OFFSET_MAX_MS = 200
 
-// Left-pane width cap when SavedTrips is rendered in dual-pane (≥ 600 dp width).
+// Left-pane width cap when SavedTrips is rendered in dual-pane (shouldShowDualPane).
 // Keeps the saved-trips list at phone-width proportions; map fills the rest.
 // See docs/TABLET_FOLDABLE_UX.md §4.
 

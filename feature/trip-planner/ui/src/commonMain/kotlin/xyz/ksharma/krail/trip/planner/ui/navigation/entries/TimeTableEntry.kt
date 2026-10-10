@@ -52,8 +52,8 @@ import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableScreen
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
 
 /**
- * Renders full-width on every form factor. On tablets / foldable-unfolded / phone
- * landscape (≥ 600 dp width), the screen splits internally: journey list on the left
+ * Renders full-width on every form factor. On windows of at least 840 dp width that are not
+ * phone landscape (`shouldShowDualPane`), the screen splits internally: journey list on the left
  * (capped width), persistent JourneyMap on the right. The per-card "Maps" button is
  * suppressed in dual-pane because the map is always visible.
  *
@@ -165,7 +165,7 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
             )
         }
 
-        // Adaptive layout — dual-pane on ≥ 600 dp width
+        // Adaptive layout: dual-pane per shouldShowDualPane (>= 840 dp wide, not compact height)
         val adaptiveLayoutInfo = rememberAdaptiveLayoutInfo()
         val dualPane = adaptiveLayoutInfo.shouldShowDualPane
 

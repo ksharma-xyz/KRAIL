@@ -13,14 +13,17 @@ that contradicts a rule here should update the doc in the same commit.
 
 Breakpoints live in
 [`core/adaptive-ui/.../AdaptiveLayoutInfo.kt`](../core/adaptive-ui/src/commonMain/kotlin/xyz/ksharma/krail/core/adaptiveui/AdaptiveLayoutInfo.kt).
-The gate for dual-pane layouts is `shouldShowDualPane` (true at
-width ≥ 600 dp).
+The gate for dual-pane layouts is `shouldShowDualPane`: true at width
+≥ 840 dp (`MIN_DUAL_PANE_WIDTH`) **and** height ≥ 480 dp. The list pane is a
+fixed width, so the gate is really a floor on the map: at 840 dp it gets at
+least 320 dp. Below that the map was a strip too narrow to read (measured on
+iPhone Duo at 624 dp: a ~144 dp map, see #2040).
 
 | Class      | Width range  | Typical device                                                  | Layout                                |
 |------------|--------------|------------------------------------------------------------------|---------------------------------------|
 | COMPACT    | < 600 dp     | phone portrait, foldable closed                                  | single-pane                           |
-| MEDIUM     | 600–840 dp   | phone landscape, foldable unfolded portrait, small tablet portrait | **dual-pane** (tight ratio)         |
-| EXPANDED+  | ≥ 840 dp     | tablet landscape, foldable unfolded landscape, desktop           | **dual-pane** (roomy ratio)           |
+| MEDIUM     | 600–840 dp   | phone landscape, foldable unfolded portrait, small tablet portrait | single-pane, Maps button              |
+| EXPANDED+  | ≥ 840 dp     | tablet landscape, foldable unfolded landscape, desktop           | **dual-pane** (unless compact height) |
 
 Width and height are decided independently. `isCompactHeight`
 (height < 480 dp, i.e. phone landscape) drives separate adaptations on
@@ -48,19 +51,18 @@ Files:
   (The old `listPane()` declaration caused a double-split: scaffold halved
   the window, then SearchStop's internal dual-pane halved it again,
   leaving ~25 % each. That is fixed.)
-- Dual-pane at ≥ 600 dp width (`shouldShowDualPane`, unchanged).
+- Dual-pane per `shouldShowDualPane` (≥ 840 dp wide, not compact height).
   COMPACT widths keep the existing single-pane list/map toggle.
 - **Pane widths** come from the shared
   [`DualPaneScaffold`](../core/adaptive-ui/src/commonMain/kotlin/xyz/ksharma/krail/core/adaptiveui/DualPaneScaffold.kt):
   list pane = a **fixed** `DUAL_PANE_LIST_WIDTH` (480 dp); map pane =
   `weight(1f)`, taking everything else. The list stays a constant
   ≈ phone width at every window size, so `StopSearchListItem` rows read
-  the same on a 720 dp foldable and a 1280 dp tablet, and only the map
+  the same on an 840 dp foldable and a 1280 dp tablet, and only the map
   grows:
 
   | Available width | List | Map   |
   |-----------------|------|-------|
-  | 720 dp          | 480  | ~240  |
   | 840 dp          | 480  | ~360  |
   | 1280 dp         | 480  | ~800  |
 
@@ -88,7 +90,7 @@ Files:
   ("Maps" button lives in `ExpandedJourneyCardContent`, lines 268–279)
 - [`JourneyMap.kt`](../feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/journeymap/JourneyMap.kt)
 
-### Rules (≥ 600 dp width)
+### Rules (`shouldShowDualPane`)
 
 - Left pane: existing TimeTable journey list, capped at
   `widthIn(max = 520.dp)` so cards keep phone-width proportions.
@@ -103,9 +105,9 @@ Files:
   smoothly to the route when the user expands a card (600 ms fly-to).
 - **With a journey expanded**: map shows the route polyline, stops, and
   leg colours. Camera flies to the route bounds / origin stop.
-- Phone landscape (`isCompactHeight` and width ≥ 600 dp): dual-pane
-  layout still applies. Cards remain full-width; vertical scroll handles
-  density.
+- Phone landscape (`isCompactHeight`): single pane. The map beside the
+  list came out as a thin strip, so the "Maps" button opens it full screen
+  as on a phone in portrait.
 
 ---
 
@@ -120,7 +122,7 @@ Files:
 full-width and manages its own left/right split internally (same pattern as
 SearchStop). `TimeTableRoute` navigation still works via back-stack push.
 
-### Width rules (≥ 600 dp)
+### Width rules (`shouldShowDualPane`)
 
 - **Left pane** (a fixed 480 dp, `DUAL_PANE_LIST_WIDTH`): the saved-trips list, Park & Ride,
   Discover tiles, and the SearchStopRow pill at the bottom — same as
@@ -153,9 +155,9 @@ Files:
 
 ### Rules
 
-- Dual-pane at `shouldShowDualPane` (width ≥ MEDIUM), same gate as everywhere
-  else — so phone landscape, unfolded foldables and tablets all show the map.
-  Phone portrait stays list-only.
+- Dual-pane at `shouldShowDualPane` (≥ 840 dp wide, not compact height), same
+  gate as everywhere else, so tablets and wide unfolded foldables show the map.
+  Phone portrait, phone landscape and medium-width windows stay list-only.
 - Uses the shared `DualPaneScaffold`, so the map is a **sibling** of the list,
   never nested inside it. See the iOS compositing invariant in
   `DualPaneScaffold` — a `UIKitView` map cannot composite into an offscreen

@@ -33,6 +33,16 @@ object AdaptiveBreakpoints {
 
     /** Medium height: 480dp ≤ height < 900dp (96.56% of tablets in landscape, 97.59% of phones in portrait) */
     const val MEDIUM_HEIGHT = 900
+
+    /**
+     * Narrowest window that gets a list and a map side by side.
+     *
+     * The list pane is a fixed width (480 dp, 520 dp on Timetable) and the map takes the rest,
+     * so this is really a floor on the map: at 840 dp it is at least 320 dp wide. Below that the
+     * map was a strip too narrow to read, so those windows use a single pane and reach the map
+     * through its own button instead.
+     */
+    const val MIN_DUAL_PANE_WIDTH = MEDIUM_WIDTH
 }
 
 /**
@@ -130,7 +140,7 @@ data class AdaptiveLayoutInfo(
 
     /**
      * True for tablet and foldable layouts (medium width or larger).
-     * Use this to determine when to show dual-pane layouts.
+     * Not the dual-pane gate: use [shouldShowDualPane] for that.
      */
     val isTabletOrFoldable: Boolean
         get() = widthSizeClass != WindowWidthSizeClass.COMPACT
@@ -143,11 +153,14 @@ data class AdaptiveLayoutInfo(
             widthSizeClass == WindowWidthSizeClass.EXTRA_LARGE
 
     /**
-     * True if dual-pane layout should be used (medium width or larger).
-     * For SearchStopScreen: List on left, Map on right.
+     * True if the list and the map should sit side by side.
+     *
+     * Needs [AdaptiveBreakpoints.MIN_DUAL_PANE_WIDTH] of width so the map gets a usable share,
+     * and is never true at compact height: a phone in landscape has the width but not the room,
+     * and its map came out as a thin strip beside the list.
      */
     val shouldShowDualPane: Boolean
-        get() = isTabletOrFoldable
+        get() = !isCompactHeight && widthDp >= AdaptiveBreakpoints.MIN_DUAL_PANE_WIDTH
 
     /**
      * Phone in landscape: any window with compact height (< 480 dp).

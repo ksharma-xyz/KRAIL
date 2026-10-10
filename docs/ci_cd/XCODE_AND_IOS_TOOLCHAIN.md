@@ -45,8 +45,12 @@ app's 17.0, so the app's setting can be fine while the bridges are not.
    bridges' final link.
 5. **CI in its own PR.** Runner images lag: a new Xcode first appears as a *preview* label
    (`runs-on: xcode-27`), not on `macos-latest`. Move the PR-check workflows first.
-6. **TestFlight last**, and only on a runner image that is out of preview. It is the release
-   pipeline, and App Store Connect's SDK rules decide what it must build with, not us.
+6. **TestFlight last**, and by default only on a runner image that is out of preview. It is the
+   release pipeline, and App Store Connect's SDK rules decide what it must build with, not us.
+   Exception, decided 2026-10-10: TestFlight moved to the preview `xcode-27` image with Xcode
+   27.1 (build 27A9269) because the iOS 27.1 SDK is what lets the app use the full iPhone Duo
+   displays (apps built with older SDKs do not extend under its status bar and camera). See
+   #2040.
 
 ## 3. Rules
 
@@ -56,10 +60,13 @@ app's 17.0, so the app's setting can be fine while the bridges are not.
 - **You cannot always go back.** macOS 27 refuses to run Xcode 26. If the laptop moves first,
   local iOS builds stay broken until the tooling supports the new Xcode, and iOS is verified by
   CI and TestFlight in the meantime. Say so in the PR rather than implying a local run.
-- **Pin the exact Xcode, not a range.** `setup-xcode` with `'~27'` picked `27.1` because the
-  image also carries a `27.1` beta, so CI built with a beta. Use `'27.0'` and move it on purpose.
+- **Pin the exact Xcode, not a range.** `setup-xcode` with `'~27'` once picked a `27.1` beta
+  because the image carried one, so CI built with a beta. The image now also carries a `27.2`
+  beta. Pin `'27.1'` and move it on purpose, in every iOS workflow at once.
 - **A preview runner is not a release runner.** Expect queueing and instability on a preview
-  image; do not put the release pipeline on one.
+  image; do not put the release pipeline on one without a recorded reason (see step 6 for the
+  one exception so far). If a TestFlight run fails on the image itself, re-run it before
+  changing anything.
 
 ## 4. Failure signatures
 

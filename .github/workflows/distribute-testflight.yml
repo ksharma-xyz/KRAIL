@@ -14,7 +14,8 @@ on:
 
 jobs:
   distribute:
-    runs-on: macos-latest
+    # Xcode 27.x only ships on the xcode-27 image, not on macos-latest.
+    runs-on: xcode-27
     environment: Firebase
     permissions:
       actions: write  # required to write back IOS_BUILD_NUMBER repo variable
@@ -34,7 +35,7 @@ jobs:
       - name: Set up Xcode
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '~26'  # Xcode 26+ required: iOS 26 SDK mandatory for App Store uploads from April 28 2026
+          xcode-version: '27.1'  # the iOS 27.1 SDK lets the app fill iPhone Duo's displays; exact pin, see docs/ci_cd/XCODE_AND_IOS_TOOLCHAIN.md
 
       - name: Setup environment variables
         run: |

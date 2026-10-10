@@ -66,20 +66,34 @@ class AdaptiveLayoutInfoTest {
     }
 
     @Test
-    fun dualPaneStartsAtSixHundredDpWide() {
-        // The gate for "is there a second pane at all". Height never enters into it: a phone in
-        // landscape is wide enough for two panes and gets them.
+    fun dualPaneStartsAtEightHundredFortyDpWide() {
+        // The gate for "is there a map beside the list at all". Below 840 dp the fixed-width
+        // list left the map a strip under 320 dp wide, so those windows stay single pane.
         assertFalse(
-            adaptiveLayoutInfoFor(LAST_COMPACT_WIDTH, ROOMY_HEIGHT).shouldShowDualPane,
-            "${LAST_COMPACT_WIDTH}dp is still a single pane",
-        )
-        assertTrue(
             adaptiveLayoutInfoFor(FIRST_MEDIUM_WIDTH, ROOMY_HEIGHT).shouldShowDualPane,
-            "${FIRST_MEDIUM_WIDTH}dp is where dual pane begins",
+            "${FIRST_MEDIUM_WIDTH}dp is a medium window but too narrow for a usable map",
+        )
+        assertFalse(
+            adaptiveLayoutInfoFor(LAST_MEDIUM_WIDTH, ROOMY_HEIGHT).shouldShowDualPane,
+            "${LAST_MEDIUM_WIDTH}dp is still a single pane",
         )
         assertTrue(
-            adaptiveLayoutInfoFor(FIRST_MEDIUM_WIDTH, LAST_COMPACT_HEIGHT).shouldShowDualPane,
-            "a short window that is wide enough still gets two panes",
+            adaptiveLayoutInfoFor(FIRST_EXPANDED_WIDTH, ROOMY_HEIGHT).shouldShowDualPane,
+            "${FIRST_EXPANDED_WIDTH}dp is where dual pane begins",
+        )
+    }
+
+    @Test
+    fun compactHeightNeverGetsDualPane() {
+        // A phone in landscape reaches EXPANDED width, but beside a list its map was a thin
+        // strip with no vertical room either. Width alone must not bring the map back.
+        assertFalse(
+            adaptiveLayoutInfoFor(FIRST_EXPANDED_WIDTH, LAST_COMPACT_HEIGHT).shouldShowDualPane,
+            "wide but short is a phone in landscape: single pane",
+        )
+        assertTrue(
+            adaptiveLayoutInfoFor(FIRST_EXPANDED_WIDTH, FIRST_MEDIUM_HEIGHT).shouldShowDualPane,
+            "the same width with medium height gets two panes",
         )
     }
 

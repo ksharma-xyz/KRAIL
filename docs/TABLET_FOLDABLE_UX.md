@@ -29,6 +29,26 @@ Width and height are decided independently. `isCompactHeight`
 (height < 480 dp, i.e. phone landscape) drives separate adaptations on
 screens whose vertical density matters (SavedTrips — see §4).
 
+### What real devices get
+
+Checked on iOS simulators (iOS 27) on 2026-10-11. Widths are the app window,
+not the panel. Home, Search and Timetable follow the same gate, so each row
+holds for all three.
+
+| Device                       | Orientation   | Window      | Layout          |
+|------------------------------|---------------|-------------|-----------------|
+| iPad mini                    | portrait      | 744 dp      | single-pane     |
+| iPad mini                    | landscape     | 1133 dp     | dual-pane       |
+| iPad Pro 13"                 | portrait      | 1032 dp     | dual-pane       |
+| iPad Pro 13"                 | landscape     | 1376 dp     | dual-pane       |
+| iPhone Duo, closed           | portrait      | ~466 dp     | single-pane     |
+| iPhone Duo, closed           | landscape     | short height | single-pane    |
+| Resizable window             | any           | 600–839 dp  | single-pane     |
+| Resizable window             | any           | ≥ 840 dp, height ≥ 480 dp | dual-pane |
+
+The iPad mini in portrait is the case the 840 dp gate changed: at the old
+600 dp gate it got a ~264 dp map beside a 480 dp list.
+
 Posture-aware adaptation (hinge detection via
 `currentWindowAdaptiveInfo().windowPosture`) is **out of scope** today.
 Width breakpoints cover the common cases. Revisit if device telemetry

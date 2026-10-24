@@ -892,6 +892,51 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         )
 
     /**
+     * The on-device AI summary card atop the Service Alerts sheet, gated by the
+     * `alert_summary_enabled` Remote Config flag. One `{feature}_status(action)` event rather
+     * than one name per outcome, same convention as `dep_board_status`.
+     *
+     * Fires only once a summary was actually attempted: the flag being off and the device being
+     * unable to run the model fire nothing. Device capability is already on `app_start` as
+     * `aiCapability`, so repeating it on every sheet open would only add rows.
+     *
+     * Carries no alert text and no summary text, by design.
+     *
+     * @param action `shown` (card resolved with a summary), `failed` (the model was available
+     * but every alert came back empty), `upvote` or `downvote` (the rider's one vote).
+     * @param alertSetKey hash of the sorted heading+message of every alert in the set. There is
+     * no server-provided alert id, so this is the only way to join a vote to its `shown` row.
+     * @param alertCount how many alerts the card covered.
+     * @param summarizedCount on `shown` only: how many of those alerts produced a summary. Below
+     * [alertCount] means a partial card rendered.
+     * @param generateMs on `shown` and `failed` only: how long the model calls took, raw, before
+     * the fixed minimum loading beat. Not bucketed, for the same reason as `extractMs`.
+     */
+    data class AlertSummaryStatusEvent(
+        val action: Action,
+        val alertSetKey: String,
+        val alertCount: Int,
+        val summarizedCount: Int? = null,
+        val generateMs: Long? = null,
+    ) : AnalyticsEvent(
+        name = "alert_summary_status",
+        rawProperties = buildMap {
+            put(PROP_ACTION, action.value)
+            put("alertSetKey", alertSetKey)
+            put("alertCount", alertCount)
+            summarizedCount?.let { put("summarizedCount", it) }
+            generateMs?.let { put("generateMs", it) }
+        },
+    ) {
+        enum class Action(val value: String) {
+            SHOWN("shown"),
+            FAILED("failed"),
+            UPVOTE("upvote"),
+            DOWNVOTE("downvote"),
+        }
+    }
+
+    /**
      * Fired when the user taps either affordance on a stop row in the timetable
      * sticky header: the stop name (opens leg-scoped stop search, "Change
      * origin" / "Change destination") or the departures icon (opens the

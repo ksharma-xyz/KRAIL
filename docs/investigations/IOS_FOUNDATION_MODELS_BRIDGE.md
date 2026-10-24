@@ -14,12 +14,11 @@ now, not a hardcoded stub. See the "What's needed" section below for the shape t
 shipped — it matches the sketch closely, plus a `@Generable`/`@Guide` struct for
 `extractTripIntent`'s structured extraction.
 
-**Not yet verified**: Simulator cannot run Apple Intelligence models at all (Apple's own
-restriction), so this compiles and the app launches clean, but real on-device output
-(`Available` + a real summary) has not been confirmed on a real, Apple-Intelligence-capable
-device (iPhone 15 Pro or newer / M-series). The one physical device tested against so far
-(an iPhone 11) is not Apple Intelligence-eligible hardware at all, so it only exercises the
-`Unavailable` path.
+**Verified on device.** Simulator cannot run Apple Intelligence models at all (Apple's own
+restriction). The first physical device tested (an iPhone 11) is not Apple
+Intelligence-eligible and only exercised the `Unavailable` path; the operator has since run it
+on Apple Intelligence-capable devices and confirmed real on-device output (recorded
+2026-10-25).
 
 Branches, stacked, not yet raised as PRs (see `feature/trip-planner/ui/ALERT_SUMMARY_UX.md`
 for the feature this unblocks):

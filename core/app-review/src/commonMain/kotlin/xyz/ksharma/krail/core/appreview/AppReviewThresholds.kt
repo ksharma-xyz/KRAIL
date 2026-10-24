@@ -14,8 +14,11 @@ import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
  * its function limit and the tunables are readable in one place.
  */
 
-/** Saved trips the user must have before ask 1 (`>= this`). */
-internal const val MIN_SAVED_TRIPS = 2L
+/**
+ * Saved trips the user must have before ask 1 (`>= this`). One, not two: a single saved trip
+ * is already a commitment to a routine, and requiring a second left out most regular riders.
+ */
+internal const val MIN_SAVED_TRIPS = 1L
 
 /** Minimum install age in days before ask 1. */
 internal const val MIN_ACCOUNT_AGE_DAYS = 3L

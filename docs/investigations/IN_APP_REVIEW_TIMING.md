@@ -73,8 +73,9 @@ tenure, so a save is an engaged user's action, not a day-one visitor's.
   user who has not rated after two good moments will not.
 - **5 months**: spaces the two asks to well within Apple's roughly 3-per-year ceiling, so
   we never waste a request against the silent OS throttle.
-- **2 saved trips + day 3**: investment plus tenure, so the asker is an engaged user, not
-  a day-one visitor who cannot judge the app yet.
+- **1 saved trip + day 3**: investment plus tenure, so the asker is an engaged user, not
+  a day-one visitor who cannot judge the app yet. Lowered from 2 on 2026-10-25: requiring a
+  second saved trip left out most regular riders, and one saved trip is already a routine.
 - **Completed moments only (moments A to D above)**: never mid-task. A transit user is
   often walking to a platform; interrupting that is how you earn a one-star.
 - **Shared moment-set for both asks**: closes the gap where a user who never taps a Park
@@ -90,7 +91,7 @@ tenure, so a save is an engaged user's action, not a day-one visitor's.
 - The `SAVED_TRIP_OPEN` lifecycle counter is removed; ask 1 gates on saved-trip *count*, a
   `SavedTrip` table query (`savedTripCount` provider), not an open counter.
 - `IN_APP_REVIEW_MIN_SAVED_TRIP_OPENS` and `IN_APP_REVIEW_COOLDOWN_DAYS` Remote Config keys
-  are replaced by the app-side constants `MIN_SAVED_TRIPS` (2) and `MIN_DAYS_BETWEEN_ASKS`
+  are replaced by the app-side constants `MIN_SAVED_TRIPS` (1) and `MIN_DAYS_BETWEEN_ASKS`
   (150, about five months) in `AppReviewThresholds.kt`. These are no longer Remote Config
   tunables: only `IN_APP_REVIEW_ENABLED` remains on Remote Config, as the master on/off gate.
 
@@ -152,7 +153,7 @@ Then, by how many times the user has been asked (`REVIEW_PROMPT_REQUESTED` count
 
 | Prior asks | Fires when | Threshold (app-side constant) |
 |---|---|---|
-| 0 (ask 1) | install age ≥ N days **and** saved-trip count ≥ M | `MIN_ACCOUNT_AGE_DAYS` (3), `MIN_SAVED_TRIPS` (2) |
+| 0 (ask 1) | install age ≥ N days **and** saved-trip count ≥ M | `MIN_ACCOUNT_AGE_DAYS` (3), `MIN_SAVED_TRIPS` (1) |
 | 1 (ask 2) | ≥ D days since ask 1 | `MIN_DAYS_BETWEEN_ASKS` (150) |
 | 2 or more | never | lifetime cap, hardcoded |
 
@@ -253,7 +254,7 @@ Only the master switch is a Remote Config value; the engagement thresholds are a
 constants in `AppReviewThresholds.kt`. To exercise the trigger without waiting days:
 
 - Set `in_app_review_enabled` to `true` in Remote Config (default is `false`).
-- Temporarily lower the constants in `AppReviewThresholds.kt`: `MIN_SAVED_TRIPS` (2),
+- Temporarily lower the constants in `AppReviewThresholds.kt`: `MIN_SAVED_TRIPS` (1),
   `MIN_ACCOUNT_AGE_DAYS` (3), `MIN_DAYS_BETWEEN_ASKS` (150). Revert before committing.
 
 A fresh install cannot otherwise trigger it, because the minimum install age is three days

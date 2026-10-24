@@ -1,9 +1,12 @@
 package xyz.ksharma.krail.sandook
 
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import xyz.ksharma.krail.sandook.db.UserLifecycleCounter
 import xyz.ksharma.krail.sandook.db.UserLifecycleQueries
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 /**
  * Counters live in their own table because each one carries two values (a total and a
@@ -49,6 +52,15 @@ internal class RealUserLifecycleStore(
         return nowMillis() - lastAt
     }
 
+    override fun recordActiveDay(): Long {
+        val now = nowMillis()
+        val last = lastAtMillis(LifecycleCounter.ACTIVE_DAYS)
+        if (last != null && sydneyDate(last) == sydneyDate(now)) {
+            return count(LifecycleCounter.ACTIVE_DAYS)
+        }
+        return increment(LifecycleCounter.ACTIVE_DAYS)
+    }
+
     override fun reset(counter: LifecycleCounter) {
         queries.deleteCounter(counter.key)
     }
@@ -67,3 +79,9 @@ internal class RealUserLifecycleStore(
         private fun systemNowMillis(): Long = Clock.System.now().toEpochMilliseconds()
     }
 }
+
+@OptIn(ExperimentalTime::class)
+private fun sydneyDate(epochMillis: Long) =
+    Instant.fromEpochMilliseconds(epochMillis).toLocalDateTime(SYDNEY).date
+
+private val SYDNEY = TimeZone.of("Australia/Sydney")

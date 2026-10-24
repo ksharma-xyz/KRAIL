@@ -20,6 +20,17 @@ import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
  */
 internal const val MIN_SAVED_TRIPS = 1L
 
+/**
+ * Distinct active days that qualify for ask 1 without a saved trip (`>= this`). The second way
+ * in, for habitual riders who plan from search and never save a trip. Five, because below that
+ * the riders it adds have thin engagement, and an ask spent on them is one of only two.
+ *
+ * The day count starts at zero in the release that added it, since nothing on the device
+ * records earlier use. So this path cannot produce an ask until about a week or two after a
+ * rider updates. That delay is expected, not a bug.
+ */
+internal const val MIN_ACTIVE_DAYS = 5L
+
 /** Minimum install age in days before ask 1. */
 internal const val MIN_ACCOUNT_AGE_DAYS = 3L
 

@@ -27,6 +27,7 @@ internal class RealAppReviewManager(
     private var pendingDelightMoment: DelightMoment? = null
 
     override fun onDelightMoment(moment: DelightMoment) {
+        lifecycleStore.recordActiveDay()
         pendingDelightMoment = moment
     }
 
@@ -34,34 +35,43 @@ internal class RealAppReviewManager(
         // Consume on arrival whether or not it fires: a landing is a one-time event, and
         // delight moments recur often enough that spending one on a not-yet-eligible user
         // costs nothing.
+        lifecycleStore.recordActiveDay()
         val moment = pendingDelightMoment ?: return
         pendingDelightMoment = null
 
-        if (!isReviewRequestDue()) return
+        val gate = dueGate() ?: return
 
         // Recorded before the call, not after: the platform never reports an outcome, so
         // "we asked" is the only fact there is. Its count is the lifetime cap and its
         // last-seen time is the spacing between the two asks.
         lifecycleStore.increment(LifecycleCounter.REVIEW_PROMPT_REQUESTED)
-        analytics.track(AnalyticsEvent.ReviewPromptRequestedEvent(source = moment.source))
-        log("AppReview: requesting platform review sheet (source=${moment.source})")
+        analytics.track(AnalyticsEvent.ReviewPromptRequestedEvent(source = moment.source, gate = gate.value))
+        log("AppReview: requesting platform review sheet (source=${moment.source}, gate=${gate.value})")
 
         requester.requestReview()
     }
 
-    private fun isReviewRequestDue(): Boolean {
-        if (!flag.isInAppReviewEnabled()) return false
-        if (!hasFinishedOnboarding()) return false
+    /** The gate that makes a request due right now, or null when none does. */
+    private fun dueGate(): ReviewGate? {
+        if (!flag.isInAppReviewEnabled()) return null
+        if (!hasFinishedOnboarding()) return null
         return when (lifecycleStore.count(LifecycleCounter.REVIEW_PROMPT_REQUESTED)) {
-            0L -> isFirstAskDue()
-            1L -> isSecondAskDue()
-            else -> false // Lifetime cap of two asks; never prompt again.
+            0L -> firstAskGate()
+            1L -> ReviewGate.SPACING.takeIf { isSecondAskDue() }
+            else -> null // Lifetime cap of two asks; never prompt again.
         }
     }
 
-    /** Ask 1: a tenured, invested user. */
-    private fun isFirstAskDue(): Boolean =
-        isAccountOldEnough() && savedTripCount() >= MIN_SAVED_TRIPS
+    /**
+     * Ask 1: a tenured user who is either invested (a saved trip) or habitual (enough distinct
+     * active days). Saved trips is checked first, so a rider who passes both reports that gate.
+     */
+    private fun firstAskGate(): ReviewGate? = when {
+        !isAccountOldEnough() -> null
+        savedTripCount() >= MIN_SAVED_TRIPS -> ReviewGate.SAVED_TRIPS
+        lifecycleStore.count(LifecycleCounter.ACTIVE_DAYS) >= MIN_ACTIVE_DAYS -> ReviewGate.ACTIVE_DAYS
+        else -> null
+    }
 
     /** Ask 2: a long, deliberate gap after ask 1, keeping both inside the OS quota. */
     private fun isSecondAskDue(): Boolean {
@@ -86,4 +96,13 @@ internal class RealAppReviewManager(
 
         private const val MILLIS_PER_DAY = 24L * 60L * 60L * 1000L
     }
+}
+
+/** Which gate made a request due, reported as `gate` on `review_prompt_requested`. */
+private enum class ReviewGate(val value: String) {
+    SAVED_TRIPS("saved_trips"),
+    ACTIVE_DAYS("active_days"),
+
+    /** Ask 2, which has one gate: the gap since ask 1. */
+    SPACING("spacing"),
 }

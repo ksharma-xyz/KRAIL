@@ -72,5 +72,9 @@ PR (Firebase caps the app at 500 unique event names, forever).
 
 ## Consumers
 
-- In-app review prompt — reads `SAVED_TRIP_OPEN` and `daysSinceFirstInstall()`, compares both
-  against Remote Config thresholds.
+- In-app review prompt: reads `daysSinceFirstInstall()`, `REVIEW_PROMPT_REQUESTED` and
+  `ACTIVE_DAYS`, plus a live saved-trip count, against the constants in
+  `AppReviewThresholds.kt`. Only the on/off switch comes from Remote Config.
+- `ACTIVE_DAYS` is written by `recordActiveDay()`, at most once per Sydney calendar day, from
+  app start, from landing on Saved Trips and from every review delight moment. It starts at
+  zero in 1.28.0, the release that added it.

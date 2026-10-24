@@ -18,6 +18,7 @@ internal class RealAppStart(
         coroutineScope.launch {
             // First, so that anything later in the launch can already read the install age.
             userLifecycleStore.recordFirstInstallIfAbsent()
+            userLifecycleStore.recordActiveDay()
             nswStopsManager.insertStops()
             nswBusRoutesManager.insertStops()
             setupRemoteConfig()

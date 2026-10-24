@@ -116,7 +116,7 @@ class RealAppReviewManagerTest {
 
     @Test
     fun `does not request with fewer than the minimum saved trips`() {
-        savedTrips = 1L
+        savedTrips = 0L
 
         manager().delightThenLand()
 
@@ -124,9 +124,18 @@ class RealAppReviewManagerTest {
     }
 
     @Test
+    fun `one saved trip is enough for ask 1`() {
+        savedTrips = 1L
+
+        manager().delightThenLand()
+
+        assertEquals(1, requester.requestCount)
+    }
+
+    @Test
     fun `consumes the armed moment even when the gates fail`() {
         val manager = manager()
-        savedTrips = 1L // not yet eligible
+        savedTrips = 0L // not yet eligible
         manager.delightThenLand()
         assertEquals(0, requester.requestCount)
 

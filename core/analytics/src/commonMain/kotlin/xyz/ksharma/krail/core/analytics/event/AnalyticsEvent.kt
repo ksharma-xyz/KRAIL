@@ -1721,10 +1721,14 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      * "rated" event to pair this with; one cannot be built. [source] carries which delight
      * moment triggered the ask, so future triggers extend this event rather than minting a
      * new name.
+     *
+     * [gate] says which condition made the ask due: `saved_trips` or `active_days` for ask 1
+     * (saved trips wins when both pass), `spacing` for ask 2. Absent on rows from before it
+     * existed.
      */
-    data class ReviewPromptRequestedEvent(val source: String) : AnalyticsEvent(
+    data class ReviewPromptRequestedEvent(val source: String, val gate: String) : AnalyticsEvent(
         name = "review_prompt_requested",
-        rawProperties = mapOf(PROP_SOURCE to source),
+        rawProperties = mapOf(PROP_SOURCE to source, "gate" to gate),
     )
 
     // endregion

@@ -173,6 +173,7 @@ private class FakeUserLifecycleStore : UserLifecycleStore {
     override fun count(counter: LifecycleCounter): Long = counts.getOrElse(counter) { 0L }
     override fun lastAtMillis(counter: LifecycleCounter): Long? = null
     override fun millisSinceLast(counter: LifecycleCounter): Long? = null
+    override fun recordActiveDay(): Long = count(LifecycleCounter.ACTIVE_DAYS)
 
     override fun reset(counter: LifecycleCounter) {
         counts.remove(counter)

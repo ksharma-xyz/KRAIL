@@ -150,6 +150,32 @@ class UserLifecycleStoreTest {
         upgradeDriver.close()
     }
 
+    @Test
+    fun `an active day counts once per day however often it is recorded`() {
+        now = SYDNEY_25_OCT_2330
+        assertEquals(1L, store.recordActiveDay())
+        assertEquals(1L, store.recordActiveDay())
+        assertEquals(1L, store.count(LifecycleCounter.ACTIVE_DAYS))
+    }
+
+    @Test
+    fun `a new sydney day counts even when the UTC date has not changed`() {
+        now = SYDNEY_25_OCT_2330
+        store.recordActiveDay()
+        now = SYDNEY_26_OCT_0030 // same UTC date, next Sydney day
+
+        assertEquals(2L, store.recordActiveDay())
+    }
+
+    @Test
+    fun `crossing UTC midnight inside one sydney day does not count twice`() {
+        now = SYDNEY_25_OCT_1030
+        store.recordActiveDay()
+        now = SYDNEY_25_OCT_1130 // next UTC date, same Sydney day
+
+        assertEquals(1L, store.recordActiveDay())
+    }
+
     private companion object {
         const val MILLIS_PER_DAY = 24L * 60L * 60L * 1000L
 
@@ -158,5 +184,11 @@ class UserLifecycleStoreTest {
 
         /** An arbitrary fixed "install" instant; tests move [now] relative to it. */
         const val DAY_ZERO = 1_700_000_000_000L
+
+        // Sydney is UTC+11 (daylight time) on these dates.
+        const val SYDNEY_25_OCT_1030 = 1_792_884_600_000L // 24 Oct 23:30 UTC
+        const val SYDNEY_25_OCT_1130 = 1_792_888_200_000L // 25 Oct 00:30 UTC
+        const val SYDNEY_25_OCT_2330 = 1_792_931_400_000L // 25 Oct 12:30 UTC
+        const val SYDNEY_26_OCT_0030 = 1_792_935_000_000L // 25 Oct 13:30 UTC
     }
 }

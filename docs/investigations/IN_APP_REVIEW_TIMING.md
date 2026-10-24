@@ -76,6 +76,10 @@ tenure, so a save is an engaged user's action, not a day-one visitor's.
 - **1 saved trip + day 3**: investment plus tenure, so the asker is an engaged user, not
   a day-one visitor who cannot judge the app yet. Lowered from 2 on 2026-10-25: requiring a
   second saved trip left out most regular riders, and one saved trip is already a routine.
+- **Or 5 active days**: added the same day, for habitual riders who plan from search and never
+  save a trip; analytics showed a habitual group of them. Days are distinct Sydney calendar
+  days, counted from 1.28.0, so this path produces its first asks a week or two after a rider
+  updates. `review_prompt_requested.gate` says which path an ask came through.
 - **Completed moments only (moments A to D above)**: never mid-task. A transit user is
   often walking to a platform; interrupting that is how you earn a one-star.
 - **Shared moment-set for both asks**: closes the gap where a user who never taps a Park
@@ -153,7 +157,7 @@ Then, by how many times the user has been asked (`REVIEW_PROMPT_REQUESTED` count
 
 | Prior asks | Fires when | Threshold (app-side constant) |
 |---|---|---|
-| 0 (ask 1) | install age ≥ N days **and** saved-trip count ≥ M | `MIN_ACCOUNT_AGE_DAYS` (3), `MIN_SAVED_TRIPS` (1) |
+| 0 (ask 1) | install age ≥ N days **and** (saved-trip count ≥ M **or** active days ≥ D) | `MIN_ACCOUNT_AGE_DAYS` (3), `MIN_SAVED_TRIPS` (1), `MIN_ACTIVE_DAYS` (5) |
 | 1 (ask 2) | ≥ D days since ask 1 | `MIN_DAYS_BETWEEN_ASKS` (150) |
 | 2 or more | never | lifetime cap, hardcoded |
 

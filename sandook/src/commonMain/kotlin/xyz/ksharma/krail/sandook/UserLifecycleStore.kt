@@ -56,6 +56,14 @@ interface UserLifecycleStore {
     fun millisSinceLast(counter: LifecycleCounter): Long?
 
     /**
+     * Counts today as an active day if it has not been counted yet, and returns the total of
+     * distinct active days. "Today" is the Sydney calendar day, so the count does not depend
+     * on the device's timezone. Safe to call as often as callers like: only the first call on
+     * each day increments [LifecycleCounter.ACTIVE_DAYS].
+     */
+    fun recordActiveDay(): Long
+
+    /**
      * Clears [counter]'s total and last-seen time, so [count] reads `0` again. Only touches this
      * one counter: the install date lives in a separate preferences row and is untouched. Used
      * by debug tooling to re-arm one-shot flows without a full data wipe.
@@ -78,4 +86,11 @@ enum class LifecycleCounter(val key: String) {
      * what enforces the cooldown between requests.
      */
     REVIEW_PROMPT_REQUESTED("review_prompt_requested_count"),
+
+    /**
+     * Distinct Sydney calendar days the app was used, incremented at most once a day by
+     * [UserLifecycleStore.recordActiveDay]. Starts at zero for everyone in the release that
+     * added it: there is no earlier on-device history to seed it from.
+     */
+    ACTIVE_DAYS("active_days_count"),
 }

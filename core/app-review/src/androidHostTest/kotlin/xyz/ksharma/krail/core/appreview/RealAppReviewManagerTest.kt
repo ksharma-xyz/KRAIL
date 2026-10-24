@@ -186,6 +186,71 @@ class RealAppReviewManagerTest {
         assertEquals(2, lifecycleStore.count(LifecycleCounter.REVIEW_PROMPT_REQUESTED))
     }
 
+    @Test
+    fun `a rider with no saved trip qualifies after enough active days`() {
+        savedTrips = 0L
+        lifecycleStore.setCount(LifecycleCounter.ACTIVE_DAYS, 5L)
+
+        manager().delightThenLand()
+
+        assertEquals(1, requester.requestCount)
+        val event = analytics.tracked.single() as AnalyticsEvent.ReviewPromptRequestedEvent
+        assertEquals("active_days", event.gate)
+    }
+
+    @Test
+    fun `a rider with no saved trip and too few active days is not asked`() {
+        savedTrips = 0L
+        lifecycleStore.setCount(LifecycleCounter.ACTIVE_DAYS, 4L)
+
+        manager().delightThenLand()
+
+        assertEquals(0, requester.requestCount)
+    }
+
+    @Test
+    fun `active days still need the install to be old enough`() {
+        savedTrips = 0L
+        lifecycleStore.setCount(LifecycleCounter.ACTIVE_DAYS, 30L)
+        lifecycleStore.installAgeDays = 1L
+
+        manager().delightThenLand()
+
+        assertEquals(0, requester.requestCount)
+    }
+
+    @Test
+    fun `saved trips is reported when both gates pass`() {
+        lifecycleStore.setCount(LifecycleCounter.ACTIVE_DAYS, 30L)
+
+        manager().delightThenLand()
+
+        val event = analytics.tracked.single() as AnalyticsEvent.ReviewPromptRequestedEvent
+        assertEquals("saved_trips", event.gate)
+    }
+
+    @Test
+    fun `the second ask reports the spacing gate`() {
+        val manager = manager()
+        manager.delightThenLand()
+        now = DAY_ZERO + MILLIS_PER_DAY * (MIN_DAYS_BETWEEN_ASKS + 1)
+        manager.delightThenLand()
+
+        val gates = analytics.tracked.map { (it as AnalyticsEvent.ReviewPromptRequestedEvent).gate }
+        assertEquals(listOf("saved_trips", "spacing"), gates)
+    }
+
+    @Test
+    fun `landing on saved trips and delight moments record an active day`() {
+        lifecycleStore.countActiveDays = true
+        val manager = manager()
+
+        manager.onSavedTripsScreenShown()
+        manager.onDelightMoment(DelightMoment.TIMETABLE_VIEWED)
+
+        assertEquals(2L, lifecycleStore.count(LifecycleCounter.ACTIVE_DAYS))
+    }
+
     private companion object {
         const val MILLIS_PER_DAY = 24L * 60L * 60L * 1000L
         const val DAY_ZERO = 1_700_000_000_000L
@@ -216,6 +281,10 @@ private class RecordingAnalytics : Analytics {
 private class FakeUserLifecycleStore(private val nowMillis: () -> Long) : UserLifecycleStore {
     var installAgeDays: Long? = 0L
 
+    // Day boundaries are RealUserLifecycleStore's job and tested there. When true, every
+    // recordActiveDay() call counts as a new day; otherwise tests set the count directly.
+    var countActiveDays = false
+
     private val counts = mutableMapOf<LifecycleCounter, Long>()
     private val lastAt = mutableMapOf<LifecycleCounter, Long>()
 
@@ -236,6 +305,13 @@ private class FakeUserLifecycleStore(private val nowMillis: () -> Long) : UserLi
     override fun millisSinceLast(counter: LifecycleCounter): Long? {
         val last = lastAt[counter] ?: return null
         return nowMillis() - last
+    }
+
+    override fun recordActiveDay(): Long =
+        if (countActiveDays) increment(LifecycleCounter.ACTIVE_DAYS) else count(LifecycleCounter.ACTIVE_DAYS)
+
+    fun setCount(counter: LifecycleCounter, value: Long) {
+        counts[counter] = value
     }
 
     override fun reset(counter: LifecycleCounter) {

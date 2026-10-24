@@ -11,6 +11,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import xyz.ksharma.krail.core.aitext.AiAvailability
 import xyz.ksharma.krail.core.aitext.AiUnavailableReasons
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.AlertSummaryStatusEvent
+import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.taj.components.AlertFeedbackVoteChoice
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAiTextService
@@ -29,6 +31,7 @@ class AlertSummaryViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val aiTextService = FakeAiTextService()
+    private val analytics = FakeAnalytics()
     private lateinit var viewModel: AlertSummaryViewModel
 
     @BeforeTest
@@ -37,6 +40,7 @@ class AlertSummaryViewModelTest {
         aiTextService.summarizeResult = "Trains delayed due to a signal fault."
         viewModel = AlertSummaryViewModel(
             aiTextService = aiTextService,
+            analytics = analytics,
             isAlertSummaryEnabled = { true },
         )
     }
@@ -50,6 +54,7 @@ class AlertSummaryViewModelTest {
     fun `flag off never requests a summary`() = runTest(testDispatcher) {
         viewModel = AlertSummaryViewModel(
             aiTextService = aiTextService,
+            analytics = analytics,
             isAlertSummaryEnabled = { false },
         )
 
@@ -197,5 +202,76 @@ class AlertSummaryViewModelTest {
         viewModel.onEvent(AlertSummaryEvent.VoteClicked(AlertFeedbackVoteChoice.UP))
 
         assertNull(viewModel.uiState.value)
+    }
+
+    @Test
+    fun `resolved summary tracks shown with counts and timing`() = runTest(testDispatcher) {
+        viewModel.onEvent(AlertSummaryEvent.SummaryRequested(persistentSetOf(ALERT_ONE, ALERT_TWO)))
+        advanceUntilIdle()
+
+        val event = analytics.getTrackedEvent("alert_summary_status") as AlertSummaryStatusEvent
+        assertEquals(AlertSummaryStatusEvent.Action.SHOWN, event.action)
+        assertEquals(persistentSetOf(ALERT_ONE, ALERT_TWO).summaryCacheKey(), event.alertSetKey)
+        assertEquals(2, event.alertCount)
+        assertEquals(2, event.summarizedCount)
+        assertTrue(event.generateMs != null)
+    }
+
+    @Test
+    fun `partial result reports fewer summarized alerts than the set holds`() = runTest(testDispatcher) {
+        aiTextService.summarizeResults = ArrayDeque(listOf("A summarized line", null))
+
+        viewModel.onEvent(AlertSummaryEvent.SummaryRequested(persistentSetOf(ALERT_ONE, ALERT_TWO)))
+        advanceUntilIdle()
+
+        val event = analytics.getTrackedEvent("alert_summary_status") as AlertSummaryStatusEvent
+        assertEquals(2, event.alertCount)
+        assertEquals(1, event.summarizedCount)
+    }
+
+    @Test
+    fun `every alert failing tracks failed and no shown`() = runTest(testDispatcher) {
+        aiTextService.summarizeResult = null
+
+        viewModel.onEvent(AlertSummaryEvent.SummaryRequested(persistentSetOf(ALERT_ONE)))
+        advanceUntilIdle()
+
+        val events = analytics.getTrackedEvents("alert_summary_status").map { it as AlertSummaryStatusEvent }
+        assertEquals(listOf(AlertSummaryStatusEvent.Action.FAILED), events.map { it.action })
+        assertNull(events.single().summarizedCount)
+    }
+
+    @Test
+    fun `flag off or unavailable device tracks nothing`() = runTest(testDispatcher) {
+        aiTextService.availability = AiAvailability.Unavailable(reason = AiUnavailableReasons.DEVICE_UNSUPPORTED)
+        viewModel.onEvent(AlertSummaryEvent.SummaryRequested(persistentSetOf(ALERT_ONE)))
+        advanceUntilIdle()
+
+        viewModel = AlertSummaryViewModel(
+            aiTextService = aiTextService,
+            analytics = analytics,
+            isAlertSummaryEnabled = { false },
+        )
+        viewModel.onEvent(AlertSummaryEvent.SummaryRequested(persistentSetOf(ALERT_TWO)))
+        advanceUntilIdle()
+
+        assertTrue(analytics.getTrackedEvents("alert_summary_status").isEmpty())
+    }
+
+    @Test
+    fun `vote is tracked against the shown set and only once`() = runTest(testDispatcher) {
+        viewModel.onEvent(AlertSummaryEvent.SummaryRequested(persistentSetOf(ALERT_ONE)))
+        advanceUntilIdle()
+
+        viewModel.onEvent(AlertSummaryEvent.VoteClicked(AlertFeedbackVoteChoice.DOWN))
+        viewModel.onEvent(AlertSummaryEvent.VoteClicked(AlertFeedbackVoteChoice.UP))
+
+        val events = analytics.getTrackedEvents("alert_summary_status").map { it as AlertSummaryStatusEvent }
+        assertEquals(
+            listOf(AlertSummaryStatusEvent.Action.SHOWN, AlertSummaryStatusEvent.Action.DOWNVOTE),
+            events.map { it.action },
+        )
+        assertEquals(events[0].alertSetKey, events[1].alertSetKey)
+        assertEquals(1, events[1].alertCount)
     }
 }

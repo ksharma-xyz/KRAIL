@@ -8,6 +8,9 @@ internal class FakeAiTextService : AiTextService {
     var availability: AiAvailability = AiAvailability.Available
     var extractionAvailability: AiAvailability = AiAvailability.Available
     var summarizeResult: String? = null
+
+    /** Per-call results, consumed in order; falls back to [summarizeResult] once empty. */
+    var summarizeResults: ArrayDeque<String?> = ArrayDeque()
     var extractionResult: TripIntentExtraction? = null
     var lastExtractedText: String? = null
 
@@ -23,7 +26,7 @@ internal class FakeAiTextService : AiTextService {
 
     override suspend fun summarize(text: String): String? {
         summarizeCallCount++
-        return summarizeResult
+        return if (summarizeResults.isNotEmpty()) summarizeResults.removeFirst() else summarizeResult
     }
 
     override suspend fun extractTripIntent(text: String): TripIntentExtraction? {

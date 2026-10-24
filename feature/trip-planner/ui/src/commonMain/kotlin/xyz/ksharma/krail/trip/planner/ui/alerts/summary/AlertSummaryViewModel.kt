@@ -12,9 +12,12 @@ import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.aitext.AiAvailability
 import xyz.ksharma.krail.core.aitext.AiTextService
 import xyz.ksharma.krail.core.aitext.AiUnavailableReasons
+import xyz.ksharma.krail.core.analytics.Analytics
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.AlertSummaryStatusEvent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.taj.components.AlertFeedbackVoteChoice
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
+import kotlin.time.TimeSource
 
 private const val GENERATING_MIN_DURATION_MS = 1000L
 
@@ -39,6 +42,7 @@ private val RETRIABLE_REASONS = setOf(AiUnavailableReasons.MODEL_DOWNLOADING)
  */
 class AlertSummaryViewModel(
     private val aiTextService: AiTextService,
+    private val analytics: Analytics,
     // Lambda, not a captured Boolean: re-read on every call so a debug-settings toggle
     // flipped while this sheet is open (Debug Settings -> back, same nav entry) takes
     // effect immediately rather than only on next ViewModel creation.
@@ -59,6 +63,13 @@ class AlertSummaryViewModel(
     // starting a new one means an old, still-running request for a superseded alert set
     // can never win a race against a newer one and overwrite its result.
     private var activeJob: Job? = null
+
+    // The set the current Resolved card was generated for, so a vote reports against the
+    // same key and count as its `shown` row.
+    private var resolvedSetKey: String? = null
+    private var resolvedAlertCount: Int = 0
+
+    private val timeSource = TimeSource.Monotonic
 
     fun onEvent(event: AlertSummaryEvent) {
         when (event) {
@@ -94,9 +105,12 @@ class AlertSummaryViewModel(
             }
             _uiState.value = AlertSummaryUiState.Generating
 
-            val summary = summarizeAlerts(alerts)
+            val startedAt = timeSource.markNow()
+            val result = summarizeAlerts(alerts)
+            val generateMs = startedAt.elapsedNow().inWholeMilliseconds
 
-            if (summary == null) {
+            if (result == null) {
+                trackStatus(AlertSummaryStatusEvent.Action.FAILED, setKey, alerts.size, generateMs = generateMs)
                 _uiState.value = null
                 return@launch
             }
@@ -107,7 +121,17 @@ class AlertSummaryViewModel(
             // how quick the real call was.
             delay(GENERATING_MIN_DURATION_MS)
 
-            _uiState.value = AlertSummaryUiState.Resolved(text = summary)
+            // Reported after the beat, so a sheet closed mid-load never counts as shown.
+            trackStatus(
+                action = AlertSummaryStatusEvent.Action.SHOWN,
+                setKey = setKey,
+                alertCount = alerts.size,
+                summarizedCount = result.summarizedCount,
+                generateMs = generateMs,
+            )
+            resolvedSetKey = setKey
+            resolvedAlertCount = alerts.size
+            _uiState.value = AlertSummaryUiState.Resolved(text = result.text)
         }
     }
 
@@ -123,29 +147,61 @@ class AlertSummaryViewModel(
      * Returns `null` only if every alert failed to summarize — a partial result (some alerts
      * summarized, some didn't) still renders rather than being thrown away entirely.
      */
-    private suspend fun summarizeAlerts(alerts: ImmutableSet<ServiceAlert>): String? {
+    private suspend fun summarizeAlerts(alerts: ImmutableSet<ServiceAlert>): AlertSummaryResult? {
         if (alerts.size == 1) {
             return alerts.first().let { aiTextService.summarize("${it.heading}. ${it.message}") }
                 .cleanedUpOrNull()
+                ?.let { AlertSummaryResult(text = it, summarizedCount = 1) }
         }
 
         val perAlertSummaries = alerts.mapNotNull { alert ->
             aiTextService.summarize("${alert.heading}. ${alert.message}").cleanedUpOrNull()
         }
-        return perAlertSummaries.takeIf { it.isNotEmpty() }?.joinToString(separator = "\n") { "• $it" }
+        if (perAlertSummaries.isEmpty()) return null
+        return AlertSummaryResult(
+            text = perAlertSummaries.joinToString(separator = "\n") { "• $it" },
+            summarizedCount = perAlertSummaries.size,
+        )
+    }
+
+    private fun trackStatus(
+        action: AlertSummaryStatusEvent.Action,
+        setKey: String,
+        alertCount: Int,
+        summarizedCount: Int? = null,
+        generateMs: Long? = null,
+    ) {
+        analytics.track(
+            AlertSummaryStatusEvent(
+                action = action,
+                alertSetKey = setKey,
+                alertCount = alertCount,
+                summarizedCount = summarizedCount,
+                generateMs = generateMs,
+            ),
+        )
     }
 
     /**
-     * The vote is recorded in state only: it flips the control to its chosen side and locks
-     * it. Nothing is reported anywhere.
+     * Flips the control to its chosen side, locks it, and reports the vote against the same
+     * alert-set key as the card's `shown` row.
      */
     private fun onVoteClicked(vote: AlertFeedbackVoteChoice) {
         val current = _uiState.value as? AlertSummaryUiState.Resolved ?: return
         if (current.vote != null) return // one vote per summary, matches every other feedback control
 
         _uiState.value = current.copy(vote = vote)
+        resolvedSetKey?.let { setKey ->
+            val action = when (vote) {
+                AlertFeedbackVoteChoice.UP -> AlertSummaryStatusEvent.Action.UPVOTE
+                AlertFeedbackVoteChoice.DOWN -> AlertSummaryStatusEvent.Action.DOWNVOTE
+            }
+            trackStatus(action, setKey, resolvedAlertCount)
+        }
     }
 }
+
+private data class AlertSummaryResult(val text: String, val summarizedCount: Int)
 
 /**
  * Stable per-content id for a set of alerts. There is no server-provided alert id in

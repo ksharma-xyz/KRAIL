@@ -77,9 +77,22 @@ analytics param (never the alert text itself).
 ## Vote
 
 At most one vote per summary; tapping an already-selected choice is a no-op
-(`AlertSummaryViewModel.onVoteClicked`). No standalone "thumbs down" icon exists in
+(`AlertSummaryViewModel.onVoteClicked`). The vote is reported as `alert_summary_status`
+(below), against the same `alertSetKey` as the card's `shown` row. No standalone "thumbs down" icon exists in
 `material-icons-core`; `AlertFeedbackVote` mirrors the thumbs-up icon on both axes rather
 than shipping a second vector asset.
+
+## Analytics: `alert_summary_status`
+
+One event, `action` = `shown` | `failed` | `upvote` | `downvote`, plus `alertSetKey` (the cache
+key above), `alertCount`, and on `shown` `summarizedCount`; `generateMs` on `shown` and `failed`.
+
+- Fires only once a summary was attempted. The flag being off and the device being unable both
+  fire nothing; device capability is already on `app_start` as `aiCapability`.
+- `shown` fires after the minimum loading beat, so a sheet closed mid-load is not counted.
+- `failed` means the model was available and every alert came back empty. A partial card is a
+  `shown` with `summarizedCount` below `alertCount`.
+- No alert text and no summary text, ever.
 
 ## Fixed: summary quality on multi-alert trips
 

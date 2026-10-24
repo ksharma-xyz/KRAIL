@@ -58,8 +58,12 @@ object AiSentenceTemplateRedaction {
      * Longer than a sentence riders actually speak. Not a privacy control, gate 2 is, but an
      * unbounded field eventually receives something pasted and a truncated value would arrive
      * looking like a real one. Over this the template is dropped rather than shortened.
+     *
+     * Held at the 100-character String param limit, where `AnalyticsParamSanitizer` would
+     * otherwise clip the value and append `~trunc`. Any higher and a long template reaches
+     * analytics shortened, mixing clipped phrasings into a phrasing readout.
      */
-    const val MAX_TEMPLATE_LENGTH = 120
+    const val MAX_TEMPLATE_LENGTH = 100
 
     /**
      * The security boundary. Every word a template may contain outside a placeholder.

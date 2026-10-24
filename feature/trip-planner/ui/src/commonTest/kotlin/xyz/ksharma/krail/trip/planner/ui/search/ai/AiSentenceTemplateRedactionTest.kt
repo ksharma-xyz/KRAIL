@@ -151,6 +151,16 @@ class AiSentenceTemplateRedactionTest {
     }
 
     @Test
+    fun `a template that would be clipped at the 100-character param limit is dropped`() {
+        val justOver = List(34) { "to" }.joinToString(" ")
+        val justUnder = List(33) { "to" }.joinToString(" ")
+        assertEquals(101, justOver.length)
+
+        assertNull(AiSentenceTemplateRedaction.redact(justOver, extraction()).template)
+        assertEquals(justUnder, AiSentenceTemplateRedaction.redact(justUnder, extraction()).template)
+    }
+
+    @Test
     fun `case does not matter to the gates`() {
         val result = AiSentenceTemplateRedaction.redact(
             riderText = "GET ME HOME BY 9PM",

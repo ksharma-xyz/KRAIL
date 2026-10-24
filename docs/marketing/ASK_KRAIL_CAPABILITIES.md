@@ -64,7 +64,13 @@ offers to get you home rather than showing two stations you have nothing to do w
 **Speaking never submits for you.** Words appear as you speak them, and the send button waits.
 A mis-heard word is yours to fix before anything happens.
 
-**It runs on the phone.** The model is on-device. What a rider types stays on their phone.
+**It understands you on the phone.** The model that reads the request is on-device on both
+platforms.
+
+> **Copy rule, decided:** never say or imply that speech or voice stays on the phone. Turning
+> speech into text uses the phone's own recogniser, which hands off to Apple or Google when no
+> local model is installed. Claim the understanding is on-device, never the listening. Reasoning
+> in `docs/STORE_DATA_DECLARATIONS.md`, judgement call 2.
 
 **It says when it doesn't know.** An unrecognised place is quoted back — "no stop called
 *Hogwarts*" — rather than a confident wrong guess. If only one end resolves, that field fills and

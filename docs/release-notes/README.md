@@ -40,6 +40,7 @@ Highlights:
 - **iOS** is more formal; numbered bullets, **no emoji whatsoever**.
 - Both start with the bare version on its own line (`v1.20.0`) and end with **"Let's KRAIL."** (or `"Let's KRAIL Sydney."` for big launches).
 - Never use the word "experience". Never say "improvements". Bug fixes get one line max.
+- Never say or imply speech or voice stays on the phone; only the understanding is on-device. See `docs/STORE_DATA_DECLARATIONS.md`.
 - Em dashes are fine in release notes copy (the project-wide ban applies to in-app UI strings, not store copy).
 
 ## File format

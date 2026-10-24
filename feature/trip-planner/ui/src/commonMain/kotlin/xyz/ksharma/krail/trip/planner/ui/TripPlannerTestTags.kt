@@ -74,6 +74,7 @@ object TripPlannerTestTags {
     const val SETTINGS_ITEM_INVITE = "settings.item.invite"
     const val SETTINGS_ITEM_HOW_TO = "settings.item.howto"
     const val SETTINGS_ITEM_OUR_STORY = "settings.item.ourstory"
+    const val SETTINGS_ITEM_RATE = "settings.item.rate"
     const val SETTINGS_ITEM_DEBUG_CONFIG = "settings.item.debugconfig"
 
     /** One saved trip row. Suffixed so a flow can target a known trip or glob the set. */

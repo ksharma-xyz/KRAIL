@@ -59,6 +59,9 @@ internal class IOSAppInfo : AppInfo {
     override val appStoreUrl: String
         get() = "https://apps.apple.com/us/app/krail-app/id6738934832"
 
+    override val writeReviewUrl: String
+        get() = "https://apps.apple.com/app/id6738934832?action=write-review"
+
     override fun toString() =
         "iOSAppInfo(type=$devicePlatformType, isDebug=$isDebug, appVersion=$appVersion, osVersion=$osVersion, " +
             "fontSize=$fontSize, isDarkTheme=$isDarkTheme, deviceModel=$deviceModel, " +

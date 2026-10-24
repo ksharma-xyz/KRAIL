@@ -94,4 +94,13 @@ class SettingsViewModelTest {
             assertTrue(analytics.isEventTracked("how_to_krail"))
             assertTrue(analytics.isEventTracked("our_story"))
         }
+
+    @Test
+    fun `GIVEN settings WHEN rate is tapped THEN the store review page opens and the tap is tracked`() {
+        viewModel().onRateAppClick()
+
+        assertEquals(appInfoProvider.getAppInfo().writeReviewUrl, platformOps.lastOpenedUrl)
+        val event = analytics.getTrackedEvent("rate_app_click") as AnalyticsEvent.RateAppClickEvent
+        assertEquals(AnalyticsEvent.RateAppClickEvent.Source.SETTINGS, event.source)
+    }
 }

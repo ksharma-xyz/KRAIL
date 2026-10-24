@@ -85,6 +85,13 @@ interface AppInfo {
     val timeZone: String
 
     val appStoreUrl: String
+
+    /**
+     * Where a rider who chose to rate KRAIL is sent. iOS opens the App Store's write-review
+     * page directly; Play has no equivalent, so Android opens the listing, where the review
+     * box sits. A user-tapped link, never the platform's in-app review API.
+     */
+    val writeReviewUrl: String
 }
 
 enum class DevicePlatformType {

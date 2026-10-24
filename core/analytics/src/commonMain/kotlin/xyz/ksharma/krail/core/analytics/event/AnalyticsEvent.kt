@@ -902,10 +902,15 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      *
      * Carries no alert text and no summary text, by design.
      *
+     * `shown` fires only after the fixed minimum loading beat, so a vote rate is votes over
+     * attempts that got past the beat, not over sheet opens.
+     *
      * @param action `shown` (card resolved with a summary), `failed` (the model was available
      * but every alert came back empty), `upvote` or `downvote` (the rider's one vote).
      * @param alertSetKey hash of the sorted heading+message of every alert in the set. There is
      * no server-provided alert id, so this is the only way to join a vote to its `shown` row.
+     * It is a 32-bit hash: join on the install id plus this key, never on the key alone, and
+     * never treat it as a global alert id.
      * @param alertCount how many alerts the card covered.
      * @param summarizedCount on `shown` only: how many of those alerts produced a summary. Below
      * [alertCount] means a partial card rendered.

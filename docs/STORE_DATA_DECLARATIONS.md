@@ -44,9 +44,9 @@ Read on the device and never transmitted:
   SQLite query, not a network call. No analytics event carries a latitude or longitude.
 - **Saved trips, stop labels, Park &amp; Ride selections, recent searches, preferences.**
   Local database only.
-Microphone used to sit in this list. It does not any more: `ai_search_input_enabled` was
-turned on for 1.27, so voice input reaches riders and the audio can leave the device. See
-judgement call 2.
+Microphone used to sit in this list. It does not any more: `ai_search_input_enabled` turns on
+for riders in 1.28, so voice input reaches them and the audio can leave the device. The forms
+were updated ahead of the flip, as the gate below requires. See judgement call 2.
 
 Not collected at all:
 
@@ -152,8 +152,9 @@ each turn this from a tile-drawing artefact into a real location feature, and th
 
 ### 2. Voice input is declared because the audio can leave the phone
 
-`ai_search_input_enabled` was turned on for 1.27, so this stopped being hypothetical. The
-microphone answer that used to read "not collected" was true only while the flag was off.
+`ai_search_input_enabled` turns on in 1.28 (it stayed off in Remote Config through 1.27), so
+this stops being hypothetical. The microphone answer that used to read "not collected" was true
+only while the flag was off, and the forms were changed ahead of the flip rather than after it.
 
 **KRAIL itself never receives the audio.** It hands the microphone to the platform
 recogniser and gets text back, and the transcribed words land in the search field where the

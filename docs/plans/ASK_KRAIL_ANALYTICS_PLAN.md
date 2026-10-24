@@ -20,20 +20,19 @@ matches ai, speech, mic or alert summary. The feature has never been measured.
 
 Two facts make this urgent rather than tidy-up work:
 
-1. **The flag is already on, and part of the measurement window has closed.**
-   `AI_SEARCH_INPUT_ENABLED` defaults off in code (`DEFAULT_AI_SEARCH_INPUT_ENABLED = false`,
-   matching the Remote Config default), which reads as "not rolled out". It is not:
-   `docs/STORE_DATA_DECLARATIONS.md` records that `ai_search_input_enabled` **was turned on for
-   1.27**, which is why the microphone moved onto the Play and Apple forms as collected.
+1. **The flag turns on in 1.28, so the instrumentation must ship in the same release.**
+   `AI_SEARCH_INPUT_ENABLED` defaults off in code (`DEFAULT_AI_SEARCH_INPUT_ENABLED = false`),
+   and Remote Config served it off through 1.27. 1.28 is the first release riders see the
+   feature. An earlier note here said it went on in 1.27; that came from a misreading of
+   `docs/STORE_DATA_DECLARATIONS.md`, whose forms were updated ahead of the flip, and was wrong.
 
-   So 1.27 ships this feature to riders with no instrumentation at all, and that period is
-   **permanently dark**. No later release recovers it. The availability signal in §7 should land
-   in 1.28 to start the denominator from there, and §12's sequencing is about the remaining
-   rollout rather than about a first flip.
+   Remote Config is read by every installed version, so the flip must carry an app-version
+   condition (1.28.0 or later). Turned on unconditionally, it would show 1.27 riders the older
+   screen with no `ask_krail_attempt` and no availability signal: a dark period of exactly the
+   kind this plan exists to prevent.
 
-   Recorded because the code default actively misleads: a Remote Config value in production is
-   not visible from the source, and the only written record of its real state is a store-forms
-   doc nobody opens when planning analytics. **Check the RC state, not the Kotlin default.**
+   **Check the RC state, not the Kotlin default.** A production value is not visible from the
+   source, and the docs are only as current as their last edit.
 2. **The per-attempt event already exists as a log line.** `AiSearchInputViewModel.logOutcome()`
    emits one wide row per attempt carrying phase, reason, from-resolved, to-resolved and
    spokeIt, and its KDoc records that it deliberately carries no rider text. Promoting it is
@@ -592,8 +591,10 @@ keeping `ask_krail_attempt` at eleven params rather than letting it grow.
 
 ## 10. The alert summary surface, and the free win
 
-`alerts/summary/` has the same hole: the on-device AI summary card and its vote UI have no
-events at all, and the votes currently go nowhere measurable.
+`alerts/summary/` had the same hole until 1.28: the on-device AI summary card and its vote UI
+had no events at all. It now fires `alert_summary_status` (`shown`, `failed`, `upvote`,
+`downvote`), shipping in the same release the flag turns on in; the shape is in the event KDoc
+and the ledger row.
 
 **Separate event names** (`ask_krail_*` and `alert_summary_*`), not a shared
 `ai_<surface>_status(source, action)`. A `source` param would spend a dimension on every row to
@@ -627,9 +628,9 @@ answer is the same as if they failed at the same rate, so it is not a measuremen
 
 ## 12. Order of work
 
-1. Availability first: the user property and the `app_start` param, in **1.28**. The flag went
-   on in 1.27 (§1), so this is no longer "before the flip". It is the earliest point a
-   denominator can start at all, and every release it slips is another dark period.
+1. Availability first: the user property and the `app_start` param, in **1.28**, the same
+   release the flag turns on in (§1). Shipping it together with the flip means the denominator
+   starts on the first day riders can see the feature, with no dark period.
 
    What that buys, stated precisely, because "it cannot be backfilled" is stronger than the
    truth and the imprecision matters if anyone is ever under pressure to flip early:

@@ -35,6 +35,7 @@ Android ends with **`Let's KRAIL. 🚀`**. iOS ends with **`Let's KRAIL.`** (no 
 - Never use the word "experience". Never say "we are pleased to announce". Never say "improvements".
 - **Bug fixes: one warm summary line for all bugs combined** — e.g. "Plenty of bug fixes for a smoother ride." Never itemise individual fixes as separate bullet points.
 - Don't list every commit — synthesise into user-facing changes.
+- **Ask KRAIL / voice: never say or imply speech or voice stays on the phone.** Speech-to-text can hand off to Apple or Google. Say the *understanding* happens on the phone ("works it out on your phone"), never the listening. Decided 2026-10-25; reasoning in `docs/STORE_DATA_DECLARATIONS.md`.
 - Short sentences. Present tense. Active voice.
 - Em dashes are OK in release notes (this is not user-facing UI copy).
 - Numbers (1, 2, 3) for iOS bullet lists. **No emoji on iOS — ever.**

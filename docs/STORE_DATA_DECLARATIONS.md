@@ -182,11 +182,17 @@ reports a local model, because that flag is a hard requirement there and would f
 session outright on a device without one. So on a device with no local model, audio goes to
 the vendor's servers on either platform.
 
-**The open decision:** requiring on-device recognition instead of preferring it would keep
-every recording on the phone, which would retire the collected answer entirely rather than
-merely justify it. The cost is that voice search stops working on devices with no local model
-instead of degrading. That trade has not been made; it is a product call, not a documentation
-one.
+**Decided 2026-10-25: prefer on-device, do not require it.** Requiring it would keep every
+recording on the phone and retire the collected answer, but voice search would then vanish on
+every device without a local model instead of falling back. Voice search working for every
+rider won. The privacy policy already describes exactly this behaviour ("on the device where it
+can and Apple's or Google's service where it cannot").
+
+**What follows for copy.** Because speech can reach Apple's or Google's recogniser, no store
+listing, release note, screenshot or in-app string may say or imply that speech or voice stays
+on the phone. Say the *understanding* runs on the phone: the trip model is on-device on both
+platforms. The rule is repeated where copy is written: `docs/marketing/ASK_KRAIL_CAPABILITIES.md`
+and the `krail-release-notes` command.
 
 **Revisit when:** the flag is turned off again, in which case both audio declarations can come
 back out; or the app starts sending audio anywhere of its own accord, such as a server-side

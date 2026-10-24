@@ -57,6 +57,17 @@ class SettingsViewModel(
         analytics.track(AnalyticsEvent.OurStoryClick)
     }
 
+    /**
+     * Opens the store's review page. Always rider-initiated, which is why this is a plain link
+     * and not the in-app review API: both stores forbid triggering that API from a button.
+     */
+    fun onRateAppClick() {
+        platformOps.openUrl(appInfoProvider.getAppInfo().writeReviewUrl)
+        analytics.track(
+            AnalyticsEvent.RateAppClickEvent(source = AnalyticsEvent.RateAppClickEvent.Source.SETTINGS),
+        )
+    }
+
     private fun updateUiState(block: SettingsState.() -> SettingsState) {
         _uiState.update(block)
     }

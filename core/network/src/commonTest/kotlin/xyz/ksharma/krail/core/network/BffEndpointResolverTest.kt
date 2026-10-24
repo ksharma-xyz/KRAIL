@@ -252,6 +252,7 @@ private class FakeAppInfoProvider(private val isDebug: Boolean) : AppInfoProvide
         override val locale: String = "en_AU"
         override val timeZone: String = "Australia/Sydney"
         override val appStoreUrl: String = "https://example.com"
+        override val writeReviewUrl: String = "https://example.com"
     }
 }
 

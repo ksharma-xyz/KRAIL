@@ -18,4 +18,5 @@ class FakeAppInfo(
     override val locale: String = "en_AU",
     override val timeZone: String = "Australia/Sydney",
     override val appStoreUrl: String = "https://play.google.com/store/apps/details?id=xyz.ksharma.krail",
+    override val writeReviewUrl: String = appStoreUrl,
 ) : AppInfo

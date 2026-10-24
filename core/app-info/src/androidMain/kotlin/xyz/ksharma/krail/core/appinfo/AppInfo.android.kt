@@ -64,6 +64,11 @@ internal class AndroidAppInfo(private val context: Context) : AppInfo {
     override val appStoreUrl: String
         get() = "https://play.google.com/store/apps/details?id=xyz.ksharma.krail"
 
+    // The https listing, not market://: Play claims this link when installed and a browser
+    // opens it otherwise, where market:// with no Play app would throw from startActivity.
+    override val writeReviewUrl: String
+        get() = appStoreUrl
+
     override fun toString() =
         "AndroidAppInfo(type=$devicePlatformType, isDebug=$isDebug, appVersion=$appVersion, osVersion=$osVersion, " +
             "fontSize=$fontSize, isDarkTheme=$isDarkTheme, deviceModel=$deviceModel, " +

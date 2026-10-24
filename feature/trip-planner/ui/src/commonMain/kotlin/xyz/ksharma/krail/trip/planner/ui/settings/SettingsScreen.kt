@@ -35,6 +35,7 @@ import krail.feature.trip_planner.ui.generated.resources.ic_heart
 import krail.feature.trip_planner.ui.generated.resources.ic_info
 import krail.feature.trip_planner.ui.generated.resources.ic_paint
 import krail.feature.trip_planner.ui.generated.resources.ic_pen
+import krail.feature.trip_planner.ui.generated.resources.ic_star
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.Divider
@@ -54,6 +55,7 @@ fun SettingsScreen(
     onBackClick: () -> Unit = {},
     onChangeThemeClick: () -> Unit = {},
     onReferFriendClick: () -> Unit = {},
+    onRateAppClick: () -> Unit = {},
     onAboutUsClick: () -> Unit = {},
     onIntroClick: () -> Unit = {},
     onDebugConfigClick: () -> Unit = {},
@@ -100,6 +102,15 @@ fun SettingsScreen(
                         onClick = {
                             onReferFriendClick()
                         },
+                    )
+                }
+
+                item(key = "settings-rate") {
+                    SettingsItem(
+                        icon = painterResource(Res.drawable.ic_star),
+                        text = "Rate KRAIL",
+                        modifier = Modifier.testTag(TripPlannerTestTags.SETTINGS_ITEM_RATE),
+                        onClick = onRateAppClick,
                     )
                 }
 

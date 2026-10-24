@@ -42,6 +42,9 @@ internal fun EntryProviderScope<NavKey>.SettingsEntry(
             onReferFriendClick = {
                 viewModel.onReferFriendClick()
             },
+            onRateAppClick = {
+                viewModel.onRateAppClick()
+            },
             onIntroClick = {
                 scope.launch {
                     viewModel.onIntroClick()

@@ -6,6 +6,7 @@ import kotlin.time.ExperimentalTime
 
 private const val PROP_STOP_ID = "stopId"
 private const val PROP_ACTION = "action"
+private const val VALUE_SETTINGS = "settings"
 private const val PROP_VARIANT = "variant"
 private const val PROP_SOURCE = "source"
 private const val PROP_EXPAND = "expand"
@@ -1152,7 +1153,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         ),
     ) {
         enum class EntryPoint(val from: String) {
-            SETTINGS("settings"),
+            SETTINGS(VALUE_SETTINGS),
             INTRO_BUTTON("intro_button"),
             INTRO_CONTENT_BUTTON("intro_content_button"),
             SAVED_TRIPS("saved_trips_tile"),
@@ -1190,6 +1191,22 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
     )
 
     /**
+     * The rider tapped a rate-the-app entry, which opens the store listing (the write-review
+     * page on iOS). Counts taps, not reviews: neither store reports whether a review was left.
+     * Separate from `review_prompt_requested`, which is the app asking on its own.
+     *
+     * @param source where the tap came from. Only `settings` today.
+     */
+    data class RateAppClickEvent(val source: Source) : AnalyticsEvent(
+        name = "rate_app_click",
+        rawProperties = mapOf(PROP_SOURCE to source.value),
+    ) {
+        enum class Source(val value: String) {
+            SETTINGS(VALUE_SETTINGS),
+        }
+    }
+
+    /**
      * Dormant, not dead - do not delete.
      *
      * Its Settings entry point was removed in v1.25.0 (#1722), so the only remaining
@@ -1217,7 +1234,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         }
 
         enum class SocialConnectionSource(val source: String) {
-            SETTINGS("settings"), DISCOVER_CARD("discover_card"),
+            SETTINGS(VALUE_SETTINGS), DISCOVER_CARD("discover_card"),
         }
     }
 

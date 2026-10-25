@@ -1,0 +1,26 @@
+{
+  "app-store/iphone-duo-outer": {
+    "spec": "1398x2034",
+    "files": [
+      "01_saved-trips.png",
+      "02_live-times.png",
+      "03_parking.png",
+      "04_service-alerts.png",
+      "05_live-delays.png",
+      "06_plan-your-day.png",
+      "07_dark-mode.png"
+    ]
+  },
+  "app-store/iphone-duo-inner": {
+    "spec": "2853x2007",
+    "files": [
+      "01_saved-trips.png",
+      "02_live-times.png",
+      "03_parking.png",
+      "04_service-alerts.png",
+      "05_live-delays.png",
+      "06_plan-your-day.png",
+      "07_dark-mode.png"
+    ]
+  }
+}

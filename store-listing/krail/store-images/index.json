@@ -1,7 +1,7 @@
 {
   "android-phone": {
     "spec": "1080x1920",
-    "reportSha256": "a76bb8fa40e3c122f339cd838066f74ca1c616fa82d4d5a2bc6588a2e3f25dbc",
+    "reportSha256": "dd025af0b7e9bb2403afd8309e19d262ed8756a0a14989acfdbfd942a2a568f6",
     "files": [
       "01_saved-trips.png",
       "02_live-times.png",
@@ -44,7 +44,7 @@
   },
   "android-tablet": {
     "spec": "1920x1080",
-    "reportSha256": "a76bb8fa40e3c122f339cd838066f74ca1c616fa82d4d5a2bc6588a2e3f25dbc",
+    "reportSha256": "dd025af0b7e9bb2403afd8309e19d262ed8756a0a14989acfdbfd942a2a568f6",
     "files": [
       "01_saved-trips.png",
       "02_live-times.png",
@@ -87,7 +87,7 @@
   },
   "iphone-6-5": {
     "spec": "1242x2688",
-    "reportSha256": "a76bb8fa40e3c122f339cd838066f74ca1c616fa82d4d5a2bc6588a2e3f25dbc",
+    "reportSha256": "dd025af0b7e9bb2403afd8309e19d262ed8756a0a14989acfdbfd942a2a568f6",
     "files": [
       "01_saved-trips.png",
       "02_live-times.png",
@@ -130,7 +130,7 @@
   },
   "ipad-13": {
     "spec": "2064x2752",
-    "reportSha256": "a76bb8fa40e3c122f339cd838066f74ca1c616fa82d4d5a2bc6588a2e3f25dbc",
+    "reportSha256": "dd025af0b7e9bb2403afd8309e19d262ed8756a0a14989acfdbfd942a2a568f6",
     "files": [
       "01_saved-trips.png",
       "02_live-times.png",
@@ -168,6 +168,92 @@
       "07_dark-mode.png": {
         "source": "screenshots/ipad13/07_dark_mode.png",
         "sourceSha256": "ada7c488456457ac29e917b949e6d57aa23e3746b22aa7daa237ef6f7ad9fb1f"
+      }
+    }
+  },
+  "iphone-duo-outer": {
+    "spec": "1398x2034",
+    "reportSha256": "dd025af0b7e9bb2403afd8309e19d262ed8756a0a14989acfdbfd942a2a568f6",
+    "files": [
+      "01_saved-trips.png",
+      "02_live-times.png",
+      "03_parking.png",
+      "04_service-alerts.png",
+      "05_live-delays.png",
+      "06_plan-your-day.png",
+      "07_dark-mode.png"
+    ],
+    "inputs": {
+      "01_saved-trips.png": {
+        "source": "screenshots/duo-outer/01_saved_trips.png",
+        "sourceSha256": "f3996da5757fd12c83d91278c412ac8da7df2e2734c504fefe4a34832b6de9b4"
+      },
+      "02_live-times.png": {
+        "source": "screenshots/duo-outer/02_live_times.png",
+        "sourceSha256": "380c97d3781baec66614803aabf069f6c2738eab83fba9a39266af004cf9553e"
+      },
+      "03_parking.png": {
+        "source": "screenshots/duo-outer/03_parking_tallawong.png",
+        "sourceSha256": "8e9b1cd3d251ed0e85fb8e979363ec311c7b95a4fc5fb5e310541121cb0aba4f"
+      },
+      "04_service-alerts.png": {
+        "source": "screenshots/duo-outer/04_service_alerts.png",
+        "sourceSha256": "c30fad8f8aab08e597420c79ab680104d1f36f062dcceb99d966969cc53a2afb"
+      },
+      "05_live-delays.png": {
+        "source": "screenshots/duo-outer/05_live_delays.png",
+        "sourceSha256": "c0f295ad822df5d02e47310b45016b1f26346ab491b9f4eb2ede7de271b0dfcf"
+      },
+      "06_plan-your-day.png": {
+        "source": "screenshots/duo-outer/06_plan_trip_sheet.png",
+        "sourceSha256": "788a5c1a08593dd1d12571b3d950c46fece71f7fbb08a3f5dd6109c9e6f3983d"
+      },
+      "07_dark-mode.png": {
+        "source": "screenshots/duo-outer/07_dark_mode.png",
+        "sourceSha256": "1071c8ed861807fa77e19d475df24060d1695756a155d40662838635d42c273a"
+      }
+    }
+  },
+  "iphone-duo-inner": {
+    "spec": "2853x2007",
+    "reportSha256": "dd025af0b7e9bb2403afd8309e19d262ed8756a0a14989acfdbfd942a2a568f6",
+    "files": [
+      "01_saved-trips.png",
+      "02_live-times.png",
+      "03_parking.png",
+      "04_service-alerts.png",
+      "05_live-delays.png",
+      "06_plan-your-day.png",
+      "07_dark-mode.png"
+    ],
+    "inputs": {
+      "01_saved-trips.png": {
+        "source": "screenshots/duo-inner/01_saved_trips.png",
+        "sourceSha256": "05f7d5d0f0591b3ddad9c781f05cc361547c877e6536c1aae3c4631fbd531a63"
+      },
+      "02_live-times.png": {
+        "source": "screenshots/duo-inner/02_live_times.png",
+        "sourceSha256": "fe3dbd8bac078d22fae8cfe715196f2004c7491c2400cac26ce148cf6ecc6744"
+      },
+      "03_parking.png": {
+        "source": "screenshots/duo-inner/03_parking_tallawong.png",
+        "sourceSha256": "43abbf5290965cae3e6c2917896a587419198c5237b5f8389a237c7d838fd6f7"
+      },
+      "04_service-alerts.png": {
+        "source": "screenshots/duo-inner/04_service_alerts.png",
+        "sourceSha256": "576a19461612e02549921e28205e470e44a034b0e1fafd6c299cee7147788a5f"
+      },
+      "05_live-delays.png": {
+        "source": "screenshots/duo-inner/05_live_delays.png",
+        "sourceSha256": "6edb6217ef3ef0292ff3bdc2a06cdae80ca9ed11569a565f250c76a8a19a23fc"
+      },
+      "06_plan-your-day.png": {
+        "source": "screenshots/duo-inner/06_plan_trip_sheet.png",
+        "sourceSha256": "5138dce3261decf270ea44688eee0e1e6b1cff17afbd1fbeeaff9d36c05f7d36"
+      },
+      "07_dark-mode.png": {
+        "source": "screenshots/duo-inner/07_dark_mode.png",
+        "sourceSha256": "35721b38649d3baaf4dd1d075ca1383f1b9f6927f92a8304d2ad9122fd1b9c84"
       }
     }
   }

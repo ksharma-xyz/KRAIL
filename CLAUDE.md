@@ -447,6 +447,12 @@ front, visual weight, font scaling, cross-surface consistency, and shared rate l
 entry is a defect that actually shipped here and was caught by hand, so working through it
 first is the difference between one review round and five.
 
+**Designing or mocking up UI comes before that: load the `ui-mockups` skill**
+(`.claude/skills/ui-mockups/SKILL.md`) whenever asked to design, mock up, or show options for
+a surface. It holds the frames every mockup must show (320 dp at 200% font, phone, landscape,
+foldable, dual-pane), the same-height-across-states rule, accessibility, copy rules, the
+on-device AI pattern, and how to present options for a pick. Nothing is built before a pick.
+
 ## Configuration changes must never crash — zero tolerance
 
 Rotation, theme switch, font-size change, dark-mode toggle, split-screen and unfolding all
@@ -555,6 +561,10 @@ that contradicts the doc should also update the doc in the same change.
   test is written from, the service register, and the decisions with their revisit
   triggers. Read before changing `core/network/`, adding a `Real*Service`, or adding an
   upstream API.
+- `docs/investigations/TFNSW_OCCUPANCY_DATA.md` — what TfNSW publishes about crowding (three
+  levels, 30 to 50 minute horizon, coverage by mode, forecast accuracy), the feed paths and
+  quirks, the platform check for carriage order, and the design rules that follow. Read before
+  building any crowding UI or reading an `occupancy` field.
 - `docs/investigations/NSW_715_WALK_LEG_INVESTIGATION.md` — why `TripResponseMapper.kt`'s
   `collapseSameRouteQuickWalks()` merges same-route-number legs split by a trivial walk;
   read before changing leg-merge/split logic in `TripResponseMapper.kt` or

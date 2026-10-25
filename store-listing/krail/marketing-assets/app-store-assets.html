@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>KRAIL App Store Assets</title>
+<style>
+:root{--g1:#f6891f;--g2:#bd5306;--ink:#2b1603;--cream:#fff4e8}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#222}
+.canvas{position:relative;overflow:hidden;color:#fff;
+  background:radial-gradient(120% 140% at 0% 0%,var(--g1) 0%,var(--g2) 100%);
+  font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif}
+.canvas::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(255,255,255,.10) 1.4px,transparent 1.6px);background-size:22px 22px}
+.ring{position:absolute;border-radius:50%;border:42px solid rgba(255,255,255,.10)}
+.copy{position:absolute;z-index:2}
+.copy h1{font-family:"Arial Black","Helvetica Neue",Arial,sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:.01em;line-height:.98;color:#fff}
+.copy h1 em{font-style:normal;color:var(--ink)}
+.copy p{font-weight:700;color:var(--cream);margin-top:.6em}
+.brand{font-family:"Arial Black",Arial,sans-serif;letter-spacing:.06em;color:var(--ink);font-weight:900}
+.phones{position:absolute;z-index:2;display:flex;align-items:flex-end}
+.phone{background:#fff;padding:1.1%;border-radius:11% / 5.2%;box-shadow:0 30px 60px rgba(40,15,0,.35),0 6px 14px rgba(40,15,0,.25)}
+.phone img{display:block;width:100%;border-radius:9.5% / 4.4%}
+.chips{display:flex;gap:14px;margin-top:28px}
+.chip{background:rgba(43,22,3,.85);color:#fff;font-weight:800;border-radius:999px;padding:10px 22px;font-size:22px}
+
+/* Header 1920x823 css, 3840x1646 px */
+#header{width:1920px;height:823px}
+#header .ring.a{width:620px;height:620px;left:-210px;bottom:-330px}
+#header .ring.b{width:380px;height:380px;right:-120px;top:-170px}
+#header .copy{left:140px;top:190px;width:760px}
+#header .brand{font-size:30px;margin-bottom:26px}
+#header h1{font-size:84px}
+#header p{font-size:30px;max-width:640px}
+#header .phones{right:120px;bottom:-190px;gap:30px}
+#header .phone{width:260px}
+#header .phone.mid{width:290px;transform:translateY(-60px)}
+
+/* Search results 1920x1280 css, 3840x2560 px */
+#search{width:1920px;height:1280px}
+#search .ring.a{width:760px;height:760px;right:-260px;top:-300px}
+#search .ring.b{width:520px;height:520px;left:-220px;bottom:-240px}
+#search .copy{left:0;right:0;top:110px;text-align:center}
+#search .brand{font-size:30px;margin-bottom:22px}
+#search h1{font-size:104px}
+#search p{font-size:36px}
+#search .chips{justify-content:center}
+#search .phones{left:0;right:0;bottom:-170px;justify-content:center;gap:60px}
+#search .phone{width:460px}
+#search .phone.mid{width:500px;transform:translateY(-30px)}
+</style></head><body>
+
+<section class="canvas" id="header">
+  <div class="ring a"></div><div class="ring b"></div>
+  <div class="copy">
+    <div class="brand">KRAIL</div>
+    <h1>Sydney transport,<br><em>sorted</em></h1>
+    <p>Live times, saved trips and Park &amp; Ride, free with no ads</p>
+  </div>
+  <div class="phones">
+    <div class="phone"><img src="../screenshots/iphone65/01_saved_trips.png" alt=""></div>
+    <div class="phone mid"><img src="../screenshots/iphone65/02_live_times.png" alt=""></div>
+    <div class="phone"><img src="map_slice.png" alt=""></div>
+  </div>
+</section>
+
+<section class="canvas" id="search">
+  <div class="ring a"></div><div class="ring b"></div>
+  <div class="copy">
+    <div class="brand">KRAIL</div>
+    <h1>Home to Work <em>in one tap</em></h1>
+    <p>Live Sydney trains, buses, metro, ferries and light rail</p>
+  </div>
+  <div class="phones">
+    <div class="phone"><img src="../screenshots/iphone65/01_saved_trips.png" alt=""></div>
+    <div class="phone mid"><img src="../screenshots/iphone65/02_live_times.png" alt=""></div>
+    <div class="phone"><img src="map_slice.png" alt=""></div>
+  </div>
+</section>
+</body></html>

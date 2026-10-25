@@ -1,12 +1,10 @@
 package xyz.ksharma.krail.trip.planner.ui.mapstopselection
 
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
+import xyz.ksharma.krail.taj.modifier.cornerSafeTopPadding
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -34,9 +32,9 @@ fun MapStopSelectionPane(
     modifier: Modifier = Modifier,
     onStopSelected: (StopItem) -> Unit = {},
 ) {
-    val statusBarTopPadding = WindowInsets.statusBars
-        .asPaddingValues()
-        .calculateTopPadding()
+    // Corner-safe rather than the status bar's height: on iPhone Duo's inner display the
+    // status bar sits on the side, the top inset is zero, and the location pill touched the top.
+    val statusBarTopPadding = cornerSafeTopPadding()
 
     SearchStopMap(
         modifier = modifier.fillMaxSize(),

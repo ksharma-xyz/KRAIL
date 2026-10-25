@@ -1,0 +1,17 @@
+# iPhone Duo outer: dismiss a bottom sheet over the timetable, scroll the list
+# back to the top so the title bar shows, then go Back to Saved Trips so the
+# timetable stops polling.
+appId: xyz.ksharma.krail
+---
+- swipe:
+    start: "50%,14%"
+    end: "50%,95%"
+    duration: 600
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element: "Back"
+    direction: UP
+    timeout: 20000
+- tapOn: "Back"
+- waitForAnimationToEnd
+- assertVisible: "Saved Trips"

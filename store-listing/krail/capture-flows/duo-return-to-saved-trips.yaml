@@ -1,0 +1,6 @@
+# iPhone Duo outer: leave a timetable for Saved Trips so polling stops.
+appId: xyz.ksharma.krail
+---
+- tapOn: "Back"
+- waitForAnimationToEnd
+- assertVisible: "Saved Trips"

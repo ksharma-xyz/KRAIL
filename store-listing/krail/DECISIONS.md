@@ -70,6 +70,7 @@ truth; `manifest.json` is its machine-readable seven-panel contract.
 - Android tablet: genuine landscape 1920 x 1080 output from 2560 x 1600 native tablet captures
 - iPhone: accepted 1242 x 2688 6.5-inch assets using genuine iPhone captures
 - iPad: accepted 2064 x 2752 13-inch assets using the native split-view app layout
+- iPhone Duo (added 2026-10-25, not yet captured): outer display 1398 x 2034 (landscape 2034 x 1398) and inner display 2007 x 2853 (landscape 2853 x 2007). Apple: "Starting in April 2027, screenshots will be required for any app using the iOS 27.1 SDK or later", and submitting Duo screenshots shows an optimized-for-iPhone-Duo badge on the product page. KRAIL builds with the iOS 27.1 SDK, so this applies. Ship both sets; the inner list + map story must be landscape because portrait inner is below the 840 dp dual-pane gate. Specs live in `../framework/devices.json`
 - The Android tablet's added marketing copy has a documented Google large-screen crop warning; retain a UI-only fallback if Play Console previewing crops it
 
 ## Workflow and release decisions

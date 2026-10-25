@@ -1,0 +1,13 @@
+# iPhone Duo outer: Saved Trips at the top of the list, with the canonical
+# labels and both Park & Ride stations.
+appId: xyz.ksharma.krail
+---
+- assertVisible: "Saved Trips"
+- assertVisible:
+    id: "savedtrips.card.202210->200020"
+- assertVisible:
+    id: "savedtrips.card.202210->201510"
+- assertVisible: "Tallawong Station"
+- assertVisible: "Schofields Station"
+- assertNotVisible: "Location Permission Required"
+- assertNotVisible: "Enjoying Krail App?"

@@ -1,0 +1,28 @@
+# iPhone Duo outer, on Saved Trips: expand Tallawong Park & Ride so P1, P2 and
+# P3 show live availability.
+appId: xyz.ksharma.krail
+---
+- tapOn: "Tallawong Station"
+- extendedWaitUntil:
+    visible: "Tallawong P1"
+    timeout: 20000
+- waitForAnimationToEnd
+# Lift the expanded card so P1 to P3 clear the sticky Park & Ride header.
+- swipe:
+    start: "40%,62%"
+    end: "40%,20%"
+    duration: 900
+- waitForAnimationToEnd
+- swipe:
+    start: "40%,40%"
+    end: "40%,50%"
+    duration: 1500
+- waitForAnimationToEnd
+- swipe:
+    start: "40%,40%"
+    end: "40%,45%"
+    duration: 1500
+- waitForAnimationToEnd
+- assertVisible: "Tallawong P1"
+- assertVisible: "Tallawong P3"
+- assertNotVisible: "Location Permission Required"

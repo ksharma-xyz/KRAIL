@@ -9,7 +9,13 @@ import base64, hashlib, json, pathlib, re, shutil, subprocess, sys
 ROOT = pathlib.Path(__file__).resolve().parent
 SRC = ROOT / "krail-screenshot-listing.html"
 OUT = ROOT / "store-images"
-UPLOAD = ROOT / "upload-ready" / "2026-08-09"
+UPLOAD_ROOT = ROOT / "upload-ready"
+# Submitted release sets. Never deleted, never written: a later release gets
+# its own dated folder. The 2026-08-09 set was uploaded to both stores.
+FROZEN_UPLOADS = (UPLOAD_ROOT / "2026-08-09",)
+# The release this renderer writes. Only this folder is recreated on each run.
+RELEASE = "2026-10-25"
+UPLOAD = UPLOAD_ROOT / RELEASE
 WORK = ROOT / ".render-work"
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 QA_CONFIG = json.loads((ROOT / "listing-qa.json").read_text())
@@ -28,7 +34,13 @@ PLATFORMS = {
     "android-tablet": {"section": "android-tablet", "css": (960, 540),   "dsf": 2, "px": (1920, 1080)},
     "iphone-6-5":     {"section": "iphone",         "css": (621, 1344),  "dsf": 2, "px": (1242, 2688)},
     "ipad-13":        {"section": "ipad",           "css": (516, 688),   "dsf": 4, "px": (2064, 2752)},
+    "iphone-duo-outer": {"section": "iphone-duo-outer", "css": (699, 1017), "dsf": 2, "px": (1398, 2034)},
+    "iphone-duo-inner": {"section": "iphone-duo-inner", "css": (951, 669),  "dsf": 3, "px": (2853, 2007)},
 }
+
+# Platforms whose raw captures may not exist yet. They are skipped, loudly,
+# until every source capture referenced by their report section is on disk.
+OPTIONAL_PLATFORMS = {"iphone-duo-inner"}
 
 SLUGS = {
     "android-phone": ["saved-trips", "live-times", "parking", "service-alerts",
@@ -39,14 +51,33 @@ SLUGS = {
                     "live-delays", "plan-your-day", "dark-mode"],
     "ipad-13": ["saved-trips", "live-times", "parking", "service-alerts",
                  "live-delays", "plan-your-day", "dark-mode"],
+    "iphone-duo-outer": ["saved-trips", "live-times", "parking", "service-alerts",
+                    "live-delays", "plan-your-day", "dark-mode"],
+    "iphone-duo-inner": ["saved-trips", "live-times", "parking", "service-alerts",
+                    "live-delays", "plan-your-day", "dark-mode"],
 }
 
+# The first four platforms point at the frozen 2026-08-09 set: they are
+# re-rendered into store-images/ so the verifier can check them against the
+# current report, but their upload folders are never touched.
 UPLOAD_DESTS = {
-    "android-phone": UPLOAD / "google-play" / "phone",
-    "android-tablet": UPLOAD / "google-play" / "tablet-10-inch",
-    "iphone-6-5": UPLOAD / "app-store" / "iphone-6.5-inch",
-    "ipad-13": UPLOAD / "app-store" / "ipad-13-inch",
+    "android-phone": FROZEN_UPLOADS[0] / "google-play" / "phone",
+    "android-tablet": FROZEN_UPLOADS[0] / "google-play" / "tablet-10-inch",
+    "iphone-6-5": FROZEN_UPLOADS[0] / "app-store" / "iphone-6.5-inch",
+    "ipad-13": FROZEN_UPLOADS[0] / "app-store" / "ipad-13-inch",
+    "iphone-duo-outer": UPLOAD / "app-store" / "iphone-duo-outer",
+    "iphone-duo-inner": UPLOAD / "app-store" / "iphone-duo-inner",
 }
+
+
+def is_frozen(path: pathlib.Path) -> bool:
+    resolved = path.resolve()
+    return any(resolved == f.resolve() or f.resolve() in resolved.parents
+               for f in FROZEN_UPLOADS)
+
+
+if is_frozen(UPLOAD):
+    sys.exit(f"RELEASE {RELEASE} is a frozen upload set; choose a new dated folder")
 
 PLATFORM_QA = {
     platform.get("outputKey", platform["id"]): platform
@@ -315,6 +346,87 @@ PLATFORM_CSS = {
 .device { border-radius: 3.6cqw; padding: 1.1cqw; }
 .device img { border-radius: 2.6cqw; }
 """,
+    # iPhone Duo panels follow the review page's proportions (bigger headline,
+    # bigger device), not the older store-render styles above. Sizes are the
+    # page's pixel values converted to cqw: the outer display takes the page's
+    # iPad portrait panel (340 px wide, the nearest aspect), the inner display
+    # the page's landscape tablet panel (520 px wide), fitted to each canvas.
+    # Ring offsets come from the page's inline styles in page pixels, so they
+    # are scaled by --k (canvas css width / page panel width).
+    "iphone-duo-outer": """
+.store-panel {
+  --k: calc(699 / 340);
+  --copy-height: 38cqw;
+  --device-height: 99cqw;
+}
+.store-panel::before { background-image: radial-gradient(rgba(255,255,255,.25) .3cqw, transparent .3cqw); background-size: 1.8cqw 1.8cqw; }
+.store-panel::after {
+  width: calc(var(--ring-size, 145px) * var(--k));
+  height: calc(var(--ring-size, 145px) * var(--k));
+  right: calc(var(--ring-right, -82px) * var(--k));
+  bottom: calc(var(--ring-bottom, -78px) * var(--k));
+  left: calc(var(--ring-left, auto) * var(--k));
+  top: calc(var(--ring-top, auto) * var(--k));
+  border-width: 6.5cqw;
+}
+.panel-index { top: 5cqw; left: 5cqw; font-size: 3.2cqw; }
+.sticker {
+  top: 4.4cqw; right: 4.7cqw; min-width: 12.4cqw;
+  padding: 1.2cqw 2.4cqw; border-width: .6cqw; border-radius: 1.5cqw;
+  font-size: 2.9cqw; box-shadow: 0 .9cqw 2.4cqw rgba(0, 0, 0, .2);
+}
+.panel-copy { padding: 11.5cqw 6.5cqw 2cqw; text-shadow: 0 .3cqw .9cqw rgba(0, 0, 0, .2); }
+.panel-copy strong { max-width: 86.8cqw; font-size: 7.35cqw; }
+.panel-accent { white-space: normal; }
+.panel-copy small { margin-top: 1.8cqw; font-size: 3.2cqw; }
+.parking-lockup { flex-direction: row; gap: 2.6cqw; }
+.parking-badge { width: 9.4cqw; height: 9.4cqw; border-radius: 1.5cqw; font-size: 6.2cqw; }
+.parking-lockup strong { font-size: 6.8cqw; }
+.alert-panel .panel-copy { padding: 11.5cqw 3.2cqw 2cqw; }
+.alert-panel .panel-copy strong { max-width: 78cqw; font-size: 6.4cqw; }
+.device {
+  margin-top: 2.6cqw; padding: 1.8cqw; border-radius: 4.4cqw;
+  box-shadow: 0 4.1cqw 8.8cqw rgba(0, 0, 0, .38);
+}
+.device img { border-radius: 2.9cqw; }
+.ghost { left: 1.5cqw; bottom: 5.3cqw; font-size: 3.8cqw; }
+""",
+    "iphone-duo-inner": """
+.store-panel {
+  --k: calc(951 / 520);
+  --copy-height: 19cqw;
+}
+.store-panel::before { background-image: radial-gradient(rgba(255,255,255,.25) .19cqw, transparent .19cqw); background-size: 1.15cqw 1.15cqw; }
+.store-panel::after {
+  width: calc(var(--ring-size, 145px) * var(--k));
+  height: calc(var(--ring-size, 145px) * var(--k));
+  right: calc(var(--ring-right, -82px) * var(--k));
+  bottom: calc(var(--ring-bottom, -78px) * var(--k));
+  left: calc(var(--ring-left, auto) * var(--k));
+  top: calc(var(--ring-top, auto) * var(--k));
+  border-width: 4.2cqw;
+}
+.panel-index { top: 3.3cqw; left: 3.3cqw; font-size: 2.1cqw; }
+.sticker {
+  top: 2.9cqw; right: 3.1cqw; min-width: 8cqw;
+  padding: .77cqw 1.54cqw; border-width: .38cqw; border-radius: .96cqw;
+  font-size: 1.92cqw; box-shadow: 0 .58cqw 1.54cqw rgba(0, 0, 0, .2);
+}
+.panel-copy { padding: 2cqw 5.4cqw 1.35cqw; text-shadow: 0 .2cqw .58cqw rgba(0, 0, 0, .2); }
+.panel-copy strong { max-width: 80.8cqw; font-size: 5cqw; }
+.panel-copy small { margin-top: .9cqw; font-size: 2.3cqw; }
+.parking-lockup { flex-direction: row; gap: 1.9cqw; }
+.parking-badge { width: 6.2cqw; height: 6.2cqw; border-radius: .96cqw; font-size: 4cqw; }
+.parking-lockup strong { font-size: 4.6cqw; }
+.alert-panel .panel-copy { padding-bottom: 1.35cqw; }
+.alert-panel .panel-copy strong { font-size: 4.6cqw; }
+.device {
+  width: 64cqw; height: auto; margin-top: 1.35cqw; padding: 1.15cqw;
+  border-radius: 2.9cqw; box-shadow: 0 2.7cqw 5.8cqw rgba(0, 0, 0, .38);
+}
+.device img { width: 100%; height: auto; border-radius: 1.9cqw; }
+.ghost { left: 1cqw; bottom: 3.5cqw; font-size: 2.5cqw; }
+""",
 }
 
 PAGE = """<!doctype html>
@@ -340,17 +452,37 @@ def extract(section_id: str, doc: str):
     return re.findall(r'(<article class="store-panel.*?</article>)', sec.group(1), re.S)
 
 
+def optional_ready(name: str, cfg: dict, doc: str) -> bool:
+    """True when an optional platform has a report section and every capture."""
+    sec = re.search(
+        r'<section class="platform" id="%s">(.*?)</section>' % cfg["section"], doc, re.S)
+    if not sec:
+        print(f"{name}: skipped, no report section yet")
+        return False
+    sources = re.findall(r'src="(screenshots/[^"]+)"', sec.group(1))
+    missing = [src for src in sources if not (ROOT / src).exists()]
+    if not sources or missing:
+        print(f"{name}: skipped, {len(missing)} of {len(sources)} captures missing")
+        return False
+    return True
+
+
 def main():
     doc = SRC.read_text()
     report_digest = hashlib.sha256(SRC.read_bytes()).hexdigest()
     if WORK.exists():
         shutil.rmtree(WORK)
     WORK.mkdir(parents=True)
+    # Only the current release folder is regenerated. Frozen sets are never
+    # removed; the guard above already refuses a RELEASE that names one.
     if UPLOAD.exists():
         shutil.rmtree(UPLOAD)
 
     manifest = {}
+    rendered = []
     for name, cfg in PLATFORMS.items():
+        if name in OPTIONAL_PLATFORMS and not optional_ready(name, cfg, doc):
+            continue
         w, h = cfg["css"]
         if w < MIN_WINDOW_WIDTH:
             sys.exit(f"{name}: css width {w} is below Chrome's {MIN_WINDOW_WIDTH}px "
@@ -413,13 +545,17 @@ def main():
             "files": entries,
             "inputs": inputs,
         }
+        rendered.append(name)
         print(f"{name}: {len(entries)} panels at {cfg['px'][0]}x{cfg['px'][1]}")
 
     (OUT / "index.json").write_text(json.dumps(manifest, indent=2) + "\n")
 
     upload_manifest = {}
-    for name, cfg in PLATFORMS.items():
+    for name in rendered:
         upload_dest = UPLOAD_DESTS[name]
+        if is_frozen(upload_dest):
+            print(f"  {name}: upload folder {upload_dest.relative_to(ROOT)} is frozen; not written")
+            continue
         upload_dest.mkdir(parents=True, exist_ok=True)
         files = manifest[name]["files"]
         primary_count = PLATFORM_QA[name]["uploadCount"]
@@ -431,13 +567,18 @@ def main():
             "files": core_files,
         }
 
-    (UPLOAD / "index.json").write_text(json.dumps(upload_manifest, indent=2) + "\n")
-    (UPLOAD / "README.md").write_text(
-        "# KRAIL store screenshots - 2026-08-09\n\n"
-        "Upload files in numeric order from the matching platform folder. "
-        "Every platform folder contains seven opaque PNGs, including the "
-        "dark-mode panel at `07_dark-mode.png`.\n"
-    )
+    if upload_manifest:
+        UPLOAD.mkdir(parents=True, exist_ok=True)
+        (UPLOAD / "index.json").write_text(json.dumps(upload_manifest, indent=2) + "\n")
+        (UPLOAD / "README.md").write_text(
+            f"# KRAIL store screenshots - {RELEASE}\n\n"
+            "iPhone Duo screenshot sets added for the iOS 27.1 SDK requirement. "
+            "Upload files in numeric order from the matching platform folder. "
+            "Every platform folder contains seven opaque PNGs, including the "
+            "dark-mode panel at `07_dark-mode.png`.\n\n"
+            "The phone, Android tablet and iPad sets are unchanged and stay in "
+            "`../2026-08-09/`.\n"
+        )
 
     verifier = ROOT.parent / "framework" / "verify-listing.py"
     subprocess.run([sys.executable, str(verifier), str(ROOT / "listing-qa.json")],

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
@@ -29,7 +30,7 @@ import androidx.compose.ui.semantics.semantics
 import xyz.ksharma.krail.taj.LocalContainerColor
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.LocalTextStyle
-import xyz.ksharma.krail.taj.modifier.cornerSafeTop
+import xyz.ksharma.krail.taj.modifier.cornerClearanceTop
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.tokens.IconSizeTokens
@@ -44,11 +45,13 @@ fun TitleBar(
 ) {
     Row(
         modifier = modifier
-            // Top and both sides of the safe area, not the status bar alone. On iPhone Duo's
-            // outer display the status bar and camera sit on the right edge, and a top-only
+            // statusBarsPadding() stays the top authority so a parent's statusBarsPadding() is
+            // still subtracted. The sides and the corner clearance are for iPhone Duo's outer
+            // display, where the status bar and camera sit on the right edge and a top-only
             // inset left the trailing action underneath the camera.
+            .statusBarsPadding()
             .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
-            .windowInsetsPadding(WindowInsets.cornerSafeTop())
+            .padding(top = cornerClearanceTop())
             .fillMaxWidth()
             .heightIn(min = IconSizeTokens.FAB)
             .padding(end = SpacingTokens.XL, start = SpacingTokens.M)

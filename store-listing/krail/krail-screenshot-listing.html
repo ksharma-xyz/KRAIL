@@ -305,6 +305,39 @@
       scrollbar-width: thin;
     }
 
+
+    /* iPhone Duo rows show the rendered store PNGs rather than live HTML, so
+       the review matches the uploaded files exactly. */
+    .rendered-note {
+      margin: 0 0 10px;
+      color: #6f655d;
+      font-size: 13px;
+    }
+    .rendered-panel {
+      flex: 0 0 auto;
+      display: block;
+      height: 444px;
+      overflow: hidden;
+      border-radius: 6px;
+      background: #d9d2cb;
+      color: #6f655d;
+      font-size: 13px;
+      text-decoration: none;
+      scroll-snap-align: start;
+    }
+    .rendered-panel img {
+      display: block;
+      width: auto;
+      height: 100%;
+    }
+    .rendered-carousel.is-landscape .rendered-panel { height: 320px; aspect-ratio: 2853 / 2007; }
+    .rendered-carousel .rendered-panel { aspect-ratio: 1398 / 2034; }
+    .rendered-carousel.is-landscape .rendered-panel { aspect-ratio: 2853 / 2007; }
+    @media (max-width: 640px) {
+      .rendered-panel { height: 360px; }
+      .rendered-carousel.is-landscape .rendered-panel { height: 220px; }
+    }
+
     .carousel::-webkit-scrollbar { height: 8px; }
     .carousel::-webkit-scrollbar-track { background: transparent; }
     .carousel::-webkit-scrollbar-thumb {
@@ -822,11 +855,11 @@
       <div>
         <p class="eyebrow">KRAIL / Store listing</p>
         <h1>One story across every screen.</h1>
-        <p class="intro">The final capture set for Android phone, Android tablet, iPhone 6.5-inch, and iPad 13-inch. Scroll each row horizontally; select any app frame to open its full-resolution source.</p>
+        <p class="intro">The final capture set for Android phone, Android tablet, iPhone 6.5-inch, iPad 13-inch and both iPhone Duo displays. Scroll each row horizontally; select any app frame to open its full-resolution source.</p>
       </div>
-      <div class="summary-count" aria-label="Twenty-eight proposed panels">
-        <strong>28</strong>
-        <span>proposed panels across four device classes</span>
+      <div class="summary-count" aria-label="Forty-two proposed panels">
+        <strong>42</strong>
+        <span>proposed panels across six device classes</span>
       </div>
     </header>
 
@@ -835,6 +868,8 @@
       <a href="#android-tablet">Android tablet</a>
       <a href="#iphone">iPhone 6.5-inch</a>
       <a href="#ipad">iPad 13-inch</a>
+      <a href="#iphone-duo-outer">iPhone Duo outer</a>
+      <a href="#iphone-duo-inner">iPhone Duo inner</a>
       <a href="#baseline">Capture baseline</a>
       <a href="#scores">QA scores</a>
       <a href="#validation">Parity review</a>
@@ -1248,6 +1283,232 @@
       </div>
     </section>
 
+    <section class="platform" id="iphone-duo-outer">
+      <div class="platform-head">
+        <div>
+          <p class="platform-kicker">Apple App Store / 7 panels / 1398 x 2034</p>
+          <h2>iPhone Duo outer display</h2>
+          <p class="platform-note">Native captures from the iPhone Duo outer display, closed, in portrait: approved labels, Bondi Junction to Circular Quay, an expanded route 333, and one dark-mode panel.</p>
+        </div>
+        <div class="platform-actions">
+          <div class="platform-score" data-score="98" aria-label="iPhone Duo outer QA score 98 out of 100"><span>QA score</span><strong>98</strong><small>/100</small></div>
+          <div class="carousel-controls" aria-label="iPhone Duo outer carousel controls">
+            <button class="carousel-control" type="button" data-dir="-1" aria-label="Previous iPhone Duo outer panel" title="Previous panel">&larr;</button>
+            <button class="carousel-control" type="button" data-dir="1" aria-label="Next iPhone Duo outer panel" title="Next panel">&rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="score-why" data-score-explanation="iphone-duo-outer">
+        <span class="risk-chip quality">Quality</span>
+        <p><strong>Why 98:</strong> mandatory checks pass; minus 2 because the expanded trackwork alert is dense at App Store thumbnail size</p>
+        <a href="#score-iphone-duo-outer">Full breakdown</a>
+      </div>
+
+      <p class="rendered-note">These are the rendered store PNGs from <code>store-images/iphone-duo-outer/</code>, byte for byte what is uploaded. Select one to open it at full size.</p>
+      <div class="carousel rendered-carousel" aria-label="iPhone Duo outer rendered store panels">
+        <a class="rendered-panel" href="store-images/iphone-duo-outer/01_saved-trips.png" target="_blank" aria-label="Open the rendered iPhone Duo outer Saved Trips panel"><img src="store-images/iphone-duo-outer/01_saved-trips.png" alt="Rendered iPhone Duo outer store panel 01: Saved Trips" loading="lazy"></a>
+        <a class="rendered-panel" href="store-images/iphone-duo-outer/02_live-times.png" target="_blank" aria-label="Open the rendered iPhone Duo outer route 333 panel"><img src="store-images/iphone-duo-outer/02_live-times.png" alt="Rendered iPhone Duo outer store panel 02: route 333" loading="lazy"></a>
+        <a class="rendered-panel" href="store-images/iphone-duo-outer/03_parking.png" target="_blank" aria-label="Open the rendered iPhone Duo outer Tallawong parking panel"><img src="store-images/iphone-duo-outer/03_parking.png" alt="Rendered iPhone Duo outer store panel 03: Tallawong parking" loading="lazy"></a>
+        <a class="rendered-panel" href="store-images/iphone-duo-outer/04_service-alerts.png" target="_blank" aria-label="Open the rendered iPhone Duo outer service alert panel"><img src="store-images/iphone-duo-outer/04_service-alerts.png" alt="Rendered iPhone Duo outer store panel 04: service alert" loading="lazy"></a>
+        <a class="rendered-panel" href="store-images/iphone-duo-outer/05_live-delays.png" target="_blank" aria-label="Open the rendered iPhone Duo outer live delay panel"><img src="store-images/iphone-duo-outer/05_live-delays.png" alt="Rendered iPhone Duo outer store panel 05: live delay" loading="lazy"></a>
+        <a class="rendered-panel" href="store-images/iphone-duo-outer/06_plan-your-day.png" target="_blank" aria-label="Open the rendered iPhone Duo outer trip planner panel"><img src="store-images/iphone-duo-outer/06_plan-your-day.png" alt="Rendered iPhone Duo outer store panel 06: trip planner" loading="lazy"></a>
+        <a class="rendered-panel" href="store-images/iphone-duo-outer/07_dark-mode.png" target="_blank" aria-label="Open the rendered iPhone Duo outer dark mode panel"><img src="store-images/iphone-duo-outer/07_dark-mode.png" alt="Rendered iPhone Duo outer store panel 07: dark mode" loading="lazy"></a>
+      </div>
+
+      <!-- Panel source for render-store-images.py and verify-listing.py. Not displayed. -->
+      <template class="panel-source">
+        <article class="store-panel" style="--g1:#f6891f;--g2:#bd5306;--word-accent:#2b1603;--ring-right:-68px;--ring-bottom:-70px">
+        <span class="panel-index">01</span>
+        <span class="sticker">Saved</span>
+        <div class="panel-copy">
+        <strong><span class="panel-accent">Save</span> your trips</strong>
+        <small>Home to Work and Home to Uni</small>
+        </div>
+        <div class="device"><a class="device-link" href="screenshots/duo-outer/01_saved_trips.png" target="_blank" aria-label="Open full iPhone Duo outer Saved Trips screenshot"><img src="screenshots/duo-outer/01_saved_trips.png" alt="KRAIL iPhone Duo outer Saved Trips screen"></a></div>
+        <span class="ghost">Daily trips</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#00b5ef;--g2:#007aa8;--word-accent:#ffe15a;--ring-right:-68px;--ring-bottom:-70px">
+        <span class="panel-index">02</span>
+        <span class="sticker live">15 stops</span>
+        <div class="panel-copy">
+        <strong><span class="panel-line">Live times</span><span class="panel-line panel-accent">Start to finish</span></strong>
+        <small>Route 333, expanded</small>
+        </div>
+        <div class="device"><a class="device-link" href="screenshots/duo-outer/02_live_times.png" target="_blank" aria-label="Open full iPhone Duo outer route 333 screenshot"><img src="screenshots/duo-outer/02_live_times.png" alt="KRAIL iPhone Duo outer route 333 expanded timetable"></a></div>
+        <span class="ghost">Circular Quay</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#00a57f;--g2:#006c56;--word-accent:#ffe15a;--ring-left:-82px;--ring-right:auto;--ring-top:174px;--ring-bottom:auto">
+        <span class="panel-index">03</span>
+        <div class="panel-copy">
+        <div class="parking-lockup"><span class="parking-badge" aria-hidden="true">P</span><strong>Check <span class="panel-accent">parking</span> first</strong></div>
+        <small>Live Park &amp; Ride availability</small>
+        </div>
+        <div class="device"><a class="device-link" href="screenshots/duo-outer/03_parking_tallawong.png" target="_blank" aria-label="Open full iPhone Duo outer Tallawong parking screenshot"><img src="screenshots/duo-outer/03_parking_tallawong.png" alt="KRAIL iPhone Duo outer Tallawong parking details"></a></div>
+        <span class="ghost">Tallawong</span>
+        </article>
+
+        <article class="store-panel alert-panel" style="--g1:#e6ab22;--g2:#a96900;--word-accent:#382300;--ring-right:-76px;--ring-bottom:auto;--ring-top:112px">
+        <span class="panel-index">04</span>
+        <span class="sticker">Alerts</span>
+        <div class="panel-copy">
+        <strong>Check <span class="panel-accent">service alerts</span></strong>
+        <small>Before you leave</small>
+        </div>
+        <div class="device"><a class="device-link" href="screenshots/duo-outer/04_service_alerts.png" target="_blank" aria-label="Open full iPhone Duo outer service alert screenshot"><img src="screenshots/duo-outer/04_service_alerts.png" alt="KRAIL iPhone Duo outer service alert sheet"></a></div>
+        <span class="ghost">Service status</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#ec1742;--g2:#a00022;--word-accent:#ffe15a;--ring-left:-72px;--ring-right:auto;--ring-bottom:24px">
+        <span class="panel-index">05</span>
+        <span class="sticker">Live</span>
+        <div class="panel-copy">
+        <strong>See <span class="panel-accent">delays</span> in real time</strong>
+        <small>Your service, updated live</small>
+        </div>
+        <div class="device"><a class="device-link" href="screenshots/duo-outer/05_live_delays.png" target="_blank" aria-label="Open full iPhone Duo outer delay screenshot"><img src="screenshots/duo-outer/05_live_delays.png" alt="KRAIL iPhone Duo outer timetable showing a delayed route 333"></a></div>
+        <span class="ghost">Live status</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#5abf32;--g2:#2c7f21;--word-accent:#17390d;--ring-size:170px;--ring-right:28px;--ring-bottom:auto;--ring-top:-106px">
+        <span class="panel-index">06</span>
+        <span class="sticker">Any time</span>
+        <div class="panel-copy">
+        <strong><span class="panel-accent">Plan</span> around your day</strong>
+        <small>Leave now or arrive by</small>
+        </div>
+        <div class="device"><a class="device-link" href="screenshots/duo-outer/06_plan_trip_sheet.png" target="_blank" aria-label="Open full iPhone Duo outer trip planner screenshot"><img src="screenshots/duo-outer/06_plan_trip_sheet.png" alt="KRAIL iPhone Duo outer trip planning sheet"></a></div>
+        <span class="ghost">Plan ahead</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#2a2522;--g2:#11100f;--word-accent:#f6891f;--ring-size:188px;--ring-left:42px;--ring-right:auto;--ring-bottom:-116px">
+        <span class="panel-index">07</span>
+        <span class="sticker" style="background:#f6891f;color:#241201">6am</span>
+        <div class="panel-copy">
+        <strong>Made for the 6am <span class="panel-accent">dark</span></strong>
+        <small>Dark mode in your colours</small>
+        </div>
+        <div class="device"><a class="device-link" href="screenshots/duo-outer/07_dark_mode.png" target="_blank" aria-label="Open full iPhone Duo outer dark mode screenshot"><img src="screenshots/duo-outer/07_dark_mode.png" alt="KRAIL iPhone Duo outer Saved Trips in dark mode"></a></div>
+        <span class="ghost">Krail</span>
+        </article>
+      </template>
+    </section>
+
+    <section class="platform" id="iphone-duo-inner">
+      <div class="platform-head">
+        <div>
+          <p class="platform-kicker">Apple App Store / 7 panels / 2853 x 2007 landscape</p>
+          <h2>iPhone Duo inner display</h2>
+          <p class="platform-note">Native captures from the iPhone Duo inner display, fully open and in landscape, with the list and the map side by side: approved labels, Bondi Junction to Circular Quay, route 333, Tallawong parking, and one dark-mode panel. Panels 01 to 06 use the Bus theme.</p>
+        </div>
+        <div class="platform-actions">
+          <div class="platform-score" data-score="98" aria-label="iPhone Duo inner QA score 98 out of 100"><span>QA score</span><strong>98</strong><small>/100</small></div>
+          <div class="carousel-controls" aria-label="iPhone Duo inner carousel controls">
+            <button class="carousel-control" type="button" data-dir="-1" aria-label="Previous iPhone Duo inner panel" title="Previous panel">&larr;</button>
+            <button class="carousel-control" type="button" data-dir="1" aria-label="Next iPhone Duo inner panel" title="Next panel">&rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="score-why" data-score-explanation="iphone-duo-inner">
+        <span class="risk-chip quality">Quality</span>
+        <p><strong>Why 98:</strong> mandatory checks pass; minus 2 because the dark-mode panel keeps a light map beside a dark list</p>
+        <a href="#score-iphone-duo-inner">Full breakdown</a>
+      </div>
+
+      <p class="rendered-note">These are the rendered store PNGs from <code>store-images/iphone-duo-inner/</code>, byte for byte what is uploaded. Select one to open it at full size.</p>
+      <div class="carousel rendered-carousel is-landscape" aria-label="iPhone Duo inner rendered store panels">
+        <a class="rendered-panel" href="store-images/iphone-duo-inner/01_saved-trips.png" target="_blank" aria-label="Open the rendered iPhone Duo inner Saved Trips panel"><img src="store-images/iphone-duo-inner/01_saved-trips.png" alt="Rendered iPhone Duo inner store panel 01: Saved Trips" loading="lazy"></a>
+        <a class="rendered-panel" href="store-images/iphone-duo-inner/02_live-times.png" target="_blank" aria-label="Open the rendered iPhone Duo inner route 333 panel"><img src="store-images/iphone-duo-inner/02_live-times.png" alt="Rendered iPhone Duo inner store panel 02: route 333" loading="lazy"></a>
+        <a class="rendered-panel" href="store-images/iphone-duo-inner/03_parking.png" target="_blank" aria-label="Open the rendered iPhone Duo inner Tallawong parking panel"><img src="store-images/iphone-duo-inner/03_parking.png" alt="Rendered iPhone Duo inner store panel 03: Tallawong parking" loading="lazy"></a>
+        <a class="rendered-panel" href="store-images/iphone-duo-inner/04_service-alerts.png" target="_blank" aria-label="Open the rendered iPhone Duo inner service alert panel"><img src="store-images/iphone-duo-inner/04_service-alerts.png" alt="Rendered iPhone Duo inner store panel 04: service alert" loading="lazy"></a>
+        <a class="rendered-panel" href="store-images/iphone-duo-inner/05_live-delays.png" target="_blank" aria-label="Open the rendered iPhone Duo inner live delay panel"><img src="store-images/iphone-duo-inner/05_live-delays.png" alt="Rendered iPhone Duo inner store panel 05: live delay" loading="lazy"></a>
+        <a class="rendered-panel" href="store-images/iphone-duo-inner/06_plan-your-day.png" target="_blank" aria-label="Open the rendered iPhone Duo inner trip planner panel"><img src="store-images/iphone-duo-inner/06_plan-your-day.png" alt="Rendered iPhone Duo inner store panel 06: trip planner" loading="lazy"></a>
+        <a class="rendered-panel" href="store-images/iphone-duo-inner/07_dark-mode.png" target="_blank" aria-label="Open the rendered iPhone Duo inner dark mode panel"><img src="store-images/iphone-duo-inner/07_dark-mode.png" alt="Rendered iPhone Duo inner store panel 07: dark mode" loading="lazy"></a>
+      </div>
+
+      <!-- Panel source for render-store-images.py and verify-listing.py. Not displayed. -->
+      <template class="panel-source">
+        <article class="store-panel" style="--g1:#f6891f;--g2:#bd5306;--word-accent:#2b1603;--ring-left:-70px;--ring-right:auto;--ring-top:-82px;--ring-bottom:auto">
+        <span class="panel-index">01</span>
+        <span class="sticker">Saved</span>
+        <div class="panel-copy">
+        <strong><span class="panel-accent">Save</span> your trips</strong>
+        <small>Home to Work and Home to Uni</small>
+        </div>
+        <div class="device"><a class="device-link" href="screenshots/duo-inner/01_saved_trips.png" target="_blank" aria-label="Open full iPhone Duo inner Saved Trips screenshot"><img src="screenshots/duo-inner/01_saved_trips.png" alt="KRAIL iPhone Duo inner Saved Trips screen"></a></div>
+        <span class="ghost">Daily trips</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#00b5ef;--g2:#007aa8;--word-accent:#ffe15a;--ring-right:-70px;--ring-bottom:-74px">
+        <span class="panel-index">02</span>
+        <span class="sticker live">15 stops</span>
+        <div class="panel-copy">
+        <strong><span class="panel-line">Live times</span><span class="panel-line panel-accent">Start to finish</span></strong>
+        <small>Route 333 expanded beside the map</small>
+        </div>
+        <div class="device"><a class="device-link" href="screenshots/duo-inner/02_live_times.png" target="_blank" aria-label="Open full iPhone Duo inner route 333 screenshot"><img src="screenshots/duo-inner/02_live_times.png" alt="KRAIL iPhone Duo inner route 333 expanded beside the map"></a></div>
+        <span class="ghost">Bondi to Quay</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#00a57f;--g2:#006c56;--word-accent:#ffe15a;--ring-left:-80px;--ring-right:auto;--ring-top:86px;--ring-bottom:auto">
+        <span class="panel-index">03</span>
+        <div class="panel-copy">
+        <div class="parking-lockup"><span class="parking-badge" aria-hidden="true">P</span><strong>Check <span class="panel-accent">parking</span> first</strong></div>
+        <small>Live Park &amp; Ride availability</small>
+        </div>
+        <div class="device"><a class="device-link" href="screenshots/duo-inner/03_parking_tallawong.png" target="_blank" aria-label="Open full iPhone Duo inner parking screenshot"><img src="screenshots/duo-inner/03_parking_tallawong.png" alt="KRAIL iPhone Duo inner Tallawong parking screen"></a></div>
+        <span class="ghost">Tallawong</span>
+        </article>
+
+        <article class="store-panel alert-panel" style="--g1:#e6ab22;--g2:#a96900;--word-accent:#382300;--ring-right:-76px;--ring-bottom:auto;--ring-top:64px">
+        <span class="panel-index">04</span>
+        <span class="sticker">Alerts</span>
+        <div class="panel-copy">
+        <strong>Check <span class="panel-accent">service alerts</span></strong>
+        <small>Before you leave</small>
+        </div>
+        <div class="device"><a class="device-link" href="screenshots/duo-inner/04_service_alerts.png" target="_blank" aria-label="Open full iPhone Duo inner service alert screenshot"><img src="screenshots/duo-inner/04_service_alerts.png" alt="KRAIL iPhone Duo inner service alert sheet"></a></div>
+        <span class="ghost">Service status</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#ec1742;--g2:#a00022;--word-accent:#ffe15a;--ring-left:-72px;--ring-right:auto;--ring-bottom:24px">
+        <span class="panel-index">05</span>
+        <span class="sticker">Live</span>
+        <div class="panel-copy">
+        <strong>See <span class="panel-accent">delays</span> in real time</strong>
+        <small>Your service, updated live</small>
+        </div>
+        <div class="device"><a class="device-link" href="screenshots/duo-inner/05_live_delays.png" target="_blank" aria-label="Open full iPhone Duo inner delay screenshot"><img src="screenshots/duo-inner/05_live_delays.png" alt="KRAIL iPhone Duo inner timetable showing a delayed route 333"></a></div>
+        <span class="ghost">Live status</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#5abf32;--g2:#2c7f21;--word-accent:#17390d;--ring-size:185px;--ring-right:32px;--ring-bottom:auto;--ring-top:-116px">
+        <span class="panel-index">06</span>
+        <span class="sticker">Any time</span>
+        <div class="panel-copy">
+        <strong><span class="panel-accent">Plan</span> around your day</strong>
+        <small>Leave now or arrive by</small>
+        </div>
+        <div class="device"><a class="device-link" href="screenshots/duo-inner/06_plan_trip_sheet.png" target="_blank" aria-label="Open full iPhone Duo inner trip planner screenshot"><img src="screenshots/duo-inner/06_plan_trip_sheet.png" alt="KRAIL iPhone Duo inner trip planning sheet"></a></div>
+        <span class="ghost">Plan ahead</span>
+        </article>
+
+        <article class="store-panel" style="--g1:#2a2522;--g2:#11100f;--word-accent:#f6891f;--ring-size:188px;--ring-left:42px;--ring-right:auto;--ring-bottom:-116px">
+        <span class="panel-index">07</span>
+        <span class="sticker" style="background:#f6891f;color:#241201">6am</span>
+        <div class="panel-copy">
+        <strong>Made for the 6am <span class="panel-accent">dark</span></strong>
+        <small>Dark mode in your colours</small>
+        </div>
+        <div class="device"><a class="device-link" href="screenshots/duo-inner/07_dark_mode.png" target="_blank" aria-label="Open full iPhone Duo inner dark mode screenshot"><img src="screenshots/duo-inner/07_dark_mode.png" alt="KRAIL iPhone Duo inner Saved Trips in dark mode"></a></div>
+        <span class="ghost">Krail</span>
+        </article>
+      </template>
+    </section>
+
     <section class="capture-baseline" id="baseline">
       <h2>Shared capture baseline</h2>
       <dl class="capture-facts">
@@ -1367,6 +1628,59 @@
             </section>
           </div>
         </article>
+
+        <article class="score-audit" id="score-iphone-duo-outer" data-score="98" data-policy-status="pass">
+          <header class="score-audit-head">
+            <div><span class="risk-chip quality">Quality improvement</span><h3>iPhone Duo outer display</h3></div>
+            <div class="score-audit-number">98 <small>/ 100</small></div>
+          </header>
+          <div class="audit-grid">
+            <section>
+              <h4>What is correct</h4>
+              <ul>
+                <li>Seven opaque 1398 x 2034 PNGs match Apple's iPhone Duo outer display size</li>
+                <li>Every panel is a native capture from the Duo outer display on a build with the Duo inset fix</li>
+                <li>The set keeps the canonical labels, route 333, Tallawong parking and one genuine dark-mode capture</li>
+              </ul>
+            </section>
+            <section>
+              <h4>Points deducted and improvements</h4>
+              <p class="deduction"><span class="points">-2</span><strong>Thumbnail readability</strong><br><strong>Wrong:</strong> the expanded trackwork alert is dense at App Store thumbnail size<br><strong>Impact:</strong> small alert text is hard to scan before opening the image<br><strong>Improve:</strong> recapture on a day with a shorter alert<br><strong>Store risk:</strong> conversion issue only; dense genuine UI is not an Apple rejection reason</p>
+            </section>
+            <section>
+              <h4>Store review flag</h4>
+              <span class="risk-chip">Pass</span>
+              <p class="policy-verdict"><strong>No current Apple screenshot rejection blocker detected</strong><br>The Duo outer size, count, authentic screens and permitted overlays should pass metadata review when the submitted build carries the Duo inset fix shown here.</p>
+            </section>
+          </div>
+        </article>
+
+        <article class="score-audit" id="score-iphone-duo-inner" data-score="98" data-policy-status="pass">
+          <header class="score-audit-head">
+            <div><span class="risk-chip quality">Quality improvement</span><h3>iPhone Duo inner display</h3></div>
+            <div class="score-audit-number">98 <small>/ 100</small></div>
+          </header>
+          <div class="audit-grid">
+            <section>
+              <h4>What is correct</h4>
+              <ul>
+                <li>Seven opaque 2853 x 2007 PNGs match Apple's iPhone Duo inner display size in landscape</li>
+                <li>The fully open landscape layout shows the list and the map side by side instead of an enlarged phone screen</li>
+                <li>The set keeps the canonical labels, route 333, Tallawong parking and one genuine dark-mode capture</li>
+              </ul>
+            </section>
+            <section>
+              <h4>Points deducted and improvements</h4>
+              <p class="deduction"><span class="points">-2</span><strong>Visual consistency</strong><br><strong>Wrong:</strong> the dark-mode panel keeps a light map beside a dark list<br><strong>Impact:</strong> half the panel reads as light mode at thumbnail size<br><strong>Improve:</strong> accept as genuine app behaviour or crop the story to the list<br><strong>Store risk:</strong> conversion issue only; genuine UI is not an Apple rejection reason</p>
+            </section>
+            <section>
+              <h4>Store review flag</h4>
+              <span class="risk-chip">Pass</span>
+              <p class="policy-verdict"><strong>No current Apple screenshot rejection blocker detected</strong><br>The Duo inner size, count and authentic screens should pass metadata review when the submitted build carries the Duo layout shown here.</p>
+            </section>
+          </div>
+        </article>
+
       </div>
     </section>
 
@@ -1424,7 +1738,7 @@
     document.querySelectorAll(".carousel-control").forEach((button) => {
       button.addEventListener("click", () => {
         const carousel = button.closest(".platform").querySelector(".carousel");
-        const panel = carousel.querySelector(".store-panel");
+        const panel = carousel.querySelector(".store-panel, .rendered-panel");
         const gap = Number.parseFloat(getComputedStyle(carousel).gap) || 18;
         const distance = panel.getBoundingClientRect().width + gap;
         carousel.scrollBy({ left: distance * Number(button.dataset.dir), behavior: "smooth" });

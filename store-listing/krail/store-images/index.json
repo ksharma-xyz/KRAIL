@@ -1,7 +1,7 @@
 {
   "android-phone": {
     "spec": "1080x1920",
-    "reportSha256": "dd025af0b7e9bb2403afd8309e19d262ed8756a0a14989acfdbfd942a2a568f6",
+    "reportSha256": "23db156e73744b941cee9f6f062154aedab73e3ea2b634aa70e935a0ad2610dc",
     "files": [
       "01_saved-trips.png",
       "02_live-times.png",
@@ -44,7 +44,7 @@
   },
   "android-tablet": {
     "spec": "1920x1080",
-    "reportSha256": "dd025af0b7e9bb2403afd8309e19d262ed8756a0a14989acfdbfd942a2a568f6",
+    "reportSha256": "23db156e73744b941cee9f6f062154aedab73e3ea2b634aa70e935a0ad2610dc",
     "files": [
       "01_saved-trips.png",
       "02_live-times.png",
@@ -87,7 +87,7 @@
   },
   "iphone-6-5": {
     "spec": "1242x2688",
-    "reportSha256": "dd025af0b7e9bb2403afd8309e19d262ed8756a0a14989acfdbfd942a2a568f6",
+    "reportSha256": "23db156e73744b941cee9f6f062154aedab73e3ea2b634aa70e935a0ad2610dc",
     "files": [
       "01_saved-trips.png",
       "02_live-times.png",
@@ -130,7 +130,7 @@
   },
   "ipad-13": {
     "spec": "2064x2752",
-    "reportSha256": "dd025af0b7e9bb2403afd8309e19d262ed8756a0a14989acfdbfd942a2a568f6",
+    "reportSha256": "23db156e73744b941cee9f6f062154aedab73e3ea2b634aa70e935a0ad2610dc",
     "files": [
       "01_saved-trips.png",
       "02_live-times.png",
@@ -173,7 +173,7 @@
   },
   "iphone-duo-outer": {
     "spec": "1398x2034",
-    "reportSha256": "dd025af0b7e9bb2403afd8309e19d262ed8756a0a14989acfdbfd942a2a568f6",
+    "reportSha256": "23db156e73744b941cee9f6f062154aedab73e3ea2b634aa70e935a0ad2610dc",
     "files": [
       "01_saved-trips.png",
       "02_live-times.png",
@@ -216,7 +216,7 @@
   },
   "iphone-duo-inner": {
     "spec": "2853x2007",
-    "reportSha256": "dd025af0b7e9bb2403afd8309e19d262ed8756a0a14989acfdbfd942a2a568f6",
+    "reportSha256": "23db156e73744b941cee9f6f062154aedab73e3ea2b634aa70e935a0ad2610dc",
     "files": [
       "01_saved-trips.png",
       "02_live-times.png",

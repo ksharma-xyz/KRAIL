@@ -20,7 +20,7 @@
       "intent": "Lead with the daily habit",
       "colour": "train",
       "screenTheme": "train/light",
-      "headline": "Save your trips",
+      "headline": "Home to Work in one tap",
       "proof": "Saved Trips shows the canonical Home to Work and Home to Uni labels"
     },
     {
@@ -29,7 +29,7 @@
       "intent": "Prove a complete journey at a glance",
       "colour": "bus",
       "screenTheme": "bus/light",
-      "headline": "Live times Start to finish",
+      "headline": "Every stop Bondi to the Quay",
       "proof": "Route 333 from Bondi Junction to Circular Quay is expanded with all 15 stops"
     },
     {
@@ -38,7 +38,7 @@
       "intent": "Show useful Park and Ride information before driving",
       "colour": "metro",
       "screenTheme": "metro/light",
-      "headline": "Check parking first",
+      "headline": "Find a park before you leave",
       "proof": "Tallawong Park and Ride shows live P1, P2 and P3 availability"
     },
     {
@@ -47,7 +47,7 @@
       "intent": "Separate network alerts from live delay information",
       "colour": "alert",
       "screenTheme": "light",
-      "headline": "Check service alerts",
+      "headline": "Weekend changes? Know first",
       "proof": "The first service alert is expanded on tablet, iPhone and iPad"
     },
     {
@@ -56,7 +56,7 @@
       "intent": "Make real-time disruption visibility unmistakable",
       "colour": "lightRail",
       "screenTheme": "light-rail/light",
-      "headline": "See delays in real time",
+      "headline": "Running late? See it live",
       "proof": "The timetable visibly shows a delayed service and updated timing"
     },
     {
@@ -65,7 +65,7 @@
       "intent": "Show leave-now and arrive-by planning flexibility",
       "colour": "ferry",
       "screenTheme": "ferry/light",
-      "headline": "Plan around your day",
+      "headline": "Arvo plans, sorted",
       "proof": "The trip-planning sheet exposes date, time, leave and arrive controls"
     },
     {
@@ -74,7 +74,7 @@
       "intent": "Finish with a deliberate low-light use case",
       "colour": "dark",
       "screenTheme": "train/dark",
-      "headline": "Made for the 6am dark",
+      "headline": "For the 5:52 to Central",
       "proof": "Saved Trips is captured in genuine app dark mode"
     }
   ],

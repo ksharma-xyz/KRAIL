@@ -64,6 +64,20 @@
       "ratio": "2.05:1",
       "count": { "min": 1, "max": 1 },
       "notes": "Required for featuring consideration. Type + field only, no screenshot."
+    },
+    "app-store-header": {
+      "store": "app-store",
+      "canvas": [3840, 1646],
+      "canvasAlt": [[5244, 2950]],
+      "count": { "min": 0, "max": 1 },
+      "notes": "Custom product page header asset. Accepted sizes 5244x2950 and 3840x1646. Source: App Store Connect upload panel, checked 2026-10-25."
+    },
+    "app-store-search-results": {
+      "store": "app-store",
+      "canvas": [3840, 2560],
+      "canvasAlt": [[5244, 2950], [1920, 1280]],
+      "count": { "min": 0, "max": 1 },
+      "notes": "Search results asset. Accepted sizes 5244x2950, 3840x2560 and 1920x1280. Without one, App Store search shows the app previews and screenshots instead. Source: App Store Connect upload panel, checked 2026-10-25."
     }
   },
   "geometry": {

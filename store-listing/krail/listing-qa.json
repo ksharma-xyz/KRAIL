@@ -55,7 +55,10 @@
       "trigger": "The store-review build does not contain the shown screens, labels, themes, or app states",
       "outcome": "Apple or Google may treat the listing as inaccurate or misleading and reject the metadata or app submission",
       "action": "Submit the same tested build lineage used for capture and manually verify every shown feature before upload",
-      "sourceIds": ["apple-review-2.3.3", "google-preview-assets"]
+      "sourceIds": [
+        "apple-review-2.3.3",
+        "google-preview-assets"
+      ]
     },
     {
       "severity": "warning",
@@ -64,7 +67,9 @@
       "trigger": "These English marketing panels are reused unchanged in a non-English localized listing",
       "outcome": "The listing may remain technically uploadable, but comprehension and promotional eligibility can be reduced",
       "action": "Render a translated panel set for every localized storefront that uses translated metadata",
-      "sourceIds": ["google-preview-assets"]
+      "sourceIds": [
+        "google-preview-assets"
+      ]
     }
   ],
   "copyRules": {
@@ -78,8 +83,14 @@
       "id": "android-phone",
       "displayName": "Android phone",
       "sectionId": "android-phone",
-      "sourceDimensions": [1080, 2400],
-      "outputDimensions": [1080, 1920],
+      "sourceDimensions": [
+        1080,
+        2400
+      ],
+      "outputDimensions": [
+        1080,
+        1920
+      ],
       "outputDir": "store-images/android-phone",
       "uploadDir": "upload-ready/2026-08-09/google-play/phone",
       "uploadCount": 7,
@@ -89,13 +100,34 @@
         "All marketing claims are concise and supported by visible app functionality"
       ],
       "panels": [
-        { "source": "screenshots/android_mobile/saved_trip.png", "output": "01_saved-trips.png" },
-        { "source": "screenshots/android_mobile/time_table_bus.png", "output": "02_live-times.png" },
-        { "source": "screenshots/android_mobile/Tallawong_Parking_Card.png", "output": "03_parking.png" },
-        { "source": "screenshots/android_mobile/ALERTS_1.png", "output": "04_service-alerts.png" },
-        { "source": "screenshots/android_mobile/LIGHT_RAIL_TIMETABLE.png", "output": "05_live-delays.png" },
-        { "source": "screenshots/android_mobile/PLAN_TRIP_SHEET.png", "output": "06_plan-your-day.png" },
-        { "source": "screenshots/android_mobile/dark_mode.png", "output": "07_dark-mode.png" }
+        {
+          "source": "screenshots/android_mobile/saved_trip.png",
+          "output": "01_saved-trips.png"
+        },
+        {
+          "source": "screenshots/android_mobile/time_table_bus.png",
+          "output": "02_live-times.png"
+        },
+        {
+          "source": "screenshots/android_mobile/Tallawong_Parking_Card.png",
+          "output": "03_parking.png"
+        },
+        {
+          "source": "screenshots/android_mobile/ALERTS_1.png",
+          "output": "04_service-alerts.png"
+        },
+        {
+          "source": "screenshots/android_mobile/LIGHT_RAIL_TIMETABLE.png",
+          "output": "05_live-delays.png"
+        },
+        {
+          "source": "screenshots/android_mobile/PLAN_TRIP_SHEET.png",
+          "output": "06_plan-your-day.png"
+        },
+        {
+          "source": "screenshots/android_mobile/dark_mode.png",
+          "output": "07_dark-mode.png"
+        }
       ],
       "deductions": [
         {
@@ -121,15 +153,23 @@
         "issue": "The primary set has valid dimensions, count, opacity, authentic app UI, and no ranking or price claims",
         "reviewOutcome": "Expected to upload successfully; the two deductions affect proof and consistency rather than policy compliance",
         "remediation": "Confirm the submitted Android build still contains every shown state and localize overlay copy for other storefront languages",
-        "sourceIds": ["google-preview-assets"]
+        "sourceIds": [
+          "google-preview-assets"
+        ]
       }
     },
     {
       "id": "android-tablet",
       "displayName": "Android tablet",
       "sectionId": "android-tablet",
-      "sourceDimensions": [2560, 1600],
-      "outputDimensions": [1920, 1080],
+      "sourceDimensions": [
+        2560,
+        1600
+      ],
+      "outputDimensions": [
+        1920,
+        1080
+      ],
       "outputDir": "store-images/android-tablet",
       "uploadDir": "upload-ready/2026-08-09/google-play/tablet-10-inch",
       "uploadCount": 7,
@@ -139,13 +179,34 @@
         "Saved Trips, expanded live times, parking, expanded alerts, planning, delays, and dark mode form a complete set"
       ],
       "panels": [
-        { "source": "screenshots/android_tablet/01_saved_trips.png", "output": "01_saved-trips.png" },
-        { "source": "screenshots/android_tablet/02_live_times.png", "output": "02_live-times.png" },
-        { "source": "screenshots/android_tablet/03_parking_tallawong.png", "output": "03_parking.png" },
-        { "source": "screenshots/android_tablet/04_service_alerts.png", "output": "04_service-alerts.png" },
-        { "source": "screenshots/android_tablet/05_live_delays.png", "output": "05_live-delays.png" },
-        { "source": "screenshots/android_tablet/06_plan_trip_sheet.png", "output": "06_plan-your-day.png" },
-        { "source": "screenshots/android_tablet/07_dark_mode.png", "output": "07_dark-mode.png" }
+        {
+          "source": "screenshots/android_tablet/01_saved_trips.png",
+          "output": "01_saved-trips.png"
+        },
+        {
+          "source": "screenshots/android_tablet/02_live_times.png",
+          "output": "02_live-times.png"
+        },
+        {
+          "source": "screenshots/android_tablet/03_parking_tallawong.png",
+          "output": "03_parking.png"
+        },
+        {
+          "source": "screenshots/android_tablet/04_service_alerts.png",
+          "output": "04_service-alerts.png"
+        },
+        {
+          "source": "screenshots/android_tablet/05_live_delays.png",
+          "output": "05_live-delays.png"
+        },
+        {
+          "source": "screenshots/android_tablet/06_plan_trip_sheet.png",
+          "output": "06_plan-your-day.png"
+        },
+        {
+          "source": "screenshots/android_tablet/07_dark_mode.png",
+          "output": "07_dark-mode.png"
+        }
       ],
       "deductions": [
         {
@@ -163,7 +224,10 @@
         "issue": "All seven tablet images include a headline and subline above the native app capture",
         "reviewOutcome": "The files meet upload specifications, but Play may crop the copy or limit promotional use; a strict review could request replacement assets",
         "remediation": "Prepare an alternate UI-only 16:9 set before submission and use it if Play Console previewing crops the marketing text",
-        "sourceIds": ["google-preview-assets", "google-large-screen-text"]
+        "sourceIds": [
+          "google-preview-assets",
+          "google-large-screen-text"
+        ]
       }
     },
     {
@@ -171,8 +235,14 @@
       "outputKey": "iphone-6-5",
       "displayName": "iPhone 6.5-inch",
       "sectionId": "iphone",
-      "sourceDimensions": [1242, 2688],
-      "outputDimensions": [1242, 2688],
+      "sourceDimensions": [
+        1242,
+        2688
+      ],
+      "outputDimensions": [
+        1242,
+        2688
+      ],
       "outputDir": "store-images/iphone-6-5",
       "uploadDir": "upload-ready/2026-08-09/app-store/iphone-6.5-inch",
       "uploadCount": 7,
@@ -182,13 +252,34 @@
         "The set includes expanded journey and alert proof plus a genuine dark-mode capture"
       ],
       "panels": [
-        { "source": "screenshots/iphone65/01_saved_trips.png", "output": "01_saved-trips.png" },
-        { "source": "screenshots/iphone65/02_live_times.png", "output": "02_live-times.png" },
-        { "source": "screenshots/iphone65/03_parking_tallawong.png", "output": "03_parking.png" },
-        { "source": "screenshots/iphone65/04_service_alerts.png", "output": "04_service-alerts.png" },
-        { "source": "screenshots/iphone65/05_live_delays.png", "output": "05_live-delays.png" },
-        { "source": "screenshots/iphone65/06_plan_trip_sheet.png", "output": "06_plan-your-day.png" },
-        { "source": "screenshots/iphone65/07_dark_mode.png", "output": "07_dark-mode.png" }
+        {
+          "source": "screenshots/iphone65/01_saved_trips.png",
+          "output": "01_saved-trips.png"
+        },
+        {
+          "source": "screenshots/iphone65/02_live_times.png",
+          "output": "02_live-times.png"
+        },
+        {
+          "source": "screenshots/iphone65/03_parking_tallawong.png",
+          "output": "03_parking.png"
+        },
+        {
+          "source": "screenshots/iphone65/04_service_alerts.png",
+          "output": "04_service-alerts.png"
+        },
+        {
+          "source": "screenshots/iphone65/05_live_delays.png",
+          "output": "05_live-delays.png"
+        },
+        {
+          "source": "screenshots/iphone65/06_plan_trip_sheet.png",
+          "output": "06_plan-your-day.png"
+        },
+        {
+          "source": "screenshots/iphone65/07_dark_mode.png",
+          "output": "07_dark-mode.png"
+        }
       ],
       "deductions": [
         {
@@ -206,7 +297,10 @@
         "issue": "The set uses an accepted size, stays within the one-to-ten count, and shows authentic app screens with permitted overlays",
         "reviewOutcome": "Expected to pass screenshot metadata review if the submitted build matches the captured functionality",
         "remediation": "Confirm build parity and provide translated artwork for every localized product page",
-        "sourceIds": ["apple-review-2.3.3", "apple-screenshot-specs"]
+        "sourceIds": [
+          "apple-review-2.3.3",
+          "apple-screenshot-specs"
+        ]
       }
     },
     {
@@ -214,8 +308,14 @@
       "outputKey": "ipad-13",
       "displayName": "iPad 13-inch",
       "sectionId": "ipad",
-      "sourceDimensions": [2064, 2752],
-      "outputDimensions": [2064, 2752],
+      "sourceDimensions": [
+        2064,
+        2752
+      ],
+      "outputDimensions": [
+        2064,
+        2752
+      ],
       "outputDir": "store-images/ipad-13",
       "uploadDir": "upload-ready/2026-08-09/app-store/ipad-13-inch",
       "uploadCount": 7,
@@ -225,13 +325,34 @@
         "Expanded journey, expanded alert, planning, parking, delays, and dark mode all use the latest app build"
       ],
       "panels": [
-        { "source": "screenshots/ipad13/01_saved_trips.png", "output": "01_saved-trips.png" },
-        { "source": "screenshots/ipad13/02_live_times.png", "output": "02_live-times.png" },
-        { "source": "screenshots/ipad13/03_parking_tallawong.png", "output": "03_parking.png" },
-        { "source": "screenshots/ipad13/04_service_alerts.png", "output": "04_service-alerts.png" },
-        { "source": "screenshots/ipad13/05_live_delays.png", "output": "05_live-delays.png" },
-        { "source": "screenshots/ipad13/06_plan_trip_sheet.png", "output": "06_plan-your-day.png" },
-        { "source": "screenshots/ipad13/07_dark_mode.png", "output": "07_dark-mode.png" }
+        {
+          "source": "screenshots/ipad13/01_saved_trips.png",
+          "output": "01_saved-trips.png"
+        },
+        {
+          "source": "screenshots/ipad13/02_live_times.png",
+          "output": "02_live-times.png"
+        },
+        {
+          "source": "screenshots/ipad13/03_parking_tallawong.png",
+          "output": "03_parking.png"
+        },
+        {
+          "source": "screenshots/ipad13/04_service_alerts.png",
+          "output": "04_service-alerts.png"
+        },
+        {
+          "source": "screenshots/ipad13/05_live_delays.png",
+          "output": "05_live-delays.png"
+        },
+        {
+          "source": "screenshots/ipad13/06_plan_trip_sheet.png",
+          "output": "06_plan-your-day.png"
+        },
+        {
+          "source": "screenshots/ipad13/07_dark_mode.png",
+          "output": "07_dark-mode.png"
+        }
       ],
       "deductions": [
         {
@@ -249,7 +370,156 @@
         "issue": "The captures are native iPad screens at an accepted 13-inch size and show the app in use",
         "reviewOutcome": "Expected to pass screenshot metadata review if the submitted iPad build matches these screens",
         "remediation": "Confirm the App Store build supports iPad and contains the same dual-pane layouts and labels",
-        "sourceIds": ["apple-review-2.3.3", "apple-screenshot-specs"]
+        "sourceIds": [
+          "apple-review-2.3.3",
+          "apple-screenshot-specs"
+        ]
+      }
+    },
+    {
+      "id": "iphone-duo-outer",
+      "outputKey": "iphone-duo-outer",
+      "displayName": "iPhone Duo outer display",
+      "sectionId": "iphone-duo-outer",
+      "sourceDimensions": [
+        1398,
+        2034
+      ],
+      "outputDimensions": [
+        1398,
+        2034
+      ],
+      "outputDir": "store-images/iphone-duo-outer",
+      "uploadDir": "upload-ready/2026-10-25/app-store/iphone-duo-outer",
+      "uploadCount": 7,
+      "strengths": [
+        "Seven opaque 1398 x 2034 PNGs match Apple's iPhone Duo outer display size",
+        "Every panel is a native capture from the Duo outer display on a build with the Duo inset fix",
+        "The set keeps the canonical labels, route 333, Tallawong parking and one genuine dark-mode capture"
+      ],
+      "panels": [
+        {
+          "source": "screenshots/duo-outer/01_saved_trips.png",
+          "output": "01_saved-trips.png"
+        },
+        {
+          "source": "screenshots/duo-outer/02_live_times.png",
+          "output": "02_live-times.png"
+        },
+        {
+          "source": "screenshots/duo-outer/03_parking_tallawong.png",
+          "output": "03_parking.png"
+        },
+        {
+          "source": "screenshots/duo-outer/04_service_alerts.png",
+          "output": "04_service-alerts.png"
+        },
+        {
+          "source": "screenshots/duo-outer/05_live_delays.png",
+          "output": "05_live-delays.png"
+        },
+        {
+          "source": "screenshots/duo-outer/06_plan_trip_sheet.png",
+          "output": "06_plan-your-day.png"
+        },
+        {
+          "source": "screenshots/duo-outer/07_dark_mode.png",
+          "output": "07_dark-mode.png"
+        }
+      ],
+      "deductions": [
+        {
+          "points": 2,
+          "category": "Thumbnail readability",
+          "reason": "The expanded trackwork alert is dense at App Store thumbnail size",
+          "impact": "Small alert text is hard to scan before a customer opens the screenshot",
+          "improvement": "Recapture on a day with a shorter alert",
+          "storeRisk": "Conversion issue only; dense genuine UI is not an Apple screenshot rejection reason"
+        }
+      ],
+      "policyReview": {
+        "status": "pass",
+        "title": "No current Apple screenshot rejection blocker detected",
+        "issue": "The captures are native iPhone Duo outer screens at Apple's listed Duo outer size and show the app in use",
+        "reviewOutcome": "Expected to pass screenshot metadata review if the submitted build carries the Duo inset fix shown here",
+        "remediation": "Submit a build that includes the Duo inset fix and recapture after any Duo layout change",
+        "sourceIds": [
+          "apple-review-2.3.3",
+          "apple-screenshot-specs"
+        ]
+      }
+    },
+    {
+      "id": "iphone-duo-inner",
+      "outputKey": "iphone-duo-inner",
+      "displayName": "iPhone Duo inner display",
+      "sectionId": "iphone-duo-inner",
+      "sourceDimensions": [
+        2853,
+        2007
+      ],
+      "outputDimensions": [
+        2853,
+        2007
+      ],
+      "outputDir": "store-images/iphone-duo-inner",
+      "uploadDir": "upload-ready/2026-10-25/app-store/iphone-duo-inner",
+      "uploadCount": 7,
+      "strengths": [
+        "Seven opaque 2853 x 2007 PNGs match Apple's iPhone Duo inner display size in landscape",
+        "The fully open landscape layout shows the list and the map side by side instead of an enlarged phone screen",
+        "The set keeps the canonical labels, route 333, Tallawong parking and one genuine dark-mode capture"
+      ],
+      "panels": [
+        {
+          "source": "screenshots/duo-inner/01_saved_trips.png",
+          "output": "01_saved-trips.png"
+        },
+        {
+          "source": "screenshots/duo-inner/02_live_times.png",
+          "output": "02_live-times.png"
+        },
+        {
+          "source": "screenshots/duo-inner/03_parking_tallawong.png",
+          "output": "03_parking.png"
+        },
+        {
+          "source": "screenshots/duo-inner/04_service_alerts.png",
+          "output": "04_service-alerts.png"
+        },
+        {
+          "source": "screenshots/duo-inner/05_live_delays.png",
+          "output": "05_live-delays.png"
+        },
+        {
+          "source": "screenshots/duo-inner/06_plan_trip_sheet.png",
+          "output": "06_plan-your-day.png"
+        },
+        {
+          "source": "screenshots/duo-inner/07_dark_mode.png",
+          "output": "07_dark-mode.png"
+        }
+      ],
+      "deductions": [
+        {
+          "points": 2,
+          "category": "Visual consistency",
+          "reason": "The dark-mode panel keeps a light map beside a dark list",
+          "impact": "Half the panel reads as light mode at thumbnail size",
+          "improvement": "Accept as genuine app behaviour or crop the story to the list",
+          "storeRisk": "Conversion issue only; genuine UI is not an Apple screenshot rejection reason"
+        }
+      ],
+      "policyReview": {
+        "status": "pass",
+        "title": "No current Apple screenshot rejection blocker detected",
+        "issue": "The captures are native iPhone Duo inner screens at Apple's listed Duo inner size and show the app in use",
+        "reviewOutcome": "Expected to pass screenshot metadata review if the submitted build carries the Duo layout shown here",
+        "remediation": "Submit a build that includes the Duo inset fix and recapture after any Duo layout change",
+        "sourceIds": [
+          "apple-review-2.3.3",
+          "apple-screenshot-specs"
+        ]
       }
     }
   ]

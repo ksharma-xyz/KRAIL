@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.CircularProgressIndicator
@@ -41,7 +42,7 @@ import xyz.ksharma.krail.core.maps.ui.components.UserLocationButton
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider
 import xyz.ksharma.krail.core.maps.ui.utils.MapCameraUtils
-import xyz.ksharma.krail.taj.modifier.cornerSafeTop
+import xyz.ksharma.krail.taj.modifier.cornerClearanceTop
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.TrackUserLocation
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
@@ -227,8 +228,9 @@ private fun JourneyMapContent(
                 },
                 modifier = Modifier
                     .align(Alignment.TopCenter)
+                    .statusBarsPadding()
                     .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
-                    .windowInsetsPadding(WindowInsets.cornerSafeTop())
+                    .padding(top = cornerClearanceTop())
                     .padding(top = KrailTheme.dimensions.spacingM)
                     .padding(horizontal = KrailTheme.dimensions.spacingXL),
             )

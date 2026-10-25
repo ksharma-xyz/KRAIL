@@ -2,10 +2,14 @@ package xyz.ksharma.krail.trip.planner.ui.journeymap
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -37,6 +41,7 @@ import xyz.ksharma.krail.core.maps.ui.components.UserLocationButton
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider
 import xyz.ksharma.krail.core.maps.ui.utils.MapCameraUtils
+import xyz.ksharma.krail.taj.modifier.cornerSafeTop
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.TrackUserLocation
 import xyz.ksharma.krail.trip.planner.ui.state.journeymap.JourneyMapUiState
@@ -211,8 +216,9 @@ private fun JourneyMapContent(
 
         // Location permission banner (shown when permission is denied).
         // TopCenter so the pill is horizontally centred like the search-stop / saved-trip maps.
-        // statusBarsPadding clears the status bar (the pill carries no inset of its own),
-        // then spacingM adds a small gap below it. Horizontal padding gives edge breathing room.
+        // The safe area clears the status bar and, on iPhone Duo, the camera on the right edge
+        // (the pill carries no inset of its own); spacingM adds a small gap below it.
+        // Horizontal padding gives edge breathing room.
         if (showPermissionBanner) {
             LocationPermissionBanner(
                 onGoToSettings = {
@@ -221,7 +227,8 @@ private fun JourneyMapContent(
                 },
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .statusBarsPadding()
+                    .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
+                    .windowInsetsPadding(WindowInsets.cornerSafeTop())
                     .padding(top = KrailTheme.dimensions.spacingM)
                     .padding(horizontal = KrailTheme.dimensions.spacingXL),
             )

@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -35,6 +34,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -199,13 +199,13 @@ fun SavedTripsScreen(
                 .onSizeChanged { log("[MAP_STOP_SEL] outerBox size=${it.width}x${it.height}") },
         ) {
             val body: @Composable BoxScope.() -> Unit = {
-                // Push content away from a side display cutout in landscape. Horizontal-only
-                // inset means portrait is untouched (cutout there is already covered by the
-                // status bar inset that TitleBar handles internally), but in landscape the
-                // whole column shifts right of the camera notch.
+                // Keep the list clear of anything on the sides: a camera notch in landscape, or
+                // iPhone Duo's outer display, where the status bar and camera sit on the right
+                // edge. displayCutout is not enough there: Compose on iOS reports the cutout on
+                // the top edge only in portrait. The keyboard stays with the root's imePadding.
                 Column(
                     modifier = Modifier.windowInsetsPadding(
-                        WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal),
+                        WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
                     ),
                 ) {
                     TitleBar(

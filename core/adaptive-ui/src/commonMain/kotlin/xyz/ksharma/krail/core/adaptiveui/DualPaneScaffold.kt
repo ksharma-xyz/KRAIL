@@ -3,9 +3,14 @@ package xyz.ksharma.krail.core.adaptiveui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -65,7 +70,7 @@ fun DualPaneScaffold(
                 )
                 .fillMaxHeight()
                 .then(
-                    if (isDualPane) Modifier.trackPaneTouches(AnalyticsPane.LIST) else Modifier,
+                    if (isDualPane) Modifier.trackPaneTouches(AnalyticsPane.LIST).listPaneInsets() else Modifier,
                 ),
         ) {
             listPane()
@@ -76,13 +81,31 @@ fun DualPaneScaffold(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .trackPaneTouches(AnalyticsPane.DETAIL),
+                    .trackPaneTouches(AnalyticsPane.DETAIL)
+                    .detailPaneInsets(),
             ) {
                 rightPane()
             }
         }
     }
 }
+
+/**
+ * For the list pane of a side-by-side layout: treats the safe-area inset on the end edge as
+ * already handled, so nothing inside the pane pads away from an edge the pane does not touch.
+ *
+ * Insets are measured against the window, not the pane. On iPhone Duo's open display the status
+ * bar and camera sit on the window's right edge, over the map; without this, the list's cards and
+ * its title bar stopped about 100 dp short of the divider.
+ */
+@Composable
+fun Modifier.listPaneInsets(): Modifier =
+    consumeWindowInsets(WindowInsets.safeDrawing.only(WindowInsetsSides.End))
+
+/** The detail pane's counterpart to [listPaneInsets]: its start edge touches the list, not the window. */
+@Composable
+fun Modifier.detailPaneInsets(): Modifier =
+    consumeWindowInsets(WindowInsets.safeDrawing.only(WindowInsetsSides.Start))
 
 /**
  * Width of the list pane in a dual-pane layout. Keeps stop/trip rows at ≈ phone width so they

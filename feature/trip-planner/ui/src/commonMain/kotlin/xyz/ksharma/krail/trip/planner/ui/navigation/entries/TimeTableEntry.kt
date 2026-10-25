@@ -28,6 +28,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.compose.viewmodel.koinViewModel
+import xyz.ksharma.krail.core.adaptiveui.detailPaneInsets
+import xyz.ksharma.krail.core.adaptiveui.listPaneInsets
 import xyz.ksharma.krail.core.adaptiveui.rememberAdaptiveLayoutInfo
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.navigation.ResultEffect
@@ -247,7 +249,8 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
                     timeTableScreen(
                         Modifier
                             .widthIn(max = TIMETABLE_PANE_MAX_WIDTH)
-                            .fillMaxHeight(),
+                            .fillMaxHeight()
+                            .listPaneInsets(),
                         true,
                     )
 
@@ -255,7 +258,8 @@ internal fun EntryProviderScope<NavKey>.TimeTableEntry(
                         journeyMapState = journeyMapState,
                         modifier = Modifier
                             .weight(1f)
-                            .fillMaxHeight(),
+                            .fillMaxHeight()
+                            .detailPaneInsets(),
                     )
                 }
             } else {

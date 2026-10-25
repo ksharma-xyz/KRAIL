@@ -1,0 +1,21 @@
+# iPhone Duo outer, on the Home to Work timetable: expand an upcoming bus-only
+# route 333 departure, preferably one running on time, so the live-times panel
+# differs from the live-delays panel. The list is live and refreshes, so read
+# the hierarchy first and pass the row id as JOURNEY_ID
+# (timetable.journey.nsw30333R..., a bus-only 333, not a T + 333 combination).
+appId: xyz.ksharma.krail
+---
+- scrollUntilVisible:
+    element:
+      id: "${JOURNEY_ID}"
+    direction: DOWN
+- swipe:
+    start: "40%,80%"
+    end: "40%,52%"
+    duration: 1500
+- waitForAnimationToEnd
+- tapOn:
+    id: "${JOURNEY_ID}"
+- waitForAnimationToEnd
+- assertVisible: "15 stops"
+- assertNotVisible: "Location Permission Required"

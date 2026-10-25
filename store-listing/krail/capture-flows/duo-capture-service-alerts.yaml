@@ -1,0 +1,17 @@
+# iPhone Duo outer, on the Home to Work timetable with a journey expanded that
+# shows an alert chip (journeycard.alerts): open Service Alerts and expand the
+# first alert. Live data: on a day with no alerts this fails instead of faking.
+appId: xyz.ksharma.krail
+---
+- tapOn:
+    id: "journeycard.alerts"
+- waitForAnimationToEnd
+- assertVisible: "Service Alerts"
+- swipe:
+    start: "50%,54%"
+    end: "50%,6%"
+    duration: 700
+- waitForAnimationToEnd
+- tapOn: "Read More"
+- waitForAnimationToEnd
+- assertNotVisible: "Location Permission Required"

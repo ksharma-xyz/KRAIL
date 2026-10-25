@@ -1,0 +1,13 @@
+# iPhone Duo outer: open the Home to Work saved trip and wait for departures.
+appId: xyz.ksharma.krail
+---
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.card.202210->200020"
+    timeout: 20000
+- tapOn:
+    id: "savedtrips.card.202210->200020"
+- extendedWaitUntil:
+    visible: "333"
+    timeout: 30000
+- waitForAnimationToEnd

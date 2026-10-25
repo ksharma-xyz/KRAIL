@@ -1,0 +1,35 @@
+# iPhone Duo outer, on Saved Trips: open Home to Work and its trip-planning
+# sheet, expanded so date, time, Leave and Arrive all show.
+appId: xyz.ksharma.krail
+---
+- tapOn:
+    id: "savedtrips.card.202210->200020"
+- extendedWaitUntil:
+    visible:
+      id: "timetable.action.datetime"
+    timeout: 30000
+- tapOn:
+    id: "timetable.action.datetime"
+- waitForAnimationToEnd
+- assertVisible: "Select Date"
+- swipe:
+    start: "50%,52%"
+    end: "50%,6%"
+    duration: 600
+- waitForAnimationToEnd
+# The outer display is too short for the whole sheet. Scroll its content so the
+# title row (whose Reset button sits under the status column) leaves the top,
+# keeping Leave, Arrive, date, time and the full clock.
+- swipe:
+    start: "15%,75%"
+    end: "15%,50%"
+    duration: 1200
+- waitForAnimationToEnd
+- swipe:
+    start: "15%,50%"
+    end: "15%,62%"
+    duration: 1500
+- waitForAnimationToEnd
+- assertVisible: "Arrive"
+- assertVisible: "Select Time"
+- assertNotVisible: "Location Permission Required"

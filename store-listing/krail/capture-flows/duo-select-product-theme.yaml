@@ -1,0 +1,30 @@
+# iPhone Duo outer: choose a product theme and an appearance from Saved Trips,
+# then return to Saved Trips.
+# Usage: maestro test -e THEME_TAGLINE="Hoppin' the concrete jungle!" -e MODE=Light
+# Taglines: Train "On the track, no lookin' back!", Metro "Surf the sub, no cap!",
+# Bus "Hoppin' the concrete jungle!", Ferry "Smooth sail, no fail!".
+# Before the Duo inset fix the gear sat under the status column and needed a
+# mirrored launch (-AppleTextDirection YES -NSForceRightToLeftWritingDirection YES).
+appId: xyz.ksharma.krail
+---
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.action.settings"
+    timeout: 20000
+- tapOn:
+    id: "savedtrips.action.settings"
+- waitForAnimationToEnd
+- tapOn: "Change Theme"
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      text: "${THEME_TAGLINE}"
+    direction: DOWN
+- tapOn: "${THEME_TAGLINE}"
+- tapOn: "${MODE}"
+- waitForAnimationToEnd
+- tapOn: "Back"
+- waitForAnimationToEnd
+- tapOn: "Back"
+- waitForAnimationToEnd
+- assertVisible: "Saved Trips"

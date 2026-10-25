@@ -14,6 +14,22 @@
       "count": { "min": 0, "max": 10 },
       "notes": "Optional; App Store auto-scales 6.9 if omitted. Same template, smaller canvas."
     },
+    "iphone-duo-outer": {
+      "store": "app-store",
+      "canvas": [1398, 2034],
+      "canvasLandscape": [2034, 1398],
+      "ratio": "1:1.45",
+      "count": { "min": 0, "max": 10 },
+      "notes": "iPhone Duo outer (closed) display. Required from April 2027 for apps built with the iOS 27.1 SDK or later; submitting Duo screenshots adds an optimized-for-iPhone-Duo badge to the product page. Window is ~466 dp, so single-pane phone layout. Source: Apple screenshot specifications, checked 2026-10-25."
+    },
+    "iphone-duo-inner": {
+      "store": "app-store",
+      "canvas": [2007, 2853],
+      "canvasLandscape": [2853, 2007],
+      "ratio": "1:1.42",
+      "count": { "min": 0, "max": 10 },
+      "notes": "iPhone Duo inner (open) display. Same April 2027 requirement and badge; Apple lists both sizes under one entry without saying each needs its own set, so ship both. Portrait is ~669 dp (below the 840 dp dual-pane gate, single pane); only landscape (~951 dp) shows list + map. Capture fully open, where the fold region is inactive (#2041)."
+    },
     "ipad-13": {
       "store": "app-store",
       "canvas": [2064, 2752],

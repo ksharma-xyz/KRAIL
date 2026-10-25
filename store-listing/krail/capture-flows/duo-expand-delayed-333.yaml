@@ -1,0 +1,21 @@
+# iPhone Duo outer, on the Home to Work timetable: expand the first route 333
+# departure that is running late and lift it into view. Live data: if no 333
+# is delayed this fails rather than presenting an on-time service as a delay.
+appId: xyz.ksharma.krail
+---
+- assertVisible: "Delayed.*"
+- tapOn:
+    text: "Delayed.*"
+    below:
+      text: "333"
+- waitForAnimationToEnd
+# The outer display is short: lift the expanded journey into view. The trip
+# card stays pinned above the list.
+- swipe:
+    start: "40%,80%"
+    end: "40%,52%"
+    duration: 1500
+- waitForAnimationToEnd
+- assertVisible: "15 stops"
+- assertVisible: "Delayed.*"
+- assertNotVisible: "Location Permission Required"

@@ -57,14 +57,13 @@ SLUGS = {
                     "live-delays", "plan-your-day", "dark-mode"],
 }
 
-# The first four platforms point at the frozen 2026-08-09 set: they are
-# re-rendered into store-images/ so the verifier can check them against the
-# current report, but their upload folders are never touched.
+# Every platform writes into the current dated set. Earlier sets in
+# FROZEN_UPLOADS are history and are never touched.
 UPLOAD_DESTS = {
-    "android-phone": FROZEN_UPLOADS[0] / "google-play" / "phone",
-    "android-tablet": FROZEN_UPLOADS[0] / "google-play" / "tablet-10-inch",
-    "iphone-6-5": FROZEN_UPLOADS[0] / "app-store" / "iphone-6.5-inch",
-    "ipad-13": FROZEN_UPLOADS[0] / "app-store" / "ipad-13-inch",
+    "android-phone": UPLOAD / "google-play" / "phone",
+    "android-tablet": UPLOAD / "google-play" / "tablet-10-inch",
+    "iphone-6-5": UPLOAD / "app-store" / "iphone-6.5-inch",
+    "ipad-13": UPLOAD / "app-store" / "ipad-13-inch",
     "iphone-duo-outer": UPLOAD / "app-store" / "iphone-duo-outer",
     "iphone-duo-inner": UPLOAD / "app-store" / "iphone-duo-inner",
 }

@@ -82,30 +82,65 @@ class JourneyCarriagesTest {
     }
 
     @Test
-    fun `loader downloads once for a train result and never for a bus one`() = runTest {
+    fun `loader refreshes with every results refresh and never for a bus result`() = runTest {
         val repository = FakeCarriageForecastRepository(Result.success(index))
         val loader = CarriageForecastLoader(repository, this, StandardTestDispatcher(testScheduler))
-        var refreshed = 0
-        loader.loadOnceFor(listOf(journey(mode = TransportMode.Bus))) { refreshed++ }
-        loader.loadOnceFor(listOf(journey())) { refreshed++ }
-        loader.loadOnceFor(listOf(journey())) { refreshed++ }
+        var changed = 0
+        loader.refreshFor(listOf(journey(mode = TransportMode.Bus))) { changed++ }
         advanceUntilIdle()
-        assertEquals(1, repository.loadCount)
-        assertEquals(1, refreshed)
+        loader.refreshFor(listOf(journey())) { changed++ }
+        advanceUntilIdle()
+        loader.refreshFor(listOf(journey())) { changed++ }
+        advanceUntilIdle()
+        assertEquals(2, repository.loadCount)
+        // The second download returned the same forecasts, so nothing redraws.
+        assertEquals(1, changed)
         assertSame(index, loader.index)
     }
 
     @Test
-    fun `a failed download leaves the index empty and redraws nothing`() = runTest {
+    fun `a refresh is skipped while one is in flight`() = runTest {
+        val repository = FakeCarriageForecastRepository(Result.success(index))
+        val loader = CarriageForecastLoader(repository, this, StandardTestDispatcher(testScheduler))
+        loader.refreshFor(listOf(journey())) {}
+        loader.refreshFor(listOf(journey())) {}
+        advanceUntilIdle()
+        assertEquals(1, repository.loadCount)
+    }
+
+    @Test
+    fun `one failed refresh keeps the last forecasts and three in a row clear them`() = runTest {
+        val repository = FakeCarriageForecastRepository(Result.success(index))
+        val loader = CarriageForecastLoader(repository, this, StandardTestDispatcher(testScheduler))
+        var changed = 0
+        loader.refreshFor(listOf(journey())) { changed++ }
+        advanceUntilIdle()
+        repository.result = Result.failure(NetworkException(NetworkError.Unknown(RuntimeException("boom"))))
+        repeat(2) {
+            loader.refreshFor(listOf(journey())) { changed++ }
+            advanceUntilIdle()
+        }
+        assertSame(index, loader.index)
+        assertEquals(1, changed)
+        loader.refreshFor(listOf(journey())) { changed++ }
+        advanceUntilIdle()
+        assertEquals(CarriageIndex.EMPTY, loader.index)
+        assertEquals(2, changed)
+    }
+
+    @Test
+    fun `a failed first download leaves the index empty and redraws nothing`() = runTest {
         val repository = FakeCarriageForecastRepository(
             Result.failure(NetworkException(NetworkError.Unknown(RuntimeException("boom")))),
         )
         val loader = CarriageForecastLoader(repository, this, StandardTestDispatcher(testScheduler))
-        var refreshed = 0
-        loader.loadOnceFor(listOf(journey())) { refreshed++ }
-        advanceUntilIdle()
+        var changed = 0
+        repeat(3) {
+            loader.refreshFor(listOf(journey())) { changed++ }
+            advanceUntilIdle()
+        }
         assertEquals(CarriageIndex.EMPTY, loader.index)
-        assertEquals(0, refreshed)
+        assertEquals(0, changed)
     }
 
     private companion object {

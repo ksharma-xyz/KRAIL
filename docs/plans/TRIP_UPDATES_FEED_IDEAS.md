@@ -18,3 +18,16 @@ Delays are already in the trip planner response, so they are not an idea here.
 Before picking any of these up, run the `transit-3-source-check` skill on a few affected trips to
 see what the trip planner and transportnsw.info already show. An idea is only worth building if
 KRAIL would show something those sources do not.
+
+## Smarter crowding, parked for later
+
+Ideas from testing crowding on a phone (27 October). Each one states facts from the feed and
+leaves the decision to the rider: never "take this one", "wait" or "skip". All are written by
+code, not an on-device model (see the design review for why).
+
+| Idea | What the rider would see | Check before building |
+|---|---|---|
+| A tag per train on a trip with a change | `T5 Seats   T8 Standing only` on the closed card, so a packed second train is not hidden behind an empty first one | Fits at 320 dp and 200% font |
+| Trains just ahead, when yours has no forecast yet | "T8: no forecast yet. The 7:42 and 7:47 from Glenfield are standing only." | Replay collected peaks: how often back-to-back trains on a line share a level. Ship only if they usually do |
+| Seats opening up or the train filling later in the trip | "More seats expected from Strathfield." / "Expected to fill up from Parramatta." | Rules and replay in `TFNSW_OCCUPANCY_DATA.md`, "Forecasts along the trip" |
+| The second train of a trip with a change | "Your next train, the T8 from Central, is expected to be standing only." | Second train's forecast must exist at the change station |

@@ -28,8 +28,12 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DepartureBoardSourc
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.toDepartureRelativeString
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
+import xyz.ksharma.krail.departures.ui.business.wantsCarriages
+import xyz.ksharma.krail.departures.ui.business.withCarriages
 import xyz.ksharma.krail.departures.ui.state.DeparturesState
 import xyz.ksharma.krail.departures.ui.state.DeparturesUiEvent
+import xyz.ksharma.krail.feature.crowding.CarriageForecastRepository
+import xyz.ksharma.krail.feature.crowding.CarriageIndex
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -44,7 +48,12 @@ class DeparturesViewModel(
     // test moves instead of waiting on the wall clock. Same shape as the `nowInstant` parameter
     // the Park & Ride cooldown helpers take.
     private val now: () -> Instant = { Clock.System.now() },
+    private val carriageForecasts: CarriageForecastRepository? = null,
 ) : ViewModel() {
+
+    // Network-wide, so one download serves every stop this board is opened on.
+    private var carriageIndex: CarriageIndex = CarriageIndex.EMPTY
+    private var carriageLoadStarted = false
 
     // Tracks which stop this ViewModel instance is responsible for polling.
     private val activeStopId = MutableStateFlow<String?>(null)
@@ -122,8 +131,27 @@ class DeparturesViewModel(
                             )
                         }
                     }
-                    _uiState.value = state
+                    _uiState.value = state.withCarriages(carriageIndex)
+                    loadCarriagesOnceFor(state)
                 }
+        }
+    }
+
+    /**
+     * One download per board, and only once a train is listed. A failure is logged and the
+     * rows simply do not open: the rider is never told the cars are missing.
+     */
+    private fun loadCarriagesOnceFor(state: DeparturesState) {
+        val repository = carriageForecasts ?: return
+        if (carriageLoadStarted || !state.wantsCarriages()) return
+        carriageLoadStarted = true
+        viewModelScope.launchWithExceptionHandler<DeparturesViewModel>(ioDispatcher) {
+            repository.load()
+                .onSuccess { index ->
+                    carriageIndex = index
+                    _uiState.update { it.withCarriages(index) }
+                }
+                .onFailure { log("[$LOG_TAG] carriage forecasts unavailable: ${it.message}") }
         }
     }
 

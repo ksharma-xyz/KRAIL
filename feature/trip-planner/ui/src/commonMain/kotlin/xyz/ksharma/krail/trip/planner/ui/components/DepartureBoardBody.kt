@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,6 +28,8 @@ import xyz.ksharma.krail.taj.components.AnimatedDots
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.trip.planner.ui.components.crowding.LocalExpandedDepartures
+import xyz.ksharma.krail.trip.planner.ui.components.crowding.rememberExpandedDepartures
 
 private val LOADING_DOTS_WIDTH = 64.dp
 
@@ -61,6 +64,30 @@ internal fun DepartureBoardBody(
     onLineFilterChange: ((lineNumber: String?, transportMode: String?, selected: Boolean) -> Unit)? = null,
     onShowPreviousToggle: ((show: Boolean) -> Unit)? = null,
     maxItems: Int? = null,
+) {
+    // Hoisted above every branch that draws rows, so opened rows survive the branch changing.
+    CompositionLocalProvider(LocalExpandedDepartures provides rememberExpandedDepartures()) {
+        DepartureBoardBodyContent(
+            state = state,
+            onRetry = onRetry,
+            onLoadPreviousDepartures = onLoadPreviousDepartures,
+            modifier = modifier,
+            onLineFilterChange = onLineFilterChange,
+            onShowPreviousToggle = onShowPreviousToggle,
+            maxItems = maxItems,
+        )
+    }
+}
+
+@Composable
+private fun DepartureBoardBodyContent(
+    state: DeparturesState,
+    onRetry: () -> Unit,
+    onLoadPreviousDepartures: () -> Unit,
+    modifier: Modifier,
+    onLineFilterChange: ((lineNumber: String?, transportMode: String?, selected: Boolean) -> Unit)?,
+    onShowPreviousToggle: ((show: Boolean) -> Unit)?,
+    maxItems: Int?,
 ) {
     val dim = KrailTheme.dimensions
     // Empty string = no filter. rememberSaveable round-trips safely as a String primitive.

@@ -22,6 +22,7 @@ import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.departures.ui.state.model.DepartureTiming
 import xyz.ksharma.krail.departures.ui.state.model.StopDeparture
+import xyz.ksharma.krail.feature.crowding.CarriageLevels
 import xyz.ksharma.krail.feature.crowding.CrowdingWording
 import xyz.ksharma.krail.feature.crowding.SeatLevel
 import xyz.ksharma.krail.taj.components.Divider
@@ -31,7 +32,10 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.components.crowding.CarriageSlot
+import xyz.ksharma.krail.trip.planner.ui.components.crowding.LocalExpandedDepartures
 import xyz.ksharma.krail.trip.planner.ui.components.crowding.SeatTag
+import xyz.ksharma.krail.trip.planner.ui.components.crowding.departureRowToggle
 import xyz.ksharma.krail.trip.planner.ui.pastDepartureColor
 
 /**
@@ -57,7 +61,9 @@ private fun String.toTransportMode(): TransportMode? =
 fun DepartureRow(
     departure: StopDeparture,
     modifier: Modifier = Modifier,
-    seatTag: String? = departure.seatLevel?.let(CrowdingWording::levelTag),
+    seatTag: String? = departure.carriageTag ?: departure.seatLevel?.let(CrowdingWording::levelTag),
+    isExpanded: Boolean = false,
+    onToggle: (() -> Unit)? = null,
 ) {
     val dim = KrailTheme.dimensions
     val isPast = departure.timing == DepartureTiming.Previous
@@ -89,9 +95,12 @@ fun DepartureRow(
         Color.Unspecified
     }
 
+    // Only a row with cars to show opens (decision 3A: seats and carriages, no Track button).
+    val canOpen = onToggle != null && departure.carriages != null
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .departureRowToggle(canOpen = canOpen, isExpanded = isExpanded, onToggle = onToggle)
             .then(
                 if (isPast) {
                     Modifier.background(KrailTheme.colors.pastDepartureRowSurface)
@@ -148,6 +157,15 @@ fun DepartureRow(
             style = KrailTheme.typography.bodyMedium,
             color = pastDepartureColor(isPast, KrailTheme.colors.softLabel),
         )
+
+        if (canOpen && isExpanded) {
+            CarriageSlot(
+                cars = departure.carriages,
+                sentence = departure.carriageSentence,
+                lineColor = lineColor,
+                modifier = Modifier.padding(top = dim.spacingS),
+            )
+        }
     }
 }
 
@@ -184,7 +202,12 @@ fun DepartureRowList(
                 lastDateLabel = departure.dateLabel
             }
 
-            DepartureRow(departure = departure)
+            val expanded = LocalExpandedDepartures.current
+            DepartureRow(
+                departure = departure,
+                isExpanded = expanded?.isOpen(departure.rowKey) == true,
+                onToggle = expanded?.let { { it.toggle(departure.rowKey) } },
+            )
 
             if (index < displayDepartures.lastIndex) {
                 Divider(modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding))
@@ -277,6 +300,26 @@ private val sampleDepartures = persistentListOf(
 private fun DepartureRowTrainSeatTagPreview() {
     PreviewTheme(KrailThemeStyle.Train) {
         DepartureRow(departure = sampleDepartures[3].copy(seatLevel = SeatLevel.FEW_SEATS))
+    }
+}
+
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun DepartureRowTrainExpandedPreview() {
+    PreviewTheme(KrailThemeStyle.Train) {
+        DepartureRow(
+            departure = sampleDepartures[3].copy(
+                seatLevel = SeatLevel.FEW_SEATS,
+                carriages = CarriageLevels(
+                    listOf(SeatLevel.SEATS_AVAILABLE) + List(6) { SeatLevel.FEW_SEATS } + SeatLevel.SEATS_AVAILABLE,
+                ),
+                carriageSentence = "Seats expected at both ends.",
+                carriageTag = "Seats at both ends",
+            ),
+            isExpanded = true,
+            onToggle = {},
+        )
     }
 }
 

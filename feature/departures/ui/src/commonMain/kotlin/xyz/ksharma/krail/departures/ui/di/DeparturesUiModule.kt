@@ -19,6 +19,6 @@ val departuresUiModule = module {
         )
     }
     viewModel {
-        DeparturesViewModel(repository = get(), analytics = get())
+        DeparturesViewModel(repository = get(), analytics = get(), carriageForecasts = get())
     }
 }

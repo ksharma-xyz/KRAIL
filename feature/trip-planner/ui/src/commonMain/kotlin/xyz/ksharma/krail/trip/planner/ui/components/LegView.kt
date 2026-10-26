@@ -111,7 +111,8 @@ fun LegView(
             CarriageSlot(
                 cars = carriages,
                 sentence = carriageSentence,
-                modifier = Modifier.padding(top = dim.spacingL),
+                // Clear of the route line above and the first stop below.
+                modifier = Modifier.padding(top = dim.spacingL, bottom = dim.spacingM),
             )
 
             Spacer(modifier = Modifier.height(dim.spacingL))

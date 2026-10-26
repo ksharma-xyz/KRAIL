@@ -148,10 +148,10 @@ class CrowdingWordingTest {
     }
 
     @Test
-    fun `tag falls back to the train level when the cars only point at an end`() {
+    fun `tag gives the level most cars share when the cars only point at an end`() {
         val backOnly = cars(SEATS_AVAILABLE, STANDING_ONLY, STANDING_ONLY, STANDING_ONLY)
-        assertEquals("Standing only", CrowdingWording.tagFor(level = STANDING_ONLY, cars = backOnly))
-        assertEquals("Seats available", CrowdingWording.tagFor(level = null, cars = backOnly))
+        assertEquals("Standing only", CrowdingWording.tagFor(level = SEATS_AVAILABLE, cars = backOnly))
+        assertEquals("Standing only", CrowdingWording.tagFor(level = null, cars = backOnly))
     }
 
     @Test

@@ -310,7 +310,7 @@ details.part[open]::details-content{height:auto}
       <tr><td>Next bus has seats</td><td>Want a seat? The next 333, at 9:04am, has seats available. With only a few: The next 333, at 9:04am, has a few seats left.</td><td>This bus Standing only; the next one on the same route is listed at the same stop by the departure monitor and is Seats available or Few seats. Clock time, never "minutes behind"</td></tr>
       <tr><td>Forecast easing</td><td>It should ease off after Strathfield.</td><td>Per-stop forecast drops; every stop to there has a value</td></tr>
       <tr><td>Short train</td><td>This is a short train, so it stops mid-platform.</td><td>4 or 6 cars in the feed</td></tr>
-      <tr><td>Night</td><td>It's late: wait in the blue Nightsafe area to board near the guard.</td><td>After about 9pm; replaces any zone advice</td></tr>
+      <tr><td>Night</td><td>It's late. Wait in the blue Nightsafe area to board near the guard.</td><td>After about 9pm; replaces any zone advice</td></tr>
       <tr><td>No data</td><td><span class="muted">Nothing at all.</span></td><td>No level, stale reading, or too far ahead</td></tr>
     </tbody></table></div>
 </section>
@@ -526,7 +526,7 @@ const SIDE={
 function zones(L){const n=L.length,a=Math.ceil(n/3),b=Math.ceil(2*n/3);return [Math.max(...L.slice(0,a)),Math.max(...L.slice(a,b)),Math.max(...L.slice(b))];}
 /* cars run back to front, left to right, matching Back / Middle / Front labels */
 function advice(L,sc){
-  if(sc==='night')return {h:"It's late: wait in the blue Nightsafe area to board near the guard.",chip:null};
+  if(sc==='night')return {h:"It's late. Wait in the blue Nightsafe area to board near the guard.",chip:null};
   const [bk,md,fr]=zones(L),mn=Math.min(bk,md,fr),mx=Math.max(bk,md,fr);
   if(mn===mx)return mn===1?{h:'Seats available all along the train.',chip:W[1]}:mn===3?{h:'Standing only, all along the train.',chip:W[3]}:{h:'A few seats left along the train.',chip:W[2]};
   const room=[bk===mn,md===mn,fr===mn];

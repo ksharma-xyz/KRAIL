@@ -23,7 +23,7 @@ object CrowdingWording {
      */
     const val END_WORDING_ENABLED = false
 
-    const val NIGHT_LINE = "It's late: wait in the blue Nightsafe area to board near the guard."
+    const val NIGHT_LINE = "It's late. Wait in the blue Nightsafe area to board near the guard."
 
     private const val NIGHT_STARTS_AT_HOUR = 21
     private const val NIGHT_ENDS_AT_HOUR = 5

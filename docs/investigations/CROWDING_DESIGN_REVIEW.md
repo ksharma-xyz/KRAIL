@@ -72,7 +72,7 @@ Say "seats", never "room". Match the level, and match certainty with one word.
 | Full everywhere | Standing only, all along the train. |
 | Next train has seats | Want a seat? The next T1, at 8:59am from Platform 1, has seats available and is due at Central at 9:26am. |
 | Next bus has seats | Want a seat? The next 333, at 9:04am, has seats available. |
-| Night, after about 9pm | It's late: wait in the blue Nightsafe area to board near the guard. |
+| Night, after about 9pm | It's late. Wait in the blue Nightsafe area to board near the guard. |
 
 Rules:
 

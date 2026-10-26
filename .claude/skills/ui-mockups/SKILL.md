@@ -114,7 +114,8 @@ Visual restraint, from maintainer review:
 ## 5. Copy
 
 - Rider words, not feed jargon (`STANDING_ONLY` is "Standing only").
-- No arrow characters, no em dash, no middle dot. Not in copy, not in the mockup page.
+- No arrow characters, no em dash, no middle dot, and no colon inside a sentence (use a comma
+  or two sentences). Not in copy, not in the mockup page.
 - One vocabulary across every surface of the feature.
 - Name any other service the way the station board does: line, clock time with am or pm,
   platform ("the next T1, at 8:59am from Platform 1"), and make the mention jump to that

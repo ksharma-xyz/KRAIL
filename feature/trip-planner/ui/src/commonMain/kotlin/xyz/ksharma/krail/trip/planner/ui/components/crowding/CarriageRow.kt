@@ -1,5 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.components.crowding
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -53,11 +56,15 @@ internal fun CarriageSection(
     Column(
         modifier = modifier
             .widthIn(max = MAX_ROW_WIDTH)
+            // A refresh that adds or drops the sentence resizes smoothly instead of jumping.
+            .animateContentSize(tween(TEXT_FADE_MS, easing = FastOutSlowInEasing))
             .semantics(mergeDescendants = true) { },
         verticalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
         sentence?.let {
-            Text(text = it, style = KrailTheme.typography.bodyMedium, color = KrailTheme.colors.onSurface)
+            CrossfadeText(text = it) { line ->
+                Text(text = line, style = KrailTheme.typography.bodyMedium, color = KrailTheme.colors.onSurface)
+            }
         }
         CarriageRow(cars = cars, ink = ink)
     }
@@ -73,6 +80,7 @@ internal fun CarriageRow(cars: CarriageLevels, ink: Color, modifier: Modifier = 
     BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
         val fits = maxWidth / cars.size >= MIN_CAR_WIDTH
         val drawn = if (fits && !largeFont) cars.levels else cars.asBlocks()
+        val fills = animatedFills(drawn)
         val description = drawn.distinct().sorted().joinToString(prefix = "Carriages: ") {
             CrowdingWording.levelTag(it)
         }
@@ -85,17 +93,17 @@ internal fun CarriageRow(cars: CarriageLevels, ink: Color, modifier: Modifier = 
         ) {
             val gap = CAR_GAP.toPx()
             val width = (size.width - gap * (drawn.size - 1)) / drawn.size
-            drawn.forEachIndexed { index, level ->
-                drawCar(Offset(index * (width + gap), 0f), Size(width, size.height), level, ink)
+            drawn.indices.forEach { index ->
+                drawCar(Offset(index * (width + gap), 0f), Size(width, size.height), fills[index], ink)
             }
         }
     }
 }
 
-private fun DrawScope.drawCar(topLeft: Offset, carSize: Size, level: SeatLevel, ink: Color) {
+private fun DrawScope.drawCar(topLeft: Offset, carSize: Size, fill: Float, ink: Color) {
     val stroke = CAR_STROKE.toPx()
     val radius = CornerRadius(CAR_CORNER.toPx())
-    val fillHeight = carSize.height * level.fillFraction()
+    val fillHeight = carSize.height * fill
     drawRoundRect(
         color = ink,
         topLeft = Offset(topLeft.x, topLeft.y + carSize.height - fillHeight),
@@ -110,9 +118,6 @@ private fun DrawScope.drawCar(topLeft: Offset, carSize: Size, level: SeatLevel, 
         style = Stroke(width = stroke),
     )
 }
-
-// Fuller car, more fill: a third, two thirds, all of it. Shape, not colour, carries the level.
-private fun SeatLevel.fillFraction(): Float = (ordinal + 1f) / SeatLevel.entries.size
 
 private fun CarriageLevels.asBlocks(): List<SeatLevel> =
     zoneLevels()?.let { zones -> Zone.entries.map { zones.getValue(it) } } ?: levels

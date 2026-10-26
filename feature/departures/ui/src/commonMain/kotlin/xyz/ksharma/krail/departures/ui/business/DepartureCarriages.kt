@@ -35,5 +35,9 @@ private fun ImmutableList<StopDeparture>.withCarriages(index: CarriageIndex): Im
             CrowdingWording.isNight(departure.departureUtcDateTime.utcToLocalDateTimeAEST().hour)
         }.getOrDefault(false)
         val advice = CrowdingWording.forCarriages(cars, Certainty.FORECAST, isNight)
-        departure.copy(carriages = cars, carriageSentence = advice?.sentence, carriageTag = advice?.tag)
+        departure.copy(
+            carriages = cars,
+            carriageSentence = advice?.sentence,
+            carriageTag = advice?.tag ?: CrowdingWording.levelTag(cars.typicalLevel()),
+        )
     }.toImmutableList()

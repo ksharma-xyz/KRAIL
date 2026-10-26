@@ -2,7 +2,7 @@
 
 How to build the crowding feature designed in
 [`CROWDING_DESIGN_REVIEW.md`](../investigations/CROWDING_DESIGN_REVIEW.md). Decisions are final:
-**1A 2A 3A 4A 5C 6A**. Read these before starting:
+**1A 2A 3A 4A 5C 6A**, with 4A withdrawn on 27 October (see the design review). Read these before starting:
 
 1. [`TFNSW_OCCUPANCY_DATA.md`](../investigations/TFNSW_OCCUPANCY_DATA.md): what the feeds carry,
    coverage, quirks.
@@ -20,7 +20,7 @@ How to build the crowding feature designed in
 | Carriage row in trip cards and the live trip screen | "Front" and "back" wording until the platform check passes |
 | Departure rows that open to the sentence and carriage row | Light rail L1 to L3 and ferries (no data) |
 | Next-service line (train and bus) | Cancellations, skipped stops, short trains (see [`TRIP_UPDATES_FEED_IDEAS.md`](TRIP_UPDATES_FEED_IDEAS.md)) |
-| On-device AI line behind its own flag, off | |
+| Code-written lines about seats later in the trip (next) | |
 
 Zone wording until the platform check passes: "both ends", "middle" and the all-along lines
 only. "At the back" and "at the front" are built but gated by a constant, so turning them on is a
@@ -58,13 +58,12 @@ All local until the maintainer says otherwise. Each branch under 500 lines.
 | 5 | `feat/crowding-carriage-row` | Carriage row composable (one ink, fill = level, legend row, three blocks at narrow width or large font), sentence, collapse-on-failure animation; wired into the opened trip card and the live trip screen | Screenshot tests for each scenario on the review page; state-height test |
 | 6 | `feat/crowding-departure-expand` | Departure rows open to sentence and carriage row; expanded state kept per trip with `rememberSaveable` | Rotation and refresh keep the row open |
 | 7 | `feat/crowding-next-service` | Next-service line with the eligibility rules (one level quieter, within about 10 minutes, no tight connection later, not last service, bus listed at the same stop); tap jumps to that card | Rule tests per condition |
-| 8 | `feat/crowding-ai-tip` | AI line via `AiTextService`, facts built by code, reply dropped if it restates the screen or fails the fact check; fixed height, folds away on failure | Follows `ALERT_SUMMARY_UX.md` test pattern |
+| 8 | `feat/crowding-tag-bars` | Small bars in the tag, no pill, no key, forecasts refreshed with the screen, smooth level changes. (The AI line branches were built and removed; see the design review) | Screenshot tests; loader refresh and failure tests |
 
 ## Flags
 
 | Flag | Key | Default | Debug override |
 |---|---|---|---|
-| AI line | `CROWDING_AI_TIP_ENABLED("crowding_ai_tip_enabled")` | off | Yes |
 | Carriage row in results (the one extra download) | `CROWDING_CARRIAGES_IN_RESULTS_ENABLED("crowding_carriages_in_results_enabled")` | on | Yes |
 
 Add each to `FlagKeys.kt` and `RemoteConfigDefaults.kt`, and a row in `DebugConfigScreen.kt` the

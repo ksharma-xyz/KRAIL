@@ -44,6 +44,58 @@ The live trip screen already downloads these feeds (`RealGtfsRealtimeRepository`
 On Sydney Trains a train has carriage data on every car or on none, and T4 and the Central
 Coast line had almost no live readings. The per-stop forecasts do cover T4.
 
+## How each mode reaches the screen
+
+No feed carries a number of seats or people for any mode. Everything is one of the three levels.
+
+| Mode | What TfNSW sends | Where KRAIL reads it | What the rider sees |
+|---|---|---|---|
+| Buses | One level for the whole bus, from the moment it starts its trip | The trip and departure responses the screen already loads | The words beside the time. A bus that has not started its trip has no level, so later buses get their tag as they set off |
+| Sydney Trains | A forecast level for every car at every stop still ahead, from the trip updates feed | One extra download of that feed, refreshed with the results screen every 30 seconds | Small bars and words on the closed card, boxes and a sentence on the opened card |
+| Metro | A live level for every car, but no forecast for later stops | Vehicle positions, on the live trip screen only | Whole-train words in results; boxes once the rider is tracking the train |
+| Parramatta Light Rail | One level per tram | Trip and departure responses | Words |
+| Newcastle Light Rail | A level per car | Trip and departure responses | Words; boxes would be possible later |
+| L1, L2, L3, ferries | Nothing | | Nothing |
+
+The trip updates feed is network-wide and cannot be filtered per trip, so one download covers
+every train on the screen. It changes about once a minute: a single download when the screen
+opened left a train twenty minutes out several minutes stale on 27 October, and missed trains
+that had no forecast yet at that moment. KRAIL now refreshes it with the results screen, keeps
+the last forecast through a failed refresh and clears it after three failures in a row.
+
+Why many trains in a list show nothing, checked on 27 October against the live feed:
+
+- Only trains with weight sensors report. The trip id's fifth part looks like the train type
+  (`A` and `B` trains reported, `H` and `T` never did), but TfNSW does not publish the letters,
+  so treat that as a likely pattern, not a rule.
+- A train often has no forecast until shortly before it starts its run. The 30 second refresh
+  picks it up when it appears.
+
+## Forecasts along the trip
+
+The trip updates feed forecasts every car at every stop still ahead, not just where the rider
+boards. Code can read that forecast at each stop between boarding and getting off, for any line
+and any station, and name the station where it changes. Nothing is hard-coded to a place.
+
+| Case | Example line |
+|---|---|
+| Seats open up later | "More seats expected from Strathfield." |
+| The train fills up | "Expected to fill up from Parramatta." |
+| The second train of a trip with a change | "Your next train, the T8 from Central, is expected to be standing only." |
+
+A line is only written when all of these hold, otherwise nothing is said:
+
+- The change is at least one whole level.
+- It lasts until the rider gets off, not one stop and back.
+- That stop is within about 30 minutes; forecasts are within one level more than nine times in
+  ten but exactly right only about two times in three, and worse further out.
+- Every stop in between has a forecast.
+- The wording says "expected", never a promise.
+
+Before shipping, replay collected peaks: for every trip where the forecast said seats open up at
+a station, check the live reading when the train got there. Ship a case only if it held on most
+trips, and record the result here in words, not counts.
+
 ## Reliability
 
 - 40 polls of trains, metro and buses over 40 minutes of the morning peak: every request
@@ -104,6 +156,10 @@ later feature does not need a second download. The ideas are parked in
 [`docs/plans/TRIP_UPDATES_FEED_IDEAS.md`](../plans/TRIP_UPDATES_FEED_IDEAS.md).
 
 ## Platform check: which end is the front
+
+Checked again on 27 October: the car ids in the vehicle feed are anonymised per trip (for
+example `5901.5212.6615...`) and do not match the numbers painted on the carriages, so the feed's
+first car cannot be tied to a real end from data alone.
 
 Zone advice ("Head to the back for more room") is worse than nothing if the ends are swapped,
 and carriage order differs between feeds and may flip when a train reverses at a terminus.

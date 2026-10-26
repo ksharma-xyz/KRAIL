@@ -40,6 +40,7 @@ kotlin {
 
         commonMain {
             dependencies {
+                api(projects.feature.crowding.state) // CarriageLevels on LiveVehiclePosition
                 implementation(projects.core.dateTime)
                 implementation(projects.core.deeplink)
                 implementation(projects.core.di)

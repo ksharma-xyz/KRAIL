@@ -8,6 +8,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import xyz.ksharma.krail.core.network.error.NetworkError
+import xyz.ksharma.krail.feature.crowding.CarriageLevels
 import xyz.ksharma.krail.feature.crowding.CrowdingWording
 import xyz.ksharma.krail.feature.crowding.SeatLevel
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
@@ -144,7 +145,10 @@ data class TimeTableState(
 
         /** The seat tag beside the times on the closed card. Null draws nothing. */
         val seatTag: String?
-            get() = CrowdingWording.tagFor(level = seatLevel)
+            get() {
+                val firstLeg = legs.firstNotNullOfOrNull { it as? Leg.TransportLeg }
+                return firstLeg?.carriageTag ?: CrowdingWording.tagFor(level = firstLeg?.seatLevel)
+            }
 
         fun hasJourneyStarted(now: Instant = Clock.System.now()): Boolean =
             Instant.parse(originUtcDateTime) < now
@@ -224,6 +228,18 @@ data class TimeTableState(
 
                 /** Platform stop id where the rider boards; GTFS-R keys stops on it. */
                 val boardingStopId: String? = null,
+
+                /**
+                 * Per-carriage forecast as this train leaves the boarding stop. Null until the
+                 * trip updates feed has arrived, and for every service it does not cover.
+                 */
+                val carriages: CarriageLevels? = null,
+
+                /** The sentence above the carriage row. Null when only an end could be named. */
+                val carriageSentence: String? = null,
+
+                /** The tag worked out from [carriages], so tag and sentence never disagree. */
+                val carriageTag: String? = null,
             ) : Leg()
         }
 

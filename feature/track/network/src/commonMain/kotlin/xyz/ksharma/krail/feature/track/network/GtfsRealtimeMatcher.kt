@@ -7,6 +7,8 @@ import com.google.transit.realtime.FeedMessage
 import com.google.transit.realtime.Position
 import com.google.transit.realtime.VehiclePosition
 import xyz.ksharma.krail.core.log.log
+import xyz.ksharma.krail.feature.crowding.CarriageLevels
+import xyz.ksharma.krail.feature.crowding.SeatLevel
 import xyz.ksharma.krail.feature.track.LiveVehiclePosition
 import xyz.ksharma.krail.feature.track.VehicleStatus
 
@@ -105,6 +107,12 @@ object GtfsRealtimeMatcher {
                 else -> VehicleStatus.IN_TRANSIT_TO
             },
             lastUpdatedEpochSec = vehicle.timestamp ?: 0L,
+            carriages = CarriageLevels.fromPositions(
+                vehicle.consist.associate { car ->
+                    (car.position_in_consist ?: return@associate -1 to null) to
+                        SeatLevel.fromGtfs(car.occupancy_status?.value)
+                },
+            ),
         )
     }
 

@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.feature.crowding.CarriageLevels
 import xyz.ksharma.krail.feature.track.TrackedLeg
 import xyz.ksharma.krail.feature.track.TrackedStop
 import xyz.ksharma.krail.taj.components.Text
@@ -31,6 +32,8 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.ensureMinimumContrast
+import xyz.ksharma.krail.trip.planner.ui.components.crowding.CarriageSlot
+import xyz.ksharma.krail.trip.planner.ui.components.crowding.liveCarriageSentence
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -43,6 +46,7 @@ internal fun TrackedLegView(
     modifier: Modifier = Modifier,
     isArrived: Boolean = false,
     stopDelays: Map<String, Int> = emptyMap(),
+    liveCarriages: CarriageLevels? = null,
 ) {
     val dim = KrailTheme.dimensions
     val lineColor = remember(leg.lineColorCode) { leg.lineColorCode.hexToComposeColor() }
@@ -124,6 +128,14 @@ internal fun TrackedLegView(
                 )
             }
         }
+
+        CarriageSlot(
+            cars = liveCarriages,
+            sentence = remember(liveCarriages, now) { liveCarriageSentence(liveCarriages, now) },
+            lineColor = lineColor,
+            decideOnOpen = false,
+            modifier = Modifier.padding(bottom = dim.spacingXL),
+        )
 
         Column(modifier = Modifier.fillMaxWidth().padding(start = dim.spacingXS)) {
             // First stop (always prominent — origin)

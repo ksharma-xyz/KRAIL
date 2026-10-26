@@ -140,17 +140,13 @@ data class TimeTableState(
                 )
             }
 
-        /**
-         * If the origin time is in the past.
-         *
-         * Takes [now] rather than reading the system clock so a caller that already
-         * knows "now" (and a test that controls it) decides which instant the journey
-         * is compared against. Defaults to the system clock, so untouched call sites
-         * behave exactly as before.
-         */
         /** Seat level of the first service the rider boards, which is what the tag shows. */
         val seatLevel: SeatLevel?
             get() = legs.firstNotNullOfOrNull { it as? Leg.TransportLeg }?.seatLevel
+
+        /** Cars of the first service the rider boards, drawn small beside the tag. */
+        val seatCars: CarriageLevels?
+            get() = legs.firstNotNullOfOrNull { it as? Leg.TransportLeg }?.carriages
 
         /** The seat tag beside the times on the closed card. Null draws nothing. */
         val seatTag: String?
@@ -159,6 +155,14 @@ data class TimeTableState(
                 return firstLeg?.carriageTag ?: CrowdingWording.tagFor(level = firstLeg?.seatLevel)
             }
 
+        /**
+         * If the origin time is in the past.
+         *
+         * Takes [now] rather than reading the system clock so a caller that already
+         * knows "now" (and a test that controls it) decides which instant the journey
+         * is compared against. Defaults to the system clock, so untouched call sites
+         * behave exactly as before.
+         */
         fun hasJourneyStarted(now: Instant = Clock.System.now()): Boolean =
             Instant.parse(originUtcDateTime) < now
 

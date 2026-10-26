@@ -52,6 +52,8 @@ import xyz.ksharma.krail.core.datetime.DateTimeHelper.toFormattedDurationTimeStr
 import xyz.ksharma.krail.core.share.withBrandingHeader
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.feature.crowding.CarriageLevels
+import xyz.ksharma.krail.feature.crowding.SeatLevel
 import xyz.ksharma.krail.taj.components.AlertButton
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
@@ -113,6 +115,7 @@ fun JourneyCard(
     deepLinkUrl: String? = null,
     destinationUtcDateTime: String = "",
     seatTag: String? = null,
+    seatCars: CarriageLevels? = null,
     nextServiceLine: String? = null,
     onNextServiceClick: () -> Unit = {},
 ) {
@@ -189,6 +192,7 @@ fun JourneyCard(
                 totalWalkTime = totalWalkTime,
                 isPast = isPast,
                 seatTag = seatTag,
+                seatCars = seatCars,
             )
         }
 
@@ -449,6 +453,7 @@ private fun ResponsiveJourneyInfoRow(
     totalWalkTime: String?,
     isPast: Boolean = false,
     seatTag: String? = null,
+    seatCars: CarriageLevels? = null,
 ) {
     val dim = KrailTheme.dimensions
     FlowRow(
@@ -476,7 +481,7 @@ private fun ResponsiveJourneyInfoRow(
         }
 
         if (seatTag != null) {
-            SeatTag(text = seatTag, modifier = Modifier.align(Alignment.CenterVertically))
+            SeatTag(text = seatTag, cars = seatCars, modifier = Modifier.align(Alignment.CenterVertically))
         }
     }
 }
@@ -891,6 +896,9 @@ private fun Preview_Default_WithSeatTag() {
             totalUniqueServiceAlerts = 0,
             onClick = {},
             seatTag = "Seats at both ends",
+            seatCars = CarriageLevels(
+                listOf(SeatLevel.SEATS_AVAILABLE) + List(6) { SeatLevel.FEW_SEATS } + SeatLevel.SEATS_AVAILABLE,
+            ),
         )
     }
 }

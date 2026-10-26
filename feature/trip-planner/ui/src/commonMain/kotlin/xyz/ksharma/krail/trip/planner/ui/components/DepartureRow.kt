@@ -148,7 +148,7 @@ fun DepartureRow(
                 deviationColor = deviationColor,
                 onTimeTextStyle = KrailTheme.typography.bodyMedium,
             )
-            seatTag?.let { SeatTag(text = it) }
+            seatTag?.let { SeatTag(text = it, cars = departure.carriages) }
         }
 
         // Line 3: destination

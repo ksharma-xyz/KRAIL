@@ -66,8 +66,8 @@ import xyz.ksharma.krail.taj.theme.KrailDimensions
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.components.crowding.AnimatedSeatTag
 import xyz.ksharma.krail.trip.planner.ui.components.crowding.NextServiceLine
-import xyz.ksharma.krail.trip.planner.ui.components.crowding.SeatTag
 import xyz.ksharma.krail.trip.planner.ui.pastDepartureTextStyle
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
@@ -480,9 +480,7 @@ private fun ResponsiveJourneyInfoRow(
             )
         }
 
-        if (seatTag != null) {
-            SeatTag(text = seatTag, cars = seatCars, modifier = Modifier.align(Alignment.CenterVertically))
-        }
+        AnimatedSeatTag(text = seatTag, cars = seatCars, modifier = Modifier.align(Alignment.CenterVertically))
     }
 }
 

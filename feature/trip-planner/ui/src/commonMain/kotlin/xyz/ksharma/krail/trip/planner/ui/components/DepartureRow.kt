@@ -32,9 +32,9 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.components.crowding.AnimatedSeatTag
 import xyz.ksharma.krail.trip.planner.ui.components.crowding.CarriageSlot
 import xyz.ksharma.krail.trip.planner.ui.components.crowding.LocalExpandedDepartures
-import xyz.ksharma.krail.trip.planner.ui.components.crowding.SeatTag
 import xyz.ksharma.krail.trip.planner.ui.components.crowding.departureRowToggle
 import xyz.ksharma.krail.trip.planner.ui.pastDepartureColor
 
@@ -148,7 +148,7 @@ fun DepartureRow(
                 deviationColor = deviationColor,
                 onTimeTextStyle = KrailTheme.typography.bodyMedium,
             )
-            seatTag?.let { SeatTag(text = it, cars = departure.carriages) }
+            AnimatedSeatTag(text = seatTag, cars = departure.carriages)
         }
 
         // Line 3: destination

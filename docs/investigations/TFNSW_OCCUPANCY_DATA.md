@@ -100,7 +100,8 @@ brings the carriage forecasts also has:
 
 The trip planner already gives KRAIL delays, so only cancellations, skipped stops, short trains
 and train type would be new. None of these are in the crowding build; they are noted here so a
-later feature does not need a second download.
+later feature does not need a second download. The ideas are parked in
+[`docs/plans/TRIP_UPDATES_FEED_IDEAS.md`](../plans/TRIP_UPDATES_FEED_IDEAS.md).
 
 ## Platform check: which end is the front
 

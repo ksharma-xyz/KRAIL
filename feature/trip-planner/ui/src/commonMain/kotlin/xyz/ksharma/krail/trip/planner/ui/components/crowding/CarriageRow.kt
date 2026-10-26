@@ -54,7 +54,7 @@ internal fun CarriageSection(
         modifier = modifier
             .widthIn(max = MAX_ROW_WIDTH)
             .semantics(mergeDescendants = true) { },
-        verticalArrangement = Arrangement.spacedBy(dim.spacingS),
+        verticalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
         sentence?.let {
             Text(text = it, style = KrailTheme.typography.bodyMedium, color = KrailTheme.colors.onSurface)

@@ -45,7 +45,12 @@ private fun Leg.TransportLeg.withCarriages(index: CarriageIndex, isNight: Boolea
         ?: return copy(carriages = null, carriageSentence = null, carriageTag = null)
     val advice = CrowdingWording.forCarriages(cars, Certainty.FORECAST, isNight)
     log("[CROWDING] ${transportModeLine.lineName} $realtimeTripId at $boardingStopId: ${cars.compact()}")
-    return copy(carriages = cars, carriageSentence = advice?.sentence, carriageTag = advice?.tag)
+    return copy(
+        carriages = cars,
+        carriageSentence = advice?.sentence,
+        // No sentence when only one end has seats; the tag still says how full most cars are.
+        carriageTag = advice?.tag ?: CrowdingWording.levelTag(cars.typicalLevel()),
+    )
 }
 
 // S seats, F few seats, X standing only, one letter per car in feed order.

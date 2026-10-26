@@ -44,6 +44,16 @@ data class CarriageLevels(val levels: List<SeatLevel>) {
     /** The level the rider gets by walking to the quietest zone. */
     fun quietestZoneLevel(): SeatLevel = zoneLevels()?.values?.min() ?: levels.max()
 
+    /**
+     * The level most cars share, the busier one on a tie. The tag's words when the sentence
+     * cannot say where the seats are (only one end has them, and the ends are not named yet):
+     * the small bars beside it show which cars are better.
+     */
+    fun typicalLevel(): SeatLevel =
+        levels.groupingBy { it }.eachCount().entries
+            .maxWith(compareBy<Map.Entry<SeatLevel, Int>> { it.value }.thenBy { it.key })
+            .key
+
     companion object {
         private const val MIN_CARS_FOR_ZONES = 3
         private const val CARS_PER_END_CAR = 6

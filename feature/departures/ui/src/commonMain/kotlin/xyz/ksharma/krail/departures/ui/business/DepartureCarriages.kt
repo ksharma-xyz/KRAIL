@@ -38,6 +38,6 @@ private fun ImmutableList<StopDeparture>.withCarriages(index: CarriageIndex): Im
         departure.copy(
             carriages = cars,
             carriageSentence = advice?.sentence,
-            carriageTag = advice?.tag ?: CrowdingWording.levelTag(cars.typicalLevel()),
+            carriageTag = CrowdingWording.carriageTag(cars, Certainty.FORECAST, isNight),
         )
     }.toImmutableList()

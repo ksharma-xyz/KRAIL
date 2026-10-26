@@ -48,8 +48,7 @@ private fun Leg.TransportLeg.withCarriages(index: CarriageIndex, isNight: Boolea
     return copy(
         carriages = cars,
         carriageSentence = advice?.sentence,
-        // No sentence when only one end has seats; the tag still says how full most cars are.
-        carriageTag = advice?.tag ?: CrowdingWording.levelTag(cars.typicalLevel()),
+        carriageTag = CrowdingWording.carriageTag(cars, Certainty.FORECAST, isNight),
     )
 }
 

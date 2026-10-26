@@ -50,10 +50,17 @@ object CrowdingWording {
         certainty: Certainty = Certainty.FORECAST,
         isNight: Boolean = false,
     ): String? {
-        val fromCars = cars?.let { forCarriages(it, certainty, isNight)?.tag }
-        val fallbackLevel = level ?: cars?.quietestZoneLevel()
-        return fromCars ?: fallbackLevel?.let(::levelTag)
+        val fromCars = cars?.let { carriageTag(it, certainty, isNight) }
+        return fromCars ?: level?.let(::levelTag)
     }
+
+    /**
+     * The tag for a known carriage row: the advice's tag, or, when the sentence cannot say where
+     * the seats are (only one end has them and the ends are not named yet), the level most cars
+     * share. The small bars beside it show which cars are better.
+     */
+    fun carriageTag(cars: CarriageLevels, certainty: Certainty, isNight: Boolean = false): String =
+        forCarriages(cars, certainty, isNight)?.tag ?: levelTag(cars.typicalLevel())
 
     /**
      * Advice from a carriage row. Null when the only thing worth saying names an end and

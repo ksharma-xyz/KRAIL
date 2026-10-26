@@ -74,7 +74,7 @@ class CrowdingWordingTest {
         assertEquals(
             "Want a seat? The next T1, at 8:59am from Platform 1, has seats available and is due " +
                 "at Central at 9:26am.",
-            CrowdingWording.nextTrain(
+            NextServiceWording.nextTrain(
                 service = NextService(
                     line = "T1",
                     departureTime = "8:59am",
@@ -92,13 +92,13 @@ class CrowdingWordingTest {
     fun `next bus has seats`() {
         assertEquals(
             "Want a seat? The next 333, at 9:04am, has seats available.",
-            CrowdingWording.nextBus(NextService("333", "9:04am", SEATS_AVAILABLE, Certainty.LIVE)),
+            NextServiceWording.nextBus(NextService("333", "9:04am", SEATS_AVAILABLE, Certainty.LIVE)),
         )
     }
 
     @Test
     fun `forecast next service says should and never will`() {
-        val line = CrowdingWording.nextBus(NextService("333", "9:04am", FEW_SEATS, Certainty.FORECAST))
+        val line = NextServiceWording.nextBus(NextService("333", "9:04am", FEW_SEATS, Certainty.FORECAST))
         assertEquals("Want a seat? The next 333, at 9:04am, should have a few seats left.", line)
         assertFalse(line.contains("will"))
     }
@@ -139,6 +139,25 @@ class CrowdingWordingTest {
         val advice = live(cars(SEATS_AVAILABLE, SEATS_AVAILABLE, SEATS_AVAILABLE, STANDING_ONLY))
         assertEquals("Seats in the middle of the train.", advice?.sentence)
         assertEquals("Seats in the middle", advice?.tag)
+    }
+
+    @Test
+    fun `tag comes from the cars when they are known`() {
+        val bothEnds = cars(SEATS_AVAILABLE, FEW_SEATS, FEW_SEATS, SEATS_AVAILABLE)
+        assertEquals("Seats at both ends", CrowdingWording.tagFor(level = FEW_SEATS, cars = bothEnds))
+    }
+
+    @Test
+    fun `tag falls back to the train level when the cars only point at an end`() {
+        val backOnly = cars(SEATS_AVAILABLE, STANDING_ONLY, STANDING_ONLY, STANDING_ONLY)
+        assertEquals("Standing only", CrowdingWording.tagFor(level = STANDING_ONLY, cars = backOnly))
+        assertEquals("Seats available", CrowdingWording.tagFor(level = null, cars = backOnly))
+    }
+
+    @Test
+    fun `no level and no cars is no tag`() {
+        assertNull(CrowdingWording.tagFor(level = null))
+        assertEquals("Few seats", CrowdingWording.tagFor(level = FEW_SEATS))
     }
 
     @Test

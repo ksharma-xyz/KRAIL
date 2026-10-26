@@ -8,6 +8,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import xyz.ksharma.krail.core.network.error.NetworkError
+import xyz.ksharma.krail.feature.crowding.CrowdingWording
 import xyz.ksharma.krail.feature.crowding.SeatLevel
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
@@ -140,6 +141,10 @@ data class TimeTableState(
         /** Seat level of the first service the rider boards, which is what the tag shows. */
         val seatLevel: SeatLevel?
             get() = legs.firstNotNullOfOrNull { it as? Leg.TransportLeg }?.seatLevel
+
+        /** The seat tag beside the times on the closed card. Null draws nothing. */
+        val seatTag: String?
+            get() = CrowdingWording.tagFor(level = seatLevel)
 
         fun hasJourneyStarted(now: Instant = Clock.System.now()): Boolean =
             Instant.parse(originUtcDateTime) < now

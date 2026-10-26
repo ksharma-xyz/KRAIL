@@ -70,6 +70,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import xyz.ksharma.krail.trip.planner.ui.timetable.business.CarriageForecastLoader
 import xyz.ksharma.krail.trip.planner.ui.timetable.business.buildJourneyListWithRawData
 import xyz.ksharma.krail.trip.planner.ui.timetable.business.withCarriages
+import xyz.ksharma.krail.trip.planner.ui.timetable.business.withNextServices
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -674,6 +675,7 @@ class TimeTableViewModel(
         val journeyList = updateJourneyCardInfoTimeText(mergedJourneys)
             .excludeUnselectedModes()
             .withCarriages(carriageLoader.index)
+            .withNextServices(destinationName = tripInfo?.toStopName)
             .sortedBy { it.originUtcDateTime.utcToLocalDateTimeAEST() }
             .toImmutableList()
 

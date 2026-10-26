@@ -64,6 +64,7 @@ import xyz.ksharma.krail.taj.theme.KrailDimensions
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.components.crowding.NextServiceLine
 import xyz.ksharma.krail.trip.planner.ui.components.crowding.SeatTag
 import xyz.ksharma.krail.trip.planner.ui.pastDepartureTextStyle
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
@@ -112,6 +113,8 @@ fun JourneyCard(
     deepLinkUrl: String? = null,
     destinationUtcDateTime: String = "",
     seatTag: String? = null,
+    nextServiceLine: String? = null,
+    onNextServiceClick: () -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
     val isPast by remember(timeToDeparture) {
@@ -200,6 +203,8 @@ fun JourneyCard(
                 onLegClick = onLegClick,
                 onMapClick = onMapClick,
                 isMapsAvailable = isMapsAvailable,
+                nextServiceLine = nextServiceLine,
+                onNextServiceClick = onNextServiceClick,
                 onShareClick = {
                     coroutineScope.launch {
                         // toImageBitmap() must stay on Main (Compose draw thread).
@@ -248,6 +253,8 @@ fun ExpandedJourneyCardContent(
     modifier: Modifier = Modifier,
     isMapsAvailable: Boolean = false,
     onShareClick: () -> Unit = {},
+    nextServiceLine: String? = null,
+    onNextServiceClick: () -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
     Column(modifier = modifier) {
@@ -316,6 +323,8 @@ fun ExpandedJourneyCardContent(
                 }
             }
         }
+
+        nextServiceLine?.let { NextServiceLine(text = it, onClick = onNextServiceClick) }
 
         Spacer(
             modifier = Modifier

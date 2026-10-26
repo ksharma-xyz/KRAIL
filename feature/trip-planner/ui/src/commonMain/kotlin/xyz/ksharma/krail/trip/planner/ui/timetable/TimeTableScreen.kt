@@ -647,6 +647,12 @@ private fun LazyListScope.journeyCardItems(
             deepLinkUrl = state.deepLinkUrls[journey.journeyId],
             destinationUtcDateTime = journey.destinationUtcDateTime,
             seatTag = journey.seatTag,
+            nextServiceLine = journey.nextServiceLine,
+            onNextServiceClick = {
+                journey.nextServiceJourneyId?.let {
+                    callbacks.onEvent(TimeTableUiEvent.JourneyCardClicked(it))
+                }
+            },
         )
     }
 }
@@ -676,6 +682,8 @@ private fun JourneyCardItem(
     deepLinkUrl: String? = null,
     destinationUtcDateTime: String = "",
     seatTag: String? = null,
+    nextServiceLine: String? = null,
+    onNextServiceClick: () -> Unit = {},
 ) {
     if (!transportModeLineList.isNullOrEmpty() && legList.isNotEmpty()) {
         JourneyCard(
@@ -702,6 +710,8 @@ private fun JourneyCardItem(
             deepLinkUrl = deepLinkUrl,
             destinationUtcDateTime = destinationUtcDateTime,
             seatTag = seatTag,
+            nextServiceLine = nextServiceLine,
+            onNextServiceClick = onNextServiceClick,
         )
     }
 }

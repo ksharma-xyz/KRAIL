@@ -132,7 +132,6 @@ internal fun TrackedLegView(
         CarriageSlot(
             cars = liveCarriages,
             sentence = remember(liveCarriages, now) { liveCarriageSentence(liveCarriages, now) },
-            lineColor = lineColor,
             decideOnOpen = false,
             modifier = Modifier.padding(bottom = dim.spacingXL),
         )

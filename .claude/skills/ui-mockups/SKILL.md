@@ -123,9 +123,13 @@ Visual restraint, from maintainer review:
   sequence, trip id); use what is visible: front, middle, back, the end the train comes in from.
 - Full sentences with a verb; no ticket-stub fragments ("At Central 9:26"). Read it aloud.
 - Who gets the verb depends on the cost of being wrong. Cheap and checkable (where to stand):
-  speak to the rider, "Head to the back for more room". Costs time (another service): the
-  service gets the verb and the rider keeps the choice, "Want a seat? The 8:59 has more room and
-  gets you to Central at 9:26". Never "skip", "wait" or "don't board". Never promise ("you will get a seat"). Match certainty in the wording: live
+  speak to the rider, "Seats at the back of the train". Costs time (another service): the
+  service gets the verb and the rider keeps the choice, "Want a seat? The next T1, at 8:59am
+  from Platform 1, has seats available and is due at Central at 9:26am". Never "skip", "wait"
+  or "don't board".
+- Name the payoff in the data's own words, never a vague one: "seats", not "room" or "space".
+  Match the level ("Seats at the back", "A few seats left at the back"). Give other services a
+  clock time, never "3 minutes behind", and an arrival as "due at", never "by" (a promise). Never promise ("you will get a seat"). Match certainty in the wording: live
   "now", forecast "expected", proven pattern "usually", no data says nothing.
 - Before mocking advice, list the riders it could hurt (needs a seat, wheelchair or pram,
   night travel, tight connection, visitor) and give each a rule. Safety and accessibility

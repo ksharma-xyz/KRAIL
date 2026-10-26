@@ -21,14 +21,17 @@ kotlin {
     sourceSets {
         commonMain {
             dependencies {
+                implementation(projects.core.appInfo)
                 implementation(projects.core.dateTime)
                 implementation(projects.core.log)
                 implementation(projects.core.network)
                 implementation(projects.core.remoteConfig)
                 implementation(projects.core.transport)
+                implementation(projects.feature.debugSettings.store)
                 implementation(projects.feature.track.state)
                 implementation(projects.io.bffApi)
-                implementation(projects.io.gtfs)
+                api(projects.feature.crowding.state) // CarriageForecastRepository is bound here
+                api(projects.io.gtfs) // FeedMessage on the public GtfsRealtimeService
 
                 implementation(libs.ktor.client.core)
                 implementation(libs.kotlinx.datetime)
@@ -41,6 +44,7 @@ kotlin {
             dependencies {
                 implementation(libs.test.kotlin)
                 implementation(libs.test.kotlinxCoroutineTest)
+                implementation(projects.core.testing)
             }
         }
     }

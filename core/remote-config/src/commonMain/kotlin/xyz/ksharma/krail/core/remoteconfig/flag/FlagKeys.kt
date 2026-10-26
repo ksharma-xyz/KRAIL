@@ -99,6 +99,11 @@ enum class FlagKeys(val key: String) {
     ALERT_SUMMARY_ENABLED("alert_summary_enabled"),
 
     /**
+     * Kill switch for the crowding carriage row in trip results and on the departure board, which costs one download of the Sydney Trains trip updates feed per results screen. `true` by default. When off, `CarriageForecastRepository.load()` makes no request and nothing draws. Seat tags from the trip response are unaffected.
+     */
+    CROWDING_CARRIAGES_IN_RESULTS_ENABLED("crowding_carriages_in_results_enabled"),
+
+    /**
      * Master kill switch for the AI search-input flow (speak/type/paste instead of manual
      * From/To + time picking). `false` by default. When off, the entry point doesn't render
      * at all on the search row — same "not built" outcome as a device that fails the

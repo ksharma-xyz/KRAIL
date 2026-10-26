@@ -51,6 +51,12 @@ message TripUpdate {
     optional StopTimeEvent departure = 3;
 
     optional ScheduleRelationship schedule_relationship = 5 [default = SCHEDULED];
+    // TfNSW numbers this 6 (the upstream spec later reused 6 for stop_time_properties).
+    // Whole-train crowding forecast as the train leaves this stop.
+    optional VehiclePosition.OccupancyStatus departure_occupancy_status = 6;
+    // TfNSW extension 1007, declared as a plain field: per-carriage forecast at this stop
+    // (position_in_consist and departure_occupancy_status are set).
+    repeated CarriageDescriptor carriage_seq_predictive_occupancy = 1007;
 
     enum ScheduleRelationship {
       SCHEDULED = 0;
@@ -70,6 +76,19 @@ message VehiclePosition {
   optional VehicleStopStatus current_status = 4 [default = IN_TRANSIT_TO];
   optional uint64 timestamp = 5;
   optional CongestionLevel congestion_level = 6;
+  optional OccupancyStatus occupancy_status = 9;
+  // TfNSW extension 1007, declared as a plain field: the consist, one entry per carriage
+  // (name, position_in_consist and occupancy_status are set).
+  repeated CarriageDescriptor consist = 1007;
+  enum OccupancyStatus {
+    EMPTY = 0;
+    MANY_SEATS_AVAILABLE = 1;
+    FEW_SEATS_AVAILABLE = 2;
+    STANDING_ROOM_ONLY = 3;
+    CRUSHED_STANDING_ROOM_ONLY = 4;
+    FULL = 5;
+    NOT_ACCEPTING_PASSENGERS = 6;
+  }
 
   enum VehicleStopStatus {
     INCOMING_AT = 0;
@@ -87,6 +106,17 @@ message VehiclePosition {
 }
 
 // A geographic position of a vehicle.
+// TfNSW carriage descriptor (extension 1007). Fields KRAIL does not read (toilet, luggage
+// rack) are left out; Wire keeps them as unknown fields.
+message CarriageDescriptor {
+  optional string name = 1;
+  // 1-based on Sydney Trains, 0-based on Metro. Sort by it, never index by it.
+  optional int32 position_in_consist = 2;
+  optional VehiclePosition.OccupancyStatus occupancy_status = 3;
+  optional bool quiet_carriage = 4;
+  optional VehiclePosition.OccupancyStatus departure_occupancy_status = 7;
+}
+
 message Position {
   required float latitude = 1;
   required float longitude = 2;

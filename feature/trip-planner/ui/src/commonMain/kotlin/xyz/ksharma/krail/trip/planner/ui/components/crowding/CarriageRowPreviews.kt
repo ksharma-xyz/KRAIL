@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
@@ -16,15 +15,12 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 
 // region Previews
 
-private val T1_ORANGE = Color(0xFFF99D1C)
-
 @Composable
 private fun PreviewSection(levels: List<SeatLevel>, sentence: String?, modifier: Modifier = Modifier) {
     PreviewTheme {
         CarriageSection(
             cars = CarriageLevels(levels),
             sentence = sentence,
-            lineColor = T1_ORANGE,
             modifier = modifier.padding(KrailTheme.dimensions.spacingL),
         )
     }

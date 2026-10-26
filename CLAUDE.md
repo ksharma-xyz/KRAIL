@@ -568,6 +568,8 @@ that contradicts the doc should also update the doc in the same change.
 - `docs/investigations/CROWDING_DESIGN_REVIEW.md` — the crowding design record: chosen chart,
   where it shows, wording rules, field results and decisions. The `.html` beside it is the
   interactive version with every state; open it in a browser.
+- `docs/testing/CROWDING_SCENARIOS.md` — every crowding scenario, what the rider must see, how
+  to find one on the live feed (`scripts/crowding_scenarios.py`) and which test holds it.
 - `docs/plans/CROWDING_BUILD_PLAN.md` — how to build crowding: data sources, the branch stack,
   flags, tests and the checks before shipping. Start here when building it.
 - `docs/investigations/NSW_715_WALK_LEG_INVESTIGATION.md` — why `TripResponseMapper.kt`'s

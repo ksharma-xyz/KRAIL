@@ -37,6 +37,7 @@ kotlin {
 
                 implementation(projects.core.analytics)
                 api(projects.core.network) // NetworkError on the public state surface
+                api(projects.feature.crowding.state) // SeatLevel on StopDeparture
             }
         }
     }

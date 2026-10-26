@@ -5,6 +5,7 @@ import xyz.ksharma.krail.core.datetime.DateTimeHelper.toFormattedDurationTimeStr
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
+import xyz.ksharma.krail.feature.crowding.SeatLevel
 import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
@@ -112,5 +113,8 @@ internal fun TripResponse.Leg.toTransportLegUiModel(): TimeTableState.JourneyCar
         transportationId = transportation?.id,
         isSchoolBus = isSchoolBus,
         isOnDemand = isOnDemand,
+        seatLevel = SeatLevel.fromApi(stopSequence?.firstOrNull()?.properties?.occupancy),
+        realtimeTripId = transportation?.properties?.realtimeTripId,
+        boardingStopId = stopSequence?.firstOrNull()?.id,
     )
 }

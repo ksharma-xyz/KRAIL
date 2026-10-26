@@ -14,6 +14,7 @@ import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.departures.network.api.model.DepartureMonitorResponse
 import xyz.ksharma.krail.departures.ui.state.model.StopDeparture
+import xyz.ksharma.krail.feature.crowding.SeatLevel
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -90,6 +91,9 @@ internal fun DepartureMonitorResponse.StopEvent.toStopDeparture(): StopDeparture
         scheduledTimeText = scheduledTimeText,
         delayMinutes = delayMinutes,
         dateLabel = runCatching { departureUtc.toDepartureDateLabel() }.getOrDefault(""),
+        seatLevel = SeatLevel.fromApi(location?.properties?.occupancy),
+        realtimeTripId = properties?.realtimeTripId,
+        platformStopId = location?.id,
     )
 }
 

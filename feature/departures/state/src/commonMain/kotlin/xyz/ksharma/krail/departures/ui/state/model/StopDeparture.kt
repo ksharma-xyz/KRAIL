@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.departures.ui.state.model
 
 import androidx.compose.runtime.Stable
+import xyz.ksharma.krail.feature.crowding.SeatLevel
 
 /**
  * Timing context for a departure row — whether it has already departed or is upcoming.
@@ -120,4 +121,16 @@ data class StopDeparture(
      * Set to [DepartureTiming.Previous] by the repository when loading past departures.
      */
     val timing: DepartureTiming = DepartureTiming.Upcoming,
+
+    /**
+     * How full the service is when it leaves this stop. Null when TfNSW sent nothing, which is
+     * every departure beyond roughly the next 30 to 50 minutes. Null draws nothing.
+     */
+    val seatLevel: SeatLevel? = null,
+
+    /** Joins this departure to the GTFS-R feeds for per-carriage crowding. */
+    val realtimeTripId: String? = null,
+
+    /** The platform's stop id, which is what GTFS-R trip updates key each stop on. */
+    val platformStopId: String? = null,
 )

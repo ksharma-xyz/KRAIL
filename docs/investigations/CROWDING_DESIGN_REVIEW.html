@@ -1,0 +1,683 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KRAIL Crowding Review</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@500&display=swap">
+<style>
+/* Layout: a review document. Prose column, wide demo bands scroll sideways inside themselves. Single light page theme by choice; phones carry the app theme. */
+:root{
+  --bg:#F2EFEB; --panel:#FFFFFF; --fg:#1C1B1A; --muted:#6B6560; --line:#DDD7D0; --accent:#B85F0E; --pick:#0B5CAB; --pickbg:#E5EEF8;
+  --font:Roboto,system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"Roboto Mono",ui-monospace,Menlo,monospace;
+  --ease:cubic-bezier(.4,0,.2,1); --emph:cubic-bezier(.2,0,0,1); color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 140px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font-size:clamp(26px,4vw,36px);line-height:1.15;margin:0 0 6px;text-wrap:balance}
+h2{font-size:22px;margin:0 0 4px;text-wrap:balance}
+h3{font-size:16px;margin:0 0 4px}
+p{margin:0 0 10px;max-width:68ch}
+.lead{color:var(--muted);font-size:16px}
+.eyebrow{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:6px}
+section{padding-block:30px;border-top:1px solid var(--line)}
+.muted{color:var(--muted)}.small{font-size:13px}
+code{font-family:var(--mono);font-size:.88em}
+a{color:var(--accent)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:14px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.tile b{display:block;font-size:15px;margin-bottom:2px}
+.tile span{font-size:13px;color:var(--muted)}
+.controls{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:10px;display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:none;color:var(--fg);font:500 13px var(--font);padding:6px 12px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.seg button:focus-visible,.btn:focus-visible,.o:focus-visible,.tap:focus-visible{outline:2px solid var(--pick);outline-offset:2px}
+.clabel{font-size:12px;color:var(--muted);font-weight:500}
+.band{overflow-x:auto;padding-bottom:6px}
+.row{display:flex;gap:22px;align-items:flex-start;width:max-content}
+.col{display:flex;flex-direction:column;gap:8px;max-width:420px}
+.cap{font-size:13px;color:var(--muted);max-width:420px}
+.cap b{color:var(--fg)}
+.scen{display:flex;flex-wrap:wrap;gap:6px;max-width:420px}
+.btn{border:1px solid var(--line);background:var(--panel);color:var(--fg);font:500 12.5px var(--font);padding:6px 11px;border-radius:999px;cursor:pointer}
+.btn.on{border-color:var(--pick);background:var(--pickbg);color:var(--pick)}
+.side p{font-size:13px;color:var(--muted)}
+.side b{color:var(--fg)}
+
+/* ---------- phone (KRAIL tokens from taj Color.kt) ---------- */
+.phone{--surface:#1C1B1A;--on:#FCF6F1;--soft:#B0B0B0;--chip:#292929;--outline:rgba(252,246,241,.22);--time:var(--lc);
+  --legBg:color-mix(in srgb,var(--lc) 52%,#1C1B1A);--legInk:#FCF6F1;--zoneBg:rgba(0,0,0,.24);
+  background:#0d0d0d;border-radius:28px;padding:9px;flex:none}
+.phone.light{--surface:#FFFFFF;--on:#010101;--soft:#767676;--chip:#F2F2F2;--outline:rgba(1,1,1,.18);
+  --legBg:color-mix(in srgb,var(--lc) 16%,#FFFFFF);--legInk:#1C1B1A;--zoneBg:rgba(255,255,255,.62)}
+.scr{background:var(--surface);color:var(--on);border-radius:20px;overflow:hidden;position:relative}
+.scr.scroll{overflow-y:auto}
+.pane{padding:14px 16px}
+.apptitle{font-size:19px;font-weight:700;margin:2px 0 2px}
+.appsub{font-size:12.5px;color:var(--soft);margin-bottom:10px}
+.card{border-bottom:1px solid var(--outline);padding:2px 0 12px;margin-bottom:12px}
+.card:last-child{border-bottom:0;margin-bottom:0}
+.tap{cursor:pointer;display:block;width:100%;text-align:left;background:none;border:0;color:inherit;font:inherit;padding:0}
+.hdr{display:flex;align-items:center;gap:8px;font-weight:700;font-size:16px;color:var(--time)}
+.hdr .plat{margin-left:auto}
+.mode{width:21px;height:21px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:11.5px;font-weight:700;background:var(--lc)}
+.badge{border-radius:5px;color:#fff;font-weight:700;font-size:12.5px;padding:2px 6px;background:var(--lc)}
+.times{margin-top:5px;font-weight:700;font-size:14.5px;line-height:1.3}
+.info{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.chip{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;padding:3px 10px 3px 8px;border-radius:999px;background:var(--chip);color:var(--on)}
+.mini{display:inline-flex;gap:1.5px;align-items:flex-end;height:11px}
+.mini i{width:4px;border-radius:1.5px;display:block;background:var(--on);transition:height .5s var(--emph)}
+.dep{padding:10px 0;border-bottom:1px solid var(--outline)}
+.dep:last-child{border-bottom:0}
+.dep .l1{display:flex;align-items:center;gap:6px}
+.dep .l1 .plat{margin-left:auto;font-weight:700;font-size:13.5px}
+.dep .t{font-size:14.5px;margin-top:3px;display:flex;align-items:center;gap:8px}
+.dep .d{font-size:13.5px;color:var(--soft);margin-top:1px}
+.exp{display:grid;grid-template-rows:0fr;transition:grid-template-rows .32s var(--emph)}
+.exp.open{grid-template-rows:1fr}
+.exp>div{overflow:hidden;min-height:0}
+.leg{border-radius:16px;padding:12px;background:var(--legBg);color:var(--legInk);margin-top:10px}
+.legtop{display:flex;align-items:center;gap:9px;font-size:13.5px}
+.crowd{padding-top:10px}
+.headline{font-size:14.5px;font-weight:700;line-height:1.3;min-height:19px;animation:fadein .3s var(--ease) both}
+.helper{font-size:13px;font-weight:500;margin-top:2px}
+.strip{display:grid;column-gap:3px;margin-top:8px}
+.car{height:18px;border-radius:4px;position:relative;overflow:hidden;box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--legInk) 50%,transparent)}
+.car.first{border-top-left-radius:9px;border-bottom-left-radius:9px}
+.car.last{border-top-right-radius:9px;border-bottom-right-radius:9px}
+.car .f{position:absolute;left:0;right:0;bottom:0;background:var(--legInk);opacity:.88;transition:height .6s var(--emph)}
+.zonerow{display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-top:5px}
+.zonerow span{flex:1;text-align:center}.zonerow span:first-child{text-align:left}.zonerow span:last-child{text-align:right}
+.next{margin-top:10px;padding:9px 11px;border-radius:12px;background:var(--zoneBg);font-size:13.5px;line-height:1.4;animation:fadein .35s var(--ease) both;display:block;width:100%;text-align:left;border:0;color:inherit;font-family:inherit;cursor:pointer}
+button.next{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+.flash{animation:flash 1.6s var(--ease)}
+@keyframes flash{0%,100%{box-shadow:none}20%,60%{box-shadow:0 0 0 2px var(--lc);border-radius:12px}}
+.blocks{display:flex;gap:5px;margin-top:8px}
+.block{flex:1;border-radius:9px;padding:6px 4px;text-align:center;background:var(--zoneBg)}
+.block div:first-child{font-weight:500}.block div:last-child{font-weight:700;line-height:1.15}
+.stops{margin-top:10px;font-size:13px}
+.stop{display:flex;gap:10px}
+.rail{width:12px;display:flex;flex-direction:column;align-items:center}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--lc);flex:none}
+.bar{width:4px;flex:1;background:var(--lc);min-height:16px}
+.st{padding-bottom:6px}.st b{display:block}
+.lvl{font-size:11.5px;font-weight:700}
+.trackbtn{display:inline-block;margin-top:10px;border:1.5px solid color-mix(in srgb,var(--legInk) 55%,transparent);border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:700}
+.ai{margin-top:10px;border-radius:13px;padding:10px 11px;position:relative;height:96px;overflow:hidden;background:color-mix(in srgb,#000 22%,transparent);
+  transition:height .3s var(--emph) .15s,padding .3s var(--emph) .15s,margin .3s var(--emph) .15s,opacity .15s var(--ease)}
+.phone.light .ai{background:color-mix(in srgb,#fff 55%,transparent)}
+.ai.gone{height:0;padding-block:0;margin-top:0;opacity:0}
+.ai::before{content:"";position:absolute;inset:0;border-radius:13px;padding:1.5px;background:conic-gradient(from var(--ang,0deg),#F6891F,#FFC800,#5BC0A8,#F6891F);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.ai .h{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:5px}
+.wheel{width:14px;height:14px;border-radius:50%;background:conic-gradient(from var(--ang,0deg),#F6891F,#FFC800,#5BC0A8,#F6891F);position:relative;flex:none}
+.wheel::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--legBg)}
+.ai .t{font-size:13px;line-height:1.4;animation:fadein .4s var(--ease) both}
+.sk{background:color-mix(in srgb,var(--legInk) 16%,transparent);border-radius:6px;height:10px;margin-top:8px;position:relative;overflow:hidden}
+.sk::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--legInk) 18%,transparent),transparent);transform:translateX(-100%);animation:shim 1.3s infinite}
+.map{background:#2a2d2b;position:relative}
+.phone.light .map{background:#E7E9E6}
+.map svg{position:absolute;inset:0;width:100%;height:100%}
+@keyframes shim{to{transform:translateX(100%)}}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+
+.lines{border-collapse:collapse;min-width:720px;width:100%;font-size:14px;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.lines th,.lines td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+.lines th{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.lines tr:last-child td{border-bottom:0}
+.lines td:first-child{font-weight:700;width:24%}
+.q{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
+.qh{display:flex;gap:10px;align-items:baseline;margin-bottom:10px}
+.num{background:var(--fg);color:var(--bg);font-weight:700;border-radius:7px;padding:1px 8px;font-size:13px}
+.qt{font-weight:700;font-size:16px}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.o{border:2px solid var(--line);border-radius:12px;padding:11px;cursor:pointer;background:var(--panel);text-align:left;color:var(--fg);font:inherit;position:relative}
+.o[aria-pressed="true"]{border-color:var(--pick);background:var(--pickbg)}
+.o .k{font-size:12px;font-weight:700;color:var(--muted)}
+.o .t{font-weight:700;font-size:14.5px}
+.o .d{font-size:13px;color:var(--fg);line-height:1.4;margin-top:6px}.sc{font-size:14px;margin:0 0 12px;max-width:760px}
+.rec{position:absolute;top:9px;right:9px;font-size:10.5px;font-weight:700;color:var(--pick);background:var(--pickbg);border-radius:999px;padding:1px 7px}
+.answer{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--fg);color:var(--bg);display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding-block:12px calc(12px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));font-size:14px}
+.answer .code{font-family:var(--mono);font-size:17px;background:color-mix(in srgb,var(--bg) 14%,transparent);padding:4px 12px;border-radius:8px}
+.answer button{border:0;border-radius:999px;background:var(--accent);color:#1C1B1A;font:700 13px var(--font);padding:7px 14px;cursor:pointer}
+.note{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;font-size:13.5px}
+.note ol{margin:6px 0 0 18px;padding:0}
+/* one page, collapsible parts */
+:root{interpolate-size:allow-keywords}
+.jump{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.jump a{font-size:13px;font-weight:500;text-decoration:none;color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 12px}
+details.part{border-top:2px solid var(--fg);margin-top:8px}
+details.part>summary{list-style:none;cursor:pointer;padding-block:18px 14px;display:grid;grid-template-columns:1fr auto;column-gap:12px}
+details.part>summary::-webkit-details-marker{display:none}
+details.part>summary::after{content:"";grid-column:2;grid-row:1/4;align-self:center;width:12px;height:12px;border-right:2px solid var(--fg);border-bottom:2px solid var(--fg);transform:rotate(45deg);transition:transform .3s var(--emph);margin-right:6px}
+details.part[open]>summary::after{transform:rotate(225deg)}
+details.part>summary:focus-visible{outline:2px solid var(--pick);outline-offset:4px;border-radius:6px}
+.ptitle{font-size:24px;font-weight:700;line-height:1.2}
+.pdesc{font-size:13.5px;color:var(--muted)}
+details.part::details-content{height:0;overflow:clip;transition:height .35s var(--emph),content-visibility .35s allow-discrete}
+details.part[open]::details-content{height:auto}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:12px}
+.pcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;font-size:14px;display:flex;flex-direction:column;gap:6px}
+.pcard .risk{color:#8A2D1E;font-size:13.5px}
+.rules{display:grid;gap:8px;margin-top:10px;counter-reset:r}
+.rule{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 14px 11px 46px;position:relative;font-size:14.5px}
+.rule::before{counter-increment:r;content:counter(r);position:absolute;left:14px;top:11px;width:22px;height:22px;border-radius:50%;background:var(--fg);color:var(--bg);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.rule span{display:block;color:var(--muted);font-size:13.5px}
+.flag{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:2px 8px;background:#FBF0D9;color:#7A5300;margin-left:6px;vertical-align:middle}
+.platform{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:12px;overflow-x:auto}
+.plat-row{display:flex;align-items:center;gap:10px;min-width:560px}
+.edge{font-size:12.5px;color:var(--muted);width:120px;flex:none}.edge.r{text-align:right}
+.ptrain{flex:1;display:flex;gap:3px;background:#7C4F1D;border-radius:12px 22px 22px 12px;padding:6px}
+.pcar{flex:1;height:26px;border-radius:5px;box-shadow:inset 0 0 0 1.5px rgba(252,246,241,.55);position:relative;overflow:hidden}
+.pcar i{position:absolute;left:0;right:0;bottom:0;background:#FCF6F1;opacity:.9}
+.pzones{display:flex;min-width:300px;margin:8px 130px 0;font-size:13px;font-weight:700}
+.pzones span{flex:1;text-align:center;border-top:2px solid var(--line);padding-top:4px}
+.status{display:inline-flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:13.5px}
+.pulse{width:9px;height:9px;border-radius:50%;background:#2E9E4A;flex:none;animation:pl 1.8s infinite}
+@keyframes pl{0%{box-shadow:0 0 0 0 rgba(46,158,74,.5)}70%{box-shadow:0 0 0 8px rgba(46,158,74,0)}100%{box-shadow:0 0 0 0 rgba(46,158,74,0)}}
+.stable{border-collapse:collapse;width:100%;min-width:720px;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;font-size:14px}
+.stable th,.stable td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+.stable th{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.stable tr:last-child td{border-bottom:0}
+.stable td b{display:block}
+.tag{display:inline-block;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap}
+.tag.ok{background:#E3F1E6;color:#1E6B2F}.tag.part{background:#FBF0D9;color:#7A5300}.tag.no{background:#F7E3DF;color:#8A2D1E}
+.ecards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
+.ecard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;font-size:14px;display:flex;flex-direction:column;gap:6px}
+.ecard span{color:var(--muted)}.ecard a{font-weight:500;font-size:13px}
+.tiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
+.tier{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;font-size:14px}
+.tier .n{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.tier b{display:block;font-size:15px;margin:2px 0 4px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition-duration:0s!important;animation-duration:0s!important;animation-iteration-count:1!important}}
+.res-t td.n,.res-t .n{font-variant-numeric:tabular-nums;white-space:nowrap}.res-t svg{vertical-align:middle}.res{margin-top:14px}.res summary{cursor:pointer;padding:8px 0}.res h3{font-size:15px;margin:22px 0 4px}.scroll{overflow-x:auto}.verdict{display:grid;gap:8px;margin-top:10px}.verdict div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:13.5px}.verdict b.t{display:inline-block;min-width:92px}
+.phone .wc{width:14px;height:14px;fill:currentColor;vertical-align:-2px}
+.sfbar{display:flex;justify-content:space-between;gap:8px;margin:4px 0 10px}
+.sfbtn{background:var(--chip);color:var(--on);border:0;border-radius:999px;padding:8px 14px;font:500 13.5px var(--font);display:inline-flex;gap:6px;align-items:center}
+.sfrow{display:flex;gap:8px;overflow:hidden;align-items:center;margin-bottom:12px;flex-wrap:nowrap;transition:max-height .32s cubic-bezier(.2,0,0,1),opacity .2s;max-height:0;opacity:0}
+.sfrow.open{max-height:60px;opacity:1}
+.mchip{border-radius:999px;padding:6px 11px;font:500 13px var(--font);flex:none;color:#fff}
+.mchip.T{background:#F6891F}.mchip.M{background:#168388}.mchip.B{background:#00B5EF;color:#010101}
+.sfsep{width:1px;height:24px;background:var(--outline);flex:none}
+.sfchip{border-radius:999px;padding:6px 12px;font:500 13px var(--font);flex:none;display:inline-flex;gap:5px;align-items:center;border:1.5px solid var(--on);color:var(--on);background:transparent;transition:background .2s,color .2s}
+.sfchip.on{background:var(--on);color:var(--surface)}
+.sfnote{font-size:12.5px;color:var(--soft);margin:-4px 0 10px}
+.sfcard{border:1px solid var(--outline);border-radius:14px;padding:12px;margin-bottom:10px}
+.sfcard .t{font-weight:700;color:#B4570B}
+.sfcard .h{font-size:13.5px;font-weight:600;margin-top:6px}
+.sfcard .s{font-size:12.5px;margin-top:4px}
+.sfpill{display:inline-block;background:var(--chip);border-radius:999px;padding:2px 9px;font-size:12px;font-weight:600;margin-left:6px}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Crowding project, everything in one place</div>
+  <h1>Crowding in KRAIL</h1>
+  <p class="lead">Design, rider thinking and the field study for showing how full a train, metro, bus or light rail is. Open the parts you need. Comment anywhere and I will reply there.</p>
+  <nav class="jump" aria-label="Parts of this page"><a href="#design">Design</a><a href="#riders">Riders and wording</a><a href="#research">Research and results</a><a href="#decisions">Decisions</a></nav>
+</header>
+
+<section>
+  <h2>Where we are</h2>
+  <p>Chart style A, one ink, is chosen. Advice uses front, middle and back, informs and never instructs. A field study is collecting live data across every line through both peaks; results appear in Research after each peak.</p>
+  <div class="tiles">
+    <div class="tile"><b>Three levels, never numbers</b><span>Seats available, Few seats, Standing only. No percentages on any poll.</span></div>
+    <div class="tile"><b>Next 30 to 50 minutes</b><span>Later departures carry nothing, so they show nothing.</span></div>
+    <div class="tile"><b>Forecasts hold up</b><span>Monday morning: TfNSW's per-stop forecast matched the later live reading about three times in four, and was within one level over nine times in ten.</span></div>
+    <div class="tile"><b>Gaps by mode</b><span>Light rail L1 to L3 and ferries report nothing. Metro has no forecasts. About 40% of Sydney Trains report live.</span></div>
+  </div>
+</section>
+
+<details class="part" id="design" open><summary><span class="eyebrow">Part 1</span><span class="ptitle">Design</span><span class="pdesc">Journey card, departure board, AI card, wording, every width</span></summary>
+<div class="controls" role="toolbar" aria-label="Preview controls">
+  <span class="clabel">App theme</span>
+  <span class="seg" id="themeSeg"><button data-v="dark" aria-pressed="true">Dark</button><button data-v="light" aria-pressed="false">Light</button></span>
+  <span class="clabel">Line</span>
+  <span class="seg" id="lineSeg"><button data-v="#F6891F" aria-pressed="true">Train</button><button data-v="#009B77" aria-pressed="false">Metro</button><button data-v="#00B5EF" aria-pressed="false">Bus</button></span>
+</div>
+
+<section>
+  <div class="eyebrow">Trip results</div>
+  <h2>Journey card</h2>
+  <p>The chip arrives with the trip response, so it never loads. The chart is drawn only if the background feed already arrived when the card opens. Pick a scenario, then tap the card.</p>
+  <div class="band"><div class="row">
+    <div class="col">
+      <div class="scen" id="jScen" role="group" aria-label="Journey scenario">
+        <button class="btn on" data-v="back">Seats at the back</button>
+        <button class="btn" data-v="ends">Seats at both ends</button>
+        <button class="btn" data-v="plenty">Seats all along</button>
+        <button class="btn" data-v="busy">Busy everywhere</button>
+        <button class="btn" data-v="next">Next one has seats</button>
+        <button class="btn" data-v="conn">Tight connection</button>
+        <button class="btn" data-v="short">Short train</button>
+        <button class="btn" data-v="night">Night</button>
+        <button class="btn" data-v="live">Refresh changes level</button>
+        <button class="btn" data-v="none">No crowding</button>
+      </div>
+      <div class="phone" id="phoneJ" style="width:378px"><div class="scr" style="height:660px"><div class="pane" id="jPane"></div></div></div>
+    </div>
+    <div class="col side" style="max-width:380px" id="jSide"></div>
+  </div></div>
+</section>
+
+<section>
+  <div class="eyebrow">Departure board</div>
+  <h2>Tap a departure to open it</h2>
+  <p>Expanded state is kept per trip, so the refresh never closes the row you opened. Buses get one line and no chart. Past departures do not open.</p>
+  <div class="band"><div class="row">
+    <div class="col">
+      <div class="phone" id="phoneD" style="width:378px"><div class="scr" style="height:620px"><div class="pane" id="dPane"></div></div></div>
+    </div>
+    <div class="col side" style="max-width:360px">
+      <p><b>Closed row.</b> The chip, as on trip results.</p>
+      <p><b>Opened train row.</b> Zone advice and chart, with the expected level at the next stops. Decision 3: no Track this trip button.</p>
+      <p><b>Opened bus row.</b> One sentence. When the next bus on the same route, listed at the same stop, has seats, it names it by clock time, with no instruction.</p>
+    </div>
+  </div></div>
+</section>
+
+<section>
+  <div class="eyebrow">On-device AI</div>
+  <h2>Suggestion card, optional</h2>
+  <p>Only says what the chart cannot, never repeats it, and folds away on any failure. Every line here can also be written by code from the same facts, so AI only makes it read more naturally.</p>
+  <div class="band"><div class="row">
+    <div class="col">
+      <div class="scen" id="aScen" role="group" aria-label="AI scenario">
+        <button class="btn on" data-v="ok">Model answers</button>
+        <button class="btn" data-v="fail">Model fails or only restates</button>
+        <button class="btn" data-v="none">Phone has no model</button>
+      </div>
+      <div class="phone" id="phoneA" style="width:378px"><div class="scr" style="height:330px"><div class="pane" id="aPane"></div></div></div>
+    </div>
+  </div></div>
+</section>
+
+<section>
+  <div class="eyebrow">Wording</div>
+  <h2>Every line, and the fact behind it</h2>
+  <p>From the Rider Angles writing guide. A line appears only when its fact exists. Certainty lives in one word: "has" for live, "should" for forecasts, "usually" only once the field study proves a pattern.</p>
+  <div class="band"><table class="lines">
+    <thead><tr><th>Situation</th><th>Line</th><th>Fact behind it</th></tr></thead>
+    <tbody>
+      <tr><td>One end roomier</td><td>Seats at the back of the train. With only a few: A few seats left at the back. Forecast: Seats expected at the back.</td><td>Busiest level in each third of the train; one third is lower than the others</td></tr>
+      <tr><td>Both ends roomier</td><td>Seats at both ends of the train.</td><td>Front and back thirds both lower than the middle</td></tr>
+      <tr><td>All roomy</td><td>Seats available all along the train.</td><td>Every car Seats available</td></tr>
+      <tr><td>All busy</td><td>Standing only, all along the train.</td><td>Every car Standing only</td></tr>
+      <tr><td>Quieter one close behind</td><td>Want a seat? The next T1, at 8:59am from Platform 1, has seats available and is due at Central at 9:26am.</td><td>Next service on the same line at least one level quieter, leaves within about 10 minutes, no tight connection, not night. Named by line, clock time and platform, like the station board. Tapping it jumps to that journey.</td></tr>
+      <tr><td>Next bus has seats</td><td>Want a seat? The next 333, at 9:04am, has seats available. With only a few: The next 333, at 9:04am, has a few seats left.</td><td>This bus Standing only; the next one on the same route is listed at the same stop by the departure monitor and is Seats available or Few seats. Clock time, never "minutes behind"</td></tr>
+      <tr><td>Forecast easing</td><td>It should ease off after Strathfield.</td><td>Per-stop forecast drops; every stop to there has a value</td></tr>
+      <tr><td>Short train</td><td>This is a short train, so it stops mid-platform.</td><td>4 or 6 cars in the feed</td></tr>
+      <tr><td>Night</td><td>It's late: wait in the blue Nightsafe area to board near the guard.</td><td>After about 9pm; replaces any zone advice</td></tr>
+      <tr><td>No data</td><td><span class="muted">Nothing at all.</span></td><td>No level, stale reading, or too far ahead</td></tr>
+    </tbody></table></div>
+</section>
+
+<section>
+  <div class="eyebrow">Adaptive</div>
+  <h2>Every width KRAIL runs at</h2>
+  <p>Layout follows the width the block gets and the font size, never the device. Stops stay vertical. Scroll sideways for tablets.</p>
+  <div class="band"><div class="row" id="frames"></div></div>
+</section>
+
+</details>
+
+<details class="part" id="riders"><summary><span class="eyebrow">Part 2</span><span class="ptitle">Riders and wording</span><span class="pdesc">Who looks, where to stand, the next service, night, trust, the writing guide</span></summary>
+<section>
+  <h2>Who is looking, and what they need</h2>
+  <div class="pgrid">
+    <div class="pcard"><h3>Rushing commuter</h3><span>Glances for a second while walking. Wants to know where to stand, nothing more.</span><span class="risk">Risk: anything longer than a short line is ignored.</span></div>
+    <div class="pcard"><h3>Needs a seat</h3><span>Older riders, pregnancy, injury, a child on the lap. A seat matters more than a few minutes.</span><span class="risk">Risk: we mention a later train and it is full too.</span></div>
+    <div class="pcard"><h3>Travelling at night</h3><span>Wants to feel safe. An empty carriage at 11pm is not a feature.</span><span class="risk">Risk: pointing someone to the emptiest car after dark.</span></div>
+    <div class="pcard"><h3>Visitor</h3><span>Does not know the lines. Plain words, nothing to decode.</span><span class="risk">Risk: car numbers and line codes mean nothing.</span></div>
+    <div class="pcard"><h3>Tight connection</h3><span>Has a change to make. A later train can break the trip.</span><span class="risk">Risk: mentioning a later train that misses the connection.</span></div>
+  </div>
+</section>
+<section>
+  <h2>Front, middle, back. Never car numbers</h2>
+  <p>Nobody counts carriages on a platform. Three zones are enough to act on, and the back can be explained by something a rider sees: the end the train comes in from.</p>
+  <div class="platform" aria-label="Platform diagram: the back of the train stops at the end it comes in from, the front at the end it is heading to">
+    <div class="plat-row"><span class="edge">End the train<br>comes in from</span>
+      <div class="ptrain"><div class="pcar"><i style="height:22%"></i></div><div class="pcar"><i style="height:22%"></i></div><div class="pcar"><i style="height:22%"></i></div><div class="pcar"><i style="height:58%"></i></div><div class="pcar"><i style="height:58%"></i></div><div class="pcar"><i style="height:100%"></i></div><div class="pcar"><i style="height:100%"></i></div><div class="pcar"><i style="height:100%"></i></div></div>
+      <span class="edge r">End the train<br>is heading to</span></div>
+    <div class="pzones"><span>Back</span><span>Middle</span><span>Front</span></div>
+  </div>
+  <div class="rules">
+    <div class="rule">Zones only. Each is the busiest level among its cars, so room is never overstated.</div>
+    <div class="rule">Short trains stop mid-platform, so the helper says so instead of pointing at a platform end.</div>
+    <div class="rule">The zone must be right, or it is worse than nothing. <span class="flag">Must verify</span><span>Carriage order differs between feeds and flips when a train reverses.</span></div>
+  </div>
+</section>
+<section>
+  <h2>The next service: inform, never tell anyone to skip</h2>
+  <p>If KRAIL says "skip this one" and the next is full too, KRAIL gets the blame. So the app states what it sees, with times, and the rider decides.</p>
+  <div class="rules">
+    <div class="rule">Only when it is clearly better: at least one full level quieter.</div>
+    <div class="rule">Only when it is close: leaves within about 10 minutes of this one.</div>
+    <div class="rule">Name it the way the station board does: line, clock time with am or pm, and platform. Tapping the line jumps to that journey's card.</div>
+    <div class="rule">Never with a tight connection later in the trip, the last service of the night, or a long gap after it.</div>
+    <div class="rule">Always with its arrival time. One suggestion at most.</div>
+  </div>
+</section>
+<section>
+  <h2>Night: quiet is not the goal</h2>
+  <p>NSW Police advise waiting in the <b>Nightsafe area marked in blue</b> on the platform, so you board the carriage closest to the guard (<a href="https://www.police.nsw.gov.au/safety_and_prevention/safe_and_secure/public_transport">NSW Police</a>). After about 9pm KRAIL says that instead of zone advice, and never mentions a later train.</p>
+</section>
+<section>
+  <h2>Writing the advice</h2>
+  <div class="rules">
+    <div class="rule">Full sentences with a verb. No fragments like "At Central 9:26". Read it aloud.</div>
+    <div class="rule">Cheap to be wrong and the rider can check: speak to the rider.<span>"Seats at the back of the train." "Wait in the blue Nightsafe area."</span></div>
+    <div class="rule">Costs time if wrong: the service gets the verb, the rider keeps the choice.<span>"Want a seat? The next T1, at 8:59am from Platform 1, has seats available and is due at Central at 9:26am." Never skip, wait or don't board.</span></div>
+    <div class="rule">Goal, then fact, then cost. Certainty in one word: "has" live, "should" forecast, "usually" proven, never "will".</div>
+    <div class="rule">Two sentences at most, about twelve words each. Stations and clock times riders recognise.</div>
+  </div>
+</section>
+</details>
+
+<details class="part" id="research"><summary><span class="eyebrow">Part 3</span><span class="ptitle">Research and results</span><span class="pdesc">What each mode reports, published evidence, themes, the evidence bar, peak results</span></summary>
+<section>
+  <h2>Field study status</h2>
+  <div class="status"><span class="pulse" aria-hidden="true"></span>Collecting every line, all modes. Every minute in the peaks: 4:15 to 6:45pm Monday 26 Oct, 7:20 to 9:40am Tuesday 27 Oct. Every 3 minutes otherwise.</div>
+  <p class="small muted" style="margin-top:8px">Each peak's results are saved as a small summary file.</p>
+</section>
+<section>
+  <h2>What each mode reports</h2>
+  <div class="band"><table class="stable">
+    <thead><tr><th>Mode</th><th>Vehicle level</th><th>Per carriage</th><th>Forecast at later stops</th></tr></thead>
+    <tbody>
+      <tr><td><b>Sydney Trains</b></td><td><span class="tag part">About 40% of trains</span><br><span class="muted">Waratah sets, weight sensors</span></td><td><span class="tag part">Same trains</span></td><td><span class="tag ok">Yes</span><br><span class="muted">TfNSW prediction, includes T4</span></td></tr>
+      <tr><td><b>Metro M1</b></td><td><span class="tag ok">Every train</span></td><td><span class="tag ok">Every train</span></td><td><span class="tag no">No</span></td></tr>
+      <tr><td><b>Buses</b></td><td><span class="tag ok">Every bus</span></td><td><span class="muted">Not applicable</span></td><td><span class="tag no">Not collected</span></td></tr>
+      <tr><td><b>Light rail L1, L2, L3</b></td><td><span class="tag no">None</span></td><td><span class="tag no">None</span></td><td><span class="tag no">None</span></td></tr>
+      <tr><td><b>Parramatta Light Rail</b></td><td><span class="tag ok">Yes</span></td><td><span class="tag no">No</span></td><td><span class="tag no">No</span></td></tr>
+      <tr><td><b>Newcastle Light Rail</b></td><td><span class="tag ok">Yes</span></td><td><span class="tag ok">Yes</span></td><td><span class="tag no">No</span></td></tr>
+      <tr><td><b>Ferries</b></td><td><span class="tag no">None</span></td><td><span class="tag no">None</span></td><td><span class="tag no">None</span></td></tr>
+    </tbody></table></div>
+</section>
+<section>
+  <h2>What published research says helps</h2>
+  <p>Mostly simulations and surveys; real field trials are missing.</p>
+  <div class="ecards">
+    <div class="ecard"><b>Choosing a carriage</b><span>Carriage-level information shifts riders to emptier cars and evens out the load.</span><a href="https://ideas.repec.org/a/eee/transa/v166y2022icp354-368.html">Peftitsi, Jenelius, Cats 2022</a></div>
+    <div class="ecard"><b>Skipping a full departure</b><span>Half to most riders would skip an overcrowded first departure; far fewer skip a moderately crowded one.</span><a href="https://napier-repository.worktribe.com/OutputFile/3036668">Edinburgh Napier</a><a href="https://transp-or.epfl.ch/heart/2023/abstracts/hEART_2023_paper_1055.pdf">hEART 2023</a></div>
+    <div class="ecard"><b>Bus bunching</b><span>Showing the next two buses' loads breaks the crowded-leader, empty-follower loop in simulation.</span><a href="https://link.springer.com/article/10.1007/s11116-022-10270-3">Drabicki, Kucharski, Cats 2022</a></div>
+    <div class="ecard"><b>Where you stand matters</b><span>Car choice depends on entrance position and knowing your exit, not only the display.</span><a href="https://econpapers.repec.org/RePEc:eee:transa:v:211:y:2026:i:c:s0965856426002223">Leprévost et al. 2026</a></div>
+  </div>
+</section>
+<section>
+  <h2>Themes being tested</h2>
+  <div class="band"><table class="stable">
+    <thead><tr><th>Theme</th><th>Modes</th><th>Line it would enable</th><th>How the data tests it</th></tr></thead>
+    <tbody>
+      <tr><td><b>Ends vs middle</b></td><td>Trains, Metro</td><td>Seats at both ends of the train.</td><td>Per line and direction: how often an end third is a level roomier than the middle</td></tr>
+      <tr><td><b>Peaks by line</b></td><td>Trains, Metro</td><td>Context for every line</td><td>Every line and direction, 7:30 to 9:30am and 4:30 to 6:30pm</td></tr>
+      <tr><td><b>Where it eases or fills</b></td><td>Trains</td><td>It should ease off after Strathfield.</td><td>Per line and direction: stations where the forecast level drops or rises</td></tr>
+      <tr><td><b>Next service has room</b></td><td>Trains, Metro, Buses</td><td>Want a seat? The next T1, at 8:59am from Platform 1, has seats available...</td><td>How often the service after a Standing-only one is a level quieter</td></tr>
+      <tr><td><b>Bus bunching</b></td><td>Buses</td><td>Want a seat? The next 333, at 9:04am, has seats available.</td><td>Same-route buses closer than 400 m: is one quieter?</td></tr>
+      <tr><td><b>Forecast accuracy</b></td><td>Trains</td><td>Decides if "should" is trustworthy</td><td>Forecast for a station vs the train's live reading when it gets there</td></tr>
+    </tbody></table></div>
+</section>
+<section>
+  <h2>The evidence bar</h2>
+  <div class="tiers">
+    <div class="tier"><div class="n">Tier 1</div><b>Seen in one peak</b>A lead to follow, never shown to riders.</div>
+    <div class="tier"><div class="n">Tier 2</div><b>Repeats</b>Holds on at least 8 of 10 weekdays. Enough for "usually".</div>
+    <div class="tier"><div class="n">Measured</div><b>Forecast accuracy</b>So far about three in four exact, over nine in ten within one level.</div>
+    <div class="tier"><div class="n">Live</div><b>Right now</b>A live reading can always be shown as it is.</div>
+  </div>
+</section>
+<section id="results">
+  <h2>Peak results</h2>
+  <p class="muted">Monday evening peak below. Tuesday morning peak lands here at about 9:55am. The collector stopped between 10:14am and 5:00pm on Monday, so the evening sample covers 5:00 to 6:30pm, the busiest part of the peak.</p>
+  <h3>What the evening says about each rider line</h3>
+  <div class="verdict">
+    <div><b class="t">Supports</b> "Seats at both ends of the train." When the cars differ, an end third had more room than the middle on 36 to 61% of readings by line, and the middle beat both ends on only 1 to 11% (T8 Airport highest, n 760 mixed readings).</div>
+    <div><b class="t">Supports, blocked</b> "Seats at the back" or "at the front". On each line one end wins almost every time in feed order: Metro all one end (n 1,476), T2 Inner West 336 to 59, North Shore 156 to 23, Blue Mountains 157 to 7. Which real end that is stays unknown until the platform check.</div>
+    <div><b class="t">Weakens</b> how often zone advice applies. Only 19 to 37% of suburban readings had mixed cars; Metro and Blue Mountains about 60%. Most of the time the honest headline is "Seats available all along the train" or "Standing only, all along the train".</div>
+    <div><b class="t">Supports</b> forecast wording with "expected". Within one level 93 to 96% of the time at every lead time (n 17,095 to 24,580), exactly right 62 to 68%, lower than Monday morning's 71 to 77%. Never promise a seat.</div>
+    <div><b class="t">Kills, for now</b> "It usually eases off after a named station". No station passed 6 trips in one evening. Needs the many-day collection before any station is named.</div>
+    <div><b class="t">Weakens</b> "The next bus has seats available". Buses were 90% Seats available (n 75,336). Of close bus pairs, one was roomier 18% of the time and Standing against Seats only 3% (n 12,809 pairs).</div>
+    <div><b class="t">Weakens</b> a light rail chip. Parramatta was all Seats available (n 255), Newcastle 97% (n 87). L1 to L3 and ferries report nothing.</div>
+    <div><b class="t">Lead</b> where crowding is real: Metro M1 was Standing only on 40% of readings (n 2,746). Central Coast 73% (n 37) and South Coast toward Wollongong 100% (n 16) are too few readings to lean on.</div>
+  </div>
+<!--RES-EVENING-->
+<details class="res" open><summary><b>Monday 26 October, evening peak</b> <span class="muted small">sampled 17:00 to 18:29, 532 requests, 0 failed</span></summary>
+<p class="small muted">Every n below counts vehicle readings (one train seen on one poll), not distinct trips. Sydney Trains polled every minute, buses and light rail every three. Evidence tier: <b>one day, so every pattern is Tier 1, a lead only</b>; nothing here may reach riders as "usually". Forecast accuracy is a measurement and stands on its own.</p>
+
+<h3>How full, by line and direction</h3>
+<p class="small muted">Bar to scale, 0 to 100%. Shades from light to dark: Seats available, Few seats, Standing only. Numbers are the same three shares in that order. Direction 1 is the one that fills at Redfern, Town Hall and Wynyard on most suburban lines, so most likely leaving the city.</p>
+<div class="scroll"><table class="lines res-t"><tr><th>Service</th><th>n</th><th>Share of readings</th><th>Seats, few, standing %</th></tr><tr><td>T1 Western, direction 1</td><td class='n'>849</td><td><svg width="260" height="14" viewBox="0 0 260 14" role="img" aria-label="Seats available 40%, Few seats 56%, Standing only 3%"><rect x="0.0" y="0" width="104.8" height="14" fill="#C9C2BA"/><rect x="104.8" y="0" width="146.4" height="14" fill="#8A8079"/><rect x="251.2" y="0" width="8.8" height="14" fill="#1C1B1A"/></svg></td><td class='n'>40 56 3</td></tr><tr><td>T1 Western, direction 2</td><td class='n'>693</td><td><svg width="260" height="14" viewBox="0 0 260 14" role="img" aria-label="Seats available 99%, Few seats 1%, Standing only 0%"><rect x="0.0" y="0" width="257.4" height="14" fill="#C9C2BA"/><rect x="257.4" y="0" width="2.6" height="14" fill="#8A8079"/></svg></td><td class='n'>99 1 0</td></tr><tr><td>T1 North Shore, direction 1</td><td class='n'>576</td><td><svg width="260" height="14" viewBox="0 0 260 14" role="img" aria-label="Seats available 83%, Few seats 17%, Standing only 0%"><rect x="0.0" y="0" width="215.3" height="14" fill="#C9C2BA"/><rect x="215.3" y="0" width="44.7" height="14" fill="#8A8079"/></svg></td><td class='n'>83 17 0</td></tr><tr><td>T1 North Shore, direction 2</td><td class='n'>701</td><td><svg width="260" height="14" viewBox="0 0 260 14" role="img" aria-label="Seats available 93%, Few seats 7%, Standing only 0%"><rect x="0.0" y="0" width="241.0" height="14" fill="#C9C2BA"/><rect x="241.0" y="0" width="17.7" height="14" fill="#8A8079"/><rect x="258.7" y="0" width="1.0" height="14" fill="#1C1B1A"/></svg></td><td class='n'>93 7 0</td></tr><tr><td>T2 Inner West, direction 1</td><td class='n'>1,347</td><td><svg width="260" height="14" viewBox="0 0 260 14" role="img" aria-label="Seats available 76%, Few seats 24%, Standing only 0%"><rect x="0.0" y="0" width="197.1" height="14" fill="#C9C2BA"/><rect x="197.1" y="0" width="62.9" height="14" fill="#8A8079"/></svg></td><td class='n'>76 24 0</td></tr><tr><td>T2 Inner West, direction 2</td><td class='n'>918</td><td><svg width="260" height="14" viewBox="0 0 260 14" role="img" aria-label="Seats available 100%, Few seats 0%, Standing only 0%"><rect x="0.0" y="0" width="260.0" height="14" fill="#C9C2BA"/></svg></td><td class='n'>100 0 0</td></tr><tr><td>T3 Bankstown, direction 1</td><td class='n'>306</td><td><svg width="260" height="14" viewBox="0 0 260 14" role="img" aria-label="Seats available 83%, Few seats 17%, Standing only 0%"><rect x="0.0" y="0" width="215.0" height="14" fill="#C9C2BA"/><rect x="215.0" y="0" width="45.0" height="14" fill="#8A8079"/></svg></td><td class='n'>83 17 0</td></tr><tr><td>T3 Bankstown, direction 2</td><td class='n'>129</td><td><svg width="260" height="14" viewBox="0 0 260 14" role="img" aria-label="Seats available 100%, Few seats 0%, Standing only 0%"><rect x="0.0" y="0" width="260.0" height="14" fill="#C9C2BA"/></svg></td><td class='n'>100 0 0</td></tr><tr><td>T8 Airport, direction 1</td><td class='n'>1,146</td><td><svg width="260" height="14" viewBox="0 0 260 14" role="img" aria-label="Seats available 58%, Few seats 40%, Standing only 2%"><rect x="0.0" y="0" width="151.3" height="14" fill="#C9C2BA"/><rect x="151.3" y="0" width="102.7" height="14" fill="#8A8079"/><rect x="254.0" y="0" width="6.0" height="14" fill="#1C1B1A"/></svg></td><td class='n'>58 40 2</td></tr><tr><td>T8 Airport, direction 2</td><td class='n'>895</td><td><svg width="260" height="14" viewBox="0 0 260 14" role="img" aria-label="Seats available 99%, Few seats 1%, Standing only 0%"><rect x="0.0" y="0" width="257.1" height="14" fill="#C9C2BA"/><rect x="257.1" y="0" width="2.9" height="14" fill="#8A8079"/></svg></td><td class='n'>99 1 0</td></tr><tr><td>T9 Northern, direction 1</td><td class='n'>661</td><td><svg width="260" height="14" viewBox="0 0 260 14" role="img" aria-label="Seats available 75%, Few seats 25%, Standing only 0%"><rect x="0.0" y="0" width="195.8" height="14" fill="#C9C2BA"/><rect x="195.8" y="0" width="64.2" height="14" fill="#8A8079"/></svg></td><td class='n'>75 25 0</td></tr><tr><td>T9 Northern, direction 2</td><td class='n'>470</td><td><svg width="260" height="14" viewBox="0 0 260 14" role="img" aria-label="Seats available 99%, Few seats 1%, Standing only 0%"><rect x="0.0" y="0" width="257.7" height="14" fill="#C9C2BA"/><rect x="257.7" y="0" width="2.3" height="14" fill="#8A8079"/></svg></td><td class='n'>99 1 0</td></tr><tr><td>Blue Mountains, direction 1</td><td class='n'>123</td><td><svg width="260" height="14" viewBox="0 0 260 14" role="img" aria-label="Seats available 84%, Few seats 6%, Standing only 11%"><rect x="0.0" y="0" width="217.6" height="14" fill="#C9C2BA"/><rect x="217.6" y="0" width="14.8" height="14" fill="#8A8079"/><rect x="232.4" y="0" width="27.6" height="14" fill="#1C1B1A"/></svg></td><td class='n'>84 6 11</td></tr><tr><td>Blue Mountains, direction 2</td><td class='n'>277</td><td><svg width="260" height="14" viewBox="0 0 260 14" role="img" aria-label="Seats available 68%, Few seats 25%, Standing only 7%"><rect x="0.0" y="0" width="177.3" height="14" fill="#C9C2BA"/><rect x="177.3" y="0" width="64.7" height="14" fill="#8A8079"/><rect x="242.1" y="0" width="17.9" height="14" fill="#1C1B1A"/></svg></td><td class='n'>68 25 7</td></tr><tr><td>Central Coast, direction 2</td><td class='n'>37</td><td><svg width="260" height="14" viewBox="0 0 260 14" role="img" aria-label="Seats available 27%, Few seats 0%, Standing only 73%"><rect x="0.0" y="0" width="70.2" height="14" fill="#C9C2BA"/><rect x="70.2" y="0" width="189.8" height="14" fill="#1C1B1A"/></svg></td><td class='n'>27 0 73</td></tr><tr><td>South Coast, direction 1</td><td class='n'>16</td><td><svg width="260" height="14" viewBox="0 0 260 14" role="img" aria-label="Seats available 0%, Few seats 0%, Standing only 100%"><rect x="0.0" y="0" width="260.0" height="14" fill="#1C1B1A"/></svg></td><td class='n'>0 0 100</td></tr><tr><td>South Coast, direction 2</td><td class='n'>11</td><td><svg width="260" height="14" viewBox="0 0 260 14" role="img" aria-label="Seats available 100%, Few seats 0%, Standing only 0%"><rect x="0.0" y="0" width="260.0" height="14" fill="#C9C2BA"/></svg></td><td class='n'>100 0 0</td></tr><tr><td>Metro M1, both directions</td><td class='n'>2,746</td><td><svg width="260" height="14" viewBox="0 0 260 14" role="img" aria-label="Seats available 34%, Few seats 26%, Standing only 40%"><rect x="0.0" y="0" width="87.1" height="14" fill="#C9C2BA"/><rect x="87.1" y="0" width="68.1" height="14" fill="#8A8079"/><rect x="155.2" y="0" width="104.8" height="14" fill="#1C1B1A"/></svg></td><td class='n'>34 26 40</td></tr><tr><td>Buses, every route</td><td class='n'>75,336</td><td><svg width="260" height="14" viewBox="0 0 260 14" role="img" aria-label="Seats available 90%, Few seats 8%, Standing only 2%"><rect x="0.0" y="0" width="234.5" height="14" fill="#C9C2BA"/><rect x="234.5" y="0" width="21.6" height="14" fill="#8A8079"/><rect x="256.1" y="0" width="3.9" height="14" fill="#1C1B1A"/></svg></td><td class='n'>90 8 2</td></tr><tr><td>Parramatta Light Rail</td><td class='n'>255</td><td><svg width="260" height="14" viewBox="0 0 260 14" role="img" aria-label="Seats available 100%, Few seats 0%, Standing only 0%"><rect x="0.0" y="0" width="260.0" height="14" fill="#C9C2BA"/></svg></td><td class='n'>100 0 0</td></tr><tr><td>Newcastle Light Rail</td><td class='n'>87</td><td><svg width="260" height="14" viewBox="0 0 260 14" role="img" aria-label="Seats available 97%, Few seats 3%, Standing only 0%"><rect x="0.0" y="0" width="251.2" height="14" fill="#C9C2BA"/><rect x="251.2" y="0" width="8.8" height="14" fill="#8A8079"/></svg></td><td class='n'>97 3 0</td></tr></table></div>
+
+<h3>Ends against the middle</h3>
+<p class="small muted">Only trains with carriage data (about 40% of Sydney Trains, all of Metro). "Mixed" means the cars on that reading were not all the same level. Of the mixed readings, how often one end third had more room than the middle third, and how often the middle beat both ends.</p>
+<div class="scroll"><table class="lines res-t"><tr><th>Line</th><th>n</th><th>Mixed readings</th><th>An end roomier</th><th>Middle roomier</th></tr><tr><td>T1 Western</td><td class='n'>1,542</td><td class='n'>29% (445)</td><td><svg width="200" height="12"><rect width="200" height="12" fill="#EDE8E2"/><rect width="90.8" height="12" fill="#1C1B1A"/></svg> <span class='n'>45%</span></td><td class='n'>5%</td></tr><tr><td>T1 North Shore</td><td class='n'>1,277</td><td class='n'>24% (311)</td><td><svg width="200" height="12"><rect width="200" height="12" fill="#EDE8E2"/><rect width="113.2" height="12" fill="#1C1B1A"/></svg> <span class='n'>57%</span></td><td class='n'>1%</td></tr><tr><td>T2 Inner West</td><td class='n'>2,265</td><td class='n'>36% (817)</td><td><svg width="200" height="12"><rect width="200" height="12" fill="#EDE8E2"/><rect width="121.2" height="12" fill="#1C1B1A"/></svg> <span class='n'>61%</span></td><td class='n'>0%</td></tr><tr><td>T3 Bankstown</td><td class='n'>435</td><td class='n'>19% (84)</td><td><svg width="200" height="12"><rect width="200" height="12" fill="#EDE8E2"/><rect width="90.5" height="12" fill="#1C1B1A"/></svg> <span class='n'>45%</span></td><td class='n'>4%</td></tr><tr><td>T8 Airport</td><td class='n'>2,041</td><td class='n'>37% (760)</td><td><svg width="200" height="12"><rect width="200" height="12" fill="#EDE8E2"/><rect width="79.2" height="12" fill="#1C1B1A"/></svg> <span class='n'>40%</span></td><td class='n'>11%</td></tr><tr><td>T9 Northern</td><td class='n'>1,131</td><td class='n'>24% (266)</td><td><svg width="200" height="12"><rect width="200" height="12" fill="#EDE8E2"/><rect width="72.2" height="12" fill="#1C1B1A"/></svg> <span class='n'>36%</span></td><td class='n'>1%</td></tr><tr><td>Blue Mountains</td><td class='n'>400</td><td class='n'>60% (238)</td><td><svg width="200" height="12"><rect width="200" height="12" fill="#EDE8E2"/><rect width="116.8" height="12" fill="#1C1B1A"/></svg> <span class='n'>58%</span></td><td class='n'>0%</td></tr><tr><td>Metro M1</td><td class='n'>2,746</td><td class='n'>64% (1,760)</td><td><svg width="200" height="12"><rect width="200" height="12" fill="#EDE8E2"/><rect width="103.3" height="12" fill="#1C1B1A"/></svg> <span class='n'>52%</span></td><td class='n'>0%</td></tr></table></div>
+
+<h3>Where it eases off and where it fills</h3>
+<p class="small muted">From the Sydney Trains forecasts, latest per trip (431 trips with forecasts). The number is how many trips changed level at that station.</p>
+<div class="scroll"><table class="lines res-t"><tr><th>Eases off after</th><th>Stations (trips)</th></tr><tr><td>T1 North Shore, direction 1</td><td>Pymble (2), Roseville (1), Killara (1)</td></tr><tr><td>T1 North Shore, direction 2</td><td>Waverton (1)</td></tr><tr><td>T1 Western, direction 1</td><td>Seven Hills (2), Blacktown (2), Parramatta (1)</td></tr><tr><td>T1 Western, direction 2</td><td>Granville (2), Strathfield (2), Seven Hills (1)</td></tr><tr><td>T2 Inner West, direction 1</td><td>Burwood (3), Lidcombe (3), Central (3)</td></tr><tr><td>T2 Inner West, direction 2</td><td>Granville (1)</td></tr><tr><td>T3 Bankstown, direction 1</td><td>Ashfield (2), Central (1)</td></tr><tr><td>T4 Eastern Suburbs, direction 1</td><td>Rockdale (2), Hurstville (2), Oatley (1)</td></tr><tr><td>T5 Cumberland, direction 1</td><td>Cabramatta (1)</td></tr><tr><td>T8 Airport, direction 1</td><td>Macquarie Fields (2), Town Hall (2), Holsworthy (2)</td></tr><tr><td>T9 Northern, direction 1</td><td>Meadowbank (2), North Strathfield (1), Rhodes (1)</td></tr><tr><td>T9 Northern, direction 2</td><td>Killara (1), Burwood (1)</td></tr></table></div>
+<div class="scroll" style="margin-top:10px"><table class="lines res-t"><tr><th>Fills at</th><th>Stations (trips)</th></tr><tr><td>T1 North Shore, direction 1</td><td>St Leonards (1), Lindfield (1), Gordon (1)</td></tr><tr><td>T1 North Shore, direction 2</td><td>Wynyard (6), Town Hall (6), Milsons Point (1)</td></tr><tr><td>T1 Western, direction 1</td><td>Parramatta (2), Redfern (1), Marayong (1)</td></tr><tr><td>T1 Western, direction 2</td><td>Parramatta (3), Lidcombe (2), Redfern (1)</td></tr><tr><td>T2 Inner West, direction 1</td><td>Redfern (3), Strathfield (2), Clyde (2)</td></tr><tr><td>T3 Bankstown, direction 1</td><td>Wynyard (1), Redfern (1)</td></tr><tr><td>T4 Eastern Suburbs, direction 1</td><td>Central (1)</td></tr><tr><td>T8 Airport, direction 1</td><td>Central (2), St James (2), Leumeah (1)</td></tr><tr><td>T8 Airport, direction 2</td><td>Mascot (4), Domestic Airport (1)</td></tr><tr><td>T9 Northern, direction 1</td><td>Town Hall (2), Burwood (1), Strathfield (1)</td></tr><tr><td>T9 Northern, direction 2</td><td>Redfern (2), North Sydney (1), Epping (1)</td></tr></table></div>
+
+<h3>Forecast accuracy by how far ahead</h3>
+<p class="small muted">Each forecast for a stop checked against the train's live reading when it got there.</p>
+<div class="scroll"><table class="lines res-t"><tr><th>Ahead</th><th>n</th><th>Exactly right</th><th>Within one level</th></tr><tr><td>5-15 min</td><td class='n'>24,580</td><td><svg width="200" height="12"><rect width="200" height="12" fill="#EDE8E2"/><rect width="135.8" height="12" fill="#1C1B1A"/></svg> <span class='n'>68%</span></td><td><svg width="200" height="12"><rect width="200" height="12" fill="#EDE8E2"/><rect width="191.8" height="12" fill="#1C1B1A"/></svg> <span class='n'>96%</span></td></tr><tr><td>15-30 min</td><td class='n'>20,885</td><td><svg width="200" height="12"><rect width="200" height="12" fill="#EDE8E2"/><rect width="123.8" height="12" fill="#1C1B1A"/></svg> <span class='n'>62%</span></td><td><svg width="200" height="12"><rect width="200" height="12" fill="#EDE8E2"/><rect width="189.8" height="12" fill="#1C1B1A"/></svg> <span class='n'>95%</span></td></tr><tr><td>30+ min</td><td class='n'>17,095</td><td><svg width="200" height="12"><rect width="200" height="12" fill="#EDE8E2"/><rect width="127.2" height="12" fill="#1C1B1A"/></svg> <span class='n'>64%</span></td><td><svg width="200" height="12"><rect width="200" height="12" fill="#EDE8E2"/><rect width="186.2" height="12" fill="#1C1B1A"/></svg> <span class='n'>93%</span></td></tr></table></div>
+
+<h3>Buses close together</h3>
+<p class="small muted">Two buses on the same route and direction within 400 m on the same poll (12,809 pairs, may include buses waiting at a terminus).</p>
+<div class="scroll"><table class="lines res-t"><tr><th>Measure</th><th>n</th><th>Share</th></tr>
+<tr><td>One of the pair roomier</td><td class='n'>2,341</td><td><svg width="200" height="12"><rect width="200" height="12" fill="#EDE8E2"/><rect width="36.6" height="12" fill="#1C1B1A"/></svg> <span class='n'>18%</span></td></tr>
+<tr><td>One Standing only, the other Seats available</td><td class='n'>376</td><td><svg width="200" height="12"><rect width="200" height="12" fill="#EDE8E2"/><rect width="5.9" height="12" fill="#1C1B1A"/></svg> <span class='n'>3%</span></td></tr></table></div>
+</details>
+<!--/RES-EVENING-->
+</section>
+</details>
+
+<details class="part" id="decisions" open><summary><span class="eyebrow">Part 4</span><span class="ptitle">Decisions</span><span class="pdesc">All decided, each with a rider story and the trade-offs</span></summary>
+<section>
+  <h2>Decisions</h2>
+  <div class="note" style="margin-bottom:6px"><b>All six are decided (26 October), code 1A 2A 3A 4A 5C 6A.</b> Each card tells a short rider story, then what the rider sees with each option and what it costs. The decided option is tagged. Click another to see the answer code change.
+    <p style="margin:8px 0 0"><b>Wording, also decided:</b> say "seats", never "room", and match the level ("Seats at the back of the train", "A few seats left at the back"). Name any other service with its clock time and platform, and its arrival as "due at".</p></div>
+  <div id="qs"></div>
+  <div class="note" style="margin-top:16px"><b>Before any build</b>
+    <ol><li>Which end is the front: car order differs between feeds and flips when a train reverses. Check on a real platform before any zone advice ships.</li>
+    <li>Use the level at the rider's boarding stop.</li>
+    <li>When carriage data exists, the chip is worked out from the cars, so the two never disagree.</li></ol>
+  </div>
+</section>
+</details>
+</div>
+
+<div class="answer" role="status"><span>Your answer</span><span class="code" id="code">pick options</span><button id="copy" type="button">Copy</button><span id="copied" class="small"></span></div>
+
+<script>
+(() => {
+const W={1:'Seats available',2:'Few seats',3:'Standing only'};
+const FILL={1:30,2:62,3:100};
+const S={theme:'dark',lc:'#F6891F'};
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const isBus=()=>S.lc==='#00B5EF', isMetro=()=>S.lc==='#009B77';
+
+const SC={
+  back:  {train:[1,1,1,2,2,3,3,3],metro:[1,1,2,2,3,3]},
+  ends:  {train:[1,1,2,3,3,2,1,1],metro:[1,2,3,3,2,1]},
+  plenty:{train:[1,1,1,1,1,1,1,1],metro:[1,1,1,1,1,1]},
+  busy:  {train:[3,3,3,3,3,3,3,3],metro:[3,3,3,3,3,3]},
+  next:  {train:[3,3,3,3,3,3,3,3],metro:[3,3,3,3,3,3]},
+  conn:  {train:[3,3,3,3,3,3,3,3],metro:[3,3,3,3,3,3]},
+  short: {train:[3,3,1,1],metro:[3,3,1,1]},
+  night: {train:[2,1,1,1,1,1,1,2],metro:[1,1,1,1,1,1]},
+  live:  {train:[1,1,1,2,2,3,3,3],metro:[1,1,2,2,3,3]},
+};
+const SIDE={
+  back:'<b>Seats at the back.</b> The back third is the least busy, so the headline points there. The chip says "Seats at the back". With only Few seats there, both say "a few seats left" instead.',
+  ends:'<b>Seats at both ends.</b> Front and back thirds tie: "Seats at both ends of the train".',
+  plenty:'<b>Seats all along.</b> No advice needed, just reassurance.',
+  busy:'<b>Busy everywhere.</b> States it plainly. No zone, no suggestion, because nothing better is close behind.',
+  next:'<b>Quieter one close behind.</b> Busy everywhere, and the next train on the same line, 7 minutes later, is two levels quieter. It is named like the station board names it: line, time with am or pm, platform. Tap the line: it jumps to that journey below and highlights it. The rider decides.',
+  conn:'<b>Tight connection.</b> Same as above, but this journey changes trains at Central with a tight connection. A later train could break the trip, so no suggestion is made.',
+  short:'<b>Short train.</b> 4 cars stop mid-platform, so the helper explains where it stops.',
+  night:'<b>Night.</b> After about 9pm the zone advice is replaced by the Nightsafe line. Never the emptiest car, never a later train.',
+  live:'<b>Refresh changes level.</b> The screen\'s existing refresh brings new readings; cars ease to them and the headline updates in place. Height never changes.',
+  none:'<b>No crowding.</b> Too far ahead or no sensors: no chip, no block. Exactly today\'s card.'
+};
+
+function zones(L){const n=L.length,a=Math.ceil(n/3),b=Math.ceil(2*n/3);return [Math.max(...L.slice(0,a)),Math.max(...L.slice(a,b)),Math.max(...L.slice(b))];}
+/* cars run back to front, left to right, matching Back / Middle / Front labels */
+function advice(L,sc){
+  if(sc==='night')return {h:"It's late: wait in the blue Nightsafe area to board near the guard.",chip:null};
+  const [bk,md,fr]=zones(L),mn=Math.min(bk,md,fr),mx=Math.max(bk,md,fr);
+  if(mn===mx)return mn===1?{h:'Seats available all along the train.',chip:W[1]}:mn===3?{h:'Standing only, all along the train.',chip:W[3]}:{h:'A few seats left along the train.',chip:W[2]};
+  const room=[bk===mn,md===mn,fr===mn];
+  /* the best zone's level picks the words: Seats available says "Seats", Few seats says "A few seats left" */
+  const where=room[0]&&room[2]&&!room[1]?['at both ends of the train','at both ends']:room[0]&&!room[1]&&!room[2]?['at the back of the train','at the back']:room[2]&&!room[1]&&!room[0]?['at the front of the train','at the front']:room[1]&&!room[0]&&!room[2]?['in the middle of the train','in the middle']:null;
+  if(!where)return {h:'A few seats left along the train.',chip:W[2]};
+  return mn===1?{h:`Seats ${where[0]}.`,chip:`Seats ${where[1]}`}:{h:`A few seats left ${where[1]}.`,chip:`Few seats ${where[1]}`};
+}
+function srSentence(L){const [b,m,f]=zones(L);return `Back: ${W[b]}. Middle: ${W[m]}. Front: ${W[f]}.`;}
+function stripHTML(L){
+  const cars=L.map((l,i)=>`<div class="car${i===0?' first':''}${i===L.length-1?' last':''}" style="grid-row:1;grid-column:${i+1}"><div class="f" style="height:${FILL[l]}%"></div></div>`).join('');
+  return `<div class="strip" role="img" aria-label="${srSentence(L)}" style="grid-template-columns:repeat(${L.length},1fr)">${cars}</div><div class="zonerow" aria-hidden="true"><span>Back</span><span>Middle</span><span>Front</span></div>`;}
+function miniHTML(L){return `<span class="mini" aria-hidden="true">${L.map(l=>`<i style="height:${[0,34,66,100][l]}%"></i>`).join('')}</span>`;}
+function chipHTML(L,sc){const a=advice(L,sc);const text=a.chip||W[Math.round(L.reduce((x,y)=>x+y,0)/L.length)];return `<span class="chip">${L.length>1?miniHTML(L):''}${text}</span>`;}
+function crowdHTML(L,sc){const a=advice(L,sc);
+  let helper=L.length<=4&&!isBus()?'<div class="helper">This is a short train, so it stops mid-platform.</div>':'';
+  let next='';
+  if(sc==='next')next=`<button class="next" type="button" data-jump="jCard2">Want a seat? The next ${legName()[0]}, at 8:59am from Platform 1, has seats available and is due at Central at 9:26am.</button>`;
+  return `<div class="crowd"><div class="headline">${a.h}</div>${helper}${stripHTML(L)}${next}</div>`;}
+function stopsHTML(rows){return `<div class="stops">${rows.map((r,i)=>`<div class="stop"><div class="rail"><div class="dot"></div>${i<rows.length-1?'<div class="bar"></div>':''}</div><div class="st">${r[0]}<b>${r[1]}</b>${r[2]?`<span class="lvl">${r[2]}</span>`:''}</div></div>`).join('')}</div>`;}
+function legName(){return isMetro()?['M1','towards Sydenham']:isBus()?['333','towards North Bondi']:['T1','towards Central'];}
+function lv(sc){const s=SC[sc]||SC.back;return isMetro()?s.metro.slice():s.train.slice();}
+function applyPhone(el){el.classList.toggle('light',S.theme==='light');el.style.setProperty('--lc',S.lc);}
+
+/* ---------- journey card ---------- */
+const J={scen:'back',open:true,timer:0};
+function renderJ(){
+  clearInterval(J.timer);
+  const p=document.getElementById('jPane'),[ln,dir]=legName(),sc=J.scen,none=sc==='none',bus=isBus();
+  const L=lv(sc);
+  document.getElementById('jSide').innerHTML=`<h3>What this scenario shows</h3><p>${SIDE[sc]}</p><p><b>Screen reader.</b> "${bus?'Few seats on this bus.':advice(L,sc).h+' '+srSentence(L)}"</p>`;
+  const conn=sc==='conn';
+  const body=none?'':bus?`<div class="crowd"><div class="headline">Few seats on this bus.</div></div>`:crowdHTML(L,sc);
+  const stops=conn?stopsHTML([['8:52am','Parramatta'],['9:19am','Central, change to T4 in 3 minutes'],['9:31am','Bondi Junction']]):stopsHTML([['8:52am','Parramatta'],['9:19am','Central']]);
+  p.innerHTML=`<div class="apptitle">Parramatta to ${conn?'Bondi Junction':'Central'}</div><div class="appsub">${sc==='night'?'Leaving at 10:41pm':'Leaving now'}</div>
+  <div class="card"><button class="tap" id="jTap" aria-expanded="${J.open}">
+    <div class="hdr">in 4 mins <span class="mode">${bus?'B':isMetro()?'M':'T'}</span><span class="plat">${bus?'Stand B':'Platform 1'}</span></div>
+    <div class="times">${sc==='night'?'10:45pm':'8:52am'}</div>
+    <div class="info"><span class="times" style="margin:0">${sc==='night'?'11:12pm':conn?'9:31am':'9:19am'}</span><span>${conn?'39':'27'} mins</span><span id="jChip">${none?'':bus?'<span class="chip">Few seats</span>':chipHTML(L,sc)}</span></div></button>
+    <div class="exp ${J.open?'open':''}" id="jExp"><div><div class="leg"><div class="legtop"><span class="badge">${ln}</span>${dir}</div>
+      <div id="jCrowd">${body}</div>${stops}</div></div></div></div>
+  <div class="card" id="jCard2"><div class="hdr">in 11 mins <span class="mode">${bus?'B':isMetro()?'M':'T'}</span><span class="plat">${bus?'Stand B':'Platform 1'}</span></div>
+    <div class="times">8:59am</div><div class="info"><span class="times" style="margin:0">9:26am</span><span>27 mins</span>${none?'':bus?'<span class="chip">Seats available</span>':chipHTML(isMetro()?[1,1,1,1,1,1]:[1,1,1,1,1,1,1,1],'plenty')}</div></div>`;
+  document.getElementById('jTap').onclick=()=>{J.open=!J.open;document.getElementById('jExp').classList.toggle('open',J.open);document.getElementById('jTap').setAttribute('aria-expanded',J.open);};
+  p.querySelectorAll('[data-jump]').forEach(b=>b.onclick=()=>{const t=document.getElementById(b.dataset.jump);t.scrollIntoView({behavior:reduce?'auto':'smooth',block:'nearest'});t.classList.remove('flash');void t.offsetWidth;t.classList.add('flash');});
+  if(sc==='live'&&!bus){const seq=isMetro()?[[1,1,2,3,3,3],[1,1,1,2,2,3],[1,1,2,2,3,3]]:[[1,1,2,2,3,3,3,3],[1,1,1,1,2,2,3,3],[1,1,1,2,2,3,3,3]];let k=0;
+    J.timer=setInterval(()=>{const c=seq[k++%3];document.getElementById('jCrowd').innerHTML=crowdHTML(c,'live');document.getElementById('jChip').innerHTML=chipHTML(c,'live');},2800);}
+}
+
+/* ---------- departure board ---------- */
+const D={open:'t1'};
+function renderD(){
+  const p=document.getElementById('dPane');const tlc=isBus()?'#F6891F':S.lc,tm=isMetro()?'M':'T',tl=isMetro()?'M1':'T1',dest=isMetro()?'Sydenham':'Central';
+  const rows=[{id:'t1',lc:tlc,mode:tm,line:tl,time:'8:57 AM',dest,plat:'Platform 1',L:isMetro()?[1,1,2,2,3,3]:[1,1,1,2,2,3,3,3]},
+    {id:'b333',lc:'#00B5EF',mode:'B',line:'333',time:'9:01 AM',dest:'City Circular Quay',plat:'Stand B',bus:true},
+    {id:'t2',lc:tlc,mode:tm,line:tl,time:'9:04 AM',dest,plat:'Platform 2',L:isMetro()?[1,1,1,1,1,1]:[1,1,1,1,1,1,1,1]}];
+  p.innerHTML=`<div class="apptitle">Parramatta Station</div><div class="appsub">Departure board</div>`+rows.map(r=>`
+   <div class="dep" style="--lc:${r.lc}"><button class="tap" data-id="${r.id}" aria-expanded="${D.open===r.id}">
+    <div class="l1"><span class="mode">${r.mode}</span><span class="badge">${r.line}</span><span class="plat">${r.plat}</span></div>
+    <div class="t">${r.time} ${r.bus?'<span class="chip">Standing only</span>':chipHTML(r.L,'x')}</div><div class="d">${r.dest}</div></button>
+    <div class="exp ${D.open===r.id?'open':''}"><div><div class="leg">
+      ${r.bus?'<div class="crowd"><div class="headline">Standing only on this bus.</div></div><div class="next">Want a seat? The next 333, at 9:04am, has seats available.</div>'
+        :crowdHTML(r.L,'x')+stopsHTML([['9:04am','Lidcombe','Should stay busy'],['9:09am','Strathfield','Should ease off here'],['9:19am','Central']])}
+      </div></div></div></div>`).join('');
+  p.querySelectorAll('.tap').forEach(b=>b.onclick=()=>{D.open=D.open===b.dataset.id?null:b.dataset.id;renderD();});
+}
+
+/* ---------- AI ---------- */
+const A={scen:'ok',timer:0,raf:0};
+function renderA(){
+  clearTimeout(A.timer);cancelAnimationFrame(A.raf);
+  const p=document.getElementById('aPane');const [ln,dir]=legName();const L=lv('back');
+  p.innerHTML=`<div class="leg" style="margin-top:0"><div class="legtop"><span class="badge">${ln}</span>${dir}</div>${isBus()?'<div class="crowd"><div class="headline">Few seats on this bus.</div></div>':crowdHTML(L,'back')}
+   ${A.scen==='none'?'':`<div class="ai" id="aiBox"><div class="h"><span class="wheel"></span>Suggestion</div><div id="aiBody"><div class="sk" style="width:94%"></div><div class="sk" style="width:86%"></div><div class="sk" style="width:58%"></div></div></div>`}</div>
+   ${A.scen==='none'?'<p class="small" style="margin-top:10px;color:var(--soft)">No model on this phone: the headline and chart are the whole feature. Nothing is greyed out.</p>':''}`;
+  if(A.scen==='none')return;
+  const box=document.getElementById('aiBox');let ang=0,speed=80,last=performance.now(),settling=false,st=0;
+  const tick=t=>{const dt=(t-last)/1000;last=t;if(settling){const e=Math.min(1,(t-st)/1400);speed=80*(1-(e<.55?e:.55+(1-Math.pow(1-(e-.55)/.45,3))*.45));if(e>=1)speed=0;}
+    ang=(ang+speed*dt)%360;box.style.setProperty('--ang',ang+'deg');if(speed>0)A.raf=requestAnimationFrame(tick);};
+  if(!reduce)A.raf=requestAnimationFrame(tick);
+  A.timer=setTimeout(()=>{settling=true;st=performance.now();
+    if(A.scen==='ok')document.getElementById('aiBody').innerHTML=`<div class="t">It should ease off after Strathfield. Want a seat the whole way? The next ${legName()[0]}, at 8:59am from Platform 1, has seats available and is due at Central at 9:26am.</div>`;
+    else box.classList.add('gone');},2200);
+}
+
+/* ---------- frames ---------- */
+function frame(w,h,inner,cap){return `<div class="col" style="max-width:${Math.max(w+18,280)}px"><div class="phone" style="width:${w+18}px"><div class="scr scroll" style="height:${h}px">${inner}</div></div><div class="cap">${cap}</div></div>`;}
+function cardTop(L){return `<div class="hdr">in 4 mins <span class="mode">${isMetro()?'M':'T'}</span><span class="plat">Platform 1</span></div><div class="times">8:52am</div><div class="info"><span class="times" style="margin:0">9:19am</span><span>27 mins</span>${chipHTML(L,'x')}</div>`;}
+function legBlock(L,opts={}){const [ln,dir]=legName();const inner=opts.blocks?blocksHTML(L):crowdHTML(L,'x');
+  return `<div class="leg"><div class="legtop"><span class="badge">${ln}</span>${dir}</div><div style="${opts.cap?`max-width:${opts.cap}px`:''}">${inner}</div>${stopsHTML([['8:52am','Parramatta'],['9:19am','Central']])}</div>`;}
+function blocksHTML(L){const z=zones(L);const a=advice(L,'x');return `<div class="crowd"><div class="headline">${a.h}</div><div class="blocks">${['Back','Middle','Front'].map((n,i)=>`<div class="block"><div>${n}</div><div>${W[z[i]]}</div></div>`).join('')}</div></div>`;}
+function renderFrames(){
+  const L=lv('back');const el=document.getElementById('frames');
+  const mapSvg=`<svg viewBox="0 0 800 640" preserveAspectRatio="none" aria-hidden="true"><path d="M0 120 L800 160 M0 380 L800 300 M160 0 L240 640 M520 0 L600 640" stroke="currentColor" stroke-opacity=".18" stroke-width="10" fill="none"/><path d="M130 470 C 260 420, 330 380, 420 330 S 600 230, 690 180" stroke="${S.lc}" stroke-width="7" fill="none"/></svg>`;
+  el.innerHTML=[
+   frame(320,600,`<div class="pane" style="font-size:20px">${cardTop(L)}${legBlock(L,{blocks:true})}</div>`,'<b>320 dp at 200% font.</b> Cars give way to Back, Middle and Front blocks in full words. Same advice.'),
+   frame(378,560,`<div class="pane">${cardTop(L)}${legBlock(L)}</div>`,'<b>Phone portrait.</b> The everyday case.'),
+   frame(760,340,`<div class="pane">${cardTop(L)}${legBlock(L,{cap:480})}</div>`,'<b>Phone landscape.</b> Same vertical layout, the list scrolls. Chart capped at 480 dp.'),
+   frame(673,600,`<div class="pane">${cardTop(L)}${legBlock(L,{cap:480})}</div>`,'<b>Foldable open.</b> Single pane, stacked, chart capped at 480 dp.'),
+   frame(1100,560,`<div style="display:flex;height:100%"><div class="pane" style="width:480px;flex:none;overflow:auto">${cardTop(L)}${legBlock(L)}</div><div class="map" style="flex:1;color:var(--on)">${mapSvg}</div></div>`,'<b>Tablet, trip results.</b> The 480 dp list pane matches the phone. The map is untouched.'),
+   frame(1100,560,`<div style="display:flex;height:100%"><div class="pane" style="width:400px;flex:none"><div class="apptitle">Saved trips</div><div class="appsub">Parramatta to Central</div></div><div class="pane" style="flex:1;border-left:1px solid var(--outline);overflow:auto"><div class="apptitle">Tracking your ${legName()[0]}</div>${legBlock(L,{cap:480})}</div></div>`,'<b>Tablet, Track Trip detail pane.</b> Stacked like a phone, capped at 480 dp.')
+  ].join('');
+  el.querySelectorAll('.phone').forEach(applyPhone);
+}
+
+/* ---------- decisions ---------- */
+const QS=[
+ {n:1,q:'How do we draw the carriages?',
+  sc:'Priya is on the platform at Parramatta. An 8-car T1 is due in 4 minutes. The two cars at the back have seats, the rest are Standing only. She opens the trip card to see where to stand.',
+  o:[['A','One colour, filled boxes','A row of 8 small boxes in the line colour. A full box means Standing only, a low fill means Seats available. One sentence above says "Seats at the back of the train".','Calm and premium. The level is carried by how full each box is, plus words, so it works for colour-blind riders.'],
+     ['B','Traffic light colours','The same 8 boxes, coloured green, orange or red.','Instantly familiar, but red and green drawn on an orange or blue line card look cheap and clash.']],d:'A'},
+ {n:2,q:'What does the small tag next to the time say?',
+  sc:'Before opening anything, Priya scans the trip results list. Each trip shows a small tag beside its time. On her train most cars are Standing only, but the back third has seats.',
+  o:[['A','Say where the seats are','The tag reads "Seats at the back".','She knows where to stand without opening the card. The train can look emptier than it is overall.'],
+     ['B','Say the overall level','The tag reads "Standing only", from the busiest part of the train.','Honest about most of the train, but hides the seats she could have had.']],d:'A'},
+ {n:3,q:'What opens when a rider taps a departure on the board?',
+  sc:'Sam is on the departure board for Parramatta Station and taps the 8:57am T1 to Central.',
+  o:[['A','Seats and carriages only','The row opens to "Seats at the back of the train", the row of carriages, and how full it should be at the next few stops.','Shortest row, the board stays easy to scan. To follow the train live, Sam uses the trip results as today.'],
+     ['B','Add a Track this trip button','Same as A, plus a button that opens the live trip screen.','One tap to live tracking, but a taller row and a second way into the same screen.'],
+     ['C','Add every stop and the button','Same as B, plus the full list of stops.','Most detail. The row gets very tall and pushes the next departures off screen.']],d:'A'},
+ {n:4,q:'Do we use the on-device AI in the first version?',
+  sc:'Mia has a recent Pixel or iPhone with a built-in AI model. Her train is Standing only and she has a tight change at Strathfield.',
+  o:[['A','Yes, behind its own switch, off at launch','When switched on, her phone may write one extra line that the screen does not already say, for example linking her tight change with where the seats are. If the line repeats the screen or fails a fact check, nothing shows.','Ready to turn on after testing, with no app update. Most phones have no model and see nothing extra.'],
+     ['B','Later','Only the lines written by the app\'s own code.','Simpler first release. The AI work waits for a later version.']],d:'A'},
+ {n:5,q:'How much ships in the first release?',
+  sc:'KRAIL calls Transport for NSW straight from each phone, with one key shared by every phone. The seat levels come free with the trip results. The carriage row needs one extra download of the Sydney Trains forecast feed.',
+  o:[['A','Tags, plus carriages on the live trip screen','Tags on every trip. The carriage row only on the live trip screen, which already downloads that feed.','No new downloads at all.'],
+     ['B','Tags only','"Seats at the back" style tags and nothing else.','Smallest start; riders never see the carriages.'],
+     ['C','Everything, carriages in trip cards too','Tags, plus the carriage row inside each trip card. The feed is downloaded once when the results open, and the row only draws if it has arrived.','The full design, at the cost of one extra download per results screen on the shared key.']],d:'C'},
+ {n:6,q:'Where does the research live?',
+  sc:'The research write-up, the platform check and the mockup rules need a home before any code is written.',
+  o:[['A','Their own local branch','On the branch docs/crowding-research. The build starts on a new branch on top of it.','Clean history; nothing pushed until you say.'],
+     ['B','Only the write-up on its own branch','The rules stay elsewhere.','Splits related changes.'],
+     ['C','On the store listing branch','Mixed in with unrelated work.','Harder to review.']],d:'A'}];
+const sel={};
+function renderQs(){document.getElementById('qs').innerHTML=QS.map(q=>`<div class="q"><div class="qh"><span class="num">${q.n}</span><span class="qt">${q.q}</span></div><p class="sc"><b>Picture this.</b> ${q.sc}</p><div class="opts">${q.o.map(o=>`<button class="o" data-q="${q.n}" data-v="${o[0]}" aria-pressed="false">${o[0]===q.d?'<span class="rec">Decided</span>':''}<div class="k">${o[0]}</div><div class="t">${o[1]}</div><div class="d"><b>${q.n===6?'What it means':'Rider sees'}:</b> ${o[2]}</div><div class="d"><b>Trade-off:</b> ${o[3]}</div></button>`).join('')}</div></div>`).join('');
+  document.querySelectorAll('.o').forEach(b=>b.onclick=()=>{document.querySelectorAll(`.o[data-q="${b.dataset.q}"]`).forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');sel[b.dataset.q]=b.dataset.v;
+    const k=Object.keys(sel).sort((a,b)=>a-b);document.getElementById('code').textContent=k.map(x=>x+sel[x]).join(' ');});
+  QS.forEach(q=>{const b=document.querySelector(`.o[data-q="${q.n}"][data-v="${q.d}"]`);b&&b.click();});}
+document.getElementById('copy').onclick=()=>{const t=document.getElementById('code').textContent;const done=m=>document.getElementById('copied').textContent=m;
+  try{navigator.clipboard.writeText(t).then(()=>done('Copied'),()=>{selectCode();done('Selected, press copy');});}catch(e){selectCode();done('Selected, press copy');}};
+function selectCode(){const r=document.createRange();r.selectNodeContents(document.getElementById('code'));const s=getSelection();s.removeAllRanges();s.addRange(r);}
+
+/* ---------- wiring ---------- */
+function seg(id,key){const s=document.getElementById(id);s.querySelectorAll('button').forEach(b=>b.onclick=()=>{s.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));S[key]=b.dataset.v;all();});}
+function scen(id,obj,after){const s=document.getElementById(id);s.querySelectorAll('.btn').forEach(b=>b.onclick=()=>{s.querySelectorAll('.btn').forEach(x=>x.classList.toggle('on',x===b));obj.scen=b.dataset.v;after();});}
+function all(){['phoneJ','phoneD','phoneA'].forEach(i=>applyPhone(document.getElementById(i)));renderJ();renderD();renderA();renderFrames();}
+seg('themeSeg','theme');seg('lineSeg','lc');
+scen('jScen',J,()=>{J.open=true;renderJ();});
+scen('aScen',A,renderA);
+all();renderQs();
+})();
+
+</script>

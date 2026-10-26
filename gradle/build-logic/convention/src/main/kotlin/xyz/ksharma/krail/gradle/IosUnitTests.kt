@@ -57,6 +57,7 @@ val IOS_TEST_MODULES: List<String> = listOf(
     ":core:deeplink",
     ":core:navigation",
     ":core:transport",
+    ":feature:crowding:state",
     ":feature:debug-settings:store",
     ":taj",
 )

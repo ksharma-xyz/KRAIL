@@ -162,7 +162,6 @@ fun DepartureRow(
             CarriageSlot(
                 cars = departure.carriages,
                 sentence = departure.carriageSentence,
-                lineColor = lineColor,
                 modifier = Modifier.padding(top = dim.spacingS),
             )
         }

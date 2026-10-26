@@ -108,8 +108,8 @@ fun DepartureRow(
                     Modifier
                 },
             )
-            .padding(horizontal = dim.pageHorizontalPadding, vertical = dim.spacingL),
-        verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
+            .padding(horizontal = dim.pageHorizontalPadding, vertical = dim.spacingXL),
+        verticalArrangement = Arrangement.spacedBy(dim.spacingS),
     ) {
         // Line 1: relative time + mode icon + line badge (left) | platform text (right)
         DepartureHeaderRow(
@@ -138,7 +138,8 @@ fun DepartureRow(
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
             verticalArrangement = Arrangement.spacedBy(dim.spacingXXS),
-            itemVerticalAlignment = Alignment.CenterVertically,
+            // Bottom, so on a delayed row the tag sits on the actual time, not between the two.
+            itemVerticalAlignment = Alignment.Bottom,
         ) {
             ScheduledTimeRow(
                 timeText = departure.departureTimeText,

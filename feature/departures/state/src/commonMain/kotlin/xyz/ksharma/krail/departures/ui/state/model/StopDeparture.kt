@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.departures.ui.state.model
 
 import androidx.compose.runtime.Stable
+import xyz.ksharma.krail.feature.crowding.CarriageLevels
 import xyz.ksharma.krail.feature.crowding.SeatLevel
 
 /**
@@ -133,4 +134,16 @@ data class StopDeparture(
 
     /** The platform's stop id, which is what GTFS-R trip updates key each stop on. */
     val platformStopId: String? = null,
-)
+
+    /** Forecast cars as the train leaves this platform. Null draws no carriage row. */
+    val carriages: CarriageLevels? = null,
+
+    /** The sentence above the carriage row. Null when only an end could be named. */
+    val carriageSentence: String? = null,
+
+    /** The tag worked out from [carriages], so tag and sentence never disagree. */
+    val carriageTag: String? = null,
+) {
+    /** Identifies the same run across refreshes, so an opened row stays open. */
+    val rowKey: String get() = realtimeTripId ?: "${lineNumber}_$departureUtcDateTime"
+}

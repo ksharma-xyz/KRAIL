@@ -8,9 +8,9 @@ import com.google.transit.realtime.FeedMessage
  * - [TRIP_UPDATES]       → `/v1|v2/gtfs/realtime/{feedName}`
  * - [VEHICLE_POSITIONS]  → `/v2/gtfs/vehiclepos/{feedName}`
  */
-internal enum class GtfsFeedType { TRIP_UPDATES, VEHICLE_POSITIONS }
+enum class GtfsFeedType { TRIP_UPDATES, VEHICLE_POSITIONS }
 
-internal interface GtfsRealtimeService {
+interface GtfsRealtimeService {
     /**
      * Fetches a GTFS-RT feed by name.
      *
@@ -25,7 +25,7 @@ internal interface GtfsRealtimeService {
     ): GtfsRealtimeResult
 }
 
-internal sealed class GtfsRealtimeResult {
+sealed class GtfsRealtimeResult {
     data class Fresh(
         val message: FeedMessage,
         val lastModified: String?,

@@ -21,6 +21,9 @@ sealed interface DebugSettingsEvent {
     /** Override the AI_SEARCH_INPUT_ENABLED RC flag locally for this debug build. */
     data class SetAiSearchInputEnabled(val enabled: Boolean) : DebugSettingsEvent
 
+    /** Override the CROWDING_CARRIAGES_IN_RESULTS_ENABLED RC flag locally for this debug build. */
+    data class SetCrowdingCarriagesEnabled(val enabled: Boolean) : DebugSettingsEvent
+
     /** Restore the entire state to [DebugSettingsState.default]. */
     data object Reset : DebugSettingsEvent
 }

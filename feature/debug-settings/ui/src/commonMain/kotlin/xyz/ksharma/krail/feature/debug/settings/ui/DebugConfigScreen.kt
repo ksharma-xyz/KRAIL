@@ -42,6 +42,8 @@ fun DebugConfigScreen(
     onAlertSummaryToggle: (Boolean) -> Unit = {},
     aiSearchInputEnabled: Boolean = false,
     onAiSearchInputToggle: (Boolean) -> Unit = {},
+    crowdingCarriagesEnabled: Boolean = true,
+    onCrowdingCarriagesEnabledToggle: (Boolean) -> Unit = {},
     onDeviceAiAvailable: Boolean = true,
     onBackClick: () -> Unit = {},
     onNetworkClick: () -> Unit = {},
@@ -121,6 +123,16 @@ fun DebugConfigScreen(
                         disabledReason = "On-device AI isn't available on this device.",
                         modifier = Modifier
                             .testTag(DebugSettingsTestTags.toggleTile("AI_SEARCH_INPUT_ENABLED")),
+                    )
+                }
+                item(key = "tile-crowding_carriages_in_results_enabled") {
+                    DebugConfigToggleTile(
+                        title = "Crowding Carriages",
+                        subtitle = "Override CROWDING_CARRIAGES_IN_RESULTS_ENABLED RC flag.",
+                        checked = crowdingCarriagesEnabled,
+                        onCheckedChange = onCrowdingCarriagesEnabledToggle,
+                        modifier = Modifier
+                            .testTag(DebugSettingsTestTags.toggleTile("CROWDING_CARRIAGES_IN_RESULTS_ENABLED")),
                     )
                 }
                 item(key = "tile-reset-review") {

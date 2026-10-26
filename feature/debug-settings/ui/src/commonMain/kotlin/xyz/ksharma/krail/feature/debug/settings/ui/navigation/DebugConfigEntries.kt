@@ -8,6 +8,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import org.koin.compose.viewmodel.koinViewModel
+import xyz.ksharma.krail.feature.debug.settings.state.DebugSettingsEvent
 import xyz.ksharma.krail.feature.debug.settings.ui.DebugConfigScreen
 import xyz.ksharma.krail.feature.debug.settings.ui.DebugSettingsViewModel
 import xyz.ksharma.krail.feature.debug.settings.ui.NetworkConfigScreen
@@ -43,6 +44,10 @@ fun EntryProviderScope<NavKey>.DebugConfigEntries(
             onAlertSummaryToggle = viewModel::setAlertSummaryEnabled,
             aiSearchInputEnabled = state.aiSearchInputEnabled,
             onAiSearchInputToggle = viewModel::setAiSearchInputEnabled,
+            crowdingCarriagesEnabled = state.crowdingCarriagesEnabled,
+            onCrowdingCarriagesEnabledToggle = { enabled ->
+                viewModel.onEvent(DebugSettingsEvent.SetCrowdingCarriagesEnabled(enabled))
+            },
             onDeviceAiAvailable = onDeviceAiAvailable,
             onBackClick = onBack,
             onNetworkClick = onNavigateToNetwork,

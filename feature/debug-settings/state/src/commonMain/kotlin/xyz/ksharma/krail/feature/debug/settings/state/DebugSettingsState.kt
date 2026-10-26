@@ -18,6 +18,7 @@ data class DebugSettingsState(
     val addressSearchEnabled: Boolean = DEFAULT_ADDRESS_SEARCH_ENABLED,
     val alertSummaryEnabled: Boolean = DEFAULT_ALERT_SUMMARY_ENABLED,
     val aiSearchInputEnabled: Boolean = DEFAULT_AI_SEARCH_INPUT_ENABLED,
+    val crowdingCarriagesEnabled: Boolean = DEFAULT_CROWDING_CARRIAGES_ENABLED,
 ) {
     companion object {
         val DEFAULT_SOURCE: NetworkSource = NetworkSource.FOLLOW_RC
@@ -35,12 +36,17 @@ data class DebugSettingsState(
         // like production until a developer flips this row.
         const val DEFAULT_AI_SEARCH_INPUT_ENABLED: Boolean = false
 
+        // Matches CROWDING_CARRIAGES_IN_RESULTS_ENABLED's RC default so debug builds behave like production
+        // until a developer flips this row.
+        const val DEFAULT_CROWDING_CARRIAGES_ENABLED: Boolean = true
+
         fun default(): DebugSettingsState = DebugSettingsState(
             source = DEFAULT_SOURCE,
             tripTrackingEnabled = DEFAULT_TRIP_TRACKING_ENABLED,
             addressSearchEnabled = DEFAULT_ADDRESS_SEARCH_ENABLED,
             alertSummaryEnabled = DEFAULT_ALERT_SUMMARY_ENABLED,
             aiSearchInputEnabled = DEFAULT_AI_SEARCH_INPUT_ENABLED,
+            crowdingCarriagesEnabled = DEFAULT_CROWDING_CARRIAGES_ENABLED,
         )
     }
 }

@@ -25,6 +25,7 @@ import xyz.ksharma.krail.sandook.SandookPreferences
  * | `KEY_ADDRESS_SEARCH_ENABLED`  | String  | "true"/"false" override          |
  * | `KEY_ALERT_SUMMARY_ENABLED`   | String  | "true"/"false" override          |
  * | `KEY_AI_SEARCH_INPUT_ENABLED` | String  | "true"/"false" override          |
+ * | `KEY_CROWDING_CARRIAGES_ENABLED` | String | "true"/"false" override |
  *
  * Missing rows hydrate to [DebugSettingsState.default]. Unknown / corrupt
  * values fall back to the default rather than throwing.
@@ -60,6 +61,9 @@ internal class RealDebugNetworkConfigStore(
                     is DebugSettingsEvent.SetAiSearchInputEnabled -> _state.value.copy(
                         aiSearchInputEnabled = event.enabled,
                     )
+                    is DebugSettingsEvent.SetCrowdingCarriagesEnabled -> _state.value.copy(
+                        crowdingCarriagesEnabled = event.enabled,
+                    )
                     DebugSettingsEvent.Reset -> DebugSettingsState.default()
                 }
 
@@ -87,12 +91,16 @@ internal class RealDebugNetworkConfigStore(
         val aiSearchInputEnabled = preferences.getString(KEY_AI_SEARCH_INPUT_ENABLED)
             ?.toBooleanStrictOrNull()
             ?: defaults.aiSearchInputEnabled
+        val crowdingCarriagesEnabled = preferences.getString(KEY_CROWDING_CARRIAGES_ENABLED)
+            ?.toBooleanStrictOrNull()
+            ?: defaults.crowdingCarriagesEnabled
         return DebugSettingsState(
             source = source,
             tripTrackingEnabled = tripTrackingEnabled,
             addressSearchEnabled = addressSearchEnabled,
             alertSummaryEnabled = alertSummaryEnabled,
             aiSearchInputEnabled = aiSearchInputEnabled,
+            crowdingCarriagesEnabled = crowdingCarriagesEnabled,
         )
     }
 
@@ -113,12 +121,16 @@ internal class RealDebugNetworkConfigStore(
             is DebugSettingsEvent.SetAiSearchInputEnabled ->
                 preferences.setString(KEY_AI_SEARCH_INPUT_ENABLED, next.aiSearchInputEnabled.toString())
 
+            is DebugSettingsEvent.SetCrowdingCarriagesEnabled ->
+                preferences.setString(KEY_CROWDING_CARRIAGES_ENABLED, next.crowdingCarriagesEnabled.toString())
+
             DebugSettingsEvent.Reset -> {
                 preferences.deletePreference(KEY_DEBUG_NETWORK_SOURCE)
                 preferences.deletePreference(KEY_TRIP_TRACKING_ENABLED)
                 preferences.deletePreference(KEY_ADDRESS_SEARCH_ENABLED)
                 preferences.deletePreference(KEY_ALERT_SUMMARY_ENABLED)
                 preferences.deletePreference(KEY_AI_SEARCH_INPUT_ENABLED)
+                preferences.deletePreference(KEY_CROWDING_CARRIAGES_ENABLED)
             }
         }
     }
@@ -129,5 +141,6 @@ internal class RealDebugNetworkConfigStore(
         const val KEY_ADDRESS_SEARCH_ENABLED = "KEY_ADDRESS_SEARCH_ENABLED"
         const val KEY_ALERT_SUMMARY_ENABLED = "KEY_ALERT_SUMMARY_ENABLED"
         const val KEY_AI_SEARCH_INPUT_ENABLED = "KEY_AI_SEARCH_INPUT_ENABLED"
+        const val KEY_CROWDING_CARRIAGES_ENABLED = "KEY_CROWDING_CARRIAGES_ENABLED"
     }
 }

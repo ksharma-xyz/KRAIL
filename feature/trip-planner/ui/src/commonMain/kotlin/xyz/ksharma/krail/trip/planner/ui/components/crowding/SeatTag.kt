@@ -10,6 +10,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,8 +23,10 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
@@ -47,28 +50,35 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
  */
 @Composable
 internal fun SeatTag(text: String, modifier: Modifier = Modifier, cars: CarriageLevels? = null) {
+    val style = KrailTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold)
+    // The bars stand on the words' baseline, so a short bar never hangs below the text.
+    val baseline = with(LocalDensity.current) {
+        rememberTextMeasurer().measure(text = "Seats", style = style).firstBaseline.toDp()
+    }
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingS),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Top,
     ) {
-        if (cars != null && cars.size > 1) MiniCars(levels = cars.levels, ink = KrailTheme.colors.onSurface)
-        CrossfadeText(text = text) { words ->
-            Text(
-                text = words,
-                style = KrailTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-                color = KrailTheme.colors.onSurface,
+        if (cars != null && cars.size > 1) {
+            MiniCars(
+                levels = cars.levels,
+                ink = KrailTheme.colors.onSurface,
+                modifier = Modifier.padding(top = (baseline - MINI_HEIGHT).coerceAtLeast(0.dp)),
             )
+        }
+        CrossfadeText(text = text) { words ->
+            Text(text = words, style = style, color = KrailTheme.colors.onSurface)
         }
     }
 }
 
 @Composable
-private fun MiniCars(levels: List<SeatLevel>, ink: Color) {
+private fun MiniCars(levels: List<SeatLevel>, ink: Color, modifier: Modifier = Modifier) {
     val width = MINI_BAR_WIDTH * levels.size + MINI_BAR_GAP * (levels.size - 1)
     val fills = animatedFills(levels)
     Canvas(
-        modifier = Modifier
+        modifier = modifier
             .width(width)
             .height(MINI_HEIGHT)
             // The words beside it say the same thing.

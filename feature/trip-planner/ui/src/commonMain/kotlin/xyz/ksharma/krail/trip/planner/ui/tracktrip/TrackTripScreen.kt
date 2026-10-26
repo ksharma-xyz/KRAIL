@@ -95,6 +95,7 @@ import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.components.OriginDestination
 import xyz.ksharma.krail.trip.planner.ui.components.TrackedLegView
 import xyz.ksharma.krail.trip.planner.ui.components.WalkingLeg
+import xyz.ksharma.krail.trip.planner.ui.components.crowding.freshCarriages
 import xyz.ksharma.krail.trip.planner.ui.components.loading.LoadingEmojiAnim
 import xyz.ksharma.krail.trip.planner.ui.journeymap.JourneyMap
 import xyz.ksharma.krail.trip.planner.ui.journeymap.LiveVehicleLayer
@@ -457,7 +458,7 @@ private fun JourneyContent(
                 )
             }
 
-            itemsIndexed(journey.legs, key = { index, _ -> "leg_$index" }) { _, leg ->
+            itemsIndexed(journey.legs, key = { index, _ -> "leg_$index" }) { index, leg ->
                 Box(modifier = Modifier.padding(horizontal = dim.spacingXL)) {
                     when (leg) {
                         is TrackedLeg.Transport -> TrackedLegView(
@@ -465,6 +466,7 @@ private fun JourneyContent(
                             now = now,
                             isArrived = isArrived,
                             stopDelays = liveOverlay?.stopDelays ?: emptyMap(),
+                            liveCarriages = freshCarriages(liveOverlay?.vehiclePositions?.get(index), now),
                         )
 
                         is TrackedLeg.Walk -> WalkingLeg(

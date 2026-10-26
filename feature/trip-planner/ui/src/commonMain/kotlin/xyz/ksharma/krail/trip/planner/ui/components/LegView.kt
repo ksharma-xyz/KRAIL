@@ -41,6 +41,7 @@ import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
+import xyz.ksharma.krail.feature.crowding.CarriageLevels
 import xyz.ksharma.krail.taj.LocalContentAlpha
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
@@ -50,6 +51,7 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.tokens.ContentAlphaTokens.DisabledContentAlpha
+import xyz.ksharma.krail.trip.planner.ui.components.crowding.CarriageSlot
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 
@@ -62,6 +64,8 @@ fun LegView(
     displayAllStops: Boolean = false,
     isSchoolBus: Boolean = false,
     isOnDemand: Boolean = false,
+    carriages: CarriageLevels? = null,
+    carriageSentence: String? = null,
     onClick: () -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
@@ -102,6 +106,13 @@ fun LegView(
                 routeText = routeText,
                 badgeText = transportModeLine.lineName,
                 badgeColor = transportModeLine.lineColorCode.hexToComposeColor(),
+            )
+
+            CarriageSlot(
+                cars = carriages,
+                sentence = carriageSentence,
+                lineColor = timelineColor,
+                modifier = Modifier.padding(top = dim.spacingL),
             )
 
             Spacer(modifier = Modifier.height(dim.spacingL))

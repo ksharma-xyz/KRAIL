@@ -385,6 +385,8 @@ private fun JourneyLegItem(
                     displayAllStops = displayAllStops,
                     isSchoolBus = leg.isSchoolBus,
                     isOnDemand = leg.isOnDemand,
+                    carriages = leg.carriages,
+                    carriageSentence = leg.carriageSentence,
                     modifier = Modifier.padding(
                         top = if (index > 0) {
                             getPaddingValue(

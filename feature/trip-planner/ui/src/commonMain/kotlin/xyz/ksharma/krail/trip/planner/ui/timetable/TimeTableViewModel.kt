@@ -51,6 +51,7 @@ import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.core.share.ShareManager
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
+import xyz.ksharma.krail.feature.crowding.CarriageForecastRepository
 import xyz.ksharma.krail.feature.track.TripDeepLinkEncoder
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
@@ -66,7 +67,9 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
+import xyz.ksharma.krail.trip.planner.ui.timetable.business.CarriageForecastLoader
 import xyz.ksharma.krail.trip.planner.ui.timetable.business.buildJourneyListWithRawData
+import xyz.ksharma.krail.trip.planner.ui.timetable.business.withCarriages
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -93,7 +96,10 @@ class TimeTableViewModel(
      * here, so a test can decide what time it is. See `dateTimeModule`.
      */
     private val clock: Clock = Clock.System,
+    carriageForecasts: CarriageForecastRepository? = null,
 ) : ViewModel() {
+
+    private val carriageLoader = CarriageForecastLoader(carriageForecasts, viewModelScope, ioDispatcher)
 
     private val _uiState: MutableStateFlow<TimeTableState> = MutableStateFlow(TimeTableState())
     val uiState: StateFlow<TimeTableState> = _uiState
@@ -534,6 +540,7 @@ class TimeTableViewModel(
             updateUiState { copy(networkError = null) }
             updateTripsCache(response)
             updateUiStateWithFilteredTrips()
+            carriageLoader.loadOnceFor(_uiState.value.journeyList) { updateUiStateWithFilteredTrips() }
             // The timetable loaded without error: arm a review ask to fire once the user
             // navigates back to the calm Saved Trips screen. Idempotent, so a background
             // auto-refresh re-arming the same moment is harmless.
@@ -666,6 +673,7 @@ class TimeTableViewModel(
             .distinctBy { it.journeyId }
         val journeyList = updateJourneyCardInfoTimeText(mergedJourneys)
             .excludeUnselectedModes()
+            .withCarriages(carriageLoader.index)
             .sortedBy { it.originUtcDateTime.utcToLocalDateTimeAEST() }
             .toImmutableList()
 

@@ -68,6 +68,7 @@ import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.departures.ui.DeparturesViewModel
+import xyz.ksharma.krail.feature.crowding.CarriageLevels
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.AnimatedDots
 import xyz.ksharma.krail.taj.components.Button
@@ -647,6 +648,7 @@ private fun LazyListScope.journeyCardItems(
             deepLinkUrl = state.deepLinkUrls[journey.journeyId],
             destinationUtcDateTime = journey.destinationUtcDateTime,
             seatTag = journey.seatTag,
+            seatCars = journey.seatCars,
             nextServiceLine = journey.nextServiceLine,
             onNextServiceClick = {
                 journey.nextServiceJourneyId?.let {
@@ -682,6 +684,7 @@ private fun JourneyCardItem(
     deepLinkUrl: String? = null,
     destinationUtcDateTime: String = "",
     seatTag: String? = null,
+    seatCars: CarriageLevels? = null,
     nextServiceLine: String? = null,
     onNextServiceClick: () -> Unit = {},
 ) {
@@ -710,6 +713,7 @@ private fun JourneyCardItem(
             deepLinkUrl = deepLinkUrl,
             destinationUtcDateTime = destinationUtcDateTime,
             seatTag = seatTag,
+            seatCars = seatCars,
             nextServiceLine = nextServiceLine,
             onNextServiceClick = onNextServiceClick,
         )

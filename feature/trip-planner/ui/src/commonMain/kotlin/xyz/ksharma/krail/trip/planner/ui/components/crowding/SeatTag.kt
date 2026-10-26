@@ -1,12 +1,24 @@
 package xyz.ksharma.krail.trip.planner.ui.components.crowding
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
+import xyz.ksharma.krail.feature.crowding.CarriageLevels
+import xyz.ksharma.krail.feature.crowding.SeatLevel
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -15,27 +27,59 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 /**
  * The seat tag beside a departure time: "Seats at both ends", "Few seats", "Standing only".
  *
+ * Plain text, no pill, led by a small bar per car when the cars are known: a taller bar is a
+ * fuller car, so the row reads at a glance without a key. Buses and trains without carriage
+ * data show the words alone.
+ *
  * It arrives with a response the screen already loads, so it has no loading or error state:
- * present or absent. Neutral on purpose (design decision 1A): no traffic-light colours, so it
- * never clashes with the line colour beside it and never relies on colour to carry the level.
- * The fill is a low-alpha wash of the content colour rather than a new token, so it reads the
- * same on the surface, on a past-departure row and in every theme.
+ * present or absent. Neutral on purpose (design decision 1A): no traffic-light colours, and the
+ * words always carry the level, never the bars alone.
  */
 @Composable
-internal fun SeatTag(text: String, modifier: Modifier = Modifier) {
-    val dim = KrailTheme.dimensions
-    val shape = RoundedCornerShape(dim.radiusFull)
-    Text(
-        text = text,
-        style = KrailTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-        color = KrailTheme.colors.onSurface,
-        modifier = modifier
-            .background(color = KrailTheme.colors.onSurface.copy(alpha = TAG_FILL_ALPHA), shape = shape)
-            .padding(horizontal = dim.spacingS, vertical = dim.spacingXXS),
-    )
+internal fun SeatTag(text: String, modifier: Modifier = Modifier, cars: CarriageLevels? = null) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingS),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (cars != null && cars.size > 1) MiniCars(levels = cars.levels, ink = KrailTheme.colors.onSurface)
+        Text(
+            text = text,
+            style = KrailTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+            color = KrailTheme.colors.onSurface,
+        )
+    }
 }
 
-private const val TAG_FILL_ALPHA = 0.08f
+@Composable
+private fun MiniCars(levels: List<SeatLevel>, ink: Color) {
+    val width = MINI_BAR_WIDTH * levels.size + MINI_BAR_GAP * (levels.size - 1)
+    Canvas(
+        modifier = Modifier
+            .width(width)
+            .height(MINI_HEIGHT)
+            // The words beside it say the same thing.
+            .clearAndSetSemantics { },
+    ) {
+        val bar = MINI_BAR_WIDTH.toPx()
+        val step = bar + MINI_BAR_GAP.toPx()
+        val radius = CornerRadius(MINI_BAR_CORNER.toPx())
+        levels.forEachIndexed { index, level ->
+            val barHeight = size.height * (level.ordinal + 1f) / SeatLevel.entries.size
+            drawRoundRect(
+                color = ink,
+                topLeft = Offset(index * step, size.height - barHeight),
+                size = Size(bar, barHeight),
+                cornerRadius = radius,
+            )
+        }
+    }
+}
+
+private val MINI_HEIGHT: Dp = 12.dp
+private val MINI_BAR_WIDTH: Dp = 4.dp
+private val MINI_BAR_GAP: Dp = 1.5.dp
+private val MINI_BAR_CORNER: Dp = 1.5.dp
 
 // region Previews
 
@@ -44,7 +88,12 @@ private const val TAG_FILL_ALPHA = 0.08f
 @Composable
 private fun Preview_SeatTag_Zone() {
     PreviewTheme {
-        SeatTag(text = "Seats at both ends")
+        SeatTag(
+            text = "Seats at both ends",
+            cars = CarriageLevels(
+                listOf(SeatLevel.SEATS_AVAILABLE) + List(6) { SeatLevel.FEW_SEATS } + SeatLevel.SEATS_AVAILABLE,
+            ),
+        )
     }
 }
 

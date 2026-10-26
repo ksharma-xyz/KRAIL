@@ -14,7 +14,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import xyz.ksharma.krail.feature.crowding.CarriageLevels
 
 /**
@@ -32,7 +31,6 @@ import xyz.ksharma.krail.feature.crowding.CarriageLevels
 internal fun CarriageSlot(
     cars: CarriageLevels?,
     sentence: String?,
-    lineColor: Color,
     modifier: Modifier = Modifier,
     decideOnOpen: Boolean = true,
 ) {
@@ -50,7 +48,7 @@ internal fun CarriageSlot(
         enter = if (decideOnOpen) EnterTransition.None else fadeIn(tween(FADE_MS)) + expandVertically(),
         exit = fadeOut(tween(FADE_MS)) + shrinkVertically(tween(FOLD_MS, delayMillis = FADE_MS)),
     ) {
-        lastCars?.let { CarriageSection(cars = it, sentence = lastSentence, lineColor = lineColor) }
+        lastCars?.let { CarriageSection(cars = it, sentence = lastSentence) }
     }
 }
 

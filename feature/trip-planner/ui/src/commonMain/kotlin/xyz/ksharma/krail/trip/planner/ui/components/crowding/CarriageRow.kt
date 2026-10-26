@@ -30,14 +30,12 @@ import xyz.ksharma.krail.feature.crowding.CrowdingWording
 import xyz.ksharma.krail.feature.crowding.SeatLevel
 import xyz.ksharma.krail.feature.crowding.Zone
 import xyz.ksharma.krail.taj.components.Text
-import xyz.ksharma.krail.taj.contrast.ContrastAnalyzer.Companion.UI_COMPONENT_CONTRAST_AA
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.theme.ensureMinimumContrast
 import xyz.ksharma.krail.trip.planner.ui.components.isLargeFontScale
 
 /**
- * The carriage row (design decision 1A): one box per car in the line's own colour, filled to
- * show the level, a sentence above saying where the seats are, and a legend listing only the
+ * The carriage row (design decision 1A): one box per car in the text colour, filled to show
+ * the level, a sentence above saying where the seats are, and a legend listing only the
  * levels drawn. Cars run left to right in feed order; which real end that is has not been
  * checked yet, so nothing here labels an end.
  *
@@ -50,11 +48,12 @@ import xyz.ksharma.krail.trip.planner.ui.components.isLargeFontScale
 internal fun CarriageSection(
     cars: CarriageLevels,
     sentence: String?,
-    lineColor: Color,
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
-    val ink = lineColor.ensureMinimumContrast(KrailTheme.colors.surface, UI_COMPONENT_CONTRAST_AA)
+    // Text colour, not the line colour: the row sits on the line-coloured leg card, where the
+    // line colour has too little contrast to read the fill.
+    val ink = KrailTheme.colors.onSurface
     Column(
         modifier = modifier
             .widthIn(max = MAX_ROW_WIDTH)
@@ -117,7 +116,7 @@ private fun CarriageLegend(levels: List<SeatLevel>, ink: Color) {
                 Text(
                     text = CrowdingWording.levelTag(level),
                     style = KrailTheme.typography.bodySmall,
-                    color = KrailTheme.colors.softLabel,
+                    color = KrailTheme.colors.onSurface,
                 )
             }
         }

@@ -111,7 +111,6 @@ fun LegView(
             CarriageSlot(
                 cars = carriages,
                 sentence = carriageSentence,
-                lineColor = timelineColor,
                 modifier = Modifier.padding(top = dim.spacingL),
             )
 

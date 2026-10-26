@@ -110,7 +110,7 @@ class CarriageLevelsTest {
     }
 
     @Test
-    fun `typical level is the one most cars share, busier on a tie`() {
+    fun `typical level is the one most cars share and the busier one on a tie`() {
         val s = SeatLevel.SEATS_AVAILABLE
         val f = SeatLevel.FEW_SEATS
         assertEquals(f, CarriageLevels(listOf(s, s, f, f, f, f, f, f)).typicalLevel())

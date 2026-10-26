@@ -565,6 +565,9 @@ that contradicts the doc should also update the doc in the same change.
   levels, 30 to 50 minute horizon, coverage by mode, forecast accuracy), the feed paths and
   quirks, the platform check for carriage order, and the design rules that follow. Read before
   building any crowding UI or reading an `occupancy` field.
+- `docs/investigations/CROWDING_DESIGN_REVIEW.md` — the crowding design record: chosen chart,
+  where it shows, wording rules, field results and decisions. The `.html` beside it is the
+  interactive version with every state; open it in a browser.
 - `docs/investigations/NSW_715_WALK_LEG_INVESTIGATION.md` — why `TripResponseMapper.kt`'s
   `collapseSameRouteQuickWalks()` merges same-route-number legs split by a trivial walk;
   read before changing leg-merge/split logic in `TripResponseMapper.kt` or

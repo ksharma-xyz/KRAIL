@@ -60,8 +60,8 @@ Coast line had almost no live readings. The per-stop forecasts do cover T4.
 
 - Carriage position is 1-based on Sydney Trains and 0-based on Metro. Re-sequence from sorted
   order.
-- Trip update stop times carry no departure or arrival timestamps on Sydney Trains; only stop
-  ids and levels. Order comes from the feed order.
+- Trip update stop times carry an arrival or departure delay on most stops but a clock time on
+  only some. Order comes from the feed order.
 - Trip update stop ids are platform ids, which are not in `NSW_STOPS.pb`. Resolve them with
   `/v1/tp/stop_finder` (`disassembledName` gives the station; `parent.name` is the suburb).
 - `tripMessage` alerts and some vehicles linger for hours; always check timestamps.
@@ -83,6 +83,24 @@ that a pattern repeats. The plan:
 4. Published research supports two kinds of advice best: choosing a carriage, and taking a later
    service with seats instead of an overcrowded one. Most of it is simulation or survey work, so
    KRAIL's own measurement of what riders do is the missing piece.
+
+## What else the Sydney Trains trip updates feed carries
+
+Checked on Monday 26 October 2026, evening (619 trips in one fetch). The same download that
+brings the carriage forecasts also has:
+
+| Field | What it says | Seen |
+|---|---|---|
+| `TripDescriptor.schedule_relationship` | Scheduled, added, cancelled (3) or replacement (5) | 97 cancelled and 139 replacement trips in one evening fetch |
+| `StopTimeUpdate.schedule_relationship` | A stop the train will skip (1) | 30 skipped stops |
+| `StopTimeUpdate.departure.delay` | Seconds late at each stop | On most stops; 65 stops 5 minutes or more late |
+| `StopTimeUpdate.departure_occupancy_status` | Whole-train level per stop | About a third of stops |
+| Carriages per stop (extension 1007) | 8 or 4 cars | Tells a short train apart, which stops mid-platform |
+| Vehicle extension 1007 field 3 | One letter per train type (A, B, D, T, H, M and others) | Every trip. The type implies facilities such as toilets; the letter mapping is not documented, so check it before use |
+
+The trip planner already gives KRAIL delays, so only cancellations, skipped stops, short trains
+and train type would be new. None of these are in the crowding build; they are noted here so a
+later feature does not need a second download.
 
 ## Platform check: which end is the front
 

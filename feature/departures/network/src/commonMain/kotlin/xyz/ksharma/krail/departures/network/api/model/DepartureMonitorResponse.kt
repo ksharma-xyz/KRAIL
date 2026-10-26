@@ -48,6 +48,16 @@ data class DepartureMonitorResponse(
         @SerialName("departureTimeEstimated") val departureTimeEstimated: String? = null,
         @SerialName("location") val location: Location? = null,
         @SerialName("transportation") val transportation: Transportation? = null,
+        @SerialName("properties") val properties: StopEventProperties? = null,
+    )
+
+    /**
+     * [realtimeTripId] joins this departure to the same trip in the GTFS-R feeds, which is where
+     * per-carriage crowding comes from.
+     */
+    @Serializable
+    data class StopEventProperties(
+        @SerialName("RealtimeTripId") val realtimeTripId: String? = null,
     )
 
     /**
@@ -84,11 +94,14 @@ data class DepartureMonitorResponse(
      * [platformName] is the human-readable name of the specific bay/berth/platform
      * (e.g. "Town Hall Light Rail", "Town Hall, Park St, Stand J").
      * [platform] is the raw platform code (e.g. "LR1", "J").
+     * [occupancy] is how full the service is when it leaves here (`MANY_SEATS`, `FEW_SEATS`,
+     * `STANDING_ONLY`). Present only for services in roughly the next 30 to 50 minutes.
      */
     @Serializable
     data class LocationProperties(
         @SerialName("platformName") val platformName: String? = null,
         @SerialName("platform") val platform: String? = null,
+        @SerialName("occupancy") val occupancy: String? = null,
     )
 
     @Serializable

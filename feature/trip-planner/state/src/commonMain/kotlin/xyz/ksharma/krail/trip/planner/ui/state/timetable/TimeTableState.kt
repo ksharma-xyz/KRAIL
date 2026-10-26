@@ -8,6 +8,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
 import xyz.ksharma.krail.core.network.error.NetworkError
+import xyz.ksharma.krail.feature.crowding.SeatLevel
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
@@ -136,6 +137,10 @@ data class TimeTableState(
          * is compared against. Defaults to the system clock, so untouched call sites
          * behave exactly as before.
          */
+        /** Seat level of the first service the rider boards, which is what the tag shows. */
+        val seatLevel: SeatLevel?
+            get() = legs.firstNotNullOfOrNull { it as? Leg.TransportLeg }?.seatLevel
+
         fun hasJourneyStarted(now: Instant = Clock.System.now()): Boolean =
             Instant.parse(originUtcDateTime) < now
 
@@ -202,6 +207,18 @@ data class TimeTableState(
                 /** True when the leg's product class is 10 (NSW on-demand/flexible-zone
                  *  shuttle). Rendered with an "On Demand" tag next to the mode icon. */
                 val isOnDemand: Boolean = false,
+
+                /**
+                 * How full the service is at the rider's boarding stop. Null when TfNSW sent
+                 * nothing, which draws nothing.
+                 */
+                val seatLevel: SeatLevel? = null,
+
+                /** Joins this leg to the GTFS-R feeds for per-carriage crowding. */
+                val realtimeTripId: String? = null,
+
+                /** Platform stop id where the rider boards; GTFS-R keys stops on it. */
+                val boardingStopId: String? = null,
             ) : Leg()
         }
 

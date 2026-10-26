@@ -35,6 +35,7 @@ kotlin {
                 implementation(projects.core.festival)
                 implementation(projects.core.maps.state)
                 api(projects.core.network) // NetworkError on the public state surface
+                api(projects.feature.crowding.state) // SeatLevel on the journey legs
                 implementation(projects.core.transport)
                 implementation(projects.infoTile.state)
                 implementation(projects.taj)

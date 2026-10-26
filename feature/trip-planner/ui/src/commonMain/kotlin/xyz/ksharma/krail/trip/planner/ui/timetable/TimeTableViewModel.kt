@@ -541,7 +541,7 @@ class TimeTableViewModel(
             updateUiState { copy(networkError = null) }
             updateTripsCache(response)
             updateUiStateWithFilteredTrips()
-            carriageLoader.loadOnceFor(_uiState.value.journeyList) { updateUiStateWithFilteredTrips() }
+            carriageLoader.refreshFor(_uiState.value.journeyList) { updateUiStateWithFilteredTrips() }
             // The timetable loaded without error: arm a review ask to fire once the user
             // navigates back to the calm Saved Trips screen. Idempotent, so a background
             // auto-refresh re-arming the same moment is harmless.

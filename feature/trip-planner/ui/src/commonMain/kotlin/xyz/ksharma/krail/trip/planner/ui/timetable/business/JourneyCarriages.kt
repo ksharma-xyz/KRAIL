@@ -2,10 +2,13 @@ package xyz.ksharma.krail.trip.planner.ui.timetable.business
 
 import kotlinx.collections.immutable.toImmutableList
 import xyz.ksharma.krail.core.datetime.DateTimeHelper.utcToLocalDateTimeAEST
+import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.feature.crowding.CarriageIndex
+import xyz.ksharma.krail.feature.crowding.CarriageLevels
 import xyz.ksharma.krail.feature.crowding.Certainty
 import xyz.ksharma.krail.feature.crowding.CrowdingWording
+import xyz.ksharma.krail.feature.crowding.SeatLevel
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState.JourneyCardInfo
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState.JourneyCardInfo.Leg
 
@@ -41,7 +44,17 @@ private fun Leg.TransportLeg.withCarriages(index: CarriageIndex, isNight: Boolea
     val cars = index.at(realtimeTripId, boardingStopId)
         ?: return copy(carriages = null, carriageSentence = null, carriageTag = null)
     val advice = CrowdingWording.forCarriages(cars, Certainty.FORECAST, isNight)
+    log("[CROWDING] ${transportModeLine.lineName} $realtimeTripId at $boardingStopId: ${cars.compact()}")
     return copy(carriages = cars, carriageSentence = advice?.sentence, carriageTag = advice?.tag)
+}
+
+// S seats, F few seats, X standing only, one letter per car in feed order.
+private fun CarriageLevels.compact(): String = levels.joinToString("") {
+    when (it) {
+        SeatLevel.SEATS_AVAILABLE -> "S"
+        SeatLevel.FEW_SEATS -> "F"
+        SeatLevel.STANDING_ONLY -> "X"
+    }
 }
 
 private fun Leg.TransportLeg.isTrainWithTripId(): Boolean =

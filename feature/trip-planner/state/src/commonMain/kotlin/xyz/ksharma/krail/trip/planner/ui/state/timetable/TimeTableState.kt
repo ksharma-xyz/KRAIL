@@ -118,6 +118,15 @@ data class TimeTableState(
          * from the planned time. Show with strikethrough alongside [departureDeviation].
          */
         val scheduledOriginTime: String? = null,
+
+        /**
+         * "Want a seat? The next T1, ..." when a quieter run of the same line leaves soon.
+         * Null says nothing. Worked out by NextServiceRule, never in the UI.
+         */
+        val nextServiceLine: String? = null,
+
+        /** The card [nextServiceLine] names, opened when the rider taps the line. */
+        val nextServiceJourneyId: String? = null,
     ) {
         val journeyId: String
             get() = buildString {

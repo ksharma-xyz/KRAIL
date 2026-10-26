@@ -20,10 +20,16 @@ What Transport for NSW publishes, and how reliable it is, lives in
 
 ### Chart: one colour, filled boxes (decision 1A)
 
-Each carriage is a small box in the line card's own colour. How full the box is shows the level.
-One sentence above the boxes says where the seats are, and one legend row lists only the levels
-present. Rejected: traffic light colours on a coloured card (cheap, clashes), labels under each
-run of cars (collapse when levels alternate), "Front" and "Back" helper labels (crowding).
+Each carriage is a small box drawn in the card's text colour (white in dark mode, black in light),
+not the line colour: on the line-coloured leg card the line colour had too little contrast to
+read. How full the box is shows the level. One sentence above the boxes says where the seats
+are. There is no key: a fuller box reads as a fuller car without one, and the key added a line
+to every card (removed 27 October). Rejected: traffic light colours on a coloured card (cheap,
+clashes), labels under each run of cars (collapse when levels alternate), "Front" and "Back"
+helper labels (crowding), a faint track behind the small bars (read as a battery).
+
+On the closed card and the departure row the tag is plain text, no pill, led by one small bar per
+car when the cars are known. Buses and trains without car data show the words alone.
 
 Cars run back to front, left to right. At 320 dp or a large font size the cars merge into three
 blocks: Back, Middle, Front.
@@ -33,18 +39,17 @@ blocks: Back, Middle, Front.
 | Surface | What it shows | Where the data comes from |
 |---|---|---|
 | Trip results, tag beside the time | "Seats at the back" (decision 2A: the tag names the zone) | The trip response the screen already loads. No loading state |
-| Trip card, opened | Sentence plus carriage row | Sydney Trains trip updates feed, fetched once per results screen. Drawn only if it has arrived |
+| Trip card, opened | Sentence plus carriage row | Sydney Trains trip updates feed, refreshed with the results screen every 30 seconds. Drawn only if it has arrived |
 | Departure board, row tapped | Sentence, carriage row, expected level at the next stops. No Track button (decision 3A) | Same as above |
 | Live trip screen | Carriage row | Feed it already downloads |
-| On-device AI line | One extra line only if it says something the screen does not (decision 4A) | On the phone, behind `crowding_ai_tip_enabled`, off by default |
 
 ### States
 
 - The tag arrives with the trip response, so it has no loading or error state: present or absent.
 - The carriage row's slot is decided before the card is shown. If the feed fails afterwards, the
   row fades (about 150 ms) and folds to zero height (about 300 ms). No placeholder.
-- The AI line keeps a fixed height while it writes. If it fails, repeats the screen or fails the
-  fact check, it folds away. No fallback text.
+- A refresh never jumps: fills and small bars ease to their new level (600 ms), changed words
+  cross-fade (250 ms), and a tag that appears or goes away opens or folds top-down.
 
 ### Every width
 
@@ -198,3 +203,24 @@ Code: **1A 2A 3A 4A 5C 6A**.
    and "middle" ship.
 2. Use the level at the rider's boarding stop.
 3. When carriage data exists, work the tag out from the cars, so the two never disagree.
+
+## Decisions (27 October, after testing on a phone)
+
+- **No AI line. Code writes every crowding line.** Decision 4A is withdrawn and the
+  `crowding_ai_tip_enabled` flag is gone. On a phone that had the model:
+  - The model got the facts wrong. Given the cars in order it could not tell which were the
+    middle, and sent riders to standing-only middle cars on three cards in a row.
+  - When it was right it repeated the sentence already on the card.
+  - Most phones have no model, and iPhones had no route to one.
+
+  The answer here is arithmetic on known values: which car, which level, which stop. Code gets
+  that right every time, on every phone, instantly, and a test proves it. A language model helps
+  when the wording is hard and the facts can be loose; here the facts must be exact and the
+  wording is simple.
+- **Lines that add something the screen does not show**, written by code: seats opening up later
+  in the trip, the train filling up before the rider gets off, and the second train of a trip with
+  a change. Rules and the replay check are in `TFNSW_OCCUPANCY_DATA.md`, "Forecasts along the
+  trip". Each is mocked up for a pick before it is built.
+- **"Front" and "back" are wanted** in place of "except at one end", once the platform check
+  passes.
+

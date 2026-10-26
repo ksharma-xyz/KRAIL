@@ -5,10 +5,12 @@ package xyz.ksharma.krail.trip.planner.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.heading
@@ -20,6 +22,8 @@ import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.departures.ui.state.model.DepartureTiming
 import xyz.ksharma.krail.departures.ui.state.model.StopDeparture
+import xyz.ksharma.krail.feature.crowding.CrowdingWording
+import xyz.ksharma.krail.feature.crowding.SeatLevel
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
@@ -27,6 +31,7 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.components.crowding.SeatTag
 import xyz.ksharma.krail.trip.planner.ui.pastDepartureColor
 
 /**
@@ -52,6 +57,7 @@ private fun String.toTransportMode(): TransportMode? =
 fun DepartureRow(
     departure: StopDeparture,
     modifier: Modifier = Modifier,
+    seatTag: String? = departure.seatLevel?.let(CrowdingWording::levelTag),
 ) {
     val dim = KrailTheme.dimensions
     val isPast = departure.timing == DepartureTiming.Previous
@@ -118,15 +124,23 @@ fun DepartureRow(
             )
         }
 
-        // Line 2: scheduled vs actual departure time (shared composable, handles deviation row)
-        ScheduledTimeRow(
-            timeText = departure.departureTimeText,
-            isPast = isPast,
-            scheduledTimeText = if (hasDeviation) departure.scheduledTimeText else null,
-            deviationLabel = deviationLabel,
-            deviationColor = deviationColor,
-            onTimeTextStyle = KrailTheme.typography.bodyMedium,
-        )
+        // Line 2: scheduled vs actual departure time (shared composable, handles deviation row),
+        // with the seat tag beside it when TfNSW sent a level.
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
+            verticalArrangement = Arrangement.spacedBy(dim.spacingXXS),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
+            ScheduledTimeRow(
+                timeText = departure.departureTimeText,
+                isPast = isPast,
+                scheduledTimeText = if (hasDeviation) departure.scheduledTimeText else null,
+                deviationLabel = deviationLabel,
+                deviationColor = deviationColor,
+                onTimeTextStyle = KrailTheme.typography.bodyMedium,
+            )
+            seatTag?.let { SeatTag(text = it) }
+        }
 
         // Line 3: destination
         Text(
@@ -256,6 +270,15 @@ private val sampleDepartures = persistentListOf(
         isRealTime = false,
     ),
 )
+
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun DepartureRowTrainSeatTagPreview() {
+    PreviewTheme(KrailThemeStyle.Train) {
+        DepartureRow(departure = sampleDepartures[3].copy(seatLevel = SeatLevel.FEW_SEATS))
+    }
+}
 
 @ScreenshotTest
 @PreviewComponent

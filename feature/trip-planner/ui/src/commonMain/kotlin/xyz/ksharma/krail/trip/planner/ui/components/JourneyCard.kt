@@ -64,6 +64,7 @@ import xyz.ksharma.krail.taj.theme.KrailDimensions
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.components.crowding.SeatTag
 import xyz.ksharma.krail.trip.planner.ui.pastDepartureTextStyle
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
@@ -110,6 +111,7 @@ fun JourneyCard(
     scheduledOriginTime: String? = null,
     deepLinkUrl: String? = null,
     destinationUtcDateTime: String = "",
+    seatTag: String? = null,
 ) {
     val dim = KrailTheme.dimensions
     val isPast by remember(timeToDeparture) {
@@ -183,6 +185,7 @@ fun JourneyCard(
                 totalTravelTime = totalTravelTime,
                 totalWalkTime = totalWalkTime,
                 isPast = isPast,
+                seatTag = seatTag,
             )
         }
 
@@ -434,6 +437,7 @@ private fun ResponsiveJourneyInfoRow(
     totalTravelTime: String,
     totalWalkTime: String?,
     isPast: Boolean = false,
+    seatTag: String? = null,
 ) {
     val dim = KrailTheme.dimensions
     FlowRow(
@@ -458,6 +462,10 @@ private fun ResponsiveJourneyInfoRow(
                 text = totalWalkTime,
                 textStyle = KrailTheme.typography.bodyLarge,
             )
+        }
+
+        if (seatTag != null) {
+            SeatTag(text = seatTag, modifier = Modifier.align(Alignment.CenterVertically))
         }
     }
 }
@@ -847,6 +855,31 @@ private fun Preview_Default_WithWalkTime() {
             totalUniqueServiceAlerts = 0,
             onClick = {},
             departureDeviation = TimeTableState.JourneyCardInfo.DepartureDeviation.OnTime,
+        )
+    }
+}
+
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun Preview_Default_WithSeatTag() {
+    PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
+        JourneyCard(
+            timeToDeparture = "in 12 mins",
+            originTime = "9:15am",
+            destinationTime = "9:45am",
+            totalTravelTime = "30 mins",
+            platformNumber = "2",
+            platformText = "Platform 2",
+            transportModeLineList = persistentListOf(
+                TransportModeLine(transportMode = TransportMode.Train, lineName = "T1"),
+            ),
+            legList = persistentListOf(),
+            cardState = JourneyCardState.DEFAULT,
+            totalWalkTime = "5 mins",
+            totalUniqueServiceAlerts = 0,
+            onClick = {},
+            seatTag = "Seats at both ends",
         )
     }
 }

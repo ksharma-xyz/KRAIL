@@ -195,6 +195,10 @@ object RemoteConfigDefaults {
                 second = true,
             ),
             Pair(
+                first = FlagKeys.CROWDING_NEXT_SERVICE_ENABLED.key,
+                second = false,
+            ),
+            Pair(
                 first = FlagKeys.AI_SEARCH_INPUT_ENABLED.key,
                 second = false,
             ),

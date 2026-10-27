@@ -65,6 +65,7 @@ All local until the maintainer says otherwise. Each branch under 500 lines.
 | Flag | Key | Default | Debug override |
 |---|---|---|---|
 | Carriage row in results (the one extra download) | `CROWDING_CARRIAGES_IN_RESULTS_ENABLED("crowding_carriages_in_results_enabled")` | on | Yes |
+| Next-service line ("Want a seat? The next T1...") | `CROWDING_NEXT_SERVICE_ENABLED("crowding_next_service_enabled")` | off | No, Remote Config only |
 
 Add each to `FlagKeys.kt` and `RemoteConfigDefaults.kt`, and a row in `DebugConfigScreen.kt` the
 way `alertSummaryEnabled` is done (`DebugSettingsState`, `DebugSettingsEvent`).

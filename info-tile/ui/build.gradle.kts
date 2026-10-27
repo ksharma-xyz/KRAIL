@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.krail.kotlin.multiplatform)
     alias(libs.plugins.krail.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.krail.snapshot.testing)
     alias(libs.plugins.krail.android.kmp.library)
 }
 
@@ -15,6 +16,14 @@ kotlin {
         namespace = "xyz.ksharma.krail.info.tiles.ui"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+
+        withHostTest {
+            isIncludeAndroidResources = true
+        }
+
+        androidResources {
+            enable = true
+        }
     }
 
     iosArm64()
@@ -27,6 +36,10 @@ kotlin {
     }
 
     sourceSets {
+        getByName("androidHostTest") {
+            kotlin.srcDir("src/androidHostTest/kotlin")
+        }
+
         androidMain {
             dependencies {
                 // https://youtrack.jetbrains.com/issue/KTIJ-32720/Support-common-androidx.compose.ui.tooling.preview.Preview-in-IDEA-and-Android-Studio

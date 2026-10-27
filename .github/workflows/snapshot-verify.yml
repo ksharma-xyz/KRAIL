@@ -82,6 +82,16 @@ jobs:
           ./gradlew :feature:trip-planner:ui:verifyRoborazziAndroidHostTest
           --continue -PciQuality=true
 
+      - name: Verify snapshots - info-tile
+        id: verify-info-tile
+        env:
+          ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
+          IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
+          CI: true
+          GITHUB_ACTIONS: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew :info-tile:ui:verifyRoborazziAndroidHostTest -PciQuality=true
+
       # The side-by-side reference/diff/new composites are the only way to judge whether a
       # reported change was intended. Uploaded whenever either step reported a diff — a
       # fully clean run's outputs are just copies of the goldens already in the repository.
@@ -89,7 +99,8 @@ jobs:
         if: >-
           always() &&
           (steps.verify-taj.outcome == 'failure' ||
-           steps.verify-trip-planner.outcome == 'failure')
+           steps.verify-trip-planner.outcome == 'failure' ||
+           steps.verify-info-tile.outcome == 'failure')
         uses: actions/upload-artifact@v7
         with:
           name: roborazzi-compare-${{ github.run_id }}

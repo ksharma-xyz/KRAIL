@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.info.tile.state.InfoTileCta
 import xyz.ksharma.krail.info.tile.state.InfoTileData
 import xyz.ksharma.krail.info.tile.state.InfoTileState
@@ -149,6 +150,7 @@ fun InfoTile(
 
 // region Previews
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun InfoTileLightPreview() {
@@ -175,6 +177,7 @@ private fun InfoTileLightPreview() {
     }
 }
 
+@ScreenshotTest
 @PreviewComponent
 @Composable
 private fun InfoTileExpandedNoDismissPreview() {

@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -55,6 +56,9 @@ import xyz.ksharma.krail.trip.planner.ui.pastDepartureTextStyle
  *                          override (e.g. `bodyMedium` for departure rows where the
  *                          "in X mins" title already establishes the visual hierarchy).
  * @param modifier          Modifier applied to the root layout.
+ * @param trailing          Drawn right after [timeText] on the same line (the seat tag), so on
+ *                          a delayed or early row it follows the actual time instead of the
+ *                          wider strikethrough line above it. Wraps below on a narrow screen.
  */
 @Composable
 fun ScheduledTimeRow(
@@ -65,6 +69,7 @@ fun ScheduledTimeRow(
     deviationLabel: String? = null,
     deviationColor: Color = Color.Unspecified,
     onTimeTextStyle: TextStyle = KrailTheme.typography.titleMedium,
+    trailing: (@Composable () -> Unit)? = null,
 ) {
     val dim = KrailTheme.dimensions
     if (scheduledTimeText != null && deviationLabel != null) {
@@ -89,20 +94,44 @@ fun ScheduledTimeRow(
                     color = deviationColor,
                 )
             }
-            Text(
-                text = timeText,
+            TimeWithTrailing(
+                timeText = timeText,
                 style = pastDepartureTextStyle(isPast, KrailTheme.typography.titleMedium),
-                color = KrailTheme.colors.label,
+                trailing = trailing,
             )
         }
     } else {
         // On-time layout: single time text
-        Text(
-            text = timeText,
+        TimeWithTrailing(
+            timeText = timeText,
             style = pastDepartureTextStyle(isPast, onTimeTextStyle),
-            color = KrailTheme.colors.label,
+            trailing = trailing,
             modifier = modifier,
         )
+    }
+}
+
+@Composable
+private fun TimeWithTrailing(
+    timeText: String,
+    style: TextStyle,
+    trailing: (@Composable () -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    if (trailing == null) {
+        Text(text = timeText, style = style, color = KrailTheme.colors.label, modifier = modifier)
+        return
+    }
+    val dim = KrailTheme.dimensions
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
+        verticalArrangement = Arrangement.spacedBy(dim.spacingXXS),
+        // Bottom, so the tag sits on the time's line rather than floating at its centre.
+        itemVerticalAlignment = Alignment.Bottom,
+    ) {
+        Text(text = timeText, style = style, color = KrailTheme.colors.label)
+        trailing()
     }
 }
 

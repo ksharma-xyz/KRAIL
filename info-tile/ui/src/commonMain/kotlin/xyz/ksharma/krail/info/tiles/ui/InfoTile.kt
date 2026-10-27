@@ -1,8 +1,6 @@
 package xyz.ksharma.krail.info.tiles.ui
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,21 +16,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.dropShadow
-import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.info.tile.state.InfoTileCta
 import xyz.ksharma.krail.info.tile.state.InfoTileData
 import xyz.ksharma.krail.info.tile.state.InfoTileState
-import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.SHADOW_ALPHA
-import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.borderWidth
 import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.horizontalPadding
-import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shadowRadius
-import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shadowSpread
 import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shape
 import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.verticalPadding
+import xyz.ksharma.krail.taj.components.AiWheelMark
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
@@ -42,7 +35,6 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.taj.themeBackgroundColor
 
 object InfoTileDefaults {
     val shape: RoundedCornerShape = RoundedCornerShape(size = 12.dp)
@@ -67,6 +59,7 @@ fun InfoTile(
     onDismissClick: (InfoTileData) -> Unit,
     // required for analytics only
     onTileExpand: (InfoTileData) -> Unit = {},
+    style: InfoTileStyle = InfoTileStyle.Standard,
 ) {
     var state by rememberSaveable { mutableStateOf(initialState) }
 
@@ -74,15 +67,7 @@ fun InfoTile(
         modifier = modifier
             .fillMaxWidth()
             // Shadow must be applied before clickable modifier
-            .dropShadow(
-                shape = shape,
-                shadow = Shadow(
-                    radius = shadowRadius,
-                    color = themeBackgroundColor(),
-                    spread = shadowSpread,
-                    alpha = SHADOW_ALPHA,
-                ),
-            )
+            .infoTileOuter(style)
             // clip shape added before clickable so that ripple indication is bounded within shape
             .clip(shape)
             .klickable(
@@ -97,21 +82,12 @@ fun InfoTile(
                     }
                 },
             )
-            .border(
-                width = borderWidth,
-                color = themeBackgroundColor(),
-                shape = shape,
-            )
-            // Apply background after shadow modifier, so that shadow color is not visible.
-            .background(color = KrailTheme.colors.surface, shape = shape)
+            .infoTileSurface(style)
             .padding(vertical = verticalPadding, horizontal = horizontalPadding)
             .animateContentSize()
             .semantics(mergeDescendants = true) {},
     ) {
-        Text(
-            text = infoTileData.title,
-            style = KrailTheme.typography.titleMedium,
-        )
+        InfoTileTitle(title = infoTileData.title, style = style)
 
         if (state == InfoTileState.EXPANDED) {
             Text(
@@ -120,29 +96,55 @@ fun InfoTile(
                 modifier = Modifier.padding(top = 8.dp),
             )
 
-            Row(
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-            ) {
-                if (infoTileData.showDismissButton) {
-                    TextButton(
-                        onClick = { onDismissClick(infoTileData) },
-                        dimensions = ButtonDefaults.mediumButtonSize(),
-                        modifier = Modifier.padding(end = 12.dp),
-                    ) {
-                        Text(text = infoTileData.dismissCtaText)
-                    }
-                }
+            if (infoTileData.showDismissButton || infoTileData.primaryCta != null) {
+                InfoTileActions(infoTileData = infoTileData, onCtaClick = onCtaClick, onDismissClick = onDismissClick)
+            }
+        }
+    }
+}
 
-                infoTileData.primaryCta?.let { cta ->
-                    Button(
-                        dimensions = ButtonDefaults.mediumButtonSize(),
-                        onClick = { onCtaClick(infoTileData) },
-                    ) {
-                        Text(text = cta.text)
-                    }
-                }
+@Composable
+private fun InfoTileTitle(title: String, style: InfoTileStyle) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (style == InfoTileStyle.AiFill) {
+            // The surface's own ink, not the gradient: a gradient wheel on a gradient fill vanishes.
+            val ink = KrailTheme.colors.onSurface
+            AiWheelMark(spinning = true, colors = listOf(ink, ink))
+        }
+        Text(text = title, style = KrailTheme.typography.titleMedium)
+    }
+}
+
+@Composable
+private fun InfoTileActions(
+    infoTileData: InfoTileData,
+    onCtaClick: (InfoTileData) -> Unit,
+    onDismissClick: (InfoTileData) -> Unit,
+) {
+    Row(
+        horizontalArrangement = Arrangement.End,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+    ) {
+        if (infoTileData.showDismissButton) {
+            TextButton(
+                onClick = { onDismissClick(infoTileData) },
+                dimensions = ButtonDefaults.mediumButtonSize(),
+                modifier = Modifier.padding(end = 12.dp),
+            ) {
+                Text(text = infoTileData.dismissCtaText)
+            }
+        }
+
+        infoTileData.primaryCta?.let { cta ->
+            Button(
+                dimensions = ButtonDefaults.mediumButtonSize(),
+                onClick = { onCtaClick(infoTileData) },
+            ) {
+                Text(text = cta.text)
             }
         }
     }
@@ -194,6 +196,27 @@ private fun InfoTileExpandedNoDismissPreview() {
                 showDismissButton = false,
             ),
             initialState = InfoTileState.EXPANDED,
+            onCtaClick = {},
+            onDismissClick = {},
+        )
+    }
+}
+
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun InfoTileAiFillPreview() {
+    PreviewTheme(themeStyle = KrailThemeStyle.Metro) {
+        InfoTile(
+            infoTileData = InfoTileData(
+                key = "ai_fill_tile",
+                title = "Want a seat?",
+                description = "The next M1, at 6:33am from Platform 4, has seats available and is due at " +
+                    "Barangaroo at 6:35am.",
+                showDismissButton = false,
+            ),
+            initialState = InfoTileState.EXPANDED,
+            style = InfoTileStyle.AiFill,
             onCtaClick = {},
             onDismissClick = {},
         )

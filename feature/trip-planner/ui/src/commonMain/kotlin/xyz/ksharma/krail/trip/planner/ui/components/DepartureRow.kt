@@ -5,12 +5,10 @@ package xyz.ksharma.krail.trip.planner.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.heading
@@ -134,23 +132,16 @@ fun DepartureRow(
         }
 
         // Line 2: scheduled vs actual departure time (shared composable, handles deviation row),
-        // with the seat tag beside it when TfNSW sent a level.
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
-            verticalArrangement = Arrangement.spacedBy(dim.spacingXXS),
-            // Bottom, so on a delayed row the tag sits on the actual time, not between the two.
-            itemVerticalAlignment = Alignment.Bottom,
-        ) {
-            ScheduledTimeRow(
-                timeText = departure.departureTimeText,
-                isPast = isPast,
-                scheduledTimeText = if (hasDeviation) departure.scheduledTimeText else null,
-                deviationLabel = deviationLabel,
-                deviationColor = deviationColor,
-                onTimeTextStyle = KrailTheme.typography.bodyMedium,
-            )
-            AnimatedSeatTag(text = seatTag, cars = departure.carriages)
-        }
+        // with the seat tag right after the actual time when TfNSW sent a level.
+        ScheduledTimeRow(
+            timeText = departure.departureTimeText,
+            isPast = isPast,
+            scheduledTimeText = if (hasDeviation) departure.scheduledTimeText else null,
+            deviationLabel = deviationLabel,
+            deviationColor = deviationColor,
+            onTimeTextStyle = KrailTheme.typography.bodyMedium,
+            trailing = { AnimatedSeatTag(text = seatTag, cars = departure.carriages) },
+        )
 
         // Line 3: destination
         Text(
@@ -347,6 +338,16 @@ private fun DepartureRowBusDelayedPreview() {
 private fun DepartureRowBusEarlyPreview() {
     PreviewTheme(KrailThemeStyle.Bus) {
         DepartureRow(departure = sampleDepartures[2])
+    }
+}
+
+/** The tag follows the actual time, not the wider "Early 2 min" line above it. */
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun DepartureRowBusEarlySeatTagPreview() {
+    PreviewTheme(KrailThemeStyle.Bus) {
+        DepartureRow(departure = sampleDepartures[2].copy(seatLevel = SeatLevel.SEATS_AVAILABLE))
     }
 }
 

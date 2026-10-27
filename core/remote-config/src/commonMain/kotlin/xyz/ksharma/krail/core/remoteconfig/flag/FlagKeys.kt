@@ -104,7 +104,7 @@ enum class FlagKeys(val key: String) {
     CROWDING_CARRIAGES_IN_RESULTS_ENABLED("crowding_carriages_in_results_enabled"),
 
     /**
-     * Gates the "Want a seat? The next T1..." line on trip result cards. `false` by default: in the
+     * Gates the "Want a seat?" next-service tip on trip result cards. `false` by default: in the
      * crowding study the named service was a level quieter only about half the time. When off, no
      * card names a later service. Seat tags and the carriage row are unaffected.
      */

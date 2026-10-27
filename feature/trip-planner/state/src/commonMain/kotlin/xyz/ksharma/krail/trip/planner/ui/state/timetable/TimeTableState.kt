@@ -120,12 +120,12 @@ data class TimeTableState(
         val scheduledOriginTime: String? = null,
 
         /**
-         * "Want a seat? The next T1, ..." when a quieter run of the same line leaves soon.
+         * "The next T1, ..." (the body of the "Want a seat?" tip) when a quieter run of the same line leaves soon.
          * Null says nothing. Worked out by NextServiceRule, never in the UI.
          */
         val nextServiceLine: String? = null,
 
-        /** The card [nextServiceLine] names, opened when the rider taps the line. */
+        /** The card [nextServiceLine] names. */
         val nextServiceJourneyId: String? = null,
     ) {
         val journeyId: String

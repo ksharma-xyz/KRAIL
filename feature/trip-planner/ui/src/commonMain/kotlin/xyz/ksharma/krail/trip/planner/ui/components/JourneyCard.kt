@@ -117,7 +117,6 @@ fun JourneyCard(
     seatTag: String? = null,
     seatCars: CarriageLevels? = null,
     nextServiceLine: String? = null,
-    onNextServiceClick: () -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
     val isPast by remember(timeToDeparture) {
@@ -208,7 +207,6 @@ fun JourneyCard(
                 onMapClick = onMapClick,
                 isMapsAvailable = isMapsAvailable,
                 nextServiceLine = nextServiceLine,
-                onNextServiceClick = onNextServiceClick,
                 onShareClick = {
                     coroutineScope.launch {
                         // toImageBitmap() must stay on Main (Compose draw thread).
@@ -258,7 +256,6 @@ fun ExpandedJourneyCardContent(
     isMapsAvailable: Boolean = false,
     onShareClick: () -> Unit = {},
     nextServiceLine: String? = null,
-    onNextServiceClick: () -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
     Column(modifier = modifier) {
@@ -328,7 +325,7 @@ fun ExpandedJourneyCardContent(
             }
         }
 
-        nextServiceLine?.let { NextServiceLine(text = it, onClick = onNextServiceClick) }
+        nextServiceLine?.let { NextServiceLine(text = it) }
 
         Spacer(
             modifier = Modifier

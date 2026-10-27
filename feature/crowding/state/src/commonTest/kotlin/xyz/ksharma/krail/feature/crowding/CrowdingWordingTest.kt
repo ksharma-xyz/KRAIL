@@ -72,7 +72,7 @@ class CrowdingWordingTest {
     @Test
     fun `next train has seats`() {
         assertEquals(
-            "Want a seat? The next T1, at 8:59am from Platform 1, has seats available and is due " +
+            "The next T1, at 8:59am from Platform 1, has seats available and is due " +
                 "at Central at 9:26am.",
             NextServiceWording.nextTrain(
                 service = NextService(
@@ -91,7 +91,7 @@ class CrowdingWordingTest {
     @Test
     fun `next bus has seats`() {
         assertEquals(
-            "Want a seat? The next 333, at 9:04am, has seats available.",
+            "The next 333, at 9:04am, has seats available.",
             NextServiceWording.nextBus(NextService("333", "9:04am", SEATS_AVAILABLE, Certainty.LIVE)),
         )
     }
@@ -99,7 +99,7 @@ class CrowdingWordingTest {
     @Test
     fun `forecast next service says should and never will`() {
         val line = NextServiceWording.nextBus(NextService("333", "9:04am", FEW_SEATS, Certainty.FORECAST))
-        assertEquals("Want a seat? The next 333, at 9:04am, should have a few seats left.", line)
+        assertEquals("The next 333, at 9:04am, should have a few seats left.", line)
         assertFalse(line.contains("will"))
     }
 

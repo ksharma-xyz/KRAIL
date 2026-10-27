@@ -56,7 +56,7 @@ class JourneyNextServiceTest {
     fun `a full train names the quieter one five minutes later`() {
         val result = listOf(full, quieter).withNextServices("Central").first()
         assertEquals(
-            "Want a seat? The next T1, at 8:59am from Platform 1, has seats available and is due at Central at 9:26am.",
+            "The next T1, at 8:59am from Platform 1, has seats available and is due at Central at 9:26am.",
             result.nextServiceLine,
         )
         assertEquals(quieter.journeyId, result.nextServiceJourneyId)
@@ -103,7 +103,7 @@ class JourneyNextServiceTest {
             legs = persistentListOf((sameStand.legs.single() as Leg.TransportLeg).copy(boardingStopId = "200041")),
         )
         assertEquals(
-            "Want a seat? The next 333, at 9:04am, has seats available.",
+            "The next 333, at 9:04am, has seats available.",
             listOf(bus, sameStand).withNextServices("Bondi Beach").first().nextServiceLine,
         )
         assertNull(listOf(bus, otherStand).withNextServices("Bondi Beach").first().nextServiceLine)

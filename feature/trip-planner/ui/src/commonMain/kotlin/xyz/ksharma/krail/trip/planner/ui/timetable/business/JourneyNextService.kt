@@ -23,8 +23,15 @@ import kotlin.time.Instant
  * does not carry the slack between them and waiting could break the change.
  *
  * The trip planner level is a reading from the vehicle now, so the line says "has".
+ *
+ * [enabled] is CROWDING_NEXT_SERVICE_ENABLED. Off clears every line: in the crowding study the
+ * named service was a level quieter only about half the time, so it stays off until proven.
  */
-internal fun List<JourneyCardInfo>.withNextServices(destinationName: String?): List<JourneyCardInfo> {
+internal fun List<JourneyCardInfo>.withNextServices(
+    destinationName: String?,
+    enabled: Boolean = true,
+): List<JourneyCardInfo> {
+    if (!enabled) return map { it.copy(nextServiceLine = null, nextServiceJourneyId = null) }
     if (destinationName == null) return this
     val options = mapNotNull { journey -> journey.serviceOption()?.let { journey to it } }
     val byId = options.associate { (journey, option) -> option.id to journey }

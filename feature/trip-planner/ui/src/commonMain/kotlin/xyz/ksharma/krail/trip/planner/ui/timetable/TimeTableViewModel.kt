@@ -235,6 +235,11 @@ class TimeTableViewModel(
             .asBoolean(fallback = false)
     }
 
+    private val isNextServiceEnabled: Boolean by lazy {
+        flag.getFlagValue(FlagKeys.CROWDING_NEXT_SERVICE_ENABLED.key)
+            .asBoolean(fallback = false)
+    }
+
     init {
         // Single VM-lifetime observer so DB updates always reach the UI even if
         // the screen briefly unsubscribes across config changes. Mirrors
@@ -675,7 +680,7 @@ class TimeTableViewModel(
         val journeyList = updateJourneyCardInfoTimeText(mergedJourneys)
             .excludeUnselectedModes()
             .withCarriages(carriageLoader.index)
-            .withNextServices(destinationName = tripInfo?.toStopName)
+            .withNextServices(destinationName = tripInfo?.toStopName, enabled = isNextServiceEnabled)
             .sortedBy { it.originUtcDateTime.utcToLocalDateTimeAEST() }
             .toImmutableList()
 

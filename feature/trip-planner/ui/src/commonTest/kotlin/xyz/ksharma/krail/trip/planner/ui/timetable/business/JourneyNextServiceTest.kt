@@ -63,6 +63,13 @@ class JourneyNextServiceTest {
     }
 
     @Test
+    fun `with the flag off no card names a later service`() {
+        val result = listOf(full, quieter).withNextServices("Central", enabled = false).first()
+        assertNull(result.nextServiceLine)
+        assertNull(result.nextServiceJourneyId)
+    }
+
+    @Test
     fun `the quieter train itself names nothing`() {
         assertNull(listOf(full, quieter).withNextServices("Central").last().nextServiceLine)
     }

@@ -73,7 +73,7 @@ Say "seats", never "room". Match the level, and match certainty with one word.
 | Full everywhere | Standing only, all along the train. |
 | Next train has seats | Want a seat? The next T1, at 8:59am from Platform 1, has seats available and is due at Central at 9:26am. |
 | Next bus has seats | Want a seat? The next 333, at 9:04am, has seats available. |
-| Night, after about 9pm | It's late. Wait in the blue Nightsafe area to board near the guard. |
+| Night, 10:30pm to 5am | No sentence. The tag keeps the level. |
 
 Rules:
 
@@ -89,8 +89,10 @@ Rules:
 - **A next service is mentioned only** when it is at least one full level quieter, leaves within
   about 10 minutes, the trip has no tight connection later, and it is not the last service of the
   night. For buses, only when the departure monitor lists that next bus at the same stop.
-- **Night:** NSW Police advise the blue Nightsafe area near the guard, so KRAIL says that instead
-  of pointing to the emptiest car, and never mentions a later train.
+- **Night (10:30pm to 5am):** KRAIL stops pointing to the emptiest car (NSW Police advise boarding
+  near the guard) and says nothing in its place, and never mentions a later train. A night line
+  ("It's late. Wait in the blue Nightsafe area...") was tried and dropped on 28 October as too
+  commanding: telling a rider it is late, or where to wait, is not KRAIL's call.
 - Full sentences with a verb, two at most, about twelve words each.
 
 ## Who is looking

@@ -71,7 +71,7 @@ private fun JourneyCardInfo.serviceOption(): ServiceOption? {
 }
 
 private fun JourneyCardInfo.isNight(): Boolean = runCatching {
-    CrowdingWording.isNight(originUtcDateTime.utcToLocalDateTimeAEST().hour)
+    originUtcDateTime.utcToLocalDateTimeAEST().let { CrowdingWording.isNight(it.hour, it.minute) }
 }.getOrDefault(true)
 
 private fun JourneyCardInfo.nextServiceLine(destinationName: String): String? {

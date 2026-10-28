@@ -194,7 +194,7 @@ way round, turn the gate off again; it is one line.
   line, clock time with am or pm, platform.
 - Match certainty in the wording: live "has", forecast "should", a pattern proven over many days
   "usually", no data says nothing.
-- At night, do not point riders to the emptiest carriage; NSW Police advise the blue Nightsafe
-  area near the guard.
+- At night (10:30pm to 5am), do not point riders to the emptiest carriage; NSW Police advise
+  boarding near the guard. Say nothing in its place.
 - Data that arrives with a response the screen already loads has no loading state of its own.
   Data from a second feed is fetched once per screen and drawn only if it is ready.

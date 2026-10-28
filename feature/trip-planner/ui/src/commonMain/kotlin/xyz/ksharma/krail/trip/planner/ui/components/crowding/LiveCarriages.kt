@@ -22,12 +22,13 @@ internal fun freshCarriages(position: LiveVehiclePosition?, now: Instant): Carri
     return cars.takeIf { now - readAt <= MAX_READING_AGE }
 }
 
-/** A live reading: "has", never "expected". Night swaps in the Nightsafe line. */
+/** A live reading: "has", never "expected". No sentence at night. */
 @OptIn(ExperimentalTime::class)
 internal fun liveCarriageSentence(cars: CarriageLevels?, now: Instant): String? {
     cars ?: return null
-    val hour = now.toLocalDateTime(SYDNEY).hour
-    return CrowdingWording.forCarriages(cars, Certainty.LIVE, CrowdingWording.isNight(hour))?.sentence
+    val local = now.toLocalDateTime(SYDNEY)
+    val isNight = CrowdingWording.isNight(local.hour, local.minute)
+    return CrowdingWording.forCarriages(cars, Certainty.LIVE, isNight)?.sentence
 }
 
 private val MAX_READING_AGE = 90.seconds

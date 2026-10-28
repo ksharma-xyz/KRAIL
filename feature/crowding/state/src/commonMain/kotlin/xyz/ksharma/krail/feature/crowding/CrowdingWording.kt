@@ -23,14 +23,18 @@ object CrowdingWording {
      */
     const val END_WORDING_ENABLED = true
 
-    const val NIGHT_LINE = "It's late. Wait in the blue Nightsafe area to board near the guard."
+    private const val MINUTES_PER_HOUR = 60
+    private const val NIGHT_STARTS_AT_MINUTE = 22 * MINUTES_PER_HOUR + 30
+    private const val NIGHT_ENDS_AT_MINUTE = 5 * MINUTES_PER_HOUR
 
-    private const val NIGHT_STARTS_AT_HOUR = 21
-    private const val NIGHT_ENDS_AT_HOUR = 5
-
-    /** After about 9pm KRAIL stops pointing riders at the emptiest car (NSW Police advice). */
-    fun isNight(hourOfDay: Int): Boolean =
-        hourOfDay >= NIGHT_STARTS_AT_HOUR || hourOfDay < NIGHT_ENDS_AT_HOUR
+    /**
+     * From 10:30pm to 5am KRAIL stops pointing riders at the emptiest car (NSW Police advise
+     * boarding near the guard at night) and says nothing in its place: the tag keeps the level.
+     */
+    fun isNight(hourOfDay: Int, minute: Int): Boolean {
+        val minuteOfDay = hourOfDay * MINUTES_PER_HOUR + minute
+        return minuteOfDay >= NIGHT_STARTS_AT_MINUTE || minuteOfDay < NIGHT_ENDS_AT_MINUTE
+    }
 
     /** The tag for a whole-train level, when there are no carriages to place the seats. */
     fun levelTag(level: SeatLevel): String = when (level) {
@@ -75,7 +79,7 @@ object CrowdingWording {
         val level = cars.quietestZoneLevel()
         val place = if (isNight) null else placeFor(cars.quietestZones(), endWordingEnabled)
         return when {
-            isNight -> SeatAdvice(sentence = NIGHT_LINE, tag = levelTag(level))
+            isNight -> SeatAdvice(sentence = null, tag = levelTag(level))
             place == null -> null
             place == Place.ALL_ALONG -> SeatAdvice(allAlongSentence(level, certainty), levelTag(level))
             else -> SeatAdvice(zoneSentence(level, certainty, place), zoneTag(level, place))

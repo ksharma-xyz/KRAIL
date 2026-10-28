@@ -30,7 +30,8 @@ internal fun List<JourneyCardInfo>.withCarriages(index: CarriageIndex): List<Jou
     if (index.tripCount == 0) return this
     return map { journey ->
         val isNight = runCatching {
-            CrowdingWording.isNight(journey.originUtcDateTime.utcToLocalDateTimeAEST().hour)
+            journey.originUtcDateTime.utcToLocalDateTimeAEST()
+                .let { CrowdingWording.isNight(it.hour, it.minute) }
         }.getOrDefault(false)
         journey.copy(
             legs = journey.legs.map { leg ->

@@ -310,7 +310,7 @@ details.part[open]::details-content{height:auto}
       <tr><td>Next bus has seats</td><td>Want a seat? The next 333, at 9:04am, has seats available. With only a few: The next 333, at 9:04am, has a few seats left.</td><td>This bus Standing only; the next one on the same route is listed at the same stop by the departure monitor and is Seats available or Few seats. Clock time, never "minutes behind"</td></tr>
       <tr><td>Forecast easing</td><td>It should ease off after Strathfield.</td><td>Per-stop forecast drops; every stop to there has a value</td></tr>
       <tr><td>Short train</td><td>This is a short train, so it stops mid-platform.</td><td>4 or 6 cars in the feed</td></tr>
-      <tr><td>Night</td><td>It's late. Wait in the blue Nightsafe area to board near the guard.</td><td>After about 9pm; replaces any zone advice</td></tr>
+      <tr><td>Night</td><td>No sentence. The tag keeps the level.</td><td>10:30pm to 5am; replaces any zone advice</td></tr>
       <tr><td>No data</td><td><span class="muted">Nothing at all.</span></td><td>No level, stale reading, or too far ahead</td></tr>
     </tbody></table></div>
 </section>
@@ -363,13 +363,13 @@ details.part[open]::details-content{height:auto}
 </section>
 <section>
   <h2>Night: quiet is not the goal</h2>
-  <p>NSW Police advise waiting in the <b>Nightsafe area marked in blue</b> on the platform, so you board the carriage closest to the guard (<a href="https://www.police.nsw.gov.au/safety_and_prevention/safe_and_secure/public_transport">NSW Police</a>). After about 9pm KRAIL says that instead of zone advice, and never mentions a later train.</p>
+  <p>NSW Police advise waiting in the <b>Nightsafe area marked in blue</b> on the platform, so you board the carriage closest to the guard (<a href="https://www.police.nsw.gov.au/safety_and_prevention/safe_and_secure/public_transport">NSW Police</a>). From 10:30pm to 5am KRAIL drops zone advice and says nothing in its place, and never mentions a later train.</p>
 </section>
 <section>
   <h2>Writing the advice</h2>
   <div class="rules">
     <div class="rule">Full sentences with a verb. No fragments like "At Central 9:26". Read it aloud.</div>
-    <div class="rule">Cheap to be wrong and the rider can check: speak to the rider.<span>"Seats at the back of the train." "Wait in the blue Nightsafe area."</span></div>
+    <div class="rule">Cheap to be wrong and the rider can check: speak to the rider.<span>"Seats at the back of the train."</span></div>
     <div class="rule">Costs time if wrong: the service gets the verb, the rider keeps the choice.<span>"Want a seat? The next T1, at 8:59am from Platform 1, has seats available and is due at Central at 9:26am." Never skip, wait or don't board.</span></div>
     <div class="rule">Goal, then fact, then cost. Certainty in one word: "has" live, "should" forecast, "usually" proven, never "will".</div>
     <div class="rule">Two sentences at most, about twelve words each. Stations and clock times riders recognise.</div>
@@ -518,7 +518,7 @@ const SIDE={
   next:'<b>Quieter one close behind.</b> Busy everywhere, and the next train on the same line, 7 minutes later, is two levels quieter. It is named like the station board names it: line, time with am or pm, platform. Tap the line: it jumps to that journey below and highlights it. The rider decides.',
   conn:'<b>Tight connection.</b> Same as above, but this journey changes trains at Central with a tight connection. A later train could break the trip, so no suggestion is made.',
   short:'<b>Short train.</b> 4 cars stop mid-platform, so the helper explains where it stops.',
-  night:'<b>Night.</b> After about 9pm the zone advice is replaced by the Nightsafe line. Never the emptiest car, never a later train.',
+  night:'<b>Night.</b> From 10:30pm to 5am there is no sentence. Never the emptiest car, never a later train.',
   live:'<b>Refresh changes level.</b> The screen\'s existing refresh brings new readings; cars ease to them and the headline updates in place. Height never changes.',
   none:'<b>No crowding.</b> Too far ahead or no sensors: no chip, no block. Exactly today\'s card.'
 };
@@ -526,7 +526,7 @@ const SIDE={
 function zones(L){const n=L.length,a=Math.ceil(n/3),b=Math.ceil(2*n/3);return [Math.max(...L.slice(0,a)),Math.max(...L.slice(a,b)),Math.max(...L.slice(b))];}
 /* cars run back to front, left to right, matching Back / Middle / Front labels */
 function advice(L,sc){
-  if(sc==='night')return {h:"It's late. Wait in the blue Nightsafe area to board near the guard.",chip:null};
+  if(sc==='night')return {h:'',chip:null};
   const [bk,md,fr]=zones(L),mn=Math.min(bk,md,fr),mx=Math.max(bk,md,fr);
   if(mn===mx)return mn===1?{h:'Seats available all along the train.',chip:W[1]}:mn===3?{h:'Standing only, all along the train.',chip:W[3]}:{h:'A few seats left along the train.',chip:W[2]};
   const room=[bk===mn,md===mn,fr===mn];

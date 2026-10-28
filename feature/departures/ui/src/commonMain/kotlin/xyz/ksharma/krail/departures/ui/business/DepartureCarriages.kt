@@ -32,7 +32,8 @@ private fun ImmutableList<StopDeparture>.withCarriages(index: CarriageIndex): Im
         val cars = index.at(departure.realtimeTripId, departure.platformStopId)
             ?: return@map departure.copy(carriages = null, carriageSentence = null, carriageTag = null)
         val isNight = runCatching {
-            CrowdingWording.isNight(departure.departureUtcDateTime.utcToLocalDateTimeAEST().hour)
+            departure.departureUtcDateTime.utcToLocalDateTimeAEST()
+                .let { CrowdingWording.isNight(it.hour, it.minute) }
         }.getOrDefault(false)
         val advice = CrowdingWording.forCarriages(cars, Certainty.FORECAST, isNight)
         departure.copy(

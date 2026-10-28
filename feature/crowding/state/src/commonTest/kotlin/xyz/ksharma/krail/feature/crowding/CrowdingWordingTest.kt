@@ -105,22 +105,23 @@ class CrowdingWordingTest {
     }
 
     @Test
-    fun `night replaces the zone line with the Nightsafe line`() {
+    fun `night drops the zone line and keeps the level tag`() {
         val advice = CrowdingWording.forCarriages(
             cars(SEATS_AVAILABLE, STANDING_ONLY, STANDING_ONLY, SEATS_AVAILABLE),
             Certainty.LIVE,
             isNight = true,
         )
-        assertEquals(CrowdingWording.NIGHT_LINE, advice?.sentence)
+        assertNull(advice?.sentence)
         assertEquals("Seats available", advice?.tag)
     }
 
     @Test
-    fun `night starts at 9pm and ends at 5am`() {
-        assertFalse(CrowdingWording.isNight(20))
-        assertEquals(true, CrowdingWording.isNight(21))
-        assertEquals(true, CrowdingWording.isNight(4))
-        assertFalse(CrowdingWording.isNight(5))
+    fun `night starts at 1030pm and ends at 5am`() {
+        assertFalse(CrowdingWording.isNight(21, 0))
+        assertFalse(CrowdingWording.isNight(22, 29))
+        assertTrue(CrowdingWording.isNight(22, 30))
+        assertTrue(CrowdingWording.isNight(4, 59))
+        assertFalse(CrowdingWording.isNight(5, 0))
     }
 
     @Test

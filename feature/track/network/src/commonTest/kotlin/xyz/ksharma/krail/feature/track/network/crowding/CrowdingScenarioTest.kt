@@ -38,11 +38,11 @@ class CrowdingScenarioTest {
     }
 
     @Test
-    fun `at night every captured scenario says the Nightsafe line`() {
+    fun `at night no captured scenario has a sentence`() {
         CrowdingScenarioFeedFixture.scenarios.forEach { scenario ->
             val cars = index.at(scenario.tripId, scenario.stopId)!!
             assertEquals(
-                CrowdingWording.NIGHT_LINE,
+                null,
                 CrowdingWording.forCarriages(cars, Certainty.FORECAST, isNight = true)?.sentence,
                 scenario.name,
             )

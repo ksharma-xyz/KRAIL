@@ -10,7 +10,6 @@ import xyz.ksharma.krail.core.testing.fakes.FakeCarriageForecastRepository
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.feature.crowding.CarriageIndex
 import xyz.ksharma.krail.feature.crowding.CarriageLevels
-import xyz.ksharma.krail.feature.crowding.CrowdingWording
 import xyz.ksharma.krail.feature.crowding.SeatLevel.FEW_SEATS
 import xyz.ksharma.krail.feature.crowding.SeatLevel.SEATS_AVAILABLE
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
@@ -67,10 +66,16 @@ class JourneyCarriagesTest {
     }
 
     @Test
-    fun `after 9pm the sentence is the Nightsafe line`() {
+    fun `from 1030pm there is no sentence`() {
         // 10:30pm in Sydney during daylight saving.
         val result = listOf(journey(originUtc = "2026-10-26T11:30:00Z")).withCarriages(index).single()
-        assertEquals(CrowdingWording.NIGHT_LINE, result.leg().carriageSentence)
+        assertNull(result.leg().carriageSentence)
+    }
+
+    @Test
+    fun `at 1029pm the zone sentence still shows`() {
+        val result = listOf(journey(originUtc = "2026-10-26T11:29:00Z")).withCarriages(index).single()
+        assertEquals("Seats expected at both ends.", result.leg().carriageSentence)
     }
 
     @Test

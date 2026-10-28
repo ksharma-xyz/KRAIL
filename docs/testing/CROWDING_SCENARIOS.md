@@ -28,7 +28,7 @@ and the opened departure row.
 | Seats at one end only | `SSFFFFFF` | Seats at the back | Seats expected at the back. |
 | No car data | none | Whole-train words from the trip planner, or nothing | None, and no boxes |
 | Bus | none | Seats available, Few seats or Standing only, once the bus has started its trip | None |
-| Night, after 9pm | any | As above | It's late. Wait in the blue Nightsafe area to board near the guard. |
+| Night, 10:30pm to 5am | any | The level (Seats available, Few seats or Standing only) | None |
 | Trip with a change of trains | per train | First train only (one tag per train is parked) | One per leg card |
 
 Behaviour that holds in every scenario:
@@ -68,7 +68,7 @@ the wrong stop.
 | Wording | Every row of the wording table | `CrowdingWordingTest` |
 | Zone maths | Ends, middle, typical level, 4 and 8 cars, 0- and 1-based positions | `CarriageLevelsTest` |
 | Feed decode | Extension 1007 read from captured feed bytes | `CarriageIndexMapperTest` |
-| Real scenarios end to end | One real captured stop per scenario: decode, index, cars, tag, sentence, night line | `CrowdingScenarioTest` with `CrowdingScenarioFeedFixture` |
+| Real scenarios end to end | One real captured stop per scenario: decode, index, cars, tag, sentence, no sentence at night | `CrowdingScenarioTest` with `CrowdingScenarioFeedFixture` |
 | Scenarios on screen | Each scenario's tag on the closed card and departure row, sentence and cars on the opened leg card and opened row | `CrowdingScenarioUiTest` (Robolectric) |
 | Joining the feed to trips | Cars, sentence and tag attached at the boarding stop; refresh and failure rules | `JourneyCarriagesTest`, `DepartureCarriagesTest` |
 | Screens | Tag, carriage row and opened departure row in light, dark and large font | Screenshot tests in `:feature:trip-planner:ui` |

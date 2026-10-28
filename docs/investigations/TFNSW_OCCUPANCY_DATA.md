@@ -175,6 +175,16 @@ Before shipping any zone advice, check on a real platform:
 
 Record the answer next to the mapper that orders carriages, with the date checked.
 
+### Result, 28 October 2026
+
+Checked on a T1 towards Berowra via Gordon at Seven Hills, Platform 2, against the carriage row in
+the app. The first three cars in feed order had seats, and the back of the arriving train was the
+visibly emptier end: **feed position 1 is the back of the train**.
+
+"At the back" and "at the front" are on from this check (`CrowdingWording.END_WORDING_ENABLED`).
+Steps 6 (a train that just reversed) and 7 (Metro) are still open. If either reports the other
+way round, turn the gate off again; it is one line.
+
 ## Design rules that follow from the data
 
 - Show levels as words. Never invent a number or a percentage.

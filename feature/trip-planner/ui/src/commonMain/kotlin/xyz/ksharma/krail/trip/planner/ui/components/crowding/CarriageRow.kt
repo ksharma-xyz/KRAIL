@@ -35,8 +35,8 @@ import xyz.ksharma.krail.trip.planner.ui.components.isLargeFontScale
 /**
  * The carriage row (design decision 1A): one box per car in the text colour, filled to show
  * the level, and a sentence above saying where the seats are. No key: a fuller box reads as a
- * fuller car without one. Cars run left to right in feed order; which real end that is has not been
- * checked yet, so nothing here labels an end.
+ * fuller car without one. Cars run left to right in feed order, back to front. Nothing here labels
+ * an end; the sentence above the row does.
  *
  * Layout follows the width it is given and the font size, never the device: under
  * [MIN_CAR_WIDTH] per car, or at a large font size, the cars merge into three blocks (the

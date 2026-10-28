@@ -17,11 +17,11 @@ data class SeatAdvice(val sentence: String?, val tag: String)
 object CrowdingWording {
 
     /**
-     * Gate on "at the back" and "at the front". Off until the platform check in
-     * TFNSW_OCCUPANCY_DATA.md proves which end the feed's first car is. Turning it on is this
-     * one line; the wording and tests already exist.
+     * Gate on "at the back" and "at the front". On since the platform check in
+     * TFNSW_OCCUPANCY_DATA.md showed the feed's first car is the back. Turning it off is this
+     * one line, if a reversed train or Metro turns out to report the other way round.
      */
-    const val END_WORDING_ENABLED = false
+    const val END_WORDING_ENABLED = true
 
     const val NIGHT_LINE = "It's late. Wait in the blue Nightsafe area to board near the guard."
 

@@ -21,10 +21,11 @@ and the opened departure row.
 | Seats all along | `SSSSSSSS` | Seats available | Seats expected all along the train. |
 | Few seats all along | `FFFFFFFF` | Few seats | A few seats expected along the train. |
 | Standing all along | `XXXXXXXX` | Standing only | Standing only expected all along the train. |
-| Seats at both ends | `SSFFFSSS` | Seats at both ends | Seats expected at both ends. |
+| Seats at both ends | `SSSFFSSS` | Seats at both ends | Seats expected at both ends. |
+| More seat cars at the back | `SSSXXXXS` | Seats at the back | Seats expected at the back. |
 | Few seats at both ends | `FXXXXXXF` | Few seats at both ends | A few seats expected at both ends. |
 | Seats in the middle | `XSSSSSSX` | Seats in the middle | Seats expected in the middle. |
-| Seats at one end only | `SSFFFFFF` | Few seats (the level most cars share) | None until "front" and "back" are switched on |
+| Seats at one end only | `SSFFFFFF` | Seats at the back | Seats expected at the back. |
 | No car data | none | Whole-train words from the trip planner, or nothing | None, and no boxes |
 | Bus | none | Seats available, Few seats or Standing only, once the bus has started its trip | None |
 | Night, after 9pm | any | As above | It's late. Wait in the blue Nightsafe area to board near the guard. |

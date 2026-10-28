@@ -27,7 +27,35 @@ class CarriageLevelsTest {
             mapOf(Zone.BACK to SEATS_AVAILABLE, Zone.MIDDLE to STANDING_ONLY, Zone.FRONT to SEATS_AVAILABLE),
             cars.zoneLevels(),
         )
-        assertEquals(setOf(Zone.BACK, Zone.FRONT), cars.quietestZones())
+        // Both end cars have seats, but two cars do at the back and one at the front.
+        assertEquals(setOf(Zone.BACK), cars.quietestZones())
+    }
+
+    @Test
+    fun `the end with the longer run of quiet cars wins`() {
+        // Seen on a platform on 28 October: three cars with seats at the back, one at the front.
+        val back = CarriageLevels(
+            listOf(
+                SEATS_AVAILABLE,
+                SEATS_AVAILABLE,
+                SEATS_AVAILABLE,
+                STANDING_ONLY,
+                STANDING_ONLY,
+                FEW_SEATS,
+                STANDING_ONLY,
+                SEATS_AVAILABLE,
+            ),
+        )
+        assertEquals(setOf(Zone.BACK), back.quietestZones())
+        assertEquals(setOf(Zone.FRONT), CarriageLevels(back.levels.reversed()).quietestZones())
+    }
+
+    @Test
+    fun `equal runs at each end stay both ends`() {
+        val evenEnds = CarriageLevels(
+            listOf(SEATS_AVAILABLE, STANDING_ONLY, STANDING_ONLY, STANDING_ONLY, STANDING_ONLY, SEATS_AVAILABLE),
+        )
+        assertEquals(setOf(Zone.BACK, Zone.FRONT), evenEnds.quietestZones())
     }
 
     @Test

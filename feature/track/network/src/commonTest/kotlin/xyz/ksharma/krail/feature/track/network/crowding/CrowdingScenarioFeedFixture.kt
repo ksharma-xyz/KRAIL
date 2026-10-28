@@ -55,15 +55,14 @@ internal object CrowdingScenarioFeedFixture {
             tag = "Standing only",
             sentence = "Standing only expected all along the train.",
         ),
-        // Only the end car has a few seats; without front and back there is no sentence, and the
-        // tag gives the level most cars share while the bars show the better car.
+        // Only the first car in feed order, the back of the train, has a few seats.
         Scenario(
             name = "Seats at one end only",
             tripId = "29-G.1324.165.8.B.8.91999433",
             stopId = "204991",
             cars = "FXXXXXXX",
-            tag = "Standing only",
-            sentence = null,
+            tag = "Few seats at the back",
+            sentence = "A few seats expected at the back.",
         ),
         // One middle car has a few seats, but each zone counts as its busiest car, so the train
         // reads as standing only all along.

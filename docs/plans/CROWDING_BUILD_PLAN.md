@@ -17,14 +17,14 @@ How to build the crowding feature designed in
 | In | Out |
 |---|---|
 | Seat tag on trip results and the departure board | "Usually" patterns (need many weekdays of data) |
-| Carriage row in trip cards and the live trip screen | "Front" and "back" wording until the platform check passes |
+| Carriage row in trip cards and the live trip screen | |
 | Departure rows that open to the sentence and carriage row | Light rail L1 to L3 and ferries (no data) |
 | Next-service line (train and bus) | Cancellations, skipped stops, short trains (see [`TRIP_UPDATES_FEED_IDEAS.md`](TRIP_UPDATES_FEED_IDEAS.md)) |
 | Code-written lines about seats later in the trip (next) | |
 
-Zone wording until the platform check passes: "both ends", "middle" and the all-along lines
-only. "At the back" and "at the front" are built but gated by a constant, so turning them on is a
-one-line change once the end is verified.
+"At the back" and "at the front" are on since the platform check on 28 October showed the feed's
+first car is the back. They sit behind a constant, so turning them off again is a one-line change
+if a reversed train or Metro reports the other way round.
 
 ## Where the data comes from
 
@@ -79,7 +79,7 @@ Run the `ANALYTICS_EVENTS.md` checklist before adding anything. Prefer params on
 ## Before shipping
 
 1. **Platform check** (`TFNSW_OCCUPANCY_DATA.md`, "Platform check"): which end of the train the
-   feed's first car is. Until it passes, "back" and "front" stay off.
+   feed's first car is. Passed on 28 October (the back); a reversed train and Metro remain.
 2. Store data declarations: no new data type leaves the device, but re-read
    `STORE_DATA_DECLARATIONS.md` for the new request.
 3. QA checklist in `CLAUDE.md` on device: rotate with the card open and loading, theme switch,

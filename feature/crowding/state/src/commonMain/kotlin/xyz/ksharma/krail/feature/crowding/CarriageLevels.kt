@@ -6,10 +6,8 @@ enum class Zone { BACK, MIDDLE, FRONT }
 /**
  * One level per carriage, in feed order, which is drawn left to right as back to front.
  *
- * Which real end the feed's first car is has not been checked on a platform yet
- * (TFNSW_OCCUPANCY_DATA.md, "Platform check"), so no wording may name an end while the
- * end-wording gate is off. "Both ends" and "middle" are symmetric and
- * safe either way.
+ * The feed's first car is the back of the train, seen on a platform on 28 October
+ * (TFNSW_OCCUPANCY_DATA.md, "Platform check").
  */
 data class CarriageLevels(val levels: List<SeatLevel>) {
 
@@ -38,7 +36,23 @@ data class CarriageLevels(val levels: List<SeatLevel>) {
     fun quietestZones(): Set<Zone> {
         val zones = zoneLevels() ?: return Zone.entries.toSet()
         val best = zones.values.min()
-        return zones.filterValues { it == best }.keys
+        val quietest = zones.filterValues { it == best }.keys
+        return if (quietest == BOTH_ENDS) longerQuietEnd(best) else quietest
+    }
+
+    /**
+     * Both end cars are equally quiet: the end whose run of quiet cars reaches further wins.
+     * Three cars with seats at the back and one at the front is "at the back", which is where
+     * a rider finds a seat more easily. Equal runs stay both ends.
+     */
+    private fun longerQuietEnd(best: SeatLevel): Set<Zone> {
+        val back = levels.takeWhile { it == best }.size
+        val front = levels.takeLastWhile { it == best }.size
+        return when {
+            back > front -> setOf(Zone.BACK)
+            front > back -> setOf(Zone.FRONT)
+            else -> BOTH_ENDS
+        }
     }
 
     /** The level the rider gets by walking to the quietest zone. */
@@ -57,6 +71,7 @@ data class CarriageLevels(val levels: List<SeatLevel>) {
     companion object {
         private const val MIN_CARS_FOR_ZONES = 3
         private const val CARS_PER_END_CAR = 6
+        private val BOTH_ENDS = setOf(Zone.BACK, Zone.FRONT)
 
         /**
          * Builds the row from `position to level` pairs as the feed sends them.

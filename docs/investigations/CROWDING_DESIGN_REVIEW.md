@@ -66,7 +66,8 @@ Say "seats", never "room". Match the level, and match certainty with one word.
 | One end has seats | Seats at the back of the train. |
 | One end has a few seats | A few seats left at the back. |
 | Forecast, not live | Seats expected at the back. |
-| Both ends have seats | Seats at both ends of the train. |
+| Both ends have seats, as many cars at each | Seats at both ends of the train. |
+| Both end cars have seats, more cars at the back | Seats at the back of the train. |
 | Seats everywhere | Seats available all along the train. |
 | Few seats everywhere | A few seats left along the train. |
 | Full everywhere | Standing only, all along the train. |
@@ -170,7 +171,7 @@ available: 3%.
 | Verdict | Line | Why |
 |---|---|---|
 | Supports | Seats at both ends of the train | When cars differ, an end beat the middle on 36 to 61% of readings by line; the middle beat both ends on 1 to 11% |
-| Supports, blocked | Seats at the back / at the front | Each line favours one end strongly in feed order. Which real end is unknown until the platform check |
+| Supports | Seats at the back / at the front | Each line favours one end strongly in feed order. The platform check on 28 October showed feed order starts at the back |
 | Weakens | How often zone advice applies | Only 19 to 37% of suburban readings had mixed cars; Metro and Blue Mountains about 60% |
 | Supports | "Expected" for forecasts | Within one level 93 to 96% at every lead time |
 | Kills, for now | Eases off after a named station | No station passed 6 trips in one evening |
@@ -199,8 +200,8 @@ Code: **1A 2A 3A 4A 5C 6A**.
 1. **Which end is the front.** The feed's car order is not tied to direction of travel in any way
    we can see (car IDs differ on every trip), and trains reverse at termini. Check on a platform:
    note the feed's per-car levels before a train arrives, watch which end leads, compare which end
-   is fuller, repeat in the other direction. Until then, "back" and "front" stay off; "both ends"
-   and "middle" ship.
+   is fuller, repeat in the other direction. Done on 28 October: the feed's first car is the back,
+   so "back" and "front" are on.
 2. Use the level at the rider's boarding stop.
 3. When carriage data exists, work the tag out from the cars, so the two never disagree.
 
@@ -222,5 +223,7 @@ Code: **1A 2A 3A 4A 5C 6A**.
   a change. Rules and the replay check are in `TFNSW_OCCUPANCY_DATA.md`, "Forecasts along the
   trip". Each is mocked up for a pick before it is built.
 - **"Front" and "back" are wanted** in place of "except at one end", once the platform check
-  passes.
+  passes. It passed on 28 October, and they are on. When both end cars have seats, the end with
+  more cars in a row that have seats is named, not "both ends": on the platform, three empty cars
+  at the back read as "both ends" because the front's one empty car tied with them.
 

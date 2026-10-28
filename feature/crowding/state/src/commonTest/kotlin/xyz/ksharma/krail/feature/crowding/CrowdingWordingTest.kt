@@ -7,6 +7,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /** One test per row of the wording table in CROWDING_DESIGN_REVIEW.md, plus the gate. */
 class CrowdingWordingTest {
@@ -125,7 +126,30 @@ class CrowdingWordingTest {
     @Test
     fun `gate off names no end`() {
         assertNull(live(cars(SEATS_AVAILABLE, STANDING_ONLY, STANDING_ONLY, STANDING_ONLY)))
-        assertFalse(CrowdingWording.END_WORDING_ENABLED)
+    }
+
+    @Test
+    fun `end wording is on`() {
+        assertTrue(CrowdingWording.END_WORDING_ENABLED)
+    }
+
+    @Test
+    fun `more seat cars at the back says the back and not both ends`() {
+        val advice = live(
+            cars(
+                SEATS_AVAILABLE,
+                SEATS_AVAILABLE,
+                SEATS_AVAILABLE,
+                STANDING_ONLY,
+                STANDING_ONLY,
+                STANDING_ONLY,
+                STANDING_ONLY,
+                SEATS_AVAILABLE,
+            ),
+            ends = true,
+        )
+        assertEquals("Seats at the back of the train.", advice?.sentence)
+        assertEquals("Seats at the back", advice?.tag)
     }
 
     @Test
@@ -148,10 +172,17 @@ class CrowdingWordingTest {
     }
 
     @Test
-    fun `tag gives the level most cars share when the cars only point at an end`() {
+    fun `tag names the end when the cars only point at one`() {
         val backOnly = cars(SEATS_AVAILABLE, STANDING_ONLY, STANDING_ONLY, STANDING_ONLY)
-        assertEquals("Standing only", CrowdingWording.tagFor(level = SEATS_AVAILABLE, cars = backOnly))
-        assertEquals("Standing only", CrowdingWording.tagFor(level = null, cars = backOnly))
+        assertEquals("Seats at the back", CrowdingWording.tagFor(level = STANDING_ONLY, cars = backOnly))
+        assertEquals("Seats at the back", CrowdingWording.tagFor(level = null, cars = backOnly))
+    }
+
+    @Test
+    fun `tag gives the level most cars share when the end is gated`() {
+        val backOnly = cars(SEATS_AVAILABLE, STANDING_ONLY, STANDING_ONLY, STANDING_ONLY)
+        assertNull(CrowdingWording.forCarriages(backOnly, Certainty.LIVE, endWordingEnabled = false))
+        assertEquals(SeatLevel.STANDING_ONLY, backOnly.typicalLevel())
     }
 
     @Test

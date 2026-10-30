@@ -318,6 +318,8 @@ class TimeTableViewModel(
 
             is TimeTableUiEvent.JourneyCardClicked -> onJourneyCardClicked(event.journeyId)
 
+            TimeTableUiEvent.SeatTipOpened -> analytics.trackSeatTipOpened()
+
             TimeTableUiEvent.SaveTripButtonClicked -> onSaveTripButtonClicked()
 
             TimeTableUiEvent.ReverseTripButtonClicked -> onReverseTripButtonClicked()
@@ -1083,11 +1085,16 @@ class TimeTableViewModel(
         log("Journey Card Clicked(JourneyId): $journeyId")
         _expandedJourneyId.update { if (it == journeyId) null else journeyId }
         val expanding = expandedJourneyId != journeyId
-        analytics.trackJourneyCardToggleEvent(
-            expanded = expanding,
-            hasStarted = hasJourneyStarted,
-            legCount = legCount,
-            transportModes = transportModes,
+        analytics.track(
+            AnalyticsEvent.JourneyCardToggleEvent(
+                expanded = expanding,
+                hasStarted = hasJourneyStarted,
+                legCount = legCount,
+                transportModes = transportModes,
+                crowding = journey.crowdingParam(),
+                seatLevel = journey?.analyticsSeatLevel(),
+                seatTip = journey?.nextServiceLine != null,
+            ),
         )
     }
 

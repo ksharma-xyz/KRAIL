@@ -650,6 +650,7 @@ private fun LazyListScope.journeyCardItems(
             seatTag = journey.seatTag,
             seatCars = journey.seatCars,
             nextServiceLine = journey.nextServiceLine,
+            onSeatTipOpen = { callbacks.onEvent(TimeTableUiEvent.SeatTipOpened) },
         )
     }
 }
@@ -681,6 +682,7 @@ private fun JourneyCardItem(
     seatTag: String? = null,
     seatCars: CarriageLevels? = null,
     nextServiceLine: String? = null,
+    onSeatTipOpen: () -> Unit = {},
 ) {
     if (!transportModeLineList.isNullOrEmpty() && legList.isNotEmpty()) {
         JourneyCard(
@@ -709,6 +711,7 @@ private fun JourneyCardItem(
             seatTag = seatTag,
             seatCars = seatCars,
             nextServiceLine = nextServiceLine,
+            onSeatTipOpen = onSeatTipOpen,
         )
     }
 }

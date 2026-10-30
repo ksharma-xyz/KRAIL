@@ -850,21 +850,39 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
     /**
      * @param transportModes Sorted comma-separated product-class integers of modes in this journey
      *                       (e.g. "1,5" = Train + Bus). Matches the encoding used by [MapOptionsSavedEvent].
+     * @param crowding       What seat data the first service boarded had: [CROWDING_CARS] (a level per
+     *                       carriage), [CROWDING_LEVEL] (one level for the whole service) or
+     *                       [CROWDING_NONE].
+     * @param seatLevel      That service's level, `seats`, `few` or `standing`. Omitted when there is none.
+     * @param seatTip        True when the card carried the "Want a seat?" tip.
      */
     data class JourneyCardToggleEvent(
         val expanded: Boolean,
         val hasStarted: Boolean,
         val legCount: Int,
         val transportModes: String,
+        val crowding: String = CROWDING_NONE,
+        val seatLevel: String? = null,
+        val seatTip: Boolean = false,
     ) : AnalyticsEvent(
         name = "journey_card_toggle",
-        rawProperties = mapOf(
+        rawProperties = mutableMapOf<String, Any>(
             "expanded" to expanded,
             "hasStarted" to hasStarted,
             PROP_LEG_COUNT to legCount,
             PROP_TRANSPORT_MODES to transportModes,
-        ),
-    )
+            "crowding" to crowding,
+            "seatTip" to seatTip,
+        ).apply {
+            seatLevel?.let { put("seatLevel", it) }
+        },
+    ) {
+        companion object {
+            const val CROWDING_CARS = "cars"
+            const val CROWDING_LEVEL = "level"
+            const val CROWDING_NONE = "none"
+        }
+    }
 
     /**
      * Fired when the user taps a transport leg row inside an expanded journey card.

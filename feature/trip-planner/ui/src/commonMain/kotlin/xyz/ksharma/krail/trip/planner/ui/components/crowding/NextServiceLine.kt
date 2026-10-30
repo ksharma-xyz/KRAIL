@@ -14,19 +14,21 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 
-private const val NEXT_SERVICE_TILE_KEY = "next-service"
+internal const val NEXT_SERVICE_TILE_KEY = "next-service"
 
 /**
  * A "Want a seat?" tile that opens to "The next T1, at 8:59am from Platform 1, has seats
  * available and is due at Central at 9:26am." Informs, never instructs: the service gets the verb
  * and the rider chooses. Tapping only opens and closes it. Data from a response the screen
- * already has, so it has no loading state of its own: present or absent.
+ * already has, so it has no loading state of its own: present or absent. [onOpen] is for
+ * analytics only.
  */
 @Composable
 internal fun NextServiceLine(
     text: String,
     modifier: Modifier = Modifier,
     initialState: InfoTileState = InfoTileState.COLLAPSED,
+    onOpen: () -> Unit = {},
 ) {
     InfoTile(
         infoTileData = InfoTileData(
@@ -39,6 +41,7 @@ internal fun NextServiceLine(
         style = InfoTileStyle.AiFill,
         onCtaClick = {},
         onDismissClick = {},
+        onTileExpand = { onOpen() },
         modifier = modifier.padding(vertical = KrailTheme.dimensions.spacingS),
     )
 }

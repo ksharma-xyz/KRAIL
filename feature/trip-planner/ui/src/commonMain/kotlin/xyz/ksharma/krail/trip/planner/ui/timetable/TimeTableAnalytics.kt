@@ -35,22 +35,6 @@ internal fun Analytics.trackSaveTripPromptEnded(
     )
 }
 
-internal fun Analytics.trackJourneyCardToggleEvent(
-    expanded: Boolean,
-    hasStarted: Boolean,
-    legCount: Int,
-    transportModes: String,
-) {
-    track(
-        AnalyticsEvent.JourneyCardToggleEvent(
-            expanded = expanded,
-            hasStarted = hasStarted,
-            legCount = legCount,
-            transportModes = transportModes,
-        ),
-    )
-}
-
 /**
  * Tracks the share journey button tap with type-safe inputs.
  *

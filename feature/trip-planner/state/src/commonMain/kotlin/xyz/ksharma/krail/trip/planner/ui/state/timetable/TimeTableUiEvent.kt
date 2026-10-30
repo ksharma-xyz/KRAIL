@@ -99,4 +99,7 @@ sealed interface TimeTableUiEvent {
      * prompt held in state may never be scrolled to.
      */
     data object SaveTripPromptDisplayed : TimeTableUiEvent
+
+    /** The rider opened the "Want a seat?" tip on an opened journey card. */
+    data object SeatTipOpened : TimeTableUiEvent
 }

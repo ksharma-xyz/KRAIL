@@ -316,13 +316,17 @@ workflow that compiles, do the same.
 
 ## Worktree build setup
 
+Worktrees live in `~/code/.worktrees/KRAIL/<name>`, never inside this repo. Create them with
+`~/code/batcave/bin/bc wt new KRAIL <branch> --kind pr|research|experiment --purpose "…"` so they
+are registered with a 30-day expiry, and remove them with `bc wt rm` once the PR is merged.
+
 Fresh worktrees are missing gitignored files and build artefacts required to compile
 `:androidApp`. Before asking the user to run any build in a worktree, copy all four
-of these from the main checkout (`/Users/ksharma/code/apps/KRAIL/`):
+of these from the main checkout (`/Users/ksharma/code/apps/krail/KRAIL/`):
 
 ```sh
-WORKTREE=/Users/ksharma/code/apps/KRAIL/.claude/worktrees/<name>
-MAIN=/Users/ksharma/code/apps/KRAIL
+WORKTREE=/Users/ksharma/code/.worktrees/KRAIL/<name>
+MAIN=/Users/ksharma/code/apps/krail/KRAIL
 
 # 1. Gradle local config
 cp $MAIN/local.properties $WORKTREE/local.properties

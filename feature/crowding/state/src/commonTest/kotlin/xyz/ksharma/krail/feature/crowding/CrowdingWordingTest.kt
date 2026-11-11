@@ -130,8 +130,8 @@ class CrowdingWordingTest {
     }
 
     @Test
-    fun `end wording is on`() {
-        assertTrue(CrowdingWording.END_WORDING_ENABLED)
+    fun `end wording is off until the car order is confirmed`() {
+        assertFalse(CrowdingWording.END_WORDING_ENABLED)
     }
 
     @Test
@@ -173,10 +173,10 @@ class CrowdingWordingTest {
     }
 
     @Test
-    fun `tag names the end when the cars only point at one`() {
+    fun `tag names no end while the gate is off`() {
         val backOnly = cars(SEATS_AVAILABLE, STANDING_ONLY, STANDING_ONLY, STANDING_ONLY)
-        assertEquals("Seats at the back", CrowdingWording.tagFor(level = STANDING_ONLY, cars = backOnly))
-        assertEquals("Seats at the back", CrowdingWording.tagFor(level = null, cars = backOnly))
+        assertEquals("Standing only", CrowdingWording.tagFor(level = STANDING_ONLY, cars = backOnly))
+        assertEquals("Standing only", CrowdingWording.tagFor(level = null, cars = backOnly))
     }
 
     @Test

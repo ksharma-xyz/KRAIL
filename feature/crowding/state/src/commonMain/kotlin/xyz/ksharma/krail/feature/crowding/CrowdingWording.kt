@@ -17,11 +17,11 @@ data class SeatAdvice(val sentence: String?, val tag: String)
 object CrowdingWording {
 
     /**
-     * Gate on "at the back" and "at the front". On since the platform check in
-     * TFNSW_OCCUPANCY_DATA.md showed the feed's first car is the back. Turning it off is this
-     * one line, if a reversed train or Metro turns out to report the other way round.
+     * Gate on "at the back" and "at the front". Off since 12 Nov: a platform board on 11 Nov
+     * (T1, Seven Hills) showed the feed's first car is the front, the opposite of the 28 Oct
+     * check in TFNSW_OCCUPANCY_DATA.md. Stays off until more platform checks agree on the order.
      */
-    const val END_WORDING_ENABLED = true
+    const val END_WORDING_ENABLED = false
 
     private const val MINUTES_PER_HOUR = 60
     private const val NIGHT_STARTS_AT_MINUTE = 22 * MINUTES_PER_HOUR + 30

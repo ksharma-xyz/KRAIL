@@ -101,22 +101,22 @@ class CrowdingScenarioUiTest {
         Scenario(
             name = "More seats at the back than the front",
             cars = "SSSXXXXS",
-            tag = "Standing only",
-            sentence = null,
+            tag = "Seats at one end",
+            sentence = "Seats expected at one end.",
             description = "Carriages: Seats available, Standing only",
         ),
         Scenario(
             name = "Seats at the back only",
             cars = "SSFFFFFF",
-            tag = "Few seats",
-            sentence = null,
+            tag = "Seats at one end",
+            sentence = "Seats expected at one end.",
             description = "Carriages: Seats available, Few seats",
         ),
         Scenario(
             name = "Seats at the front only",
             cars = "FFFFFFSS",
-            tag = "Few seats",
-            sentence = null,
+            tag = "Seats at one end",
+            sentence = "Seats expected at one end.",
             description = "Carriages: Seats available, Few seats",
         ),
     )

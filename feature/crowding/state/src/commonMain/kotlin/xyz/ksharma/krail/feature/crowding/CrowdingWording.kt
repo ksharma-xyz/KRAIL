@@ -17,11 +17,12 @@ data class SeatAdvice(val sentence: String?, val tag: String)
 object CrowdingWording {
 
     /**
-     * Gate on "at the back" and "at the front". On since the platform check in
-     * TFNSW_OCCUPANCY_DATA.md showed the feed's first car is the back. Turning it off is this
-     * one line, if a reversed train or Metro turns out to report the other way round.
+     * Gate on naming WHICH end: "at the back" and "at the front". Off since 12 Nov: a platform
+     * board on 11 Nov (T1, Seven Hills) showed the feed's first car is the front, the opposite of
+     * the 28 Oct check in TFNSW_OCCUPANCY_DATA.md. While off, a single quiet end reads "at one
+     * end" and the carriage bars show which. Turn on once more platform checks agree on the order.
      */
-    const val END_WORDING_ENABLED = true
+    const val END_WORDING_ENABLED = false
 
     private const val MINUTES_PER_HOUR = 60
     private const val NIGHT_STARTS_AT_MINUTE = 22 * MINUTES_PER_HOUR + 30
@@ -67,8 +68,8 @@ object CrowdingWording {
         forCarriages(cars, certainty, isNight)?.tag ?: levelTag(cars.typicalLevel())
 
     /**
-     * Advice from a carriage row. Null when the only thing worth saying names an end and
-     * [endWordingEnabled] is off: the caller then falls back to the whole-train [levelTag].
+     * Advice from a carriage row. With [endWordingEnabled] off a single quiet end is "at one end"
+     * rather than back or front. Null only when no place can be said.
      */
     fun forCarriages(
         cars: CarriageLevels,
@@ -89,6 +90,7 @@ object CrowdingWording {
     private enum class Place(val words: String) {
         BACK("at the back"),
         FRONT("at the front"),
+        ONE_END("at one end"),
         BOTH_ENDS("at both ends"),
         MIDDLE("in the middle"),
         ALL_ALONG("all along"),
@@ -99,7 +101,7 @@ object CrowdingWording {
         zones == setOf(Zone.BACK, Zone.FRONT) -> Place.BOTH_ENDS
         // Middle plus one end: the middle is true either way and does not depend on the gate.
         Zone.MIDDLE in zones -> Place.MIDDLE
-        !endWordingEnabled -> null
+        !endWordingEnabled -> Place.ONE_END
         zones == setOf(Zone.BACK) -> Place.BACK
         else -> Place.FRONT
     }

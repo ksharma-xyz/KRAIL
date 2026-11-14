@@ -125,13 +125,22 @@ class CrowdingWordingTest {
     }
 
     @Test
-    fun `gate off names no end`() {
-        assertNull(live(cars(SEATS_AVAILABLE, STANDING_ONLY, STANDING_ONLY, STANDING_ONLY)))
+    fun `gate off says one end without naming which`() {
+        val advice = live(cars(SEATS_AVAILABLE, STANDING_ONLY, STANDING_ONLY, STANDING_ONLY))
+        assertEquals("Seats at one end of the train.", advice?.sentence)
+        assertEquals("Seats at one end", advice?.tag)
     }
 
     @Test
-    fun `end wording is on`() {
-        assertTrue(CrowdingWording.END_WORDING_ENABLED)
+    fun `gate off says one end for the other end too`() {
+        val advice = live(cars(STANDING_ONLY, STANDING_ONLY, STANDING_ONLY, FEW_SEATS))
+        assertEquals("A few seats left at one end.", advice?.sentence)
+        assertEquals("Few seats at one end", advice?.tag)
+    }
+
+    @Test
+    fun `end wording is off until the car order is confirmed`() {
+        assertFalse(CrowdingWording.END_WORDING_ENABLED)
     }
 
     @Test
@@ -154,9 +163,9 @@ class CrowdingWordingTest {
     }
 
     @Test
-    fun `alternating cars say nothing while ends are gated`() {
+    fun `alternating cars say one end while ends are gated`() {
         val alternating = CarriageLevels(List(8) { if (it % 2 == 0) SEATS_AVAILABLE else STANDING_ONLY })
-        assertNull(live(alternating))
+        assertEquals("Seats at one end", live(alternating)?.tag)
     }
 
     @Test
@@ -173,17 +182,16 @@ class CrowdingWordingTest {
     }
 
     @Test
-    fun `tag names the end when the cars only point at one`() {
-        val backOnly = cars(SEATS_AVAILABLE, STANDING_ONLY, STANDING_ONLY, STANDING_ONLY)
-        assertEquals("Seats at the back", CrowdingWording.tagFor(level = STANDING_ONLY, cars = backOnly))
-        assertEquals("Seats at the back", CrowdingWording.tagFor(level = null, cars = backOnly))
+    fun `tag says one end while the gate is off`() {
+        val oneEnd = cars(SEATS_AVAILABLE, STANDING_ONLY, STANDING_ONLY, STANDING_ONLY)
+        assertEquals("Seats at one end", CrowdingWording.tagFor(level = STANDING_ONLY, cars = oneEnd))
+        assertEquals("Seats at one end", CrowdingWording.tagFor(level = null, cars = oneEnd))
     }
 
     @Test
-    fun `tag gives the level most cars share when the end is gated`() {
-        val backOnly = cars(SEATS_AVAILABLE, STANDING_ONLY, STANDING_ONLY, STANDING_ONLY)
-        assertNull(CrowdingWording.forCarriages(backOnly, Certainty.LIVE, endWordingEnabled = false))
-        assertEquals(SeatLevel.STANDING_ONLY, backOnly.typicalLevel())
+    fun `gated end still reports the level most cars share`() {
+        val oneEnd = cars(SEATS_AVAILABLE, STANDING_ONLY, STANDING_ONLY, STANDING_ONLY)
+        assertEquals(SeatLevel.STANDING_ONLY, oneEnd.typicalLevel())
     }
 
     @Test

@@ -40,7 +40,7 @@ class TripPlannerUiSnapshotTest : BaseSnapshotTest() {
         "PreviewDisruptionBannerListPane",
         "PreviewDisruptionBannerDuo",
         "PreviewDisruptionBannerTablet",
-        // Recorded on a 320dp canvas by TripPlannerUiNarrowSnapshotTest.
+        // Recorded on a 320dp canvas by TripPlannerUiSnapshotTestNarrow.
         "PreviewDisruptionBannerNarrow",
         "PreviewDisruptionBannerNarrowLongText",
     )

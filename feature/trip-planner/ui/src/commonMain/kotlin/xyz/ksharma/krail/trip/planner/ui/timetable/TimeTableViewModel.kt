@@ -63,11 +63,13 @@ import xyz.ksharma.krail.trip.planner.network.api.service.TripPlanningService
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptions
+import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionRepository
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import xyz.ksharma.krail.trip.planner.ui.timetable.business.CarriageForecastLoader
+import xyz.ksharma.krail.trip.planner.ui.timetable.business.DisruptionLoader
 import xyz.ksharma.krail.trip.planner.ui.timetable.business.buildJourneyListWithRawData
 import xyz.ksharma.krail.trip.planner.ui.timetable.business.withCarriages
 import xyz.ksharma.krail.trip.planner.ui.timetable.business.withNextServices
@@ -98,9 +100,18 @@ class TimeTableViewModel(
      */
     private val clock: Clock = Clock.System,
     carriageForecasts: CarriageForecastRepository? = null,
+    disruptions: DisruptionRepository? = null,
 ) : ViewModel() {
 
     private val carriageLoader = CarriageForecastLoader(carriageForecasts, viewModelScope, ioDispatcher)
+
+    private val disruptionLoader = DisruptionLoader(
+        repository = disruptions,
+        sandook = sandook,
+        scope = viewModelScope,
+        dispatcher = ioDispatcher,
+        nowEpochSec = { clock.now().epochSeconds },
+    )
 
     private val _uiState: MutableStateFlow<TimeTableState> = MutableStateFlow(TimeTableState())
     val uiState: StateFlow<TimeTableState> = _uiState
@@ -523,6 +534,8 @@ class TimeTableViewModel(
     fun fetchTrip() {
         log("fetchTrip API Call")
         fetchTripJob?.cancel()
+        // Starts beside the trip call, never before or inside it: the results do not wait for alerts.
+        tripInfo?.let { trip -> disruptionLoader.refresh(trip) { updateUiStateWithFilteredTrips() } }
         updateUiState { copy(silentLoading = true) }
         fetchTripJob = viewModelScope.launch(ioDispatcher) {
             rateLimiter.rateLimitFlow {
@@ -730,6 +743,7 @@ class TimeTableViewModel(
                 canLoadMore = PAGINATION_ENABLED && journeyList.isNotEmpty() &&
                     loadMoreCount < MAX_LOAD_MORE_COUNT,
                 paginationEnabled = PAGINATION_ENABLED,
+                disruptionBanner = disruptionLoader.bannerFor(journeyList, unselectedModes),
             )
         }
     }

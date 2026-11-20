@@ -30,6 +30,8 @@ internal class DisruptionLoader(
     private val scope: CoroutineScope,
     private val dispatcher: CoroutineDispatcher,
     private val nowEpochSec: () -> Long,
+    /** Called when a feed could not be read, so the screen can report it. Never shown to the rider. */
+    private val onUnavailable: (DisruptionFeed) -> Unit = {},
 ) {
     private var disruptions: List<Disruption> = emptyList()
     private var endpointClasses: Set<Int> = emptySet()
@@ -47,7 +49,10 @@ internal class DisruptionLoader(
                 val feeds = DisruptionFeed.entries.filter { it.productClass in classes }
                 val loaded = feeds.flatMap { feed ->
                     repository.load(feed)
-                        .onFailure { log("[DISRUPTION] ${feed.feedName} unavailable: ${it.message}") }
+                        .onFailure {
+                            log("[DISRUPTION] ${feed.feedName} unavailable: ${it.message}")
+                            onUnavailable(feed)
+                        }
                         .getOrNull()
                         .orEmpty()
                 }

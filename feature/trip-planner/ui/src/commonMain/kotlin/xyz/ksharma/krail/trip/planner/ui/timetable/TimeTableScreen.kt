@@ -382,7 +382,7 @@ fun TimeTableScreen(
                 onSaveAccepted = { celebrateSaveStar = true },
             )
 
-            disruptionBannerItem(banner = timeTableState.disruptionBanner)
+            disruptionBannerItem(banner = timeTableState.disruptionBanner, onEvent = onEvent)
 
             item(key = "spacer-top") {
                 // The previous-departures text sits about spacingXXS lower than its row. With the banner

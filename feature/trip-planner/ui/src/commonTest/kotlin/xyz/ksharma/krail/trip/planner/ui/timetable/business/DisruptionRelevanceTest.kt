@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.timetable.business
 import xyz.ksharma.krail.trip.planner.ui.state.disruption.Disruption
 import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionBannerState
 import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionFeed
+import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionReason
 import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionSeverity
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -51,6 +52,20 @@ class DisruptionRelevanceTest {
     @Test
     fun `Given buses replace metro and the results carry a bus leg beside metro Then the banner shows`() {
         assertIs<DisruptionBannerState.Shown>(banner(results = setOf(bus, metro)))
+    }
+
+    @Test
+    fun `Given metro missing Then the reason is mode missing`() {
+        val shown = assertIs<DisruptionBannerState.Shown>(banner())
+
+        assertEquals(DisruptionReason.MODE_MISSING, shown.reason)
+    }
+
+    @Test
+    fun `Given metro present beside a replacement bus Then the reason is replacement bus`() {
+        val shown = assertIs<DisruptionBannerState.Shown>(banner(results = setOf(bus, metro)))
+
+        assertEquals(DisruptionReason.REPLACEMENT_BUS, shown.reason)
     }
 
     @Test

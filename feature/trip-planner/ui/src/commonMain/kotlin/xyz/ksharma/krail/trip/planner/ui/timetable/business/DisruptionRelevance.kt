@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.timetable.business
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.disruption.Disruption
 import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionBannerState
+import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionReason
 import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionSeverity
 
 /**
@@ -35,9 +36,15 @@ internal fun disruptionBanner(
         .filter { it.severity == DisruptionSeverity.NOT_RUNNING }
         .filter { it.feed.productClass in endpointProductClasses }
         .filter { it.overlaps(spanStartEpochSec, spanEndEpochSec) }
-        .filter { it.displacesResults(resultProductClasses) }
-        .minByOrNull { it.startEpochSec }
-    return if (shown == null) DisruptionBannerState.None else DisruptionBannerState.Shown(shown)
+        .mapNotNull { disruption ->
+            disruption.displacementReason(resultProductClasses)?.let { reason -> disruption to reason }
+        }
+        .minByOrNull { (disruption, _) -> disruption.startEpochSec }
+    return if (shown == null) {
+        DisruptionBannerState.None
+    } else {
+        DisruptionBannerState.Shown(disruption = shown.first, reason = shown.second)
+    }
 }
 
 private fun Disruption.overlaps(spanStart: Long, spanEnd: Long): Boolean {
@@ -45,8 +52,8 @@ private fun Disruption.overlaps(spanStart: Long, spanEnd: Long): Boolean {
     return startEpochSec <= spanEnd && (end == null || end >= spanStart)
 }
 
-private fun Disruption.displacesResults(resultProductClasses: Set<Int>): Boolean {
-    val modeMissing = feed.productClass !in resultProductClasses
-    val replacementBusShown = replacedByBuses && TransportMode.Bus.productClass in resultProductClasses
-    return modeMissing || replacementBusShown
+private fun Disruption.displacementReason(resultProductClasses: Set<Int>): DisruptionReason? = when {
+    feed.productClass !in resultProductClasses -> DisruptionReason.MODE_MISSING
+    replacedByBuses && TransportMode.Bus.productClass in resultProductClasses -> DisruptionReason.REPLACEMENT_BUS
+    else -> null
 }

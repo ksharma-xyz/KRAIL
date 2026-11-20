@@ -238,6 +238,25 @@ Mockups: https://claude.ai/artifact/BMoVoEixHaHPZGGQoGzton (private review page)
 Copy and icons follow `.claude/skills/ui-mockups/SKILL.md`: no helper text beside headings, no
 separator glyphs, vector icons only.
 
+## Analytics
+
+One new event name, `disruption_status`, and no new param names. Expanding the banner and tapping
+"More info" ride the existing `info_tile_interaction` event, because the banner is an info tile.
+Checked against the new-event checklist in `docs/ANALYTICS_EVENTS.md`: a distinct surface and param
+set, charted on its own, and one `{feature}_status(action)` event rather than one name per outcome.
+
+| Question | Where it is answered |
+|---|---|
+| How often does a rider see the banner, and for which trips? | `disruption_status` `action = shown`, with `transportMode`, `fromStopId`, `toStopId`, `visibleJourneyCount` |
+| How much of it is the looser signal? | `reason`: `mode_missing` against `replacement_bus`. A rising `replacement_bus` share is the false-positive watch |
+| Do riders read it? | `info_tile_interaction` with `key = disruption_metro`, `expand = true` |
+| Do they follow the link? | `info_tile_interaction` with `cta_click` set |
+| Is the alerts feed reliable? | `disruption_status` `action = error`, once per screen |
+
+`shown` fires from composition (once per alert and trip per screen) so it counts banners riders could
+see. No alert text is sent. Ledger rows are in `docs/ANALYTICS_REGISTRY_HANDOFF.md`, `Pending` until
+KRAIL-Analytics labels the event.
+
 ## 8. Test plan
 
 Built:

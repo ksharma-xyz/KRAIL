@@ -12,6 +12,12 @@
 
 <!-- Test tasks run, detekt status, compile targets verified. -->
 
+## Cost
+
+<!-- Network and battery, in code terms: calls added per action and per minute, payload bytes, -->
+<!-- time to first content, cache TTL, lifecycle gating. Link the ERD cost budget. -->
+<!-- Write "None: no network or background change" only when that is literally true. -->
+
 ## Snapshots
 
 <!-- Required when UI is touched, otherwise delete this section. -->

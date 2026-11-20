@@ -206,6 +206,7 @@ The review page and every message about it follow this order:
 
 1. **Data reality**: one short paragraph (section 1).
 2. **Options**, lettered, each with a one-line trade-off. Two to four options, not ten.
+   Each option also carries its cost line: calls added, bytes, time to content, battery.
 3. **Recommendation**: which one, and why it changes what the rider does.
 4. **Decisions needed**: in their own bullet block, separate from the prose.
 

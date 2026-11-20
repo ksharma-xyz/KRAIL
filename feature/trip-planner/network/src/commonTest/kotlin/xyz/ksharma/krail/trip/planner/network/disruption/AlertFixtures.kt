@@ -12,7 +12,7 @@ import com.google.transit.realtime.TranslatedString
  */
 internal object AlertFixtures {
 
-    /** Buses replace metro between Bankstown and Sydenham, Mon 23 Nov 11:00pm to 1:40am (AEDT). */
+    /** Buses replace metro between Bankstown and Sydenham, Mon 23 Nov 11:20pm to Tue 2:00am (AEDT). */
     val busesReplaceMetro = alert(
         header = "Buses replace metro services between Bankstown and Sydenham",
         description = "Monday 23 November\nFrom 11:10PM, buses replace metro services between Bankstown and Sydenham.",

@@ -97,6 +97,7 @@ import xyz.ksharma.krail.trip.planner.ui.components.map.StopDetailsBottomSheet
 import xyz.ksharma.krail.trip.planner.ui.navigation.savers.stopDisplaySaver
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
+import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionBannerState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.fromStopDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.toStopDisplay
@@ -384,7 +385,13 @@ fun TimeTableScreen(
             disruptionBannerItem(banner = timeTableState.disruptionBanner)
 
             item(key = "spacer-top") {
-                Spacer(modifier = Modifier.height(dim.spacingL))
+                // The previous-departures text sits about spacingXXS lower than its row. With the banner
+                // above, the full spacer reads as a bigger gap than the one above the banner, so trim it
+                // to keep the gaps above and below the banner equal (measured on a Pixel 6 Pro).
+                val bannerShown = timeTableState.disruptionBanner is DisruptionBannerState.Shown
+                Spacer(
+                    modifier = Modifier.height(if (bannerShown) dim.spacingL - dim.spacingXXS else dim.spacingL),
+                )
             }
 
             if (timeTableState.isError) {

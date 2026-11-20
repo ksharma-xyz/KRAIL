@@ -151,7 +151,7 @@ private fun LastServicesBoard(services: List<LastService>) {
     val dim = KrailTheme.dimensions
     val secondary = KrailTheme.colors.onSurface.copy(alpha = SECONDARY_TEXT_ALPHA)
     Column(verticalArrangement = Arrangement.spacedBy(dim.spacingL)) {
-        Text(text = "Last services", style = KrailTheme.typography.labelMedium, color = secondary)
+        Text(text = "Last metro before buses", style = KrailTheme.typography.labelMedium, color = secondary)
         services.forEach { service ->
             // A flow, not a fixed time column: at a large font size or on a narrow pane the place moves
             // under the time instead of squeezing it onto two lines.

@@ -9,7 +9,7 @@ import xyz.ksharma.krail.trip.planner.ui.timetable.PreviewBannerSurface
 import xyz.ksharma.krail.trip.planner.ui.timetable.previewAlert
 import xyz.ksharma.krail.trip.planner.ui.timetable.previewAlertLong
 
-// A 320dp wide screen, the smallest the app supports. Recorded by `TripPlannerUiNarrowSnapshotTest` on a
+// A 320dp wide screen, the smallest the app supports. Recorded by `TripPlannerUiSnapshotTestNarrow` on a
 // 320 x 1280dp canvas: at 2x font the card is taller than a Pixel 6 canvas and the bottom was cut off.
 // Skipped by the phone test. Keep both lists in step when adding one here.
 

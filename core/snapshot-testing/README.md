@@ -94,7 +94,11 @@ Two consequences, found while snapshotting the disruption banner (2026-11-20):
   previews in their own package and add a second test class with its own qualifier, for example
   `qualifiers = RobolectricDeviceQualifiers.MediumTablet` or `"w320dp-h1280dp-xxhdpi"`, scanning only that
   package. Add those preview names to `excludedPreviewNames` in the phone class so they are not recorded
-  twice. See `TripPlannerUiWideSnapshotTest` and `TripPlannerUiNarrowSnapshotTest`.
+  twice. See `TripPlannerUiWideSnapshotTest` and `TripPlannerUiSnapshotTestNarrow`.
+
+Name the extra class so it sorts after the phone class (`TripPlannerUiSnapshotTestNarrow`, not `...NarrowSnapshotTest`):
+test classes run in name order in one JVM, and a class with a different qualifier running first changes how the map preview
+renders, which fails the unrelated map golden.
 
 Look at the image sizes after recording: a golden that is the phone size for a "tablet" preview means the
 width was never applied.

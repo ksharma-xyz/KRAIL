@@ -42,7 +42,10 @@ kotlin {
                 implementation(projects.core.log)
                 implementation(projects.core.network)
                 implementation(projects.core.transport)
+                implementation(projects.feature.track.network)
+                implementation(projects.feature.tripPlanner.state)
                 implementation(projects.io.bffApi)
+                implementation(projects.io.gtfs)
 
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.ktor.client.core)

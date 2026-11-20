@@ -438,6 +438,21 @@ Stops on first compile failure. Detekt continues on rule violations so all issue
 
 ## Building a feature — read the checklist first
 
+**Spec first.** Every large or new feature starts as `docs/features/<feature-name>/ERD.md`, copied from
+`docs/templates/FEATURE_ERD_TEMPLATE.md`, before any code: entities (a Mermaid `erDiagram`),
+interfaces, upstream and BFF contracts, data flow, states, tests, and the **cost budget**
+(section 6 of the template). Code is built from the ERD and the ERD is updated in the same
+change when the code diverges.
+
+Small fixes and tweaks skip the ERD, never the cost check.
+
+**Always answer the cost questions, unprompted, for every feature, proposal, design or option
+shown for a pick.** With numbers, not adjectives: how many API calls (per action, on open, per
+minute visible), payload bytes, time to content before and after, UX in loading/slow/failed/
+offline, caching and dedupe, battery (radio wake-ups, no background work, lifecycle gating),
+and shared NSW limits. Measure with `curl --compressed -w`; label a guess as a guess. An
+optional call must be non-blocking, cached, lifecycle-gated and silent on failure.
+
 Before writing code for any feature that adds a screen, a section, or a new surface for
 existing data, read **`docs/FEATURE_QUALITY_CHECKLIST.md`**.
 

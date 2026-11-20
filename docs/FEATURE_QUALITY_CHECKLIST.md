@@ -10,6 +10,31 @@ so they never become a round of "you broke X, also Y".
 
 ---
 
+## 0. Spec first, and the cost budget
+
+For a large or new feature, before any code, copy `docs/templates/FEATURE_ERD_TEMPLATE.md` to
+`docs/features/<feature-name>/ERD.md` and fill it in: entities and relationships, the
+interfaces, the upstream and BFF contracts, and the cost budget. Build from that document and
+update it in the same change when the code diverges.
+
+The cost budget is not optional and not "N/A". Answer these seven with measured numbers for
+every feature, every proposal and every design option, without being asked:
+
+- [ ] **API calls**: how many per user action, on screen open, and per minute while visible?
+- [ ] **Payload**: bytes on the wire and decoded, and the parse cost.
+- [ ] **Timing**: time to first useful content before and after; parallel or blocking; timeout.
+- [ ] **UX**: loading, slow, failed and offline states; layout shift; does an optional call
+      ever delay or degrade the core result?
+- [ ] **Network efficiency**: cache key and TTL, conditional requests, in-flight dedupe,
+      retry policy, sharing across screens.
+- [ ] **Battery**: radio wake-ups per minute, any background work (must be none), lifecycle
+      gating, CPU and memory, can it ride an existing refresh tick.
+- [ ] **Shared limits**: NSW rate limits and what the BFF would collapse.
+
+> Shipped gap this prevents: a disruption-alerts design was proposed with no call count, no
+> payload size and no battery story. Measuring showed the obvious endpoint decoded 217 KB of
+> JSON where another carried the same alerts in 3 KB.
+
 ## 1. Reuse audit — do this first, before any new component
 
 Search before you build. Inventing a parallel version of something that exists is the single

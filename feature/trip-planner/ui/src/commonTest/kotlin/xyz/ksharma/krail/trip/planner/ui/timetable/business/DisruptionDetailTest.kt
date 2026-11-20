@@ -30,15 +30,15 @@ class DisruptionDetailTest {
 
         assertEquals(
             listOf(
-                "From 11:10PM, buses replace metro services between Bankstown and Sydenham.",
+                "From 11:10 PM, buses replace metro services between Bankstown and Sydenham.",
                 "Services run between Sydenham and Tallawong, to the normal frequency.",
             ),
             detail.paragraphs,
         )
         assertEquals(
             listOf(
-                LastService(from = "Bankstown", leaves = "23:03", to = "Sydenham", arrives = "23:24"),
-                LastService(from = "Sydenham", leaves = "23:15", to = "Bankstown", arrives = "23:37"),
+                LastService(from = "Bankstown", leaves = "11:03 PM", to = "Sydenham", arrives = "11:24 PM"),
+                LastService(from = "Sydenham", leaves = "11:15 PM", to = "Bankstown", arrives = "11:37 PM"),
             ),
             detail.lastServices,
         )
@@ -51,27 +51,69 @@ class DisruptionDetailTest {
         assertTrue(paragraphs.none { it.startsWith("Monday") || it.startsWith("The last") })
     }
 
+    private fun bolded(text: String) = factRanges(text).map { text.substring(it.first, it.last + 1) }
+
     @Test
-    fun `Given last services Then the text has no list markers and one line per service`() {
+    fun `Given buses replace Then the time and both stations are bold`() {
         assertEquals(
-            "From 11:10PM, buses replace metro services between Bankstown and Sydenham.\n\n" +
-                "Services run between Sydenham and Tallawong, to the normal frequency.\n\n" +
-                "Last services\n" +
-                "Bankstown 23:03, arrives Sydenham 23:24\n" +
-                "Sydenham 23:15, arrives Bankstown 23:37",
-            formatDisruptionDescription(replaceWithLastServices),
+            listOf("11:10PM", "Bankstown", "Sydenham"),
+            bolded("From 11:10PM, buses replace metro services between Bankstown and Sydenham."),
         )
     }
 
     @Test
-    fun `Given a closure with advice Then every sentence is kept with a blank line between`() {
+    fun `Given a still running line Then both ends are bold and the rest is not`() {
         assertEquals(
-            "From 4AM to 9AM, metro services do not run between Tallawong and Bankstown.\n\n" +
-                "Buses replace services between Tallawong and Chatswood, and between Sydenham and Bankstown only.\n\n" +
-                "Use trains between Epping or Chatswood, the City and Sydenham.\n\n" +
-                "For travel to and from Waterloo use local buses or trains from Redfern.",
-            formatDisruptionDescription(doNotRun),
+            listOf("Sydenham", "Tallawong"),
+            bolded("Services run between Sydenham and Tallawong, to the normal frequency."),
         )
+    }
+
+    @Test
+    fun `Given a time range Then both times are bold`() {
+        assertEquals(
+            listOf("4AM", "9AM", "Tallawong", "Bankstown"),
+            bolded("From 4AM to 9AM, metro services do not run between Tallawong and Bankstown."),
+        )
+    }
+
+    @Test
+    fun `Given advice with several places Then each place is bold`() {
+        assertEquals(
+            listOf("Epping", "Chatswood", "Sydenham"),
+            bolded("Use trains between Epping or Chatswood, the City and Sydenham."),
+        )
+        assertEquals(
+            listOf("Waterloo", "Redfern"),
+            bolded("For travel to and from Waterloo use local buses or trains from Redfern."),
+        )
+    }
+
+    @Test
+    fun `Given the full December alert Then every time and place is bold and nothing else`() {
+        assertEquals(
+            listOf(
+                "4AM", "9AM", "Tallawong", "Bankstown", "Tallawong", "Chatswood", "Sydenham", "Bankstown",
+                "Epping", "Chatswood", "Sydenham", "Waterloo", "Redfern",
+            ),
+            bolded(doNotRun),
+        )
+    }
+
+    @Test
+    fun `Given words that are not places Then they are not bold`() {
+        assertEquals(emptyList(), bolded("Services run to the normal frequency."))
+        assertEquals(emptyList(), bolded("Buses replace services between Platforms."))
+    }
+
+    @Test
+    fun `Given text in an unfamiliar format Then nothing is bold and nothing is lost`() {
+        assertEquals(emptyList(), bolded("trains are delayed after a signal fault"))
+    }
+
+    @Test
+    fun `Given a 24 hour time Then it is bold`() {
+        assertEquals(listOf("23:03", "Sydenham", "23:24"), bolded("Bankstown at 23:03, arriving Sydenham at 23:24"))
     }
 
     @Test
@@ -83,7 +125,27 @@ class DisruptionDetailTest {
     }
 
     @Test
-    fun `Given an empty description Then the text is empty`() {
-        assertEquals("", formatDisruptionDescription(""))
+    fun `Given 24 hour times Then they read as 12 hour with am or pm`() {
+        assertEquals("11:03 PM", to12Hour("23:03"))
+        assertEquals("12:10 AM", to12Hour("00:10"))
+        assertEquals("12:00 PM", to12Hour("12:00"))
+        assertEquals("1:05 AM", to12Hour("01:05"))
+        assertEquals("9:15 AM", to12Hour("9:15"))
+    }
+
+    @Test
+    fun `Given NSW mixed time styles Then all read the way the app writes them`() {
+        assertEquals("From 11:10 PM, buses replace metro", normaliseTimes("From 11:10PM, buses replace metro"))
+        assertEquals("From 4 AM to 9 AM, no metro", normaliseTimes("From 4AM to 9AM, no metro"))
+        assertEquals("leaves 11:03 PM", normaliseTimes("leaves 23:03"))
+        assertEquals("From 4 AM to 9 AM", normaliseTimes(normaliseTimes("From 4AM to 9AM")))
+    }
+
+    @Test
+    fun `Given last services Then the board times are 12 hour`() {
+        val detail = parseDisruptionDetail(replaceWithLastServices)
+
+        assertEquals(listOf("11:03 PM", "11:15 PM"), detail.lastServices.map { it.leaves })
+        assertEquals(listOf("11:24 PM", "11:37 PM"), detail.lastServices.map { it.arrives })
     }
 }

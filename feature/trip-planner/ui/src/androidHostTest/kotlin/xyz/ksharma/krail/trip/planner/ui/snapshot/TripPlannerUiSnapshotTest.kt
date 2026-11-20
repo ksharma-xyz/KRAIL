@@ -34,7 +34,16 @@ class TripPlannerUiSnapshotTest : BaseSnapshotTest() {
      * every time and the golden can never be matched twice. Same class of preview as taj's
      * `PreviewLoadingDotsPill_Visible`.
      */
-    override val excludedPreviewNames = setOf("PreviewMapStopSelectionPane_Loading")
+    override val excludedPreviewNames = setOf(
+        "PreviewMapStopSelectionPane_Loading",
+        // Recorded on a tablet sized canvas by TripPlannerUiWideSnapshotTest.
+        "PreviewDisruptionBannerListPane",
+        "PreviewDisruptionBannerDuo",
+        "PreviewDisruptionBannerTablet",
+        // Recorded on a 320dp canvas by TripPlannerUiNarrowSnapshotTest.
+        "PreviewDisruptionBannerNarrow",
+        "PreviewDisruptionBannerNarrowLongText",
+    )
 
     @Test
     fun generateTripPlannerUiScreenshots() {

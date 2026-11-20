@@ -83,6 +83,22 @@ The scanner discovers methods by their `@Preview` annotation in the bytecode and
 `@ScreenshotTest`. A function with only `@ScreenshotTest` (no `@Preview` or multi-preview wrapper
 that expands to `@Preview`) won't be found.
 
+### `@Preview(widthDp = ...)` does not resize the canvas
+
+Every screenshot is the size of the test class's device qualifier (Pixel 6, 1078 x 2399 px), whatever
+`widthDp` and `heightDp` say. The `Discover_Card_Tablet_W720dp` goldens are phone sized for this reason.
+Two consequences, found while snapshotting the disruption banner (2026-11-20):
+
+- To show a narrower pane, set the width on the content (`Modifier.width(...)`).
+- To show anything wider than the canvas, or taller (a 2x font card can be cut off at the bottom), put the
+  previews in their own package and add a second test class with its own qualifier, for example
+  `qualifiers = RobolectricDeviceQualifiers.MediumTablet` or `"w320dp-h1280dp-xxhdpi"`, scanning only that
+  package. Add those preview names to `excludedPreviewNames` in the phone class so they are not recorded
+  twice. See `TripPlannerUiWideSnapshotTest` and `TripPlannerUiNarrowSnapshotTest`.
+
+Look at the image sizes after recording: a golden that is the phone size for a "tablet" preview means the
+width was never applied.
+
 ### Em-dashes in `@Preview(name = …)` break the test runner
 
 A preview named `@Preview(name = "Expanded — both fields empty")` either hangs the host test

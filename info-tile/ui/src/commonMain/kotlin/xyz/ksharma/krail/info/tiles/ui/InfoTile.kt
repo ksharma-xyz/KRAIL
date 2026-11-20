@@ -2,6 +2,7 @@ package xyz.ksharma.krail.info.tiles.ui
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -62,6 +63,8 @@ fun InfoTile(
     style: InfoTileStyle = InfoTileStyle.Standard,
     // Drawn before the title, top aligned so it sits beside the first line of a long title.
     leadingIcon: (@Composable () -> Unit)? = null,
+    // Replaces the plain description when the caller needs more than a string, such as bold runs.
+    expandedContent: (@Composable () -> Unit)? = null,
 ) {
     var state by rememberSaveable { mutableStateOf(initialState) }
 
@@ -92,11 +95,15 @@ fun InfoTile(
         InfoTileTitle(title = infoTileData.title, style = style, leadingIcon = leadingIcon)
 
         if (state == InfoTileState.EXPANDED) {
-            Text(
-                text = infoTileData.description,
-                style = KrailTheme.typography.bodyMedium,
-                modifier = Modifier.padding(top = 8.dp),
-            )
+            if (expandedContent != null) {
+                Box(modifier = Modifier.padding(top = 8.dp)) { expandedContent() }
+            } else {
+                Text(
+                    text = infoTileData.description,
+                    style = KrailTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
 
             if (infoTileData.showDismissButton || infoTileData.primaryCta != null) {
                 InfoTileActions(infoTileData = infoTileData, onCtaClick = onCtaClick, onDismissClick = onDismissClick)

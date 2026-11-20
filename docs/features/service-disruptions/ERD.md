@@ -230,10 +230,17 @@ Mockups: https://claude.ai/artifact/BMoVoEixHaHPZGGQoGzton (private review page)
 
 | State | Behaviour | Reuse |
 |---|---|---|
-| Content with disruption | Banner above the results (InfoTile with a warning triangle, collapsed to the headline, tap for the replacement times, "More info" opens the alert's URL). The gap above and below the banner equals the gap between the header card and the actions row. | `InfoTile` |
+| Content with disruption | Banner above the results (InfoTile with a warning triangle, collapsed to the headline, tap for the details, "More info" opens the alert's URL). Expanded, the facts are bold (times and place names) and the last services are a small board: the time large with a small am or pm, the station and the arrival beside it. The board flows, so on a narrow pane or at a large font the station moves under the time. The gap above and below the banner equals the gap between the header card and the actions row. | `InfoTile` |
 | Content, metro missing, no alert | Not built | none |
 | No disruption | Nothing | none |
 | Alerts loading, slow, failed, offline | Nothing, results unaffected | none |
+
+**Times.** NSW writes times three ways in one alert ("11:10PM", "4AM", "23:03"). The card rewrites all of them
+the way the rest of the app does ("11:10 PM", "4 AM", "11:03 PM") in `normaliseTimes` and `to12Hour`. The text
+is only restyled: an alert in a format the parser does not recognise is shown in full with no bold.
+
+**Layouts checked** (snapshots, light, light at 2x font, dark): Pixel 6 (411dp), 320dp (smallest phone), the
+480dp dual pane list, a 540dp Surface Duo screen and a tablet, with a short and a long alert.
 
 Copy and icons follow `.claude/skills/ui-mockups/SKILL.md`: no helper text beside headings, no
 separator glyphs, vector icons only.
@@ -266,6 +273,10 @@ Built:
   on failure, failure when nothing cached.
 - `DisruptionRelevanceTest` (11): one-ended trips, filtered mode, window overlap before and after,
   open end, delays-only, earliest wins, replacement-bus branch.
+- `DisruptionDetailTest`: last services, bold ranges on the real alert wording, 12 hour times.
+- `DisruptionAnalyticsTest` (7): see Analytics.
+- Snapshots: `DisruptionBannerPreviews` (phone), `narrow/` and `wide/` previews, each recorded at light,
+  2x font and dark. Run `:feature:trip-planner:ui:testAndroidHostTest -Proborazzi.test.verify=true`.
 - BFF `AlertsCacheTest` (4).
 
 Not built: a hanging-alerts test proving the trip result still arrives (the loader is a separate

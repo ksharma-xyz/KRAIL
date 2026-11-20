@@ -11,6 +11,8 @@ import xyz.ksharma.krail.trip.planner.network.api.ratelimit.NetworkRateLimiter
 import xyz.ksharma.krail.trip.planner.network.api.ratelimit.RateLimiter
 import xyz.ksharma.krail.trip.planner.network.api.service.RealTripPlanningService
 import xyz.ksharma.krail.trip.planner.network.api.service.TripPlanningService
+import xyz.ksharma.krail.trip.planner.network.disruption.RealDisruptionRepository
+import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionRepository
 
 val tripPlannerNetworkModule = module {
     // factory, NOT single: a limiter's trigger channel is a broadcast, so every consumer
@@ -25,4 +27,8 @@ val tripPlannerNetworkModule = module {
             resolver = get(),
         )
     } bind TripPlanningService::class
+
+    // single: the cache and the one-request-at-a-time lock live on the instance, so every screen
+    // that asks for disruptions shares them.
+    single<DisruptionRepository> { RealDisruptionRepository(service = get()) }
 }

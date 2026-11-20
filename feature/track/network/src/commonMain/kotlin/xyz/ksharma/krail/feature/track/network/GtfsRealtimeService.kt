@@ -7,8 +7,9 @@ import com.google.transit.realtime.FeedMessage
  *
  * - [TRIP_UPDATES]       → `/v1|v2/gtfs/realtime/{feedName}`
  * - [VEHICLE_POSITIONS]  → `/v2/gtfs/vehiclepos/{feedName}`
+ * - [ALERTS]             → `/v2/gtfs/alerts/{feedName}`
  */
-enum class GtfsFeedType { TRIP_UPDATES, VEHICLE_POSITIONS }
+enum class GtfsFeedType { TRIP_UPDATES, VEHICLE_POSITIONS, ALERTS }
 
 interface GtfsRealtimeService {
     /**

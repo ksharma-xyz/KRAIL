@@ -128,7 +128,7 @@ message Position {
 // Alert, shown when there is an issue with a stop, route, or the whole network.
 message Alert {
   repeated EntitySelector informed_entity = 5;
-  optional TimeRange active_period = 1;
+  repeated TimeRange active_period = 1;
   optional Cause cause = 6 [default = UNKNOWN_CAUSE];
   optional Effect effect = 7 [default = UNKNOWN_EFFECT];
   optional TranslatedString url = 8;

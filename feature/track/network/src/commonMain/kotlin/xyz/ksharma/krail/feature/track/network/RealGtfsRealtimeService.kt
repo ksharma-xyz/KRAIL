@@ -107,6 +107,10 @@ internal fun buildGtfsUrl(
         // Documented at: https://api.transport.nsw.gov.au/v2/gtfs/vehiclepos/
         "$baseUrl/v2/gtfs/vehiclepos/$feedName"
     }
+    GtfsFeedType.ALERTS -> {
+        // Service alerts are v2 only, one small feed per mode (metro is about 3 KB).
+        "$baseUrl/v2/gtfs/alerts/$feedName"
+    }
     GtfsFeedType.TRIP_UPDATES -> {
         val version = if (feedName in RealGtfsRealtimeService.V2_FEEDS) "v2" else "v1"
         "$baseUrl/$version/gtfs/realtime/$feedName"

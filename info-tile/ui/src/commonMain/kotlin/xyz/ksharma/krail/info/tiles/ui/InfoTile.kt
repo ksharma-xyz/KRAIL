@@ -60,6 +60,8 @@ fun InfoTile(
     // required for analytics only
     onTileExpand: (InfoTileData) -> Unit = {},
     style: InfoTileStyle = InfoTileStyle.Standard,
+    // Drawn before the title, top aligned so it sits beside the first line of a long title.
+    leadingIcon: (@Composable () -> Unit)? = null,
 ) {
     var state by rememberSaveable { mutableStateOf(initialState) }
 
@@ -87,7 +89,7 @@ fun InfoTile(
             .animateContentSize()
             .semantics(mergeDescendants = true) {},
     ) {
-        InfoTileTitle(title = infoTileData.title, style = style)
+        InfoTileTitle(title = infoTileData.title, style = style, leadingIcon = leadingIcon)
 
         if (state == InfoTileState.EXPANDED) {
             Text(
@@ -104,11 +106,13 @@ fun InfoTile(
 }
 
 @Composable
-private fun InfoTileTitle(title: String, style: InfoTileStyle) {
+private fun InfoTileTitle(title: String, style: InfoTileStyle, leadingIcon: (@Composable () -> Unit)?) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        // Top aligned only with a leading icon, so it stays beside the first line of a wrapped title.
+        verticalAlignment = if (leadingIcon != null) Alignment.Top else Alignment.CenterVertically,
     ) {
+        leadingIcon?.invoke()
         if (style == InfoTileStyle.AiFill) {
             // The surface's own ink, not the gradient: a gradient wheel on a gradient fill vanishes.
             val ink = KrailTheme.colors.onSurface

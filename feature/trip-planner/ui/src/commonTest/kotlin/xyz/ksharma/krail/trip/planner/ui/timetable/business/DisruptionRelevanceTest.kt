@@ -14,7 +14,7 @@ class DisruptionRelevanceTest {
     private val train = 1
     private val bus = 5
 
-    // Mon 23 Nov 2026, 11:00pm to 1:40am AEDT, the live "buses replace metro" window.
+    // Mon 23 Nov 2026, 11:20pm to Tue 2:00am AEDT, the live "buses replace metro" window.
     private val windowStart = 1_795_436_400L
     private val windowEnd = 1_795_446_005L
 

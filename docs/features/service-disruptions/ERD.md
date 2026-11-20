@@ -1,7 +1,7 @@
 # Feature ERD: Service disruptions in trip results
 
-Status: Draft
-Touches: `feature/trip-planner/network`, `feature/trip-planner/ui`, `feature/track/network` (alerts feed type), `KRAIL-BFF` (parity route)
+Status: Built for review (metro banner). Deferred items are listed in section 10.
+Touches: `feature/trip-planner/state`, `feature/trip-planner/network`, `feature/trip-planner/ui`, `feature/track/network` (alerts feed type), `io/gtfs` (proto), `KRAIL-BFF` (alerts proxy)
 
 Measurements below were taken from the live NSW APIs on 2026-11-20 with `curl --compressed`.
 They are point-in-time; re-run before relying on them.
@@ -14,16 +14,18 @@ A rider searching a trip they normally make by metro gets replacement buses and 
 with no sign that the metro is not running. The trip planner silently routes around a closed
 line, and KRAIL only shows alerts attached to the journeys the planner returned.
 
-In scope:
-- Show a disruption banner above results when a service-impacting alert applies to a mode the
-  rider would use and that mode is missing or replaced in the results.
-- Label replacement-bus legs.
-- Group alerts by severity in the existing alert sheet.
-- A mode chip on saved trips.
+In scope (built):
+- Show a disruption banner above results when metro is out of service, both ends of the trip are
+  served by metro, and metro is missing from, or replaced by buses in, the results.
+
+Deferred (section 10): replacement-bus leg chips, the neutral "no metro, no alert" banner, alert
+sheet grouping by severity, saved-trip chip, train and light-rail alerts.
 
 Out of scope:
 - Lift and escalator outages, standing notices, station facility notices (not service impact).
-- Bus-network alerts in the first version.
+- Bus-network alerts and train alerts in the first version. Train alerts name routes such as
+  `T6_1a` and `BNK_1a` that the planner does not use, so a train banner needs a route-to-line
+  mapping first; without it every train rider would see every train alert.
 - Push notifications.
 - Any background polling.
 
@@ -102,57 +104,52 @@ Collision check, from real data:
 - The route id `SMNW_M1` is a GTFS id; the trip API uses `nsw:...` line ids. They are not
   joined in v1. Mode comes from the feed name, which avoids the join.
 
-Relevance rule (two signals):
+Relevance rule, as built (`DisruptionRelevance.kt`). A banner shows only when all hold:
+1. The alert's severity is NOT_RUNNING.
+2. Both the origin and the destination are served by that mode. A train trip from Central, which
+   also has a metro, is not a metro trip; Parramatta has no metro, so it gets no banner.
+3. The rider has not filtered that mode out.
+4. The alert's window overlaps the times of the results on screen. With no results, the next 2 hours.
+5. The mode is missing from the results, or the alert says buses replace it and the results contain a bus leg.
 
-| Alert on rider's mode, in window | Mode present in results | Result |
-|---|---|---|
-| yes | no, or replaced by bus | Red banner, replacement-bus chips |
-| yes | yes, normal | No banner. Alert only in the sheet if the leg carries it |
-| no | no | Neutral banner with timetable button, no cause claimed |
-| no | yes | Nothing |
+Alerts name no stops, so (5) cannot tell which stretch the rider uses; the banner prints the
+alert's own headline so the rider can judge. The replacement-bus branch can fire for a rider whose
+bus leg is unrelated to the closure while a "buses replace metro" alert is active for some stretch
+and time window that overlaps their results. This is the main false-positive risk and is listed
+in section 9.
 
 ## 3. Interfaces
 
 ```kotlin
-// module: :feature:trip-planner:network, caller: TimeTableViewModel, SavedTripsViewModel
-interface DisruptionService {
-    /** Rail and metro modes only in v1. Cached, deduped, silent on failure. */
-    suspend fun disruptionsFor(
-        modes: Set<TransportMode>,
-        searchTime: Instant,
-    ): List<Disruption>
+// :feature:trip-planner:state, package ...state.disruption
+interface DisruptionRepository {
+    suspend fun load(feed: DisruptionFeed): Result<List<Disruption>>
 }
+enum class DisruptionFeed(val feedName: String, val productClass: Int) { METRO("metro", 2) }
+sealed interface DisruptionBannerState { data object None; data class Shown(val disruption: Disruption) }
 
-// module: :feature:trip-planner:state, pure, no I/O, runs in app and BFF fixtures
-fun classifyAlerts(
-    feedName: String,
-    alerts: List<RawAlert>,
-    searchTime: Instant,
-): List<Disruption>
+// :feature:trip-planner:network, internal, pure, no I/O
+internal fun classifyAlerts(feed: DisruptionFeed, alerts: List<Alert>): List<Disruption>
+internal class RealDisruptionRepository(service: GtfsRealtimeService, clock, ttl = 3.minutes, requestBudget = 3.seconds)
 
-// module: :feature:trip-planner:state, pure
-fun relevance(
-    disruptions: List<Disruption>,
-    resultModes: Set<TransportMode>,
-    riderModes: Set<TransportMode>,
-): DisruptionBannerState
+// :feature:trip-planner:ui, internal
+internal fun disruptionBanner(disruptions, endpointProductClasses, resultProductClasses, spanStartEpochSec, spanEndEpochSec): DisruptionBannerState
+internal class DisruptionLoader(repository, sandook, scope, dispatcher, nowEpochSec)
 
-// module: :feature:track:network, extend existing
+// :feature:track:network, extended
 enum class GtfsFeedType { TRIP_UPDATES, VEHICLE_POSITIONS, ALERTS }
 ```
 
-- `GtfsRealtimeService.fetchFeed(feedName, feedType = ALERTS, sinceLastModified)` already
-  supports conditional requests and returns `Unchanged`. Reuse it. Do not add a client.
-- Fakes: `FakeDisruptionService` in `:core:testing`.
-- Rider modes come from `NswStopProductClass` for the origin and destination stops.
-
-Classifier rules, which both repos run against the same fixtures:
-- Keep: `effect` is MODIFIED_SERVICE, REDUCED_SERVICE, NO_SERVICE, SIGNIFICANT_DELAYS or DETOUR,
-  with an informed route, and an active period that contains the search time.
-- Drop: `UNKNOWN_EFFECT` (the live "Station Update" and "Opal sales" items), periods ending
-  after year 2100 (standing notices), anything outside the search window.
-- NOT_RUNNING when the header matches "do not run", "buses replace", "suspended" or "no service"
-  or the effect is NO_SERVICE. Otherwise DELAYS_AND_CHANGES.
+- `GtfsRealtimeService.fetchFeed(feedName, ALERTS)` is reused; no new HTTP client.
+- Endpoint modes come from `Sandook.selectStopsByIds` (the bundled `NswStopProductClass` table), so
+  deciding whether a trip is a metro trip needs no network.
+- `TimeTableViewModel` takes an optional `DisruptionRepository`, like `CarriageForecastRepository`.
+- The banner reuses the shared `InfoTile` (CRITICAL_ALERT type, expanded, no dismiss).
+- The classifier keeps alerts whose effect is NO_SERVICE, REDUCED_SERVICE, SIGNIFICANT_DELAYS,
+  DETOUR or MODIFIED_SERVICE, plus any headline worded "do not run", "buses replace", "suspended",
+  "no service" or "not running". It drops UNKNOWN_EFFECT facility notices, lift and escalator
+  headlines, alerts with no start, and empty headlines. An open end date means ongoing.
+- Fakes: `FakeGtfsRealtimeService` and `FakeClock` already exist in `:core:testing`.
 
 ## 4. External contracts
 
@@ -171,9 +168,14 @@ Classifier rules, which both repos run against the same fixtures:
   route id. Fields ignored: translations other than the first, informed stop ids.
 - Why not add_info: 217 KB of JSON to decode for 7 metro items, against 3 KB of protobuf for
   the same alerts, because each item embeds full line objects.
-- Parity: KRAIL-BFF gets `GET /v1/alerts/disruptions?modes=metro,trains&at=<epoch>` returning
-  the classifier's output, run against the same fixtures. The app resolver
-  (`BffEndpointResolver`, `ENABLE_PROTO_BFF`) chooses the base URL. Disarmed today.
+- Parity: `GtfsRealtimeService` goes through `BffEndpointResolver`, so when the BFF rollout is armed
+  the app asks the BFF for `/v2/gtfs/alerts/metro`. KRAIL-BFF now serves that path
+  (`GtfsRoutes.kt`, `NswClient.getGtfsAlertsRaw`) as a byte proxy with a 60 s per-feed cache, so one
+  NSW call serves every rider. Classification stays in the app for both paths, so there is one
+  implementation and nothing to drift. The BFF is disarmed today.
+- Proto fix: the app's `gtfs-realtime.proto` declared `active_period` as a single field. The spec
+  and NSW use `repeated`; a single field keeps only the last period. Changed to `repeated`, which
+  is wire compatible.
 
 ## 5. Data flow
 
@@ -204,32 +206,32 @@ sequenceDiagram
 
 | # | Question | Answer |
 |---|---|---|
-| 1 | API calls | Per search: 0 to 2 extra small calls, one per rail or metro mode at the origin or destination, usually 1 (a metro-only trip) and at most 2. Zero when the cache is warm. While the results screen is visible: the existing trip refresh stays at 1 call per 30 s; alerts refresh only on that same tick and only when the cache is older than 3 minutes, so about 3 to 4 extra calls per mode per 10 minutes. Saved trips screen: one call per distinct rail mode among saved trips, at most 2, once per 3 minutes. Nothing runs at app start before first frame. |
-| 2 | Payload | Metro 3.2 KB, trains 20 KB, light rail 1.3 KB. Against 34 KB for one trip call. Protobuf decode of a few KB, not 217 KB of JSON. Bus feed (35 KB) is excluded from v1. |
-| 3 | Timing | Alerts run in parallel with the trip call and finish first (0.1 to 0.25 s against 0.5 to 0.8 s), so the banner is ready when results render and time to results is unchanged. The trip call never awaits alerts. Alert budget: 3 s timeout, no retry, silent on failure. |
-| 4 | UX | Loading: nothing extra, results load as today. Slow or failed alerts: no banner, results unaffected. If alerts arrive after results, the banner animates in only while the list is at the top and never moves a card the rider is touching. Offline: no call, no banner. Empty: no banner. The neutral variant never claims a cause. |
-| 5 | Network efficiency | In-memory cache per feed, TTL 3 minutes, aligned above the server's 90 s max-age. `sinceLastModified` makes refresh a 304-style `Unchanged` where NSW supports it (verify). In-flight dedupe so two screens asking for metro share one request. One cache shared by results and saved trips. |
-| 6 | Battery | No timers and no background work. Foreground only, gated with `repeatOnLifecycle(STARTED)`. Alert refresh rides the existing 30 s trip tick so it shares that radio wake-up instead of adding one. Parse cost is a few KB. No new wake-ups per minute. |
-| 7 | Shared limits | Adds roughly 15 to 20 percent more calls on a results screen held open for 10 minutes, about 3 percent more bytes for a metro-only trip. Rate-limit headroom unmeasured, listed in section 9. BFF parity collapses all riders into one upstream poll per feed per 90 s. |
+| 1 | API calls | A trip whose origin and destination are not both served by metro: **0 extra**, decided offline from the stop table. A metro trip: **1 extra call** to `/v2/gtfs/alerts/metro` on the first results load, beside the trip call. While the screen stays open the trip refresh stays at 1 call per 30 s; the alerts repository answers from memory for 3 minutes, so about 3 to 4 extra calls per 10 minutes. Nothing at app start, nothing in the background. |
+| 2 | Payload | 3.2 KB gzip for metro, against 34 KB for a trip call. Protobuf decode of a few KB. The 217 KB add_info JSON path was rejected. |
+| 3 | Timing | Metro alerts returned in 0.12 to 0.23 s against 0.54 to 0.78 s for the trip call. The loader starts beside the trip call and never gates it, so time to results is unchanged. Budget 3 s, no retry, silent on failure. |
+| 4 | UX | No spinner and no placeholder. A late or failed alert means no banner and unchanged results. The banner is a list item with `animateItem`, so it slides in; it is open by default because the replacement times are the answer. Offline: the existing connectivity gate applies, no banner. |
+| 5 | Network efficiency | In-memory cache, TTL 3 minutes (above NSW's `max-age=90`). Duplicate callers wait on one lock and read the cache. A failure returns the last good answer, so a dropped request never removes a showing banner. The loader skips a refresh while one is in flight. |
+| 6 | Battery | No timers and no background work. It rides `fetchTrip()`, which the screen already runs on its 30 s refresh while visible. Radio wake-ups per minute: unchanged. Parse: a few KB. |
+| 7 | Shared limits | At most +3 to +4 small calls per 10 minutes for a metro trip, zero otherwise. Rate-limit headroom is unmeasured. With the BFF armed, 1 NSW call per feed per minute total. |
 
 | Flow | Calls before | Calls after | Bytes before | Bytes after | Time to results before | after |
 |---|---|---|---|---|---|---|
-| One search, metro-only, cold cache | 1 | 2 | 34 KB | 37 KB | 0.5 to 0.8 s | 0.5 to 0.8 s |
-| One search, warm cache | 1 | 1 | 34 KB | 34 KB | same | same |
-| Results held open 10 minutes | 20 | 20 + 3 to 4 | 680 KB | about 700 KB | n/a | n/a |
-| Saved trips opened, metro and trains saved | 0 | 2 | 0 | 23 KB | n/a | no change to first frame |
+| Search, not a metro trip | 1 | 1 | 34 KB | 34 KB | 0.5 to 0.8 s | unchanged |
+| Search, metro trip, cold cache | 1 | 2 | 34 KB | 37 KB | 0.5 to 0.8 s | unchanged |
+| Search, metro trip, warm cache | 1 | 1 | 34 KB | 34 KB | unchanged | unchanged |
+| Results open 10 minutes, metro trip | 20 | 23 to 24 | 680 KB | about 690 KB | n/a | n/a |
 
-The saved-trips row is the one real added cost on a path every user hits. It is gated behind
-having saved metro or train trips, deferred until after first frame, and cached for 3 minutes.
+Train alerts (20 KB), the saved-trip chip and bus alerts are not in v1, so the earlier saved-trips
+cost line does not apply yet. It must be re-budgeted before that work starts.
 
 ## 7. States and UX
 
-Mockups: https://claude.ai/artifact/BMoVoEixHaHPZGGQoGzton (private review page).
+Mockups: https://claude.ai/artifact/BMoVoEixHaHPZGGQoGzton (private review page). The built banner uses the standard tile surface, not the red styling in the mockup.
 
 | State | Behaviour | Reuse |
 |---|---|---|
-| Content with disruption | Red banner, replacement-bus chips, grouped sheet | new `DisruptionBanner`, existing sheet |
-| Content, metro missing, no alert | Neutral banner, timetable button | new variant of the same component |
+| Content with disruption | Banner above the results (InfoTile, critical-alert type, open, "More info" opens the alert's URL) | `InfoTile` |
+| Content, metro missing, no alert | Not built | none |
 | No disruption | Nothing | none |
 | Alerts loading, slow, failed, offline | Nothing, results unaffected | none |
 
@@ -238,32 +240,36 @@ separator glyphs, vector icons only.
 
 ## 8. Test plan
 
-- Fixtures captured from the live feeds on 2026-11-20 (metro, sydneytrains), including the
-  UNKNOWN_EFFECT "Station Update" items and a standing notice, committed as binary protobuf plus
-  expected classifier JSON.
-- Pure tests for `classifyAlerts` and `relevance` over the 2x2 table above.
-- Cache tests: TTL, in-flight dedupe, `Unchanged` path, failure leaves previous value.
-- A test that the trip call result is delivered even when the alerts call hangs.
-- Rotation and process-death cases from the checklist for banner state.
-- The same fixture suite added to KRAIL-BFF.
+Built:
+- `AlertClassifierTest` (10): values copied from the live metro feed, including the UNKNOWN_EFFECT
+  "Station Update" items, lift headlines, no-end and no-start alerts.
+- `RealDisruptionRepositoryTest` (5): feed and type requested, TTL hit, TTL expiry, last good answer
+  on failure, failure when nothing cached.
+- `DisruptionRelevanceTest` (11): one-ended trips, filtered mode, window overlap before and after,
+  open end, delays-only, earliest wins, replacement-bus branch.
+- BFF `AlertsCacheTest` (4).
+
+Not built: a hanging-alerts test proving the trip result still arrives (the loader is a separate
+coroutine, so it holds by construction, but there is no test); rotation and process-death checks
+for the banner (it is derived state rebuilt from the loader, with the tile expansion in
+`rememberSaveable`); committed binary feed fixtures shared with the BFF.
 
 ## 9. Open gaps and decisions
 
-| Gap or decision | Owner | Needed by |
-|---|---|---|
-| No unplanned metro fault observed; every live alert is planned trackwork. Capture over a couple of weeks before finalising the NOT_RUNNING rule. | | before classifier merge |
-| How the trip API labels a replacement-bus leg; the red leg chip needs a reliable signal. | | before UI |
-| Whether the app's Wire-generated proto includes `Alert` and `EntitySelector`; the proto submodule is not checked out here. The BFF proto does. | | before service |
-| The BFF flagged a latent decode problem with `TripDescriptor.direction_id` as string in the app's proto. Alerts feeds had no trip entities, but confirm. | | before service |
-| Whether `sinceLastModified` yields `Unchanged` on the alerts endpoints. | | before service |
-| NSW rate-limit headroom for roughly 15 to 20 percent more calls. | | before rollout |
-| Include bus alerts later, behind a measured cost. | | later |
+| Gap or decision | Status |
+|---|---|
+| No unplanned metro fault observed; every live alert is planned trackwork. The NOT_RUNNING wording list and the effect set are from planned alerts. | Open. Needs a captured real fault. |
+| Replacement-bus branch can fire for an unrelated bus leg while a "buses replace metro" alert for another stretch overlaps the results. Mitigated by the banner printing the headline. | Open. Needs the trip API's replacement-bus signal or stop-level data. |
+| How the trip API labels a replacement-bus leg. | Open. Blocks the red leg chip. |
+| App proto declared `active_period` as a single field. | Fixed to `repeated`. |
+| Whether the app's proto includes `Alert`. | Resolved: it does. |
+| `sinceLastModified` on the alerts endpoint. | Not used; the repository's TTL cache replaces it. |
+| NSW rate-limit headroom for the extra calls. | Open, unmeasured. |
+| Train and light-rail alerts need a route-id to line-name mapping. | Open, deferred. |
 
 ## 10. Build order
 
-1. Fixtures and the pure classifier plus `relevance`, with tests. No UI.
-2. `GtfsFeedType.ALERTS` and `DisruptionService` with cache, dedupe and fake.
-3. ViewModel wiring, banner and leg chips on the results screen.
-4. Alert sheet grouping and `priority` carried into state.
-5. Saved-trip mode chip.
-6. BFF route, same fixtures.
+Done: classifier, repository, loader, relevance, banner, DI, BFF alerts proxy with cache.
+Deferred, each its own PR with its own cost line: replacement-bus leg chips, neutral banner, sheet
+grouping with `priority` in state, saved-trip chip, train and light-rail alerts, shared binary
+fixtures with the BFF.

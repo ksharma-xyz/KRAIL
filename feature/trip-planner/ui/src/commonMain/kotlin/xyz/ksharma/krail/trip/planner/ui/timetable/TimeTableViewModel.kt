@@ -63,12 +63,15 @@ import xyz.ksharma.krail.trip.planner.network.api.service.TripPlanningService
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptions
+import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionBannerState
+import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionFeed
 import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionRepository
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import xyz.ksharma.krail.trip.planner.ui.timetable.business.CarriageForecastLoader
+import xyz.ksharma.krail.trip.planner.ui.timetable.business.DisruptionAnalytics
 import xyz.ksharma.krail.trip.planner.ui.timetable.business.DisruptionLoader
 import xyz.ksharma.krail.trip.planner.ui.timetable.business.buildJourneyListWithRawData
 import xyz.ksharma.krail.trip.planner.ui.timetable.business.withCarriages
@@ -111,7 +114,10 @@ class TimeTableViewModel(
         scope = viewModelScope,
         dispatcher = ioDispatcher,
         nowEpochSec = { clock.now().epochSeconds },
+        onUnavailable = ::onDisruptionUnavailable,
     )
+
+    private val disruptionAnalytics = DisruptionAnalytics(analytics)
 
     private val _uiState: MutableStateFlow<TimeTableState> = MutableStateFlow(TimeTableState())
     val uiState: StateFlow<TimeTableState> = _uiState
@@ -390,7 +396,33 @@ class TimeTableViewModel(
             TimeTableUiEvent.SaveTripPromptDismissed -> onSaveTripPromptDismissed()
 
             TimeTableUiEvent.SaveTripPromptDisplayed -> onSavePromptDisplayed()
+
+            TimeTableUiEvent.DisruptionBannerDisplayed -> onDisruptionBannerDisplayed()
+
+            TimeTableUiEvent.DisruptionBannerExpanded -> trackDisruptionTile(expand = true)
+
+            is TimeTableUiEvent.DisruptionBannerCtaClicked -> trackDisruptionTile(ctaUrl = event.url)
         }
+    }
+
+    /**
+     * The banner composed, so it reached the screen. Same reasoning as [onSavePromptDisplayed]: a
+     * banner held in state may never be scrolled to.
+     */
+    private fun onDisruptionBannerDisplayed() {
+        val banner = _uiState.value.disruptionBanner as? DisruptionBannerState.Shown ?: return
+        val trip = tripInfo ?: return
+        disruptionAnalytics.trackShown(banner, trip, visibleJourneyCount = _uiState.value.journeyList.size)
+    }
+
+    private fun onDisruptionUnavailable(feed: DisruptionFeed) {
+        val trip = tripInfo ?: return
+        disruptionAnalytics.trackUnavailable(feed, trip)
+    }
+
+    private fun trackDisruptionTile(expand: Boolean? = null, ctaUrl: String? = null) {
+        val banner = _uiState.value.disruptionBanner as? DisruptionBannerState.Shown ?: return
+        disruptionAnalytics.trackTile(banner, expand = expand, ctaUrl = ctaUrl)
     }
 
     private fun trackStopHeaderClick(event: TimeTableUiEvent.OriginDestinationStopHeaderClicked) {

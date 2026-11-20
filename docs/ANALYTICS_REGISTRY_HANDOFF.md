@@ -144,6 +144,12 @@ fails the analytics build, so this class of gap cannot silently reopen.
   a distinct category, same convention already used for `StopLabelStopAssignedEvent`'s
   `source` field (see that event's KDoc in `AnalyticsEvent.kt`).
 
+| 2026-11-20 | `disruption_status` (NEW) | `action` | `shown｜error` | `shown`: the metro disruption banner above timetable results composed, once per alert and trip per screen. `error`: the metro alerts feed could not be read for a metro trip, once per screen | pending | Pending | — |
+| 2026-11-20 | `disruption_status` | `transportMode`, `fromStopId`, `toStopId` | `metro` today; stop ids as on other trip events | Same as above. Existing param names | pending | Pending | — |
+| 2026-11-20 | `disruption_status` | `reason` | `mode_missing｜replacement_bus`; `shown` only. `replacement_bus` is the looser signal, so its share is the false-positive watch | Same as above. Existing param name (`save_trip_prompt_action`) | pending | Pending | — |
+| 2026-11-20 | `disruption_status` | `visibleJourneyCount` | Int, journeys on screen when the banner appeared; `shown` only. Existing param name | Same as above | pending | Pending | — |
+| 2026-11-20 | `info_tile_interaction` | `key` (new value) | `disruption_metro`. Expanding the banner sends `expand = true`; tapping "More info" sends `cta_click` = the alert URL. No new params | The disruption banner is an info tile | pending | Documented | — |
+
 ## Not yet in this ledger (scoped, not implemented)
 
 Nothing at the moment. The stop-label lifecycle analytics work

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
@@ -22,6 +23,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.disruption.Disruption
 import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionBannerState
 import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionFeed
 import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionSeverity
+import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
 import xyz.ksharma.krail.trip.planner.ui.timetable.business.formatDisruptionDescription
 
 /**
@@ -30,11 +32,19 @@ import xyz.ksharma.krail.trip.planner.ui.timetable.business.formatDisruptionDesc
  * between where, and an open tile took about 45 percent of a Pixel 6 Pro screen and pushed the
  * results off it. Tapping it opens the replacement times.
  */
-internal fun LazyListScope.disruptionBannerItem(banner: DisruptionBannerState) {
+internal fun LazyListScope.disruptionBannerItem(
+    banner: DisruptionBannerState,
+    onEvent: (TimeTableUiEvent) -> Unit,
+) {
     val shown = (banner as? DisruptionBannerState.Shown)?.disruption ?: return
     item(key = "disruption-banner") {
+        // A lazy item only composes once it is in or near the viewport, so this is the first moment the
+        // banner can be said to have reached the rider. The ViewModel de-dupes recompositions.
+        LaunchedEffect(Unit) { onEvent(TimeTableUiEvent.DisruptionBannerDisplayed) }
         DisruptionBanner(
             disruption = shown,
+            onExpand = { onEvent(TimeTableUiEvent.DisruptionBannerExpanded) },
+            onMoreInfo = { url -> onEvent(TimeTableUiEvent.DisruptionBannerCtaClicked(url)) },
             modifier = Modifier
                 .padding(horizontal = KrailTheme.dimensions.spacingL)
                 // The header card to the actions row is spacingM (the card's own bottom padding) plus
@@ -47,7 +57,12 @@ internal fun LazyListScope.disruptionBannerItem(banner: DisruptionBannerState) {
 }
 
 @Composable
-private fun DisruptionBanner(disruption: Disruption, modifier: Modifier = Modifier) {
+private fun DisruptionBanner(
+    disruption: Disruption,
+    modifier: Modifier = Modifier,
+    onExpand: () -> Unit = {},
+    onMoreInfo: (String) -> Unit = {},
+) {
     val uriHandler = LocalUriHandler.current
     val description = remember(disruption.detail) { formatDisruptionDescription(disruption.detail) }
     val tile = remember(disruption) {
@@ -63,8 +78,14 @@ private fun DisruptionBanner(disruption: Disruption, modifier: Modifier = Modifi
     InfoTile(
         infoTileData = tile,
         initialState = InfoTileState.COLLAPSED,
-        onCtaClick = { data -> data.primaryCta?.url?.let(uriHandler::openUri) },
+        onCtaClick = { data ->
+            data.primaryCta?.url?.let { url ->
+                onMoreInfo(url)
+                uriHandler.openUri(url)
+            }
+        },
         onDismissClick = {},
+        onTileExpand = { onExpand() },
         modifier = modifier,
         leadingIcon = {
             Image(

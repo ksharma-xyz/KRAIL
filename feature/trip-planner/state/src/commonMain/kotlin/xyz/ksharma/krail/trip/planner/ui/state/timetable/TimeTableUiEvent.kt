@@ -100,6 +100,13 @@ sealed interface TimeTableUiEvent {
      */
     data object SaveTripPromptDisplayed : TimeTableUiEvent
 
+    /** The disruption banner reached the screen. Fired from composition, like the save prompt. */
+    data object DisruptionBannerDisplayed : TimeTableUiEvent
+
+    data object DisruptionBannerExpanded : TimeTableUiEvent
+
+    data class DisruptionBannerCtaClicked(val url: String) : TimeTableUiEvent
+
     /** The rider opened the "Want a seat?" tip on an opened journey card. */
     data object SeatTipOpened : TimeTableUiEvent
 }

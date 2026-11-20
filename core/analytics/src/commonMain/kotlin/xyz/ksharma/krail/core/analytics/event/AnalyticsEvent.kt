@@ -32,6 +32,8 @@ private const val PROP_ENDPOINT = "endpoint"
 // PARAMETER NAME, so one registration covers every event that sends it. Divergent vocabulary is
 // what costs, not shared vocabulary.
 private const val PROP_REASON = "reason"
+private const val PROP_TRANSPORT_MODE = "transportMode"
+private const val PROP_VISIBLE_JOURNEY_COUNT = "visibleJourneyCount"
 
 /**
  * Every event's [properties] pass through [AnalyticsParamSanitizer] before they are
@@ -899,7 +901,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         name = "journey_leg_click",
         rawProperties = mapOf(
             "expanded" to expanded,
-            "transportMode" to transportMode,
+            PROP_TRANSPORT_MODE to transportMode,
             "lineName" to lineName,
         ),
     )
@@ -957,6 +959,55 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
             FAILED("failed"),
             UPVOTE("upvote"),
             DOWNVOTE("downvote"),
+        }
+    }
+
+    /**
+     * The service disruption banner above the timetable results, which appears when a line the rider
+     * would use is out of service. One `{feature}_status(action)` event, same convention as
+     * `alert_summary_status` and `dep_board_status`. Expanding the banner and tapping "More info" are
+     * not here: the banner is an info tile, so they ride `info_tile_interaction` with
+     * `key = disruption_metro`.
+     *
+     * `shown` fires from composition, once per alert and trip per screen, so it counts banners riders
+     * could see rather than banners resolved into state. Carries no alert text.
+     *
+     * No new param names: every one is already used by another event.
+     *
+     * @param action `shown`, or `error` when the alerts feed could not be read for a metro trip (once per
+     * screen).
+     * @param transportMode the mode whose alert this is, `metro` today.
+     * @param reason on `shown` only: `mode_missing` (the planner returned no metro at all) or
+     * `replacement_bus` (the alert says buses replace the line and the results contain a bus leg).
+     * `replacement_bus` is the looser signal, so its share is the false-positive watch.
+     * @param visibleJourneyCount on `shown` only: journeys on screen when the banner appeared.
+     */
+    data class DisruptionStatusEvent(
+        val action: Action,
+        val transportMode: String,
+        val fromStopId: String,
+        val toStopId: String,
+        val reason: String? = null,
+        val visibleJourneyCount: Int? = null,
+    ) : AnalyticsEvent(
+        name = "disruption_status",
+        rawProperties = buildMap {
+            put(PROP_ACTION, action.value)
+            put(PROP_TRANSPORT_MODE, transportMode)
+            put(PROP_FROM_STOP_ID, fromStopId)
+            put(PROP_TO_STOP_ID, toStopId)
+            reason?.let { put(PROP_REASON, it) }
+            visibleJourneyCount?.let { put(PROP_VISIBLE_JOURNEY_COUNT, it) }
+        },
+    ) {
+        enum class Action(val value: String) {
+            SHOWN("shown"),
+            ERROR("error"),
+        }
+
+        companion object {
+            const val REASON_MODE_MISSING = "mode_missing"
+            const val REASON_REPLACEMENT_BUS = "replacement_bus"
         }
     }
 
@@ -1048,7 +1099,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
             "loadMoreCount" to loadMoreCount,
             "isCustomDateTime" to isCustomDateTime,
             "latestVisibleDepartureMinutesFromNow" to latestVisibleDepartureMinutesFromNow,
-            "visibleJourneyCount" to visibleJourneyCount,
+            PROP_VISIBLE_JOURNEY_COUNT to visibleJourneyCount,
         ),
     )
 
@@ -1079,7 +1130,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
             PROP_TO_STOP_ID to toStopId,
             "isCustomDateTime" to isCustomDateTime,
             "earliestVisibleDepartureMinutesFromNow" to earliestVisibleDepartureMinutesFromNow,
-            "visibleJourneyCount" to visibleJourneyCount,
+            PROP_VISIBLE_JOURNEY_COUNT to visibleJourneyCount,
         ),
     )
 
@@ -1627,7 +1678,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
             put("selected", selected)
             put(PROP_SOURCE, source.value)
             lineNumber?.let { put("lineNumber", it) }
-            transportMode?.let { put("transportMode", it) }
+            transportMode?.let { put(PROP_TRANSPORT_MODE, it) }
         },
     )
 

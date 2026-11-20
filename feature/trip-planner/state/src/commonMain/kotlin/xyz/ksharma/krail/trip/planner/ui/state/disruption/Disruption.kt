@@ -38,8 +38,17 @@ data class Disruption(
     val replacedByBuses: Boolean,
 )
 
+/** Why a disruption deserves a banner on these results. Reported to analytics. */
+enum class DisruptionReason {
+    /** The planner returned no journey on the affected mode at all. */
+    MODE_MISSING,
+
+    /** The alert says buses replace the line and the results contain a bus leg. */
+    REPLACEMENT_BUS,
+}
+
 sealed interface DisruptionBannerState {
     data object None : DisruptionBannerState
 
-    data class Shown(val disruption: Disruption) : DisruptionBannerState
+    data class Shown(val disruption: Disruption, val reason: DisruptionReason) : DisruptionBannerState
 }

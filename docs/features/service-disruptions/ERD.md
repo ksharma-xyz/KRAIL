@@ -144,7 +144,7 @@ enum class GtfsFeedType { TRIP_UPDATES, VEHICLE_POSITIONS, ALERTS }
 - Endpoint modes come from `Sandook.selectStopsByIds` (the bundled `NswStopProductClass` table), so
   deciding whether a trip is a metro trip needs no network.
 - `TimeTableViewModel` takes an optional `DisruptionRepository`, like `CarriageForecastRepository`.
-- The banner reuses the shared `InfoTile` (CRITICAL_ALERT type, expanded, no dismiss).
+- The banner reuses the shared `InfoTile` (CRITICAL_ALERT type, collapsed to the headline, no dismiss). `InfoTile` takes an optional leading icon, used for a warning triangle before the title. The description is shown as clean paragraphs with the last services as short lines, without NSW's date line or list markers.
 - The classifier keeps alerts whose effect is NO_SERVICE, REDUCED_SERVICE, SIGNIFICANT_DELAYS,
   DETOUR or MODIFIED_SERVICE, plus any headline worded "do not run", "buses replace", "suspended",
   "no service" or "not running". It drops UNKNOWN_EFFECT facility notices, lift and escalator
@@ -209,7 +209,7 @@ sequenceDiagram
 | 1 | API calls | A trip whose origin and destination are not both served by metro: **0 extra**, decided offline from the stop table. A metro trip: **1 extra call** to `/v2/gtfs/alerts/metro` on the first results load, beside the trip call. While the screen stays open the trip refresh stays at 1 call per 30 s; the alerts repository answers from memory for 3 minutes, so about 3 to 4 extra calls per 10 minutes. Nothing at app start, nothing in the background. |
 | 2 | Payload | 3.2 KB gzip for metro, against 34 KB for a trip call. Protobuf decode of a few KB. The 217 KB add_info JSON path was rejected. |
 | 3 | Timing | Metro alerts returned in 0.12 to 0.23 s against 0.54 to 0.78 s for the trip call. The loader starts beside the trip call and never gates it, so time to results is unchanged. Budget 3 s, no retry, silent on failure. |
-| 4 | UX | No spinner and no placeholder. A late or failed alert means no banner and unchanged results. The banner is a list item with `animateItem`, so it slides in; it is open by default because the replacement times are the answer. Offline: the existing connectivity gate applies, no banner. |
+| 4 | UX | No spinner and no placeholder. A late or failed alert means no banner and unchanged results. The banner is a list item with `animateItem`, so it slides in; it is collapsed by default (the headline names what is out and where), because open it took about 45% of a Pixel 6 Pro screen and pushed the results off it. Offline: the existing connectivity gate applies, no banner. |
 | 5 | Network efficiency | In-memory cache, TTL 3 minutes (above NSW's `max-age=90`). Duplicate callers wait on one lock and read the cache. A failure returns the last good answer, so a dropped request never removes a showing banner. The loader skips a refresh while one is in flight. |
 | 6 | Battery | No timers and no background work. It rides `fetchTrip()`, which the screen already runs on its 30 s refresh while visible. Radio wake-ups per minute: unchanged. Parse: a few KB. |
 | 7 | Shared limits | At most +3 to +4 small calls per 10 minutes for a metro trip, zero otherwise. Rate-limit headroom is unmeasured. With the BFF armed, 1 NSW call per feed per minute total. |
@@ -230,7 +230,7 @@ Mockups: https://claude.ai/artifact/BMoVoEixHaHPZGGQoGzton (private review page)
 
 | State | Behaviour | Reuse |
 |---|---|---|
-| Content with disruption | Banner above the results (InfoTile, critical-alert type, open, "More info" opens the alert's URL) | `InfoTile` |
+| Content with disruption | Banner above the results (InfoTile with a warning triangle, collapsed to the headline, tap for the replacement times, "More info" opens the alert's URL). The gap above and below the banner equals the gap between the header card and the actions row. | `InfoTile` |
 | Content, metro missing, no alert | Not built | none |
 | No disruption | Nothing | none |
 | Alerts loading, slow, failed, offline | Nothing, results unaffected | none |

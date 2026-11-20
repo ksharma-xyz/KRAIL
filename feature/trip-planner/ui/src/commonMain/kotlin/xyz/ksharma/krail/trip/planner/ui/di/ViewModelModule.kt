@@ -210,6 +210,7 @@ val viewModelsModule = module {
             tripTrackingDebugOverride = tripTrackingDebugOverride,
             clock = get(),
             carriageForecasts = get(),
+            disruptions = get(),
         )
     }
 

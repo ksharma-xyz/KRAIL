@@ -13,6 +13,7 @@ import xyz.ksharma.krail.feature.crowding.CrowdingWording
 import xyz.ksharma.krail.feature.crowding.SeatLevel
 import xyz.ksharma.krail.trip.planner.ui.state.TransportModeLine
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
+import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionBannerState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -70,6 +71,8 @@ data class TimeTableState(
      * session, max 2 dismissals per pair, never for saved pairs).
      */
     val showSaveTripPrompt: Boolean = false,
+    /** Service disruption worth showing above the results. See `DisruptionRelevance`. */
+    val disruptionBanner: DisruptionBannerState = DisruptionBannerState.None,
 ) {
     @OptIn(ExperimentalTime::class)
     @Stable

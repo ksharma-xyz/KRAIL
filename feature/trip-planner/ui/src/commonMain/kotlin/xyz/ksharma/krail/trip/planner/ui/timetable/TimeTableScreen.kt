@@ -381,6 +381,8 @@ fun TimeTableScreen(
                 onSaveAccepted = { celebrateSaveStar = true },
             )
 
+            disruptionBannerItem(banner = timeTableState.disruptionBanner)
+
             item(key = "spacer-top") {
                 Spacer(modifier = Modifier.height(dim.spacingL))
             }

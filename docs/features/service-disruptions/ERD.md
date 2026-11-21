@@ -74,15 +74,15 @@ Collision check, from real data:
 - A leg alert and a feed alert share no id. The planner's id is `ems-81168`; the feed's is a UUID.
   They can only be paired by text, so they are not paired.
 
-Relevance rule, version 2. A banner shows when a leg in the results is a replacement bus (product
-id 14 or 22) and the rider has not filtered that mode out. No alert is needed. With no replacement
+Relevance rule, version 2. A banner shows when a leg in the results is a replacement bus (`iconId`
+14 or 22) and the rider has not filtered that mode out. No alert is needed. With no replacement
 leg the version 2 logic shows nothing; the 1.30 metro alert logic is unchanged (A8).
 
 ## 3. Interfaces
 
 ```kotlin
 // :feature:trip-planner:network, internal, pure, no I/O
-internal fun isReplacementLeg(leg: Leg): Boolean                  // product id 14 or 22
+internal fun isReplacementLeg(leg: Leg): Boolean                  // iconId 14 or 22
 internal fun hasReplacementLeg(journeys: List<Journey>): Boolean
 
 // :feature:trip-planner:ui, internal
@@ -106,7 +106,7 @@ internal fun disruptionBanner(...): DisruptionBannerState
 | Metro alerts (existing, 1.30) | GET `/v2/gtfs/alerts/metro` | none | NSW key | protobuf | 3.2 KB | 0.19 to 0.31 s |
 
 Trip fields read:
-- `legs[].transportation.product` (`id`, `class`, `name`) decides a replacement leg.
+- `legs[].transportation.iconId` decides a replacement leg (14 or 22). `product.id` carries the same value.
 - `legs[].infos` where `type` is `lineInfo`, for the detail text only (A7), never as a trigger.
 
 Metro alert fields read (unchanged from 1.30): header text, description text, url, effect, every
@@ -130,7 +130,7 @@ itself carries a replacement-bus leg.
 
 | Decision | Source | Reliable |
 |---|---|---|
-| Replacement bus on the trip | `transportation.product.id` 14 or 22, a data field (observed, not in NSW docs) | Yes when present. The planner may not show buses far ahead. |
+| Replacement bus on the trip | `transportation.iconId` 14 or 22, a data field and documented | Yes when present. The planner may not show buses far ahead. |
 | Closure versus other alert | headline wording | No |
 | Closed stretch | headline text | No |
 | Active period | `active_period`, a data field | Yes |
@@ -205,8 +205,8 @@ Built in version 1 and kept: `AlertClassifierTest`, `RealDisruptionRepositoryTes
 `DisruptionRelevanceTest`, `DisruptionDetailTest`, `DisruptionAnalyticsTest`, banner snapshots.
 
 New, from real captured trip replies (fixtures committed under the module's test resources):
-- Replacement legs: Cronulla to Central (every leg product id 14), Bankstown to Sydenham at 11:30 pm
-  (one metro journey, then product id 14 buses), a normal bus journey (id 5, no banner).
+- Replacement legs: Cronulla to Central (every leg iconId 14), Bankstown to Sydenham at 11:30 pm
+  (one metro journey, then iconId 14 buses), a normal bus journey (id 5, no banner).
 - No banner: Parramatta to Central (a T1 leg alert for Richmond to Blacktown, no replacement leg),
   Central to Bondi Junction (carries the Cronulla closure as a leg alert, no replacement leg).
 - Rider moved to another mode: Sydenham to Central with metro only, no banner.
@@ -232,7 +232,7 @@ Each row decides who sees a banner, when, or which cases count. Sign-off line:
 
 | # | Assumption | Evidence (real data, named cases) | What breaks if it is wrong | Decision |
 |---|---|---|---|---|
-| A1 | A replacement bus is a leg whose product id is 14 ("Temporary buses", class 5), or id 22 ("Temporary coaches", class 7) for regional. | 27 legs across Cronulla, Waterfall, Dapto, Olympic Park, Richmond and a metro closure, none on the 11 normal bus legs (id 5, "Sydney Buses Network"). Observed on 2026-11-21, not in NSW documentation. | A replacement of another type is invisible, and a renamed product silently removes the banner. | Approved by ksharma-xyz, 2026-11-21 |
+| A1 | A replacement bus is a leg whose `transportation.iconId` is 14 ("Temporary Buses", class 5), or 22 ("Temporary Coaches", class 7) for regional. The same value is `transportation.product.id`. | 27 legs across Cronulla, Waterfall, Dapto, Olympic Park, Richmond and a metro closure, none on the 11 normal bus legs (id 5, "Sydney Buses Network"). `iconId` and both values are in the trip API's field documentation, copied in the app's `TripResponse.Transportation`. On a phone the Cronulla to Central results showed the banner on every row. | A replacement of another type is invisible, and a renamed product silently removes the banner. | Approved by ksharma-xyz, 2026-11-21 |
 | A2 | A banner shows only when the trip reply carries a replacement-bus leg. Alert text is never a trigger. A rider whose planner has not loaded the buses yet sees nothing. | Ashfield to Central Sun 22 Nov 7:00 am, closure from 6:20 am: trains, no buses. Richmond to Blacktown Sun 22 Nov: buses shown. | A rider days ahead of a closure is not warned. | Approved by ksharma-xyz, 2026-11-21 (option A) |
 | A3 | An alert attached to a leg covers the whole route, so it is never a trigger by itself. | Central to Bondi Junction and Central to Coogee carried the Cronulla to Central closure. T1 trains from Parramatta carried the Richmond to Blacktown closure. | A banner for a rider far from the closed stretch. | Approved by ksharma-xyz, 2026-11-21 |
 | A4 | A rider whose results moved to another working mode sees no banner. | Sydenham to Central Sat 21 Nov: train closure live, planner returned metro only. | The rider does not learn trains are replaced. | Approved by ksharma-xyz, 2026-11-21 |

@@ -150,7 +150,13 @@ How the first PR behaves, where it adds to the signatures above:
 internal data class SuggestedStop(val stopId: String, val name: String)
 internal data class SuggestedStops(val start: List<SuggestedStop>, val end: List<SuggestedStop>)
 
-/** Parses the Remote Config value. A parse failure or an empty list returns [fallback], never an empty screen. */
+/**
+ * Parses the Remote Config value, `{"start":[{"stopId":"..","name":".."}],"end":[..]}`, ignoring unknown fields. Returns
+ * [fallback] as a whole, never a repaired half, for: text that is not that shape, an empty list, a stop id repeated
+ * within a list, a blank id or name, or a start that equals the only end (or an end that equals the only start), where
+ * picking that stop would leave the other list with nothing different to pick. The same stop on both lists is normal.
+ * `name` is the stop's own name in the stops table (for example "Central Station").
+ */
 internal fun parseSuggestedStops(json: String, fallback: SuggestedStops): SuggestedStops
 
 /**

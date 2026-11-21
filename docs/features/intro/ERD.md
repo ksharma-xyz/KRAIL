@@ -176,11 +176,16 @@ internal fun parkRideStartPrefill(station: ParkRideStationPickerItem, stopNameLo
 internal fun introFinishAction(state: IntroState, readiness: StopsReadiness): IntroFinishAction
 internal enum class IntroFinishAction { Next, GettingReady, TryAgain, SaveAndStart, SkipForNow, LetsKrail }
 
+/** savedTrip = state.saved, skipped = no saved trip and no complete pair. Param names and values as section 11.2. */
 internal fun IntroState.toOutcome(stopsWait: StopsWait): IntroOutcome
+internal fun IntroOutcome.toParams(): Map<String, Any>
+/** Failed is failed. None is no wait, under 2 s, 2 s to 5 s inclusive, over 5 s. Takes a Duration, never reads a clock. */
+internal fun stopsWaitBucket(waited: Duration, readiness: StopsReadiness): StopsWait
 ```
 
 ```kotlin
-// module: :feature:trip-planner:state, intro/
+// module: :feature:trip-planner:state, intro/ (package intro.v2 until the carousel IntroState is deleted, then moved up)
+// Every field has a default, so IntroState() is the first screen. hasTrip is true only when both stop ids are set.
 data class IntroState(
     val step: IntroStep,
     val parkRideAnswer: ParkRideAnswer,

@@ -198,16 +198,21 @@ data class IntroState(
     val saved: Boolean,
 )
 
+// module: :feature:trip-planner:ui, intro/v2 (internal, because SuggestedStop is). Moves up with the carousel's deletion.
 sealed interface IntroUiEvent {
     data object Back : IntroUiEvent
-    data object Next : IntroUiEvent
+    data object Next : IntroUiEvent                    // the question step only
     data class AnswerParkRide(val yes: Boolean) : IntroUiEvent
-    data class LocationResultReceived(val result: LocationResult) : IntroUiEvent
+    data class LocationResultReceived(val result: LocationResult, val location: LatLng?) : IntroUiEvent
     data object ToggleParkRide : IntroUiEvent          // Add to home / Added
     data class PickStart(val stop: SuggestedStop) : IntroUiEvent
     data class PickEnd(val stop: SuggestedStop) : IntroUiEvent
+    data class StopPickedFromSearch(val isStart: Boolean, val stopId: String, val stopName: String) : IntroUiEvent
     data object FinishPressed : IntroUiEvent           // Save and start, Skip for now, Let's KRAIL, Try again
 }
+
+/** One shot, delivered once through a Channel and never replayed after rotation. */
+sealed interface IntroEffect { data object NavigateToSavedTrips : IntroEffect }
 ```
 
 - Every interface has a fake in `:core:testing`: `FakeAppDataReadiness` (controllable state), the existing location, catalogue,

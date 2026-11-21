@@ -25,6 +25,8 @@ import xyz.ksharma.krail.trip.planner.ui.alerts.summary.isAlertSummaryEnabled
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorViewModel
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverViewModel
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroViewModel
+import xyz.ksharma.krail.trip.planner.ui.intro.v2.IntroCompletion
+import xyz.ksharma.krail.trip.planner.ui.intro.v2.IntroFlowViewModel
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.parkride.AddParkRideViewModel
 import xyz.ksharma.krail.trip.planner.ui.parkride.RealParkRideAvailabilityLoader
@@ -57,6 +59,7 @@ import xyz.ksharma.krail.trip.planner.ui.settings.SettingsViewModel
 import xyz.ksharma.krail.trip.planner.ui.settings.story.OurStoryViewModel
 import xyz.ksharma.krail.trip.planner.ui.themeselection.ThemeSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
+import kotlin.time.TimeSource
 
 val viewModelsModule = module {
     viewModelOf(::ServiceAlertsViewModel)
@@ -137,6 +140,22 @@ val viewModelsModule = module {
             preferences = get(),
             nswStopsManager = get(named(GtfsQualifiers.NSW_STOPS_MANAGER)),
             nswBusRoutesManager = get(named(GtfsQualifiers.NSW_BUS_ROUTES_MANAGER)),
+        )
+    }
+
+    // The two step Intro. It takes a SavedStateHandle from Koin's view model parameters.
+    viewModel { params ->
+        IntroFlowViewModel(
+            savedStateHandle = params.get(),
+            appDataReadiness = get(),
+            completion = IntroCompletion(
+                sandook = get(),
+                preferences = get(),
+                analytics = get(),
+                ioDispatcher = get(named(IODispatcher)),
+            ),
+            flag = get(),
+            timeSource = TimeSource.Monotonic,
         )
     }
 

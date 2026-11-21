@@ -3,33 +3,49 @@ package xyz.ksharma.krail.trip.planner.ui.intro.v2
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.io.gtfs.readiness.AppDataReadiness
+import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroFinishAction
 import xyz.ksharma.krail.trip.planner.ui.intro.SuggestedStops
 import xyz.ksharma.krail.trip.planner.ui.intro.introFinishAction
+import xyz.ksharma.krail.trip.planner.ui.intro.stopsWaitBucket
+import xyz.ksharma.krail.trip.planner.ui.intro.toOutcome
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideAnswer
+import kotlin.time.Duration
+import kotlin.time.TimeSource
+
+/**
+ * The longest a finish waits for the stops. A guess: the insert is assumed to take 3 to 5 seconds.
+ * Past it the press does nothing and the button keeps reading Getting ready.
+ */
+internal const val FINISH_WAIT_TIMEOUT_MS = 30_000L
 
 /**
  * The two step Intro. Its state is saved as it changes, so the step, the answer and the picks
- * survive rotation and the process being killed. It never polls.
+ * survive rotation and the process being killed. It never polls: the one thing it waits on is
+ * [AppDataReadiness.awaitReady], once, at the finish.
  *
- * The finish, and the Park & Ride step, come in later branches. Until then the bottom button only
- * handles Next and Try again, an answer of yes is only recorded, a location result is only noted,
- * and add to home does nothing.
+ * The Park & Ride step is finished by the branch that builds it. Until then an answer of yes is only
+ * recorded, a location result is only noted, and add to home does nothing.
  */
 internal class IntroFlowViewModel(
     private val savedStateHandle: SavedStateHandle,
     private val appDataReadiness: AppDataReadiness,
     private val completion: IntroCompletion,
     flag: Flag,
+    private val timeSource: TimeSource,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(savedStateHandle.restoreIntroState())
@@ -38,7 +54,14 @@ internal class IntroFlowViewModel(
     /** Read once, so the lists never change under the rider. */
     val suggestedStops: SuggestedStops = flag.introSuggestedStops()
 
+    private val effectChannel = Channel<IntroEffect>(Channel.BUFFERED)
+
+    /** Delivered once to whoever collects, never replayed after rotation. */
+    val effects: Flow<IntroEffect> = effectChannel.receiveAsFlow()
+
     private var suggestionShownWritten = false
+    private var finishJob: Job? = null
+    private var finished = false
 
     fun onEvent(event: IntroUiEvent) {
         when (event) {
@@ -72,21 +95,53 @@ internal class IntroFlowViewModel(
         }
     }
 
+    // A press while the button reads Getting ready is not dropped: the finish waits for the stops,
+    // so a tap that gets through never opens home on an empty table.
     private fun finishPressed() {
         when (introFinishAction(_state.value, appDataReadiness.state.value)) {
             IntroFinishAction.Next -> next()
             IntroFinishAction.TryAgain -> appDataReadiness.retry()
-            // The next branch completes the finish: wait for the stops, save the trip, write the
-            // flags, track the outcome and leave. Until then these presses do nothing.
             IntroFinishAction.GettingReady,
             IntroFinishAction.SaveAndStart,
             IntroFinishAction.SkipForNow,
             IntroFinishAction.LetsKrail,
-            -> Unit
+            -> finish()
         }
     }
 
-    /** Written once, when the question is answered or passed. */
+    private fun finish() {
+        if (finished || finishJob?.isActive == true) return
+        finishJob = viewModelScope.launch { runFinish() }
+    }
+
+    /**
+     * Waits for the stops, writes the trip if there is one, marks the Intro seen, reports the
+     * outcome and only then tells the screen to leave. Stops that are not ready, or failed, write
+     * nothing and the button reads Getting ready or Try again.
+     */
+    private suspend fun runFinish() {
+        val wasReady = appDataReadiness.state.value is StopsReadiness.Ready
+        val waitStarted = timeSource.markNow()
+        val readiness = appDataReadiness.awaitReady(FINISH_WAIT_TIMEOUT_MS)
+        // A real clock never reads exactly zero, so no wait is decided here, not by the bucket.
+        val waited = if (wasReady) Duration.ZERO else waitStarted.elapsedNow()
+
+        val action = introFinishAction(_state.value, readiness)
+        if (action !in FINISHING_ACTIONS) return
+
+        val trip = if (action == IntroFinishAction.SaveAndStart) _state.value.toTripOrNull() else null
+        if (trip != null) {
+            completion.saveTrip(trip)
+            update { copy(saved = true) }
+        }
+        ensureSuggestionShown()
+        completion.writeIntroSeen()
+        completion.track(_state.value.toOutcome(stopsWaitBucket(waited, readiness)), savedTrip = trip)
+        finished = true
+        effectChannel.send(IntroEffect.NavigateToSavedTrips)
+    }
+
+    /** Written once, at the first of: the question answered or passed, or the finish. */
     private suspend fun ensureSuggestionShown() {
         if (suggestionShownWritten) return
         suggestionShownWritten = true
@@ -97,5 +152,13 @@ internal class IntroFlowViewModel(
     private fun update(transform: IntroState.() -> IntroState) {
         _state.update(transform)
         savedStateHandle.saveIntroState(_state.value)
+    }
+
+    private companion object {
+        val FINISHING_ACTIONS = setOf(
+            IntroFinishAction.SaveAndStart,
+            IntroFinishAction.SkipForNow,
+            IntroFinishAction.LetsKrail,
+        )
     }
 }

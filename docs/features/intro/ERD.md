@@ -215,11 +215,12 @@ sealed interface IntroUiEvent {
 sealed interface IntroEffect { data object NavigateToSavedTrips : IntroEffect }
 ```
 
-`IntroFlowViewModel` (named apart from the carousel `IntroViewModel` until that is deleted) exposes `state: StateFlow<IntroState>` and `suggestedStops: SuggestedStops` (read once from the
-`intro_suggested_stops` flag, empty default so the bundled lists apply). It takes a
+`IntroFlowViewModel` (named apart from the carousel `IntroViewModel` until that is deleted) exposes `state: StateFlow<IntroState>`, `suggestedStops: SuggestedStops` (read once from the
+`intro_suggested_stops` flag, empty default so the bundled lists apply) and `effects: Flow<IntroEffect>`. It takes a
 `SavedStateHandle` and saves the step, answer, permission result, picks and flags on every change as one JSON string, so
 they survive rotation and the process being killed. The station card and its spots are not saved, the park and ride step
-works them out again. Its writes live in `IntroCompletion`.
+works them out again. Its writes and tracking live in `IntroCompletion`, which holds `Sandook`, `SandookPreferences`,
+`Analytics` and the IO dispatcher, to keep the constructor under the detekt parameter limit.
 
 - Every interface has a fake in `:core:testing`: `FakeAppDataReadiness` (controllable state), the existing location, catalogue,
   sandook and park ride fakes, and a fake clock. No `Clock.System` (the `ClockSystemBan` rule).
@@ -281,9 +282,23 @@ sequenceDiagram
 Readiness is published when the stops are usable. The bus routes insert runs after that in the same run and does not
 hold the Intro back.
 
-Order at finish, which differs from today: wait for readiness, write the trip, write `KEY_HAS_SEEN_INTRO` and
-`KEY_PARK_RIDE_SUGGESTION_SHOWN`, track the outcome, then navigate. Today the screen navigates without waiting for the
-insert, so a fast rider can reach home before the stops are committed.
+Order at finish, which differs from today: wait for readiness, write the trip, write `KEY_PARK_RIDE_SUGGESTION_SHOWN` then
+`KEY_HAS_SEEN_INTRO`, track the outcome, then navigate. Today the screen navigates without waiting for the insert, so a
+fast rider can reach home before the stops are committed. The suggestion flag goes first, so a process killed between the
+two writes shows the Intro again, rather than showing home with the suggestion still to ask.
+
+Decisions the view model branch made where this document was silent:
+
+- **Waiting.** The finish calls `awaitReady(30 s)`, a guess. A press while the button reads Getting ready is not dropped
+  by the view model, it waits for the stops and then finishes (the button itself is disabled, so the screen never sends
+  it). Without that the `stopsWait` buckets could not be reached. Stops that are Failed, or still not ready at the limit,
+  write nothing. The wait is none when the stops were already Ready, because a real clock never reads exactly zero.
+- **Once.** The suggestion flag is written at the first of the question being answered or passed, and the finish. A
+  second press while a finish runs, or after it has finished, does nothing. A trip already written (`saved`) is not
+  written again by Let's KRAIL.
+- **Same stop.** Picking the stop already chosen for the other end keeps the new pick and clears the other end. Two
+  different stops that sit on both suggestion lists are fine.
+- **Tracking.** A saved trip also tracks `save_trip_click` with `source = intro`, stop ids only, before the outcome event.
 
 ## 6. Cost budget (mandatory, never "N/A")
 
@@ -358,7 +373,8 @@ Save and start (a trip picked), Let's KRAIL (saved). It keeps the test tag `intr
 - **View model**, with fakes at the edges and `krailRunTest`.
   - Yes then granted then Add then pick then finish writes one trip, one park ride and both flags, once.
   - No, denied and no fix each reach step 2 and set the suggestion flag.
-  - Finish before readiness waits, then writes. Finish while Failed offers Try again and writes nothing.
+  - Finish before readiness waits, then writes, in the order readiness, trip, flags, tracking, effect. Finish while
+    Failed offers Try again and writes nothing.
   - A tap on Next with step 1 unanswered sets the flag.
   - Rotation mid step keeps the answer, the picks and the pending permission.
   - Add to home never triggers the review delight moment.

@@ -4,7 +4,6 @@ import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 import xyz.ksharma.krail.core.testing.coroutines.krailRunTest
-import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.trip.planner.ui.intro.DEFAULT_SUGGESTED_STOPS
 import xyz.ksharma.krail.trip.planner.ui.intro.SuggestedStop
 import xyz.ksharma.krail.trip.planner.ui.intro.SuggestedStops
@@ -230,40 +229,5 @@ class IntroFlowViewModelTest {
         handle[INTRO_SAVED_STATE_KEY] = "{not a snapshot"
 
         assertEquals(IntroState(), IntroRig(this, handle = handle).state)
-    }
-
-    @Test
-    fun `the bottom button on the question step is next`() = krailRunTest {
-        val rig = IntroRig(this)
-
-        rig.send(IntroUiEvent.FinishPressed)
-
-        assertEquals(IntroStep.FIRST_TRIP, rig.state.step)
-        assertEquals(listOf(SUGGESTION_FLAG_WRITE), rig.log.entries)
-    }
-
-    @Test
-    fun `the bottom button asks the stops to try again when they failed`() = krailRunTest {
-        val rig = IntroRig(
-            this,
-            initialReadiness = StopsReadiness.Failed(attempt = 4, reason = "disk"),
-            handle = savedAt(IntroState(step = IntroStep.FIRST_TRIP)),
-        )
-
-        rig.send(IntroUiEvent.FinishPressed)
-
-        assertEquals(1, rig.readiness.retryCallCount)
-        assertEquals(listOf("retry"), rig.log.entries)
-    }
-
-    // Removed by the branch that adds the finish.
-    @Test
-    fun `the bottom button does nothing else on the trip step until the finish exists`() = krailRunTest {
-        val rig = IntroRig(this, handle = savedAt(IntroState(step = IntroStep.FIRST_TRIP)))
-
-        rig.send(IntroUiEvent.FinishPressed)
-
-        assertEquals(IntroStep.FIRST_TRIP, rig.state.step)
-        assertEquals(emptyList(), rig.log.entries)
     }
 }

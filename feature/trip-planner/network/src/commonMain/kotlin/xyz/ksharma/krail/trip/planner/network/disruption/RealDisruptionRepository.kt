@@ -24,8 +24,12 @@ import kotlin.time.Instant
  *   and the results screen asks every 30 seconds, so most asks cost no request.
  * - **Dedupe:** one request at a time per repository. A second caller waits on the lock and then
  *   reads the cache the first one filled.
- * - **Budget:** [requestBudget] caps the wait. There is no retry: this is optional information and
- *   the results never wait for it.
+ * - **Budget:** [requestBudget] caps the wait for one request. This is optional information and the
+ *   results never wait for it.
+ * - **Retry:** once, and only when nothing is cached yet. The first request after a cold start is
+ *   the one most likely to be slow (new connection, radio waking up), and with nothing cached a
+ *   miss means no alert and no banner until the next ask. When something is cached the rider
+ *   already has an answer, so a failed refresh is not retried and costs one request, not two.
  * - **Failure:** the last good answer is returned when there is one, so a dropped request never
  *   removes a banner that was already showing. With nothing cached it returns the failure.
  */
@@ -53,11 +57,18 @@ internal class RealDisruptionRepository(
     private fun freshFor(feed: DisruptionFeed): List<Disruption>? =
         cache[feed]?.takeIf { clock.now() - it.at < ttl }?.items
 
+    /** One request inside [requestBudget]; null means it did not finish in time. */
+    private suspend fun request(feed: DisruptionFeed): GtfsRealtimeResult? = withTimeoutOrNull(requestBudget) {
+        service.fetchFeed(feedName = feed.feedName, feedType = GtfsFeedType.ALERTS)
+    }
+
     private suspend fun fetch(feed: DisruptionFeed): Result<List<Disruption>> {
-        val result = withTimeoutOrNull(requestBudget) {
-            service.fetchFeed(feedName = feed.feedName, feedType = GtfsFeedType.ALERTS)
-        }
         val stale = cache[feed]?.items
+        var result = request(feed)
+        if (result !is GtfsRealtimeResult.Fresh && stale == null) {
+            log("[DISRUPTION] ${feed.feedName} first request did not complete, retrying once")
+            result = request(feed)
+        }
         return when (result) {
             is GtfsRealtimeResult.Fresh -> {
                 val items = classifyAlerts(feed, result.message.entity.mapNotNull { it.alert })

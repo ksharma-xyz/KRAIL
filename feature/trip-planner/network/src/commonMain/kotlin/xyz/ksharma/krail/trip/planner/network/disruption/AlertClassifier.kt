@@ -13,7 +13,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionSeverity
  * the effect can. Pure and free of I/O so the same fixtures can run in the BFF.
  */
 internal fun classifyAlerts(feed: DisruptionFeed, alerts: List<Alert>): List<Disruption> =
-    alerts.mapNotNull { alert -> alert.toDisruption(feed) }
+    alerts.flatMap { alert -> alert.toDisruptions(feed) }
 
 private val SERVICE_EFFECTS = setOf(
     Alert.Effect.NO_SERVICE,
@@ -30,27 +30,36 @@ private val NOT_RUNNING_WORDING = listOf("do not run", "buses replace", "suspend
 // Lift and escalator outages are accessibility notices, not a change to the service.
 private val FACILITY_WORDING = listOf("lift", "escalator")
 
-private fun Alert.toDisruption(feed: DisruptionFeed): Disruption? {
+/**
+ * One [Disruption] per active period. NSW repeats a closure on consecutive nights as one alert with
+ * several periods, so reading only the first would hide every later night. Each period keeps its own
+ * window, so the relevance check matches a search against the right night.
+ */
+private fun Alert.toDisruptions(feed: DisruptionFeed): List<Disruption> {
     val headline = header_text?.translation?.firstOrNull()?.text?.trim().orEmpty()
-    val period = active_period.firstOrNull()
-    // An alert with no headline or no start has nothing to show or no window to match a search against.
-    val start = period?.start
+    // An alert with no headline has nothing to show.
     val severity = headline.takeIf { it.isNotEmpty() }?.let { severityOf(it.lowercase(), effect) }
-    return if (start == null || severity == null) {
-        null
-    } else {
-        Disruption(
-            id = "${feed.feedName}:$headline:$start",
-            feed = feed,
-            severity = severity,
-            headline = headline,
-            detail = description_text?.translation?.firstOrNull()?.text?.trim().orEmpty(),
-            startEpochSec = start,
-            endEpochSec = period.end?.takeIf { it > start },
-            moreInfoUrl = url?.translation?.firstOrNull()?.text?.takeIf { it.isNotBlank() },
-            replacedByBuses = "buses replace" in headline.lowercase(),
-        )
-    }
+        ?: return emptyList()
+    val detail = description_text?.translation?.firstOrNull()?.text?.trim().orEmpty()
+    val moreInfoUrl = url?.translation?.firstOrNull()?.text?.takeIf { it.isNotBlank() }
+    val replacedByBuses = "buses replace" in headline.lowercase()
+    return active_period
+        // A period with no start has no window to match a search against.
+        .mapNotNull { period -> period.start?.let { start -> start to period } }
+        .map { (start, period) ->
+            Disruption(
+                id = "${feed.feedName}:$headline:$start",
+                feed = feed,
+                severity = severity,
+                headline = headline,
+                detail = detail,
+                startEpochSec = start,
+                endEpochSec = period.end?.takeIf { it > start },
+                moreInfoUrl = moreInfoUrl,
+                replacedByBuses = replacedByBuses,
+            )
+        }
+        .distinctBy { it.id }
 }
 
 /** Null means the alert is not a service disruption and is dropped. */

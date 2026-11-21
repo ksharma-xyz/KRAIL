@@ -69,6 +69,7 @@ kotlin {
                 api(projects.core.maps.data) // NearbyStop + NearbyStopsRepository
                 api(projects.infoTile.network.api) // InfoTileManager + db extensions
                 api(projects.infoTile.state) // InfoTileData
+                api(projects.io.gtfs) // StopsManager + AppDataReadiness interfaces
                 api(projects.feature.parkRide.network) // NswParkRideFacilityManager + CarPark models
                 api(projects.platform.ops) // PlatformOps
                 api(projects.core.transport) // TransportMode (for stop.transportModes in fakes)

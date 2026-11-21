@@ -50,6 +50,8 @@ class IntroViewModel(
 
             is IntroUiEvent.Complete -> {
                 viewModelScope.launch {
+                    // The Results are not acted on until the Intro waits on AppDataReadiness. A failure
+                    // is logged by the manager and retried by AppDataReadiness, so nothing is lost.
                     // Insert NSW stops data
                     nswStopsManager.insertStops()
 

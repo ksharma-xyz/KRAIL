@@ -76,6 +76,11 @@ internal class IntroFlowViewModel(
         onLeftQuestion = ::markSuggestionShown,
     )
 
+    init {
+        // After a killed process the saved station id is worked out into a card again.
+        parkRideStep.restore()
+    }
+
     fun onEvent(event: IntroUiEvent) {
         when (event) {
             IntroUiEvent.Back -> update { copy(step = IntroStep.PARK_RIDE) }

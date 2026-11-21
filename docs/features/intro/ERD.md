@@ -254,8 +254,8 @@ sealed interface IntroEffect { data object NavigateToSavedTrips : IntroEffect }
 `intro_suggested_stops` flag, empty default so the bundled lists apply) and `effects: Flow<IntroEffect>`. It takes a
 `SavedStateHandle` and saves the step, answer, permission result, picks and flags on every change as one JSON string, so
 they survive rotation and the process being killed. It also saves which station the card was for (the station id, or a
-flag when there was none near) and nothing else about the card: no car park, no reading, and never a coordinate. Its
-writes and tracking live in `IntroCompletion`, which holds `Sandook`, `SandookPreferences`, `Analytics` and the IO
+flag when there was none near) and nothing else about the card: no car park, no reading, and never a coordinate. After
+the process is killed the card is worked out again from that id (see section 5). Its writes and tracking live in `IntroCompletion`, which holds `Sandook`, `SandookPreferences`, `Analytics` and the IO
 dispatcher, to keep the constructor under the detekt parameter limit.
 
 The Park & Ride step is two more classes, so the view model stays small. `IntroParkRideGateway` is the injected one, like
@@ -375,8 +375,10 @@ list grows with each:
 - **No.** `AnswerParkRide(false)` is as before, and also cancels a look still waiting and clears the card.
 - **What is saved.** The step, answer, permission result, picks and flags as before, plus the card's station id (or a
   flag for no station near). A card is saved as the id alone, with no car park and no reading, and comes back as a
-  Locating skeleton that carries the id. A location still being awaited is not saved, so a process killed there asks the
-  question again. Nothing about the rider's position is ever saved.
+  Locating skeleton that carries the id. The step then works it out again from the catalogue and asks the loader once
+  more, which spends no call while the readings are inside the cooldown. A station that is no longer in the catalogue, or
+  stops that are not Ready, come back as No station near. A location still being awaited is not saved, so a process killed
+  there asks the question again. Nothing about the rider's position is ever saved.
 
 Operator decisions of 2026-11-22: (1) exactly one of start or end picked disables the bottom button until both or neither
 are picked, (2) there is no Try again and no error state, a Failed readiness behaves like Ready for the button and a trip
@@ -458,8 +460,9 @@ disabled (one stop picked), Skip for now (nothing picked), Save and start (both 
   - The card: the nearest station inside 5 km and none outside it, no usable location (denied, unavailable, a granted
     result with no fix) moving to step 2 with the flag written once, stops that are not Ready or Failed giving no station
     near without holding the rider, a failed or empty availability call giving the name with no numbers, one availability
-    call and no more however long the card stays, a second Intro inside the cooldown making no call, and a cleared view
-    model cancelling a look that is still waiting or a call that is in flight.
+    call and no more however long the card stays, a second Intro inside the cooldown making no call, the answer and the
+    chosen station surviving a new view model, no coordinate in the saved state or the state, and a cleared view model
+    cancelling a look that is still waiting or a call that is in flight.
   - No, denied and no fix each reach step 2 and set the suggestion flag.
   - Finish before readiness waits, then writes, in the order readiness, trip, flags, tracking, effect. Finish while
     Failed saves the trip from the picks, tracks `failed` and retries the load in the background. A wait past 15 s

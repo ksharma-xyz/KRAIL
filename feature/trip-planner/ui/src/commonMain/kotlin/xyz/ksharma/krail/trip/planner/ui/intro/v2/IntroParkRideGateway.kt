@@ -36,6 +36,11 @@ internal class IntroParkRideGateway(
         nearestParkRideStation(location, catalogue.stations(), INTRO_PARK_RIDE_RADIUS_KM)
     }
 
+    /** The station with [stationId], to work the card out again after the process was killed. */
+    suspend fun stationById(stationId: String): ParkRideStationPickerItem? = withContext(ioDispatcher) {
+        catalogue.stations().firstOrNull { it.stationId == stationId }
+    }
+
     /**
      * The car parks of [station] with their latest reading, after asking the loader once.
      *

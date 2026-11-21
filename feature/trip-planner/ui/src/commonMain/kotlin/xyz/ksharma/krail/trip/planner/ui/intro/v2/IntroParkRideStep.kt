@@ -73,6 +73,12 @@ internal class IntroParkRideStep(
         }
     }
 
+    /** Works the card out again from the saved station id, when the process was killed with a card. */
+    fun restore() {
+        val stationId = (read().parkRideCard as? ParkRideCardPhase.Locating)?.stationId ?: return
+        resolve { gateway.stationById(stationId) }
+    }
+
     private fun resolve(find: suspend () -> ParkRideStationPickerItem?) {
         job?.cancel()
         job = scope.launch {

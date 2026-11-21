@@ -68,37 +68,38 @@ private fun Disruption.displacementReason(
 }
 
 /**
- * Puts the replacement-bus banner over the metro alert banner when a leg in [journeys] is a replacement
- * bus, which is NSW itself labelling a leg a temporary bus. Otherwise the metro banner stands.
+ * Puts the replacement-bus banner over the metro alert banner when the first result, the trip the rider
+ * would take next, has a replacement-bus leg: NSW itself labelling a leg a temporary bus. A replacement bus
+ * further down the list, such as one tomorrow morning, does not show it; its row still says "Replacement
+ * bus". Otherwise the metro banner stands.
  *
- * A metro alert only supplies the expanded detail when it also says buses replace the line. The
- * planner's own line alert is used when there is none. Neither is ever a trigger: a line alert
- * covers a whole route, so it would show for riders far from the closed stretch.
+ * The banner also needs something to open. A metro alert supplies it when it says buses replace the line,
+ * else the planner's own line alert on a leg of the first result. With neither, a banner would do nothing
+ * when tapped, so none is shown. Neither alert is ever a trigger: a line alert covers a whole route, so it
+ * would show for riders far from the closed stretch.
  */
 internal fun replacementBusBanner(
     journeys: List<JourneyCardInfo>,
     metroBanner: DisruptionBannerState,
 ): DisruptionBannerState {
-    val replacementJourneys = journeys.filter { it.hasReplacementBusLeg() }
-    return if (replacementJourneys.isEmpty()) {
+    val next = journeys.firstOrNull()?.takeIf { it.hasReplacementBusLeg() } ?: return metroBanner
+    // Whatever the reason: when every result is a replacement bus the metro is missing from the results
+    // (MODE_MISSING), and the alert that says buses replace it is still the detail.
+    val disruption = (metroBanner as? DisruptionBannerState.Shown)
+        ?.disruption
+        ?.takeIf { it.replacedByBuses }
+    val lineAlert = next.firstLineAlert()
+    return if (disruption == null && lineAlert == null) {
         metroBanner
     } else {
-        DisruptionBannerState.ReplacementBuses(
-            // Whatever the reason: when every result is a replacement bus the metro is missing from
-            // the results (MODE_MISSING), and the alert that says buses replace it is still the detail.
-            disruption = (metroBanner as? DisruptionBannerState.Shown)
-                ?.disruption
-                ?.takeIf { it.replacedByBuses },
-            lineAlert = replacementJourneys.firstLineAlert(),
-        )
+        DisruptionBannerState.ReplacementBuses(disruption = disruption, lineAlert = lineAlert)
     }
 }
 
 internal fun JourneyCardInfo.hasReplacementBusLeg(): Boolean =
     legs.any { it is JourneyCardInfo.Leg.TransportLeg && it.isReplacementBus }
 
-private fun List<JourneyCardInfo>.firstLineAlert(): ServiceAlert? = asSequence()
-    .flatMap { it.legs.asSequence() }
+private fun JourneyCardInfo.firstLineAlert(): ServiceAlert? = legs.asSequence()
     .filterIsInstance<JourneyCardInfo.Leg.TransportLeg>()
     .flatMap { it.serviceAlertList.orEmpty().asSequence() }
     .firstOrNull { it.isLineAlert }

@@ -29,6 +29,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 /**
  * What the timetable screen reports when it shows a replacement-bus banner. The trip is a real NSW
@@ -51,8 +52,9 @@ class TimeTableViewModelDisruptionTest {
             ignoreUnknownKeys = true
             isLenient = true
         }
-            .decodeFromString<TripResponse>(ReplacementBusTripFixtures.CRONULLA_TO_CENTRAL)
-        // The screen refreshes on a timer, so every call returns the same replacement-bus trip.
+            .decodeFromString<TripResponse>(ReplacementBusTripFixtures.TALLAWONG_TO_BANKSTOWN_NIGHT)
+        // The screen refreshes on a timer, so every call returns the same trip: a replacement bus first, with
+        // the planner's line alert on the metro leg, which is what the banner opens.
         repeat(REFRESH_CALLS) { tripPlanningService.setResponseForCall(it, response) }
         viewModel = TimeTableViewModel(
             connectivity = FakeConnectivityObserver(initial = TransportState.Up),
@@ -85,7 +87,8 @@ class TimeTableViewModelDisruptionTest {
         loadReplacementTrip()
         advanceUntilIdle()
 
-        assertIs<DisruptionBannerState.ReplacementBuses>(viewModel.uiState.value.disruptionBanner)
+        val banner = assertIs<DisruptionBannerState.ReplacementBuses>(viewModel.uiState.value.disruptionBanner)
+        assertTrue(banner.lineAlert?.url != null)
     }
 
     @Test

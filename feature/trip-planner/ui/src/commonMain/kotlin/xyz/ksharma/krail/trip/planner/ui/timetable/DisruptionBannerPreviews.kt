@@ -88,7 +88,7 @@ private val previewLineAlert = ServiceAlert(
 @PreviewComponent
 @Composable
 private fun PreviewReplacementBusesBanner() {
-    PreviewBannerSurface { ReplacementBusesBanner(disruption = null, lineAlert = null) }
+    PreviewBannerSurface { ReplacementBusesBanner(disruption = null, lineAlert = previewLineAlert) }
 }
 
 @ScreenshotTest

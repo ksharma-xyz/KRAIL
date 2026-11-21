@@ -16,6 +16,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -294,7 +295,8 @@ private fun ExpandedSearchRow(
             }
 
             val navBarPaddingDp = with(LocalDensity.current) { navBarPadding.dp }
-            Row(
+            var isReverseRotated by rememberSaveable { mutableStateOf(false) }
+            BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
@@ -303,33 +305,63 @@ private fun ExpandedSearchRow(
                         start = dim.pageHorizontalPadding,
                         end = dim.pageHorizontalPadding,
                     ),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
             ) {
                 // To on top, From under it, and the go circle inside the From bar.
-                ToFromBlock(
-                    toStopItem = toStopItem,
-                    fromStopItem = fromStopItem,
-                    onToClick = toButtonClick,
-                    onFromClick = fromButtonClick,
-                    onGoClick = onSearchButtonClick,
-                    showFrom = showFromField,
-                    isFromHighlighted = isFromHighlighted,
-                    modifier = Modifier.weight(1f),
-                )
+                val block: @Composable (Modifier) -> Unit = { blockModifier ->
+                    ToFromBlock(
+                        toStopItem = toStopItem,
+                        fromStopItem = fromStopItem,
+                        onToClick = toButtonClick,
+                        onFromClick = fromButtonClick,
+                        onGoClick = onSearchButtonClick,
+                        showFrom = showFromField,
+                        isFromHighlighted = isFromHighlighted,
+                        modifier = blockModifier,
+                    )
+                }
 
-                // The one action beside the block, centred on the two bars so it sits between
-                // the stops it acts on. The slot is always filled: Ask KRAIL where on-device AI
-                // can run, reverse where it cannot, so the row is the same shape on devices that
-                // differ only in a capability the rider never chose.
-                Box(modifier = Modifier.padding(start = dim.spacingXL)) {
+                // The one action. The slot is always filled: Ask KRAIL where on-device AI can run,
+                // reverse where it cannot, so the row is the same shape on devices that differ
+                // only in a capability the rider never chose.
+                val action: @Composable () -> Unit = {
                     if (isAiSearchAvailable) {
                         AiSheetEntryButton(
                             onAiEvent = onAiEvent,
                             spinning = isAiHandoffSettling,
                         )
                     } else {
-                        ReverseButton(onReverseButtonClick = onReverseButtonClick)
+                        ReverseButton(
+                            isRotated = isReverseRotated,
+                            onClick = {
+                                isReverseRotated = !isReverseRotated
+                                onReverseButtonClick()
+                            },
+                        )
+                    }
+                }
+
+                val placement = actionPlacementFor(
+                    contentWidth = maxWidth,
+                    fontScale = LocalDensity.current.fontScale,
+                    besideCost = dim.iconXXXL + dim.spacingXL,
+                    barReserved = dim.iconXXXL * 2 + dim.spacingXS,
+                )
+                when (placement) {
+                    // Centred on the two bars so it sits between the stops it acts on.
+                    ActionPlacement.Beside -> Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        block(Modifier.weight(1f))
+                        Box(modifier = Modifier.padding(start = dim.spacingXL)) { action() }
+                    }
+
+                    // Where width is short it goes under the From bar, in line with the go circle, so
+                    // neither stop name gives up its room for it.
+                    ActionPlacement.Under -> Column(modifier = Modifier.fillMaxWidth()) {
+                        block(Modifier)
+                        Box(modifier = Modifier.align(Alignment.End).padding(top = dim.spacingM)) { action() }
                     }
                 }
             }
@@ -375,18 +407,18 @@ private fun AiSheetEntryButton(
 }
 
 /**
- * Swaps From and To. Shown in the top action slot only when on-device AI is unavailable, so
- * the slot is never empty and Search never moves.
+ * Swaps From and To. Shown in the action slot only when on-device AI is unavailable, so the slot
+ * is never empty.
  *
  * The icon half-turns on every tap and stays where it lands: the arrow ends up pointing the
  * way the stops now run, so the button reads as the state it produced rather than as an
- * animation that played. `rememberSaveable` keeps that resting angle across rotation, which a
- * plain `remember` would snap back to zero.
+ * animation that played. [isRotated] is the row's own `rememberSaveable`, so that resting angle
+ * survives both rotation and the button moving between beside and under the bars, which a state
+ * remembered in here would lose.
  */
 @Composable
-private fun ReverseButton(onReverseButtonClick: () -> Unit) {
+private fun ReverseButton(isRotated: Boolean, onClick: () -> Unit) {
     val dim = KrailTheme.dimensions
-    var isRotated by rememberSaveable { mutableStateOf(false) }
     val rotation by animateFloatAsState(
         targetValue = if (isRotated) REVERSE_ICON_ROTATED_DEGREES else 0f,
         animationSpec = tween(durationMillis = REVERSE_ROTATION_DURATION_MILLIS),
@@ -402,10 +434,7 @@ private fun ReverseButton(onReverseButtonClick: () -> Unit) {
                 modifier = Modifier.size(dim.iconDefault),
             )
         },
-        onClick = {
-            isRotated = !isRotated
-            onReverseButtonClick()
-        },
+        onClick = onClick,
         modifier = Modifier
             .testTag(TripPlannerTestTags.SEARCH_ROW_REVERSE)
             .graphicsLayer { rotationZ = rotation },

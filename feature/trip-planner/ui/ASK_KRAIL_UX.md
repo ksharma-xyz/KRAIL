@@ -275,8 +275,9 @@ fallback cannot be deleted casually.
   where they are going. The ring is drawn at rest and turns for one beat on handoff, which is
   the same motion the wheel had.
 - **The way-in slot is never empty.** That mic is the one button beside the To and From block in
-  `SearchStopRow`, centred on the two bars. Search is not in that column any more: it is the go
-  circle inside the From bar. Where `isWayInAvailable` is false the slot holds the reverse-stops
+  `SearchStopRow`, centred on the two bars, and in its own row under the From bar when width is
+  short (`actionPlacementFor`), so neither stop name is squeezed for it. Search is not in that
+  column any more: it is the go circle inside the From bar. Where `isWayInAvailable` is false the slot holds the reverse-stops
   button instead. Two devices differing only in a capability the rider never chose should not
   have differently shaped rows.
 - **No second speak control.** A worded `Speak` button used to appear below the bar at large

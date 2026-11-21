@@ -348,7 +348,7 @@ class ToFromBlockLayoutTest {
 
     @Test
     @Config(qualifiers = NARROW)
-    fun `the real row at 320 dp and 200 percent keeps the bars whole and the buttons whole`() =
+    fun `the real row at 320 dp and 200 percent keeps the bars and the button whole`() =
         assertRealRow(fontScale = 2f, ai = false)
 
     @Test
@@ -403,9 +403,11 @@ class ToFromBlockLayoutTest {
         assertTrue(circle.isInside(from), "The go circle $circle should be inside the From bar $from.")
         assertNear("action width", 48.dp, action.width)
         assertNear("action height", 48.dp, action.height)
-        assertTrue(action.left >= to.right, "The action $action should sit beside the bars, not over them ($to).")
+        assertTrue(
+            action.left >= to.right || action.top >= from.bottom,
+            "The action $action should be beside or under the bars, not over them ($to, $from).",
+        )
         assertTrue(action.right <= windowWidth, "The action $action runs off the $windowWidth dp row.")
-        assertNear("action is centred on the two bars", (to.top + from.bottom) / 2, (action.top + action.bottom) / 2)
     }
 
     // endregion

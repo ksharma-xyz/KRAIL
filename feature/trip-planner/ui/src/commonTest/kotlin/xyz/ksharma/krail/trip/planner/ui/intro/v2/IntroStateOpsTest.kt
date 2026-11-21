@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.intro.v2
 
+import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
@@ -7,6 +8,8 @@ import xyz.ksharma.krail.trip.planner.ui.intro.DEFAULT_SUGGESTED_STOPS
 import xyz.ksharma.krail.trip.planner.ui.intro.SuggestedStop
 import xyz.ksharma.krail.trip.planner.ui.intro.SuggestedStops
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroState
+import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideAvailabilityState
+import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideCarPark
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideCardPhase
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideCardStation
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
@@ -17,6 +20,19 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class IntroStateOpsTest {
+
+    private val named = ParkRideCarPark(facilityId = "26", name = "Tallawong P1")
+    private val read = ParkRideCarPark(
+        facilityId = "27",
+        name = "Tallawong P2",
+        spotsAvailable = 0,
+        percentageFull = 100,
+    )
+    private val loading = IntroState(
+        parkRideCard = ParkRideCardPhase.Card(
+            ParkRideCardStation(stationId = "2155384", stationName = "Tallawong", carParks = persistentListOf(named)),
+        ),
+    )
 
     private val bothPicked = IntroState(
         startStopId = "1",
@@ -118,10 +134,36 @@ class IntroStateOpsTest {
 
     // region Park & Ride card
 
+    private fun IntroState.station() = (parkRideCard as ParkRideCardPhase.Card).station
+
+    @Test
+    fun `a reading on any car park settles the card as content with every car park`() {
+        val settled = loading.withReadings("2155384", listOf(named, read))
+
+        assertEquals(ParkRideAvailabilityState.Content, settled.station().availability)
+        assertEquals(listOf(named, read), settled.station().carParks)
+    }
+
+    @Test
+    fun `no reading on any car park settles the card as unavailable and keeps the names`() {
+        listOf(listOf(named), emptyList(), null).forEach { carParks ->
+            val settled = loading.withReadings("2155384", carParks)
+
+            assertEquals(ParkRideAvailabilityState.Unavailable, settled.station().availability, "$carParks")
+            assertEquals(listOf(named), settled.station().carParks, "$carParks")
+        }
+    }
+
+    @Test
+    fun `readings for another station, or when there is no card, change nothing`() {
+        assertEquals(loading, loading.withReadings("2153478", listOf(read)))
+        assertEquals(IntroState(), IntroState().withReadings("2155384", listOf(read)))
+    }
+
     @Test
     fun `only a location being awaited or a card is in progress or shown`() {
         assertTrue(ParkRideCardPhase.Locating().isInProgressOrShown())
-        assertTrue(ParkRideCardPhase.Card(ParkRideCardStation("2155384", "Tallawong")).isInProgressOrShown())
+        assertTrue(loading.parkRideCard.isInProgressOrShown())
         assertFalse(ParkRideCardPhase.None.isInProgressOrShown())
         assertFalse(ParkRideCardPhase.NoStationNear.isInProgressOrShown())
     }

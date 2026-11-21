@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.intro.v2
 
 import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.sandook.db.NSWParkRideFacilityDetail
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRideMapping
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRideStationPickerItem
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.StationPosition
@@ -55,3 +56,29 @@ internal val AT_CENTRAL = LatLng(latitude = -33.883852, longitude = 151.206272)
 /** Due south of Bella Vista, and the nearest station is Bella Vista in both cases. */
 internal val FOUR_POINT_SIX_KM_FROM_BELLA_VISTA = LatLng(latitude = -33.771961, longitude = 150.944024)
 internal val FIVE_POINT_FOUR_KM_FROM_BELLA_VISTA = LatLng(latitude = -33.779155, longitude = 150.944024)
+
+private const val TOTAL_SPOTS = 200L
+
+/** A reading as the availability loader stores it: [stopName] is the stop id until the station is saved. */
+internal fun reading(
+    facilityId: String,
+    stopId: String,
+    spots: Long = 120,
+    percentFull: Long = 40,
+    time: String = "8:05 AM",
+    stopName: String = stopId,
+) = NSWParkRideFacilityDetail(
+    facilityId = facilityId,
+    spotsAvailable = spots,
+    totalSpots = TOTAL_SPOTS,
+    facilityName = "facility $facilityId",
+    percentageFull = percentFull,
+    stopId = stopId,
+    stopName = stopName,
+    timeText = time,
+    suburb = "",
+    address = "",
+    latitude = 0.0,
+    longitude = 0.0,
+    timestamp = 1_000,
+)

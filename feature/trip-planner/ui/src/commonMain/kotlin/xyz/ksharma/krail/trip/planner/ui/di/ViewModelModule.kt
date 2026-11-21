@@ -164,6 +164,12 @@ val viewModelsModule = module {
                     sandook = get(),
                     festivalManager = get(),
                 ),
+                availabilityLoader = RealParkRideAvailabilityLoader(
+                    parkRideSandook = get(),
+                    parkRideService = get(),
+                    flag = get(),
+                ),
+                parkRideSandook = get(),
                 ioDispatcher = get(named(IODispatcher)),
             ),
         )

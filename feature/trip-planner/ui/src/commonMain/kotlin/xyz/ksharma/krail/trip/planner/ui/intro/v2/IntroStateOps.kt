@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.intro.v2
 
+import kotlinx.collections.immutable.toImmutableList
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
@@ -7,6 +8,8 @@ import xyz.ksharma.krail.trip.planner.ui.intro.DEFAULT_SUGGESTED_STOPS
 import xyz.ksharma.krail.trip.planner.ui.intro.SuggestedStops
 import xyz.ksharma.krail.trip.planner.ui.intro.parseSuggestedStops
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroState
+import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideAvailabilityState
+import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideCarPark
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideCardPhase
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
@@ -38,6 +41,27 @@ internal fun IntroState.toTripOrNull(): Trip? {
 /** True while a location result is awaited or a card shows, when a second yes must start nothing. */
 internal fun ParkRideCardPhase.isInProgressOrShown(): Boolean =
     this is ParkRideCardPhase.Locating || this is ParkRideCardPhase.Card
+
+/**
+ * The card for [stationId] once its one availability call is back. [carParks] is null when the call
+ * could not be made. A card with no reading at all is Unavailable and keeps its car park names, so
+ * the screen shows the name and Add with no numbers. A card that is no longer for [stationId], or
+ * no longer a card, is left as it is.
+ */
+internal fun IntroState.withReadings(stationId: String, carParks: List<ParkRideCarPark>?): IntroState {
+    val card = parkRideCard as? ParkRideCardPhase.Card ?: return this
+    if (card.station.stationId != stationId) return this
+    val readings = carParks.orEmpty()
+    val settled = if (readings.any { it.hasReading }) {
+        card.station.copy(
+            carParks = readings.toImmutableList(),
+            availability = ParkRideAvailabilityState.Content,
+        )
+    } else {
+        card.station.copy(availability = ParkRideAvailabilityState.Unavailable)
+    }
+    return copy(parkRideCard = ParkRideCardPhase.Card(settled))
+}
 
 /**
  * The lists in Remote Config, or the bundled ones when the value is empty, unset, or not a usable

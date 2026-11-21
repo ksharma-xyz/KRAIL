@@ -2,12 +2,16 @@ package xyz.ksharma.krail.trip.planner.ui.intro.v2
 
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.trip.planner.ui.intro.INTRO_PARK_RIDE_RADIUS_KM
 import xyz.ksharma.krail.trip.planner.ui.intro.nearestParkRideStation
+import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideAvailabilityLoader
 import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideCatalogue
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.toParkRideState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideCarPark
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRideStationPickerItem
 import kotlin.coroutines.cancellation.CancellationException
@@ -20,6 +24,8 @@ import kotlin.coroutines.cancellation.CancellationException
  */
 internal class IntroParkRideGateway(
     private val catalogue: ParkRideCatalogue,
+    private val availabilityLoader: ParkRideAvailabilityLoader,
+    private val parkRideSandook: NswParkRideSandook,
     private val ioDispatcher: CoroutineDispatcher,
 ) {
     /**
@@ -28,6 +34,31 @@ internal class IntroParkRideGateway(
      */
     suspend fun nearestStation(location: LatLng): ParkRideStationPickerItem? = withContext(ioDispatcher) {
         nearestParkRideStation(location, catalogue.stations(), INTRO_PARK_RIDE_RADIUS_KM)
+    }
+
+    /**
+     * The car parks of [station] with their latest reading, after asking the loader once.
+     *
+     * The loader is the same one the Saved Trips card and the picker use, so its cooldown applies
+     * here and an Intro that follows a fresh reading costs no call. Whatever the loader could not
+     * fetch is read from what is stored, and a car park with nothing stored is a name alone. A
+     * loader that fails is the same as one that found nothing.
+     */
+    suspend fun carParks(station: ParkRideStationPickerItem): List<ParkRideCarPark> = withContext(ioDispatcher) {
+        attempt { availabilityLoader.refreshIfNeeded(station.mappings) }
+        val readings = attempt { parkRideSandook.getAllParkRideFacilityDetail().first() }
+            .orEmpty()
+            .associateBy { it.facilityId }
+        station.mappings.distinctBy { it.facilityId }.map { mapping ->
+            val reading = readings[mapping.facilityId]?.toParkRideState()
+            ParkRideCarPark(
+                facilityId = mapping.facilityId,
+                name = mapping.facilityName,
+                spotsAvailable = reading?.spotsAvailable,
+                percentageFull = reading?.percentageFull,
+                timeText = reading?.timeText?.takeIf { it.isNotBlank() },
+            )
+        }
     }
 }
 

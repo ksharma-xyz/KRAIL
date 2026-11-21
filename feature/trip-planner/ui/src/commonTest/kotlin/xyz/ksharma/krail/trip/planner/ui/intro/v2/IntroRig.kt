@@ -13,15 +13,18 @@ import xyz.ksharma.krail.core.testing.coroutines.KrailTestScope
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeAppDataReadiness
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
+import xyz.ksharma.krail.core.testing.fakes.FakeNswParkRideSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import xyz.ksharma.krail.core.testing.helpers.CallLog
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.trip.planner.ui.intro.SuggestedStop
+import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideAvailabilityLoader
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideCardPhase
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRideStationPickerItem
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeParkRideAvailabilityLoader
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeParkRideCatalogue
 import kotlin.test.assertIs
 import kotlin.time.Duration
@@ -40,6 +43,8 @@ internal class IntroRig(
     val handle: SavedStateHandle = SavedStateHandle(),
     timeSource: TimeSource? = null,
     stations: List<ParkRideStationPickerItem> = INTRO_STATIONS,
+    availabilityLoader: ParkRideAvailabilityLoader? = null,
+    val parkRideSandook: FakeNswParkRideSandook = FakeNswParkRideSandook(),
 ) {
     val log = CallLog()
     val readiness = FakeAppDataReadiness(initial = initialReadiness, callLog = log)
@@ -48,6 +53,9 @@ internal class IntroRig(
     val analytics = FakeAnalytics(callLog = log)
     val flag = FakeFlag()
     val catalogue = FakeParkRideCatalogue(stations = stations)
+
+    /** Records each refresh the Park & Ride step asks for. Unused when the rig was given a loader. */
+    val loader = FakeParkRideAvailabilityLoader()
 
     /** Moves only when a test says so. Ignored when the rig was given its own [timeSource]. */
     val testTime = TestTimeSource()
@@ -66,6 +74,8 @@ internal class IntroRig(
                     timeSource = timeSource ?: testTime,
                     parkRide = IntroParkRideGateway(
                         catalogue = catalogue,
+                        availabilityLoader = availabilityLoader ?: loader,
+                        parkRideSandook = parkRideSandook,
                         ioDispatcher = scope.ioDispatcher,
                     ),
                 )
@@ -97,6 +107,17 @@ internal class IntroRig(
 
     /** Builds the view model if it is not built yet, then lets everything it started at this instant run. */
     fun settle() = send()
+
+    /** The refresh a real loader does, as far as the Intro can tell: the rows it wrote. */
+    fun refreshWritesBellaVista(spots: Long = 120, percentFull: Long = 40, time: String = "8:05 AM") {
+        loader.onRefresh = {
+            parkRideSandook.insertOrReplaceAll(
+                listOf(
+                    reading(facilityId = "31", stopId = "2153478", spots = spots, percentFull = percentFull, time = time),
+                ),
+            )
+        }
+    }
 
     /** What the system does when the screen is gone for good: the view model is cleared. */
     fun clearViewModel() = store.clear()

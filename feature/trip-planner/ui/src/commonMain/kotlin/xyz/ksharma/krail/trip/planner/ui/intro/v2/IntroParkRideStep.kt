@@ -22,9 +22,9 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRi
 internal const val PARK_RIDE_STOPS_WAIT_MS = 10_000L
 
 /**
- * The Park & Ride step of the Intro: the answer, the one location result and the nearest station. It
- * runs in [scope], the view model's scope, so all of it is cancelled when the view model is cleared,
- * and it starts no timer and no repeat.
+ * The Park & Ride step of the Intro: the answer, the one location result, the nearest station and
+ * its one availability reading. It runs in [scope], the view model's scope, so all of it is
+ * cancelled when the view model is cleared, and it starts no timer and no repeat.
  *
  * The rider's position arrives in [onLocationResult], is used to find the station inside one
  * coroutine and goes out of scope with it. It is never written to the state or to what is saved.
@@ -89,13 +89,15 @@ internal class IntroParkRideStep(
         }
     }
 
-    // The card shows at once with names only.
-    private fun show(found: ParkRideStationPickerItem) {
+    // The card shows at once with names only, then settles when the one availability call is back.
+    private suspend fun show(found: ParkRideStationPickerItem) {
         val card = ParkRideCardStation(
             stationId = found.stationId,
             stationName = found.stationName,
             carParks = found.carParksWithoutReadings(),
         )
         write { copy(parkRideCard = ParkRideCardPhase.Card(card)) }
+        val carParks = attempt { gateway.carParks(found) }
+        write { withReadings(found.stationId, carParks) }
     }
 }

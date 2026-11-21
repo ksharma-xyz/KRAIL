@@ -16,6 +16,8 @@ kotlin {
         namespace = "xyz.ksharma.krail.core.appstart"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+
+        withHostTest {}
     }
 
     iosArm64()
@@ -39,6 +41,14 @@ kotlin {
                 implementation(libs.compose.runtime)
                 api(libs.di.koinComposeViewmodel)
                 implementation(libs.kotlinx.serialization.json)
+            }
+        }
+
+        commonTest {
+            dependencies {
+                implementation(projects.core.testing)
+                implementation(libs.test.kotlin)
+                implementation(libs.test.kotlinxCoroutineTest)
             }
         }
     }

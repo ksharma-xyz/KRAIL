@@ -85,9 +85,11 @@ internal fun replacementBusBanner(
     val next = journeys.firstOrNull()?.takeIf { it.hasReplacementBusLeg() } ?: return metroBanner
     // Whatever the reason: when every result is a replacement bus the metro is missing from the results
     // (MODE_MISSING), and the alert that says buses replace it is still the detail.
-    val disruption = (metroBanner as? DisruptionBannerState.Shown)
-        ?.disruption
-        ?.takeIf { it.replacedByBuses }
+    val disruption = if (metroBanner is DisruptionBannerState.Shown && metroBanner.disruption.replacedByBuses) {
+        metroBanner.disruption
+    } else {
+        null
+    }
     val lineAlert = next.firstLineAlert()
     return if (disruption == null && lineAlert == null) {
         metroBanner

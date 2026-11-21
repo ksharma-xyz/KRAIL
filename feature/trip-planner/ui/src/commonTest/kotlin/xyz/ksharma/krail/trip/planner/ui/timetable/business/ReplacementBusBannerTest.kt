@@ -36,7 +36,6 @@ class ReplacementBusBannerTest {
         feed = DisruptionFeed.METRO,
         severity = DisruptionSeverity.NOT_RUNNING,
         headline = "Buses replace metro services between Bankstown and Sydenham",
-        detail = "Monday 23 November",
         startEpochSec = 1_795_436_400L,
         endEpochSec = 1_795_446_005L,
         moreInfoUrl = "https://transportnsw.info/alerts/details#/ems-8150",
@@ -57,16 +56,57 @@ class ReplacementBusBannerTest {
     }
 
     @Test
-    fun `Given Cronulla to Central Then the replacement bus banner shows with nothing more to say`() {
-        val banner = replacementBusBanner(
-            journeys(ReplacementBusTripFixtures.CRONULLA_TO_CENTRAL),
-            DisruptionBannerState.None,
+    fun `Given Cronulla to Central with replacement buses but no alert to open Then no banner`() {
+        val cronulla = journeys(ReplacementBusTripFixtures.CRONULLA_TO_CENTRAL)
+
+        // NSW attaches no alert to the replacement legs themselves, so a banner would have no detail and no link.
+        assertTrue(cronulla.first().hasReplacementBusLeg())
+        assertEquals(DisruptionBannerState.None, replacementBusBanner(cronulla, DisruptionBannerState.None))
+    }
+
+    @Test
+    fun `Given the first result is a normal trip and a replacement bus comes later Then no banner`() {
+        // The shape of a Seven Hills to Redfern search: tonight's trips are normal, tomorrow 6:29 am is replaced.
+        // Built from real journeys: a normal bus trip first, then the replacement-bus journeys.
+        val laterOnly = listOf(journeys(ReplacementBusTripFixtures.BONDI_JUNCTION_TO_BONDI_BEACH).first()) +
+            journeys(ReplacementBusTripFixtures.CRONULLA_TO_CENTRAL)
+        val withAlert = DisruptionBannerState.Shown(metroAlert, DisruptionReason.REPLACEMENT_BUS)
+
+        assertFalse(laterOnly.first().hasReplacementBusLeg())
+        assertTrue(laterOnly.any { it.hasReplacementBusLeg() })
+        assertEquals(DisruptionBannerState.None, replacementBusBanner(laterOnly, DisruptionBannerState.None))
+        // Even with a metro alert that says buses replace the line: the trip the rider takes next is unaffected.
+        assertEquals(withAlert, replacementBusBanner(laterOnly, withAlert))
+    }
+
+    @Test
+    fun `Given a closed-only metro alert and a line alert on the first result Then the line alert is the detail`() {
+        val closedOnly = metroAlert.copy(
+            headline = "Metro services do not run between Tallawong and Bankstown",
+            replacedByBuses = false,
         )
 
-        // NSW attaches no alert to the replacement legs themselves, so there is no detail and no link.
+        val banner = replacementBusBanner(
+            journeys(ReplacementBusTripFixtures.TALLAWONG_TO_BANKSTOWN_NIGHT),
+            DisruptionBannerState.Shown(closedOnly, DisruptionReason.MODE_MISSING),
+        )
+
         val shown = assertIs<DisruptionBannerState.ReplacementBuses>(banner)
         assertNull(shown.disruption)
-        assertNull(shown.lineAlert)
+        assertTrue(shown.lineAlert?.isLineAlert == true)
+    }
+
+    @Test
+    fun `Given the first result is a replacement bus and carries the planner line alert Then the banner opens it`() {
+        val tallawong = journeys(ReplacementBusTripFixtures.TALLAWONG_TO_BANKSTOWN_NIGHT)
+
+        val banner = replacementBusBanner(tallawong, DisruptionBannerState.None)
+
+        val shown = assertIs<DisruptionBannerState.ReplacementBuses>(banner)
+        assertNull(shown.disruption)
+        val lineAlert = checkNotNull(shown.lineAlert)
+        assertTrue(lineAlert.isLineAlert)
+        assertTrue(lineAlert.url?.startsWith("https://transportnsw.info/") == true)
     }
 
     @Test
@@ -125,13 +165,47 @@ class ReplacementBusBannerTest {
     }
 
     @Test
-    fun `Given a metro alert that only says the mode is missing Then it is not used for the detail`() {
-        val banner = replacementBusBanner(
-            journeys(ReplacementBusTripFixtures.CRONULLA_TO_CENTRAL),
-            DisruptionBannerState.Shown(metroAlert, DisruptionReason.MODE_MISSING),
+    fun `Given a metro alert that only says the line is closed Then its own banner stands, not the replacement one`() {
+        // "Metro services do not run between ..." never says buses replace it, so it explains nothing here.
+        val closedOnly = metroAlert.copy(
+            headline = "Metro services do not run between Tallawong and Bankstown",
+            replacedByBuses = false,
         )
 
-        assertNull(assertIs<DisruptionBannerState.ReplacementBuses>(banner).disruption)
+        val closedBanner = DisruptionBannerState.Shown(closedOnly, DisruptionReason.MODE_MISSING)
+
+        val banner = replacementBusBanner(journeys(ReplacementBusTripFixtures.CRONULLA_TO_CENTRAL), closedBanner)
+
+        assertEquals(closedBanner, banner)
+    }
+
+    @Test
+    fun `Given every result is a replacement bus so the metro is missing Then the metro alert still supplies the detail`() {
+        // Bankstown to Sydenham at 11:40 pm Monday: NSW returned only temporary buses, no metro train,
+        // and attached no alert to them. The metro alert is the only text there is.
+        val replacementOnly = journeys(ReplacementBusTripFixtures.BANKSTOWN_TO_SYDENHAM_NIGHT)
+            .filter { journey -> journey.transportLegs().all { it.isReplacementBus } }
+        assertTrue(replacementOnly.isNotEmpty())
+        assertTrue(
+            replacementOnly.flatMap { it.transportLegs() }.all { it.serviceAlertList.orEmpty().none { a -> a.isLineAlert } },
+        )
+        val metroBanner = disruptionBanner(
+            disruptions = listOf(metroAlert),
+            endpointProductClasses = setOf(1, 2),
+            resultProductClasses = replacementOnly.flatMap { it.transportModeLines }
+                .map { it.transportMode.productClass }
+                .toSet(),
+            hasReplacementBusLeg = true,
+            spanStartEpochSec = metroAlert.startEpochSec + 600,
+            spanEndEpochSec = metroAlert.startEpochSec + 4_000,
+        )
+
+        val banner = replacementBusBanner(replacementOnly, metroBanner)
+
+        assertEquals(DisruptionReason.MODE_MISSING, assertIs<DisruptionBannerState.Shown>(metroBanner).reason)
+        val shown = assertIs<DisruptionBannerState.ReplacementBuses>(banner)
+        assertEquals(metroAlert, shown.disruption)
+        assertNull(shown.lineAlert)
     }
 
     @Test
@@ -140,6 +214,7 @@ class ReplacementBusBannerTest {
             heading = "Buses replace trains",
             message = "<div>Details</div>",
             isLineAlert = true,
+            url = "https://transportnsw.info/alerts/details#/ems-81168",
         )
         val stationAlert = ServiceAlert(heading = "Station Update - Central", message = "Lift", isLineAlert = false)
         val withAlerts = journeys(ReplacementBusTripFixtures.CRONULLA_TO_CENTRAL).map { journey ->
@@ -170,7 +245,7 @@ class ReplacementBusBannerTest {
     }
 
     @Test
-    fun `Given the metro night closure on real data Then the metro alert and the replacement legs make one banner with detail`() {
+    fun `Given the first result is the last metro and buses follow Then the metro alert banner stands`() {
         val night = journeys(ReplacementBusTripFixtures.BANKSTOWN_TO_SYDENHAM_NIGHT)
         val metroClass = 2
         val metroBanner = disruptionBanner(
@@ -184,12 +259,15 @@ class ReplacementBusBannerTest {
 
         val banner = replacementBusBanner(night, metroBanner)
 
+        // The 11:30 pm search lists the last metro first. That trip is not replaced, so the replacement banner
+        // does not show; the metro alert banner, which names the line, does.
+        assertFalse(night.first().hasReplacementBusLeg())
         assertEquals(DisruptionReason.REPLACEMENT_BUS, assertIs<DisruptionBannerState.Shown>(metroBanner).reason)
-        assertEquals(metroAlert, assertIs<DisruptionBannerState.ReplacementBuses>(banner).disruption)
+        assertEquals(metroBanner, banner)
     }
 
     @Test
-    fun `Given replacement legs with no alert list at all Then the banner has no line alert`() {
+    fun `Given replacement legs with no alert list at all Then there is no banner`() {
         val noAlerts = journeys(ReplacementBusTripFixtures.CRONULLA_TO_CENTRAL).map { journey ->
             journey.copy(
                 legs = journey.legs.map { leg ->
@@ -200,6 +278,46 @@ class ReplacementBusBannerTest {
 
         val banner = replacementBusBanner(noAlerts, DisruptionBannerState.None)
 
-        assertNull(assertIs<DisruptionBannerState.ReplacementBuses>(banner).lineAlert)
+        assertEquals(DisruptionBannerState.None, banner)
+    }
+
+    @Test
+    fun `Given a line alert on the first result with no link Then no banner`() {
+        val noLink = journeys(ReplacementBusTripFixtures.TALLAWONG_TO_BANKSTOWN_NIGHT).map { journey ->
+            journey.copy(
+                legs = journey.legs.map { leg ->
+                    if (leg is JourneyCardInfo.Leg.TransportLeg) {
+                        leg.copy(
+                            serviceAlertList = leg.serviceAlertList.orEmpty().map {
+                                it.copy(
+                                    url = null,
+                                )
+                            }.toImmutableList(),
+                        )
+                    } else {
+                        leg
+                    }
+                }.toImmutableList(),
+            )
+        }
+
+        assertTrue(noLink.first().hasReplacementBusLeg())
+        assertEquals(DisruptionBannerState.None, replacementBusBanner(noLink, DisruptionBannerState.None))
+    }
+
+    @Test
+    fun `Given a metro alert with no link Then there is no metro banner`() {
+        val noLink = metroAlert.copy(moreInfoUrl = null)
+
+        val banner = disruptionBanner(
+            disruptions = listOf(noLink, noLink.copy(id = "metro:blank", moreInfoUrl = " ")),
+            endpointProductClasses = setOf(1, 2),
+            resultProductClasses = setOf(5),
+            hasReplacementBusLeg = true,
+            spanStartEpochSec = metroAlert.startEpochSec + 600,
+            spanEndEpochSec = metroAlert.startEpochSec + 4_000,
+        )
+
+        assertEquals(DisruptionBannerState.None, banner)
     }
 }

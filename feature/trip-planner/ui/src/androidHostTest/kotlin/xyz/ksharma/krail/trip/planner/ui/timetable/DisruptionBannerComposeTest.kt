@@ -10,7 +10,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -85,18 +84,6 @@ class DisruptionBannerComposeTest {
     }
 
     @Test
-    fun bareReplacementBanner_doesNothingWhenTapped() {
-        show(DisruptionBannerState.ReplacementBuses())
-        composeRule.waitForIdle()
-
-        composeRule.onNodeWithText(REPLACEMENT_BUSES_TITLE).performClick()
-        composeRule.waitForIdle()
-
-        assertFalse(TimeTableUiEvent.DisruptionBannerExpanded in events)
-        composeRule.onNodeWithText("More info").assertDoesNotExist()
-    }
-
-    @Test
     fun replacementBannerWithLineAlert_expandsAndOpensItsLink() {
         show(DisruptionBannerState.ReplacementBuses(lineAlert = lineAlert))
         composeRule.waitForIdle()
@@ -122,6 +109,9 @@ class DisruptionBannerComposeTest {
         composeRule.onNodeWithText(REPLACEMENT_BUSES_TITLE).performClick()
         composeRule.waitForIdle()
 
+        // The headline and the window from the alert's own fields; no text parsed out of the description.
+        composeRule.onNodeWithText(previewAlert.headline).assertIsDisplayed()
+        composeRule.onNodeWithText(PREVIEW_ALERT_WINDOW).assertIsDisplayed()
         composeRule.onNodeWithText("More info").performClick()
         composeRule.waitForIdle()
 
@@ -136,6 +126,7 @@ class DisruptionBannerComposeTest {
         composeRule.onNodeWithText(previewAlert.headline).assertIsDisplayed()
         composeRule.onNodeWithText(previewAlert.headline).performClick()
         composeRule.waitForIdle()
+        composeRule.onNodeWithText(PREVIEW_ALERT_WINDOW).assertIsDisplayed()
         composeRule.onNodeWithText("More info").performClick()
         composeRule.waitForIdle()
 
@@ -143,3 +134,5 @@ class DisruptionBannerComposeTest {
         assertEquals(listOf("https://transportnsw.info/alerts"), opened)
     }
 }
+
+private const val PREVIEW_ALERT_WINDOW = "Mon\u00A023\u00A0Nov, 11:20\u00A0PM to Tue\u00A024\u00A0Nov, 2:00\u00A0AM"

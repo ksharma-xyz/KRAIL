@@ -30,7 +30,5 @@ feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/
 feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/parkride/ParkRideAvailabilityLoader.kt|1
 feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/savedtrips/ParkRideMapper.kt|1
 feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/savedtrips/SavedTripsViewModel.kt|1
-io/gtfs/src/commonMain/kotlin/xyz/ksharma/krail/io/gtfs/nswbusroutes/NswBusRoutesManager.kt|10
-io/gtfs/src/commonMain/kotlin/xyz/ksharma/krail/io/gtfs/nswstops/NswStopsManager.kt|8
 sandook/src/commonMain/kotlin/xyz/ksharma/krail/sandook/RealUserLifecycleStore.kt|1
 taj/src/commonMain/kotlin/xyz/ksharma/krail/taj/components/LoadingDotsPill.kt|2

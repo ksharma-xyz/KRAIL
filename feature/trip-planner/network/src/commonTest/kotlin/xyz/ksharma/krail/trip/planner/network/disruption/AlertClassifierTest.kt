@@ -91,4 +91,25 @@ class AlertClassifierTest {
     fun `Given an alert with an empty headline Then it is dropped`() {
         assertTrue(classify(AlertFixtures.alert(header = "  ")).isEmpty())
     }
+
+    @Test
+    fun `Given one closure on two nights Then each night is its own disruption with its own window`() {
+        val nights = classify(AlertFixtures.closureTwoNights)
+
+        assertEquals(2, nights.size)
+        assertEquals(listOf(1_795_603_800L, 1_795_690_200L), nights.map { it.startEpochSec })
+        assertEquals(listOf(1_795_617_000L, 1_795_703_400L), nights.map { it.endEpochSec })
+        assertEquals(2, nights.map { it.id }.toSet().size)
+        assertTrue(nights.all { it.replacedByBuses })
+    }
+
+    @Test
+    fun `Given two periods with the same start Then only one disruption is kept`() {
+        val repeated = AlertFixtures.alert(
+            header = "Metro services do not run",
+            periods = listOf(1_795_436_400L to 1_795_446_005L, 1_795_436_400L to 1_795_446_005L),
+        )
+
+        assertEquals(1, classify(repeated).size)
+    }
 }

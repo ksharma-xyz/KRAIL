@@ -4,9 +4,13 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import xyz.ksharma.krail.core.analytics.Analytics
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.ParkRideUserFacilityEvent
 import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.sandook.NswParkRideSandook
+import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.UserAdded
+import xyz.ksharma.krail.sandook.db.SavedParkRide
 import xyz.ksharma.krail.trip.planner.ui.intro.INTRO_PARK_RIDE_RADIUS_KM
 import xyz.ksharma.krail.trip.planner.ui.intro.nearestParkRideStation
 import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideAvailabilityLoader
@@ -17,8 +21,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRi
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
- * Everything the Park & Ride step reads, kept apart from the view model so the view model decides
- * the order and this class does the work, in the same way as [IntroCompletion].
+ * Everything the Park & Ride step reads and writes, kept apart from the view model so the view model
+ * decides the order and this class does the work, in the same way as [IntroCompletion].
  *
  * Every call runs on the IO dispatcher and none of them polls.
  */
@@ -27,6 +31,7 @@ internal class IntroParkRideGateway(
     private val availabilityLoader: ParkRideAvailabilityLoader,
     private val parkRideSandook: NswParkRideSandook,
     private val ioDispatcher: CoroutineDispatcher,
+    private val analytics: Analytics,
 ) {
     /**
      * The nearest station within [INTRO_PARK_RIDE_RADIUS_KM] of [location], or null. [location] is
@@ -65,7 +70,60 @@ internal class IntroParkRideGateway(
             )
         }
     }
+
+    /**
+     * Saves every car park of [station] as a user added row, the same rows and the same source as
+     * the picker's Add, and tracks it with stop ids only. It never touches the app review manager:
+     * the rider's first minute is not the moment to ask for a review.
+     */
+    suspend fun saveStation(station: ParkRideStationPickerItem) {
+        withContext(ioDispatcher) {
+            parkRideSandook.insertOrReplaceSavedParkRides(
+                parkRideInfoList = station.mappings.map { mapping ->
+                    SavedParkRide(
+                        stopId = mapping.stopId,
+                        facilityId = mapping.facilityId,
+                        stopName = station.savedStopName(),
+                        facilityName = mapping.facilityName,
+                        source = UserAdded.value,
+                    )
+                }.toSet(),
+                source = UserAdded,
+            )
+        }
+        track(station, ParkRideUserFacilityEvent.Action.ADD)
+    }
+
+    /**
+     * Gives the stored readings of [station] its own name. The loader files a car park that is not
+     * saved yet under its stop id, because it takes the name from the saved row, so a reading the
+     * Intro fetched before Add shows the stop id on the Saved Trips card until the next refresh.
+     * Only the name is rewritten: the time of the reading, and with it the cooldown, is kept.
+     */
+    suspend fun correctStopName(station: ParkRideStationPickerItem) = withContext(ioDispatcher) {
+        val facilityIds = station.mappings.map { it.facilityId }.toSet()
+        val misnamed = parkRideSandook.getAllParkRideFacilityDetail().first()
+            .filter { it.facilityId in facilityIds && it.stopName != station.savedStopName() }
+        if (misnamed.isNotEmpty()) {
+            parkRideSandook.insertOrReplaceAll(misnamed.map { it.copy(stopName = station.savedStopName()) })
+        }
+    }
+
+    // Stop ids only, never a name or a coordinate, as the picker's own event carries.
+    private fun track(station: ParkRideStationPickerItem, action: ParkRideUserFacilityEvent.Action) {
+        analytics.track(
+            ParkRideUserFacilityEvent(
+                facilityId = station.mappings.joinToString { it.facilityId },
+                stopId = station.stationId,
+                action = action,
+                source = ParkRideUserFacilityEvent.Source.INTRO,
+            ),
+        )
+    }
 }
+
+// The name the picker saves a station under, so a car park added here reads the same everywhere.
+private fun ParkRideStationPickerItem.savedStopName(): String = stopName.ifBlank { stationName }
 
 /**
  * [block]'s result, or null when it failed. The Intro never shows an error, so a failure is only

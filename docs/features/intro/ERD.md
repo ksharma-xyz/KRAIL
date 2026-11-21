@@ -260,7 +260,8 @@ dispatcher, to keep the constructor under the detekt parameter limit.
 
 The Park & Ride step is two more classes, so the view model stays small. `IntroParkRideGateway` is the injected one, like
 `IntroCompletion`: the catalogue, the availability loader (`ParkRideAvailabilityLoader`, the same one the Saved Trips card
-and the picker use), `NswParkRideSandook` and the IO dispatcher, and it does the reads. `IntroParkRideStep` is built by the view
+and the picker use), `NswParkRideSandook`, the IO dispatcher and `Analytics`, and it does the reads and the writes of Add
+to home. `IntroParkRideStep` is built by the view
 model in its own scope and holds the order of things: the answer, the one location result, the wait for the stops, the
 nearest station and the one availability call. It never asks for the permission: the screen does, and sends
 `LocationResultReceived`.
@@ -270,7 +271,8 @@ nearest station and the one availability call. It never asks for the permission:
 - The Intro never calls the trip planner. `IntroViewModel` keeps `StopsManager` out of its constructor and depends on
   `AppDataReadiness` instead.
 - The Add to home action calls `NswParkRideSandook.insertOrReplaceSavedParkRides` with `UserAdded` and does **not** call
-  `AppReviewManager.onDelightMoment(PARK_RIDE_ADDED)` (see IA11).
+  `AppReviewManager.onDelightMoment(PARK_RIDE_ADDED)` (see IA11). The Intro has no review manager to call, and
+  `IntroNeverReviewsTest` fails if any Intro source names one.
 - Save trip calls `Sandook.insertOrReplaceTrip` with the two stop ids and names.
 
 ## 4. External contracts
@@ -373,6 +375,23 @@ list grows with each:
   reading is a name. A loader that throws is the same as one that found nothing. There is no timer, no retry and no
   second call, and a view model that is cleared cancels all of it.
 - **No.** `AnswerParkRide(false)` is as before, and also cancels a look still waiting and clears the card.
+- **What Add does.** It saves one `UserAdded` row for every mapping of the station, the rows and the source the picker's
+  Add writes, with the stop name the picker uses (the stop's own name, or the station name when the stops table has none).
+  The card turns to Added as soon as the rows are written and never waits for the network. A second tap while a toggle is
+  running does nothing, so a double tap adds once and tracks once. It is ignored with no card on screen, and before a card
+  that is being worked out again after a killed process has its station back.
+- **Tracking.** One `park_ride_user_facility` with `action` add, `source` intro, `stopId` the station id and `facilityId`
+  the car park ids joined the way the picker joins them. No name and no coordinate.
+- **No review.** Nothing in the Intro arms the app review delight moment. `IntroNeverReviewsTest` reads the Intro sources
+  and fails if one names the review manager or the moment.
+- **The stop name.** The loader files a car park that is not saved under its stop id, because it takes the name from the
+  saved row. So the reading the Intro fetched before Add would show that id as the title of the Saved Trips card until the
+  next refresh. After Add the step waits for the availability call if it is still running, then rewrites the stored
+  readings of the station's car parks with the station's name and keeps everything else, including the time of the reading,
+  so the cooldown is untouched. The wait never holds the Added state back, only this correction.
+- **Outcome.** `parkRideAnswer`, `locationResult` and `addedParkRide` come from the state at the finish, and a test holds all
+  six paths: granted and added, granted and not added, no station near, denied, a fix that timed out (`unavailable`), and
+  never answered (`skipped`, `not_asked`).
 - **What is saved.** The step, answer, permission result, picks and flags as before, plus the card's station id (or a
   flag for no station near). A card is saved as the id alone, with no car park and no reading, and comes back as a
   Locating skeleton that carries the id. The step then works it out again from the catalogue and asks the loader once
@@ -392,7 +411,7 @@ can be saved while the stops failed, (3) the finish never blocks on the stops, i
 | 2 | **Payload.** | About 350 B gzip and 665 B decoded per availability call, from the snapshot of 2026-11-21. **Not re-measured here**: the endpoint needs the shared NSW key, so nothing was sent. The stops files (about 2.3 MB and 2.6 MB) are bundled and are not downloaded. The Intro reads the 42-row catalogue and groups it once per look (and once after a kill), on the IO dispatcher, plus one batched coordinates query, and reads the facility table (at most 37 rows) once. All of it is small and local. |
 | 3 | **Timing.** | The Intro opens with no network and no wait. The car park card needs a location fix (up to 10 s inside the location manager, **not measured**), then stops readiness (`awaitReady` up to 10 s, nothing when already Ready, and **assumed 3 to 5 seconds** on a fresh install, measured privately and not recorded here), then the station is picked in memory and the card shows at once with the car park names. The numbers follow after the calls. They run one after another at 0.09 to 0.31 s each in the snapshot, so about 0.1 to 0.3 s for most stations and about 0.3 to 0.9 s for Tallawong (arithmetic on the snapshot, a guess for a real phone). Nothing blocks: Next, Back and the last button work throughout, and the last button is the only forced wait, and only if the rider finishes before readiness. The `stopsWait` bucket in section 11 measures it in the field. |
 | 4 | **UX.** | Loading: skeleton in the card's space. Slow stops data: last button reads Getting ready, for at most 15 s. Failed stops data: no message and no error state, the button behaves as when ready and the load is retried in the background. Failed or offline availability: the station name and Add stay, the numbers are omitted. No station near: a plain line and the normal Next. Denied location: step 2. No layout shift between states (same slot). |
-| 5 | **Network efficiency.** | Availability goes through the existing `ParkRideAvailabilityLoader`, the one the Saved Trips card and the picker use, so its cooldown and cache apply. **Verified in the code and held by a test** (`a second intro inside the cooldown makes no second call`): the loader reads the cooldown from the `NSWParkRideFacilityDetail` table and writes the reading into the same table the Saved Trips card reads, so home finds the car park inside its cooldown (120 s from 05:00 to 10:00 and 600 s otherwise, the Remote Config defaults) and does not refetch. One thing it writes wrongly for a car park that is not saved yet is the stop name, which is the stop id until the station is saved. |
+| 5 | **Network efficiency.** | Availability goes through the existing `ParkRideAvailabilityLoader`, the one the Saved Trips card and the picker use, so its cooldown and cache apply. **Verified in the code and held by a test** (`a second intro inside the cooldown makes no second call`): the loader reads the cooldown from the `NSWParkRideFacilityDetail` table and writes the reading into the same table the Saved Trips card reads, so home finds the car park inside its cooldown (120 s from 05:00 to 10:00 and 600 s otherwise, the Remote Config defaults) and does not refetch. One thing it writes wrongly for a car park that is not saved yet is the stop name, which is the stop id until the station is saved. Add corrects it (section 5), keeping the time of the reading, and a test holds it. |
 | 6 | **Battery.** | One location fix, taken by the screen, not updates. No timer, no polling and no background work: the view model test lets an hour of virtual time pass and still finds one call. Everything the step starts runs in the view model's scope and is cancelled when it is cleared (two tests). Foreground only, so nothing needs lifecycle gating beyond collecting state with `collectAsStateWithLifecycle()`. |
 | 7 | **Shared limits.** | At most one to three availability calls (28, 3 and 1 stations of 32) per rider who answers Yes and has a station near, once, on the shared NSW key, and the same again only after a killed process that is off cooldown. Small next to the existing polling on home (a guess, label it as one). The BFF is not live, so nothing collapses. |
 
@@ -469,7 +488,9 @@ disabled (one stop picked), Skip for now (nothing picked), Save and start (both 
     proceeds and tracks `over_5s`. One pick disables the button and a press on it does nothing.
   - A tap on Next with step 1 unanswered sets the flag.
   - Rotation mid step keeps the answer, the picks and the pending permission.
-  - Add to home never triggers the review delight moment.
+  - Add to home never triggers the review delight moment (a guard test over the Intro sources).
+  - Add: every car park saved as `UserAdded`, the tracked event with source intro and stop ids only, and the stop name
+    corrected with the time of the reading kept (also when Add comes before the call lands).
   - Discriminating cases only: each test must fail if the behaviour it names is removed.
 - **Database.** The real driver, via the existing test seam: the clear and the insert in one transaction leaves the old rows
   readable until the commit (this belongs to the readiness PR).

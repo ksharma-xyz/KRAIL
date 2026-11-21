@@ -38,6 +38,10 @@ internal class IntroParkRideStep(
     private val onLeftQuestion: () -> Unit,
 ) {
     private var job: Job? = null
+    private var toggleJob: Job? = null
+
+    // The catalogue item behind the card, which Add needs and the state deliberately does not carry.
+    private var station: ParkRideStationPickerItem? = null
 
     /**
      * The answer is yes and the screen now asks for the permission, then sends the result. Ignored
@@ -48,10 +52,11 @@ internal class IntroParkRideStep(
         write { copy(parkRideAnswer = ParkRideAnswer.YES, parkRideCard = ParkRideCardPhase.Locating()) }
     }
 
-    /** The answer is no, so nothing the step started is wanted any more. */
+    /** The answer is no, so nothing the step started is wanted any more, and the card goes with it. */
     fun cancel() {
         job?.cancel()
         job = null
+        station = null
     }
 
     /**
@@ -70,6 +75,19 @@ internal class IntroParkRideStep(
                 copy(locationResult = recorded, step = IntroStep.FIRST_TRIP, parkRideCard = ParkRideCardPhase.None)
             }
             onLeftQuestion()
+        }
+    }
+
+    /**
+     * Add to home. Ignored with no card on screen, which also covers a card that is being worked out
+     * again after a killed process, when the station is already added, and while an earlier toggle is
+     * still running, so a double tap does one thing.
+     */
+    fun toggle() {
+        val chosen = station ?: return
+        if (toggleJob?.isActive == true) return
+        toggleJob = scope.launch {
+            if (!read().addedParkRide) add(chosen)
         }
     }
 
@@ -97,6 +115,7 @@ internal class IntroParkRideStep(
 
     // The card shows at once with names only, then settles when the one availability call is back.
     private suspend fun show(found: ParkRideStationPickerItem) {
+        station = found
         val card = ParkRideCardStation(
             stationId = found.stationId,
             stationName = found.stationName,
@@ -105,5 +124,15 @@ internal class IntroParkRideStep(
         write { copy(parkRideCard = ParkRideCardPhase.Card(card)) }
         val carParks = attempt { gateway.carParks(found) }
         write { withReadings(found.stationId, carParks) }
+    }
+
+    // Added at once, without waiting for the network. The availability call may still be running, and
+    // when it read the saved rows before this add it filed its reading under the stop id, so the
+    // name is corrected once that call has landed.
+    private suspend fun add(chosen: ParkRideStationPickerItem) {
+        attempt { gateway.saveStation(chosen) } ?: return
+        write { copy(addedParkRide = true) }
+        job?.join()
+        attempt { gateway.correctStopName(chosen) }
     }
 }

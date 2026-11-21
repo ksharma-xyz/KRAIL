@@ -18,6 +18,7 @@ import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import xyz.ksharma.krail.core.testing.helpers.CallLog
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
+import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.trip.planner.ui.intro.SuggestedStop
 import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideAvailabilityLoader
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroState
@@ -44,7 +45,7 @@ internal class IntroRig(
     timeSource: TimeSource? = null,
     stations: List<ParkRideStationPickerItem> = INTRO_STATIONS,
     availabilityLoader: ParkRideAvailabilityLoader? = null,
-    val parkRideSandook: FakeNswParkRideSandook = FakeNswParkRideSandook(),
+    val parkRideSandook: NswParkRideSandook = FakeNswParkRideSandook(),
 ) {
     val log = CallLog()
     val readiness = FakeAppDataReadiness(initial = initialReadiness, callLog = log)
@@ -77,6 +78,7 @@ internal class IntroRig(
                         availabilityLoader = availabilityLoader ?: loader,
                         parkRideSandook = parkRideSandook,
                         ioDispatcher = scope.ioDispatcher,
+                        analytics = analytics,
                     ),
                 )
             }

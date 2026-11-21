@@ -87,8 +87,7 @@ internal class IntroFlowViewModel(
             IntroUiEvent.Next -> next()
             is IntroUiEvent.AnswerParkRide -> answerParkRide(event.yes)
             is IntroUiEvent.LocationResultReceived -> parkRideStep.onLocationResult(event.result, event.location)
-            // Add to home is built by a later branch.
-            IntroUiEvent.ToggleParkRide -> Unit
+            IntroUiEvent.ToggleParkRide -> parkRideStep.toggle()
             is IntroUiEvent.PickStart -> update { withPick(isStart = true, event.stop.stopId, event.stop.name) }
             is IntroUiEvent.PickEnd -> update { withPick(isStart = false, event.stop.stopId, event.stop.name) }
             is IntroUiEvent.StopPickedFromSearch -> update {

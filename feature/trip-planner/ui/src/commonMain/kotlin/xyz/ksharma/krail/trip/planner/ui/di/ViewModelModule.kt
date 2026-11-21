@@ -171,6 +171,7 @@ val viewModelsModule = module {
                 ),
                 parkRideSandook = get(),
                 ioDispatcher = get(named(IODispatcher)),
+                analytics = get(),
             ),
         )
     }

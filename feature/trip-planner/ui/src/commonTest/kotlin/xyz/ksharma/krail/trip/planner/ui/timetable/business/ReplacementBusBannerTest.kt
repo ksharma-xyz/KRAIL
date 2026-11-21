@@ -214,6 +214,7 @@ class ReplacementBusBannerTest {
             heading = "Buses replace trains",
             message = "<div>Details</div>",
             isLineAlert = true,
+            url = "https://transportnsw.info/alerts/details#/ems-81168",
         )
         val stationAlert = ServiceAlert(heading = "Station Update - Central", message = "Lift", isLineAlert = false)
         val withAlerts = journeys(ReplacementBusTripFixtures.CRONULLA_TO_CENTRAL).map { journey ->
@@ -276,6 +277,42 @@ class ReplacementBusBannerTest {
         }
 
         val banner = replacementBusBanner(noAlerts, DisruptionBannerState.None)
+
+        assertEquals(DisruptionBannerState.None, banner)
+    }
+
+    @Test
+    fun `Given a line alert on the first result with no link Then no banner`() {
+        val noLink = journeys(ReplacementBusTripFixtures.TALLAWONG_TO_BANKSTOWN_NIGHT).map { journey ->
+            journey.copy(
+                legs = journey.legs.map { leg ->
+                    if (leg is JourneyCardInfo.Leg.TransportLeg) {
+                        leg.copy(
+                            serviceAlertList = leg.serviceAlertList.orEmpty().map { it.copy(url = null) }.toImmutableList(),
+                        )
+                    } else {
+                        leg
+                    }
+                }.toImmutableList(),
+            )
+        }
+
+        assertTrue(noLink.first().hasReplacementBusLeg())
+        assertEquals(DisruptionBannerState.None, replacementBusBanner(noLink, DisruptionBannerState.None))
+    }
+
+    @Test
+    fun `Given a metro alert with no link Then there is no metro banner`() {
+        val noLink = metroAlert.copy(moreInfoUrl = null)
+
+        val banner = disruptionBanner(
+            disruptions = listOf(noLink, noLink.copy(id = "metro:blank", moreInfoUrl = " ")),
+            endpointProductClasses = setOf(1, 2),
+            resultProductClasses = setOf(5),
+            hasReplacementBusLeg = true,
+            spanStartEpochSec = metroAlert.startEpochSec + 600,
+            spanEndEpochSec = metroAlert.startEpochSec + 4_000,
+        )
 
         assertEquals(DisruptionBannerState.None, banner)
     }

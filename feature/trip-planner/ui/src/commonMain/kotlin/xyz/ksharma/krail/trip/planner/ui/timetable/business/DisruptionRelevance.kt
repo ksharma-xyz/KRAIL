@@ -37,6 +37,8 @@ internal fun disruptionBanner(
     val shown = disruptions
         .asSequence()
         .filter { it.severity == DisruptionSeverity.NOT_RUNNING }
+        // No link to the real Transport for NSW alert, no banner.
+        .filter { !it.moreInfoUrl.isNullOrBlank() }
         .filter { it.feed.productClass in endpointProductClasses }
         .filter { it.overlaps(spanStartEpochSec, spanEndEpochSec) }
         .mapNotNull { disruption ->
@@ -73,9 +75,9 @@ private fun Disruption.displacementReason(
  * further down the list, such as one tomorrow morning, does not show it; its row still says "Replacement
  * bus". Otherwise the metro banner stands.
  *
- * The banner also needs something to open. A metro alert supplies it when it says buses replace the line,
- * else the planner's own line alert on a leg of the first result. With neither, a banner would do nothing
- * when tapped, so none is shown. Neither alert is ever a trigger: a line alert covers a whole route, so it
+ * The banner also needs something to open, and a real link to the alert on the Transport for NSW website:
+ * the metro alert when it says buses replace the line, else the planner's own line alert on a leg of the
+ * first result. With no alert, or an alert without its link, no banner is shown. Neither alert is ever a trigger: a line alert covers a whole route, so it
  * would show for riders far from the closed stretch.
  */
 internal fun replacementBusBanner(
@@ -85,6 +87,7 @@ internal fun replacementBusBanner(
     val next = journeys.firstOrNull()?.takeIf { it.hasReplacementBusLeg() } ?: return metroBanner
     // Whatever the reason: when every result is a replacement bus the metro is missing from the results
     // (MODE_MISSING), and the alert that says buses replace it is still the detail.
+    // metroBanner only ever carries an alert that has a link (see disruptionBanner).
     val disruption = if (metroBanner is DisruptionBannerState.Shown && metroBanner.disruption.replacedByBuses) {
         metroBanner.disruption
     } else {
@@ -101,7 +104,8 @@ internal fun replacementBusBanner(
 internal fun JourneyCardInfo.hasReplacementBusLeg(): Boolean =
     legs.any { it is JourneyCardInfo.Leg.TransportLeg && it.isReplacementBus }
 
+// A line alert with the link to its page on the Transport for NSW website; one without is not shown.
 private fun JourneyCardInfo.firstLineAlert(): ServiceAlert? = legs.asSequence()
     .filterIsInstance<JourneyCardInfo.Leg.TransportLeg>()
     .flatMap { it.serviceAlertList.orEmpty().asSequence() }
-    .firstOrNull { it.isLineAlert }
+    .firstOrNull { it.isLineAlert && !it.url.isNullOrBlank() }

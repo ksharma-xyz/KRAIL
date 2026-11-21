@@ -36,7 +36,6 @@ class ReplacementBusBannerTest {
         feed = DisruptionFeed.METRO,
         severity = DisruptionSeverity.NOT_RUNNING,
         headline = "Buses replace metro services between Bankstown and Sydenham",
-        detail = "Monday 23 November",
         startEpochSec = 1_795_436_400L,
         endEpochSec = 1_795_446_005L,
         moreInfoUrl = "https://transportnsw.info/alerts/details#/ems-8150",
@@ -125,13 +124,48 @@ class ReplacementBusBannerTest {
     }
 
     @Test
-    fun `Given a metro alert that only says the mode is missing Then it is not used for the detail`() {
+    fun `Given a metro alert that only says the line is closed Then it is not used for the detail`() {
+        // "Metro services do not run between ..." never says buses replace it, so it explains nothing here.
+        val closedOnly = metroAlert.copy(
+            headline = "Metro services do not run between Tallawong and Bankstown",
+            replacedByBuses = false,
+        )
+
         val banner = replacementBusBanner(
             journeys(ReplacementBusTripFixtures.CRONULLA_TO_CENTRAL),
-            DisruptionBannerState.Shown(metroAlert, DisruptionReason.MODE_MISSING),
+            DisruptionBannerState.Shown(closedOnly, DisruptionReason.MODE_MISSING),
         )
 
         assertNull(assertIs<DisruptionBannerState.ReplacementBuses>(banner).disruption)
+    }
+
+    @Test
+    fun `Given every result is a replacement bus so the metro is missing Then the metro alert still supplies the detail`() {
+        // Bankstown to Sydenham at 11:40 pm Monday: NSW returned only temporary buses, no metro train,
+        // and attached no alert to them. The metro alert is the only text there is.
+        val replacementOnly = journeys(ReplacementBusTripFixtures.BANKSTOWN_TO_SYDENHAM_NIGHT)
+            .filter { journey -> journey.transportLegs().all { it.isReplacementBus } }
+        assertTrue(replacementOnly.isNotEmpty())
+        assertTrue(
+            replacementOnly.flatMap { it.transportLegs() }.all { it.serviceAlertList.orEmpty().none { a -> a.isLineAlert } },
+        )
+        val metroBanner = disruptionBanner(
+            disruptions = listOf(metroAlert),
+            endpointProductClasses = setOf(1, 2),
+            resultProductClasses = replacementOnly.flatMap { it.transportModeLines }
+                .map { it.transportMode.productClass }
+                .toSet(),
+            hasReplacementBusLeg = true,
+            spanStartEpochSec = metroAlert.startEpochSec + 600,
+            spanEndEpochSec = metroAlert.startEpochSec + 4_000,
+        )
+
+        val banner = replacementBusBanner(replacementOnly, metroBanner)
+
+        assertEquals(DisruptionReason.MODE_MISSING, assertIs<DisruptionBannerState.Shown>(metroBanner).reason)
+        val shown = assertIs<DisruptionBannerState.ReplacementBuses>(banner)
+        assertEquals(metroAlert, shown.disruption)
+        assertNull(shown.lineAlert)
     }
 
     @Test

@@ -40,7 +40,6 @@ private fun Alert.toDisruptions(feed: DisruptionFeed): List<Disruption> {
     // An alert with no headline has nothing to show.
     val severity = headline.takeIf { it.isNotEmpty() }?.let { severityOf(it.lowercase(), effect) }
         ?: return emptyList()
-    val detail = description_text?.translation?.firstOrNull()?.text?.trim().orEmpty()
     val moreInfoUrl = url?.translation?.firstOrNull()?.text?.takeIf { it.isNotBlank() }
     val replacedByBuses = "buses replace" in headline.lowercase()
     return active_period
@@ -52,7 +51,6 @@ private fun Alert.toDisruptions(feed: DisruptionFeed): List<Disruption> {
                 feed = feed,
                 severity = severity,
                 headline = headline,
-                detail = detail,
                 startEpochSec = start,
                 endEpochSec = period.end?.takeIf { it > start },
                 moreInfoUrl = moreInfoUrl,

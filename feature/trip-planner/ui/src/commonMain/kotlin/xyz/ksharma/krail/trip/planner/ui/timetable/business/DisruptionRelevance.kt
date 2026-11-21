@@ -84,9 +84,11 @@ internal fun replacementBusBanner(
         metroBanner
     } else {
         DisruptionBannerState.ReplacementBuses(
+            // Whatever the reason: when every result is a replacement bus the metro is missing from
+            // the results (MODE_MISSING), and the alert that says buses replace it is still the detail.
             disruption = (metroBanner as? DisruptionBannerState.Shown)
-                ?.takeIf { it.reason == DisruptionReason.REPLACEMENT_BUS }
-                ?.disruption,
+                ?.disruption
+                ?.takeIf { it.replacedByBuses },
             lineAlert = replacementJourneys.firstLineAlert(),
         )
     }

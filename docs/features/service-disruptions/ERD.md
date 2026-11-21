@@ -109,8 +109,8 @@ Trip fields read:
 - `legs[].transportation.iconId` decides a replacement leg (14 or 22). `product.id` carries the same value.
 - `legs[].infos` where `type` is `lineInfo`, for the detail text only (A7), never as a trigger.
 
-Metro alert fields read (unchanged from 1.30): header text, description text, url, effect, every
-active period, informed route ids.
+Metro alert fields read: header text, url, effect, every active period, informed route ids. The
+description text is no longer read: NSW sends two versions of it that can disagree (A10).
 
 ## Why the alert feeds are not used for trains
 
@@ -172,7 +172,7 @@ The metro alert load from 1.30 runs beside the trip call and never gates it. It 
 
 | State | Behaviour | Reuse |
 |---|---|---|
-| Replacement buses in the results | Banner "Replacement buses on this trip". Each row with a replacement leg says "Replacement bus" in plain text beside the line badge, with no border. Tap the banner for the planner's line alert detail when one is attached (A7). | `InfoTile`, row text |
+| Replacement buses in the results | Banner "Replacement buses on this trip". Each row with a replacement leg says "Replacement bus" in plain text beside the line badge, with no border. Tap the banner for the metro alert's headline and window when it also says buses replace the line (A10), else the planner's line alert (A7), else it does not expand. | `InfoTile`, row text |
 | No replacement leg | Nothing from version 2. | none |
 | Rider moved to another working mode | Nothing, because no replacement leg exists. | none |
 | Content, no disruption | Nothing. | none |
@@ -202,7 +202,8 @@ new-event checklist in `docs/ANALYTICS_EVENTS.md` in the PR that adds it. No ale
 ## 8. Test plan
 
 Built in version 1 and kept: `AlertClassifierTest`, `RealDisruptionRepositoryTest`,
-`DisruptionRelevanceTest`, `DisruptionDetailTest`, `DisruptionAnalyticsTest`, banner snapshots.
+`DisruptionRelevanceTest`, `DisruptionWindowTest`, `DisruptionAnalyticsTest`, banner snapshots.
+`DisruptionDetailTest` was removed with the description parser (A10).
 
 New, from real captured trip replies (fixtures committed under the module's test resources):
 - Replacement legs: Cronulla to Central (every leg iconId 14), Bankstown to Sydenham at 11:30 pm
@@ -215,6 +216,8 @@ New, from real captured trip replies (fixtures committed under the module's test
 - Configuration change and state survival: banner state is derived; tile expansion stays in
   `rememberSaveable`.
 - A hanging metro alerts feed must not delay the trip result.
+- Every result is a replacement bus, so the metro is missing from the results: the metro alert still
+  supplies the detail (Bankstown to Sydenham at 11:40 pm Mon 23 Nov, real reply).
 
 ## 9. Open gaps and decisions
 
@@ -223,6 +226,7 @@ New, from real captured trip replies (fixtures committed under the module's test
 | No unplanned metro fault observed; every live alert is planned trackwork. The closure wording list is from planned alerts. | Open. Needs a captured real fault. |
 | How far ahead the planner loads replacement buses. Loaded for Richmond to Blacktown the next morning, not for Ashfield to Central, not for Mon 30 Nov. Those riders see nothing from version 2. | Accepted by owner 2026-11-21. |
 | Replacement legs for light rail and ferry. | Open, not yet seen. |
+| The metro alert request gives up after 3 s and is made once when the timetable opens. One slow first request on a phone leaves the banner without its detail (not expandable) until the screen is reopened. Seen once on a Pixel 6 Pro, not on the Pixel 10 Pro. | Open. Raising the timeout or retrying once needs a decision. |
 | `active_period` read as one field and only the first period used. | Fix in PR 1. |
 
 ### Assumptions for approval (mandatory, no code until signed off). All rows signed.
@@ -238,9 +242,10 @@ Each row decides who sees a banner, when, or which cases count. Sign-off line:
 | A4 | A rider whose results moved to another working mode sees no banner. | Sydenham to Central Sat 21 Nov: train closure live, planner returned metro only. | The rider does not learn trains are replaced. | Approved by ksharma-xyz, 2026-11-21 |
 | A5 | Banner title "Replacement buses on this trip" when replacement buses are in the results. | 1.30 shows the alert headline today, so this shortens the collapsed title. | The collapsed card says less than 1.30 does. | Approved by ksharma-xyz, 2026-11-21 |
 | A6 | Rows with a replacement-bus leg say "Replacement bus" in plain text, no border. | Cronulla to Central, Bankstown to Sydenham at 11:30 pm. | None beyond a longer row. | Approved by ksharma-xyz, 2026-11-21 |
-| A7 | The expanded banner shows the planner's own line alert (`type` `lineInfo`) attached to a leg in the results, as the planner gives it. With none, the banner is not expandable. | Cronulla to Central: the bus leg carried no alert, a train leg carried "Buses replace trains between Cronulla, Waterfall and Central" with its full HTML content and url. | A detail that does not explain the replacement, because leg alerts are route-wide (A3). | Approved by ksharma-xyz, 2026-11-21 ("makes sense" after the default was shown) |
+| A7 | The expanded banner shows the planner's own line alert (`type` `lineInfo`) attached to a leg in the results, as the planner gives it, unless a metro alert that also says buses replace the line supplies the detail (A10). With neither, the banner is not expandable. | Cronulla to Central: the bus leg carried no alert, a train leg carried "Buses replace trains between Cronulla, Waterfall and Central" with its full HTML content and url. | A detail that does not explain the replacement, because leg alerts are route-wide (A3). | Approved by ksharma-xyz, 2026-11-21 ("makes sense" after the default was shown) |
 | A8 | The 1.30 metro alert banner is unchanged except it reads every active period. 1.30 rules kept: closure wording, hidden when the rider filtered that mode out, trains and metro only, delays never show a banner. One banner per results screen; when a replacement leg and a metro alert both apply, the replacement-bus words show. | The metro feed carries 6 alerts on 2026-11-21, all `MODIFIED_SERVICE`. | The metro banner stays wording-based, which the check in section 4 found unreliable for trains. | The 1.30 rules: Approved by ksharma-xyz, 2026-11-21. Leaving metro unchanged and the precedence rule: Approved by ksharma-xyz, 2026-11-21 ("makes sense" after the default was shown). |
 | A9 | The later-today heads-up is deferred. It needs a closure's start time from alert text, which version 2 does not read for trains. | Metro closure from 11:20 pm Mon 23 Nov would be the only case. | A rider is not warned a closure starts later today. | Deferred, no code. Approved by ksharma-xyz, 2026-11-21 ("makes sense" after the default was shown). |
+| A10 | A metro alert's expanded text is NSW's headline and the alert's start and end (`active_period`), with a More info link. It is used whenever the alert says buses replace the line and a replacement leg is in the results, including when every result is a replacement bus and no metro train is listed. The description text, the bold times and the "last metro before buses" list from 1.30 are not shown. | The description carries two versions, language `en` (plain) and `en/html`, and they disagree. Bankstown to Sydenham, Mon 23 Nov: `en` says buses from 11:10 PM and the last metro leaves Bankstown 23:03; `en/html` says 11:20 PM and 11:40 PM by direction and the last metro leaves Bankstown 23:33. The planner listed a metro leaving Bankstown at 11:33 PM and the feed window starts 11:20 PM, so `en` was stale. 1.30 read the first version, which showed the stale times on a Pixel 10 Pro. Rough count: 4 of 6 metro alerts and 9 of 67 train alerts name different clock times in the two versions. Every replacement leg carries no alert of its own (`infos` empty) and NSW sends its description as "Unknown". | The rider loses the last-metro list, and the window is the whole alert's, not their direction's. Reading the HTML version instead was the other option: it matched the planner in the one case checked, but needs HTML parsing and is unproven elsewhere. | Approved by ksharma-xyz, 2026-11-21 (option "Headline + window + More info"). |
 
 Dropped on 2026-11-21 after the reliability check: closed stretch from headline, stretch rules,
 route to line map, bundled station order, train alert feed. Each depended on reading text.

@@ -28,26 +28,19 @@ internal val previewAlert = Disruption(
     feed = DisruptionFeed.METRO,
     severity = DisruptionSeverity.NOT_RUNNING,
     headline = "Buses replace metro services between Bankstown and Sydenham",
-    detail = "Monday 23 November\n" +
-        "From 11:10PM, buses replace metro services between Bankstown and Sydenham.\n" +
-        "Services run between Sydenham and Tallawong, to the normal frequency.\n" +
-        "The last metro services leave:\n" +
-        "- Bankstown at 23:03, arriving Sydenham at 23:24\n" +
-        "- Sydenham at 23:15, arriving Bankstown at 23:37",
-    startEpochSec = 0L,
-    endEpochSec = null,
+    startEpochSec = 1_795_436_400L,
+    endEpochSec = 1_795_446_000L,
     moreInfoUrl = "https://transportnsw.info/alerts",
     replacedByBuses = true,
 )
 
-// No last services and a longer body, the shape of the early-morning alerts.
+// A morning window on another day, for an alert that says the metro does not run and names no buses.
 internal val previewAlertLong = previewAlert.copy(
     id = "metro:preview-long",
-    detail = "Saturday 5 December\n" +
-        "From 4AM to 9AM, metro services do not run between Tallawong and Bankstown.\n" +
-        "Buses replace services between Tallawong and Chatswood, and between Sydenham and Bankstown only.\n" +
-        "Use trains between Epping or Chatswood, the City and Sydenham.\n" +
-        "For travel to and from Waterloo use local buses or trains from Redfern.",
+    headline = "Metro services do not run between Tallawong and Bankstown",
+    startEpochSec = 1_796_403_600L,
+    endEpochSec = 1_796_421_600L,
+    replacedByBuses = false,
 )
 
 /** The banner in a column [width] wide, the way a pane of that width draws it. Null fills the canvas. */

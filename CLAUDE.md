@@ -316,46 +316,29 @@ workflow that compiles, do the same.
 
 ## Worktree build setup
 
-Worktrees live in `~/code/.worktrees/KRAIL/<name>`, never inside this repo. Create them with
+Full routine in **`docs/WORKTREES.md`**. Worktrees live in `~/code/.worktrees/KRAIL/<name>`, never
+inside this repo. Create them with
 `~/code/batcave/bin/bc wt new KRAIL <branch> --kind pr|research|experiment --purpose "…"` so they
-are registered with a 30-day expiry, and remove them with `bc wt rm` once the PR is merged.
+are registered with a 30-day expiry.
 
-Fresh worktrees are missing gitignored files and build artefacts required to compile
-`:androidApp`. Before asking the user to run any build in a worktree, copy all four
-of these from the main checkout (`/Users/ksharma/code/apps/krail/KRAIL/`):
+**Right after creating a worktree, run `./scripts/worktree_setup.sh` in it, before any build, test
+or push.** A fresh worktree is missing the gitignored local config (`local.properties`, the
+`google-services.json` files, two resource folders) and nothing compiles without it. The script
+copies them from the primary checkout; the list is `scripts/worktree-local-files.txt`. Do not copy
+them by hand, and add any new gitignored build file to that list in the same change.
 
-```sh
-WORKTREE=/Users/ksharma/code/.worktrees/KRAIL/<name>
-MAIN=/Users/ksharma/code/apps/krail/KRAIL
+**When the PR is merged, run `./scripts/worktree_cleanup.sh <path>`** (or `bc wt rm <path>`). It
+removes the worktree and the local and remote branch, and refuses while anything is unmerged or
+uncommitted.
 
-# 1. Gradle local config
-cp $MAIN/local.properties $WORKTREE/local.properties
-
-# 2. Firebase config (three locations)
-cp $MAIN/androidApp/src/debug/google-services.json   $WORKTREE/androidApp/src/debug/google-services.json
-cp $MAIN/androidApp/src/release/google-services.json $WORKTREE/androidApp/src/release/google-services.json
-cp $MAIN/androidApp/src/main/google-services.json    $WORKTREE/androidApp/src/main/google-services.json
-cp $MAIN/composeApp/src/debug/google-services.json   $WORKTREE/composeApp/src/debug/google-services.json
-cp $MAIN/composeApp/src/release/google-services.json $WORKTREE/composeApp/src/release/google-services.json
-
-# 3. Wire-generated proto sources (saves a full codegen run)
-cp -R $MAIN/io/bff-api/build/generated $WORKTREE/io/bff-api/build/generated
-
-# 4. Proto submodule
-git -C $WORKTREE submodule update --init --recursive
-
-# 5. iOS Firebase config — only needed if you will build the iOS app from this worktree
-cp $MAIN/iosApp/iosApp/GoogleService-Info.plist $WORKTREE/iosApp/iosApp/GoogleService-Info.plist
-```
-
-If any of these are skipped the build fails with one of:
+If setup was skipped the build fails with one of:
 - `File google-services.json is missing` — missing Firebase config
-- `Unresolved reference 'app'` in BFF mappers — missing Wire-generated sources or empty submodule
+- `Unresolved reference 'app'` in BFF mappers — missing Wire-generated sources
 - `Register API key` — missing `local.properties`
 - `Build input file cannot be found: .../GoogleService-Info.plist` — missing iOS Firebase config
 
-Note: the repo no longer uses the `krail-api-proto` submodule, so step 4 is a no-op on current
-checkouts. It is kept for branches that predate its removal.
+The repo no longer uses the `krail-api-proto` submodule; the setup script initialises submodules
+only when a `.gitmodules` file exists.
 
 ### Running on an iOS simulator
 

@@ -26,6 +26,15 @@ if [ "${SKIP_STRUCTURAL_CHECKS:-0}" = "1" ]; then
   exit 0
 fi
 
+# A fresh worktree has none of the gitignored local config, and Gradle then fails with an error that
+# does not say what to do. Say it here, before the slow part.
+if [ ! -f "$(git rev-parse --show-toplevel)/local.properties" ]; then
+  echo "pre-push: local.properties is missing, so Gradle cannot run." >&2
+  echo "pre-push: this looks like a fresh worktree. Run ./scripts/worktree_setup.sh and push again." >&2
+  echo "pre-push: see docs/WORKTREES.md. A clone with no NSW key can push with SKIP_STRUCTURAL_CHECKS=1." >&2
+  exit 1
+fi
+
 repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
 

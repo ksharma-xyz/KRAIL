@@ -433,6 +433,15 @@ change when the code diverges.
 
 Small fixes and tweaks skip the ERD, never the cost check.
 
+**Assumptions need sign-off before code.** Any rule that decides who sees something, when, or which
+cases count (relevance, eligibility, matching, classification, thresholds, time windows) is an
+assumption until the owner approves it. List every one with its evidence and what breaks if it is
+wrong, show the list in the message and not only in the ERD, and wait for approval. Test each rule
+against real named cases first, including the cases it is meant to exclude. For each rule say
+whether it reads a data field or text parsed from a message, check text-based rules against every
+current real item, and show that judgement of reliability with the rule. Offer options with
+trade-offs; do not pick for the owner. The tables are in section 9 of `FEATURE_ERD_TEMPLATE.md`.
+
 **Always answer the cost questions, unprompted, for every feature, proposal, design or option
 shown for a pick.** With numbers, not adjectives: how many API calls (per action, on open, per
 minute visible), payload bytes, time to content before and after, UX in loading/slow/failed/

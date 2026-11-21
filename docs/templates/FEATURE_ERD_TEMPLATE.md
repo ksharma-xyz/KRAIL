@@ -5,7 +5,7 @@ code is written**. Code is built from this document and the document is updated 
 change whenever the code diverges. A section that does not apply says "None" and why; it is
 never deleted.
 
-Status: Draft | Agreed | Built
+Status: Draft | Agreed | Built (`Agreed` means every row of "Assumptions for approval" in section 9 is signed off)
 Owner: <github login>
 Touches: <modules and repos, e.g. `feature/trip-planner/*`, `KRAIL-BFF`>
 
@@ -125,6 +125,33 @@ Which existing component and wording each state reuses.
 
 | Gap or decision | Owner | Needed by |
 |---|---|---|
+
+### Assumptions for approval (mandatory, no code until signed off)
+
+Any rule that decides who sees something, when, or which cases count (relevance, eligibility,
+matching, classification, thresholds, time windows) is an assumption until the owner has approved
+it. List every one here, and **show the list in the message that introduces the ERD**, not only in
+this file.
+
+| # | Assumption | Evidence (real data, named cases) | What breaks if it is wrong | Decision |
+|---|---|---|---|---|
+
+- Test each rule against real named cases before listing it, including the cases it is meant to
+  exclude. For transit: a trip to a station with no metro, a partial closure, a stop shared by two
+  modes. Put what the rule did in the Evidence column.
+- Judge each rule against the facts, and show the judgement. For every rule say whether it reads a
+  **data field** (name the field, show a real response) or **text parsed** from a message (alert
+  headline, description, free text). Text is not evidence. For a rule that depends on text, check it
+  against **every** current real item, not three hand-picked ones, and list the ones it gets wrong.
+  Prefer a rule built on a data field. Put the result in the table below.
+- Offer options with their trade-offs. Do not pick for the owner.
+- Sign-off line: `Approved by <github login>, <date>`. Status stays `Draft` until every row has one.
+
+| Decision | Source (data field or parsed text) | Checked against | Reliable |
+|---|---|---|---|
+
+A default I chose without being asked is marked `Default, not yet seen by owner` in its Decision
+cell and shown to the owner in the message. It is never signed on their behalf.
 
 ## 10. Build order
 

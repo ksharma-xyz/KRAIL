@@ -4,6 +4,8 @@ import xyz.ksharma.krail.trip.planner.network.api.model.TripResponse
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlertPriority
 
+private const val LINE_INFO_TYPE = "lineInfo"
+
 fun TripResponse.Info.toAlert(): ServiceAlert? {
     val heading = subtitle
     val alertContent = content
@@ -13,6 +15,8 @@ fun TripResponse.Info.toAlert(): ServiceAlert? {
         ServiceAlert(
             heading = heading,
             message = alertContent,
+            isLineAlert = type == LINE_INFO_TYPE,
+            url = url?.takeIf { it.isNotBlank() },
         )
     } else {
         null

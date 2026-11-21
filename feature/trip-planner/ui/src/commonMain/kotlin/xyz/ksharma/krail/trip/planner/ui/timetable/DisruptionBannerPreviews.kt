@@ -13,6 +13,7 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 import xyz.ksharma.krail.trip.planner.ui.state.disruption.Disruption
 import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionFeed
 import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionSeverity
@@ -77,6 +78,42 @@ private fun PreviewDisruptionBannerExpanded() {
 @Composable
 private fun PreviewDisruptionBannerExpandedLongText() {
     PreviewBannerSurface { DisruptionBanner(disruption = previewAlertLong, initialState = InfoTileState.EXPANDED) }
+}
+
+// The planner's own alert for the line, copied from the live trip reply on 2026-11-21.
+private val previewLineAlert = ServiceAlert(
+    heading = "Buses replace trains between Cronulla, Waterfall and Central",
+    message = "<div><strong>Saturday 21 and Sunday 22 November</strong></div>" +
+        "<ul><li>Buses replace trains between Cronulla, Waterfall and Central.</li>" +
+        "<li>Trains run between Central and Bondi Junction, to a changed timetable.</li></ul>",
+    isLineAlert = true,
+    url = "https://transportnsw.info/alerts/details#/ems-81168",
+)
+
+// Replacement buses in the results and nothing attached to them: the title only, no expand.
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun PreviewReplacementBusesBanner() {
+    PreviewBannerSurface { ReplacementBusesBanner(disruption = null, lineAlert = null) }
+}
+
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun PreviewReplacementBusesBannerLineAlertExpanded() {
+    PreviewBannerSurface {
+        ReplacementBusesBanner(disruption = null, lineAlert = previewLineAlert, initialState = InfoTileState.EXPANDED)
+    }
+}
+
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun PreviewReplacementBusesBannerMetroAlertExpanded() {
+    PreviewBannerSurface {
+        ReplacementBusesBanner(disruption = previewAlert, lineAlert = null, initialState = InfoTileState.EXPANDED)
+    }
 }
 
 // endregion

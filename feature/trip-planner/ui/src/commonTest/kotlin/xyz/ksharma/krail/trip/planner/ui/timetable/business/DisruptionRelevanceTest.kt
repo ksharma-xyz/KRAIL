@@ -42,7 +42,8 @@ class DisruptionRelevanceTest {
         results: Set<Int> = setOf(bus, train),
         spanStart: Long = windowStart + 600,
         spanEnd: Long = windowStart + 4_000,
-    ) = disruptionBanner(disruptions, endpoints, results, spanStart, spanEnd)
+        replacementLeg: Boolean = false,
+    ) = disruptionBanner(disruptions, endpoints, results, replacementLeg, spanStart, spanEnd)
 
     @Test
     fun `Given metro missing from the results Then the banner shows`() {
@@ -51,7 +52,7 @@ class DisruptionRelevanceTest {
 
     @Test
     fun `Given buses replace metro and the results carry a bus leg beside metro Then the banner shows`() {
-        assertIs<DisruptionBannerState.Shown>(banner(results = setOf(bus, metro)))
+        assertIs<DisruptionBannerState.Shown>(banner(results = setOf(bus, metro), replacementLeg = true))
     }
 
     @Test
@@ -63,9 +64,15 @@ class DisruptionRelevanceTest {
 
     @Test
     fun `Given metro present beside a replacement bus Then the reason is replacement bus`() {
-        val shown = assertIs<DisruptionBannerState.Shown>(banner(results = setOf(bus, metro)))
+        val shown = assertIs<DisruptionBannerState.Shown>(banner(results = setOf(bus, metro), replacementLeg = true))
 
         assertEquals(DisruptionReason.REPLACEMENT_BUS, shown.reason)
+    }
+
+    @Test
+    fun `Given metro present beside an ordinary bus Then no banner`() {
+        // A normal Sydney bus is not a replacement. The old check counted any bus leg.
+        assertEquals(DisruptionBannerState.None, banner(results = setOf(bus, metro), replacementLeg = false))
     }
 
     @Test

@@ -288,7 +288,11 @@ class ReplacementBusBannerTest {
                 legs = journey.legs.map { leg ->
                     if (leg is JourneyCardInfo.Leg.TransportLeg) {
                         leg.copy(
-                            serviceAlertList = leg.serviceAlertList.orEmpty().map { it.copy(url = null) }.toImmutableList(),
+                            serviceAlertList = leg.serviceAlertList.orEmpty().map {
+                                it.copy(
+                                    url = null,
+                                )
+                            }.toImmutableList(),
                         )
                     } else {
                         leg

@@ -21,6 +21,7 @@ class IntroStateTest {
         assertEquals(ParkRideCardPhase.None, state.parkRideCard)
         assertNull(state.startStopId)
         assertNull(state.endStopId)
+        assertFalse(state.startFromParkRide)
         assertFalse(state.addedParkRide)
         assertFalse(state.usedSearch)
         assertFalse(state.saved)

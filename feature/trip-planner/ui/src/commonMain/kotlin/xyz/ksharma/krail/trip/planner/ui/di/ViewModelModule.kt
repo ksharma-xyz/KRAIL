@@ -171,6 +171,7 @@ val viewModelsModule = module {
                 ),
                 parkRideSandook = get(),
                 ioDispatcher = get(named(IODispatcher)),
+                stopNameLookup = get<StopResultsManager>()::fetchLocalStopName,
                 analytics = get(),
             ),
         )

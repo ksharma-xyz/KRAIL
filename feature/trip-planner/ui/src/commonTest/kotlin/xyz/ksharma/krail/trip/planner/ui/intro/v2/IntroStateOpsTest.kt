@@ -169,4 +169,64 @@ class IntroStateOpsTest {
     }
 
     // endregion
+
+    // region Add to home and the start it fills in
+
+    @Test
+    fun `adding fills in the start only when no start is picked and the stop is not the end`() {
+        val filled = IntroState().withAddedParkRide("1", "One")
+        assertEquals("1", filled.startStopId)
+        assertEquals("One", filled.startName)
+        assertTrue(filled.startFromParkRide)
+        assertTrue(filled.addedParkRide)
+
+        val picked = IntroState(startStopId = "9", startName = "Nine").withAddedParkRide("1", "One")
+        assertEquals("9", picked.startStopId, "a start the rider picked stays")
+        assertFalse(picked.startFromParkRide)
+        assertTrue(picked.addedParkRide)
+
+        val sameAsEnd = IntroState(endStopId = "1", endName = "One").withAddedParkRide("1", "One")
+        assertNull(sameAsEnd.startStopId, "never a trip from a stop to itself")
+        assertEquals("1", sameAsEnd.endStopId)
+        assertTrue(sameAsEnd.addedParkRide)
+    }
+
+    @Test
+    fun `adding with no stop that resolves is added with no start`() {
+        val added = IntroState().withAddedParkRide(null, null)
+
+        assertTrue(added.addedParkRide)
+        assertNull(added.startStopId)
+        assertFalse(added.startFromParkRide)
+    }
+
+    @Test
+    fun `removing clears the start only while it is the one add filled in`() {
+        val filled = IntroState().withAddedParkRide("1", "One")
+        val removed = filled.withoutParkRide()
+        assertFalse(removed.addedParkRide)
+        assertNull(removed.startStopId)
+        assertNull(removed.startName)
+        assertFalse(removed.startFromParkRide)
+
+        val picked = IntroState(startStopId = "9", startName = "Nine", addedParkRide = true).withoutParkRide()
+        assertFalse(picked.addedParkRide)
+        assertEquals("9", picked.startStopId, "a start the rider picked is not the Intro's to clear")
+    }
+
+    @Test
+    fun `any pick of the start, even the stop add chose, makes it the rider's`() {
+        val filled = IntroState().withAddedParkRide("1", "One")
+
+        assertFalse(filled.withPick(isStart = true, stopId = "1", stopName = "One").startFromParkRide)
+        assertFalse(filled.withPick(isStart = true, stopId = "2", stopName = "Two").startFromParkRide)
+        // An end pick that equals the start clears the start, and with it the claim that add chose it.
+        val cleared = filled.withPick(isStart = false, stopId = "1", stopName = "One")
+        assertNull(cleared.startStopId)
+        assertFalse(cleared.startFromParkRide)
+        // An end pick that leaves the start alone leaves the claim alone.
+        assertTrue(filled.withPick(isStart = false, stopId = "2", stopName = "Two").startFromParkRide)
+    }
+
+    // endregion
 }

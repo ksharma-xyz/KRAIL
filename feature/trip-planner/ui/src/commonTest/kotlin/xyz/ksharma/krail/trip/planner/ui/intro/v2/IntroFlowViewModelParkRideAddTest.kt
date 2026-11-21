@@ -211,33 +211,4 @@ class IntroFlowViewModelParkRideAddTest {
             )
         }
     }
-
-    @Test
-    fun `granted and added reports added in the outcome, with the add tracked once`() = krailRunTest {
-        val rig = IntroRig(this)
-        rig.showBellaVista()
-
-        rig.send(IntroUiEvent.ToggleParkRide)
-        rig.send(IntroUiEvent.Next)
-        rig.send(IntroUiEvent.FinishPressed)
-
-        val outcome = rig.outcomeEvent().properties.orEmpty()
-        assertEquals("yes", outcome["parkRideAnswer"])
-        assertEquals("granted", outcome["locationResult"])
-        assertEquals(true, outcome["addedParkRide"])
-        assertEquals(1, rig.parkRideEvents().size, "the add is tracked once, and the finish adds nothing")
-    }
-
-    @Test
-    fun `tapping Added again after the add finished saves and tracks nothing more`() = krailRunTest {
-        val rig = IntroRig(this)
-        rig.showBellaVista()
-        rig.send(IntroUiEvent.ToggleParkRide)
-
-        rig.send(IntroUiEvent.ToggleParkRide)
-
-        assertTrue(rig.state.addedParkRide)
-        assertEquals(1, rig.savedRows(UserAdded).size)
-        assertEquals(1, rig.parkRideEvents().size)
-    }
 }

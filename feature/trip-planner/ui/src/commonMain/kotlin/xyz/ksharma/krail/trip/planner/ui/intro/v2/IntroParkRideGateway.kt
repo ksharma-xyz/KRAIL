@@ -12,7 +12,9 @@ import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.UserAdded
 import xyz.ksharma.krail.sandook.db.SavedParkRide
 import xyz.ksharma.krail.trip.planner.ui.intro.INTRO_PARK_RIDE_RADIUS_KM
+import xyz.ksharma.krail.trip.planner.ui.intro.SuggestedStop
 import xyz.ksharma.krail.trip.planner.ui.intro.nearestParkRideStation
+import xyz.ksharma.krail.trip.planner.ui.intro.parkRideStartPrefill
 import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideAvailabilityLoader
 import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideCatalogue
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.toParkRideState
@@ -24,13 +26,15 @@ import kotlin.coroutines.cancellation.CancellationException
  * Everything the Park & Ride step reads and writes, kept apart from the view model so the view model
  * decides the order and this class does the work, in the same way as [IntroCompletion].
  *
- * Every call runs on the IO dispatcher and none of them polls.
+ * Every call runs on the IO dispatcher and none of them polls. [stopNameLookup] is the stops table,
+ * for the one stop name the pre-fill needs.
  */
 internal class IntroParkRideGateway(
     private val catalogue: ParkRideCatalogue,
     private val availabilityLoader: ParkRideAvailabilityLoader,
     private val parkRideSandook: NswParkRideSandook,
     private val ioDispatcher: CoroutineDispatcher,
+    private val stopNameLookup: (stopId: String) -> String?,
     private val analytics: Analytics,
 ) {
     /**
@@ -92,6 +96,24 @@ internal class IntroParkRideGateway(
             )
         }
         track(station, ParkRideUserFacilityEvent.Action.ADD)
+    }
+
+    /** Removes the user added rows of [station] and only those, so a row a saved trip holds stays. */
+    suspend fun removeStation(station: ParkRideStationPickerItem) {
+        withContext(ioDispatcher) {
+            station.mappings.forEach { mapping ->
+                parkRideSandook.deleteSavedParkRide(mapping.stopId, mapping.facilityId, UserAdded)
+            }
+        }
+        track(station, ParkRideUserFacilityEvent.Action.REMOVE)
+    }
+
+    /**
+     * The start to fill in once [station] is on home, or null: the smallest of its stop ids that is
+     * in the stops table, with that stop's own name.
+     */
+    suspend fun startPrefill(station: ParkRideStationPickerItem): SuggestedStop? = withContext(ioDispatcher) {
+        parkRideStartPrefill(station, stopNameLookup)
     }
 
     /**

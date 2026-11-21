@@ -30,6 +30,7 @@ private data class IntroSnapshot(
     val addedParkRide: Boolean,
     val usedSearch: Boolean,
     val saved: Boolean,
+    val startFromParkRide: Boolean = false,
     val cardStationId: String? = null,
     val noStationNear: Boolean = false,
 )
@@ -48,6 +49,7 @@ internal fun SavedStateHandle.restoreIntroState(): IntroState {
 private fun IntroState.toSnapshot() = IntroSnapshot(
     step, parkRideAnswer, locationResult, startStopId, startName, endStopId, endName,
     addedParkRide, usedSearch, saved,
+    startFromParkRide = startFromParkRide,
     cardStationId = when (val card = parkRideCard) {
         is ParkRideCardPhase.Card -> card.station.stationId
         is ParkRideCardPhase.Locating -> card.stationId
@@ -67,6 +69,7 @@ private fun IntroSnapshot.toState() = IntroState(
     addedParkRide = addedParkRide,
     usedSearch = usedSearch,
     saved = saved,
+    startFromParkRide = startFromParkRide,
     parkRideCard = when {
         // Shown as the skeleton until the Park & Ride step has worked the station out again.
         cardStationId != null -> ParkRideCardPhase.Locating(cardStationId)

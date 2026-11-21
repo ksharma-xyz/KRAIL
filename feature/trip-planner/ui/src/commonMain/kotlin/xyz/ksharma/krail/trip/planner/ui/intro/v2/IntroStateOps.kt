@@ -20,13 +20,42 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
  */
 internal fun IntroState.withPick(isStart: Boolean, stopId: String, stopName: String): IntroState =
     if (isStart) {
-        copy(startStopId = stopId, startName = stopName).let {
+        // A start the rider picks is theirs, even when it is the stop Add to home had filled in.
+        copy(startStopId = stopId, startName = stopName, startFromParkRide = false).let {
             if (it.endStopId == stopId) it.copy(endStopId = null, endName = null) else it
         }
     } else {
         copy(endStopId = stopId, endName = stopName).let {
-            if (it.startStopId == stopId) it.copy(startStopId = null, startName = null) else it
+            if (it.startStopId == stopId) {
+                it.copy(startStopId = null, startName = null, startFromParkRide = false)
+            } else {
+                it
+            }
         }
+    }
+
+/**
+ * The station is on home. The start is filled in with ([stopId], [stopName]) only when the rider has
+ * not picked a start and the stop is not already the end, so a pick of theirs is never overridden
+ * and the trip is never from a stop to itself. [stopId] is null when no stop of the station
+ * resolves in the stops table, and then there is no pre-fill.
+ */
+internal fun IntroState.withAddedParkRide(stopId: String?, stopName: String?): IntroState {
+    val added = copy(addedParkRide = true)
+    val startIsFree = startStopId == null && endStopId != stopId
+    return if (startIsFree && stopId != null && stopName != null) {
+        added.copy(startStopId = stopId, startName = stopName, startFromParkRide = true)
+    } else {
+        added
+    }
+}
+
+/** The station is off home. A start Add to home filled in and the rider has not touched goes with it. */
+internal fun IntroState.withoutParkRide(): IntroState =
+    if (startFromParkRide) {
+        copy(addedParkRide = false, startStopId = null, startName = null, startFromParkRide = false)
+    } else {
+        copy(addedParkRide = false)
     }
 
 /** The picked pair as a [Trip], or null until both ends are set. */

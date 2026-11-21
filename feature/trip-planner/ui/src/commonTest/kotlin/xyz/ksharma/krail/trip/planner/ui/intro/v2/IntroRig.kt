@@ -46,6 +46,7 @@ internal class IntroRig(
     stations: List<ParkRideStationPickerItem> = INTRO_STATIONS,
     availabilityLoader: ParkRideAvailabilityLoader? = null,
     val parkRideSandook: NswParkRideSandook = FakeNswParkRideSandook(),
+    stopNames: Map<String, String> = INTRO_STOP_NAMES,
 ) {
     val log = CallLog()
     val readiness = FakeAppDataReadiness(initial = initialReadiness, callLog = log)
@@ -78,6 +79,7 @@ internal class IntroRig(
                         availabilityLoader = availabilityLoader ?: loader,
                         parkRideSandook = parkRideSandook,
                         ioDispatcher = scope.ioDispatcher,
+                        stopNameLookup = stopNames::get,
                         analytics = analytics,
                     ),
                 )

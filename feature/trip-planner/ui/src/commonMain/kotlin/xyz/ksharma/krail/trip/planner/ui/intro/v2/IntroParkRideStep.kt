@@ -79,15 +79,15 @@ internal class IntroParkRideStep(
     }
 
     /**
-     * Add to home. Ignored with no card on screen, which also covers a card that is being worked out
-     * again after a killed process, when the station is already added, and while an earlier toggle is
+     * Add to home, or Added again to take it off. Ignored with no card on screen, which also covers a
+     * card that is being worked out again after a killed process, and while an earlier toggle is
      * still running, so a double tap does one thing.
      */
     fun toggle() {
         val chosen = station ?: return
         if (toggleJob?.isActive == true) return
         toggleJob = scope.launch {
-            if (!read().addedParkRide) add(chosen)
+            if (read().addedParkRide) remove(chosen) else add(chosen)
         }
     }
 
@@ -131,8 +131,14 @@ internal class IntroParkRideStep(
     // name is corrected once that call has landed.
     private suspend fun add(chosen: ParkRideStationPickerItem) {
         attempt { gateway.saveStation(chosen) } ?: return
-        write { copy(addedParkRide = true) }
+        val prefill = attempt { gateway.startPrefill(chosen) }
+        write { withAddedParkRide(prefill?.stopId, prefill?.name) }
         job?.join()
         attempt { gateway.correctStopName(chosen) }
+    }
+
+    private suspend fun remove(chosen: ParkRideStationPickerItem) {
+        attempt { gateway.removeStation(chosen) } ?: return
+        write { withoutParkRide() }
     }
 }

@@ -22,6 +22,7 @@ class IntroSavedStateTest {
         startName = "Central Station",
         endStopId = "200080",
         endName = "Wynyard Station",
+        startFromParkRide = true,
         addedParkRide = true,
         usedSearch = true,
         saved = true,

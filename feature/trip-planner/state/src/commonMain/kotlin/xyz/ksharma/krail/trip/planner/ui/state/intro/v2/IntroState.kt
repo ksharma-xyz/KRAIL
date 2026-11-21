@@ -22,6 +22,11 @@ data class IntroState(
     val startName: String? = null,
     val endStopId: String? = null,
     val endName: String? = null,
+    /**
+     * The start was filled in by Add to home and the rider has not picked a start since, so taking
+     * the station off home takes the start away again. A start the rider picked is never this.
+     */
+    val startFromParkRide: Boolean = false,
     val addedParkRide: Boolean = false,
     val usedSearch: Boolean = false,
     /** The trip has been written, so the last button now reads Let's KRAIL. */

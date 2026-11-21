@@ -47,6 +47,7 @@ erDiagram
         enum parkRideCard "NONE, LOCATING, NO_STATION_NEAR, CARD"
         string startStopId "nullable"
         string endStopId "nullable"
+        bool startFromParkRide "the start was filled in by Add to home and is still the Intro's"
         bool addedParkRide
         bool usedSearch
     }
@@ -210,6 +211,7 @@ data class IntroState(
     val parkRideCard: ParkRideCardPhase,
     val startStopId: String?, val startName: String?,
     val endStopId: String?, val endName: String?,
+    val startFromParkRide: Boolean,
     val addedParkRide: Boolean, val usedSearch: Boolean,
     val saved: Boolean,
 )
@@ -260,8 +262,8 @@ dispatcher, to keep the constructor under the detekt parameter limit.
 
 The Park & Ride step is two more classes, so the view model stays small. `IntroParkRideGateway` is the injected one, like
 `IntroCompletion`: the catalogue, the availability loader (`ParkRideAvailabilityLoader`, the same one the Saved Trips card
-and the picker use), `NswParkRideSandook`, the IO dispatcher and `Analytics`, and it does the reads and the writes of Add
-to home. `IntroParkRideStep` is built by the view
+and the picker use), `NswParkRideSandook`, the IO dispatcher, the stops table's name lookup and `Analytics`, and it does the
+reads and the writes of Add to home. `IntroParkRideStep` is built by the view
 model in its own scope and holds the order of things: the answer, the one location result, the wait for the stops, the
 nearest station and the one availability call. It never asks for the permission: the screen does, and sends
 `LocationResultReceived`.
@@ -389,6 +391,15 @@ list grows with each:
   next refresh. After Add the step waits for the availability call if it is still running, then rewrites the stored
   readings of the station's car parks with the station's name and keeps everything else, including the time of the reading,
   so the cooldown is untouched. The wait never holds the Added state back, only this correction.
+- **Pre-fill, from IA6.** After Add the start is filled in with the smallest stop id of the station that resolves in the
+  stops table, labelled with that stop's own name, and only when the rider has not picked a start. It is not filled in when
+  that stop is already the end, because the trip would run from a stop to itself and the end is the rider's pick. When no
+  stop resolves there is no pre-fill and the station is still added. IA6 says "the added Park & Ride station", so a rider who
+  reaches step 2 with a station found but did not add it has no pre-fill.
+- **Removing.** Tapping Added again removes only the `UserAdded` rows of the station, so a row a saved trip holds stays,
+  and the card stays. A removal tracks `remove` the same way as an add. It clears the start only while `startFromParkRide`
+  is true. Any pick of the start by the rider ends that claim, even a pick of the very stop Add chose, and so does an end
+  pick that clears the start. The stop names corrected after Add stay as they are.
 - **Outcome.** `parkRideAnswer`, `locationResult` and `addedParkRide` come from the state at the finish, and a test holds all
   six paths: granted and added, granted and not added, no station near, denied, a fix that timed out (`unavailable`), and
   never answered (`skipped`, `not_asked`).
@@ -491,6 +502,8 @@ disabled (one stop picked), Skip for now (nothing picked), Save and start (both 
   - Add to home never triggers the review delight moment (a guard test over the Intro sources).
   - Add: every car park saved as `UserAdded`, the tracked event with source intro and stop ids only, and the stop name
     corrected with the time of the reading kept (also when Add comes before the call lands).
+  - The start: filled in only when none is picked and never over the rider's pick or onto the end, no pre-fill when the
+    station was found but not added, and removal clearing only the start the Intro filled in.
   - Discriminating cases only: each test must fail if the behaviour it names is removed.
 - **Database.** The real driver, via the existing test seam: the clear and the insert in one transaction leaves the old rows
   readable until the commit (this belongs to the readiness PR).

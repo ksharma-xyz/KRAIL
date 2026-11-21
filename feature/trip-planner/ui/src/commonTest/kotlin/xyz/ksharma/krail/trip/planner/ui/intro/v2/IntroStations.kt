@@ -49,6 +49,13 @@ internal val BELLA_VISTA_STATION = ParkRideStationPickerItem(
 
 internal val INTRO_STATIONS = listOf(KELLYVILLE_STATION, TALLAWONG_STATION, BELLA_VISTA_STATION)
 
+/** The names the stops table gives those stops. They are stop names, never built from a car park name. */
+internal val INTRO_STOP_NAMES = mapOf(
+    "2155384" to "Tallawong Station",
+    "2155382" to "Kellyville Station",
+    "2153478" to "Bella Vista Station",
+)
+
 /** Where the rider stands, none of them a station. A point is named by its distance from one. */
 internal val AT_TALLAWONG = LatLng(latitude = -33.69163, longitude = 150.906022)
 internal val AT_CENTRAL = LatLng(latitude = -33.883852, longitude = 151.206272)

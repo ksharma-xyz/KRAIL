@@ -1,0 +1,248 @@
+package xyz.ksharma.krail.trip.planner.ui.intro.v2
+
+import kotlinx.coroutines.flow.first
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.ParkRideUserFacilityEvent
+import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.core.testing.coroutines.krailRunTest
+import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource
+import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.SavedTrips
+import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.UserAdded
+import xyz.ksharma.krail.sandook.db.SavedParkRide
+import xyz.ksharma.krail.trip.planner.ui.intro.SuggestedStop
+import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroStep
+import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.LocationResult
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRideMapping
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRideStationPickerItem
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.StationPosition
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertIs
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+
+private val BELLA_VISTA_STOP = SuggestedStop(stopId = "2153478", name = "Bella Vista Station")
+
+private suspend fun IntroRig.savedRows(source: SavedParkRideSource) =
+    parkRideSandook.observeSavedParkRidesBySource(source).first()
+
+private fun IntroRig.parkRideEvents() =
+    analytics.getTrackedEvents("park_ride_user_facility").map { assertIs<ParkRideUserFacilityEvent>(it) }
+
+class IntroFlowViewModelParkRideStartTest {
+
+    @Test
+    fun `add fills in the start with the station stop and its own name`() = krailRunTest {
+        val rig = IntroRig(this)
+        rig.showBellaVista()
+
+        rig.send(IntroUiEvent.ToggleParkRide)
+
+        assertEquals(BELLA_VISTA_STOP.stopId, rig.state.startStopId)
+        assertEquals(BELLA_VISTA_STOP.name, rig.state.startName, "the stop's own name")
+        assertTrue(rig.state.startFromParkRide)
+        assertNull(rig.state.endStopId)
+    }
+
+    @Test
+    fun `the smallest stop of the station that resolves is the start`() = krailRunTest {
+        val hornsby = ParkRideStationPickerItem(
+            stationId = "207720",
+            stationName = "Hornsby",
+            stopName = "",
+            carParkNames = listOf("Hornsby"),
+            mappings = listOf(
+                ParkRideMapping(stopId = "207720", facilityId = "25", facilityName = "Hornsby"),
+                ParkRideMapping(stopId = "207763", facilityId = "25", facilityName = "Hornsby"),
+            ),
+            position = StationPosition(latitude = -33.7032, longitude = 151.0993),
+        )
+        val rig = IntroRig(this, stations = listOf(hornsby), stopNames = mapOf("207763" to "Hornsby Station"))
+        rig.send(
+            IntroUiEvent.AnswerParkRide(yes = true),
+            IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, LatLng(-33.7032, 151.0993)),
+        )
+
+        rig.send(IntroUiEvent.ToggleParkRide)
+
+        assertEquals("207763", rig.state.startStopId, "207720 is not in the stops table")
+        assertEquals("Hornsby Station", rig.state.startName)
+    }
+
+    @Test
+    fun `a station none of whose stops resolve is added with no start`() = krailRunTest {
+        val rig = IntroRig(this, stopNames = emptyMap())
+        rig.showBellaVista()
+
+        rig.send(IntroUiEvent.ToggleParkRide)
+
+        assertTrue(rig.state.addedParkRide)
+        assertEquals(1, rig.savedRows(UserAdded).size)
+        assertNull(rig.state.startStopId)
+        assertFalse(rig.state.startFromParkRide)
+    }
+
+    @Test
+    fun `a start the rider already picked is never overridden`() = krailRunTest {
+        listOf(
+            IntroUiEvent.PickStart(CENTRAL),
+            IntroUiEvent.StopPickedFromSearch(isStart = true, stopId = CENTRAL.stopId, stopName = CENTRAL.name),
+        ).forEach { pick ->
+            val rig = IntroRig(this)
+            rig.send(pick)
+            rig.showBellaVista()
+
+            rig.send(IntroUiEvent.ToggleParkRide)
+
+            assertTrue(rig.state.addedParkRide, "$pick")
+            assertEquals(CENTRAL.stopId, rig.state.startStopId, "$pick")
+            assertEquals(CENTRAL.name, rig.state.startName, "$pick")
+            assertFalse(rig.state.startFromParkRide, "$pick")
+        }
+    }
+
+    @Test
+    fun `a stop already chosen as the end is not filled in as the start`() = krailRunTest {
+        val rig = IntroRig(this)
+        rig.send(IntroUiEvent.PickEnd(BELLA_VISTA_STOP))
+        rig.showBellaVista()
+
+        rig.send(IntroUiEvent.ToggleParkRide)
+
+        assertTrue(rig.state.addedParkRide)
+        assertNull(rig.state.startStopId, "a trip from a stop to itself is never made for the rider")
+        assertEquals(BELLA_VISTA_STOP.stopId, rig.state.endStopId)
+    }
+
+    @Test
+    fun `reaching the trip step with a station found but not added leaves the start empty`() = krailRunTest {
+        val rig = IntroRig(this)
+        rig.showBellaVista()
+
+        rig.send(IntroUiEvent.Next)
+
+        assertEquals(IntroStep.FIRST_TRIP, rig.state.step)
+        assertNull(rig.state.startStopId)
+        assertFalse(rig.state.addedParkRide)
+        assertTrue(rig.savedRows(UserAdded).isEmpty())
+    }
+
+    @Test
+    fun `toggling again removes the user added rows only and clears the start the intro filled in`() = krailRunTest {
+        val rig = IntroRig(this)
+        rig.parkRideSandook.insertOrReplaceSavedParkRides(
+            setOf(SavedParkRide("2153478", "31", "Bella Vista Station", "Bella Vista", SavedTrips.value)),
+            SavedTrips,
+        )
+        rig.showBellaVista()
+        rig.send(IntroUiEvent.ToggleParkRide)
+        assertEquals(1, rig.savedRows(UserAdded).size)
+        assertEquals(BELLA_VISTA_STOP.stopId, rig.state.startStopId)
+
+        rig.send(IntroUiEvent.ToggleParkRide)
+
+        assertFalse(rig.state.addedParkRide)
+        assertTrue(rig.savedRows(UserAdded).isEmpty())
+        assertEquals(1, rig.savedRows(SavedTrips).size, "a row a saved trip holds is not the Intro's to remove")
+        assertNull(rig.state.startStopId)
+        assertNull(rig.state.startName)
+        assertFalse(rig.state.startFromParkRide)
+        assertEquals(listOf("add", "remove"), rig.parkRideEvents().map { it.properties?.get("action") })
+        assertEquals(setOf("intro"), rig.parkRideEvents().map { it.properties?.get("source") }.toSet())
+    }
+
+    @Test
+    fun `removal keeps a start the rider picked after the pre-fill`() = krailRunTest {
+        val rig = IntroRig(this)
+        rig.showBellaVista()
+        rig.send(IntroUiEvent.ToggleParkRide)
+        assertTrue(rig.state.startFromParkRide, "the Intro filled it in first")
+        rig.send(IntroUiEvent.PickStart(CENTRAL))
+
+        rig.send(IntroUiEvent.ToggleParkRide)
+
+        assertFalse(rig.state.addedParkRide)
+        assertEquals(CENTRAL.stopId, rig.state.startStopId)
+    }
+
+    @Test
+    fun `a rider who picks the same stop the pre-fill chose owns it, so removal keeps it`() = krailRunTest {
+        val rig = IntroRig(this)
+        rig.showBellaVista()
+        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.PickStart(BELLA_VISTA_STOP))
+
+        rig.send(IntroUiEvent.ToggleParkRide)
+
+        assertEquals(BELLA_VISTA_STOP.stopId, rig.state.startStopId)
+        assertFalse(rig.state.startFromParkRide)
+    }
+
+    @Test
+    fun `removal keeps a start the rider picked before the add`() = krailRunTest {
+        val rig = IntroRig(this)
+        rig.send(IntroUiEvent.PickStart(CENTRAL))
+        rig.showBellaVista()
+        rig.send(IntroUiEvent.ToggleParkRide)
+
+        rig.send(IntroUiEvent.ToggleParkRide)
+
+        assertEquals(CENTRAL.stopId, rig.state.startStopId)
+    }
+
+    @Test
+    fun `adding again after removing saves the rows and fills in the start again`() = krailRunTest {
+        val rig = IntroRig(this)
+        rig.showBellaVista()
+        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.ToggleParkRide)
+        assertNull(rig.state.startStopId)
+
+        rig.send(IntroUiEvent.ToggleParkRide)
+
+        assertTrue(rig.state.addedParkRide)
+        assertEquals(1, rig.savedRows(UserAdded).size)
+        assertEquals(BELLA_VISTA_STOP.stopId, rig.state.startStopId)
+    }
+
+    @Test
+    fun `the added station, its start and the answer survive a new view model and the card can still be removed`() =
+        krailRunTest {
+            val before = IntroRig(this)
+            before.showBellaVista()
+            before.send(IntroUiEvent.ToggleParkRide)
+
+            val after = IntroRig(this, handle = before.handle, parkRideSandook = before.parkRideSandook)
+            after.settle()
+
+            assertEquals(before.state, after.state, "the same Added card, the same start")
+            assertTrue(after.state.addedParkRide)
+            assertTrue(after.state.startFromParkRide)
+
+            after.send(IntroUiEvent.ToggleParkRide)
+
+            assertTrue(after.savedRows(UserAdded).isEmpty())
+            assertNull(after.state.startStopId)
+        }
+
+    @Test
+    fun `granted and added reports added, and the trip saved from the filled in start comes from the intro`() =
+        krailRunTest {
+            val rig = IntroRig(this)
+            rig.showBellaVista()
+
+            rig.send(IntroUiEvent.ToggleParkRide)
+            rig.send(IntroUiEvent.Next, IntroUiEvent.PickEnd(CENTRAL))
+            rig.send(IntroUiEvent.FinishPressed)
+
+            val outcome = rig.outcomeEvent().properties.orEmpty()
+            assertEquals("yes", outcome["parkRideAnswer"])
+            assertEquals("granted", outcome["locationResult"])
+            assertEquals(true, outcome["addedParkRide"])
+            assertEquals(true, outcome["savedTrip"])
+            assertEquals(false, outcome["skipped"])
+            val trip = rig.sandook.selectAllTrips().single()
+            assertEquals(listOf("2153478", "200060"), listOf(trip.fromStopId, trip.toStopId))
+            assertEquals(1, rig.parkRideEvents().size, "the add is tracked once, and the finish adds nothing")
+        }
+}

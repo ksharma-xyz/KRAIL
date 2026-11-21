@@ -1,8 +1,7 @@
 # Feature ERD: Service disruptions in trip results
 
-Status: Locked 2026-11-21 (version 2, real API fields only). Version 1 is built for the metro
-banner. PR 1 and PR 2 may start. Three rows (A7, A8, A9) are defaults the owner has not yet
-confirmed, see section 9.
+Status: Agreed 2026-11-21 (version 2, real API fields only). Every row of section 9 is signed.
+Version 1 is built for the metro banner.
 Owner: ksharma-xyz
 Touches: `feature/trip-planner/state`, `feature/trip-planner/network`, `feature/trip-planner/ui`
 
@@ -226,7 +225,7 @@ New, from real captured trip replies (fixtures committed under the module's test
 | Replacement legs for light rail and ferry. | Open, not yet seen. |
 | `active_period` read as one field and only the first period used. | Fix in PR 1. |
 
-### Assumptions for approval (mandatory, no code until signed off)
+### Assumptions for approval (mandatory, no code until signed off). All rows signed.
 
 Each row decides who sees a banner, when, or which cases count. Sign-off line:
 `Approved by ksharma-xyz, <date>`.
@@ -239,9 +238,9 @@ Each row decides who sees a banner, when, or which cases count. Sign-off line:
 | A4 | A rider whose results moved to another working mode sees no banner. | Sydenham to Central Sat 21 Nov: train closure live, planner returned metro only. | The rider does not learn trains are replaced. | Approved by ksharma-xyz, 2026-11-21 |
 | A5 | Banner title "Replacement buses on this trip" when replacement buses are in the results. | 1.30 shows the alert headline today, so this shortens the collapsed title. | The collapsed card says less than 1.30 does. | Approved by ksharma-xyz, 2026-11-21 |
 | A6 | Rows with a replacement-bus leg say "Replacement bus" in plain text, no border. | Cronulla to Central, Bankstown to Sydenham at 11:30 pm. | None beyond a longer row. | Approved by ksharma-xyz, 2026-11-21 |
-| A7 | The expanded banner shows the planner's own line alert (`type` `lineInfo`) attached to a leg in the results, as the planner gives it. With none, the banner is not expandable. | Cronulla to Central: the bus leg carried no alert, a train leg carried "Buses replace trains between Cronulla, Waterfall and Central" with its full HTML content and url. | A detail that does not explain the replacement, because leg alerts are route-wide (A3). | **Default, not yet seen by owner.** Confirm before PR 2. |
-| A8 | The 1.30 metro alert banner is unchanged except it reads every active period. 1.30 rules kept: closure wording, hidden when the rider filtered that mode out, trains and metro only, delays never show a banner. One banner per results screen; when a replacement leg and a metro alert both apply, the replacement-bus words show. | The metro feed carries 6 alerts on 2026-11-21, all `MODIFIED_SERVICE`. | The metro banner stays wording-based, which the check in section 4 found unreliable for trains. | The 1.30 rules: Approved by ksharma-xyz, 2026-11-21. Leaving metro unchanged and the precedence rule: **default, not yet seen by owner.** |
-| A9 | The later-today heads-up is deferred. It needs a closure's start time from alert text, which version 2 does not read for trains. | Metro closure from 11:20 pm Mon 23 Nov would be the only case. | A rider is not warned a closure starts later today. | **Default, not yet seen by owner.** Deferred, no code. |
+| A7 | The expanded banner shows the planner's own line alert (`type` `lineInfo`) attached to a leg in the results, as the planner gives it. With none, the banner is not expandable. | Cronulla to Central: the bus leg carried no alert, a train leg carried "Buses replace trains between Cronulla, Waterfall and Central" with its full HTML content and url. | A detail that does not explain the replacement, because leg alerts are route-wide (A3). | Approved by ksharma-xyz, 2026-11-21 ("makes sense" after the default was shown) |
+| A8 | The 1.30 metro alert banner is unchanged except it reads every active period. 1.30 rules kept: closure wording, hidden when the rider filtered that mode out, trains and metro only, delays never show a banner. One banner per results screen; when a replacement leg and a metro alert both apply, the replacement-bus words show. | The metro feed carries 6 alerts on 2026-11-21, all `MODIFIED_SERVICE`. | The metro banner stays wording-based, which the check in section 4 found unreliable for trains. | The 1.30 rules: Approved by ksharma-xyz, 2026-11-21. Leaving metro unchanged and the precedence rule: Approved by ksharma-xyz, 2026-11-21 ("makes sense" after the default was shown). |
+| A9 | The later-today heads-up is deferred. It needs a closure's start time from alert text, which version 2 does not read for trains. | Metro closure from 11:20 pm Mon 23 Nov would be the only case. | A rider is not warned a closure starts later today. | Deferred, no code. Approved by ksharma-xyz, 2026-11-21 ("makes sense" after the default was shown). |
 
 Dropped on 2026-11-21 after the reliability check: closed stretch from headline, stretch rules,
 route to line map, bundled station order, train alert feed. Each depended on reading text.
@@ -251,7 +250,7 @@ route to line map, bundled station order, train alert feed. Each depended on rea
 Each PR is under 500 lines with one concern and its own cost line.
 1. Read every active period in the classifier, and the proto check. Bug fix, no behaviour change.
 2. Replacement-bus signal from the trip reply: banner title (A1, A5), row text (A6), expanded
-   detail (A7) and the yellow circle icon. No new calls. Needs A7 and A8 confirmed.
+   detail (A7) and the yellow circle icon. No new calls.
 3. Deferred, each its own change: heads-up for closures later today (A9), light rail and ferry
    replacements, regional coaches, saved-trip chip, a train alert feed only if a data field that
    names the closed stations is found.

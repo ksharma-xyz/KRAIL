@@ -274,11 +274,11 @@ fallback cannot be deleted casually.
   wrong on a door: on the way in it named the technology to a rider looking for a way to say
   where they are going. The ring is drawn at rest and turns for one beat on handoff, which is
   the same motion the wheel had.
-- **The way-in slot is never empty.** That mic is the top of a two-button column in
-  `SearchStopRow`, with Search below it. Where `isWayInAvailable` is false the slot holds the
-  reverse-stops button instead, so Search does not rise into the mic's place. Two devices
-  differing only in a capability the rider never chose should not have differently shaped rows,
-  and the button that commits the trip should not move next to a different field.
+- **The way-in slot is never empty.** That mic is the one button beside the To and From block in
+  `SearchStopRow`, centred on the two bars. Search is not in that column any more: it is the go
+  circle inside the From bar. Where `isWayInAvailable` is false the slot holds the reverse-stops
+  button instead. Two devices differing only in a capability the rider never chose should not
+  have differently shaped rows.
 - **No second speak control.** A worded `Speak` button used to appear below the bar at large
   font scales, from when the actions were a row underneath the field. Once mic and send folded
   into the bar it became a second way to do the same thing directly under the first.

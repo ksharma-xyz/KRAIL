@@ -1,5 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.state.disruption
 
+import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
+
 /**
  * Modes that publish a dedicated service-alerts feed and can be matched to a rider's trip.
  *
@@ -43,7 +45,7 @@ enum class DisruptionReason {
     /** The planner returned no journey on the affected mode at all. */
     MODE_MISSING,
 
-    /** The alert says buses replace the line and the results contain a bus leg. */
+    /** The alert says buses replace the line and the results contain a replacement-bus leg. */
     REPLACEMENT_BUS,
 }
 
@@ -51,4 +53,15 @@ sealed interface DisruptionBannerState {
     data object None : DisruptionBannerState
 
     data class Shown(val disruption: Disruption, val reason: DisruptionReason) : DisruptionBannerState
+
+    /**
+     * A leg in the results is a replacement bus, so the line the rider would use is closed. Needs no
+     * alert: the leg itself is the evidence. [disruption] is a metro alert that also says buses replace
+     * the line, used for the expanded detail. [lineAlert] is the planner's own alert for the line,
+     * used when there is no [disruption]. With neither, the banner has nothing more to show.
+     */
+    data class ReplacementBuses(
+        val disruption: Disruption? = null,
+        val lineAlert: ServiceAlert? = null,
+    ) : DisruptionBannerState
 }

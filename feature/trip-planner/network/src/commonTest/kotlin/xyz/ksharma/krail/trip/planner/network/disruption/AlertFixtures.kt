@@ -33,6 +33,15 @@ internal object AlertFixtures {
         end = null,
     )
 
+    /**
+     * One alert, two nights. Copied from the live NSW train alerts feed on 2026-11-21: Wed 25 Nov
+     * 9:50pm to Thu 1:30am and Thu 26 Nov 9:50pm to Fri 1:30am (AEDT).
+     */
+    val closureTwoNights = alert(
+        header = "Buses replace trains between Central and Bondi Junction",
+        periods = listOf(1_795_603_800L to 1_795_617_000L, 1_795_690_200L to 1_795_703_400L),
+    )
+
     private fun text(value: String) = TranslatedString(
         translation = listOf(TranslatedString.Translation(text = value, language = "en")),
     )
@@ -44,13 +53,14 @@ internal object AlertFixtures {
         end: Long? = 1_795_446_005L,
         description: String = "",
         url: String? = null,
+        periods: List<Pair<Long, Long?>> = if (start == null) emptyList() else listOf(start to end),
     ) = Alert(
         header_text = text(header),
         description_text = if (description.isEmpty()) null else text(description),
         effect = effect,
         cause = Alert.Cause.MAINTENANCE,
         url = url?.let { text(it) },
-        active_period = if (start == null) emptyList() else listOf(Alert.TimeRange(start = start, end = end)),
+        active_period = periods.map { (from, to) -> Alert.TimeRange(start = from, end = to) },
     )
 
     fun feed(vararg alerts: Alert) = FeedMessage(

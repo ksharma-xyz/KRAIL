@@ -64,6 +64,7 @@ fun LegView(
     displayAllStops: Boolean = false,
     isSchoolBus: Boolean = false,
     isOnDemand: Boolean = false,
+    isReplacementBus: Boolean = false,
     carriages: CarriageLevels? = null,
     carriageSentence: String? = null,
     onClick: () -> Unit = {},
@@ -78,6 +79,7 @@ fun LegView(
     val modeLabel = when {
         isSchoolBus -> "School Bus"
         isOnDemand -> "On Demand"
+        isReplacementBus -> REPLACEMENT_BUS_LABEL
         else -> null
     }
 

@@ -132,6 +132,12 @@ fun JourneyCard(
                 .any { it.isSchoolBus },
         )
     }
+    val hasReplacementBus by remember(legList) {
+        mutableStateOf(
+            legList.filterIsInstance<TimeTableState.JourneyCardInfo.Leg.TransportLeg>()
+                .any { it.isReplacementBus },
+        )
+    }
     val coroutineScope = rememberCoroutineScope()
     val graphicsLayer = rememberGraphicsLayer()
     val cardBackground =
@@ -168,6 +174,7 @@ fun JourneyCard(
             platformText = platformText,
             timeToDeparture = timeToDeparture,
             isSchoolBus = hasSchoolBus,
+            isReplacementBus = hasReplacementBus,
         )
 
         // Always visible content
@@ -398,6 +405,7 @@ private fun JourneyLegItem(
                     displayAllStops = displayAllStops,
                     isSchoolBus = leg.isSchoolBus,
                     isOnDemand = leg.isOnDemand,
+                    isReplacementBus = leg.isReplacementBus,
                     carriages = leg.carriages,
                     carriageSentence = leg.carriageSentence,
                     modifier = Modifier.padding(

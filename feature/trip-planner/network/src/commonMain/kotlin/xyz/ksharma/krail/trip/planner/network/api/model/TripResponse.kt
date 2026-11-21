@@ -409,6 +409,13 @@ data class TripResponse(
         @SerialName("urlText") val urlText: String? = null,
 
         @SerialName("id") val id: String? = null,
+
+        /**
+         * What the alert is about. `lineInfo` covers a whole line, `stopInfo` a station or stop.
+         * Observed values only; any other value is read as not a line alert.
+         */
+        @SerialName("type") val type: String? = null,
+
         /**
          * 	string
          * This value indicates how important the service alert is. A value of high or veryHigh

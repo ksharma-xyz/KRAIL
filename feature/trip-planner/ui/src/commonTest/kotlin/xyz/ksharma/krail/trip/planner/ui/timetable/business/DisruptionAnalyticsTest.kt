@@ -104,4 +104,55 @@ class DisruptionAnalyticsTest {
         assertEquals(0, fake.getTrackedEvents("info_tile_interaction").size)
         assertEquals(AnalyticsEvent.DisruptionStatusEvent::class, fake.getTrackedEvent("disruption_status")!!::class)
     }
+
+    private fun replacementBuses(withAlert: Boolean) = DisruptionBannerState.ReplacementBuses(
+        disruption = if (withAlert) banner().disruption else null,
+    )
+
+    @Test
+    fun `Given replacement buses with no alert Then shown reports the planner as the source`() {
+        analytics.trackShown(replacementBuses(withAlert = false), trip, visibleJourneyCount = 4)
+
+        assertEquals(
+            mapOf(
+                "action" to "shown",
+                "transportMode" to "planner",
+                "fromStopId" to "A",
+                "toStopId" to "B",
+                "reason" to "replacement_bus",
+                "visibleJourneyCount" to 4,
+            ),
+            fake.getTrackedEvent("disruption_status")?.properties,
+        )
+    }
+
+    @Test
+    fun `Given replacement buses with a metro alert Then shown reports the metro feed`() {
+        analytics.trackShown(replacementBuses(withAlert = true), trip, visibleJourneyCount = 4)
+
+        assertEquals("metro", fake.getTrackedEvent("disruption_status")?.properties?.get("transportMode"))
+    }
+
+    @Test
+    fun `Given replacement buses compose again Then shown is reported once per trip`() {
+        repeat(3) { analytics.trackShown(replacementBuses(withAlert = false), trip, visibleJourneyCount = 4) }
+
+        assertEquals(1, fake.getTrackedEvents("disruption_status").size)
+    }
+
+    @Test
+    fun `Given no banner Then nothing is reported`() {
+        analytics.trackShown(DisruptionBannerState.None, trip, visibleJourneyCount = 4)
+        analytics.trackTile(DisruptionBannerState.None, expand = true)
+
+        assertEquals(0, fake.getTrackedEvents("disruption_status").size)
+        assertEquals(0, fake.getTrackedEvents("info_tile_interaction").size)
+    }
+
+    @Test
+    fun `Given replacement buses with no alert Then the tile interaction is keyed on the planner`() {
+        analytics.trackTile(replacementBuses(withAlert = false), expand = true)
+
+        assertEquals("disruption_planner", fake.getTrackedEvent("info_tile_interaction")?.properties?.get("key"))
+    }
 }

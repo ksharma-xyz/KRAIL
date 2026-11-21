@@ -66,11 +66,25 @@ sealed class TransportMode(
     companion object {
         const val SCHOOL_BUS_PRODUCT_CLASS = 11
 
+        /**
+         * `transportation.iconId` for "Temporary Buses", the replacement buses NSW runs when a train or
+         * metro line is closed. Documented in the trip planner API, and the same value as
+         * `transportation.product.id`.
+         */
+        const val TEMPORARY_BUS_ICON_ID = 14L
+
+        /** `transportation.iconId` for "Temporary Coaches", the regional counterpart of the above. */
+        const val TEMPORARY_COACH_ICON_ID = 22L
+
         val all: List<TransportMode> by lazy {
             listOf(Train, Metro, Bus, LightRail, Ferry, Coach, SchoolBus, OnDemand)
         }
 
         private val byProductClass: Map<Int, TransportMode> by lazy { all.associateBy { it.productClass } }
+
+        /** True for a leg NSW labels as a replacement bus or coach. Null or any other icon is false. */
+        fun isReplacementIconId(iconId: Long?): Boolean =
+            iconId == TEMPORARY_BUS_ICON_ID || iconId == TEMPORARY_COACH_ICON_ID
 
         fun fromProductClass(productClass: Int): TransportMode? = byProductClass[productClass]
     }

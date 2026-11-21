@@ -35,6 +35,7 @@ this repository. Everything a builder needs from it is restated here, so this fi
 erDiagram
     INTRO_STATE ||--o| SAVED_TRIP : "saves at most one"
     INTRO_STATE ||--o| PARK_RIDE_STATION : "offers at most one"
+    PARK_RIDE_STATION ||--|{ PARK_RIDE_CAR_PARK : "shown as one row per car park"
     PARK_RIDE_STATION ||--|{ SAVED_PARK_RIDE : "one row per car park"
     INTRO_STATE }o--o{ SUGGESTED_STOP : "chooses from"
     INTRO_STATE ||--|| STOPS_READINESS : "waits on"
@@ -43,6 +44,7 @@ erDiagram
         enum step "PARK_RIDE or FIRST_TRIP"
         enum parkRideAnswer "ASK, YES, NO"
         enum locationResult "NOT_ASKED, GRANTED, DENIED, UNAVAILABLE"
+        enum parkRideCard "NONE, LOCATING, NO_STATION_NEAR, CARD"
         string startStopId "nullable"
         string endStopId "nullable"
         bool addedParkRide
@@ -56,8 +58,16 @@ erDiagram
     PARK_RIDE_STATION {
         string stationId PK "smallest stop id of the group"
         string stationName
-        double lat
-        double lon
+        double lat "catalogue only, never in IntroState"
+        double lon "catalogue only, never in IntroState"
+        enum availability "LOADING, CONTENT, UNAVAILABLE"
+    }
+    PARK_RIDE_CAR_PARK {
+        string facilityId PK
+        string name
+        int spotsAvailable "nullable, null until a reading"
+        int percentageFull "nullable"
+        string timeText "nullable, the time of the reading"
     }
     SAVED_PARK_RIDE {
         string stopId PK
@@ -87,6 +97,7 @@ erDiagram
 | `IntroState` | ui | `IntroViewModel` | none, one per Intro | Process, survives rotation (view model plus saved state) |
 | `SuggestedStop` | domain | Bundled default, optionally Remote Config key `intro_suggested_stops` | `stopId` | Until the list is next refreshed |
 | `ParkRideStationPickerItem` (existing) | domain | `ParkRideCatalogue.stations()` | `stationId` (smallest stop id of the group) | Per call |
+| `ParkRideCardStation` and `ParkRideCarPark` (new) | ui state | `IntroParkRideStep`, from the catalogue item and the stored readings | `stationId`, `facilityId` | The Intro, in memory. Only `stationId` is saved |
 | `SavedParkRide` (existing) | db | `NswParkRideSandook` | (`stopId`, `facilityId`) | Until the rider removes it |
 | `SavedTrip` (existing) | db | `Sandook` | `tripId` | Until the rider deletes it |
 | `KEY_HAS_SEEN_INTRO` (existing) | prefs | `SandookPreferences` | key | Install |
@@ -196,12 +207,30 @@ data class IntroState(
     val step: IntroStep,
     val parkRideAnswer: ParkRideAnswer,
     val locationResult: LocationResult,
-    val nearestStation: ParkRideStationPickerItem?,
-    val availability: ParkRideAvailabilityState, // Loading, Content, Unavailable
+    val parkRideCard: ParkRideCardPhase,
     val startStopId: String?, val startName: String?,
     val endStopId: String?, val endName: String?,
     val addedParkRide: Boolean, val usedSearch: Boolean,
     val saved: Boolean,
+)
+
+/** What the question step shows below the question. Added is a Card while addedParkRide is true, not a fifth phase. */
+sealed interface ParkRideCardPhase {
+    data object None : ParkRideCardPhase                         // unanswered, or no usable location
+    data class Locating(val stationId: String? = null) : ParkRideCardPhase // skeleton. stationId only while a saved card is worked out again
+    data object NoStationNear : ParkRideCardPhase                // no station within the radius, or the stops were not ready in time
+    data class Card(val station: ParkRideCardStation) : ParkRideCardPhase
+}
+
+/** No coordinate of the rider and none of the station: the station position stays in the catalogue item. */
+data class ParkRideCardStation(
+    val stationId: String, val stationName: String,
+    val carParks: ImmutableList<ParkRideCarPark>,                // names first, readings once the one call is back
+    val availability: ParkRideAvailabilityState,                 // Loading, Content, Unavailable
+)
+data class ParkRideCarPark(
+    val facilityId: String, val name: String,
+    val spotsAvailable: Int?, val percentageFull: Int?, val timeText: String?, // null until a reading exists
 )
 
 // module: :feature:trip-planner:ui, intro/v2 (internal, because SuggestedStop is). Moves up with the carousel's deletion.
@@ -224,9 +253,10 @@ sealed interface IntroEffect { data object NavigateToSavedTrips : IntroEffect }
 `IntroFlowViewModel` (named apart from the carousel `IntroViewModel` until that is deleted) exposes `state: StateFlow<IntroState>`, `suggestedStops: SuggestedStops` (read once from the
 `intro_suggested_stops` flag, empty default so the bundled lists apply) and `effects: Flow<IntroEffect>`. It takes a
 `SavedStateHandle` and saves the step, answer, permission result, picks and flags on every change as one JSON string, so
-they survive rotation and the process being killed. The station card and its spots are not saved, the park and ride step
-works them out again. Its writes and tracking live in `IntroCompletion`, which holds `Sandook`, `SandookPreferences`,
-`Analytics` and the IO dispatcher, to keep the constructor under the detekt parameter limit.
+they survive rotation and the process being killed. It also saves which station the card was for (the station id, or a
+flag when there was none near) and nothing else about the card: no car park, no reading, and never a coordinate. Its
+writes and tracking live in `IntroCompletion`, which holds `Sandook`, `SandookPreferences`, `Analytics` and the IO
+dispatcher, to keep the constructor under the detekt parameter limit.
 
 - Every interface has a fake in `:core:testing`: `FakeAppDataReadiness` (controllable state), the existing location, catalogue,
   sandook and park ride fakes, and a fake clock. No `Clock.System` (the `ClockSystemBan` rule).
@@ -308,6 +338,16 @@ Decisions the view model branch made where this document was silent:
 - **Same stop.** Picking the stop already chosen for the other end keeps the new pick and clears the other end. Two
   different stops that sit on both suggestion lists are fine.
 - **Tracking.** A saved trip also tracks `save_trip_click` with `source = intro`, stop ids only, before the outcome event.
+
+Decisions the Park & Ride step made where this document was silent. The step is built over several branches and the
+list grows with each:
+
+- **Added is not a phase.** The rider's Added state is a Card while `addedParkRide` is true, which is what the section 7
+  table says ("the same card"), so the two cannot disagree.
+- **What is saved.** The step, answer, permission result, picks and flags as before, plus the card's station id (or a
+  flag for no station near). A card is saved as the id alone, with no car park and no reading, and comes back as a
+  Locating skeleton that carries the id. A location still being awaited is not saved, so a process killed there asks the
+  question again. Nothing about the rider's position is ever saved.
 
 Operator decisions of 2026-11-22: (1) exactly one of start or end picked disables the bottom button until both or neither
 are picked, (2) there is no Try again and no error state, a Failed readiness behaves like Ready for the button and a trip

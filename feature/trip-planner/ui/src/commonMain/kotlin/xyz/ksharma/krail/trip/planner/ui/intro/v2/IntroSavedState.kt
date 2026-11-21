@@ -7,13 +7,16 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideAnswer
+import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideCardPhase
 
 internal const val INTRO_SAVED_STATE_KEY = "intro_state"
 
 /**
  * What the Intro keeps across the process being killed: the step, the answer, the permission result,
- * the picks and the flags. The station card and its live spots are not kept, the park and ride step
- * works them out again.
+ * the picks and the flags, and which station the card was for. The rider's position is never kept,
+ * and neither are the card's car parks or their live spots: the Park & Ride step works the card out
+ * again from the station id, which costs no call while the readings are inside the cooldown. A
+ * location still being awaited is not kept either, so that rider is asked again.
  */
 @Serializable
 private data class IntroSnapshot(
@@ -27,6 +30,8 @@ private data class IntroSnapshot(
     val addedParkRide: Boolean,
     val usedSearch: Boolean,
     val saved: Boolean,
+    val cardStationId: String? = null,
+    val noStationNear: Boolean = false,
 )
 
 internal fun SavedStateHandle.saveIntroState(state: IntroState) {
@@ -43,6 +48,12 @@ internal fun SavedStateHandle.restoreIntroState(): IntroState {
 private fun IntroState.toSnapshot() = IntroSnapshot(
     step, parkRideAnswer, locationResult, startStopId, startName, endStopId, endName,
     addedParkRide, usedSearch, saved,
+    cardStationId = when (val card = parkRideCard) {
+        is ParkRideCardPhase.Card -> card.station.stationId
+        is ParkRideCardPhase.Locating -> card.stationId
+        ParkRideCardPhase.None, ParkRideCardPhase.NoStationNear -> null
+    },
+    noStationNear = parkRideCard == ParkRideCardPhase.NoStationNear,
 )
 
 private fun IntroSnapshot.toState() = IntroState(
@@ -56,4 +67,10 @@ private fun IntroSnapshot.toState() = IntroState(
     addedParkRide = addedParkRide,
     usedSearch = usedSearch,
     saved = saved,
+    parkRideCard = when {
+        // Shown as the skeleton until the Park & Ride step has worked the station out again.
+        cardStationId != null -> ParkRideCardPhase.Locating(cardStationId)
+        noStationNear -> ParkRideCardPhase.NoStationNear
+        else -> ParkRideCardPhase.None
+    },
 )

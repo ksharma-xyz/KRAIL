@@ -5,8 +5,11 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideAnswer
+import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideCardPhase
+import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideCardStation
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 
 class IntroSavedStateTest {
 
@@ -56,5 +59,68 @@ class IntroSavedStateTest {
 
             assertEquals(IntroState(), handle.restoreIntroState(), "saved text $text")
         }
+    }
+
+    @Test
+    fun `no station near comes back as no station near`() {
+        val handle = SavedStateHandle()
+        val state = IntroState(parkRideAnswer = ParkRideAnswer.YES, parkRideCard = ParkRideCardPhase.NoStationNear)
+
+        handle.saveIntroState(state)
+
+        assertEquals(state, handle.restoreIntroState())
+    }
+
+    @Test
+    fun `a card is saved as its station id alone and comes back as a skeleton for that station`() {
+        val handle = SavedStateHandle()
+        val card = ParkRideCardStation(stationId = "2153478", stationName = "Bella Vista")
+
+        handle.saveIntroState(
+            IntroState(parkRideAnswer = ParkRideAnswer.YES, parkRideCard = ParkRideCardPhase.Card(card)),
+        )
+
+        assertEquals(
+            IntroState(
+                parkRideAnswer = ParkRideAnswer.YES,
+                parkRideCard = ParkRideCardPhase.Locating(stationId = "2153478"),
+            ),
+            handle.restoreIntroState(),
+        )
+        assertFalse("Bella Vista" in handle.get<String>(INTRO_SAVED_STATE_KEY).orEmpty(), "only the id is kept")
+    }
+
+    @Test
+    fun `a station being worked out again stays saved, so a second kill loses nothing`() {
+        val handle = SavedStateHandle()
+        val state = IntroState(parkRideCard = ParkRideCardPhase.Locating(stationId = "2153478"))
+
+        handle.saveIntroState(state)
+
+        assertEquals(state, handle.restoreIntroState())
+    }
+
+    @Test
+    fun `a location still awaited is not saved, so the question comes back`() {
+        val handle = SavedStateHandle()
+
+        handle.saveIntroState(
+            IntroState(parkRideAnswer = ParkRideAnswer.YES, parkRideCard = ParkRideCardPhase.Locating()),
+        )
+
+        assertEquals(IntroState(parkRideAnswer = ParkRideAnswer.YES), handle.restoreIntroState())
+    }
+
+    @Test
+    fun `a snapshot saved before the card existed still reads`() {
+        val handle = SavedStateHandle()
+        handle[INTRO_SAVED_STATE_KEY] = """{"step":"FIRST_TRIP","parkRideAnswer":"NO","locationResult":"NOT_ASKED",""" +
+            """"startStopId":null,"startName":null,"endStopId":null,"endName":null,""" +
+            """"addedParkRide":false,"usedSearch":false,"saved":false}"""
+
+        assertEquals(
+            IntroState(step = IntroStep.FIRST_TRIP, parkRideAnswer = ParkRideAnswer.NO),
+            handle.restoreIntroState(),
+        )
     }
 }

@@ -1,7 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.state.intro.v2
 
 import androidx.compose.runtime.Stable
-import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRideStationPickerItem
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 /**
  * State of the two step Intro, the Park & Ride question and then the first trip.
@@ -15,8 +16,8 @@ data class IntroState(
     val step: IntroStep = IntroStep.PARK_RIDE,
     val parkRideAnswer: ParkRideAnswer = ParkRideAnswer.ASK,
     val locationResult: LocationResult = LocationResult.NOT_ASKED,
-    val nearestStation: ParkRideStationPickerItem? = null,
-    val availability: ParkRideAvailabilityState = ParkRideAvailabilityState.Loading,
+    /** What the question step shows below the question. [ParkRideCardPhase.Card] with [addedParkRide] is Added. */
+    val parkRideCard: ParkRideCardPhase = ParkRideCardPhase.None,
     val startStopId: String? = null,
     val startName: String? = null,
     val endStopId: String? = null,
@@ -41,3 +42,52 @@ enum class LocationResult { NOT_ASKED, GRANTED, DENIED, UNAVAILABLE }
 
 /** Whether the live spots on the Park & Ride card are still loading, shown, or could not be read. */
 enum class ParkRideAvailabilityState { Loading, Content, Unavailable }
+
+/**
+ * What the Park & Ride step shows below the question. The rider's position is never part of it: it
+ * is used in memory to pick the station and dropped, so no phase and nothing saved carries one.
+ */
+@Stable
+sealed interface ParkRideCardPhase {
+    /** No card: the question is unanswered, or the answer produced no usable location. */
+    data object None : ParkRideCardPhase
+
+    /**
+     * Waiting for the permission and the one fix, then for the stops, shown as a skeleton in the
+     * card's space. [stationId] is set only while a card the rider already had is being worked out
+     * again after the process was killed.
+     */
+    data class Locating(val stationId: String? = null) : ParkRideCardPhase
+
+    /** No station within the radius, or the stops were not ready in time. One plain line and Next. */
+    data object NoStationNear : ParkRideCardPhase
+
+    /** The nearest station. It is Added when [IntroState.addedParkRide] is true. */
+    data class Card(val station: ParkRideCardStation) : ParkRideCardPhase
+}
+
+/**
+ * The station on the card. [availability] is [ParkRideAvailabilityState.Loading] from the moment the
+ * card shows, and settles to Content or Unavailable once, after the one availability call.
+ */
+@Stable
+data class ParkRideCardStation(
+    /** The smallest stop id of the station group, the key the card is worked out again from. */
+    val stationId: String,
+    val stationName: String,
+    val carParks: ImmutableList<ParkRideCarPark> = persistentListOf(),
+    val availability: ParkRideAvailabilityState = ParkRideAvailabilityState.Loading,
+)
+
+/** One car park. The numbers are null until a reading exists, so a name alone is a valid row. */
+@Stable
+data class ParkRideCarPark(
+    val facilityId: String,
+    val name: String,
+    val spotsAvailable: Int? = null,
+    val percentageFull: Int? = null,
+    /** The time of the reading as the car park feed gave it, such as 8:05 AM. */
+    val timeText: String? = null,
+) {
+    val hasReading: Boolean get() = spotsAvailable != null
+}

@@ -477,6 +477,20 @@ disabled (one stop picked), Skip for now (nothing picked), Save and start (both 
   600 dp and at dual-pane before the UI branch.
 - Screen reader: the progress dots read "Step 1 of 2". Each row names its stop and role ("Change start stop, now Tallawong").
 
+The shell, as built (`IntroFlowScreen`, stateless, in `intro/v2`):
+
+- A top bar, the step, and the one bottom button. The bar reserves 48 dp at both ends, so the dots do not move when the back
+  chevron appears on step 2. The current dot is longer as well as darker, so colour is never the only signal, and the row
+  reads as one label, "Step 1 of 2" or "Step 2 of 2".
+- Every step scrolls inside a column capped at 480 dp (`DUAL_PANE_LIST_WIDTH`) and centred. The bottom button sits outside
+  the scroll, so it is always on screen, and it carries the test tag `intro.action.primary`. It is disabled for Getting ready
+  and for the half pick, and the theme colour is drawn on it and nowhere else on the screen.
+- System back on step 2 sends `Back`, and so does the chevron. On step 1 no handler is registered, so the platform decides.
+- The cross-fade is 120 ms out and 180 ms in. With reduced motion the steps swap in one frame and the dots change width with
+  no animation.
+- Step 2's content is a slot, `firstTripStep`, which the first trip branch fills. It is given the state, the suggested stops
+  and the event callback.
+
 ## 8. Test plan
 
 - **Pure logic, fixtures first.**

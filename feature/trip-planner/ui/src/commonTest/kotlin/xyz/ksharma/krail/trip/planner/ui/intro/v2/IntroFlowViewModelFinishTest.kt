@@ -16,6 +16,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 private const val SEEN_INTRO = "pref:KEY_HAS_SEEN_INTRO=true"
@@ -76,13 +77,29 @@ class IntroFlowViewModelFinishTest {
     }
 
     @Test
-    fun `a half picked trip is skipped and never written`() = krailRunTest {
-        val rig = rigAt(nothingPicked.copy(startStopId = TALLAWONG.stopId, startName = TALLAWONG.name))
+    fun `a half pick disables the button so pressing it finishes nothing`() = krailRunTest {
+        val startOnly = nothingPicked.copy(startStopId = TALLAWONG.stopId, startName = TALLAWONG.name)
+        val endOnly = nothingPicked.copy(endStopId = CENTRAL.stopId, endName = CENTRAL.name)
 
-        rig.send(IntroUiEvent.FinishPressed)
+        listOf(startOnly, endOnly).forEach { halfPicked ->
+            val rig = rigAt(halfPicked)
 
-        assertTrue(rig.sandook.selectAllTrips().isEmpty())
-        assertEquals(true, rig.outcomeEvent().properties?.get("skipped"))
+            rig.send(IntroUiEvent.FinishPressed)
+
+            assertEquals(emptyList(), rig.log.entries, "picks $halfPicked")
+            assertEquals(halfPicked, rig.state)
+        }
+    }
+
+    @Test
+    fun `a pick made while the finish waits turns the finish into a half pick and abandons it`() = krailRunTest {
+        val rig = rigAt(nothingPicked, readiness = StopsReadiness.Loading)
+
+        rig.send(IntroUiEvent.FinishPressed, IntroUiEvent.PickStart(TALLAWONG))
+        rig.readiness.emit(StopsReadiness.Ready(stopCount = 100))
+        rig.send()
+
+        assertEquals(listOf("awaitReady"), rig.log.entries)
     }
 
     @Test
@@ -113,41 +130,73 @@ class IntroFlowViewModelFinishTest {
     }
 
     @Test
-    fun `finishing while the stops failed offers try again and writes nothing`() = krailRunTest {
-        val rig = rigAt(tripPicked, readiness = StopsReadiness.Failed(attempt = 4, reason = "disk"))
+    fun `a trip is saved while the stops failed, the stops load goes on in the background and the wait is failed`() =
+        krailRunTest {
+            val rig = rigAt(tripPicked, readiness = StopsReadiness.Failed(attempt = 4, reason = "disk"))
 
-        rig.send(IntroUiEvent.FinishPressed)
+            rig.withEffects {
+                rig.send(IntroUiEvent.FinishPressed)
 
-        assertEquals(1, rig.readiness.retryCallCount)
-        assertEquals(listOf("retry"), rig.log.entries)
-        assertFalse(rig.state.saved)
+                assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+            }
+
+            assertEquals(1, rig.sandook.selectAllTrips().size)
+            assertEquals(1, rig.log.count(SAVED_TRIP))
+            assertEquals(1, rig.readiness.retryCallCount)
+            assertEquals("failed", rig.outcomeEvent().properties?.get("stopsWait"))
+            assertEquals(1, rig.log.count(SEEN_INTRO))
+            assertTrue(rig.state.saved)
+        }
+
+    @Test
+    fun `skipping while the stops failed writes no trip and still leaves`() = krailRunTest {
+        val rig = rigAt(nothingPicked, readiness = StopsReadiness.Failed(attempt = 4, reason = "disk"))
+
+        rig.withEffects {
+            rig.send(IntroUiEvent.FinishPressed)
+
+            assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+        }
+
+        assertTrue(rig.sandook.selectAllTrips().isEmpty())
+        assertEquals("failed", rig.outcomeEvent().properties?.get("stopsWait"))
     }
 
     @Test
-    fun `stops that fail while the finish waits leave nothing written`() = krailRunTest {
-        val rig = rigAt(tripPicked, readiness = StopsReadiness.Loading)
+    fun `stops that fail while the finish waits do not stop it, it saves the trip and reports failed`() =
+        krailRunTest {
+            val rig = rigAt(tripPicked, readiness = StopsReadiness.Loading)
 
-        rig.send(IntroUiEvent.FinishPressed)
-        rig.readiness.emit(StopsReadiness.Failed(attempt = 4, reason = "disk"))
-        rig.send()
+            rig.send(IntroUiEvent.FinishPressed)
+            assertEquals(listOf("awaitReady"), rig.log.entries)
+            rig.readiness.emit(StopsReadiness.Failed(attempt = 4, reason = "disk"))
+            rig.send()
 
-        assertEquals(listOf("awaitReady"), rig.log.entries)
-        assertEquals(0, rig.readiness.retryCallCount)
-    }
+            assertEquals(1, rig.log.count(SAVED_TRIP))
+            assertEquals(1, rig.readiness.retryCallCount)
+            assertEquals("failed", rig.outcomeEvent().properties?.get("stopsWait"))
+        }
 
     @Test
-    fun `a wait that runs out writes nothing and a later press can still finish`() = krailRunTest {
-        val rig = rigAt(tripPicked, readiness = StopsReadiness.Loading)
+    fun `a wait that runs out after fifteen seconds still saves the trip and reports over five seconds`() =
+        krailRunTest {
+            listOf(StopsReadiness.Loading, StopsReadiness.Unknown).forEach { stillNotReady ->
+                val rig = rigAt(tripPicked, readiness = stillNotReady)
 
-        rig.send(IntroUiEvent.FinishPressed)
-        pumpOnce(FINISH_WAIT_TIMEOUT_MS)
+                rig.send(IntroUiEvent.FinishPressed)
+                assertEquals(listOf("awaitReady"), rig.log.entries, "readiness $stillNotReady")
+                rig.testTime += FINISH_WAIT_TIMEOUT_MS.milliseconds
+                pumpOnce(FINISH_WAIT_TIMEOUT_MS)
 
-        assertEquals(listOf("awaitReady"), rig.log.entries)
+                assertEquals(1, rig.log.count(SAVED_TRIP), "readiness $stillNotReady")
+                assertEquals(1, rig.readiness.retryCallCount, "readiness $stillNotReady")
+                assertEquals("over_5s", rig.outcomeEvent().properties?.get("stopsWait"))
+            }
+        }
 
-        rig.readiness.emit(StopsReadiness.Ready(stopCount = 100))
-        rig.send(IntroUiEvent.FinishPressed)
-
-        assertEquals(1, rig.log.count(SAVED_TRIP))
+    @Test
+    fun `the wait for the stops is fifteen seconds`() {
+        assertEquals(15_000L, FINISH_WAIT_TIMEOUT_MS)
     }
 
     @Test

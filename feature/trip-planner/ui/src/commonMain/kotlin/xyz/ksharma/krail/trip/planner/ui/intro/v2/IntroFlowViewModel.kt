@@ -18,6 +18,7 @@ import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroFinishAction
 import xyz.ksharma.krail.trip.planner.ui.intro.SuggestedStops
 import xyz.ksharma.krail.trip.planner.ui.intro.introFinishAction
+import xyz.ksharma.krail.trip.planner.ui.intro.introFinishActionIgnoringStops
 import xyz.ksharma.krail.trip.planner.ui.intro.stopsWaitBucket
 import xyz.ksharma.krail.trip.planner.ui.intro.toOutcome
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroState
@@ -27,15 +28,15 @@ import kotlin.time.Duration
 import kotlin.time.TimeSource
 
 /**
- * The longest a finish waits for the stops. A guess: the insert is assumed to take 3 to 5 seconds.
- * Past it the press does nothing and the button keeps reading Getting ready.
+ * The longest a finish waits for the stops, an operator decision. Past it the finish goes ahead
+ * without them and the wait is reported as over five seconds.
  */
-internal const val FINISH_WAIT_TIMEOUT_MS = 30_000L
+internal const val FINISH_WAIT_TIMEOUT_MS = 15_000L
 
 /**
  * The two step Intro. Its state is saved as it changes, so the step, the answer and the picks
  * survive rotation and the process being killed. It never polls: the one thing it waits on is
- * [AppDataReadiness.awaitReady], once, at the finish.
+ * [AppDataReadiness.awaitReady], once, at the finish, and the finish never blocks on it for good.
  *
  * The Park & Ride step is finished by the branch that builds it. Until then an answer of yes is only
  * recorded, a location result is only noted, and add to home does nothing.
@@ -96,11 +97,12 @@ internal class IntroFlowViewModel(
     }
 
     // A press while the button reads Getting ready is not dropped: the finish waits for the stops,
-    // so a tap that gets through never opens home on an empty table.
+    // up to FINISH_WAIT_TIMEOUT_MS, and then goes ahead. A half pick disables the button, so a press
+    // on it does nothing.
     private fun finishPressed() {
         when (introFinishAction(_state.value, appDataReadiness.state.value)) {
             IntroFinishAction.Next -> next()
-            IntroFinishAction.TryAgain -> appDataReadiness.retry()
+            IntroFinishAction.PickBothStops -> Unit
             IntroFinishAction.GettingReady,
             IntroFinishAction.SaveAndStart,
             IntroFinishAction.SkipForNow,
@@ -116,8 +118,11 @@ internal class IntroFlowViewModel(
 
     /**
      * Waits for the stops, writes the trip if there is one, marks the Intro seen, reports the
-     * outcome and only then tells the screen to leave. Stops that are not ready, or failed, write
-     * nothing and the button reads Getting ready or Try again.
+     * outcome and only then tells the screen to leave. The wait ends on Ready, on Failed, or after
+     * FINISH_WAIT_TIMEOUT_MS, and the finish goes ahead whichever it was. When the stops are not
+     * Ready by then the load is asked to carry on in the background, once. A press that no longer
+     * has a trip or a skip to finish, because the rider went back or half picked a pair while it
+     * waited, is abandoned.
      */
     private suspend fun runFinish() {
         val wasReady = appDataReadiness.state.value is StopsReadiness.Ready
@@ -126,8 +131,10 @@ internal class IntroFlowViewModel(
         // A real clock never reads exactly zero, so no wait is decided here, not by the bucket.
         val waited = if (wasReady) Duration.ZERO else waitStarted.elapsedNow()
 
-        val action = introFinishAction(_state.value, readiness)
+        val action = introFinishActionIgnoringStops(_state.value)
         if (action !in FINISHING_ACTIONS) return
+        // A no-op while Loading. From Failed it is one more attempt, from Unknown the launch trigger.
+        if (readiness !is StopsReadiness.Ready) appDataReadiness.retry()
 
         val trip = if (action == IntroFinishAction.SaveAndStart) _state.value.toTripOrNull() else null
         if (trip != null) {

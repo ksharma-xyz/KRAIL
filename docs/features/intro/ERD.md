@@ -172,9 +172,15 @@ internal fun nearestParkRideStation(
 /** The start to pre-fill after Add to home (IA6), or null. Smallest stop id of the station that resolves, the stop's own name. */
 internal fun parkRideStartPrefill(station: ParkRideStationPickerItem, stopNameLookup: (String) -> String?): SuggestedStop?
 
-/** What the bottom button says and does. A table, so every state has exactly one answer. */
+/**
+ * What the bottom button says and does. A table, so every state has exactly one answer. Only Unknown and Loading hold the
+ * button back (GettingReady, disabled). Failed is treated as Ready, because the picks carry their own id and name. Exactly one
+ * pick gives PickBothStops, disabled, labelled Save and start on screen, until both or neither are picked.
+ */
 internal fun introFinishAction(state: IntroState, readiness: StopsReadiness): IntroFinishAction
-internal enum class IntroFinishAction { Next, GettingReady, TryAgain, SaveAndStart, SkipForNow, LetsKrail }
+/** The same table once the stops no longer matter, used by a finish that has waited as long as it will. */
+internal fun introFinishActionIgnoringStops(state: IntroState): IntroFinishAction
+internal enum class IntroFinishAction { Next, GettingReady, PickBothStops, SaveAndStart, SkipForNow, LetsKrail }
 
 /** savedTrip = state.saved, skipped = no saved trip and no complete pair. Param names and values as section 11.2. */
 internal fun IntroState.toOutcome(stopsWait: StopsWait): IntroOutcome
@@ -208,7 +214,7 @@ sealed interface IntroUiEvent {
     data class PickStart(val stop: SuggestedStop) : IntroUiEvent
     data class PickEnd(val stop: SuggestedStop) : IntroUiEvent
     data class StopPickedFromSearch(val isStart: Boolean, val stopId: String, val stopName: String) : IntroUiEvent
-    data object FinishPressed : IntroUiEvent           // Save and start, Skip for now, Let's KRAIL, Try again
+    data object FinishPressed : IntroUiEvent           // Save and start, Skip for now, Let's KRAIL
 }
 
 /** One shot, delivered once through a Channel and never replayed after rotation. */
@@ -289,16 +295,23 @@ two writes shows the Intro again, rather than showing home with the suggestion s
 
 Decisions the view model branch made where this document was silent:
 
-- **Waiting.** The finish calls `awaitReady(30 s)`, a guess. A press while the button reads Getting ready is not dropped
-  by the view model, it waits for the stops and then finishes (the button itself is disabled, so the screen never sends
-  it). Without that the `stopsWait` buckets could not be reached. Stops that are Failed, or still not ready at the limit,
-  write nothing. The wait is none when the stops were already Ready, because a real clock never reads exactly zero.
+- **Waiting.** The finish calls `awaitReady(15 s)`. A press while the button reads Getting ready is not dropped by the
+  view model, it waits for the stops and then finishes (the button itself is disabled, so the screen never sends it).
+  Without that the `stopsWait` buckets could not be reached. The wait ends on Ready, on Failed, or at 15 s, and the finish
+  goes ahead whichever it was: the trip if there is one, both flags, tracking, then the effect. When the stops are not Ready
+  by then, `retry()` is called once so the load goes on in the background (a no-op from Loading). The tracked wait is
+  `failed` for Failed and `over_5s` for a timeout. The wait is none when the stops were already Ready, because a real clock
+  never reads exactly zero. Going back, or half picking a pair, while it waits abandons the finish.
 - **Once.** The suggestion flag is written at the first of the question being answered or passed, and the finish. A
   second press while a finish runs, or after it has finished, does nothing. A trip already written (`saved`) is not
   written again by Let's KRAIL.
 - **Same stop.** Picking the stop already chosen for the other end keeps the new pick and clears the other end. Two
   different stops that sit on both suggestion lists are fine.
 - **Tracking.** A saved trip also tracks `save_trip_click` with `source = intro`, stop ids only, before the outcome event.
+
+Operator decisions of 2026-11-22: (1) exactly one of start or end picked disables the bottom button until both or neither
+are picked, (2) there is no Try again and no error state, a Failed readiness behaves like Ready for the button and a trip
+can be saved while the stops failed, (3) the finish never blocks on the stops, it waits at most 15 s and then proceeds.
 
 ## 6. Cost budget (mandatory, never "N/A")
 
@@ -307,7 +320,7 @@ Decisions the view model branch made where this document was silent:
 | 1 | **API calls.** | None at open. Step 1 Yes path only: one availability call per car park of the nearest station, once on arrival, no polling in the Intro. That is one call for most stations and up to three for the largest. Step 2: none. A rider who answers No makes none. The Intro makes no trip planner, alerts or departures call. |
 | 2 | **Payload.** | About 350 B gzip and 665 B decoded per availability call (a snapshot, labelled as such). The stops files (about 2.3 MB and 2.6 MB) are bundled and are not downloaded. Parse cost for the suggestion JSON is trivial and bundled. |
 | 3 | **Timing.** | The Intro opens with no network and no wait. The car park card needs a location fix, then stops readiness, then one call. The fix time is **not measured**. The stops insert is **assumed 3 to 5 seconds** (measured privately, not recorded here), and the code already logs it. Readiness waits for the stops only, so the bus routes insert adds nothing to the wait. The call is 0.09 to 0.31 s in the snapshot. The last button is the only forced wait, and only if the rider finishes before readiness. The `stopsWait` bucket in section 11 measures it in the field. |
-| 4 | **UX.** | Loading: skeleton in the card's space. Slow stops data: last button reads Getting ready. Failed stops data: Try again. Failed or offline availability: the station name and Add stay, the numbers are omitted. No station near: a plain line and the normal Next. Denied location: step 2. No layout shift between states (same slot). |
+| 4 | **UX.** | Loading: skeleton in the card's space. Slow stops data: last button reads Getting ready, for at most 15 s. Failed stops data: no message and no error state, the button behaves as when ready and the load is retried in the background. Failed or offline availability: the station name and Add stay, the numbers are omitted. No station near: a plain line and the normal Next. Denied location: step 2. No layout shift between states (same slot). |
 | 5 | **Network efficiency.** | Availability goes through the existing repository, so its cooldown and cache apply. The Intro's read should seed the Saved Trips card so home does not refetch inside the cooldown. **To verify** in the repository before the UI branch. |
 | 6 | **Battery.** | One location fix, not updates. No timer, no polling and no background work. Foreground only, so nothing needs lifecycle gating beyond collecting state with `collectAsStateWithLifecycle()`. |
 | 7 | **Shared limits.** | At most three availability calls per rider who answers Yes, once, on the shared NSW key. Small next to the existing polling on home (a guess, label it as one). The BFF is not live, so nothing collapses. |
@@ -346,10 +359,11 @@ The reference is an interactive review page (private). The states it shows are r
 | Both chosen | One tile with the two stop names stacked on the theme tint (the shape of `SavedTripCard`), tap to change |
 | Searching | The app's own stop search, then back with the pick |
 | Stops not ready | Last button reads Getting ready, disabled |
-| Stops failed | Last button reads Try again |
+| Stops failed | No error state. The button behaves as when the stops are ready, and a trip is saved from the picks |
+| Only one of start and end picked | Last button disabled, reading Save and start, until both or neither are picked |
 
-**Bottom button** (`introFinishAction`): Next on step 1. On step 2, Getting ready, Try again, Skip for now (nothing picked),
-Save and start (a trip picked), Let's KRAIL (saved). It keeps the test tag `intro.action.primary`.
+**Bottom button** (`introFinishAction`): Next on step 1. On step 2, Getting ready (disabled, stops loading), Save and start
+disabled (one stop picked), Skip for now (nothing picked), Save and start (both picked), Let's KRAIL (saved). It keeps the test tag `intro.action.primary`.
 
 - Wording, in rider words: trip, saved trip, car park. No colon, em dash or arrow in any string.
 - Layout rules: items stay whole and wrap to the next line at 320 dp and 200% text, and the screen scrolls. Pills are one
@@ -374,7 +388,8 @@ Save and start (a trip picked), Let's KRAIL (saved). It keeps the test tag `intr
   - Yes then granted then Add then pick then finish writes one trip, one park ride and both flags, once.
   - No, denied and no fix each reach step 2 and set the suggestion flag.
   - Finish before readiness waits, then writes, in the order readiness, trip, flags, tracking, effect. Finish while
-    Failed offers Try again and writes nothing.
+    Failed saves the trip from the picks, tracks `failed` and retries the load in the background. A wait past 15 s
+    proceeds and tracks `over_5s`. One pick disables the button and a press on it does nothing.
   - A tap on Next with step 1 unanswered sets the flag.
   - Rotation mid step keeps the answer, the picks and the pending permission.
   - Add to home never triggers the review delight moment.
@@ -418,12 +433,12 @@ Evidence that comes from private analytics is shown to the owner in the message 
 | IA4 | No, a denied permission, a failed fix and a fix that takes longer than 10 seconds all go to step 2 with no further ask and no message. | The 10 seconds is a guess. | A slow fix on a good day skips a car park the rider wanted, and they can add it later. | Approved by ksharma-xyz, 2026-11-21 (the 10 second wait is the approved value) |
 | IA5 | The suggested start and end stops are two short lists, one per role, with Search another stop always available. Proposed default start list: Tallawong, Central, Schofields, Parramatta, Town Hall. Proposed default end list: Central, Wynyard, Parramatta, Town Hall, Martin Place. Delivery: Remote Config `intro_suggested_stops` with the same bundled default (option b, taken from "approved as recommended"). | Private evidence, shown to the owner in the message that introduces this ERD, kept outside the repository. Public check: every id is the station-level (parent) stop in the stops table, to be confirmed against the table. | A rider whose stops are not listed must search. A list that goes stale costs taps until it is refreshed, and a constant only refreshes with a release. | Approved by ksharma-xyz, 2026-11-21 (delivery follows "approved as recommended", option b, Remote Config; the owner named only the radius, so correct this if a constant was meant) |
 | IA6 | The start is pre-filled with the added Park & Ride station only if one of the station's stop ids resolves in the stops table (the smallest that does, since a station can span several ids and the smallest may be absent), and the label is the stop's own name. Otherwise there is no pre-fill. | 42 catalogue rows: three ids absent from the stops table, seven are bus stops. | A wrong or unresolvable id would save a trip the planner cannot use. | Approved by ksharma-xyz, 2026-11-21 |
-| IA7 | The bottom button is a soft gate. Skip for now is always available once the stops are ready. Save and start saves and opens home in one tap. A hard gate is rejected. | A hard gate would stop a rider with location off or no destination from finishing. | A skipped rider reaches an empty home. The existing save prompt still reaches them. | Approved by ksharma-xyz, 2026-11-21 |
+| IA7 | The bottom button is a soft gate. Skip for now is always available once the stops are ready. Save and start saves and opens home in one tap. A hard gate is rejected. | A hard gate would stop a rider with location off or no destination from finishing. | A skipped rider reaches an empty home. The existing save prompt still reaches them. | Approved by ksharma-xyz, 2026-11-21. Amended by the owner on 2026-11-22: Skip for now is available once the stops are Ready or Failed, and exactly one pick disables the button until both or neither are picked (section 5) |
 | IA8 | The Intro is shown only when `KEY_HAS_SEEN_INTRO` is false, which is a new install. Existing riders are unchanged. | The key exists and gates the current Intro. | A reinstall shows it again, as today. | Approved by ksharma-xyz, 2026-11-21 |
 | IA9 | `KEY_PARK_RIDE_SUGGESTION_SHOWN` is set when step 1 is answered, or passed with Next, so no rider is asked twice on home. | Decided by the owner on 2026-11-21. | A rider who tapped Next by accident never gets the home suggestion. | Approved by ksharma-xyz, 2026-11-21 |
 | IA10 | If availability fails or the phone is offline, the card shows the station name and Add with no numbers. Add never waits on the network. | The station list is local. | A card with no numbers looks incomplete. | Approved by ksharma-xyz, 2026-11-21 |
 | IA11 | Add to home inside the Intro does not fire the app review delight moment. | The moment fires when the rider returns to Saved Trips, so it would fire on first launch. | A review prompt on the first minute of a new install. | Approved by ksharma-xyz, 2026-11-21 |
-| IA12 | The last button waits for stops readiness and never opens home on an empty table. The wait is assumed 3 to 5 seconds. Failure shows Try again and the next launch retries. Readiness is about the stops only, bus routes follow best effort. | The insert is one transaction of about 37,000 rows. It is logged and measured privately. Before the readiness fix the clear ran outside the transaction and `insertStops()` swallowed failures. Failed stays until `retry()` or the next launch. | A rider could wait longer than expected on a slow phone. `stopsWait` measures it. | Approved by ksharma-xyz, 2026-11-21 |
+| IA12 | The last button waits for stops readiness and never opens home on an empty table. The wait is assumed 3 to 5 seconds. Failure shows Try again and the next launch retries. Readiness is about the stops only, bus routes follow best effort. | The insert is one transaction of about 37,000 rows. It is logged and measured privately. Before the readiness fix the clear ran outside the transaction and `insertStops()` swallowed failures. Failed stays until `retry()` or the next launch. | A rider could wait longer than expected on a slow phone. `stopsWait` measures it. | Approved by ksharma-xyz, 2026-11-21. Amended by the owner on 2026-11-22: there is no Try again and no error state, and the finish waits at most 15 s and then proceeds even when the stops failed or are still loading (section 5) |
 | IA13 | The readiness fix ships first, as its own PR, because it also protects existing riders after every data refresh. | A data refresh raised the stops version on 2026-11-21, so every rider re-runs the clear and the insert. With the clear inside the insert transaction, a second connection in WAL mode keeps reading the old rows until the commit. Proven on the JDBC test driver in `NswTablesReplaceTransactionTest`. WAL is set explicitly on iOS and on Android (`SandookCallback.onOpen`) and the WAL files were seen on one real Android phone; the Android and iOS drivers are not run in a test. | Existing riders see empty search while the table refills. | Approved by ksharma-xyz, 2026-11-21 |
 
 | Decision | Source (data field or parsed text) | Checked against | Reliable |

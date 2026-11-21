@@ -4,9 +4,9 @@ import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroFinishAction.GettingReady
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroFinishAction.LetsKrail
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroFinishAction.Next
+import xyz.ksharma.krail.trip.planner.ui.intro.IntroFinishAction.PickBothStops
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroFinishAction.SaveAndStart
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroFinishAction.SkipForNow
-import xyz.ksharma.krail.trip.planner.ui.intro.IntroFinishAction.TryAgain
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroStep
 import kotlin.test.Test
@@ -19,7 +19,7 @@ import kotlin.test.assertEquals
  */
 class IntroFinishActionTest {
 
-    private enum class Picks { NONE, START_ONLY, BOTH }
+    private enum class Picks { NONE, START_ONLY, END_ONLY, BOTH }
 
     private data class Row(
         val step: IntroStep,
@@ -31,8 +31,8 @@ class IntroFinishActionTest {
         fun state() = IntroState(
             step = step,
             saved = saved,
-            startStopId = "1".takeIf { picks != Picks.NONE },
-            endStopId = "2".takeIf { picks == Picks.BOTH },
+            startStopId = "1".takeIf { picks == Picks.START_ONLY || picks == Picks.BOTH },
+            endStopId = "2".takeIf { picks == Picks.END_ONLY || picks == Picks.BOTH },
         )
     }
 
@@ -50,17 +50,22 @@ class IntroFinishActionTest {
         // Step 2, stops not ready, whatever has been picked.
         Row(IntroStep.FIRST_TRIP, false, Picks.NONE, unknown, GettingReady),
         Row(IntroStep.FIRST_TRIP, false, Picks.START_ONLY, unknown, GettingReady),
+        Row(IntroStep.FIRST_TRIP, false, Picks.END_ONLY, unknown, GettingReady),
         Row(IntroStep.FIRST_TRIP, false, Picks.BOTH, unknown, GettingReady),
         Row(IntroStep.FIRST_TRIP, false, Picks.NONE, loading, GettingReady),
         Row(IntroStep.FIRST_TRIP, false, Picks.START_ONLY, loading, GettingReady),
+        Row(IntroStep.FIRST_TRIP, false, Picks.END_ONLY, loading, GettingReady),
         Row(IntroStep.FIRST_TRIP, false, Picks.BOTH, loading, GettingReady),
-        // Step 2, stops failed.
-        Row(IntroStep.FIRST_TRIP, false, Picks.NONE, failed, TryAgain),
-        Row(IntroStep.FIRST_TRIP, false, Picks.START_ONLY, failed, TryAgain),
-        Row(IntroStep.FIRST_TRIP, false, Picks.BOTH, failed, TryAgain),
-        // Step 2, stops ready. Only a complete pair is a trip.
+        // Step 2, stops failed or ready. Failed is no different from Ready for the button: the picks
+        // carry their own id and name, so a trip never needs the stops table. Only a complete pair
+        // is a trip, and exactly one pick disables the button until both or neither are picked.
+        Row(IntroStep.FIRST_TRIP, false, Picks.NONE, failed, SkipForNow),
+        Row(IntroStep.FIRST_TRIP, false, Picks.START_ONLY, failed, PickBothStops),
+        Row(IntroStep.FIRST_TRIP, false, Picks.END_ONLY, failed, PickBothStops),
+        Row(IntroStep.FIRST_TRIP, false, Picks.BOTH, failed, SaveAndStart),
         Row(IntroStep.FIRST_TRIP, false, Picks.NONE, ready, SkipForNow),
-        Row(IntroStep.FIRST_TRIP, false, Picks.START_ONLY, ready, SkipForNow),
+        Row(IntroStep.FIRST_TRIP, false, Picks.START_ONLY, ready, PickBothStops),
+        Row(IntroStep.FIRST_TRIP, false, Picks.END_ONLY, ready, PickBothStops),
         Row(IntroStep.FIRST_TRIP, false, Picks.BOTH, ready, SaveAndStart),
         // Once saved there is nothing left to wait for, so readiness no longer matters.
         Row(IntroStep.FIRST_TRIP, true, Picks.BOTH, unknown, LetsKrail),
@@ -78,6 +83,22 @@ class IntroFinishActionTest {
                 "step=${row.step} saved=${row.saved} picks=${row.picks} readiness=${row.readiness}",
             )
         }
+    }
+
+    @Test
+    fun `once the stops stop mattering the picks alone decide the button`() {
+        assertEquals(SkipForNow, introFinishActionIgnoringStops(IntroState(step = IntroStep.FIRST_TRIP)))
+        assertEquals(
+            PickBothStops,
+            introFinishActionIgnoringStops(IntroState(step = IntroStep.FIRST_TRIP, startStopId = "1")),
+        )
+        assertEquals(
+            SaveAndStart,
+            introFinishActionIgnoringStops(
+                IntroState(step = IntroStep.FIRST_TRIP, startStopId = "1", endStopId = "2"),
+            ),
+        )
+        assertEquals(Next, introFinishActionIgnoringStops(IntroState()))
     }
 
     @Test

@@ -24,6 +24,12 @@ class FakeSandook : Sandook {
     private val recentSearchLocations = mutableListOf<RecentSearchLocations>()
     private val stopLabelsFlow = MutableStateFlow<List<StopLabels>>(emptyList())
 
+    /** Makes [insertNswStop] throw for this stop id, to fail an insert part way through. */
+    var failInsertNswStopId: String? = null
+
+    /** Makes [stopsCount] throw, as a database that cannot be read would. */
+    var failStopsCount = false
+
     // region StopLabels
     override fun observeStopLabels(): Flow<List<StopLabels>> = stopLabelsFlow.asStateFlow()
 
@@ -177,12 +183,14 @@ class FakeSandook : Sandook {
         stopLon: Double,
         isParent: Boolean?,
     ) {
+        check(stopId != failInsertNswStopId) { "FakeSandook: insert of stop $stopId failed" }
         // Only store when explicitly false (child stop)
         // NULL means parent stop (default)
         stops.add(NswStops(stopId, stopName, stopLat, stopLon, isParent = if (isParent == false) 0L else null))
     }
 
     override fun stopsCount(): Int {
+        check(!failStopsCount) { "FakeSandook: stopsCount failed" }
         return stops.size
     }
 
@@ -195,8 +203,21 @@ class FakeSandook : Sandook {
         productClasses.add(productClass)
     }
 
+    /** Like the real driver, a block that throws leaves the stops tables as they were before it. */
     override fun <R> insertTransaction(block: () -> R): R {
-        return block()
+        val stopsBefore = stops.toList()
+        val productClassesBefore = stopProductClasses.mapValues { it.value.toMutableList() }
+        var committed = false
+        try {
+            return block().also { committed = true }
+        } finally {
+            if (!committed) {
+                stops.clear()
+                stops.addAll(stopsBefore)
+                stopProductClasses.clear()
+                stopProductClasses.putAll(productClassesBefore)
+            }
+        }
     }
 
     override fun clearNswStopsTable() {

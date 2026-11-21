@@ -11,7 +11,8 @@ internal class FakeStopsManager : StopsManager {
     var insertStopsCallCount = 0
         private set
 
-    override suspend fun insertStops() {
+    override suspend fun insertStops(): Result<Unit> {
         insertStopsCallCount++
+        return Result.success(Unit)
     }
 }

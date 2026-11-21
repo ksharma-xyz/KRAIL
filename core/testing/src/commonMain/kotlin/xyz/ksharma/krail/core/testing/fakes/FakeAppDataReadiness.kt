@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
+import xyz.ksharma.krail.core.testing.helpers.CallLog
 import xyz.ksharma.krail.io.gtfs.readiness.AppDataReadiness
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 
@@ -15,6 +16,7 @@ import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 class FakeAppDataReadiness(
     initial: StopsReadiness = StopsReadiness.Ready(stopCount = 0),
     private val onRetry: () -> Unit = {},
+    private val callLog: CallLog? = null,
 ) : AppDataReadiness {
 
     private val _state = MutableStateFlow(initial)
@@ -27,13 +29,16 @@ class FakeAppDataReadiness(
         _state.value = state
     }
 
-    override suspend fun awaitReady(timeoutMs: Long): StopsReadiness =
-        withTimeoutOrNull(timeoutMs) {
+    override suspend fun awaitReady(timeoutMs: Long): StopsReadiness {
+        callLog?.record("awaitReady")
+        return withTimeoutOrNull(timeoutMs) {
             _state.first { it is StopsReadiness.Ready || it is StopsReadiness.Failed }
         } ?: _state.value
+    }
 
     override fun retry() {
         retryCallCount++
+        callLog?.record("retry")
         onRetry()
     }
 }

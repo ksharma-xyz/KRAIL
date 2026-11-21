@@ -1,11 +1,12 @@
 package xyz.ksharma.krail.core.testing.fakes
 
+import xyz.ksharma.krail.core.testing.helpers.CallLog
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.SandookPreferences.Companion.KEY_DISCOVER_CLICKED_BEFORE
 
 // Intrinsic to faking the production SandookPreferences interface. Not refactorable.
 @Suppress("TooManyFunctions")
-class FakeSandookPreferences : SandookPreferences {
+class FakeSandookPreferences(private val callLog: CallLog? = null) : SandookPreferences {
 
     private val preferences = mutableMapOf<String, Any>()
 
@@ -15,6 +16,7 @@ class FakeSandookPreferences : SandookPreferences {
 
     override fun setLong(key: String, value: Long) {
         preferences[key] = value
+        record(key, value)
     }
 
     override fun getString(key: String): String? {
@@ -23,6 +25,7 @@ class FakeSandookPreferences : SandookPreferences {
 
     override fun setString(key: String, value: String) {
         preferences[key] = value
+        record(key, value)
     }
 
     override fun getBoolean(key: String): Boolean? {
@@ -31,6 +34,7 @@ class FakeSandookPreferences : SandookPreferences {
 
     override fun setBoolean(key: String, value: Boolean) {
         preferences[key] = value
+        record(key, value)
     }
 
     override fun getDouble(key: String): Double? {
@@ -39,10 +43,15 @@ class FakeSandookPreferences : SandookPreferences {
 
     override fun setDouble(key: String, value: Double) {
         preferences[key] = value
+        record(key, value)
     }
 
     override fun deletePreference(key: String) {
         preferences.remove(key)
+    }
+
+    private fun record(key: String, value: Any) {
+        callLog?.record("pref:$key=$value")
     }
 
     fun setDiscoverClicked(clicked: Boolean) {

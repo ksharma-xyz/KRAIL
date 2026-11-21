@@ -216,6 +216,12 @@ object RemoteConfigDefaults {
                 first = FlagKeys.JOURNEY_MAPS_AVAILABLE.key,
                 second = true,
             ),
+            // Empty on purpose: the Intro then falls back to its bundled lists, so the stop ids
+            // exist in one place only.
+            Pair(
+                first = FlagKeys.INTRO_SUGGESTED_STOPS.key,
+                second = "",
+            ),
         )
     }
 }

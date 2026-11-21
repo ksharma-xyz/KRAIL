@@ -2,8 +2,9 @@ package xyz.ksharma.krail.core.testing.fakes
 
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
+import xyz.ksharma.krail.core.testing.helpers.CallLog
 
-class FakeAnalytics : Analytics {
+class FakeAnalytics(private val callLog: CallLog? = null) : Analytics {
 
     private val trackedEvents = mutableListOf<AnalyticsEvent>()
     private var fakeUserId: String? = null
@@ -24,6 +25,7 @@ class FakeAnalytics : Analytics {
     override fun track(event: AnalyticsEvent) {
         println("Tracking event: $event")
         trackedEvents.add(event)
+        callLog?.record("track:${event.name}")
     }
 
     override fun setUserId(userId: String) {

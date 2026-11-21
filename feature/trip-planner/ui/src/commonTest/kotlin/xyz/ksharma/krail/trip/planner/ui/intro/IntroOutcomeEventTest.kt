@@ -1,6 +1,5 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
-import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.IntroLetsKrailClickEvent
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideAnswer
@@ -9,7 +8,8 @@ import kotlin.test.assertEquals
 
 /**
  * Holds the Intro outcome and the analytics event to the same names and values, so the two cannot
- * drift apart. The mapping here is the one the view model branch will write for real.
+ * drift apart. The mapping under test is the real one, `IntroOutcome.toEvent()`, the one the view
+ * model reports through.
  */
 class IntroOutcomeEventTest {
 
@@ -17,7 +17,7 @@ class IntroOutcomeEventTest {
     fun `the event carries exactly what the outcome reports for every value of every list`() {
         val outcomes = allOutcomes()
 
-        outcomes.forEach { assertEquals(it.toParams(), it.asEvent().properties) }
+        outcomes.forEach { assertEquals(it.toParams(), it.toEvent().properties) }
 
         assertEquals(
             IntroStep.entries.size * ParkRideAnswer.entries.size *
@@ -36,7 +36,7 @@ class IntroOutcomeEventTest {
                 StopsWait.NONE,
             ).copy(addedParkRide = flag, savedTrip = !flag, usedSearch = flag, skipped = !flag)
 
-            assertEquals(outcome.toParams(), outcome.asEvent().properties)
+            assertEquals(outcome.toParams(), outcome.toEvent().properties)
         }
     }
 
@@ -68,42 +68,4 @@ class IntroOutcomeEventTest {
             locationsAndWaits.map { (location, wait) -> outcome(step, answer, location, wait) }
         }
     }
-
-    private fun IntroOutcome.asEvent() = IntroLetsKrailClickEvent(
-        introVersion = introVersion,
-        finishedOn = finishedOn.toEventValue(),
-        parkRideAnswer = parkRideAnswer.toEventValue(),
-        locationResult = locationResult.toEventValue(),
-        addedParkRide = addedParkRide,
-        savedTrip = savedTrip,
-        usedSearch = usedSearch,
-        skipped = skipped,
-        stopsWait = stopsWait.toEventValue(),
-    )
-}
-
-private fun IntroStep.toEventValue() = when (this) {
-    IntroStep.PARK_RIDE -> IntroLetsKrailClickEvent.FinishedOn.PARK_RIDE
-    IntroStep.FIRST_TRIP -> IntroLetsKrailClickEvent.FinishedOn.FIRST_TRIP
-}
-
-private fun ParkRideAnswer.toEventValue() = when (this) {
-    ParkRideAnswer.ASK -> IntroLetsKrailClickEvent.ParkRideAnswer.SKIPPED
-    ParkRideAnswer.YES -> IntroLetsKrailClickEvent.ParkRideAnswer.YES
-    ParkRideAnswer.NO -> IntroLetsKrailClickEvent.ParkRideAnswer.NO
-}
-
-private fun LocationResult.toEventValue() = when (this) {
-    LocationResult.NOT_ASKED -> IntroLetsKrailClickEvent.LocationResult.NOT_ASKED
-    LocationResult.GRANTED -> IntroLetsKrailClickEvent.LocationResult.GRANTED
-    LocationResult.DENIED -> IntroLetsKrailClickEvent.LocationResult.DENIED
-    LocationResult.UNAVAILABLE -> IntroLetsKrailClickEvent.LocationResult.UNAVAILABLE
-}
-
-private fun StopsWait.toEventValue() = when (this) {
-    StopsWait.NONE -> IntroLetsKrailClickEvent.StopsWait.NONE
-    StopsWait.UNDER_2S -> IntroLetsKrailClickEvent.StopsWait.UNDER_2S
-    StopsWait.TWO_TO_FIVE_S -> IntroLetsKrailClickEvent.StopsWait.TWO_TO_FIVE_S
-    StopsWait.OVER_5S -> IntroLetsKrailClickEvent.StopsWait.OVER_5S
-    StopsWait.FAILED -> IntroLetsKrailClickEvent.StopsWait.FAILED
 }

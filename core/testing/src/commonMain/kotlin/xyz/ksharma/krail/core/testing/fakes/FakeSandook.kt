@@ -3,6 +3,7 @@ package xyz.ksharma.krail.core.testing.fakes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import xyz.ksharma.krail.core.testing.helpers.CallLog
 import xyz.ksharma.krail.sandook.RecentSearchLocation
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.db.NswStops
@@ -14,7 +15,7 @@ import xyz.ksharma.krail.sandook.db.StopLabels
 
 // Intrinsic to faking the production Sandook interface (33 methods). Not refactorable.
 @Suppress("TooManyFunctions")
-class FakeSandook : Sandook {
+class FakeSandook(private val callLog: CallLog? = null) : Sandook {
 
     private var productClass: Long? = null
     private val tripsFlow = MutableStateFlow<List<SavedTrip>>(emptyList())
@@ -105,6 +106,7 @@ class FakeSandook : Sandook {
         toStopId: String,
         toStopName: String,
     ) {
+        callLog?.record("trip:$fromStopId->$toStopId")
         val canonicalTripId = "$fromStopId->$toStopId"
         val existingSortOrder = tripsFlow.value
             .find {

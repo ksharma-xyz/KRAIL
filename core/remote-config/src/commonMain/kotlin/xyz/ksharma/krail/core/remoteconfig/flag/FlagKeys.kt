@@ -117,4 +117,12 @@ enum class FlagKeys(val key: String) {
      * on-device availability check, not a disabled-looking button.
      */
     AI_SEARCH_INPUT_ENABLED("ai_search_input_enabled"),
+
+    /**
+     * The stops the Intro offers as a first trip's start and end, as
+     * `{"start":[{"stopId":"..","name":".."}],"end":[..]}`. The default is the empty string on
+     * purpose: the app then uses its bundled lists, so the stop ids live in one place only. Text
+     * that is not that shape also falls back to the bundled lists, as a whole.
+     */
+    INTRO_SUGGESTED_STOPS("intro_suggested_stops"),
 }

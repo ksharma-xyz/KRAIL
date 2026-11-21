@@ -39,6 +39,17 @@ class RemoteConfigDefaultsTest {
     }
 
     @Test
+    fun theIntroSuggestedStopsDefaultIsEmptySoTheBundledListsApply() {
+        val default = RemoteConfigDefaults.getDefaults()
+            .single { it.first == FlagKeys.INTRO_SUGGESTED_STOPS.key }
+            .second
+
+        // A non-empty default here would be a second copy of the stop ids, which the Intro
+        // keeps in one place only, as its bundled lists.
+        assertEquals("", default)
+    }
+
+    @Test
     fun noDefaultIsForAKeyThatNoLongerExists() {
         val flagKeys = FlagKeys.entries.map { it.key }.toSet()
         val orphans = RemoteConfigDefaults.getDefaults()

@@ -72,6 +72,7 @@ internal fun TripResponse.Leg.toTransportLegUiModel(): TimeTableState.JourneyCar
     val transportMode = rawProductClass
         ?.let { NswTransportConfig.modeFromProductClass(productClass = it) }
     val isOnDemand = transportMode is TransportMode.OnDemand
+    val isReplacementBus = TransportMode.isReplacementIconId(transportation?.iconId)
     val lineName = transportation?.disassembledName
     val displayText = NswTransportConfig.resolveServiceDisplayText(
         productClass = transportation?.product?.productClass?.toInt(),
@@ -113,6 +114,7 @@ internal fun TripResponse.Leg.toTransportLegUiModel(): TimeTableState.JourneyCar
         transportationId = transportation?.id,
         isSchoolBus = isSchoolBus,
         isOnDemand = isOnDemand,
+        isReplacementBus = isReplacementBus,
         seatLevel = SeatLevel.fromApi(stopSequence?.firstOrNull()?.properties?.occupancy),
         realtimeTripId = transportation?.properties?.realtimeTripId,
         boardingStopId = stopSequence?.firstOrNull()?.id,

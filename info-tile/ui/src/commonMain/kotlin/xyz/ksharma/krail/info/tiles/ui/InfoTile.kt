@@ -65,6 +65,8 @@ fun InfoTile(
     leadingIcon: (@Composable () -> Unit)? = null,
     // Replaces the plain description when the caller needs more than a string, such as bold runs.
     expandedContent: (@Composable () -> Unit)? = null,
+    // False for a tile with nothing more to say: a tap then does nothing, instead of opening a repeat of the title.
+    expandable: Boolean = true,
 ) {
     var state by rememberSaveable { mutableStateOf(initialState) }
 
@@ -76,6 +78,7 @@ fun InfoTile(
             // clip shape added before clickable so that ripple indication is bounded within shape
             .clip(shape)
             .klickable(
+                enabled = expandable,
                 onClick = {
                     state = when (state) {
                         InfoTileState.COLLAPSED -> {

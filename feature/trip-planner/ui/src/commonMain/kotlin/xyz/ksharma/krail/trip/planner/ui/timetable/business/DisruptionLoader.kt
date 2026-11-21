@@ -66,7 +66,22 @@ internal class DisruptionLoader(
         }
     }
 
+    /**
+     * A replacement-bus leg in [journeys] is itself the evidence a line is closed, so it needs no alert
+     * and no network call. [journeys] are already filtered by the rider's modes, so hiding the bus mode
+     * hides the banner. See [replacementBusBanner].
+     */
     fun bannerFor(journeys: List<JourneyCardInfo>, unselectedModes: Set<Int>): DisruptionBannerState {
+        val hasReplacement = journeys.any { it.hasReplacementBusLeg() }
+        val metroBanner = metroBannerFor(journeys, unselectedModes, hasReplacement)
+        return replacementBusBanner(journeys, metroBanner)
+    }
+
+    private fun metroBannerFor(
+        journeys: List<JourneyCardInfo>,
+        unselectedModes: Set<Int>,
+        hasReplacementBusLeg: Boolean,
+    ): DisruptionBannerState {
         if (disruptions.isEmpty()) return DisruptionBannerState.None
         val now = nowEpochSec()
         val spanStart = journeys.minOfOrNull { it.originUtcDateTime.toEpochSec() } ?: now
@@ -77,6 +92,7 @@ internal class DisruptionLoader(
             resultProductClasses = journeys.flatMap { it.transportModeLines }
                 .map { it.transportMode.productClass }
                 .toSet(),
+            hasReplacementBusLeg = hasReplacementBusLeg,
             spanStartEpochSec = spanStart,
             spanEndEpochSec = spanEnd,
         )

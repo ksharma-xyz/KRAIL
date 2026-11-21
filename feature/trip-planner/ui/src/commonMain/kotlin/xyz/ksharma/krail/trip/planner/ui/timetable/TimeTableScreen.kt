@@ -388,7 +388,7 @@ fun TimeTableScreen(
                 // The previous-departures text sits about spacingXXS lower than its row. With the banner
                 // above, the full spacer reads as a bigger gap than the one above the banner, so trim it
                 // to keep the gaps above and below the banner equal (measured on a Pixel 6 Pro).
-                val bannerShown = timeTableState.disruptionBanner is DisruptionBannerState.Shown
+                val bannerShown = timeTableState.disruptionBanner !is DisruptionBannerState.None
                 Spacer(
                     modifier = Modifier.height(if (bannerShown) dim.spacingL - dim.spacingXXS else dim.spacingL),
                 )

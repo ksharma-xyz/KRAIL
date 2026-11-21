@@ -1,7 +1,9 @@
 package xyz.ksharma.krail.trip.planner.ui.timetable
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -9,11 +11,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -22,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
 import xyz.ksharma.krail.info.tile.state.InfoTileCta
 import xyz.ksharma.krail.info.tile.state.InfoTileData
@@ -30,6 +38,8 @@ import xyz.ksharma.krail.info.tiles.ui.InfoTile
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.WarningIcon
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.trip.planner.ui.alerts.HtmlText
+import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 import xyz.ksharma.krail.trip.planner.ui.state.disruption.Disruption
 import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionBannerState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.TimeTableUiEvent
@@ -48,25 +58,137 @@ internal fun LazyListScope.disruptionBannerItem(
     banner: DisruptionBannerState,
     onEvent: (TimeTableUiEvent) -> Unit,
 ) {
-    val shown = (banner as? DisruptionBannerState.Shown)?.disruption ?: return
+    if (banner is DisruptionBannerState.None) return
     item(key = "disruption-banner") {
         // A lazy item only composes once it is in or near the viewport, so this is the first moment the
         // banner can be said to have reached the rider. The ViewModel de-dupes recompositions.
         LaunchedEffect(Unit) { onEvent(TimeTableUiEvent.DisruptionBannerDisplayed) }
-        DisruptionBanner(
-            disruption = shown,
-            onExpand = { onEvent(TimeTableUiEvent.DisruptionBannerExpanded) },
-            onMoreInfo = { url -> onEvent(TimeTableUiEvent.DisruptionBannerCtaClicked(url)) },
-            modifier = Modifier
-                .padding(horizontal = KrailTheme.dimensions.spacingL)
-                // The header card to the actions row is spacingM (the card's own bottom padding) plus
-                // spacingL (the row's top padding). Match it so the gap above the banner equals the gap
-                // above the actions row, as the Save prompt does.
-                .padding(top = KrailTheme.dimensions.spacingL + KrailTheme.dimensions.spacingM)
-                .animateItem(),
+        val bannerModifier = Modifier
+            .padding(horizontal = KrailTheme.dimensions.spacingL)
+            // The header card to the actions row is spacingM (the card's own bottom padding) plus
+            // spacingL (the row's top padding). Match it so the gap above the banner equals the gap
+            // above the actions row, as the Save prompt does.
+            .padding(top = KrailTheme.dimensions.spacingL + KrailTheme.dimensions.spacingM)
+            .animateItem()
+        val onExpand = { onEvent(TimeTableUiEvent.DisruptionBannerExpanded) }
+        val onMoreInfo = { url: String -> onEvent(TimeTableUiEvent.DisruptionBannerCtaClicked(url)) }
+        when (banner) {
+            is DisruptionBannerState.Shown -> DisruptionBanner(
+                disruption = banner.disruption,
+                onExpand = onExpand,
+                onMoreInfo = onMoreInfo,
+                modifier = bannerModifier,
+            )
+            is DisruptionBannerState.ReplacementBuses -> ReplacementBusesBanner(
+                disruption = banner.disruption,
+                lineAlert = banner.lineAlert,
+                onExpand = onExpand,
+                onMoreInfo = onMoreInfo,
+                modifier = bannerModifier,
+            )
+            DisruptionBannerState.None -> Unit
+        }
+    }
+}
+
+/** The title when replacement buses are in the results. It says what is on the rider's screen, not where. */
+internal const val REPLACEMENT_BUSES_TITLE = "Replacement buses on this trip"
+
+/**
+ * Replacement buses are in the results. The expanded detail is the metro alert when one also says buses
+ * replace the line, else the planner's own line alert, else there is nothing more to say and the tile
+ * does not expand. Both cases use the same tile as [DisruptionBanner].
+ */
+@Composable
+internal fun ReplacementBusesBanner(
+    disruption: Disruption?,
+    lineAlert: ServiceAlert?,
+    modifier: Modifier = Modifier,
+    onExpand: () -> Unit = {},
+    onMoreInfo: (String) -> Unit = {},
+    initialState: InfoTileState = InfoTileState.COLLAPSED,
+) {
+    val uriHandler = LocalUriHandler.current
+    val detail = remember(disruption?.detail) { disruption?.let { parseDisruptionDetail(it.detail) } }
+    val moreInfoUrl = disruption?.moreInfoUrl ?: lineAlert?.url
+    val tile = remember(disruption, lineAlert) {
+        InfoTileData(
+            key = "disruption:replacement:${disruption?.id ?: lineAlert?.alertId}",
+            title = REPLACEMENT_BUSES_TITLE,
+            // Only used by the plain InfoTile layout; the expanded content below replaces it.
+            description = REPLACEMENT_BUSES_TITLE,
+            type = InfoTileData.InfoTileType.CRITICAL_ALERT,
+            primaryCta = moreInfoUrl?.let { InfoTileCta(text = "More info", url = it) },
+            showDismissButton = false,
+        )
+    }
+    InfoTile(
+        infoTileData = tile,
+        initialState = initialState,
+        onCtaClick = { data ->
+            data.primaryCta?.url?.let { url ->
+                onMoreInfo(url)
+                uriHandler.openUri(url)
+            }
+        },
+        onDismissClick = {},
+        onTileExpand = { onExpand() },
+        modifier = modifier,
+        expandable = disruption != null || lineAlert != null,
+        expandedContent = {
+            when {
+                disruption != null && detail != null ->
+                    DisruptionDetailContent(detail = detail, fallback = disruption.detail)
+                lineAlert != null -> LineAlertContent(alert = lineAlert)
+            }
+        },
+        leadingIcon = { DisruptionWarningBadge() },
+    )
+}
+
+/** The planner's line alert as NSW wrote it, with its own markup, in the app's existing alert text. */
+@Composable
+private fun LineAlertContent(alert: ServiceAlert) {
+    HtmlText(
+        text = alert.message,
+        onClick = {},
+        color = KrailTheme.colors.onSurface,
+        urlColor = KrailTheme.colors.onSurface,
+    )
+}
+
+/**
+ * The warning triangle on a yellow circle, centred on the first line of the title. The circle is the
+ * alert amber riders already know; the triangle stays near black in both themes because `onSurface`
+ * is white in dark mode and would not read on yellow.
+ */
+@Composable
+internal fun DisruptionWarningBadge(modifier: Modifier = Modifier) {
+    val titleLine = KrailTheme.typography.titleMedium.lineHeight
+    val lineHeight = with(LocalDensity.current) {
+        if (titleLine.isSpecified) titleLine.toDp() else BADGE_SIZE
+    }
+    Box(
+        modifier = modifier
+            // The tile top-aligns its icon, so push the circle down to the middle of the first line.
+            .padding(top = ((lineHeight - BADGE_SIZE) / 2).coerceAtLeast(0.dp))
+            .size(BADGE_SIZE)
+            .clip(CircleShape)
+            .background(KrailTheme.colors.alert),
+        contentAlignment = Alignment.Center,
+    ) {
+        Image(
+            imageVector = WarningIcon,
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(BADGE_GLYPH_COLOR),
+            modifier = Modifier.size(BADGE_GLYPH_SIZE),
         )
     }
 }
+
+private val BADGE_SIZE = 20.dp
+private val BADGE_GLYPH_SIZE = 12.dp
+private val BADGE_GLYPH_COLOR = Color(0xFF010101)
 
 @Composable
 internal fun DisruptionBanner(
@@ -102,14 +224,7 @@ internal fun DisruptionBanner(
         onTileExpand = { onExpand() },
         modifier = modifier,
         expandedContent = { DisruptionDetailContent(detail = detail, fallback = disruption.detail) },
-        leadingIcon = {
-            Image(
-                imageVector = WarningIcon,
-                contentDescription = null,
-                colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
-                modifier = Modifier.size(KrailTheme.dimensions.iconM),
-            )
-        },
+        leadingIcon = { DisruptionWarningBadge() },
     )
 }
 

@@ -63,7 +63,6 @@ import xyz.ksharma.krail.trip.planner.network.api.service.TripPlanningService
 import xyz.ksharma.krail.trip.planner.ui.state.alerts.ServiceAlert
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptions
-import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionBannerState
 import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionFeed
 import xyz.ksharma.krail.trip.planner.ui.state.disruption.DisruptionRepository
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
@@ -410,7 +409,7 @@ class TimeTableViewModel(
      * banner held in state may never be scrolled to.
      */
     private fun onDisruptionBannerDisplayed() {
-        val banner = _uiState.value.disruptionBanner as? DisruptionBannerState.Shown ?: return
+        val banner = _uiState.value.disruptionBanner
         val trip = tripInfo ?: return
         disruptionAnalytics.trackShown(banner, trip, visibleJourneyCount = _uiState.value.journeyList.size)
     }
@@ -421,7 +420,7 @@ class TimeTableViewModel(
     }
 
     private fun trackDisruptionTile(expand: Boolean? = null, ctaUrl: String? = null) {
-        val banner = _uiState.value.disruptionBanner as? DisruptionBannerState.Shown ?: return
+        val banner = _uiState.value.disruptionBanner
         disruptionAnalytics.trackTile(banner, expand = expand, ctaUrl = ctaUrl)
     }
 

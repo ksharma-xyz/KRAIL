@@ -233,6 +233,9 @@ data class TimeTableState(
                  *  shuttle). Rendered with an "On Demand" tag next to the mode icon. */
                 val isOnDemand: Boolean = false,
 
+                /** True when NSW labels the leg a temporary bus or coach, which runs in place of a closed line. */
+                val isReplacementBus: Boolean = false,
+
                 /**
                  * How full the service is at the rider's boarding stop. Null when TfNSW sent
                  * nothing, which draws nothing.

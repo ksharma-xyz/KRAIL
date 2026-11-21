@@ -215,6 +215,12 @@ sealed interface IntroUiEvent {
 sealed interface IntroEffect { data object NavigateToSavedTrips : IntroEffect }
 ```
 
+`IntroFlowViewModel` (named apart from the carousel `IntroViewModel` until that is deleted) exposes `state: StateFlow<IntroState>` and `suggestedStops: SuggestedStops` (read once from the
+`intro_suggested_stops` flag, empty default so the bundled lists apply). It takes a
+`SavedStateHandle` and saves the step, answer, permission result, picks and flags on every change as one JSON string, so
+they survive rotation and the process being killed. The station card and its spots are not saved, the park and ride step
+works them out again. Its writes live in `IntroCompletion`.
+
 - Every interface has a fake in `:core:testing`: `FakeAppDataReadiness` (controllable state), the existing location, catalogue,
   sandook and park ride fakes, and a fake clock. No `Clock.System` (the `ClockSystemBan` rule).
 - The Intro never calls the trip planner. `IntroViewModel` keeps `StopsManager` out of its constructor and depends on

@@ -154,6 +154,11 @@ SearchStop). `TimeTableRoute` navigation still works via back-stack push.
 - Trip planning is done via the SearchStopRow at the bottom of the left pane.
   On tablet and foldable-unfolded the row is **always expanded**; only
   phone-landscape collapses it to a button (see compact-height rules below).
+- **One column** (rule 45 in [`MAP_HOME_UX.md`](MAP_HOME_UX.md)): the trip cards, the Park &
+  Ride section and the search row share one column, `min(pane width, 560 dp)` and centred
+  (`columnWidthFor` in `SavedTripsColumn.kt`). A phone narrower than 560 dp keeps its whole width.
+  A single-pane window of 560 to 839 dp centres a 560 dp column. In the 480 dp left pane the column
+  is the whole pane. The list stays the pane's full width so the gutter still scrolls.
 
 ### Compact-height rules (`isCompactHeight`, height < 480 dp)
 

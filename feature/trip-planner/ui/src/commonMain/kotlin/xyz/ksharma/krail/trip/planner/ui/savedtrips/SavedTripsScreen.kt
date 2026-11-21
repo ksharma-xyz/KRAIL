@@ -21,6 +21,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -229,24 +230,36 @@ fun SavedTripsScreen(
                         },
                     )
 
-                    LazyColumn(
-                        state = lazyListState,
-                        modifier = Modifier.testTag(TripPlannerTestTags.SAVED_TRIPS_LIST),
-                        contentPadding = PaddingValues(bottom = LAZY_COLUMN_BOTTOM_PADDING.dp),
-                    ) {
-                        savedTripsListBody(
-                            savedTripsState = savedTripsState,
-                            trackedJourney = trackedJourney,
-                            onEvent = onEvent,
-                            onSavedTripCardClick = onSavedTripCardClick,
-                            onTrackingCardClick = onTrackingCardClick,
-                            onStopTracking = onStopTracking,
-                            expandedMap = expandedMap,
-                            editing = editing,
-                            reorderState = reorderState,
-                            onEnterEditing = { editing = true },
-                            onAddParkRideClick = onAddParkRideClick,
-                        )
+                    // One column, at most 560 dp wide and centred (MAP_HOME_UX rule 45). The
+                    // list stays the full width of the pane so a swipe in the gutter still
+                    // scrolls it; the gutter is content padding, so the trips, the headings and
+                    // Park & Ride all sit on the same two edges. The search row below takes the
+                    // same edges from savedTripsColumn().
+                    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                        val gutter = columnGutterFor(maxWidth)
+                        LazyColumn(
+                            state = lazyListState,
+                            modifier = Modifier.testTag(TripPlannerTestTags.SAVED_TRIPS_LIST),
+                            contentPadding = PaddingValues(
+                                start = gutter,
+                                end = gutter,
+                                bottom = LAZY_COLUMN_BOTTOM_PADDING.dp,
+                            ),
+                        ) {
+                            savedTripsListBody(
+                                savedTripsState = savedTripsState,
+                                trackedJourney = trackedJourney,
+                                onEvent = onEvent,
+                                onSavedTripCardClick = onSavedTripCardClick,
+                                onTrackingCardClick = onTrackingCardClick,
+                                onStopTracking = onStopTracking,
+                                expandedMap = expandedMap,
+                                editing = editing,
+                                reorderState = reorderState,
+                                onEnterEditing = { editing = true },
+                                onAddParkRideClick = onAddParkRideClick,
+                            )
+                        }
                     }
                 }
 
@@ -286,7 +299,7 @@ fun SavedTripsScreen(
                     isAiHandoffSettling = askKrailFocus.handoffSpin,
                     dateTimeSelectionText = savedTripsState.dateTimeSelectionItem?.toDateTimeText(),
                     onDateTimeSelectionClear = { onEvent(SavedTripUiEvent.DateTimeSelectionChanged(null)) },
-                    modifier = Modifier.align(Alignment.BottomCenter),
+                    modifier = Modifier.align(Alignment.BottomCenter).savedTripsColumn(),
                 )
             }
             log(
@@ -538,10 +551,6 @@ private const val WIGGLE_DURATION_VARIANCE_BUCKETS = 4
 private const val WIGGLE_DURATION_VARIANCE_STEP_MS = 70
 private const val WIGGLE_OFFSET_MULTIPLIER = 47
 private const val WIGGLE_OFFSET_MAX_MS = 200
-
-// Left-pane width cap when SavedTrips is rendered in dual-pane (shouldShowDualPane).
-// Keeps the saved-trips list at phone-width proportions; map fills the rest.
-// See docs/TABLET_FOLDABLE_UX.md §4.
 
 // region Previews
 

@@ -313,7 +313,12 @@ raised until the whole stack has passed device QA, then it merges bottom-up. No 
 0. `docs/map-home-erd`, this file.
 1. `docs/map-home-ux`, `docs/MAP_HOME_UX.md`, the rules, with no internal metrics or quotes.
 2. `refactor/home-search-extract`, only if detekt has no headroom in `SearchStopScreen.kt` or `SavedTripsScreen.kt`.
-3. `feat/map-home-one-column`, one column with shared edges (rule 45).
+3. `feat/map-home-one-column`, one column with shared edges (rule 45). The column is `min(pane width, 560)` and
+   centred (`columnWidthFor` in `SavedTripsColumn.kt`). Phones narrower than 560 keep every dp, and in the 480 dp
+   list pane it is the whole pane. The list stays the pane's full width and takes the gutter as content padding, so
+   a swipe in the gutter still scrolls. Cards and headings sit one 16 dp page padding inside the column. Until the
+   home pill (branch 11) replaces it, the search row's coloured block sits on the column's edges and its fields on
+   the cards' edges. The title bar keeps the screen's edges (rule 20) and is not part of the column.
 4. `feat/search-stop-map-first`, the map state, list state and two-step back (rule 39), the recents card (rule 9),
    and the location status pill under the form (rule 24).
 5. `feat/search-stop-radius-config`, delete `MapOptionsBottomSheet`, move the mode filter to a chip row on the map

@@ -1,0 +1,25 @@
+# Gitignored files a fresh worktree needs before it can build. Read by scripts/worktree_setup.sh.
+# One path per line, relative to the repo root. A trailing / means a whole directory.
+# A leading ? means optional: copied when the primary checkout has it, skipped quietly when it
+# does not. Every other line is required, and the script fails if the primary checkout lacks it.
+# Adding a new gitignored file the build needs? Add it here, in the same change.
+
+# Gradle local config (NSW API key and SDK path)
+local.properties
+
+# Firebase config, one per build type and module
+androidApp/src/debug/google-services.json
+androidApp/src/main/google-services.json
+androidApp/src/release/google-services.json
+composeApp/src/debug/google-services.json
+composeApp/src/release/google-services.json
+
+# Android resources and debug sources generated outside git
+composeApp/src/androidMain/res/
+core/festival/src/androidDebug/
+
+# iOS Firebase config, only needed to build the iOS app from this worktree
+?iosApp/iosApp/GoogleService-Info.plist
+
+# Wire-generated proto sources, saves a full codegen run
+?io/bff-api/build/generated/

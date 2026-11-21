@@ -568,7 +568,8 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
 
     /**
      * @param source Where the save was triggered from: [SOURCE_STAR] for the
-     * title-bar star button, [SOURCE_PROMPT] for the "Save this trip?" prompt.
+     * title-bar star button, [SOURCE_PROMPT] for the "Save this trip?" prompt,
+     * [SOURCE_INTRO] for the first trip step of the Intro.
      * Historical events (pre-prompt) carry no `source` — treat null as star.
      */
     data class SaveTripClickEvent(
@@ -586,6 +587,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         companion object {
             const val SOURCE_STAR = "star"
             const val SOURCE_PROMPT = "prompt"
+            const val SOURCE_INTRO = "intro"
         }
     }
 
@@ -1230,24 +1232,85 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
     }
 
     /**
-     * Analytics event for the refer friend button click in the intro screen.
+     * The rider finished the Intro. One event name, two shapes, and a caller sends only its own
+     * set. A param that is null is left out of the event.
      *
-     * @param pageType The page number of the intro screen from which the user clicked Let's KRAIL button.
-     * @param interactionPages Represents pages list where interaction was performed. with the
-     * content inside the intro pages.
+     * Carousel Intro: [pageType] and [pageNumber], sent as `completedOnPage` and
+     * `completedOnPageNumber`. They describe the carousel and are removed with it.
+     *
+     * Two step Intro: the nine outcome params from [introVersion] to [stopsWait], sent together.
+     * Each is a flag or one of a short list of values. None carries a coordinate, a stop name or
+     * text.
+     *
+     * @param pageType The carousel page the Intro was finished on.
+     * @param pageNumber The number of that carousel page.
+     * @param introVersion `2` for the two step Intro.
+     * @param finishedOn The step the Intro was finished on.
+     * @param parkRideAnswer The answer to the Park & Ride question, `skipped` when unanswered.
+     * @param locationResult What the location permission came to, `not_asked` when never asked.
+     * @param addedParkRide Whether a Park & Ride station was added during the Intro.
+     * @param savedTrip Whether a trip was saved during the Intro.
+     * @param usedSearch Whether the search for another stop was used.
+     * @param skipped Whether the Intro finished with no complete trip picked.
+     * @param stopsWait How long the Intro waited on the stops data.
      */
     data class IntroLetsKrailClickEvent(
-        val pageType: InteractionPage,
-        val pageNumber: Int,
+        val pageType: InteractionPage? = null,
+        val pageNumber: Int? = null,
+        val introVersion: Int? = null,
+        val finishedOn: FinishedOn? = null,
+        val parkRideAnswer: ParkRideAnswer? = null,
+        val locationResult: LocationResult? = null,
+        val addedParkRide: Boolean? = null,
+        val savedTrip: Boolean? = null,
+        val usedSearch: Boolean? = null,
+        val skipped: Boolean? = null,
+        val stopsWait: StopsWait? = null,
     ) : AnalyticsEvent(
         name = "intro_lets_krail",
-        rawProperties = mapOf(
-            "completedOnPage" to pageType.name,
-            "completedOnPageNumber" to pageNumber,
-        ),
+        rawProperties = buildMap {
+            pageType?.let { put("completedOnPage", it.name) }
+            pageNumber?.let { put("completedOnPageNumber", it) }
+            introVersion?.let { put("introVersion", it) }
+            finishedOn?.let { put("finishedOn", it.value) }
+            parkRideAnswer?.let { put("parkRideAnswer", it.value) }
+            locationResult?.let { put("locationResult", it.value) }
+            addedParkRide?.let { put("addedParkRide", it) }
+            savedTrip?.let { put("savedTrip", it) }
+            usedSearch?.let { put("usedSearch", it) }
+            skipped?.let { put("skipped", it) }
+            stopsWait?.let { put("stopsWait", it.value) }
+        },
     ) {
+        /** Carousel pages. Removed with the carousel. */
         enum class InteractionPage {
             SAVE_TRIPS, REAL_TIME_ROUTES, ALERTS, PLAN_TRIP, SELECT_MODE, INVITE_FRIENDS, PARK_RIDE,
+        }
+
+        enum class FinishedOn(val value: String) {
+            PARK_RIDE("park_ride"),
+            FIRST_TRIP("first_trip"),
+        }
+
+        enum class ParkRideAnswer(val value: String) {
+            YES("yes"),
+            NO("no"),
+            SKIPPED("skipped"),
+        }
+
+        enum class LocationResult(val value: String) {
+            GRANTED("granted"),
+            DENIED("denied"),
+            UNAVAILABLE("unavailable"),
+            NOT_ASKED("not_asked"),
+        }
+
+        enum class StopsWait(val value: String) {
+            NONE("none"),
+            UNDER_2S("under_2s"),
+            TWO_TO_FIVE_S("2_to_5s"),
+            OVER_5S("over_5s"),
+            FAILED("failed"),
         }
     }
 
@@ -1375,6 +1438,9 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
              * mapping. See [SavedTripsViewModel.updateParkRideStopIdsInDb].
              */
             SAVED_TRIPS_SCREEN("saved_trips_screen"),
+
+            /** Rider toggled the nearest station on the Park & Ride step of the Intro. */
+            INTRO("intro"),
         }
     }
     // endregion

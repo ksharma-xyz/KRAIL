@@ -451,6 +451,10 @@ The 500 event-name budget is respected. Nothing here mints a name.
   `introVersion` (2), `finishedOn` (park_ride or first_trip), `parkRideAnswer` (yes, no, skipped), `locationResult`
   (granted, denied, unavailable, not_asked), `addedParkRide` (bool), `savedTrip` (bool), `usedSearch` (bool), `skipped`
   (bool), `stopsWait` (none, under_2s, 2_to_5s, over_5s, failed). Nine params, well inside the 25 per event.
+  In code, `IntroLetsKrailClickEvent` carries all eleven params as optional, and a null one is left out of the event, so
+  the carousel keeps sending its two and the new Intro sends its nine until the last carousel caller is removed. That
+  removal deletes `completedOnPage`, `completedOnPageNumber` and the `InteractionPage` enum. The four lists are enums in the
+  event, with the values above, and `IntroOutcomeEventTest` holds them to `IntroOutcome.toParams()`.
 - `view_screen` (existing) gets one new screen name, `IntroFirstTrip`. `Intro` stays as step 1. The pair gives the funnel
   with no new event, and a rider who reaches step 2 and never finishes is the drop-off.
 - `park_ride_user_facility` (existing) gains `source = intro`. `save_trip_click` (existing) gains `source = intro`. These make

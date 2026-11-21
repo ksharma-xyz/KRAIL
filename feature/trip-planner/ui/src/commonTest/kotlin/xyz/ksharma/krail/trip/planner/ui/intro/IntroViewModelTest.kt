@@ -114,7 +114,7 @@ class IntroViewModelTest {
 
             val recorded = analytics.getTrackedEvents("intro_lets_krail")
                 .filterIsInstance<AnalyticsEvent.IntroLetsKrailClickEvent>()
-                .map { it.pageType.name }
+                .map { it.pageType?.name }
 
             assertEquals(IntroState.IntroPageType.entries.map { it.name }, recorded)
         }

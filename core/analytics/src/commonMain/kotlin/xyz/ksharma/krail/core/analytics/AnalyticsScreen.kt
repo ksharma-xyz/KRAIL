@@ -14,6 +14,9 @@ sealed class AnalyticsScreen(val name: String) {
     data object AddParkRide : AnalyticsScreen(name = "AddParkRide")
     data object ServiceAlerts : AnalyticsScreen(name = "ServiceAlerts")
     data object Intro : AnalyticsScreen(name = "Intro")
+
+    // Step 2 of the two step Intro. Intro is step 1.
+    data object IntroFirstTrip : AnalyticsScreen(name = "IntroFirstTrip")
     data object OurStory : AnalyticsScreen(name = "OurStory")
 
     // Map screens — used for ScreenViewEvent + BigQuery engagement_time_msec queries

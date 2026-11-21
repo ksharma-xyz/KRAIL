@@ -6,11 +6,11 @@ import xyz.ksharma.krail.core.testing.coroutines.krailRunTest
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakePlatformOps
 import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
+import xyz.ksharma.krail.core.testing.fakes.FakeStopsManager
 import xyz.ksharma.krail.core.testing.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroUiEvent
-import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopsManager
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs

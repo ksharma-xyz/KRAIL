@@ -118,14 +118,32 @@ sealed interface StopsReadiness {
 
 interface AppDataReadiness {
     val state: StateFlow<StopsReadiness>
-    /** Suspends until Ready or Failed, or until [timeoutMs]. Never throws. */
+    /** Suspends until the stops are Ready or Failed, or until [timeoutMs]. Never throws. Starts the first run if none has started. */
     suspend fun awaitReady(timeoutMs: Long): StopsReadiness
-    /** Runs the guarded insert once more. A no-op while Loading. */
+    /** A no-op while Loading or Ready. From Failed one more attempt. From Unknown the launch trigger. */
     fun retry()
 }
 
 // StopsManager.insertStops() changes from Unit to Result<Unit>, and the table clear moves inside the insert transaction.
 ```
+
+How the first PR behaves, where it adds to the signatures above:
+
+- `RealAppStart` calls `retry()` once at launch and no longer waits for the inserts, so remote config set up starts earlier.
+  `retry()` is a no-op while Loading and while Ready, so calling it again in a live process never demotes good data. From
+  Unknown it gets up to three automatic retries with a growing backoff. From Failed it is one more attempt.
+- The automatic retries show as Loading, never as Failed. `Failed.attempt` counts every attempt in the process. A run that
+  is cancelled or breaks unexpectedly ends in Failed, never stuck in Loading.
+- Ready is about the stops only. It means all of: the stops insert returned success, the stored stops version is at or above
+  the bundled one, the stop count is at or above the existing floor, and a read of one known stop (Central, the parent stop
+  `200060`) returns a row. The decision is one pure function, `reduceReadiness`, so a table test holds every combination.
+  A test reads the bundled data file and fails if that stop is ever dropped by a data refresh.
+- The bus routes insert follows in the same run once the stops are Ready, best effort. A failure there is logged, does not
+  change the state, and is not retried until the next launch. `awaitReady` returns as soon as the stops are Ready and never
+  waits for the bus routes. The Intro needs only the stops table.
+- WAL and the clear inside the transaction: proven on the JDBC test driver. The app sets WAL explicitly on iOS
+  (`JournalMode.WAL`) and on Android (`enableWriteAheadLogging()` in `SandookCallback.onOpen`), and the `-wal` and `-shm`
+  files have been seen on a real Android phone. The Android and iOS drivers themselves are not run in a test.
 
 ```kotlin
 // module: :feature:trip-planner:ui, intro/, pure, no I/O, runs under a fixture suite
@@ -214,7 +232,7 @@ sequenceDiagram
     participant C as ParkRideCatalogue
     participant A as Availability
     participant DB as Sandook
-    App->>R: insertStops, insertBusRoutes (already at launch)
+    App->>R: retry (launch trigger: stops insert, then bus routes best effort)
     UI->>VM: AnswerParkRide(yes)
     VM->>L: permission and one fix
     L-->>VM: Location or denied
@@ -235,6 +253,9 @@ sequenceDiagram
     VM-->>UI: navigate to SavedTrips
 ```
 
+Readiness is published when the stops are usable. The bus routes insert runs after that in the same run and does not
+hold the Intro back.
+
 Order at finish, which differs from today: wait for readiness, write the trip, write `KEY_HAS_SEEN_INTRO` and
 `KEY_PARK_RIDE_SUGGESTION_SHOWN`, track the outcome, then navigate. Today the screen navigates without waiting for the
 insert, so a fast rider can reach home before the stops are committed.
@@ -245,7 +266,7 @@ insert, so a fast rider can reach home before the stops are committed.
 |---|---|---|
 | 1 | **API calls.** | None at open. Step 1 Yes path only: one availability call per car park of the nearest station, once on arrival, no polling in the Intro. That is one call for most stations and up to three for the largest. Step 2: none. A rider who answers No makes none. The Intro makes no trip planner, alerts or departures call. |
 | 2 | **Payload.** | About 350 B gzip and 665 B decoded per availability call (a snapshot, labelled as such). The stops files (about 2.3 MB and 2.6 MB) are bundled and are not downloaded. Parse cost for the suggestion JSON is trivial and bundled. |
-| 3 | **Timing.** | The Intro opens with no network and no wait. The car park card needs a location fix, then stops readiness, then one call. The fix time is **not measured**. The stops insert is **assumed 3 to 5 seconds, not measured**, and the code already logs it. The call is 0.09 to 0.31 s in the snapshot. The last button is the only forced wait, and only if the rider finishes before readiness. The `stopsWait` bucket in section 11 measures it in the field. |
+| 3 | **Timing.** | The Intro opens with no network and no wait. The car park card needs a location fix, then stops readiness, then one call. The fix time is **not measured**. The stops insert is **assumed 3 to 5 seconds** (measured privately, not recorded here), and the code already logs it. Readiness waits for the stops only, so the bus routes insert adds nothing to the wait. The call is 0.09 to 0.31 s in the snapshot. The last button is the only forced wait, and only if the rider finishes before readiness. The `stopsWait` bucket in section 11 measures it in the field. |
 | 4 | **UX.** | Loading: skeleton in the card's space. Slow stops data: last button reads Getting ready. Failed stops data: Try again. Failed or offline availability: the station name and Add stay, the numbers are omitted. No station near: a plain line and the normal Next. Denied location: step 2. No layout shift between states (same slot). |
 | 5 | **Network efficiency.** | Availability goes through the existing repository, so its cooldown and cache apply. The Intro's read should seed the Saved Trips card so home does not refetch inside the cooldown. **To verify** in the repository before the UI branch. |
 | 6 | **Battery.** | One location fix, not updates. No timer, no polling and no background work. Foreground only, so nothing needs lifecycle gating beyond collecting state with `collectAsStateWithLifecycle()`. |
@@ -361,8 +382,8 @@ Evidence that comes from private analytics is shown to the owner in the message 
 | IA9 | `KEY_PARK_RIDE_SUGGESTION_SHOWN` is set when step 1 is answered, or passed with Next, so no rider is asked twice on home. | Decided by the owner on 2026-11-21. | A rider who tapped Next by accident never gets the home suggestion. | Approved by ksharma-xyz, 2026-11-21 |
 | IA10 | If availability fails or the phone is offline, the card shows the station name and Add with no numbers. Add never waits on the network. | The station list is local. | A card with no numbers looks incomplete. | Approved by ksharma-xyz, 2026-11-21 |
 | IA11 | Add to home inside the Intro does not fire the app review delight moment. | The moment fires when the rider returns to Saved Trips, so it would fire on first launch. | A review prompt on the first minute of a new install. | Approved by ksharma-xyz, 2026-11-21 |
-| IA12 | The last button waits for stops readiness and never opens home on an empty table. The wait is assumed 3 to 5 seconds. Failure shows Try again and the next launch retries. | The insert is one transaction of about 37,000 rows. It is logged, not measured. The clear currently runs outside the transaction, and `insertStops()` swallows failures. | A rider could wait longer than expected on a slow phone. `stopsWait` measures it. | Approved by ksharma-xyz, 2026-11-21 |
-| IA13 | The readiness fix ships first, as its own PR, because it also protects existing riders after every data refresh. | A data refresh raised the stops version on 2026-11-21, so every rider re-runs the clear and the insert. | Existing riders see empty search while the table refills. | Approved by ksharma-xyz, 2026-11-21 |
+| IA12 | The last button waits for stops readiness and never opens home on an empty table. The wait is assumed 3 to 5 seconds. Failure shows Try again and the next launch retries. Readiness is about the stops only, bus routes follow best effort. | The insert is one transaction of about 37,000 rows. It is logged and measured privately. Before the readiness fix the clear ran outside the transaction and `insertStops()` swallowed failures. Failed stays until `retry()` or the next launch. | A rider could wait longer than expected on a slow phone. `stopsWait` measures it. | Approved by ksharma-xyz, 2026-11-21 |
+| IA13 | The readiness fix ships first, as its own PR, because it also protects existing riders after every data refresh. | A data refresh raised the stops version on 2026-11-21, so every rider re-runs the clear and the insert. With the clear inside the insert transaction, a second connection in WAL mode keeps reading the old rows until the commit. Proven on the JDBC test driver in `NswTablesReplaceTransactionTest`. WAL is set explicitly on iOS and on Android (`SandookCallback.onOpen`) and the WAL files were seen on one real Android phone; the Android and iOS drivers are not run in a test. | Existing riders see empty search while the table refills. | Approved by ksharma-xyz, 2026-11-21 |
 
 | Decision | Source (data field or parsed text) | Checked against | Reliable |
 |---|---|---|---|

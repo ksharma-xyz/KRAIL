@@ -1,6 +1,10 @@
 package xyz.ksharma.krail.trip.planner.ui.intro.v2
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
 import kotlinx.coroutines.flow.onEach
@@ -15,6 +19,11 @@ import xyz.ksharma.krail.core.testing.helpers.CallLog
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.trip.planner.ui.intro.SuggestedStop
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroState
+import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.LocationResult
+import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideCardPhase
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRideStationPickerItem
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeParkRideCatalogue
+import kotlin.test.assertIs
 import kotlin.time.Duration
 import kotlin.time.TestTimeSource
 import kotlin.time.TimeMark
@@ -30,6 +39,7 @@ internal class IntroRig(
     initialReadiness: StopsReadiness = StopsReadiness.Ready(stopCount = 100),
     val handle: SavedStateHandle = SavedStateHandle(),
     timeSource: TimeSource? = null,
+    stations: List<ParkRideStationPickerItem> = INTRO_STATIONS,
 ) {
     val log = CallLog()
     val readiness = FakeAppDataReadiness(initial = initialReadiness, callLog = log)
@@ -37,19 +47,31 @@ internal class IntroRig(
     val preferences = FakeSandookPreferences(callLog = log)
     val analytics = FakeAnalytics(callLog = log)
     val flag = FakeFlag()
+    val catalogue = FakeParkRideCatalogue(stations = stations)
 
     /** Moves only when a test says so. Ignored when the rig was given its own [timeSource]. */
     val testTime = TestTimeSource()
 
+    private val store = ViewModelStore()
+
     /** Built on first use, so a test can set the flag before the view model reads it. */
     val viewModel: IntroFlowViewModel by lazy {
-        IntroFlowViewModel(
-            savedStateHandle = handle,
-            appDataReadiness = readiness,
-            completion = IntroCompletion(sandook, preferences, analytics, scope.ioDispatcher),
-            flag = flag,
-            timeSource = timeSource ?: testTime,
-        )
+        val factory = viewModelFactory {
+            initializer {
+                IntroFlowViewModel(
+                    savedStateHandle = handle,
+                    appDataReadiness = readiness,
+                    completion = IntroCompletion(sandook, preferences, analytics, scope.ioDispatcher),
+                    flag = flag,
+                    timeSource = timeSource ?: testTime,
+                    parkRide = IntroParkRideGateway(
+                        catalogue = catalogue,
+                        ioDispatcher = scope.ioDispatcher,
+                    ),
+                )
+            }
+        }
+        ViewModelProvider.create(store, factory)[IntroFlowViewModel::class]
     }
 
     val state: IntroState get() = viewModel.state.value
@@ -58,6 +80,26 @@ internal class IntroRig(
         events.forEach(viewModel::onEvent)
         scope.runCurrent()
     }
+
+    /** The station on the card, which the test expects to be showing. */
+    fun card() = assertIs<ParkRideCardPhase.Card>(state.parkRideCard).station
+
+    /** A rider who answered Yes and is shown the nearest station, Bella Vista here. */
+    fun showBellaVista() = send(
+        IntroUiEvent.AnswerParkRide(yes = true),
+        IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, FOUR_POINT_SIX_KM_FROM_BELLA_VISTA),
+    )
+
+    fun showTallawong() = send(
+        IntroUiEvent.AnswerParkRide(yes = true),
+        IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, AT_TALLAWONG),
+    )
+
+    /** Builds the view model if it is not built yet, then lets everything it started at this instant run. */
+    fun settle() = send()
+
+    /** What the system does when the screen is gone for good: the view model is cleared. */
+    fun clearViewModel() = store.clear()
 
     /** Collects the finish effects, noting each one in [log] at the moment it is emitted. */
     suspend fun withEffects(block: suspend ReceiveTurbine<IntroEffect>.() -> Unit) {

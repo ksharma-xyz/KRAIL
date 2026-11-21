@@ -1,6 +1,5 @@
 package xyz.ksharma.krail.trip.planner.ui.intro.v2
 
-import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 import xyz.ksharma.krail.core.testing.coroutines.krailRunTest
@@ -9,7 +8,6 @@ import xyz.ksharma.krail.trip.planner.ui.intro.SuggestedStop
 import xyz.ksharma.krail.trip.planner.ui.intro.SuggestedStops
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroStep
-import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideAnswer
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -107,36 +105,32 @@ class IntroFlowViewModelTest {
         }
 
     @Test
-    fun `answering yes only records the answer until the location step exists`() = krailRunTest {
-        val rig = IntroRig(this)
-
-        rig.send(IntroUiEvent.AnswerParkRide(yes = true))
-
-        assertEquals(ParkRideAnswer.YES, rig.state.parkRideAnswer)
-        assertEquals(IntroStep.PARK_RIDE, rig.state.step)
-        assertEquals(0, rig.log.count(SUGGESTION_FLAG_WRITE))
-
-        rig.send(IntroUiEvent.Next)
-
-        assertEquals(ParkRideAnswer.YES, rig.state.parkRideAnswer)
-        assertEquals(IntroStep.FIRST_TRIP, rig.state.step)
-        assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE))
-    }
-
-    @Test
-    fun `a location result is recorded and add to home changes nothing until the park and ride step lands`() =
+    fun `answering yes keeps the question step and writes nothing until a result arrives, and next still moves on`() =
         krailRunTest {
             val rig = IntroRig(this)
 
-            rig.send(
-                IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, LatLng(-33.88, 151.21)),
-                IntroUiEvent.ToggleParkRide,
-            )
+            rig.send(IntroUiEvent.AnswerParkRide(yes = true))
 
-            assertEquals(LocationResult.GRANTED, rig.state.locationResult)
-            assertFalse(rig.state.addedParkRide)
+            assertEquals(ParkRideAnswer.YES, rig.state.parkRideAnswer)
             assertEquals(IntroStep.PARK_RIDE, rig.state.step)
+            assertEquals(0, rig.log.count(SUGGESTION_FLAG_WRITE))
+
+            rig.send(IntroUiEvent.Next)
+
+            assertEquals(ParkRideAnswer.YES, rig.state.parkRideAnswer)
+            assertEquals(IntroStep.FIRST_TRIP, rig.state.step)
+            assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE))
         }
+
+    @Test
+    fun `add to home with no card on screen changes nothing`() = krailRunTest {
+        val rig = IntroRig(this)
+
+        rig.send(IntroUiEvent.ToggleParkRide)
+
+        assertEquals(IntroState(), rig.state)
+        assertFalse(rig.state.addedParkRide)
+    }
 
     @Test
     fun `picking a start and an end sets their ids and names without marking search`() = krailRunTest {

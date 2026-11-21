@@ -2,7 +2,6 @@ package xyz.ksharma.krail.trip.planner.ui.intro.v2
 
 import app.cash.turbine.test
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SaveTripClickEvent
-import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.testing.coroutines.KrailTestScope
 import xyz.ksharma.krail.core.testing.coroutines.krailRunTest
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
@@ -10,6 +9,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideAnswer
+import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideCardPhase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -286,15 +286,17 @@ class IntroFlowViewModelFinishTest {
     }
 
     @Test
-    fun `no tracked property carries a stop name or a coordinate`() = krailRunTest {
+    fun `no tracked property carries a stop name, a station name or a coordinate`() = krailRunTest {
         val rig = IntroRig(this)
         rig.send(
-            IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, LatLng(-33.8688, 151.2093)),
+            IntroUiEvent.AnswerParkRide(yes = true),
+            IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, FOUR_POINT_SIX_KM_FROM_BELLA_VISTA),
+            IntroUiEvent.Next,
             IntroUiEvent.PickStart(TALLAWONG),
             IntroUiEvent.StopPickedFromSearch(isStart = false, stopId = CENTRAL.stopId, stopName = CENTRAL.name),
-            IntroUiEvent.Next,
             IntroUiEvent.FinishPressed,
         )
+        assertIs<ParkRideCardPhase.Card>(rig.state.parkRideCard, "the station card was found, so its name is in play")
 
         val values = listOf("intro_lets_krail", "save_trip_click")
             .flatMap { rig.analytics.getTrackedEvents(it) }
@@ -302,7 +304,7 @@ class IntroFlowViewModelFinishTest {
             .map { it.toString() }
 
         assertTrue(values.isNotEmpty())
-        listOf("Station", TALLAWONG.name, CENTRAL.name, "-33.8688", "151.2093").forEach { forbidden ->
+        listOf("Station", "Bella Vista", TALLAWONG.name, CENTRAL.name, "33.77", "150.94").forEach { forbidden ->
             assertTrue(values.none { it.contains(forbidden) }, "a property carries $forbidden: $values")
         }
     }

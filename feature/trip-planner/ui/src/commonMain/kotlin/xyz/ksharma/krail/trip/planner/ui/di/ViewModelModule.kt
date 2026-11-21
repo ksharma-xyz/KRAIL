@@ -27,6 +27,7 @@ import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverViewModel
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroViewModel
 import xyz.ksharma.krail.trip.planner.ui.intro.v2.IntroCompletion
 import xyz.ksharma.krail.trip.planner.ui.intro.v2.IntroFlowViewModel
+import xyz.ksharma.krail.trip.planner.ui.intro.v2.IntroParkRideGateway
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.parkride.AddParkRideViewModel
 import xyz.ksharma.krail.trip.planner.ui.parkride.RealParkRideAvailabilityLoader
@@ -156,6 +157,15 @@ val viewModelsModule = module {
             ),
             flag = get(),
             timeSource = TimeSource.Monotonic,
+            parkRide = IntroParkRideGateway(
+                catalogue = RealParkRideCatalogue(
+                    nswParkRideFacilityManager = get(),
+                    stopResultsManager = get(),
+                    sandook = get(),
+                    festivalManager = get(),
+                ),
+                ioDispatcher = get(named(IODispatcher)),
+            ),
         )
     }
 

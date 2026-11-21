@@ -11,9 +11,14 @@ internal sealed interface IntroUiEvent {
     /** The question step only. The trip step ends with [FinishPressed]. */
     data object Next : IntroUiEvent
 
+    /** Yes starts the location step. The screen then asks for the permission and sends [LocationResultReceived]. */
     data class AnswerParkRide(val yes: Boolean) : IntroUiEvent
 
-    /** [location] is the fix behind a granted result, and null for any other result. */
+    /**
+     * The permission result and the one fix, sent once after a yes and ignored at any other time.
+     * [location] is the fix behind a granted result, and null for any other result. It is used to
+     * find the station and kept nowhere, so a screen must not hold on to it either.
+     */
     data class LocationResultReceived(val result: LocationResult, val location: LatLng?) : IntroUiEvent
 
     /** Add to home, and Added. */

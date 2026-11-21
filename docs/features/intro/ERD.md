@@ -258,6 +258,11 @@ flag when there was none near) and nothing else about the card: no car park, no 
 writes and tracking live in `IntroCompletion`, which holds `Sandook`, `SandookPreferences`, `Analytics` and the IO
 dispatcher, to keep the constructor under the detekt parameter limit.
 
+The Park & Ride step is two more classes, so the view model stays small. `IntroParkRideGateway` is the injected one, like
+`IntroCompletion`: the catalogue and the IO dispatcher, and it does the reads. `IntroParkRideStep` is built by the view
+model in its own scope and holds the order of things: the answer, the one location result, the wait for the stops and the
+nearest station. It never asks for the permission: the screen does, and sends `LocationResultReceived`.
+
 - Every interface has a fake in `:core:testing`: `FakeAppDataReadiness` (controllable state), the existing location, catalogue,
   sandook and park ride fakes, and a fake clock. No `Clock.System` (the `ClockSystemBan` rule).
 - The Intro never calls the trip planner. `IntroViewModel` keeps `StopsManager` out of its constructor and depends on
@@ -296,8 +301,9 @@ sequenceDiagram
     participant DB as Sandook
     App->>R: retry (launch trigger: stops insert, then bus routes best effort)
     UI->>VM: AnswerParkRide(yes)
-    VM->>L: permission and one fix
-    L-->>VM: Location or denied
+    UI->>L: permission and one fix
+    L-->>UI: Location or denied
+    UI->>VM: LocationResultReceived(result, fix)
     VM->>R: awaitReady
     R-->>VM: Ready
     VM->>C: stations()
@@ -344,6 +350,23 @@ list grows with each:
 
 - **Added is not a phase.** The rider's Added state is a Card while `addedParkRide` is true, which is what the section 7
   table says ("the same card"), so the two cannot disagree.
+- **Who asks.** The screen asks for the permission and takes the one fix, then sends `LocationResultReceived`. The view
+  model never asks. `AnswerParkRide(yes = true)` records Yes and moves the card to Locating, the skeleton.
+- **A result nobody asked for is ignored.** Only a result that arrives while the card is Locating counts, so a repeat or a
+  late one changes nothing. A second Yes while Locating or while a card shows does nothing, so it can never start a second
+  look or a second call. Yes after No station near, or after a denial, looks again.
+- **No usable location.** Denied, unavailable and the 10 s timeout inside the location manager (mapped to `UNAVAILABLE`
+  by the screen) record the result, move to step 2, write the suggestion flag once and leave the card at None. Nothing
+  blocks and there is no error state. A granted result that carries no fix is recorded as `UNAVAILABLE`, because there
+  is nothing to find a station from. A fix that arrives behind a result that is not granted is dropped unused.
+- **Stops.** With a fix, the step calls `awaitReady(10 s)`. Anything but Ready (Unknown or Loading at 10 s, or Failed at
+  once) is the same answer as no station near, with no error. The rider is not held on the wait: Next, Back and the
+  finish all work while it runs.
+- **The fix.** It is used inside one coroutine to pick the station by `nearestParkRideStation` (5 km, the edge inclusive)
+  and then goes out of scope. It is never stored in the state, never saved and never logged or tracked. The state holds
+  the station's id, name and car parks only.
+- **The card.** It shows at once with the car park names and no numbers (availability Loading).
+- **No.** `AnswerParkRide(false)` is as before, and also cancels a look still waiting and clears the card.
 - **What is saved.** The step, answer, permission result, picks and flags as before, plus the card's station id (or a
   flag for no station near). A card is saved as the id alone, with no car park and no reading, and comes back as a
   Locating skeleton that carries the id. A location still being awaited is not saved, so a process killed there asks the
@@ -426,6 +449,9 @@ disabled (one stop picked), Skip for now (nothing picked), Save and start (both 
   - `toOutcome`: every flag and bucket.
 - **View model**, with fakes at the edges and `krailRunTest`.
   - Yes then granted then Add then pick then finish writes one trip, one park ride and both flags, once.
+  - The card: the nearest station inside 5 km and none outside it, no usable location (denied, unavailable, a granted
+    result with no fix) moving to step 2 with the flag written once, stops that are not Ready or Failed giving no station
+    near without holding the rider, and a cleared view model cancelling a look that is still waiting.
   - No, denied and no fix each reach step 2 and set the suggestion flag.
   - Finish before readiness waits, then writes, in the order readiness, trip, flags, tracking, effect. Finish while
     Failed saves the trip from the picks, tracks `failed` and retries the load in the background. A wait past 15 s

@@ -7,6 +7,7 @@ import xyz.ksharma.krail.trip.planner.ui.intro.DEFAULT_SUGGESTED_STOPS
 import xyz.ksharma.krail.trip.planner.ui.intro.SuggestedStops
 import xyz.ksharma.krail.trip.planner.ui.intro.parseSuggestedStops
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroState
+import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideCardPhase
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 /**
@@ -33,6 +34,10 @@ internal fun IntroState.toTripOrNull(): Trip? {
     val toName = endName ?: return null
     return Trip(fromStopId = fromId, fromStopName = fromName, toStopId = toId, toStopName = toName)
 }
+
+/** True while a location result is awaited or a card shows, when a second yes must start nothing. */
+internal fun ParkRideCardPhase.isInProgressOrShown(): Boolean =
+    this is ParkRideCardPhase.Locating || this is ParkRideCardPhase.Card
 
 /**
  * The lists in Remote Config, or the bundled ones when the value is empty, unset, or not a usable

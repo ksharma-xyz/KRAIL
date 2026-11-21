@@ -24,6 +24,7 @@ import xyz.ksharma.krail.trip.planner.ui.intro.toOutcome
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideAnswer
+import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideCardPhase
 import kotlin.time.Duration
 import kotlin.time.TimeSource
 
@@ -35,11 +36,12 @@ internal const val FINISH_WAIT_TIMEOUT_MS = 15_000L
 
 /**
  * The two step Intro. Its state is saved as it changes, so the step, the answer and the picks
- * survive rotation and the process being killed. It never polls: the one thing it waits on is
- * [AppDataReadiness.awaitReady], once, at the finish, and the finish never blocks on it for good.
+ * survive rotation and the process being killed. It never polls: the things it waits on are
+ * [AppDataReadiness.awaitReady], once for the nearest station and once at the finish, and neither
+ * wait blocks for good.
  *
- * The Park & Ride step is finished by the branch that builds it. Until then an answer of yes is only
- * recorded, a location result is only noted, and add to home does nothing.
+ * The Park & Ride step is [IntroParkRideStep]. The screen asks for the location permission and sends
+ * the result, and this class never asks for it.
  */
 internal class IntroFlowViewModel(
     private val savedStateHandle: SavedStateHandle,
@@ -47,6 +49,7 @@ internal class IntroFlowViewModel(
     private val completion: IntroCompletion,
     flag: Flag,
     private val timeSource: TimeSource,
+    parkRide: IntroParkRideGateway,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(savedStateHandle.restoreIntroState())
@@ -64,13 +67,22 @@ internal class IntroFlowViewModel(
     private var finishJob: Job? = null
     private var finished = false
 
+    private val parkRideStep = IntroParkRideStep(
+        scope = viewModelScope,
+        readiness = appDataReadiness,
+        gateway = parkRide,
+        read = { _state.value },
+        write = ::update,
+        onLeftQuestion = ::markSuggestionShown,
+    )
+
     fun onEvent(event: IntroUiEvent) {
         when (event) {
             IntroUiEvent.Back -> update { copy(step = IntroStep.PARK_RIDE) }
             IntroUiEvent.Next -> next()
             is IntroUiEvent.AnswerParkRide -> answerParkRide(event.yes)
-            // The park and ride step completes these two. Until then the result is only recorded.
-            is IntroUiEvent.LocationResultReceived -> update { copy(locationResult = event.result) }
+            is IntroUiEvent.LocationResultReceived -> parkRideStep.onLocationResult(event.result, event.location)
+            // Add to home is built by a later branch.
             IntroUiEvent.ToggleParkRide -> Unit
             is IntroUiEvent.PickStart -> update { withPick(isStart = true, event.stop.stopId, event.stop.name) }
             is IntroUiEvent.PickEnd -> update { withPick(isStart = false, event.stop.stopId, event.stop.name) }
@@ -84,16 +96,28 @@ internal class IntroFlowViewModel(
     private fun next() {
         if (_state.value.step != IntroStep.PARK_RIDE) return
         update { copy(step = IntroStep.FIRST_TRIP) }
-        viewModelScope.launch { ensureSuggestionShown() }
+        markSuggestionShown()
     }
 
+    // Yes starts the location step, and the screen then sends LocationResultReceived. No ends it.
     private fun answerParkRide(yes: Boolean) {
         if (yes) {
-            update { copy(parkRideAnswer = ParkRideAnswer.YES) }
+            parkRideStep.askLocation()
         } else {
-            update { copy(parkRideAnswer = ParkRideAnswer.NO, step = IntroStep.FIRST_TRIP) }
-            viewModelScope.launch { ensureSuggestionShown() }
+            parkRideStep.cancel()
+            update {
+                copy(
+                    parkRideAnswer = ParkRideAnswer.NO,
+                    step = IntroStep.FIRST_TRIP,
+                    parkRideCard = ParkRideCardPhase.None,
+                )
+            }
+            markSuggestionShown()
         }
+    }
+
+    private fun markSuggestionShown() {
+        viewModelScope.launch { ensureSuggestionShown() }
     }
 
     // A press while the button reads Getting ready is not dropped: the finish waits for the stops,

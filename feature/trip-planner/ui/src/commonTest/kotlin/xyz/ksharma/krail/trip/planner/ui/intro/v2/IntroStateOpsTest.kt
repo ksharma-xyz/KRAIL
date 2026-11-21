@@ -7,11 +7,14 @@ import xyz.ksharma.krail.trip.planner.ui.intro.DEFAULT_SUGGESTED_STOPS
 import xyz.ksharma.krail.trip.planner.ui.intro.SuggestedStop
 import xyz.ksharma.krail.trip.planner.ui.intro.SuggestedStops
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroState
+import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideCardPhase
+import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideCardStation
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class IntroStateOpsTest {
 
@@ -112,4 +115,16 @@ class IntroStateOpsTest {
             assertEquals(DEFAULT_SUGGESTED_STOPS, flag.introSuggestedStops(), "flag value $value")
         }
     }
+
+    // region Park & Ride card
+
+    @Test
+    fun `only a location being awaited or a card is in progress or shown`() {
+        assertTrue(ParkRideCardPhase.Locating().isInProgressOrShown())
+        assertTrue(ParkRideCardPhase.Card(ParkRideCardStation("2155384", "Tallawong")).isInProgressOrShown())
+        assertFalse(ParkRideCardPhase.None.isInProgressOrShown())
+        assertFalse(ParkRideCardPhase.NoStationNear.isInProgressOrShown())
+    }
+
+    // endregion
 }

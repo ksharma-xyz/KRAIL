@@ -187,4 +187,19 @@ class ReplacementBusBannerTest {
         assertEquals(DisruptionReason.REPLACEMENT_BUS, assertIs<DisruptionBannerState.Shown>(metroBanner).reason)
         assertEquals(metroAlert, assertIs<DisruptionBannerState.ReplacementBuses>(banner).disruption)
     }
+
+    @Test
+    fun `Given replacement legs with no alert list at all Then the banner has no line alert`() {
+        val noAlerts = journeys(ReplacementBusTripFixtures.CRONULLA_TO_CENTRAL).map { journey ->
+            journey.copy(
+                legs = journey.legs.map { leg ->
+                    if (leg is JourneyCardInfo.Leg.TransportLeg) leg.copy(serviceAlertList = null) else leg
+                }.toImmutableList(),
+            )
+        }
+
+        val banner = replacementBusBanner(noAlerts, DisruptionBannerState.None)
+
+        assertNull(assertIs<DisruptionBannerState.ReplacementBuses>(banner).lineAlert)
+    }
 }

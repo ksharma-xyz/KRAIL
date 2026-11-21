@@ -194,4 +194,9 @@ class TripResponseLegMapperTest {
     )
 
     //endregion
+
+    @Test
+    fun `Given a leg with no transportation When toTransportLegUiModel Then it is not a replacement bus and is dropped`() {
+        assertNull(TripResponse.Leg().toTransportLegUiModel())
+    }
 }

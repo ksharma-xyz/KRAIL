@@ -288,6 +288,22 @@ adb logcat -d | grep -A 30 "FATAL EXCEPTION"
 If a device is not connected, say so plainly and list which of these checks were skipped —
 do not describe a change as verified when only the static checks ran.
 
+## Every PR covers its own lines: 80 percent at least, 90 percent the aim
+
+Codecov comments on the PR with the lines a change left untested, but it does not block the merge
+(`codecov.yml` is informational on purpose). So the check happens before the PR is opened:
+
+```sh
+./gradlew :<each touched module>:koverXmlReportAndroid
+./scripts/patch_coverage.py          # this branch against origin/main; --min 90 for the aim
+```
+
+It prints the percentage of new and changed production lines that run under a test, lists the
+uncovered and partially covered lines, and exits 1 below 80. Below 80 the PR is not ready: write the
+tests for the listed lines, preferring real captured API replies over hand-built objects, and run it
+again. Put the number in the PR's Testing section. A line that cannot be tested (a platform call, a
+preview) is listed in the PR with the reason, not silently left out.
+
 ## Build
 
 Claude may run build/compile/install commands directly (assembleDebug, installDebug, etc.) — no need to ask the user to run them instead.

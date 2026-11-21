@@ -21,7 +21,6 @@ import xyz.ksharma.krail.trip.planner.ui.timetable.business.fixtures.Replacement
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -89,7 +88,12 @@ class DisruptionLoaderTest {
         loader.refresh(trip) {}
         advanceUntilIdle()
 
-        val banner = loader.bannerFor(journeys(ReplacementBusTripFixtures.BANKSTOWN_TO_SYDENHAM_NIGHT), emptySet())
+        // The results after the last metro: every one is a replacement bus, so the metro is missing from them.
+        val allBuses = journeys(ReplacementBusTripFixtures.BANKSTOWN_TO_SYDENHAM_NIGHT)
+            .filter { journey -> journey.legs.filterIsInstance<JourneyCardInfo.Leg.TransportLeg>().all { it.isReplacementBus } }
+        assertTrue(allBuses.isNotEmpty())
+
+        val banner = loader.bannerFor(allBuses, emptySet())
 
         assertEquals(metroAlert, assertIs<DisruptionBannerState.ReplacementBuses>(banner).disruption)
     }
@@ -112,16 +116,15 @@ class DisruptionLoaderTest {
     }
 
     @Test
-    fun `Given replacement legs and no alert loaded Then the banner is bare`() = runTest(dispatcher) {
+    fun `Given replacement legs and no alert loaded Then there is no banner`() = runTest(dispatcher) {
         val loader = loader(this, Repo(Result.success(emptyList())))
         loader.refresh(trip) {}
         advanceUntilIdle()
 
         val banner = loader.bannerFor(journeys(ReplacementBusTripFixtures.CRONULLA_TO_CENTRAL), emptySet())
 
-        val shown = assertIs<DisruptionBannerState.ReplacementBuses>(banner)
-        assertNull(shown.disruption)
-        assertNull(shown.lineAlert)
+        // Nothing to open, so nothing to show: the rows still say "Replacement bus".
+        assertEquals(DisruptionBannerState.None, banner)
     }
 
     @Test

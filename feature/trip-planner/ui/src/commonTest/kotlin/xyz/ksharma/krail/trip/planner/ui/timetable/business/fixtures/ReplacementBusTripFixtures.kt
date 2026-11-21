@@ -5715,4 +5715,2403 @@ internal object ReplacementBusTripFixtures {
          ]
         }
     """.trimIndent()
+
+    /**
+     * Tallawong to Bankstown, searched for Mon 23 Nov 11:40 pm, captured 2026-11-21. The first result is a metro
+     * leg that carries the planner's line alert (with its url) and then a replacement bus (`iconId` 14, no alert).
+     */
+    val TALLAWONG_TO_BANKSTOWN_NIGHT = """
+        {
+         "version": "10.6.21.17",
+         "journeys": [
+          {
+           "rating": 0,
+           "isAdditional": false,
+           "interchanges": 1,
+           "legs": [
+            {
+             "duration": 3444,
+             "origin": {
+              "isGlobalId": true,
+              "id": "2155269",
+              "name": "Tallawong Station, Platform 2, Tallawong",
+              "disassembledName": "Tallawong Station, Platform 2",
+              "type": "platform",
+              "coord": [
+               -33.691705,
+               150.905653
+              ],
+              "niveau": -1,
+              "parent": {
+               "isGlobalId": true,
+               "id": "2155384",
+               "name": "Tallawong Station, Platform 2, Tallawong",
+               "disassembledName": "Tallawong Station, Platform 2",
+               "type": "stop",
+               "parent": {
+                "id": "placeID:95308057:1",
+                "name": "Tallawong",
+                "type": "locality"
+               },
+               "properties": {
+                "stopId": "10101500"
+               },
+               "coord": [
+                -33.691631,
+                150.906006
+               ],
+               "niveau": 0
+              },
+              "departureTimeBaseTimetable": "2026-11-23T12:47:06Z",
+              "departureTimePlanned": "2026-11-23T12:47:06Z",
+              "departureTimeEstimated": "2026-11-23T12:47:06Z",
+              "properties": {
+               "WheelchairAccess": "true",
+               "AREA_NIVEAU_DIVA": "-1",
+               "AREA_NIVEAU_GIS": "-1.00",
+               "stoppingPointPlanned": "Platform 2",
+               "area": "1",
+               "platform": "TLA2",
+               "platformName": "Platform 2",
+               "plannedPlatformName": "Platform 2",
+               "callType": [
+                "NOALIGHTING"
+               ],
+               "accessArray": [
+                {
+                 "stoppointAccess": {
+                  "height": 780,
+                  "equipment": 0,
+                  "maxWeight": 0,
+                  "distanceTrack": 0,
+                  "lengthAvail": 0,
+                  "widthAvail": 0,
+                  "attributes": 0,
+                  "stepFromStreet": 0
+                 }
+                }
+               ]
+              },
+              "modes": [
+               2,
+               5,
+               11
+              ]
+             },
+             "destination": {
+              "isGlobalId": true,
+              "id": "204471",
+              "name": "Sydenham Station, Platform 1, Sydenham",
+              "disassembledName": "Sydenham Station, Platform 1",
+              "type": "platform",
+              "coord": [
+               -33.913707,
+               151.167192
+              ],
+              "niveau": 0,
+              "parent": {
+               "isGlobalId": true,
+               "id": "204420",
+               "name": "Sydenham Station, Platform 1, Sydenham",
+               "disassembledName": "Sydenham Station, Platform 1",
+               "type": "stop",
+               "parent": {
+                "id": "placeID:95338008:1",
+                "name": "Sydenham",
+                "type": "locality"
+               },
+               "properties": {
+                "stopId": "10101326"
+               },
+               "coord": [
+                -33.914459,
+                151.166526
+               ],
+               "niveau": 0
+              },
+              "arrivalTimeBaseTimetable": "2026-11-23T13:44:30Z",
+              "arrivalTimePlanned": "2026-11-23T13:44:30Z",
+              "arrivalTimeEstimated": "2026-11-23T13:44:30Z",
+              "properties": {
+               "WheelchairAccess": "true",
+               "AREA_NIVEAU_DIVA": "0",
+               "AREA_NIVEAU_GIS": "0.00",
+               "stoppingPointPlanned": "Platform 1",
+               "area": "1",
+               "platform": "SYD1",
+               "platformName": "Platform 1",
+               "plannedPlatformName": "Platform 1",
+               "callType": [
+                "NOBOARDING"
+               ],
+               "accessArray": [
+                {
+                 "stoppointAccess": {
+                  "height": 780,
+                  "equipment": 0,
+                  "maxWeight": 0,
+                  "distanceTrack": 0,
+                  "lengthAvail": 0,
+                  "widthAvail": 0,
+                  "attributes": 0
+                 }
+                }
+               ]
+              },
+              "modes": [
+               1,
+               2,
+               5
+              ]
+             },
+             "transportation": {
+              "id": "nsw:030M1: :R:sj2",
+              "name": "Sydney Metro Network M1 Metro North West & Bankstown Line",
+              "disassembledName": "M1",
+              "number": "M1 Metro North West & Bankstown Line",
+              "description": "Tallawong to Bankstown",
+              "product": {
+               "id": 24,
+               "class": 2,
+               "name": "Sydney Metro Network",
+               "iconId": 2
+              },
+              "operator": {
+               "id": "SMNW",
+               "name": "Sydney Metro"
+              },
+              "destination": {
+               "id": "10101326",
+               "name": "Sydenham",
+               "type": "stop"
+              },
+              "properties": {
+               "isTTB": true,
+               "tripCode": 17,
+               "timetablePeriod": "NSW JP",
+               "lineDisplay": "LINE",
+               "globalId": "3001",
+               "RealtimeTripId": "0273-001-121-014:1000",
+               "OperatorURL": "http://transportnsw.info",
+               "FrequencyLine": "1",
+               "gtfsTripId": "3001.nsw-3-M1.1.TA.29.sj2",
+               "attributes": [
+                "PLAN_LOWFLOORVEHICLE",
+                "PLAN_WHEELCHAIRACCESS"
+               ]
+              },
+              "iconId": 24
+             },
+             "stopSequence": [
+              {
+               "isGlobalId": true,
+               "id": "2155269",
+               "name": "Tallawong Station, Platform 2, Tallawong",
+               "disassembledName": "Tallawong Station, Platform 2",
+               "type": "platform",
+               "coord": [
+                -33.691705,
+                150.905653
+               ],
+               "niveau": -1,
+               "parent": {
+                "isGlobalId": true,
+                "id": "2155384",
+                "name": "Tallawong Station, Platform 2, Tallawong",
+                "disassembledName": "Tallawong Station, Platform 2",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95308057:1",
+                 "name": "Tallawong",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101500"
+                },
+                "coord": [
+                 -33.691631,
+                 150.906006
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "-1",
+                "AREA_NIVEAU_GIS": "-1.00",
+                "stoppingPointPlanned": "Platform 2",
+                "area": "1",
+                "platform": "TLA2",
+                "platformName": "Platform 2",
+                "plannedPlatformName": "Platform 2",
+                "callType": [
+                 "NOALIGHTING"
+                ],
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0,
+                   "stepFromStreet": 0
+                  }
+                 }
+                ]
+               },
+               "departureTimePlanned": "2026-11-23T12:47:06Z",
+               "modes": [
+                2,
+                5,
+                11
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "2155267",
+               "name": "Rouse Hill Station, Platform 1, Rouse Hill",
+               "disassembledName": "Rouse Hill Station, Platform 1",
+               "type": "platform",
+               "coord": [
+                -33.691959,
+                150.924357
+               ],
+               "niveau": 2,
+               "parent": {
+                "isGlobalId": true,
+                "id": "2155383",
+                "name": "Rouse Hill Station, Platform 1, Rouse Hill",
+                "disassembledName": "Rouse Hill Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95307020:1",
+                 "name": "Rouse Hill",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101501"
+                },
+                "coord": [
+                 -33.691812,
+                 150.924168
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "2",
+                "AREA_NIVEAU_GIS": "2.00",
+                "stoppingPointPlanned": "Platform 1",
+                "area": "1",
+                "platform": "ROU1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0,
+                   "stepFromStreet": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T12:49:06Z",
+               "departureTimePlanned": "2026-11-23T12:49:36Z",
+               "modes": [
+                2,
+                5,
+                11
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "2155265",
+               "name": "Kellyville Station, Platform 1, Kellyville",
+               "disassembledName": "Kellyville Station, Platform 1",
+               "type": "platform",
+               "coord": [
+                -33.713488,
+                150.935344
+               ],
+               "niveau": 2,
+               "parent": {
+                "isGlobalId": true,
+                "id": "2155382",
+                "name": "Kellyville Station, Platform 1, Kellyville",
+                "disassembledName": "Kellyville Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95307011:1",
+                 "name": "Kellyville",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101502"
+                },
+                "coord": [
+                 -33.713374,
+                 150.935231
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "2",
+                "AREA_NIVEAU_GIS": "2.00",
+                "stoppingPointPlanned": "Platform 1",
+                "area": "1",
+                "platform": "KLV1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0,
+                   "stepFromStreet": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T12:51:54Z",
+               "departureTimePlanned": "2026-11-23T12:52:24Z",
+               "modes": [
+                2,
+                5,
+                11
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "2153402",
+               "name": "Bella Vista Station, Platform 1, Bella Vista",
+               "disassembledName": "Bella Vista Station, Platform 1",
+               "type": "platform",
+               "coord": [
+                -33.730698,
+                150.944123
+               ],
+               "niveau": -1,
+               "parent": {
+                "isGlobalId": true,
+                "id": "2153478",
+                "name": "Bella Vista Station, Platform 1, Bella Vista",
+                "disassembledName": "Bella Vista Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95307004:1",
+                 "name": "Bella Vista",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101503"
+                },
+                "coord": [
+                 -33.730566,
+                 150.94402
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "-1",
+                "stoppingPointPlanned": "Platform 1",
+                "area": "1",
+                "platform": "BEV1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0,
+                   "stepFromStreet": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T12:54:18Z",
+               "departureTimePlanned": "2026-11-23T12:54:48Z",
+               "modes": [
+                2,
+                5,
+                11
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "2153404",
+               "name": "Norwest Station, Platform 1, Norwest",
+               "disassembledName": "Norwest Station, Platform 1",
+               "type": "platform",
+               "coord": [
+                -33.734282,
+                150.963851
+               ],
+               "niveau": -2,
+               "parent": {
+                "isGlobalId": true,
+                "id": "2153477",
+                "name": "Norwest Station, Platform 1, Norwest",
+                "disassembledName": "Norwest Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95307025:1",
+                 "name": "Norwest",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101504"
+                },
+                "coord": [
+                 -33.734617,
+                 150.963522
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "-2",
+                "AREA_NIVEAU_GIS": "-2.00",
+                "stoppingPointPlanned": "Platform 1",
+                "area": "1",
+                "platform": "NWZ1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0,
+                   "stepFromStreet": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T12:56:54Z",
+               "departureTimePlanned": "2026-11-23T12:57:24Z",
+               "modes": [
+                2,
+                5,
+                11
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "2154264",
+               "name": "Hills Showground Station, Platform 1, Castle Hill",
+               "disassembledName": "Hills Showground Station, Platform 1",
+               "type": "platform",
+               "coord": [
+                -33.727755,
+                150.987427
+               ],
+               "niveau": -2,
+               "parent": {
+                "isGlobalId": true,
+                "id": "2154392",
+                "name": "Hills Showground Station, Platform 1, Castle Hill",
+                "disassembledName": "Hills Showground Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95307007:1",
+                 "name": "Castle Hill",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101505"
+                },
+                "coord": [
+                 -33.727912,
+                 150.987025
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "-2",
+                "AREA_NIVEAU_GIS": "-2.00",
+                "stoppingPointPlanned": "Platform 1",
+                "area": "1",
+                "platform": "HIS1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0,
+                   "stepFromStreet": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T12:59:30Z",
+               "departureTimePlanned": "2026-11-23T13:00:00Z",
+               "modes": [
+                2,
+                5,
+                11
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "2154262",
+               "name": "Castle Hill Station, Platform 1, Castle Hill",
+               "disassembledName": "Castle Hill Station, Platform 1",
+               "type": "platform",
+               "coord": [
+                -33.731469,
+                151.00768
+               ],
+               "niveau": -2,
+               "parent": {
+                "isGlobalId": true,
+                "id": "2154391",
+                "name": "Castle Hill Station, Platform 1, Castle Hill",
+                "disassembledName": "Castle Hill Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95307007:1",
+                 "name": "Castle Hill",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101506"
+                },
+                "coord": [
+                 -33.731626,
+                 151.007288
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "-2",
+                "AREA_NIVEAU_GIS": "-2.00",
+                "stoppingPointPlanned": "Platform 1",
+                "area": "1",
+                "platform": "CSH1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0,
+                   "stepFromStreet": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T13:01:54Z",
+               "departureTimePlanned": "2026-11-23T13:02:24Z",
+               "modes": [
+                2,
+                5,
+                11
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "2126159",
+               "name": "Cherrybrook Station, Platform 1, Cherrybrook",
+               "disassembledName": "Cherrybrook Station, Platform 1",
+               "type": "platform",
+               "coord": [
+                -33.736728,
+                151.032084
+               ],
+               "niveau": -2,
+               "parent": {
+                "isGlobalId": true,
+                "id": "2126158",
+                "name": "Cherrybrook Station, Platform 1, Cherrybrook",
+                "disassembledName": "Cherrybrook Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95325012:1",
+                 "name": "Cherrybrook",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101507"
+                },
+                "coord": [
+                 -33.736659,
+                 151.031994
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "-1",
+                "AREA_NIVEAU_GIS": "-2.00",
+                "stoppingPointPlanned": "Platform 1",
+                "area": "1",
+                "platform": "CEB1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0,
+                   "stepFromStreet": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T13:04:36Z",
+               "departureTimePlanned": "2026-11-23T13:05:06Z",
+               "modes": [
+                2,
+                5,
+                11
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "2121225",
+               "name": "Epping Station, Platform 5, Epping",
+               "disassembledName": "Epping Station, Platform 5",
+               "type": "platform",
+               "coord": [
+                -33.772875,
+                151.082278
+               ],
+               "niveau": -2,
+               "parent": {
+                "isGlobalId": true,
+                "id": "212110",
+                "name": "Epping Station, Platform 5, Epping",
+                "disassembledName": "Epping Station, Platform 5",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95325016:1",
+                 "name": "Epping",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101429"
+                },
+                "coord": [
+                 -33.772837,
+                 151.082082
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "-2",
+                "AREA_NIVEAU_GIS": "-2.00",
+                "stoppingPointPlanned": "Platform 5",
+                "area": "3",
+                "platform": "EPG5",
+                "platformName": "Platform 5",
+                "plannedPlatformName": "Platform 5",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0,
+                   "stepFromStreet": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T13:10:06Z",
+               "departureTimePlanned": "2026-11-23T13:10:42Z",
+               "modes": [
+                1,
+                2,
+                5,
+                11
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "2113351",
+               "name": "Macquarie University Station, Platform 1, Macquarie Park",
+               "disassembledName": "Macquarie University Station, Platform 1",
+               "type": "platform",
+               "coord": [
+                -33.777596,
+                151.118314
+               ],
+               "niveau": -3,
+               "parent": {
+                "isGlobalId": true,
+                "id": "211310",
+                "name": "Macquarie University Station, Platform 1, Macquarie Park",
+                "disassembledName": "Macquarie University Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95352007:1",
+                 "name": "Macquarie Park",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101508"
+                },
+                "coord": [
+                 -33.777282,
+                 151.118267
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "-3",
+                "stoppingPointPlanned": "Platform 1",
+                "area": "1",
+                "platform": "MCU1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0,
+                   "stepFromStreet": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T13:13:48Z",
+               "departureTimePlanned": "2026-11-23T13:14:18Z",
+               "modes": [
+                2,
+                5,
+                11
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "2113341",
+               "name": "Macquarie Park Station, Platform 1, Macquarie Park",
+               "disassembledName": "Macquarie Park Station, Platform 1",
+               "type": "platform",
+               "coord": [
+                -33.784982,
+                151.128337
+               ],
+               "niveau": -3,
+               "parent": {
+                "isGlobalId": true,
+                "id": "211340",
+                "name": "Macquarie Park Station, Platform 1, Macquarie Park",
+                "disassembledName": "Macquarie Park Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95352007:1",
+                 "name": "Macquarie Park",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101509"
+                },
+                "coord": [
+                 -33.78508,
+                 151.128374
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "-3",
+                "stoppingPointPlanned": "Platform 1",
+                "area": "1",
+                "platform": "MQP1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0,
+                   "stepFromStreet": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T13:15:48Z",
+               "departureTimePlanned": "2026-11-23T13:16:18Z",
+               "modes": [
+                2,
+                5,
+                11
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "2113361",
+               "name": "North Ryde Station, Platform 1, North Ryde",
+               "disassembledName": "North Ryde Station, Platform 1",
+               "type": "platform",
+               "coord": [
+                -33.794171,
+                151.13806
+               ],
+               "niveau": -3,
+               "parent": {
+                "isGlobalId": true,
+                "id": "211320",
+                "name": "North Ryde Station, Platform 1, North Ryde",
+                "disassembledName": "North Ryde Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95352010:1",
+                 "name": "North Ryde",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101510"
+                },
+                "coord": [
+                 -33.794218,
+                 151.137987
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "-3",
+                "stoppingPointPlanned": "Platform 1",
+                "area": "1",
+                "platform": "NRQ1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0,
+                   "stepFromStreet": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T13:17:54Z",
+               "departureTimePlanned": "2026-11-23T13:18:24Z",
+               "modes": [
+                2,
+                5
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "2067142",
+               "name": "Chatswood Station, Platform 2, Chatswood",
+               "disassembledName": "Chatswood Station, Platform 2",
+               "type": "platform",
+               "coord": [
+                -33.797469,
+                151.180988
+               ],
+               "niveau": 0,
+               "parent": {
+                "isGlobalId": true,
+                "id": "206710",
+                "name": "Chatswood Station, Platform 2, Chatswood",
+                "disassembledName": "Chatswood Station, Platform 2",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95362004:1",
+                 "name": "Chatswood",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101117"
+                },
+                "coord": [
+                 -33.797237,
+                 151.180934
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "AREA_NIVEAU_GIS": "0.00",
+                "stoppingPointPlanned": "Platform 2",
+                "area": "1",
+                "platform": "CWD2",
+                "platformName": "Platform 2",
+                "plannedPlatformName": "Platform 2",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T13:23:24Z",
+               "departureTimePlanned": "2026-11-23T13:24:06Z",
+               "modes": [
+                1,
+                2,
+                5,
+                11
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "2065163",
+               "name": "Crows Nest Station, Platform 1, Crows Nest",
+               "disassembledName": "Crows Nest Station, Platform 1",
+               "type": "platform",
+               "coord": [
+                -33.825801,
+                151.199372
+               ],
+               "niveau": -5,
+               "parent": {
+                "isGlobalId": true,
+                "id": "206516",
+                "name": "Crows Nest Station, Platform 1, Crows Nest",
+                "disassembledName": "Crows Nest Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95343004:1",
+                 "name": "Crows Nest",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101511"
+                },
+                "coord": [
+                 -33.82562,
+                 151.199137
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "-2",
+                "AREA_NIVEAU_GIS": "-5.00",
+                "stoppingPointPlanned": "Platform 1",
+                "area": "1",
+                "platform": "CRO1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T13:27:06Z",
+               "departureTimePlanned": "2026-11-23T13:27:36Z",
+               "modes": [
+                2,
+                5,
+                11
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "2060115",
+               "name": "Victoria Cross Station, Platform 1, North Sydney",
+               "disassembledName": "Victoria Cross Station, Platform 1",
+               "type": "platform",
+               "coord": [
+                -33.836219,
+                151.207494
+               ],
+               "niveau": -5,
+               "parent": {
+                "isGlobalId": true,
+                "id": "206044",
+                "name": "Victoria Cross Station, Platform 1, North Sydney",
+                "disassembledName": "Victoria Cross Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95343010:1",
+                 "name": "North Sydney",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101512"
+                },
+                "coord": [
+                 -33.837727,
+                 151.207385
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "-5",
+                "AREA_NIVEAU_GIS": "-5.00",
+                "stoppingPointPlanned": "Platform 1",
+                "area": "1",
+                "platform": "VIC1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T13:29:18Z",
+               "departureTimePlanned": "2026-11-23T13:29:48Z",
+               "modes": [
+                2,
+                5,
+                11
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "2000460",
+               "name": "Barangaroo Station, Platform 1, Barangaroo",
+               "disassembledName": "Barangaroo Station, Platform 1",
+               "type": "platform",
+               "coord": [
+                -33.859314,
+                151.202656
+               ],
+               "niveau": -5,
+               "parent": {
+                "isGlobalId": true,
+                "id": "200046",
+                "name": "Barangaroo Station, Platform 1, Barangaroo",
+                "disassembledName": "Barangaroo Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95301004:1",
+                 "name": "Barangaroo",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101513"
+                },
+                "coord": [
+                 -33.859577,
+                 151.202615
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "-5",
+                "AREA_NIVEAU_GIS": "-5.00",
+                "stoppingPointPlanned": "Platform 1",
+                "area": "1",
+                "platform": "BAO1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T13:32:18Z",
+               "departureTimePlanned": "2026-11-23T13:32:48Z",
+               "modes": [
+                2,
+                5
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "2000463",
+               "name": "Martin Place Station, Platform 3, Sydney",
+               "disassembledName": "Martin Place Station, Platform 3",
+               "type": "platform",
+               "coord": [
+                -33.867135,
+                151.210568
+               ],
+               "niveau": -5,
+               "parent": {
+                "isGlobalId": true,
+                "id": "200030",
+                "name": "Martin Place Station, Platform 3, Sydney",
+                "disassembledName": "Martin Place Station, Platform 3",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95301001:1",
+                 "name": "Sydney",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101106"
+                },
+                "coord": [
+                 -33.867648,
+                 151.210583
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "-5",
+                "AREA_NIVEAU_GIS": "-5.00",
+                "stoppingPointPlanned": "Platform 3",
+                "area": "2",
+                "platform": "MPL3",
+                "platformName": "Platform 3",
+                "plannedPlatformName": "Platform 3",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T13:34:30Z",
+               "departureTimePlanned": "2026-11-23T13:35:12Z",
+               "modes": [
+                1,
+                2
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "2000464",
+               "name": "Gadigal Station, Platform 1, Sydney",
+               "disassembledName": "Gadigal Station, Platform 1",
+               "type": "platform",
+               "coord": [
+                -33.873865,
+                151.208998
+               ],
+               "niveau": -5,
+               "parent": {
+                "isGlobalId": true,
+                "id": "200066",
+                "name": "Gadigal Station, Platform 1, Sydney",
+                "disassembledName": "Gadigal Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95301001:1",
+                 "name": "Sydney",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101514"
+                },
+                "coord": [
+                 -33.873081,
+                 151.208722
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "-5",
+                "AREA_NIVEAU_GIS": "-5.00",
+                "stoppingPointPlanned": "Platform 1",
+                "area": "1",
+                "platform": "GDL1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T13:36:18Z",
+               "departureTimePlanned": "2026-11-23T13:36:48Z",
+               "modes": [
+                2
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "2000467",
+               "name": "Central Station, Platform 27, Sydney",
+               "disassembledName": "Central Station, Platform 27",
+               "type": "platform",
+               "coord": [
+                -33.884142,
+                151.206436
+               ],
+               "niveau": -2,
+               "parent": {
+                "isGlobalId": true,
+                "id": "200060",
+                "name": "Central Station, Platform 27, Sydney",
+                "disassembledName": "Central Station, Platform 27",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95301001:1",
+                 "name": "Sydney",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101100"
+                },
+                "coord": [
+                 -33.884024,
+                 151.206203
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "-3",
+                "AREA_NIVEAU_GIS": "-2.00",
+                "stoppingPointPlanned": "Platform 27",
+                "area": "14",
+                "platform": "CE27",
+                "platformName": "Platform 27",
+                "plannedPlatformName": "Platform 27",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T13:38:18Z",
+               "departureTimePlanned": "2026-11-23T13:39:00Z",
+               "modes": [
+                1,
+                2,
+                4,
+                5,
+                7,
+                11
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "2017078",
+               "name": "Waterloo Station, Platform 2, Waterloo",
+               "disassembledName": "Waterloo Station, Platform 2",
+               "type": "platform",
+               "coord": [
+                -33.897497,
+                151.200318
+               ],
+               "niveau": -5,
+               "parent": {
+                "isGlobalId": true,
+                "id": "201721",
+                "name": "Waterloo Station, Platform 2, Waterloo",
+                "disassembledName": "Waterloo Station, Platform 2",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95301031:1",
+                 "name": "Waterloo",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101515"
+                },
+                "coord": [
+                 -33.897445,
+                 151.20024
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "-5",
+                "AREA_NIVEAU_GIS": "-5.00",
+                "stoppingPointPlanned": "Platform 2",
+                "area": "1",
+                "platform": "WLO2",
+                "platformName": "Platform 2",
+                "plannedPlatformName": "Platform 2",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T13:40:36Z",
+               "departureTimePlanned": "2026-11-23T13:41:06Z",
+               "modes": [
+                2,
+                5,
+                11
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "204471",
+               "name": "Sydenham Station, Platform 1, Sydenham",
+               "disassembledName": "Sydenham Station, Platform 1",
+               "type": "platform",
+               "coord": [
+                -33.913707,
+                151.167192
+               ],
+               "niveau": 0,
+               "parent": {
+                "isGlobalId": true,
+                "id": "204420",
+                "name": "Sydenham Station, Platform 1, Sydenham",
+                "disassembledName": "Sydenham Station, Platform 1",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95338008:1",
+                 "name": "Sydenham",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101326"
+                },
+                "coord": [
+                 -33.914459,
+                 151.166526
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "AREA_NIVEAU_GIS": "0.00",
+                "stoppingPointPlanned": "Platform 1",
+                "area": "1",
+                "platform": "SYD1",
+                "platformName": "Platform 1",
+                "plannedPlatformName": "Platform 1",
+                "callType": [
+                 "NOBOARDING"
+                ],
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T13:44:30Z",
+               "modes": [
+                1,
+                2,
+                5
+               ]
+              }
+             ],
+             "footPathInfo": [
+              {
+               "position": "AFTER",
+               "duration": 120,
+               "footPathElem": [
+                {
+                 "description": "",
+                 "type": "LEVEL",
+                 "levelFrom": 0,
+                 "levelTo": 0,
+                 "level": "LEVEL",
+                 "origin": {
+                  "location": {
+                   "id": "204420",
+                   "isGlobalId": true,
+                   "type": "stop",
+                   "name": "Sydenham Station",
+                   "coord": [
+                    -33.913707,
+                    151.167192
+                   ],
+                   "properties": {
+                    "area": "1",
+                    "georef": "1003749983:5:GDAV:100",
+                    "areaGid": "",
+                    "areaType": 65
+                   }
+                  },
+                  "area": "1",
+                  "georef": "1003749983:5:GDAV:100"
+                 },
+                 "destination": {
+                  "location": {
+                   "id": "204420",
+                   "isGlobalId": true,
+                   "type": "stop",
+                   "name": "Sydenham Station",
+                   "coord": [
+                    -33.913642,
+                    151.167243
+                   ],
+                   "properties": {
+                    "area": "34",
+                    "georef": "0:0::100",
+                    "areaGid": "",
+                    "areaType": 4096
+                   }
+                  }
+                 },
+                 "attributes": {
+                  "duration": 1,
+                  "distance": 0,
+                  "narrowestWidth": -1,
+                  "elevLength": 0,
+                  "elevWidth": 0,
+                  "elevDoorWidth": 0,
+                  "rampLength": 0,
+                  "rampWidth": 0,
+                  "rampInclination": 0,
+                  "numberSteps": 0,
+                  "maxStepHeight": 0
+                 },
+                 "openingHours": []
+                },
+                {
+                 "description": "",
+                 "type": "LEVEL",
+                 "levelFrom": 0,
+                 "levelTo": 0,
+                 "level": "LEVEL",
+                 "origin": {
+                  "location": {
+                   "id": "204420",
+                   "isGlobalId": true,
+                   "type": "stop",
+                   "name": "Sydenham Station",
+                   "coord": [
+                    -33.913642,
+                    151.167243
+                   ],
+                   "properties": {
+                    "area": "34",
+                    "georef": "0:0::100",
+                    "areaGid": "",
+                    "areaType": 4096
+                   }
+                  },
+                  "area": "34",
+                  "georef": "0:0::100"
+                 },
+                 "destination": {
+                  "location": {
+                   "id": "204420",
+                   "isGlobalId": true,
+                   "type": "stop",
+                   "name": "Sydenham Station",
+                   "coord": [
+                    -33.913563,
+                    151.167174
+                   ],
+                   "properties": {
+                    "area": "35",
+                    "georef": "1003749985:0:GDAV:100",
+                    "areaGid": "",
+                    "areaType": 32
+                   }
+                  }
+                 },
+                 "attributes": {
+                  "duration": 1,
+                  "distance": 0,
+                  "narrowestWidth": -1,
+                  "elevLength": 0,
+                  "elevWidth": 0,
+                  "elevDoorWidth": 0,
+                  "rampLength": 0,
+                  "rampWidth": 0,
+                  "rampInclination": 0,
+                  "numberSteps": 0,
+                  "maxStepHeight": 0
+                 },
+                 "openingHours": []
+                },
+                {
+                 "description": "",
+                 "type": "LEVEL",
+                 "levelFrom": 0,
+                 "levelTo": 0,
+                 "level": "LEVEL",
+                 "origin": {
+                  "location": {
+                   "id": "204420",
+                   "isGlobalId": true,
+                   "type": "stop",
+                   "name": "Sydenham Station",
+                   "coord": [
+                    -33.913563,
+                    151.167174
+                   ],
+                   "properties": {
+                    "area": "35",
+                    "georef": "1003749985:0:GDAV:100",
+                    "areaGid": "",
+                    "areaType": 32
+                   }
+                  },
+                  "area": "35",
+                  "georef": "1003749985:0:GDAV:100"
+                 },
+                 "destination": {
+                  "location": {
+                   "id": "204420",
+                   "isGlobalId": true,
+                   "type": "stop",
+                   "name": "Sydenham Station",
+                   "coord": [
+                    -33.914281,
+                    151.166194
+                   ],
+                   "properties": {
+                    "area": "12",
+                    "georef": "1001958004:84:GDAV:100",
+                    "areaGid": "",
+                    "areaType": 65
+                   }
+                  }
+                 },
+                 "attributes": {
+                  "duration": 10,
+                  "distance": 0,
+                  "narrowestWidth": -1,
+                  "elevLength": 0,
+                  "elevWidth": 0,
+                  "elevDoorWidth": 0,
+                  "rampLength": 0,
+                  "rampWidth": 0,
+                  "rampInclination": 0,
+                  "numberSteps": 0,
+                  "maxStepHeight": 0
+                 },
+                 "openingHours": []
+                }
+               ]
+              }
+             ],
+             "footPathInfoRedundant": true,
+             "infos": [
+              {
+               "timestamps": {
+                "creation": "2026-11-09T00:45:00Z"
+               },
+               "priority": "normal",
+               "id": "ems-81504",
+               "version": 164790,
+               "type": "lineInfo",
+               "urlText": "Buses replace metro services between Bankstown and Sydenham",
+               "url": "https://transportnsw.info/alerts/details#/ems-81504",
+               "content": "<div><strong>Monday 23 November</strong></div>\n<ul>\n<li><strong>From 11.20pm</strong>, buses replace metro services from Sydenham to Bankstown.</li>\n<li><strong>From 11.40pm</strong>, buses replace metro services from Bankstown to Sydenham.</li>\n<li>Services run between Sydenham and Tallawong, to the normal frequency.</li>\n<li>The last metro services leave:<br />-&nbsp;Sydenham at 23:15, arriving Bankstown at 23:37<br />- Bankstown at 23:33, arriving Sydenham at 23:54<br /><br /></li>\n<li><a href=\"https://transportnsw.info/trip-planner\" target=\"_blank\" rel=\"noopener\">Plan your trip</a> before you travel for up-to-date real time information. You can also subscribe to <a href=\"https://transportnsw.info/travel-info/ways-to-get-around/train/about-trackwork#subscribe\" target=\"_blank\" rel=\"noopener\">planned trackwork alerts</a>.</li>\n</ul>\n<div>&nbsp;</div>\n<div><strong>Bus routes</strong><br />1M&nbsp; &nbsp;Bankstown, all stations to Sydenham and return<br />2M&nbsp; &nbsp;Bankstown, all stations to Belmore, express to Sydenham and return<br />3M&nbsp; &nbsp;Campsie, Canterbury, Sydenham and return</div>\n<div>&nbsp;</div>\n<div><br /><strong>Replacement buses</strong></div>\n<ul>\n<li>Most replacement buses are Opal-enabled. Tap on and off with a valid Opal or contactless card. Fines apply without a valid ticket.</li>\n<li>Bikes aren&rsquo;t allowed on replacement buses. Use a nearby bike shed or locker.</li>\n<li>Services may be delayed or cancelled due to driver shortages. We're working to minimise disruptions and keep your journey safe.<br /><br /></li>\n</ul>",
+               "subtitle": "Buses replace metro services between Bankstown and Sydenham"
+              }
+             ],
+             "pathDescriptions": [
+              {
+               "turnDirection": "UNKNOWN",
+               "manoeuvre": "LEAVE",
+               "name": "Leave Commuter train M1 Metro North West & Bankstown Line against opposite direction of travel",
+               "coord": [
+                -33.913707,
+                151.167181
+               ],
+               "duration": 0,
+               "cumDuration": 0,
+               "distance": 0,
+               "cumDistance": 0,
+               "fromCoordsIndex": 0,
+               "toCoordsIndex": 0
+              },
+              {
+               "turnDirection": "STRAIGHT",
+               "manoeuvre": "KEEP",
+               "name": "",
+               "coord": [
+                -33.913707,
+                151.167181
+               ],
+               "skyDirection": 50,
+               "duration": 8,
+               "cumDuration": 8,
+               "distance": 9,
+               "cumDistance": 9,
+               "fromCoordsIndex": 0,
+               "toCoordsIndex": 1,
+               "properties": {
+                "TRACK_SURFACE": "COBBLE"
+               }
+              },
+              {
+               "turnDirection": "LEFT",
+               "manoeuvre": "TURN",
+               "name": "",
+               "coord": [
+                -33.91365,
+                151.167254
+               ],
+               "skyDirection": 322,
+               "duration": 10,
+               "cumDuration": 18,
+               "distance": 11,
+               "cumDistance": 20,
+               "fromCoordsIndex": 1,
+               "toCoordsIndex": 2,
+               "properties": {
+                "OUTDOOR_TYPE": "HIKING_TRAIL",
+                "TRACK_SURFACE": "COBBLE"
+               }
+              },
+              {
+               "turnDirection": "LEFT",
+               "manoeuvre": "TURN",
+               "name": "",
+               "coord": [
+                -33.913572,
+                151.167175
+               ],
+               "skyDirection": 224,
+               "duration": 108,
+               "cumDuration": 126,
+               "distance": 120,
+               "cumDistance": 141,
+               "fromCoordsIndex": 2,
+               "toCoordsIndex": 8,
+               "properties": {
+                "OUTDOOR_TYPE": "HIKING_TRAIL",
+                "TRACK_SURFACE": "COBBLE"
+               }
+              },
+              {
+               "turnDirection": "UNKNOWN",
+               "manoeuvre": "ENTER",
+               "name": "Enter Low platform bus 2M",
+               "coord": [
+                -33.914272,
+                151.166193
+               ],
+               "duration": 0,
+               "cumDuration": 126,
+               "distance": 0,
+               "cumDistance": 141,
+               "fromCoordsIndex": 8,
+               "toCoordsIndex": 8,
+               "properties": {
+                "OUTDOOR_TYPE": "HIKING_TRAIL"
+               }
+              }
+             ],
+             "interchange": {
+              "desc": "Fussweg",
+              "type": 100
+             },
+             "properties": {
+              "vehicleAccess": [
+               {
+                "height": 0,
+                "halfWidth": 0,
+                "doorWidth": 0,
+                "attributes": 1073741824,
+                "areaToStay": 0,
+                "areaToMove": 0,
+                "equipments": [
+                 {
+                  "vehicleEquipment": {
+                   "equipmentType": 1,
+                   "length": 0,
+                   "width": 0,
+                   "lengthAtPl": 0,
+                   "widthAtPl": 0,
+                   "maxWeight": 0
+                  }
+                 }
+                ]
+               }
+              ],
+              "PlanLowFloorVehicle": "1",
+              "PlanWheelChairAccess": "1"
+             }
+            },
+            {
+             "duration": 1920,
+             "origin": {
+              "isGlobalId": true,
+              "id": "2204125",
+              "name": "Sydenham Station, Railway Pde, Stand C, Sydenham",
+              "disassembledName": "Sydenham Station, Railway Pde, Stand C",
+              "type": "platform",
+              "coord": [
+               -33.914281,
+               151.166194
+              ],
+              "niveau": 0,
+              "parent": {
+               "isGlobalId": true,
+               "id": "204420",
+               "name": "Sydenham Station, Railway Pde, Stand C, Sydenham",
+               "disassembledName": "Sydenham Station, Railway Pde, Stand C",
+               "type": "stop",
+               "parent": {
+                "id": "placeID:95338008:1",
+                "name": "Sydenham",
+                "type": "locality"
+               },
+               "properties": {
+                "stopId": "10101326"
+               },
+               "coord": [
+                -33.914459,
+                151.166526
+               ],
+               "niveau": 0
+              },
+              "departureTimeBaseTimetable": "2026-11-23T13:57:00Z",
+              "departureTimePlanned": "2026-11-23T13:57:00Z",
+              "departureTimeEstimated": "2026-11-23T13:57:00Z",
+              "properties": {
+               "WheelchairAccess": "true",
+               "AREA_NIVEAU_DIVA": "0",
+               "AREA_NIVEAU_GIS": "0.00",
+               "stoppingPointPlanned": "Sydenham Station, Railway Pde, Stand C",
+               "area": "12",
+               "platform": "C",
+               "platformName": "Sydenham Station, Railway Pde, Stand C",
+               "plannedPlatformName": "Sydenham Station, Railway Pde, Stand C",
+               "accessArray": [
+                {
+                 "stoppointAccess": {
+                  "height": 780,
+                  "equipment": 0,
+                  "maxWeight": 0,
+                  "distanceTrack": 0,
+                  "lengthAvail": 0,
+                  "widthAvail": 0,
+                  "attributes": 0
+                 }
+                }
+               ]
+              },
+              "modes": [
+               1,
+               2,
+               5
+              ]
+             },
+             "destination": {
+              "isGlobalId": true,
+              "id": "220018",
+              "name": "Bankstown Station, Restwell St, Bankstown",
+              "disassembledName": "Bankstown Station, Restwell St",
+              "type": "platform",
+              "coord": [
+               -33.918638,
+               151.035005
+              ],
+              "niveau": 0,
+              "parent": {
+               "isGlobalId": true,
+               "id": "220010",
+               "name": "Bankstown Station, Restwell St, Bankstown",
+               "disassembledName": "Bankstown Station, Restwell St",
+               "type": "stop",
+               "parent": {
+                "id": "placeID:95305001:1",
+                "name": "Bankstown",
+                "type": "locality"
+               },
+               "properties": {
+                "stopId": "10101401"
+               },
+               "coord": [
+                -33.917848,
+                151.034654
+               ],
+               "niveau": 0
+              },
+              "arrivalTimeBaseTimetable": "2026-11-23T14:29:00Z",
+              "arrivalTimePlanned": "2026-11-23T14:29:00Z",
+              "arrivalTimeEstimated": "2026-11-23T14:29:00Z",
+              "properties": {
+               "WheelchairAccess": "true",
+               "AREA_NIVEAU_DIVA": "0",
+               "stoppingPointPlanned": "Bankstown Station, Restwell St",
+               "area": "15",
+               "platform": "X1",
+               "platformName": "Bankstown Station, Restwell St",
+               "plannedPlatformName": "Bankstown Station, Restwell St",
+               "accessArray": [
+                {
+                 "stoppointAccess": {
+                  "height": 780,
+                  "equipment": 0,
+                  "maxWeight": 0,
+                  "distanceTrack": 0,
+                  "lengthAvail": 0,
+                  "widthAvail": 0,
+                  "attributes": 0
+                 }
+                }
+               ]
+              },
+              "modes": [
+               1,
+               2,
+               5,
+               11
+              ]
+             },
+             "transportation": {
+              "id": "nsw:3102M: :H:sj2",
+              "name": "Temporary buses 2M",
+              "disassembledName": "2M",
+              "number": "2M",
+              "description": "Unknown",
+              "product": {
+               "id": 14,
+               "class": 5,
+               "name": "Temporary buses",
+               "iconId": 5
+              },
+              "operator": {
+               "id": "7066",
+               "name": "U-Go Mobility"
+              },
+              "destination": {
+               "id": "10101401",
+               "name": "Bankstown Station: Restwell St",
+               "type": "stop"
+              },
+              "properties": {
+               "isTTB": true,
+               "tripCode": 17,
+               "timetablePeriod": "NSW JP",
+               "lineDisplay": "LINE",
+               "globalId": "3001",
+               "RealtimeTripId": "2790428",
+               "OperatorURL": "http://transportnsw.info",
+               "gtfsTripId": "3001.nsw-31-2M.1.TA.15.sj2",
+               "attributes": [
+                "PLAN_LOWFLOORVEHICLE",
+                "PLAN_WHEELCHAIRACCESS"
+               ]
+              },
+              "iconId": 14
+             },
+             "stopSequence": [
+              {
+               "isGlobalId": true,
+               "id": "2204125",
+               "name": "Sydenham Station, Railway Pde, Stand C, Sydenham",
+               "disassembledName": "Sydenham Station, Railway Pde, Stand C",
+               "type": "platform",
+               "coord": [
+                -33.914281,
+                151.166194
+               ],
+               "niveau": 0,
+               "parent": {
+                "isGlobalId": true,
+                "id": "204420",
+                "name": "Sydenham Station, Railway Pde, Stand C, Sydenham",
+                "disassembledName": "Sydenham Station, Railway Pde, Stand C",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95338008:1",
+                 "name": "Sydenham",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101326"
+                },
+                "coord": [
+                 -33.914459,
+                 151.166526
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "AREA_NIVEAU_GIS": "0.00",
+                "stoppingPointPlanned": "Sydenham Station, Railway Pde, Stand C",
+                "area": "12",
+                "platform": "C",
+                "platformName": "Sydenham Station, Railway Pde, Stand C",
+                "plannedPlatformName": "Sydenham Station, Railway Pde, Stand C",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0
+                  }
+                 }
+                ]
+               },
+               "departureTimePlanned": "2026-11-23T13:57:00Z",
+               "modes": [
+                1,
+                2,
+                5
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "219227",
+               "name": "Bridge Rd opp Belmore Station, Belmore",
+               "disassembledName": "Bridge Rd opp Belmore Station",
+               "type": "platform",
+               "coord": [
+                -33.917824,
+                151.087741
+               ],
+               "niveau": 0,
+               "parent": {
+                "isGlobalId": true,
+                "id": "219210",
+                "name": "Bridge Rd opp Belmore Station, Belmore",
+                "disassembledName": "Bridge Rd opp Belmore Station",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95315003:1",
+                 "name": "Belmore",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101397"
+                },
+                "coord": [
+                 -33.917225,
+                 151.088415
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Bridge Rd opp Belmore Station",
+                "area": "13",
+                "platform": "X5",
+                "platformName": "Bridge Rd opp Belmore Station",
+                "plannedPlatformName": "Bridge Rd opp Belmore Station",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T14:12:00Z",
+               "departureTimePlanned": "2026-11-23T14:12:00Z",
+               "modes": [
+                2,
+                5,
+                11
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "219527",
+               "name": "Lakemba Station, The Boulevarde, Stand E, Lakemba",
+               "disassembledName": "Lakemba Station, The Boulevarde, Stand E",
+               "type": "platform",
+               "coord": [
+                -33.920274,
+                151.07664
+               ],
+               "niveau": 0,
+               "parent": {
+                "isGlobalId": true,
+                "id": "219510",
+                "name": "Lakemba Station, The Boulevarde, Stand E, Lakemba",
+                "disassembledName": "Lakemba Station, The Boulevarde, Stand E",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95315011:1",
+                 "name": "Lakemba",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101398"
+                },
+                "coord": [
+                 -33.919961,
+                 151.076311
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Lakemba Station, The Boulevarde, Stand E",
+                "area": "15",
+                "platform": "E",
+                "platformName": "Lakemba Station, The Boulevarde, Stand E",
+                "plannedPlatformName": "Lakemba Station, The Boulevarde, Stand E",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T14:16:00Z",
+               "departureTimePlanned": "2026-11-23T14:16:00Z",
+               "modes": [
+                2,
+                5,
+                11
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "2195109",
+               "name": "The Boulevarde opp Wiley Park Station, Wiley Park",
+               "disassembledName": "The Boulevarde opp Wiley Park Station",
+               "type": "platform",
+               "coord": [
+                -33.923074,
+                151.068008
+               ],
+               "niveau": 0,
+               "parent": {
+                "isGlobalId": true,
+                "id": "219520",
+                "name": "The Boulevarde opp Wiley Park Station, Wiley Park",
+                "disassembledName": "The Boulevarde opp Wiley Park Station",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95315014:1",
+                 "name": "Wiley Park",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101399"
+                },
+                "coord": [
+                 -33.922762,
+                 151.067917
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "The Boulevarde opp Wiley Park Station",
+                "area": "12",
+                "platform": "X2",
+                "platformName": "The Boulevarde opp Wiley Park Station",
+                "plannedPlatformName": "The Boulevarde opp Wiley Park Station",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T14:19:00Z",
+               "departureTimePlanned": "2026-11-23T14:19:00Z",
+               "modes": [
+                2,
+                5,
+                11
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "2196242",
+               "name": "Punchbowl Station, The Boulevarde, Stand B, Punchbowl",
+               "disassembledName": "Punchbowl Station, The Boulevarde, Stand B",
+               "type": "platform",
+               "coord": [
+                -33.925866,
+                151.056056
+               ],
+               "niveau": 0,
+               "parent": {
+                "isGlobalId": true,
+                "id": "219610",
+                "name": "Punchbowl Station, The Boulevarde, Stand B, Punchbowl",
+                "disassembledName": "Punchbowl Station, The Boulevarde, Stand B",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95315021:1",
+                 "name": "Punchbowl",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101400"
+                },
+                "coord": [
+                 -33.925405,
+                 151.055548
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Punchbowl Station, The Boulevarde, Stand B",
+                "area": "12",
+                "platform": "B",
+                "platformName": "Punchbowl Station, The Boulevarde, Stand B",
+                "plannedPlatformName": "Punchbowl Station, The Boulevarde, Stand B",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T14:22:00Z",
+               "departureTimePlanned": "2026-11-23T14:22:00Z",
+               "modes": [
+                2,
+                5,
+                11
+               ]
+              },
+              {
+               "isGlobalId": true,
+               "id": "220018",
+               "name": "Bankstown Station, Restwell St, Bankstown",
+               "disassembledName": "Bankstown Station, Restwell St",
+               "type": "platform",
+               "coord": [
+                -33.918638,
+                151.035005
+               ],
+               "niveau": 0,
+               "parent": {
+                "isGlobalId": true,
+                "id": "220010",
+                "name": "Bankstown Station, Restwell St, Bankstown",
+                "disassembledName": "Bankstown Station, Restwell St",
+                "type": "stop",
+                "parent": {
+                 "id": "placeID:95305001:1",
+                 "name": "Bankstown",
+                 "type": "locality"
+                },
+                "properties": {
+                 "stopId": "10101401"
+                },
+                "coord": [
+                 -33.917848,
+                 151.034654
+                ],
+                "niveau": 0
+               },
+               "properties": {
+                "WheelchairAccess": "true",
+                "AREA_NIVEAU_DIVA": "0",
+                "stoppingPointPlanned": "Bankstown Station, Restwell St",
+                "area": "15",
+                "platform": "X1",
+                "platformName": "Bankstown Station, Restwell St",
+                "plannedPlatformName": "Bankstown Station, Restwell St",
+                "accessArray": [
+                 {
+                  "stoppointAccess": {
+                   "height": 780,
+                   "equipment": 0,
+                   "maxWeight": 0,
+                   "distanceTrack": 0,
+                   "lengthAvail": 0,
+                   "widthAvail": 0,
+                   "attributes": 0
+                  }
+                 }
+                ]
+               },
+               "arrivalTimePlanned": "2026-11-23T14:29:00Z",
+               "modes": [
+                1,
+                2,
+                5,
+                11
+               ]
+              }
+             ],
+             "infos": [],
+             "properties": {
+              "vehicleAccess": [
+               {
+                "height": 0,
+                "halfWidth": 0,
+                "doorWidth": 2000,
+                "attributes": 1073741824,
+                "areaToStay": 0,
+                "areaToMove": 0,
+                "equipments": [
+                 {
+                  "vehicleEquipment": {
+                   "equipmentType": 1,
+                   "length": 0,
+                   "width": 0,
+                   "lengthAtPl": 0,
+                   "widthAtPl": 0,
+                   "maxWeight": 0
+                  }
+                 }
+                ]
+               }
+              ],
+              "PlanLowFloorVehicle": "1",
+              "PlanWheelChairAccess": "1"
+             }
+            }
+           ],
+           "fare": {
+            "tickets": []
+           },
+           "daysOfService": {
+            "rvb": "204000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+           }
+          }
+         ]
+        }
+    """.trimIndent()
 }

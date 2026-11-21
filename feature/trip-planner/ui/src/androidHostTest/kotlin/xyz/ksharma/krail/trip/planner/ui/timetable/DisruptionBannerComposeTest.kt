@@ -10,7 +10,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -82,18 +81,6 @@ class DisruptionBannerComposeTest {
 
         composeRule.onNodeWithText(REPLACEMENT_BUSES_TITLE).assertIsDisplayed()
         assertTrue(TimeTableUiEvent.DisruptionBannerDisplayed in events)
-    }
-
-    @Test
-    fun bareReplacementBanner_doesNothingWhenTapped() {
-        show(DisruptionBannerState.ReplacementBuses())
-        composeRule.waitForIdle()
-
-        composeRule.onNodeWithText(REPLACEMENT_BUSES_TITLE).performClick()
-        composeRule.waitForIdle()
-
-        assertFalse(TimeTableUiEvent.DisruptionBannerExpanded in events)
-        composeRule.onNodeWithText("More info").assertDoesNotExist()
     }
 
     @Test

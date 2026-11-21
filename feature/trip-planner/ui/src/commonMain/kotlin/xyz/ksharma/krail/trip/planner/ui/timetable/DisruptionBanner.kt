@@ -82,9 +82,10 @@ internal fun LazyListScope.disruptionBannerItem(
 internal const val REPLACEMENT_BUSES_TITLE = "Replacement buses on this trip"
 
 /**
- * Replacement buses are in the results. The expanded detail is the metro alert's headline and window when
- * one also says buses replace the line, else the planner's own line alert, else there is nothing more to
- * say and the tile does not expand. Both cases use the same tile as [DisruptionBanner].
+ * Replacement buses are in the first result. The expanded detail is the metro alert's headline and window
+ * when one also says buses replace the line, else the planner's own line alert. With neither there is no
+ * banner at all (see replacementBusBanner), so this tile always has something to open. Both cases use the
+ * same tile as [DisruptionBanner].
  */
 @Composable
 internal fun ReplacementBusesBanner(
@@ -120,7 +121,6 @@ internal fun ReplacementBusesBanner(
         onDismissClick = {},
         onTileExpand = { onExpand() },
         modifier = modifier,
-        expandable = disruption != null || lineAlert != null,
         expandedContent = {
             when {
                 disruption != null -> DisruptionWindowContent(disruption = disruption, showHeadline = true)

@@ -45,7 +45,6 @@ class DisruptionLoaderTest {
         feed = DisruptionFeed.METRO,
         severity = DisruptionSeverity.NOT_RUNNING,
         headline = "Buses replace metro services between Bankstown and Sydenham",
-        detail = "Monday 23 November",
         startEpochSec = 1_795_436_400L,
         endEpochSec = 1_795_446_005L,
         moreInfoUrl = "https://transportnsw.info/alerts/details#/ems-8150",

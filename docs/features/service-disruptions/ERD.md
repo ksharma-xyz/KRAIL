@@ -1,181 +1,141 @@
 # Feature ERD: Service disruptions in trip results
 
-Status: Built for review (metro banner). Deferred items are listed in section 10.
-Touches: `feature/trip-planner/state`, `feature/trip-planner/network`, `feature/trip-planner/ui`, `feature/track/network` (alerts feed type), `io/gtfs` (proto), `KRAIL-BFF` (alerts proxy)
+Status: Agreed 2026-11-21 (version 2, real API fields only). Every row of section 9 is signed.
+Version 1 is built for the metro banner.
+Owner: ksharma-xyz
+Touches: `feature/trip-planner/state`, `feature/trip-planner/network`, `feature/trip-planner/ui`
 
-Measurements below were taken from the live NSW APIs on 2026-11-20 with `curl --compressed`.
-They are point-in-time; re-run before relying on them.
+Measurements below were taken from the live NSW APIs on 2026-11-20 and 2026-11-21 with
+`curl --compressed` and real trip searches. They are point-in-time; re-run before relying on them.
 
 ---
 
 ## 1. Problem and scope
 
-A rider searching a trip they normally make by metro gets replacement buses and odd changes,
-with no sign that the metro is not running. The trip planner silently routes around a closed
-line, and KRAIL only shows alerts attached to the journeys the planner returned.
+A rider searching a trip gets replacement buses or odd changes with no sign that their line is not
+running. The trip planner silently routes around a closed line, and KRAIL only shows alerts attached
+to the journeys the planner returned.
 
-In scope (built):
-- Show a disruption banner above results when metro is out of service, both ends of the trip are
-  served by metro, and metro is missing from, or replaced by buses in, the results.
+Version 1 (built in 1.30 RC1) only helps a rider whose origin and destination are both served by
+metro, reads only the metro feed, and decides by headline wording. On 2026-11-21 it showed nothing
+for any train rider, even with four train closures live.
 
-Deferred (section 10): replacement-bus leg chips, the neutral "no metro, no alert" banner, alert
-sheet grouping by severity, saved-trip chip, train and light-rail alerts.
+Version 2 uses only fields the NSW APIs return as data, never text read from an alert:
+- Recognise a replacement-bus leg in the trip results and say so on the banner and on the rows.
+- Show nothing when the results hold no replacement-bus leg.
+- Read every active period of an alert in the existing metro logic (version 1 read only the first).
 
-Out of scope:
-- Lift and escalator outages, standing notices, station facility notices (not service impact).
-- Bus-network alerts and train alerts in the first version. Train alerts name routes such as
-  `T6_1a` and `BNK_1a` that the planner does not use, so a train banner needs a route-to-line
-  mapping first; without it every train rider would see every train alert.
-- Push notifications.
-- Any background polling.
+It keeps the 1.30 banner: the info tile, the warning icon (now on a yellow circle), tap to expand,
+bold times and places, the last-services board and the "More info" button.
+
+Out of scope, decided 2026-11-21 (reasons in "Why the alert feeds are not used for trains" below):
+- Reading the train alert feed, a closed stretch from headline text, a line order file, a route to
+  line map, and the later-today heads-up.
+- Lift and escalator outages, standing notices, station facility notices.
+- Light rail, ferry and bus-network alerts, and regional coach alerts.
+- Push notifications and any background polling.
 
 ## 2. Entities and relationships
 
 ```mermaid
 erDiagram
-    ALERT_FEED ||--o{ RAW_ALERT : contains
-    RAW_ALERT ||--o{ INFORMED_ENTITY : informs
-    RAW_ALERT ||--o{ ACTIVE_PERIOD : "valid during"
-    RAW_ALERT ||--o| DISRUPTION : "classified into"
-    DISRUPTION }o--|| TRANSPORT_MODE : affects
-    DISRUPTION_CONTEXT ||--o{ DISRUPTION : filters
-    DISRUPTION_CONTEXT }o--o{ TRANSPORT_MODE : "modes at origin and destination"
-    NSW_STOP ||--o{ STOP_PRODUCT_CLASS : "served by"
-    SAVED_TRIP }o--|| NSW_STOP : "origin and destination"
     JOURNEY ||--o{ LEG : has
-    LEG }o--o| DISRUPTION : "tagged replacement"
-    ALERT_FEED {
-        string feedName "metro, sydneytrains, nswtrains, lightrail"
-        string lastModified
-        long fetchedAtMillis
+    LEG }o--|| LEG_PRODUCT : "runs as"
+    LEG ||--o{ LEG_INFO : "carries"
+    ALERT_FEED ||--o{ RAW_ALERT : "contains (metro, as in 1.30)"
+    RAW_ALERT ||--o{ ACTIVE_PERIOD : "valid during"
+    LEG_PRODUCT {
+        int id "14 Temporary buses, 22 Temporary coaches, 5 normal bus"
+        int productClass
+        string name
     }
-    RAW_ALERT {
-        string headerText
-        string descriptionText
+    LEG_INFO {
+        string id "ems-81168"
+        string type "lineInfo or stopInfo"
+        string subtitle
+        string content
         string url
-        enum effect
-        enum cause
-    }
-    INFORMED_ENTITY {
-        string routeId
-        string stopId "empty on line alerts"
     }
     ACTIVE_PERIOD {
         long startEpochSec
         long endEpochSec "open end means standing notice"
     }
-    DISRUPTION {
-        string id
-        enum severity "NOT_RUNNING, DELAYS_AND_CHANGES"
-        string mode
-        string lineName
-        string headline
-        string detail
-        long windowStart
-        long windowEnd
-        string moreInfoUrl
-    }
-    DISRUPTION_CONTEXT {
-        string originStopId
-        string destinationStopId
-        long searchTimeEpochSec
-    }
-    STOP_PRODUCT_CLASS {
-        string stopId FK
-        int productClass "2 is metro"
-    }
 ```
 
 | Entity | Layer | Source of truth | Identity key | Lifetime |
 |---|---|---|---|---|
-| ALERT_FEED | network | NSW GTFS-R alerts v2, one per mode | feedName | cache TTL, in memory only |
-| RAW_ALERT, INFORMED_ENTITY, ACTIVE_PERIOD | network (Wire-generated) | same feed | position in feed | one parse |
-| DISRUPTION | domain | classifier output | feedName + header + window start | cache TTL |
-| DISRUPTION_CONTEXT | domain | search request | none, value object | one classification |
-| STOP_PRODUCT_CLASS | db (existing `NswStopProductClass`) | bundled stop data | stopId + productClass | app data |
-| LEG tag | ui | classifier plus journey legs | journeyId + leg index | screen state |
+| JOURNEY, LEG, LEG_PRODUCT, LEG_INFO | network (existing `TripResponse`) | trip planner reply | journey + leg index | one results load |
+| ALERT_FEED, RAW_ALERT, ACTIVE_PERIOD | network (existing, Wire-generated) | NSW GTFS-R metro alerts | position in feed | cache TTL, in memory only |
 
 Collision check, from real data:
-- One alert maps to many entities: the metro alerts carry 2 informed entities each, both
-  `routeId = SMNW_M1` with an empty `stopId`. Line alerts name no stops, so matching by stop
-  is impossible. Matching is by mode (feed) plus the rider's modes.
-- One line maps to many alerts: M1 has four concurrent alerts for different stretches and
-  windows. The identity key therefore includes the window start, not only the route.
-- The route id `SMNW_M1` is a GTFS id; the trip API uses `nsw:...` line ids. They are not
-  joined in v1. Mode comes from the feed name, which avoids the join.
+- A leg alert from the trip planner covers the whole route, not the stops. Central to Bondi
+  Junction carried the Cronulla to Central closure on three journeys. A leg alert is never a trigger
+  on its own.
+- A leg alert and a feed alert share no id. The planner's id is `ems-81168`; the feed's is a UUID.
+  They can only be paired by text, so they are not paired.
 
-Relevance rule, as built (`DisruptionRelevance.kt`). A banner shows only when all hold:
-1. The alert's severity is NOT_RUNNING.
-2. Both the origin and the destination are served by that mode. A train trip from Central, which
-   also has a metro, is not a metro trip; Parramatta has no metro, so it gets no banner.
-3. The rider has not filtered that mode out.
-4. The alert's window overlaps the times of the results on screen. With no results, the next 2 hours.
-5. The mode is missing from the results, or the alert says buses replace it and the results contain a bus leg.
-
-Alerts name no stops, so (5) cannot tell which stretch the rider uses; the banner prints the
-alert's own headline so the rider can judge. The replacement-bus branch can fire for a rider whose
-bus leg is unrelated to the closure while a "buses replace metro" alert is active for some stretch
-and time window that overlaps their results. This is the main false-positive risk and is listed
-in section 9.
+Relevance rule, version 2. A banner shows when a leg in the results is a replacement bus (`iconId`
+14 or 22) and the rider has not filtered that mode out. No alert is needed. With no replacement
+leg the version 2 logic shows nothing; the 1.30 metro alert logic is unchanged (A8).
 
 ## 3. Interfaces
 
 ```kotlin
-// :feature:trip-planner:state, package ...state.disruption
-interface DisruptionRepository {
-    suspend fun load(feed: DisruptionFeed): Result<List<Disruption>>
-}
-enum class DisruptionFeed(val feedName: String, val productClass: Int) { METRO("metro", 2) }
-sealed interface DisruptionBannerState { data object None; data class Shown(val disruption: Disruption) }
-
 // :feature:trip-planner:network, internal, pure, no I/O
-internal fun classifyAlerts(feed: DisruptionFeed, alerts: List<Alert>): List<Disruption>
-internal class RealDisruptionRepository(service: GtfsRealtimeService, clock, ttl = 3.minutes, requestBudget = 3.seconds)
+internal fun isReplacementLeg(leg: Leg): Boolean                  // iconId 14 or 22
+internal fun hasReplacementLeg(journeys: List<Journey>): Boolean
 
 // :feature:trip-planner:ui, internal
-internal fun disruptionBanner(disruptions, endpointProductClasses, resultProductClasses, spanStartEpochSec, spanEndEpochSec): DisruptionBannerState
-internal class DisruptionLoader(repository, sandook, scope, dispatcher, nowEpochSec)
-
-// :feature:track:network, extended
-enum class GtfsFeedType { TRIP_UPDATES, VEHICLE_POSITIONS, ALERTS }
+// Existing banner state is kept; REPLACEMENT_BUS_LEG is the new reason beside the 1.30 metro alert.
+internal fun disruptionBanner(...): DisruptionBannerState
 ```
 
-- `GtfsRealtimeService.fetchFeed(feedName, ALERTS)` is reused; no new HTTP client.
-- Endpoint modes come from `Sandook.selectStopsByIds` (the bundled `NswStopProductClass` table), so
-  deciding whether a trip is a metro trip needs no network.
-- `TimeTableViewModel` takes an optional `DisruptionRepository`, like `CarriageForecastRepository`.
-- The banner reuses the shared `InfoTile` (CRITICAL_ALERT type, collapsed to the headline, no dismiss). `InfoTile` takes an optional leading icon, used for a warning triangle before the title. The description is shown as clean paragraphs with the last services as short lines, without NSW's date line or list markers.
-- The classifier keeps alerts whose effect is NO_SERVICE, REDUCED_SERVICE, SIGNIFICANT_DELAYS,
-  DETOUR or MODIFIED_SERVICE, plus any headline worded "do not run", "buses replace", "suspended",
-  "no service" or "not running". It drops UNKNOWN_EFFECT facility notices, lift and escalator
-  headlines, alerts with no start, and empty headlines. An open end date means ongoing.
-- Fakes: `FakeGtfsRealtimeService` and `FakeClock` already exist in `:core:testing`.
+- No new service, no new HTTP call, no new bundled asset.
+- The banner stays the shared `InfoTile` (CRITICAL_ALERT, collapsed, no dismiss). The leading icon
+  becomes a yellow circle (`KrailTheme.colors.alert`) behind the warning triangle, centred on the
+  first line of the title. Only the disruption banner passes this icon.
+- One banner per results screen. When a replacement leg and a metro alert both apply, the
+  replacement-bus words show (A8).
+- Fakes: `FakeClock` exists in `:core:testing`. Test fixtures are real captured trip replies.
 
 ## 4. External contracts
 
-| Call | Method and path | Key params | Auth | Format | Wire size | Latency (3 samples) |
+| Call | Method and path | Key params | Auth | Format | Wire size | Latency |
 |---|---|---|---|---|---|---|
-| Metro alerts | GET `/v2/gtfs/alerts/metro` | none | NSW key | protobuf | 3.2 KB | 0.12 to 0.23 s |
-| Train alerts | GET `/v2/gtfs/alerts/sydneytrains` | none | NSW key | protobuf | 20 KB | 0.13 s |
-| Light rail alerts | GET `/v2/gtfs/alerts/lightrail` | none | NSW key | protobuf | 1.3 KB | 0.22 s |
-| Regional train alerts | GET `/v2/gtfs/alerts/nswtrains` | none | NSW key | protobuf | 11.6 KB | 0.21 s |
-| Bus alerts (not v1) | GET `/v2/gtfs/alerts/buses` | none | NSW key | protobuf | 35 KB | 0.55 s |
-| add_info metro (rejected) | GET `/v1/tp/add_info` | `filterMOTType=2` | NSW key | JSON | 21 KB gzip, 217 KB decoded | 0.18 to 0.27 s |
-| Trip (existing, for scale) | GET `/v1/tp/trip` | `calcNumberOfTrips=6` | NSW key | JSON | 34 KB | 0.54 to 0.78 s |
+| Trip (existing, nothing new) | GET `/v1/tp/trip` | `calcNumberOfTrips=6` | NSW key | JSON | 34 KB | 0.54 to 0.78 s |
+| Metro alerts (existing, 1.30) | GET `/v2/gtfs/alerts/metro` | none | NSW key | protobuf | 3.2 KB | 0.19 to 0.31 s |
 
-- Responses carry `cache-control: public, max-age=90`, so data is never fresher than 90 s.
-- Fields read: header text, description text, url, effect, cause, active period, informed
-  route id. Fields ignored: translations other than the first, informed stop ids.
-- Why not add_info: 217 KB of JSON to decode for 7 metro items, against 3 KB of protobuf for
-  the same alerts, because each item embeds full line objects.
-- Parity: `GtfsRealtimeService` goes through `BffEndpointResolver`, so when the BFF rollout is armed
-  the app asks the BFF for `/v2/gtfs/alerts/metro`. KRAIL-BFF now serves that path
-  (`GtfsRoutes.kt`, `NswClient.getGtfsAlertsRaw`) as a byte proxy with a 60 s per-feed cache, so one
-  NSW call serves every rider. Classification stays in the app for both paths, so there is one
-  implementation and nothing to drift. The BFF is disarmed today.
-- Proto fix: the app's `gtfs-realtime.proto` declared `active_period` as a single field. The spec
-  and NSW use `repeated`; a single field keeps only the last period. Changed to `repeated`, which
-  is wire compatible.
+Trip fields read:
+- `legs[].transportation.iconId` decides a replacement leg (14 or 22). `product.id` carries the same value.
+- `legs[].infos` where `type` is `lineInfo`, for the detail text only (A7), never as a trigger.
+
+Metro alert fields read: header text, url, effect, every active period, informed route ids. The
+description text is no longer read: NSW sends two versions of it that can disagree (A10).
+
+## Why the alert feeds are not used for trains
+
+Checked on 2026-11-21 against the live feeds (67 train alerts and 6 metro alerts):
+- The alert's `stop_id` field is filled only on "Station Update" alerts. It is empty on every closure
+  alert, so the closed stations are not in any field. Only headline text names them.
+- Every train alert has effect `MODIFIED_SERVICE` and cause maintenance, including platform
+  changes, timetable changes and extra stops. Only the wording says whether a line is closed.
+- The wording list misses a closure in effect: "Trains run between Liverpool and Lidcombe only".
+- Headlines vary: "A, B and C", "A or B", two stretches in one headline. "Cronulla, Waterfall and
+  Central" names a station on the other branch, so "every named station is on the rider's trip"
+  would miss a Cronulla to Central rider.
+- Alert route lists are loose: one Inner West alert is attached to the Bankstown routes.
+
+A banner from text is not evidence. Version 2 therefore shows a banner only when the trip reply
+itself carries a replacement-bus leg.
+
+| Decision | Source | Reliable |
+|---|---|---|
+| Replacement bus on the trip | `transportation.iconId` 14 or 22, a data field and documented | Yes when present. The planner may not show buses far ahead. |
+| Closure versus other alert | headline wording | No |
+| Closed stretch | headline text | No |
+| Active period | `active_period`, a data field | Yes |
+| Rider moved to another mode | modes in the results, a data field | Yes |
+| Pairing a leg alert with a feed alert | no shared id | No |
 
 ## 5. Data flow
 
@@ -184,122 +144,118 @@ sequenceDiagram
     participant UI as TimeTableScreen
     participant VM as TimeTableViewModel
     participant T as TripPlanningService
-    participant D as DisruptionService
     participant NSW as NSW API
     UI->>VM: search
-    par trip, unchanged
-        VM->>T: trip(origin, destination)
-        T->>NSW: GET /v1/tp/trip
-        NSW-->>T: journeys (0.5 to 0.8 s)
-        T-->>VM: results
-    and alerts, non blocking
-        VM->>D: disruptionsFor(modes, searchTime)
-        D->>NSW: GET /v2/gtfs/alerts/metro (cache miss only)
-        NSW-->>D: 3 KB (0.1 to 0.25 s)
-        D-->>VM: disruptions
-    end
-    VM->>VM: relevance(disruptions, resultModes, riderModes)
-    VM-->>UI: results plus banner state
+    VM->>T: trip(origin, destination)
+    T->>NSW: GET /v1/tp/trip
+    NSW-->>T: journeys with legs and products (0.5 to 0.8 s)
+    T-->>VM: results
+    VM->>VM: replacement leg in results?
+    VM-->>UI: results plus banner state, and row text for replacement legs
 ```
+
+The metro alert load from 1.30 runs beside the trip call and never gates it. It is unchanged.
 
 ## 6. Cost budget
 
 | # | Question | Answer |
 |---|---|---|
-| 1 | API calls | A trip whose origin and destination are not both served by metro: **0 extra**, decided offline from the stop table. A metro trip: **1 extra call** to `/v2/gtfs/alerts/metro` on the first results load, beside the trip call. While the screen stays open the trip refresh stays at 1 call per 30 s; the alerts repository answers from memory for 3 minutes, so about 3 to 4 extra calls per 10 minutes. Nothing at app start, nothing in the background. |
-| 2 | Payload | 3.2 KB gzip for metro, against 34 KB for a trip call. Protobuf decode of a few KB. The 217 KB add_info JSON path was rejected. |
-| 3 | Timing | Metro alerts returned in 0.12 to 0.23 s against 0.54 to 0.78 s for the trip call. The loader starts beside the trip call and never gates it, so time to results is unchanged. Budget 3 s, no retry, silent on failure. |
-| 4 | UX | No spinner and no placeholder. A late or failed alert means no banner and unchanged results. The banner is a list item with `animateItem`, so it slides in; it is collapsed by default (the headline names what is out and where), because open it took about 45% of a Pixel 6 Pro screen and pushed the results off it. Offline: the existing connectivity gate applies, no banner. |
-| 5 | Network efficiency | In-memory cache, TTL 3 minutes (above NSW's `max-age=90`). Duplicate callers wait on one lock and read the cache. A failure returns the last good answer, so a dropped request never removes a showing banner. The loader skips a refresh while one is in flight. |
-| 6 | Battery | No timers and no background work. It rides `fetchTrip()`, which the screen already runs on its 30 s refresh while visible. Radio wake-ups per minute: unchanged. Parse: a few KB. |
-| 7 | Shared limits | At most +3 to +4 small calls per 10 minutes for a metro trip, zero otherwise. Rate-limit headroom is unmeasured. With the BFF armed, 1 NSW call per feed per minute total. |
-
-| Flow | Calls before | Calls after | Bytes before | Bytes after | Time to results before | after |
-|---|---|---|---|---|---|---|
-| Search, not a metro trip | 1 | 1 | 34 KB | 34 KB | 0.5 to 0.8 s | unchanged |
-| Search, metro trip, cold cache | 1 | 2 | 34 KB | 37 KB | 0.5 to 0.8 s | unchanged |
-| Search, metro trip, warm cache | 1 | 1 | 34 KB | 34 KB | unchanged | unchanged |
-| Results open 10 minutes, metro trip | 20 | 23 to 24 | 680 KB | about 690 KB | n/a | n/a |
-
-Train alerts (20 KB), the saved-trip chip and bus alerts are not in v1, so the earlier saved-trips
-cost line does not apply yet. It must be re-budgeted before that work starts.
+| 1 | API calls | **0 new.** The replacement-bus banner and row text read the trip reply that is already fetched. The metro alert call is the 1.30 call, unchanged. |
+| 2 | Payload | **0 new.** Parse cost: one pass over the legs already in memory. |
+| 3 | Timing | Unchanged. The banner arrives with the results. |
+| 4 | UX | No spinner and no placeholder. Failed or offline: results unaffected, no banner. The banner is a list item with `animateItem`. |
+| 5 | Network efficiency | No new requests, so nothing to cache or dedupe. |
+| 6 | Battery | No timers and no background work. It rides `fetchTrip()`, which the screen already runs. |
+| 7 | Shared limits | No change to NSW call volume. |
 
 ## 7. States and UX
 
-Mockups: https://claude.ai/artifact/BMoVoEixHaHPZGGQoGzton (private review page). The built banner uses the standard tile surface, not the red styling in the mockup.
-
 | State | Behaviour | Reuse |
 |---|---|---|
-| Content with disruption | Banner above the results (InfoTile with a warning triangle, collapsed to the headline, tap for the details, "More info" opens the alert's URL). Expanded, the facts are bold (times and place names) and the last services are a small board: the time large with a small am or pm, the station and the arrival beside it. The board flows, so on a narrow pane or at a large font the station moves under the time. The gap above and below the banner equals the gap between the header card and the actions row. | `InfoTile` |
-| Content, metro missing, no alert | Not built | none |
-| No disruption | Nothing | none |
-| Alerts loading, slow, failed, offline | Nothing, results unaffected | none |
+| Replacement buses in the results | Banner "Replacement buses on this trip". Each row with a replacement leg says "Replacement bus" in plain text beside the line badge, with no border. Tap the banner for the metro alert's headline and window when it also says buses replace the line (A10), else the planner's line alert (A7), else it does not expand. | `InfoTile`, row text |
+| No replacement leg | Nothing from version 2. | none |
+| Rider moved to another working mode | Nothing, because no replacement leg exists. | none |
+| Content, no disruption | Nothing. | none |
+| Offline or failed trip | Nothing. | none |
 
-**Times.** NSW writes times three ways in one alert ("11:10PM", "4AM", "23:03"). The card rewrites all of them
-the way the rest of the app does ("11:10 PM", "4 AM", "11:03 PM") in `normaliseTimes` and `to12Hour`. The text
-is only restyled: an alert in a format the parser does not recognise is shown in full with no bold.
+Warning icon: a yellow circle (`KrailTheme.colors.alert`, `#FFBA27` light, `#F4B400` dark) behind a
+near-black triangle, about 20 dp, centred on the first line of the title. The glyph stays near
+black in both themes because the shared `onSurface` tint is white in dark mode and would not read on
+yellow.
 
-**Layouts checked** (snapshots, light, light at 2x font, dark): Pixel 6 (411dp), 320dp (smallest phone), the
-480dp dual pane list, a 540dp Surface Duo screen and a tablet, with a short and a long alert.
+**Times.** NSW writes times three ways in one alert ("11:10PM", "4AM", "23:03"). The card rewrites all
+of them the way the rest of the app does, in `normaliseTimes` and `to12Hour`. An alert in a format
+the parser does not recognise is shown in full with no bold.
+
+**Layouts to re-check** (snapshots, light, light at 2x font, dark): Pixel 6 (411dp), 320dp, the 480dp
+dual pane list, a 540dp Surface Duo screen and a tablet, with a short and a long alert. Names,
+badges and the new row text wrap as whole items; nothing is shrunk or clipped.
 
 Copy and icons follow `.claude/skills/ui-mockups/SKILL.md`: no helper text beside headings, no
 separator glyphs, vector icons only.
 
 ## Analytics
 
-One new event name, `disruption_status`, and no new param names. Expanding the banner and tapping
-"More info" ride the existing `info_tile_interaction` event, because the banner is an info tile.
-Checked against the new-event checklist in `docs/ANALYTICS_EVENTS.md`: a distinct surface and param
-set, charted on its own, and one `{feature}_status(action)` event rather than one name per outcome.
-
-| Question | Where it is answered |
-|---|---|
-| How often does a rider see the banner, and for which trips? | `disruption_status` `action = shown`, with `transportMode`, `fromStopId`, `toStopId`, `visibleJourneyCount` |
-| How much of it is the looser signal? | `reason`: `mode_missing` against `replacement_bus`. A rising `replacement_bus` share is the false-positive watch |
-| Do riders read it? | `info_tile_interaction` with `key = disruption_metro`, `expand = true` |
-| Do they follow the link? | `info_tile_interaction` with `cta_click` set |
-| Is the alerts feed reliable? | `disruption_status` `action = error`, once per screen |
-
-`shown` fires from composition (once per alert and trip per screen) so it counts banners riders could
-see. No alert text is sent. Ledger rows are in `docs/ANALYTICS_REGISTRY_HANDOFF.md`, `Pending` until
-KRAIL-Analytics labels the event.
+`disruption_status` and its params are unchanged. Check any new `reason` value against the
+new-event checklist in `docs/ANALYTICS_EVENTS.md` in the PR that adds it. No alert text is sent.
 
 ## 8. Test plan
 
-Built:
-- `AlertClassifierTest` (10): values copied from the live metro feed, including the UNKNOWN_EFFECT
-  "Station Update" items, lift headlines, no-end and no-start alerts.
-- `RealDisruptionRepositoryTest` (5): feed and type requested, TTL hit, TTL expiry, last good answer
-  on failure, failure when nothing cached.
-- `DisruptionRelevanceTest` (11): one-ended trips, filtered mode, window overlap before and after,
-  open end, delays-only, earliest wins, replacement-bus branch.
-- `DisruptionDetailTest`: last services, bold ranges on the real alert wording, 12 hour times.
-- `DisruptionAnalyticsTest` (7): see Analytics.
-- Snapshots: `DisruptionBannerPreviews` (phone), `narrow/` and `wide/` previews, each recorded at light,
-  2x font and dark. Run `:feature:trip-planner:ui:testAndroidHostTest -Proborazzi.test.verify=true`.
-- BFF `AlertsCacheTest` (4).
+Built in version 1 and kept: `AlertClassifierTest`, `RealDisruptionRepositoryTest`,
+`DisruptionRelevanceTest`, `DisruptionWindowTest`, `DisruptionAnalyticsTest`, banner snapshots.
+`DisruptionDetailTest` was removed with the description parser (A10).
 
-Not built: a hanging-alerts test proving the trip result still arrives (the loader is a separate
-coroutine, so it holds by construction, but there is no test); rotation and process-death checks
-for the banner (it is derived state rebuilt from the loader, with the tile expansion in
-`rememberSaveable`); committed binary feed fixtures shared with the BFF.
+New, from real captured trip replies (fixtures committed under the module's test resources):
+- Replacement legs: Cronulla to Central (every leg iconId 14), Bankstown to Sydenham at 11:30 pm
+  (one metro journey, then iconId 14 buses), a normal bus journey (id 5, no banner).
+- No banner: Parramatta to Central (a T1 leg alert for Richmond to Blacktown, no replacement leg),
+  Central to Bondi Junction (carries the Cronulla closure as a leg alert, no replacement leg).
+- Rider moved to another mode: Sydenham to Central with metro only, no banner.
+- Every active period read: an alert with two periods.
+- Pure-logic tests run against the same fixtures.
+- Configuration change and state survival: banner state is derived; tile expansion stays in
+  `rememberSaveable`.
+- A hanging metro alerts feed must not delay the trip result.
+- Every result is a replacement bus, so the metro is missing from the results: the metro alert still
+  supplies the detail (Bankstown to Sydenham at 11:40 pm Mon 23 Nov, real reply).
 
 ## 9. Open gaps and decisions
 
 | Gap or decision | Status |
 |---|---|
-| No unplanned metro fault observed; every live alert is planned trackwork. The NOT_RUNNING wording list and the effect set are from planned alerts. | Open. Needs a captured real fault. |
-| Replacement-bus branch can fire for an unrelated bus leg while a "buses replace metro" alert for another stretch overlaps the results. Mitigated by the banner printing the headline. | Open. Needs the trip API's replacement-bus signal or stop-level data. |
-| How the trip API labels a replacement-bus leg. | Open. Blocks the red leg chip. |
-| App proto declared `active_period` as a single field. | Fixed to `repeated`. |
-| Whether the app's proto includes `Alert`. | Resolved: it does. |
-| `sinceLastModified` on the alerts endpoint. | Not used; the repository's TTL cache replaces it. |
-| NSW rate-limit headroom for the extra calls. | Open, unmeasured. |
-| Train and light-rail alerts need a route-id to line-name mapping. | Open, deferred. |
+| No unplanned metro fault observed; every live alert is planned trackwork. The closure wording list is from planned alerts. | Open. Needs a captured real fault. |
+| How far ahead the planner loads replacement buses. Loaded for Richmond to Blacktown the next morning, not for Ashfield to Central, not for Mon 30 Nov. Those riders see nothing from version 2. | Accepted by owner 2026-11-21. |
+| Replacement legs for light rail and ferry. | Open, not yet seen. |
+| The metro alert request gives up after 3 s and is made once when the timetable opens. One slow first request on a phone leaves the banner without its detail (not expandable) until the screen is reopened. Seen once on a Pixel 6 Pro, not on the Pixel 10 Pro. | Open. Raising the timeout or retrying once needs a decision. |
+| `active_period` read as one field and only the first period used. | Fix in PR 1. |
+
+### Assumptions for approval (mandatory, no code until signed off). All rows signed.
+
+Each row decides who sees a banner, when, or which cases count. Sign-off line:
+`Approved by ksharma-xyz, <date>`.
+
+| # | Assumption | Evidence (real data, named cases) | What breaks if it is wrong | Decision |
+|---|---|---|---|---|
+| A1 | A replacement bus is a leg whose `transportation.iconId` is 14 ("Temporary Buses", class 5), or 22 ("Temporary Coaches", class 7) for regional. The same value is `transportation.product.id`. | 27 legs across Cronulla, Waterfall, Dapto, Olympic Park, Richmond and a metro closure, none on the 11 normal bus legs (id 5, "Sydney Buses Network"). `iconId` and both values are in the trip API's field documentation, copied in the app's `TripResponse.Transportation`. On a phone the Cronulla to Central results showed the banner on every row. | A replacement of another type is invisible, and a renamed product silently removes the banner. | Approved by ksharma-xyz, 2026-11-21 |
+| A2 | A banner shows only when the trip reply carries a replacement-bus leg. Alert text is never a trigger. A rider whose planner has not loaded the buses yet sees nothing. | Ashfield to Central Sun 22 Nov 7:00 am, closure from 6:20 am: trains, no buses. Richmond to Blacktown Sun 22 Nov: buses shown. | A rider days ahead of a closure is not warned. | Approved by ksharma-xyz, 2026-11-21 (option A) |
+| A3 | An alert attached to a leg covers the whole route, so it is never a trigger by itself. | Central to Bondi Junction and Central to Coogee carried the Cronulla to Central closure. T1 trains from Parramatta carried the Richmond to Blacktown closure. | A banner for a rider far from the closed stretch. | Approved by ksharma-xyz, 2026-11-21 |
+| A4 | A rider whose results moved to another working mode sees no banner. | Sydenham to Central Sat 21 Nov: train closure live, planner returned metro only. | The rider does not learn trains are replaced. | Approved by ksharma-xyz, 2026-11-21 |
+| A5 | Banner title "Replacement buses on this trip" when replacement buses are in the results. | 1.30 shows the alert headline today, so this shortens the collapsed title. | The collapsed card says less than 1.30 does. | Approved by ksharma-xyz, 2026-11-21 |
+| A6 | Rows with a replacement-bus leg say "Replacement bus" in plain text, no border. | Cronulla to Central, Bankstown to Sydenham at 11:30 pm. | None beyond a longer row. | Approved by ksharma-xyz, 2026-11-21 |
+| A7 | The expanded banner shows the planner's own line alert (`type` `lineInfo`) attached to a leg in the results, as the planner gives it, unless a metro alert that also says buses replace the line supplies the detail (A10). With neither, the banner is not expandable. | Cronulla to Central: the bus leg carried no alert, a train leg carried "Buses replace trains between Cronulla, Waterfall and Central" with its full HTML content and url. | A detail that does not explain the replacement, because leg alerts are route-wide (A3). | Approved by ksharma-xyz, 2026-11-21 ("makes sense" after the default was shown) |
+| A8 | The 1.30 metro alert banner is unchanged except it reads every active period. 1.30 rules kept: closure wording, hidden when the rider filtered that mode out, trains and metro only, delays never show a banner. One banner per results screen; when a replacement leg and a metro alert both apply, the replacement-bus words show. | The metro feed carries 6 alerts on 2026-11-21, all `MODIFIED_SERVICE`. | The metro banner stays wording-based, which the check in section 4 found unreliable for trains. | The 1.30 rules: Approved by ksharma-xyz, 2026-11-21. Leaving metro unchanged and the precedence rule: Approved by ksharma-xyz, 2026-11-21 ("makes sense" after the default was shown). |
+| A9 | The later-today heads-up is deferred. It needs a closure's start time from alert text, which version 2 does not read for trains. | Metro closure from 11:20 pm Mon 23 Nov would be the only case. | A rider is not warned a closure starts later today. | Deferred, no code. Approved by ksharma-xyz, 2026-11-21 ("makes sense" after the default was shown). |
+| A10 | A metro alert's expanded text is NSW's headline and the alert's start and end (`active_period`), with a More info link. It is used whenever the alert says buses replace the line and a replacement leg is in the results, including when every result is a replacement bus and no metro train is listed. The description text, the bold times and the "last metro before buses" list from 1.30 are not shown. | The description carries two versions, language `en` (plain) and `en/html`, and they disagree. Bankstown to Sydenham, Mon 23 Nov: `en` says buses from 11:10 PM and the last metro leaves Bankstown 23:03; `en/html` says 11:20 PM and 11:40 PM by direction and the last metro leaves Bankstown 23:33. The planner listed a metro leaving Bankstown at 11:33 PM and the feed window starts 11:20 PM, so `en` was stale. 1.30 read the first version, which showed the stale times on a Pixel 10 Pro. Rough count: 4 of 6 metro alerts and 9 of 67 train alerts name different clock times in the two versions. Every replacement leg carries no alert of its own (`infos` empty) and NSW sends its description as "Unknown". | The rider loses the last-metro list, and the window is the whole alert's, not their direction's. Reading the HTML version instead was the other option: it matched the planner in the one case checked, but needs HTML parsing and is unproven elsewhere. | Approved by ksharma-xyz, 2026-11-21 (option "Headline + window + More info"). |
+
+Dropped on 2026-11-21 after the reliability check: closed stretch from headline, stretch rules,
+route to line map, bundled station order, train alert feed. Each depended on reading text.
 
 ## 10. Build order
 
-Done: classifier, repository, loader, relevance, banner, DI, BFF alerts proxy with cache.
-Deferred, each its own PR with its own cost line: replacement-bus leg chips, neutral banner, sheet
-grouping with `priority` in state, saved-trip chip, train and light-rail alerts, shared binary
-fixtures with the BFF.
+Each PR is under 500 lines with one concern and its own cost line.
+1. Read every active period in the classifier, and the proto check. Bug fix, no behaviour change.
+2. Replacement-bus signal from the trip reply: banner title (A1, A5), row text (A6), expanded
+   detail (A7) and the yellow circle icon. No new calls.
+3. Deferred, each its own change: heads-up for closures later today (A9), light rail and ferry
+   replacements, regional coaches, saved-trip chip, a train alert feed only if a data field that
+   names the closed stations is found.

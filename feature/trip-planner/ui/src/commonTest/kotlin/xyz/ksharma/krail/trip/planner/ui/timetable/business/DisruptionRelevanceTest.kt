@@ -29,7 +29,6 @@ class DisruptionRelevanceTest {
         feed = DisruptionFeed.METRO,
         severity = severity,
         headline = "Buses replace metro services between Bankstown and Sydenham",
-        detail = "",
         startEpochSec = start,
         endEpochSec = end,
         moreInfoUrl = null,

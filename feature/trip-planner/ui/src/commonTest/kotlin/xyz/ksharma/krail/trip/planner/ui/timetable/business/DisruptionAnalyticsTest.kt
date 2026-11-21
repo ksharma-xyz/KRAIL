@@ -25,7 +25,6 @@ class DisruptionAnalyticsTest {
                 feed = DisruptionFeed.METRO,
                 severity = DisruptionSeverity.NOT_RUNNING,
                 headline = "Buses replace metro services between Bankstown and Sydenham",
-                detail = "secret detail that must never be sent",
                 startEpochSec = 1L,
                 endEpochSec = 2L,
                 moreInfoUrl = null,

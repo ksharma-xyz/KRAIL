@@ -31,7 +31,6 @@ data class Disruption(
     val feed: DisruptionFeed,
     val severity: DisruptionSeverity,
     val headline: String,
-    val detail: String,
     val startEpochSec: Long,
     /** Null when the alert has no end, which NSW uses for faults with no estimate. */
     val endEpochSec: Long?,

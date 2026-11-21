@@ -80,6 +80,23 @@ class ReplacementBusBannerTest {
     }
 
     @Test
+    fun `Given a closed-only metro alert and a line alert on the first result Then the line alert is the detail`() {
+        val closedOnly = metroAlert.copy(
+            headline = "Metro services do not run between Tallawong and Bankstown",
+            replacedByBuses = false,
+        )
+
+        val banner = replacementBusBanner(
+            journeys(ReplacementBusTripFixtures.TALLAWONG_TO_BANKSTOWN_NIGHT),
+            DisruptionBannerState.Shown(closedOnly, DisruptionReason.MODE_MISSING),
+        )
+
+        val shown = assertIs<DisruptionBannerState.ReplacementBuses>(banner)
+        assertNull(shown.disruption)
+        assertTrue(shown.lineAlert?.isLineAlert == true)
+    }
+
+    @Test
     fun `Given the first result is a replacement bus and carries the planner line alert Then the banner opens it`() {
         val tallawong = journeys(ReplacementBusTripFixtures.TALLAWONG_TO_BANKSTOWN_NIGHT)
 

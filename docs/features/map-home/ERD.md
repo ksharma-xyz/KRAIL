@@ -244,11 +244,27 @@ State survival and lifecycle:
   and `iphone-pro`. The iOS build must compile (`compileKotlinIosSimulatorArm64`) and install with Xcode 27.2 and
   spmForKmp 1.9.7, which is already on main.
 
+### Existing rules and components this stack touches
+
+| Existing rule or component | What the stack does to it | How it is held |
+|---|---|---|
+| `SEARCH_STOP_UX.md`, "The landing surface is the list, never the map", pinned by `singlePane_opensOnTheList_evenWhenAMapIsAlreadyInitialised`. The doc also records that a map-first default starts the whole MapLibre stack on every visit and that the flag once flipped by accident | Rule 39 reverses it on purpose. Branch 4 flips the pinned test with the same initialised-map fixture, rewrites that doc section in the same change, and adds a measured before and after of time to first content and map start cost to section 6 | doc, test, and a measurement on the Pixel 6 Pro and the tablet AVD, reported before the branch is called done |
+| Search Stop label pill row, the curated first-open stops (Town Hall, Central, Parramatta, Wynyard), `StopLabelAssignRow` and its "+" | The recents card replaces that list layout (rule 9). Custom labels beyond Home and Work, and the curated stops with location off, are open gaps below | the existing Search Stop tests must pass or be changed on purpose, with the doc updated |
+| Ask KRAIL on home (`AskKrailScreen`, the mic in the search row, listen on open, blur and dim while it is open, gated by the AI input flag and device availability) | The new home pill keeps it working. The mic shows only when the flag and the device allow it, never as a dead icon. The blur applies to the cards, and the map stays a sibling | to verify in the home map branch, with `DualPaneCompositingGuardTest` |
+| The saved trips reorder callback treats every list key as a trip id | The Park & Ride row is a list item with its own key. The callback must move it as a block and never read its key as a trip id. Its position is stored as an anchor after a trip and clamped when trips are added or deleted | unit tests on the move and the clamp, before the code |
+| `persistFacilityDetail` stores the stop id as the stop name when a car park is not saved | A2b writes readings for car parks the rider never saved. The station name comes from the catalogue and the stops table, never from a reading row | `station card shows the station name for an unsaved car park` |
+| Search query telemetry (`SearchQueryTextEgressTest`, `SearchQueryRedactionCallSiteTest`), the address search gate and `searchSessionId` | Text fields move but keep going through the same helpers. No raw text reaches any event | the existing tests pass unchanged |
+| `MapOptionsSaved` and `DepartureBoardSource.MAP_SHEET` analytics | Deleting the sheet ends `MapOptionsSaved`. Mode toggles log through an existing event with parameters, no new event name, with a ledger row and a message to the KRAIL-Analytics side before the release | `docs/ANALYTICS_EVENTS.md` checklist |
+| Guards that run on every branch | `ThemeColorRoleRule`, `LazyItemKeyRule`, `ClockSystemBan` (the age text takes `now`), `CollectAsStateBan`, `SnackbarBan`, `PollingLifecycleGuardTest` (a new `WhileSubscribed` is registered in `docs/POLLING_LIFECYCLE.md`), `DualPaneCompositingGuardTest`, `BrandHexUniquenessTest` (mode chips use the `TransportMode` colours, no hex), `ScreenshotPreviewAnnotation`, `ViewModelStateDurabilityTest`, `NavKeySerializationConfigTest`, `verifyTestWiring` | passing is the bar, and no allowlist entry is added to get past one |
+
 ## 9. Open gaps and decisions
 
 | Gap or decision | Owner | Needed by |
 |---|---|---|
 | The multi-car-park card at 320 dp and 200% text is not drawn yet | ksharma-xyz | before branch 8 |
+| Where the shortcuts for custom labels (beyond Home and Work) live in the new Search Stop. Today they are pills in the label pill row | ksharma-xyz | before branch 4 |
+| Whether the curated first-open stops (Town Hall, Central, Parramatta, Wynyard) stay for a new rider with location off and no recents | ksharma-xyz | before branch 4 |
+| Whether the home pill is the same entry as today's search row, with the mic opening Ask KRAIL unchanged | ksharma-xyz | before the home map branch |
 | Whether the stop card's Lines chip merges into one chip in the board heading (decision 8) | ksharma-xyz | before the stop card branch |
 | Decision 16, every Go here case in the table in section 8 | ksharma-xyz | before branch 11 |
 | A richer onboarding with kinetic typography (stops near you, Park & Ride, departures) rewrites the existing Intro. It is a separate follow-up stack with its own ERD, not part of this one | ksharma-xyz | after this stack |

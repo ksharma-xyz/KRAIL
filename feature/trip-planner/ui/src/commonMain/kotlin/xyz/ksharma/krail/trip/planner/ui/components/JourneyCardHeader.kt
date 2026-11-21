@@ -42,6 +42,7 @@ internal fun JourneyCardHeader(
     timeToDeparture: String,
     modifier: Modifier = Modifier,
     isSchoolBus: Boolean = false,
+    isReplacementBus: Boolean = false,
 ) {
     val isPast by remember(timeToDeparture) {
         mutableStateOf(timeToDeparture.contains(other = "ago", ignoreCase = true))
@@ -70,6 +71,7 @@ internal fun JourneyCardHeader(
                         it.transportMode is TransportMode.Bus || it.transportMode is TransportMode.SchoolBus
                     },
                     isSchoolBus = isSchoolBus,
+                    isReplacementBus = isReplacementBus,
                 )
             }
         }
@@ -81,6 +83,7 @@ internal fun JourneyCardHeader(
                 transportModeLineList = transportModeLineList,
                 showBadge = { it.transportMode is TransportMode.Bus || it.transportMode is TransportMode.SchoolBus },
                 isSchoolBus = isSchoolBus,
+                isReplacementBus = isReplacementBus,
                 modifier = Modifier.padding(top = dim.journeyCardLegSpacing),
             )
         }
@@ -101,6 +104,7 @@ internal fun TransportModesRow(
     showBadge: (TransportModeLine) -> Boolean,
     modifier: Modifier = Modifier,
     isSchoolBus: Boolean = false,
+    isReplacementBus: Boolean = false,
 ) {
     val dim = KrailTheme.dimensions
     FlowRow(
@@ -131,6 +135,14 @@ internal fun TransportModesRow(
                 color = KrailTheme.colors.onSurface,
             )
         }
+        if (isReplacementBus) {
+            // Plain text like the School Bus label: it is part of the row, not a badge to tap.
+            Text(
+                text = REPLACEMENT_BUS_LABEL,
+                style = KrailTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                color = KrailTheme.colors.onSurface,
+            )
+        }
     }
 }
 
@@ -147,6 +159,22 @@ private fun Preview_JourneyCardHeader_Train_WithPlatform() {
             transportModeLineList = persistentListOf(
                 TransportModeLine(transportMode = TransportMode.Train, lineName = "T1"),
             ),
+        )
+    }
+}
+
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun Preview_JourneyCardHeader_ReplacementBus() {
+    PreviewTheme(themeStyle = DEFAULT_THEME_STYLE) {
+        JourneyCardHeader(
+            timeToDeparture = "in 6 mins",
+            platformText = null,
+            transportModeLineList = persistentListOf(
+                TransportModeLine(transportMode = TransportMode.Bus, lineName = "26T4"),
+            ),
+            isReplacementBus = true,
         )
     }
 }
@@ -231,3 +259,5 @@ private fun Preview_JourneyCardHeader_Past() {
 }
 
 // endregion
+
+internal const val REPLACEMENT_BUS_LABEL = "Replacement bus"

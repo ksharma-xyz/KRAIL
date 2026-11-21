@@ -7,6 +7,10 @@ import kotlinx.serialization.json.Json
 data class ServiceAlert(
     val heading: String,
     val message: String,
+    /** The planner marks it `lineInfo`: it covers a whole line, not one station. */
+    val isLineAlert: Boolean = false,
+    /** Page with the full alert, when the planner gave one. */
+    val url: String? = null,
 ) {
 
     /**

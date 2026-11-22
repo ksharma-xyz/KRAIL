@@ -209,6 +209,37 @@ New events on `SavedTripUiEvent`: `EnterReorder(liftedKey)`, `ReorderMove(fromKe
 preference key go with the tip lines. The drag library is the existing `sh.calvin.reorderable` (2.5.1): its move callback raises
 `ReorderMove`, the whole card carries `draggableHandle`, and no dependency is added.
 
+Branch 10, the floating stop card. All pure, in `stopcard/StopCardRules.kt`, `StopCardBoardRules.kt` and `ParkRidePinCardRules.kt`, so each
+rule is a table test and none needs a layout, a clock or a database:
+
+```kotlin
+// module: :feature:trip-planner:ui, callers: SearchStopMap (a stop pin), ParkRideMapPane (a P pin)
+internal enum class StopCardKind { Stop, ParkRide }
+internal fun stopCardLayout(kind, modeCount: Int, carParkCount: Int): StopCardLayout   // modes row, board, total, action slot
+internal fun nearbyStopFor(selectedStopId: String?, nearbyStops: List<NearbyStopFeature>): NearbyStopFeature?
+internal fun stopCardStateKey(kind: StopCardKind, id: String): String                 // what the card's saved state is keyed on
+internal fun stopCardWidth(paneWidth: Dp): Dp                                          // the one column less 16 dp each side, at most 560 dp (rule 45)
+internal fun stopCardMaxHeight(paneHeight: Dp, topReserve: Dp, bottomInset: Dp): Dp   // below the form, above the nav bar, floor 120 dp
+internal fun controlsClearance(cardHeight: Dp): Dp                                     // the location button rides above an open card
+// the board on a stop card
+internal enum class BoardPhase { Collapsed, Loading, Failed, Empty, Content }
+internal fun stopCardBoard(state: DeparturesState, expanded: Boolean): StopCardBoard   // phase, Lines chip, reserved room, body floor
+internal fun showsLinesChip(lineCount: Int): Boolean                                   // more than one line, decision G2
+internal fun distinctLineCount(departures: List<StopDeparture>): Int
+internal fun lineBadges(departures: List<StopDeparture>): ImmutableList<LineBadge>     // one per line, the app's mode order
+internal fun lineFilterAfterTap(selected: String?, tapped: String): String?
+internal fun boardFloorHeight(fontScale: Float): Dp                                    // an open board never shrinks below it
+// the Park & Ride pin card
+internal fun ParkRideStationPickerItem.toPinCardTile(readings: Collection<ParkRideFacilityDetail>): ParkRideTile  // every car park, equal weight
+internal fun parkRidePinActionLabel(isOnHome: Boolean): String                         // Add to home, Remove from home (rule 38)
+```
+
+`StopCardLayout` carries `showsActionSlot`, true for every card: the room at the bottom of the card for the actions it hosts. Today it holds
+the stop's one pick action (the sheet's Select Stop, carried over) and the Park & Ride card's Add to home or Remove from home. Branch 13 fills
+the same slot with Save as, Go here and Start here and the card does not change shape. The pin card builds the same `ParkRideTile` the home
+row draws, so a station's total, its time and each car park's block read the same on both surfaces, and `directionsTarget` is the one rule
+for where Directions go.
+
 Reused unchanged: `ParkRideAvailabilityLoader` (fetch for a set of facilities), `filterRefreshableFacilities` and
 `parkRideApiCooldown` (the cooldown), `pollWhileCardsAreOpen` (the expanded-card poll).
 
@@ -503,6 +534,29 @@ Home and Work chips (branch 7), written before the code:
 - The screen's effect: one fix per tap, a plan opens the results once, a rotation during the fix reports the real fix once and
   never a missing one
 
+Stop card (branch 10), written before the code:
+
+- Pure (`StopCardRulesTest`, `StopCardBoardRulesTest`, `ParkRidePinCardRulesTest`): `a card has the parts its kind and its stop give it` (a
+  stop with several modes, one mode, none, a stop that ignores car parks, a station of three, two, one and no car parks, a station that
+  ignores modes), `every card keeps room for the actions a later branch fills`, `the open stop is looked up again in the stops the map is
+  drawing`, `no stop open or a stop that left the map leaves the card closed`, `a card's state is kept per stop and per kind`, `the card is
+  one column wide less its margins, at most 560 and the pane when narrower` (320, 411, 480, 560, 700, 1200), `a pane with no room gets a card with no
+  width and never a negative one`, `the card stops short of the form above it and the navigation bar below it`, `a pane too short for the
+  card keeps the card at its floor`, `the map controls sit above an open card and stay put with none`.
+- Board: `the board is in the phase its state and the chevron say` (closed, closed with rows, first load, failed with nothing, empty,
+  content, loading over a stale error, a failed refresh that kept its rows), `an open board holds its height floor in every phase and a
+  closed one holds none`, `a refresh in flight leaves the rows and says so`, `the lines chip shows only for a stop with more than one line
+  and keeps its room while loading` (one line once and three times, two, many, loading, failed, empty), `a closed board shows no chip even
+  when rows are held`, `lines are counted by line and not by departure`, `badges list each line once in the apps mode order and keep the
+  board's order inside a mode`, `tapping a badge selects it and tapping the selected one clears it`, `the board floor is three rows at
+  normal text and grows with the text`.
+- Park & Ride pin card: `the card lists every car park of the station, with a reading or not`, `a car park with no reading shows its name
+  alone and never borrows a position`, `directions go to the car parks own position and never the stations`, `a car park whose reading
+  carried no position has no directions even when the station has one`, `a station with no position of its own still gets directions for a
+  car park that has one`, `the total is the free spots of the car parks that have a reading and its time is the oldest`, `a station with no
+  reading yet has no total and no time`, `car parks keep their order when the numbers change`, `a car park behind two stop ids is listed
+  once`, `the action reads Remove from home on home and Add to home off it`.
+
 State survival and lifecycle:
 
 - Rotate on every changed screen, loaded and loading. Expanded tile, reorder edit and first-run answer survive
@@ -659,6 +713,15 @@ Branch 9, reorder mode. The spec was silent on each of these. Every one is `Defa
 | A76 | The top row of reorder mode is taj's `Button` in `monochromeButtonColors()` and `chipButtonSize()`, at least 48 dp tall, 16 dp below the status bar and 16 dp from the right. It replaces the whole title bar, so the logo and gear are gone and not hidden. The list's bottom padding drops from 400 dp to 16 dp, which is the height the chips and search row held | Rule 31 and the brief | The title bar and the Done row differ in height, so the stack jumps up by the difference on entering | Default, not yet seen by owner |
 | A77 | A tap on the map cancels, with a pointer observer that sees the touch first and consumes nothing, around the right pane only when a dual pane window shows the map. On a phone there is no map behind the cards, so back is the way out. A failed Done write leaves the screen showing the chosen order until the table is next observed | Rule 31 and rule 38. The map pane stays a sibling of the list so the iOS compositing rule holds | iOS draws the map as a native view, which may not deliver the touch to the observer. To verify on a device | Default, not yet seen by owner |
 | A78 | A station is never removed in reorder mode: the row carries no delete circle and no touch of its own. Its tiles do not scroll or open while the mode is on | Rule 38, "stations do not reorder one by one and carry no delete overlay" | A rider with an open tile who long presses sees it closed in the mode, and open again after | Default, not yet seen by owner |
+
+Branch 10, the floating stop card. The spec was silent on each of these. Every one is `Default, not yet seen by owner`.
+
+| # | Assumption | Evidence | What breaks if it is wrong | Decision |
+|---|---|---|---|---|
+| A79 | A tapped pin opens the card with the Departure Board closed. The chevron opens it and only then is the board fetched. Opening the card is 0 calls and opening the board is one, the cooldown the sheet had | The sheet's board card is closed until its header is tapped (`DepartureBoardStopCard`, uncontrolled), so this keeps the calls per pin tap where they were. Opening the board on a pin tap would turn every pin a rider looks at into a request | A rider who wants the times on the first tap taps once more. The alternative is a call per pin looked at | Default, not yet seen by owner |
+| A80 | The Lines chip reads "Lines" and is one chip in the board heading, beside the chevron. Tapping it opens a row of the stop's line badges under the heading, whole badges that wrap and never scroll sideways, and tapping a badge filters the board to that line and tapping it again clears. It replaces the board's old filter pill and per mode groups on this card only. The chip keeps its room in the heading while the board loads and is not drawn for a stop with one line | Decision G2 says one chip, only with more than one line. Rule 4 allows no other sideways row. The old row was a pill, a mode icon per mode and a badge per line, three kinds of chip | At large text a stop with one line shows its heading one line shorter once the board lands, because the reserved room is released. It cannot be known before the first board whether a stop has one line | Default, not yet seen by owner |
+| A81 | An open board holds a floor of 168 dp at normal text, growing with the font scale, so the loading dots, the failed message, the empty message and a one row board all stand in the same height as a few rows. **168 dp is a guess, about three rows, read it against a device** | Rule 22. The placeholders previously had their own heights, so the card changed height when data landed | A one row board shows a little blank space under its row, and a board with many rows grows past the floor and scrolls inside the card | Default, not yet seen by owner |
+| A82 | The Park & Ride pin card lists every car park of the station stacked at equal weight and shows the station's total only when the station has more than one car park. With one, the car park's own block already says the number and the total would repeat it. The card's action reads "Add to home" or "Remove from home", the words of rule 38, and not "Add Park & Ride" and "Remove Park & Ride" as the sheet said | G1 and A2b. Rule 38 | A rider with one car park sees no total line where the closed home tile shows one. The sheet's old wording is gone from this card | Default, not yet seen by owner |
 
 Source judgement, one row per rule that reads data:
 

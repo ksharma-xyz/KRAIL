@@ -146,7 +146,7 @@ class IntroFinaleHostTest {
     }
 
     @Test
-    fun `once the Intro has navigated the colour lifts and the app is there, as if it was always there`() {
+    fun `once the Intro has navigated the colour lifts and the app is back in view`() {
         show()
         start()
         advance(2700)

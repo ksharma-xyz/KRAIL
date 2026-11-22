@@ -41,6 +41,14 @@
 # Ride screen does the same while its station is looked for. Without that wait the taps
 # are spent on a disabled button and the cap below runs out before the app is ready.
 #
+# After Not now, the Intro hands over to the finale: the wordmark, the theme colour flooding the
+# screen, Saved Trips opening underneath it, and the colour fading out. It takes about 3.5 s, and
+# while it is up the app behind it is hidden from the accessibility tree, so none of the Intro's
+# tags are visible, the loop above ends, and `savedtrips.screen` is not there until the colour
+# has lifted. So the last step waits for Saved Trips, with room for a slow device, instead of
+# racing the overlay. A tap on the screen would skip the finale, but this flow never taps it,
+# because the wait is the one thing that is certain to work on both platforms.
+#
 # `times` is a safety net, not the exit condition: `while` is what ends the
 # loop. Without the cap a button that stops responding would hang the run
 # instead of failing it.
@@ -111,3 +119,12 @@ appId: ${APP_ID}
             # second tap on the screen that is still moving in.
             - waitForAnimationToEnd:
                 timeout: 5000
+
+# The finale has to end before Saved Trips can be used. `optional`, like the first wait, because
+# a device that has already been through the Intro is on Saved Trips at once, and because the
+# callers each wait for the screen themselves and are what fails the run if it never comes.
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
+    timeout: 15000
+    optional: true

@@ -409,8 +409,8 @@ fun IntroState.toOutcome(stopsWait: StopsWait, declined: Boolean = false): Intro
 - **Finishing, as built.** `IntroStep.canFinish()` is true for the confirm screen alone, so `FinishPressed` and `FinishWithoutTrip`
   from any other screen do nothing. Yes, save it is the existing path unchanged (the wait of up to 15 s for the stops, the trip
   write, both flags, `intro_lets_krail`, then the effect). `IntroFlowRoute` hands the effect to one function,
-  `onIntroFinished(navigateToSavedTrips)`, which today calls straight through to Saved Trips and is the one place a finale
-  wraps.
+  `onIntroFinished(navigateToSavedTrips)`, which unit R3 left calling straight through to Saved Trips as the one place a finale
+  wraps, and unit R4 wraps (see "Unit R4, as built").
 - **The outcome.** `skipped` in `intro_lets_krail` is true only when the rider answered Not now on the confirm screen, and a saved
   trip is never skipped. It is no longer inferred from the picks. No event name and no param was added, and the other params keep
   their meaning.
@@ -918,6 +918,19 @@ The confirm screen and the celebration (unit R3), the seven questions:
 | 6 | **Battery.** | One finite animation, started when the screen first shows and ended 800 ms later, with no timer after it. |
 | 7 | **Shared limits.** | None. |
 
+The finale (unit R4), the seven questions, with numbers where there are any. Nothing here was measured on a device; every figure that is not
+arithmetic on the timeline is a guess and is labelled one.
+
+| # | Question | Answer |
+|---|---|---|
+| 1 | **API calls.** | None, on any path. No network, no storage and no analytics event are added. The trip write, both flags and `intro_lets_krail` happen before the finale starts and are unchanged. |
+| 2 | **Payload.** | None. Everything is in code. The brand colours are the app's existing AI gradient stops and the size is the existing tagline token. |
+| 3 | **Timing.** | Saved Trips now opens about 2.5 s after the finish instead of at once, when the colour covers the screen, and the rider sees it about 3.5 s after the finish with an instant navigation (2.5 s to the cover, about 0.3 s settling, 0.7 s fading; arithmetic on the timeline). A tap anywhere brings that to about 0.4 s (two drawn frames, then a 300 ms fade). Reduced motion is about 0.5 s (300 ms hold and a 200 ms fade). It never waits longer than 1.5 s after the cover for Saved Trips, so the worst case is about 5 s. The first composition of Saved Trips is the heavy one, and it happens under the solid colour, so its cost is not seen. The finish itself still never blocks (the 15 s rule is unchanged). |
+| 4 | **UX.** | There is no loading, slow, failed or offline state, because nothing is waited for from outside. A slow device draws fewer frames of the same timeline, since the clock is the real one, and the colour is solid when Saved Trips is composed. The layer swallows touches, and a tap anywhere skips it. With reduced motion there is no movement. A turn of the screen, or an app that is stopped, in the middle of the finale ends it at once and still navigates. A killed process has no finale and the next launch shows Saved Trips. |
+| 5 | **Network efficiency.** | Not applicable. |
+| 6 | **Battery.** | One finite frame loop of about 3.5 s, about 210 frames at 60 Hz and 420 at 120 Hz (arithmetic), run only after a finish and only while the app is started: it is cancelled with the host's composition and when the app stops. Idle there is no loop and nothing is drawn, only one box and one state read. Per frame: eleven small `graphicsLayer` transforms, one offscreen layer holding the wordmark (a guess: a few MB for about 3.5 s, freed when it goes), one gradient rect over it and one `drawBehind` circle or rect. Nothing is laid out or recomposed per frame. The one blur-like cost is the stepped text `Shadow`: at most 12 style changes in the whole run, each recomposing eleven letters (132 letter recompositions in all, arithmetic), and a blur on each letter's text while it shows. It is the one thing to measure first on a device (`dumpsys gfxinfo` before and after on the Pixel 6 Pro, janky frames during the finale, and a second look on the slowest device), and if it is the cost, the fallback is a smaller blur or a flatter glow. |
+| 7 | **Shared limits.** | None. No NSW call and nothing for a BFF to collapse. |
+
 Decision rule met: the added calls buy a live car park card and a one tap add for riders who park and ride. They are
 optional, non-blocking, once only and silent on failure.
 
@@ -966,6 +979,21 @@ Every screen has three zones:
 | `Yes, save it` | The trip is written and the Intro ends at Saved Trips, as before |
 | `Not now` | Nothing is written and the Intro ends at Saved Trips |
 | Back | The origin screen, or the destination screen when a Park & Ride start filled the origin in, with the earlier choice listed first |
+
+**The finale (unit R4).**
+
+| State | What the rider sees |
+|---|---|
+| Opening | After `Yes, save it` or `Not now` the screen fades to the app's ground and `#LET'S` over `KRAIL` springs up letter by letter in the brand gradient with a soft glow. No bar, no button and no text but the wordmark |
+| Hold | The wordmark sits, the glow swells once |
+| Blend | The gradient and the glow take the colour of the theme the rider chose |
+| Flood | That colour grows from the middle of the wordmark until nothing else shows. Saved Trips opens underneath at full cover |
+| Fade | The colour fades out and Saved Trips is there, drawn already |
+| Tap anywhere | The screen is the solid colour at once, Saved Trips opens, and the colour fades in about 0.3 s once Saved Trips has been drawn |
+| Reduced motion | No wordmark, no glow, no flood. The theme colour covers the screen and fades away in 200 ms once Saved Trips has been drawn |
+| A turn of the screen, or the app stopped, part way | The finale ends and Saved Trips is open, with no replay and no layer left |
+| 320 dp at 200 percent text | The two lines are scaled down together to fit, whole, inside the system bars and the side padding. Nothing is squeezed or cut |
+| Screen reader | Hears `Let's KRAIL` once. The app behind it is not read while the layer is up |
 
 At a large text size or a narrow window nothing is squeezed. The headline, field and rows are in one scrolling column above the pinned
 bar, a stop's name wraps inside its row, and the bar stacks its two whole buttons when they do not fit in a row. The keyboard resizes
@@ -1302,6 +1330,11 @@ in `searchstop/` touched:
   rely on a saved trip: `01-launch-home` asserts the list container and never its contents, and `02-plan-trip` plans from the home
   bar. `maestro check-syntax` accepts the file and every flow. A device case, because nothing is run on a device here. CI and
   workflow files are not touched.
+  In unit R4 the file ends with one more wait, `extendedWaitUntil` on `savedtrips.screen` (15 s, optional), because Not now now hands over to the
+  finale, which takes about 3.5 s before Saved Trips can be used. While the finale is up the app behind it is hidden from the accessibility
+  tree, so none of the Intro's tags is visible, the loop ends, and the wait is what lets the finale finish instead of racing it. The six flows that
+  call it already wait for `savedtrips.screen` (60 s) straight after, so they hold unchanged, and `maestro check-syntax` accepts the file and all
+  six flows. Nothing was run on a device.
 - **Coverage.** Every PR passes `scripts/patch_coverage.py` at 80 percent or more. The result goes in the PR's Testing section.
 - **Manual cases** (nothing automated reaches them): a real permission dialog on both platforms, a real fix indoors, airplane
   mode on the Yes path, a fresh install on a slow device.
@@ -1368,6 +1401,29 @@ Each is a default taken to keep moving. None has been seen by the owner. The lis
 | R3-18 | A pick that leaves one end missing, which the lists never offer, goes back to the screen of the missing stop | The confirm screen needs both stops, and a trip with one end is worse than one more screen | Default, not yet seen by owner |
 | R3-19 | The tile is read to a screen reader as `From <start> to <end>`, and the tile is not a button | The two names stacked read as one run of words without it, and a tile that looks like a card on Saved Trips must not look pressable | Default, not yet seen by owner |
 
+### Unit R4, decisions where the spec was silent
+
+Each is a default taken to keep moving. None has been seen by the owner. The timings in section 5 are the proposed ones, to be tuned on a phone.
+
+| # | Decision | Why, and what changes if it is wrong | Decision |
+|---|---|---|---|
+| R4-1 | The Intro route navigates when the finale asks, with the callback it has then, and says so. The signal never holds a callback | A callback held by the signal would belong to a screen that a turn of the screen replaces, and would navigate a stale navigator. The cost is one more small effect in the route | Default, not yet seen by owner |
+| R4-2 | A turn of the screen, or the app stopped, part way through the finale jumps to its end: it asks the Intro to navigate if it has not, waits at most 1 s, and ends. It never replays | A replay on rotation would be a second 3 s wait and a stuck overlay is the worse bug. The cost is that a turn of the screen part way skips the animation. If a replay is wanted, the run would need its own saved clock | Default, not yet seen by owner |
+| R4-3 | With no finale host attached, or a run already playing, the finish goes straight to Saved Trips | The host is at the app root and always attached in the app, so this is only tests and previews. It means the finish can never wait for a finale that is not there | Default, not yet seen by owner |
+| R4-4 | The fade starts after two drawn frames and 300 ms since the Intro navigated, and at most 1500 ms after the app was asked, counted by the overlay itself. Nothing is called back from Saved Trips | The brief set these numbers. If the navigation library's own screen change is longer than 300 ms, which is not verified here, it would show under the fading colour. Raise `SETTLE_MIN_HOLD_MS` | Default, not yet seen by owner |
+| R4-5 | The wordmark and the flood are the raw theme colour (the decoration role, `AiGradientTokens` for the brand stops), so the letters vanish into the flood | The wordmark is a logotype, not text read off a surface, and the same colour makes the flood look as if it grew out of the letters. If the letters must clear a contrast ratio against the ground, the ink role would be used and the wordmark would fade out instead | Default, not yet seen by owner |
+| R4-6 | The ground behind the wordmark is the app's `surface` colour, fading in over 250 ms, and gone once the colour covers the screen | The confirm screen would otherwise show through the letters. The cost is a short fade to the ground before the wordmark is read | Default, not yet seen by owner |
+| R4-7 | One scale for the whole wordmark, the smallest any line needs, so the two lines stay the same size | "Scales down by line" could mean each line separately, which would make `KRAIL` larger than `#LET'S`. The pair looks like one mark. One line of `wordmarkFitScale` changes it | Default, not yet seen by owner |
+| R4-8 | The wordmark is 3 times the tagline token, italic, with the letters 35 ms apart and the glow in 12 steps | "Huge" had no number and no larger token exists. 3 times keeps it inside the type scale. The glow is stepped so the text style changes at most 12 times | Default, not yet seen by owner |
+| R4-9 | A tap moves the clock straight to the covered frame, so the screen jumps to the solid colour, and the fade is 300 ms | The brief said to skip to the navigate frame. A quicker fast forward through the same frames would be gentler but longer | Default, not yet seen by owner |
+| R4-10 | Reduced motion shows the solid colour on the first frame and cross-fades it away in 200 ms after Saved Trips is drawn | The brief said a plain cross-fade, navigating at the start. There is no fade in, so the screen cuts to the colour. Colour with no movement is not the motion that reduced motion is about | Default, not yet seen by owner |
+| R4-11 | A screen reader hears `Let's KRAIL` once as a polite live region, and the app behind is hidden from it while the layer is up | The letters read one by one would be noise. Hiding the app also hides its test tags, which is what makes the Maestro wait work | Default, not yet seen by owner |
+| R4-12 | The layer has no click action of its own, only a tap gesture, so a screen reader user cannot skip it | It is not a control, and it ends by itself in a few seconds. If it should be skippable by a screen reader, one semantic action is added | Default, not yet seen by owner |
+| R4-13 | System Back during the finale is not handled | The Intro is still the screen behind it, so Back pops as it always did and the finale then ends at the longest wait. If Back should be swallowed while the colour is up, the host would add a back handler | Default, not yet seen by owner |
+| R4-14 | The signal is registered in `tripPlannerNavigationModule` and injected at the Intro entry with `koinInject`, as `JourneyMapEntry` does | There is no entry level view model to inject it through, and the view model is at its constructor limit | Default, not yet seen by owner |
+| R4-15 | The navigation library's own transition is not changed | It is the app root's one shared component, and the finale works above it. The settle hold covers it | Default, not yet seen by owner |
+| R4-16 | No taj component is added | The overlay and the wordmark are feature level composables of taj `Text` and modifiers. A reusable finale in taj would need the owner's yes | Default, not yet seen by owner |
+
 ### Assumptions for approval (mandatory, no code until signed off)
 
 Evidence that comes from private analytics is shown to the owner in the message that introduces this ERD and is kept outside this repository. This table states the rule, the options and the public facts.
@@ -1432,6 +1488,9 @@ The rebuild, in three units on the same branch, in focused commits, none pushed:
   deletion of the temporary trip bar, `IntroPendingStepBody` and the old pick events. `skipped` in `IntroOutcome` is completed (Not now on
   the confirm screen). R3 keeps the theme the rider chose in the saved state for the finale, reading `IntroState.selectedThemeId`
   through `themeChoiceFor`, and the Maestro loop needs no change unless the last screens' bars do.
+- **R4, built.** The finale, as focused commits: the timeline and the run as pure functions, the wordmark and the overlay with the previews,
+  the signal, the host at the app root and the hand-off that wraps `onIntroFinished`, and the Maestro wait. It reads `IntroState.selectedThemeId`
+  through `themeChoiceFor`, adds no analytics event name and no param, changes no taj file, and does not touch Saved Trips, Search Stop or any map.
 
 ## 11. Measurement plan (ROI)
 

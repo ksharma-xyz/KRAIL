@@ -34,7 +34,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroStep
 /** The content of one step, given everything the screen knows and the way to tell the view model. */
 internal typealias IntroStepContent = @Composable (IntroState, SuggestedStops, (IntroUiEvent) -> Unit) -> Unit
 
-/** The slot a step has until its own branch fills it: nothing at all. */
+/** The slot the trip step has until its own branch fills it: nothing at all. */
 internal val EmptyIntroStep: IntroStepContent = { _, _, _ -> }
 
 // The same width as a phone, so the Intro reads the same on a tablet and only gains margin.
@@ -57,7 +57,6 @@ internal fun IntroFlowScreen(
     readiness: StopsReadiness,
     onEvent: (IntroUiEvent) -> Unit,
     modifier: Modifier = Modifier,
-    parkRideStep: IntroStepContent = EmptyIntroStep,
     firstTripStep: IntroStepContent = EmptyIntroStep,
 ) {
     val dim = KrailTheme.dimensions
@@ -84,7 +83,7 @@ internal fun IntroFlowScreen(
             ) { step ->
                 Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                     when (step) {
-                        IntroStep.PARK_RIDE -> parkRideStep(state, suggestedStops, onEvent)
+                        IntroStep.PARK_RIDE -> IntroParkRideStepContent(state = state, onEvent = onEvent)
                         IntroStep.FIRST_TRIP -> firstTripStep(state, suggestedStops, onEvent)
                     }
                 }

@@ -43,6 +43,11 @@ class TripPlannerUiSnapshotTest : BaseSnapshotTest() {
         // Recorded on a 320dp canvas by TripPlannerUiSnapshotTestNarrow.
         "PreviewDisruptionBannerNarrow",
         "PreviewDisruptionBannerNarrowLongText",
+        // Recorded on a 320dp canvas and on a tablet sized canvas by the two Intro snapshot classes.
+        "PreviewIntroParkRideNarrowAsk",
+        "PreviewIntroParkRideNarrowCardContent",
+        "PreviewIntroParkRideNarrowAdded",
+        "PreviewIntroParkRideWideCardContent",
     )
 
     @Test

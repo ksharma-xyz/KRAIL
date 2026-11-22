@@ -9,21 +9,8 @@ import xyz.ksharma.krail.trip.planner.ui.intro.DEFAULT_SUGGESTED_STOPS
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroStep
 
-// The shell with both steps empty: the dots, the back button and the one bottom button.
-
-@ScreenshotTest
-@PreviewScreen
-@Composable
-private fun PreviewIntroShellStepOne() {
-    PreviewTheme {
-        IntroFlowScreen(
-            state = IntroState(),
-            suggestedStops = DEFAULT_SUGGESTED_STOPS,
-            readiness = StopsReadiness.Ready(stopCount = 100),
-            onEvent = {},
-        )
-    }
-}
+// The shell with the trip step still empty: the dots, the back button and the one bottom button. Step 1 is
+// previewed with its question and card in IntroParkRideStepPreviews.
 
 @ScreenshotTest
 @PreviewScreen

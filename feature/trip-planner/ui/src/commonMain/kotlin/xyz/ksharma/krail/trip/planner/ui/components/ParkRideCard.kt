@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -31,12 +33,22 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 
 private val ParkRideCardVerticalPadding = 20.dp // no token equivalent
 
+/**
+ * The Park & Ride card.
+ *
+ * [keepReadingSpace] is for a surface that shows the card before its numbers have arrived or when
+ * they never will: an open card then lists every car park by name, and one with no reading (spots
+ * below zero) holds the lines its numbers will take, so the card keeps one height whether the
+ * numbers are loading, shown or missing. It is off for the home card, which shows Loading until a
+ * reading exists.
+ */
 @Composable
 fun ParkRideCard(
     parkRideUiState: ParkRideUiState,
     isExpanded: Boolean,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
+    keepReadingSpace: Boolean = false,
 ) {
     val dim = KrailTheme.dimensions
     Row(
@@ -62,7 +74,7 @@ fun ParkRideCard(
                 enter = expandVertically() + fadeIn(spring(stiffness = Spring.StiffnessVeryLow)),
                 exit = shrinkVertically() + fadeOut(spring(stiffness = Spring.StiffnessVeryLow)),
             ) {
-                if (parkRideUiState.facilities.any { it.spotsAvailable >= 0 }) {
+                if (keepReadingSpace || parkRideUiState.facilities.any { it.spotsAvailable >= 0 }) {
                     Column(verticalArrangement = Arrangement.spacedBy(ParkRideCardVerticalPadding)) {
                         parkRideUiState.facilities.forEach { facility ->
                             Column(
@@ -74,47 +86,18 @@ fun ParkRideCard(
                                     style = KrailTheme.typography.displaySmall.copy(fontWeight = FontWeight.Normal),
                                 )
 
-                                // Spots Information
-                                FlowRow(
-                                    horizontalArrangement = Arrangement.spacedBy(dim.spacingML),
-                                    verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
-                                ) {
-                                    FlowRow(horizontalArrangement = Arrangement.spacedBy(dim.spacingXS)) {
-                                        Text(
-                                            text = "${facility.spotsAvailable}",
-                                            style = KrailTheme.typography.headlineMedium,
-                                            modifier = Modifier.alignByBaseline(),
-                                        )
-                                        Text(
-                                            text = "spots available",
-                                            style = KrailTheme.typography.bodyMedium,
-                                            modifier = Modifier.alignByBaseline(),
-                                        )
-                                    }
-
-                                    FlowRow(
-                                        horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
-                                    ) {
-                                        Text(
-                                            text = "${facility.percentageFull}%",
-                                            style = KrailTheme.typography.headlineMedium,
-                                            modifier = Modifier.alignByBaseline(),
-                                        )
-                                        Text(
-                                            text = "full",
-                                            style = KrailTheme.typography.bodyMedium,
-                                            modifier = Modifier.alignByBaseline(),
-                                        )
-                                    }
-                                }
-
-                                // Time Information
-                                if (facility.timeText.isNotBlank()) {
-                                    Text(
-                                        text = "Last updated at\u00A0${facility.timeText}",
-                                        style = KrailTheme.typography.bodySmall,
-                                        color = KrailTheme.colors.secondaryLabel,
+                                if (facility.spotsAvailable >= 0 || !keepReadingSpace) {
+                                    ParkRideFigures(
+                                        spots = "${facility.spotsAvailable}",
+                                        percentFull = "${facility.percentageFull}%",
                                     )
+
+                                    // Time Information
+                                    if (facility.timeText.isNotBlank()) {
+                                        ParkRideUpdatedAt(timeText = facility.timeText)
+                                    }
+                                } else {
+                                    ParkRideReadingPlaceholder()
                                 }
                             }
                         }
@@ -139,6 +122,65 @@ fun ParkRideCard(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ParkRideFigures(spots: String, percentFull: String) {
+    val dim = KrailTheme.dimensions
+    // Spots Information
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingML),
+        verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
+    ) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(dim.spacingXS)) {
+            Text(
+                text = spots,
+                style = KrailTheme.typography.headlineMedium,
+                modifier = Modifier.alignByBaseline(),
+            )
+            Text(
+                text = "spots available",
+                style = KrailTheme.typography.bodyMedium,
+                modifier = Modifier.alignByBaseline(),
+            )
+        }
+
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
+        ) {
+            Text(
+                text = percentFull,
+                style = KrailTheme.typography.headlineMedium,
+                modifier = Modifier.alignByBaseline(),
+            )
+            Text(
+                text = "full",
+                style = KrailTheme.typography.bodyMedium,
+                modifier = Modifier.alignByBaseline(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ParkRideUpdatedAt(timeText: String) {
+    Text(
+        text = "Last updated at\u00A0$timeText",
+        style = KrailTheme.typography.bodySmall,
+        color = KrailTheme.colors.secondaryLabel,
+    )
+}
+
+/** The lines a reading takes, drawn with nothing in them and hidden from a screen reader. */
+@Composable
+private fun ParkRideReadingPlaceholder() {
+    Column(
+        modifier = Modifier.alpha(0f).clearAndSetSemantics {},
+        verticalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingXS),
+    ) {
+        ParkRideFigures(spots = "000", percentFull = "00%")
+        ParkRideUpdatedAt(timeText = "0:00\u00A0AM")
     }
 }
 

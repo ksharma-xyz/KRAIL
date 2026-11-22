@@ -491,6 +491,23 @@ The shell, as built (`IntroFlowScreen`, stateless, in `intro/v2`):
 - Step 2's content is a slot, `firstTripStep`, which the first trip branch fills. It is given the state, the suggested stops
   and the event callback.
 
+Step 1, as built (`IntroParkRideStepContent`), where this document was silent:
+
+- The question is the heading, with a car sticker above it, both in ink, in the type the carousel's tagline used. The sticker
+  pops and the line rises once when the step appears. A turn of the screen does not repeat it, and reduced motion has it in
+  place at once. A heading stands alone, so nothing is written under it.
+- The two answers are whole buttons, one under the other, always. The chosen answer is filled in neutral ink and the other is
+  outlined. The theme colour is not used for them, because it belongs to the bottom button.
+- The card is the shared `ParkRideCard`, opened, with the shared `ParkRideFacilityRow` under it as the Add to home row,
+  reading Add to home and then Added to home. Tapping the card does what tapping the row does.
+- Locating is the same card with no text, and no row, so the Add row is not offered before there is a station. No station near
+  is "No car parks near you" drawn inside that same room. Loading and Unavailable are the same: the car park names, with the
+  lines the numbers will take held empty. The held lines are invisible and hidden from a screen reader, so the card has one
+  height from the skeleton to the numbers and to Added, and a test holds it at 411 dp and at 320 dp with text at 200%.
+- `ParkRideCard` gained one parameter, `keepReadingSpace`, off by default, so the home card is drawn exactly as before (the
+  existing goldens are unchanged). On, an open card lists every car park by name and holds the lines for any car park that has
+  no reading yet.
+
 ## 8. Test plan
 
 - **Pure logic, fixtures first.**
@@ -523,6 +540,10 @@ The shell, as built (`IntroFlowScreen`, stateless, in `intro/v2`):
   readable until the commit (this belongs to the readiness PR).
 - **Screenshot tests.** Step 1 and step 2 in every state above, light and dark, 320 dp at 200%, using `@PreviewScreen` and
   `@PreviewComponent`. The old `IntroContent*` previews and screenshots are deleted with their code.
+  Built so far: step 1 in seven states on a phone (Ask, Locating, No station near, Card loading, Card with numbers, Card
+  unavailable, Added), the tallest card (three car parks) on a 320 dp canvas and on a tablet canvas, and the shell with an empty
+  step 2. Each preview is recorded light, dark and light at 200% text, 36 images in all. The 320 dp and tablet previews live in
+  `intro/v2/narrow` and `intro/v2/wide`, each recorded by its own snapshot class, and are skipped by the phone class by name.
 - **Guards that already exist and must stay green.** `ThemeColorRoleRule`, `ClockSystemBan`, `CollectAsStateBan`,
   `SnackbarBan`, `PollingLifecycleGuardTest` (the Intro must not poll), `ViewModelStateDurabilityTest`,
   `NavKeySerializationConfigTest`, `verifyTestWiring`.

@@ -62,6 +62,17 @@ class RemoteConfigDefaultsTest {
     }
 
     @Test
+    fun theParkRideSuggestionRadiusDefaultIsFiveKilometresAsADouble() {
+        val default = RemoteConfigDefaults.getDefaults()
+            .single { it.first == FlagKeys.PARK_RIDE_SUGGESTION_RADIUS_KM.key }
+            .second
+
+        // A Double on purpose, as the nearby stops radius is: a rider who has not fetched yet gets
+        // this value, and the reader accepts it as the text "5.0" or as a whole number from a console.
+        assertEquals(5.0, default)
+    }
+
+    @Test
     fun noDefaultIsForAKeyThatNoLongerExists() {
         val flagKeys = FlagKeys.entries.map { it.key }.toSet()
         val orphans = RemoteConfigDefaults.getDefaults()

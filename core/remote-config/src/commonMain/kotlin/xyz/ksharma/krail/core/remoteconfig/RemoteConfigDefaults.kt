@@ -229,6 +229,13 @@ object RemoteConfigDefaults {
                 first = FlagKeys.NEARBY_STOPS_RADIUS_KM.key,
                 second = 3.0,
             ),
+            // Kilometres, a Double, read through resolveParkRideSuggestionRadiusKm the same way, which keeps
+            // its own copy of this value for a reading that is not usable (pinned equal by
+            // ParkRideSuggestionRadiusTest). The Intro asks about Park & Ride within the same 5 km.
+            Pair(
+                first = FlagKeys.PARK_RIDE_SUGGESTION_RADIUS_KM.key,
+                second = 5.0,
+            ),
         )
     }
 }

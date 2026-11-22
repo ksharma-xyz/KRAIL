@@ -133,4 +133,13 @@ enum class FlagKeys(val key: String) {
      * the app lets a rider change it.
      */
     NEARBY_STOPS_RADIUS_KM("nearby_stops_radius_km"),
+
+    /**
+     * How far from the rider's Home, or from where they are before Home is set, in kilometres, the
+     * one-time Park & Ride suggestion on the map home looks for a station. A number such as `5.0`;
+     * the default is 5.0. A value that is not a number, or is outside 0.5 to 10, is ignored and the
+     * default applies, as a whole, rather than being pulled into range. Nothing in the app lets a
+     * rider change it.
+     */
+    PARK_RIDE_SUGGESTION_RADIUS_KM("park_ride_suggestion_radius_km"),
 }

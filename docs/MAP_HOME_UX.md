@@ -196,7 +196,8 @@ If a design breaks one of these rules, the design changes, not the rule.
     **A pick never leaves the screen.** On the To and From form every pick (a recents row, a label shortcut, a result, a stop
     card action) fills its bar and the screen stays. Editing moves to the other bar while that bar is empty, with the keyboard
     following it, and to nothing when both hold a stop. Only the go circle leaves, with both stops, and back leaves with nothing,
-    so a half pick is dropped. A label, or one leg of a trip, is a single field and returns at once with its stop.
+    so a half pick is dropped. The go circle opens the trip results over Search Stop, so back from them lands on Search Stop
+    with both stops still set, the go circle shown and no keyboard, and back again goes home. A label, or one leg of a trip, is a single field and returns at once with its stop.
 40. **A Park & Ride card never promises a trip it cannot start.**
 41. **Home and Work chips stay once set.** Tapping Home plans a trip from the nearest stop to Home with no saved trip
     needed. There is no long press on a chip. The app's own Manage stop labels screen (expand a row: Save changes, Remove,
@@ -327,7 +328,7 @@ A tapped pin opens a floating stop card, never a bottom sheet.
    known, and stays editable. With location off it asks "Choose start".
 5. The bar reads To with the stop. The From row sits under it with the go circle inside it at the end (rules 26 and 36), shown
    as soon as both bars hold a stop. Tapping a bar edits it in place. With no start, From reads Choose starting point and there
-   is no go circle. The go circle is the only way out with a trip.
+   is no go circle. The go circle is the only way out with a trip, and back from the results returns here.
 6. Tapping a pin opens a floating stop card: departures, Save as, Go here or Start here.
 
 ### Spacing

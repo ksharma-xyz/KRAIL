@@ -387,6 +387,31 @@ class SearchStopScreenInteractionTest {
     }
 
     @Test
+    fun goWhileABarIsBeingEdited_savesTheScreenAsTheMapStateWithBothBarsSet() {
+        var chosen: Pair<StopItem, StopItem>? = null
+        setForm(
+            state = SearchStopFixtures.recentWithDefaults(),
+            onTripChosen = { from, to -> chosen = from to to },
+        )
+        composeRule.onNodeWithText("Central Station").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Town Hall").performClick()
+        composeRule.waitForIdle()
+
+        // The rider taps the destination bar to change it, which raises the list state, then goes anyway.
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_TO).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_SEARCH, useUnmergedTree = true).performClick()
+        composeRule.waitForIdle()
+
+        // The trip results open over this screen, so what stays behind is what back from them lands on: no list,
+        // no bar being edited, and the go circle on both stops.
+        checkNotNull(chosen) { "expected the trip to leave with go" }
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE, useUnmergedTree = true).assertIsDisplayed()
+    }
+
+    @Test
     fun backBeforeGo_leavesWithNoTrip_soAHalfPickIsDropped() {
         var chosen: Pair<StopItem, StopItem>? = null
         var wentBack = 0

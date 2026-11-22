@@ -13,7 +13,6 @@ import androidx.compose.runtime.State
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
@@ -53,7 +52,7 @@ internal fun IntroThemeStepContent(
  * The badges, in a row that wraps whole badges onto the next line rather than squeezing them, centred, with
  * room between them for them to drift and dance without touching. Every badge that is not selected drifts and
  * the selected one dances, both from one clock that runs only while the screen is resumed. With reduced motion,
- * in a preview and in a screenshot nothing moves: the selected badge sits lifted with a thicker ring.
+ * in a preview and in a screenshot nothing moves: the selected badge sits lifted 4 dp.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -83,12 +82,6 @@ internal fun IntroThemeBadges(
             IntroThemeBadge(
                 choice = choice,
                 selected = selected,
-                ringWidth = ringWidthDp(
-                    selected = selected,
-                    motionRuns = motionRuns,
-                    regularDp = dim.strokeMedium.value,
-                    thickDp = dim.strokeThick.value,
-                ).dp,
                 frame = badgeFrameSource(index, selected, motionRuns, clock, danceWeight),
                 onClick = { onPick(choice.style.id) },
             )

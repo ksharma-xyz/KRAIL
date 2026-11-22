@@ -203,44 +203,6 @@ class IntroThemeMotionTest {
 
     // endregion
 
-    // region Size and ring
-
-    @Test
-    fun `the badge is 64 dp at the default text size, grows with the text to at most 96 dp, and never shrinks`() {
-        val table = listOf(
-            0.85f to 64f,
-            1f to 64f,
-            1.15f to 73.6f,
-            1.3f to 83.2f,
-            1.5f to 96f,
-            2f to 96f,
-            3f to 96f,
-        )
-
-        table.forEach { (scale, size) -> assertNear(size, badgeSizeDp(scale), "scale $scale", tolerance = LOOSE) }
-    }
-
-    @Test
-    fun `the touch target is never under 48 dp, and two of the largest badges fit side by side at 320 dp`() {
-        listOf(0.5f, 1f, 1.5f, 2f).forEach { assertTrue(badgeSizeDp(it) >= MIN_TOUCH_DP, "$it") }
-        val widthAt320 = NARROW_WIDTH_DP - 2 * PAGE_PADDING_DP
-        assertTrue(2 * badgeSizeDp(2f) + MIN_GAP_DP <= widthAt320, "two of the largest side by side")
-    }
-
-    @Test
-    fun `the ring is thicker only for the chosen badge when there is no motion to show it`() {
-        val table = listOf(
-            Triple("not chosen, no motion", ringWidthDp(false, motionRuns = false, regularDp = 3f, thickDp = 4f), 3f),
-            Triple("not chosen, motion", ringWidthDp(false, motionRuns = true, regularDp = 3f, thickDp = 4f), 3f),
-            Triple("chosen, motion", ringWidthDp(true, motionRuns = true, regularDp = 3f, thickDp = 4f), 3f),
-            Triple("chosen, no motion", ringWidthDp(true, motionRuns = false, regularDp = 3f, thickDp = 4f), 4f),
-        )
-
-        table.forEach { (name, actual, expected) -> assertEquals(expected, actual, name) }
-    }
-
-    // endregion
-
     private companion object {
         const val TOLERANCE = 0.0005f
         const val LOOSE = 0.01f
@@ -249,9 +211,5 @@ class IntroThemeMotionTest {
         const val MIN_PERIOD = 8f
         const val MAX_PERIOD = 13f
         const val JOIN_EPSILON = 0.001f
-        const val MIN_TOUCH_DP = 48f
-        const val NARROW_WIDTH_DP = 320f
-        const val PAGE_PADDING_DP = 16f
-        const val MIN_GAP_DP = 16f
     }
 }

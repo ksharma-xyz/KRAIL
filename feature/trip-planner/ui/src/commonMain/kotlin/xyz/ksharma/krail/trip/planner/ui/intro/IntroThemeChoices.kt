@@ -1,17 +1,19 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
+import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 
 /**
- * One badge on the theme screen. [letter] is what the badge shows and [name] is what a screen reader
- * calls it. [tag] is the selector the Maestro flow taps. The colour is never kept here: it is read from
- * [style], so the badge and the app's own theme can never disagree.
+ * One badge on the theme screen. [mode] is the transport mode whose own icon is the badge: its fill and its white
+ * letter are the app's `TransportModeIcon`, drawn by that component with nothing passed to it, and [name] is what a
+ * screen reader calls it. [tag] is the selector the Maestro flow taps. The theme colour is never kept here: it is
+ * read from [style], and a test holds that it is the mode's own fill, so the badge and the recolour cannot disagree.
  */
 internal data class IntroThemeChoice(
     val style: KrailThemeStyle,
-    val letter: String,
+    val mode: TransportMode,
     val name: String,
     val tag: String,
 )
@@ -21,25 +23,25 @@ internal data class IntroThemeChoice(
 private val TransportThemeChoices = listOf(
     IntroThemeChoice(
         style = KrailThemeStyle.Train,
-        letter = "T",
+        mode = TransportMode.Train,
         name = "Train",
         tag = TripPlannerTestTags.INTRO_THEME_TRAIN,
     ),
     IntroThemeChoice(
         style = KrailThemeStyle.Metro,
-        letter = "M",
+        mode = TransportMode.Metro,
         name = "Metro",
         tag = TripPlannerTestTags.INTRO_THEME_METRO,
     ),
     IntroThemeChoice(
         style = KrailThemeStyle.Bus,
-        letter = "B",
+        mode = TransportMode.Bus,
         name = "Bus",
         tag = TripPlannerTestTags.INTRO_THEME_BUS,
     ),
     IntroThemeChoice(
         style = KrailThemeStyle.Ferry,
-        letter = "F",
+        mode = TransportMode.Ferry,
         name = "Ferry",
         tag = TripPlannerTestTags.INTRO_THEME_FERRY,
     ),

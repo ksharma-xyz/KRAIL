@@ -108,7 +108,7 @@ class IntroCopyTest {
     @Test
     fun `every string of the theme screen follows the wording rules, and only the taglines of the themes are exempt`() {
         val ours = barWords() + PICK_THEME_HEADLINE + PICK_THEME_HEADING +
-            introThemeChoices().flatMap { listOf(it.name, it.letter) }
+            introThemeChoices().map { it.name }
         val shown = introThemeChoices().flatMap { introThemeHeadline(it.style.id).lines }
 
         (ours + shown).forEach { text ->

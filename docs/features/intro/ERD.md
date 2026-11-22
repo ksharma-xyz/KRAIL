@@ -419,9 +419,11 @@ fun IntroState.toOutcome(stopsWait: StopsWait, declined: Boolean = false): Intro
 Unit R2, as built (the theme screen), where this document was silent. The theme screen is `IntroThemeStepContent` in the
 three zone frame, and everything it decides is in pure functions with table tests:
 
-- **The choices.** `introThemeChoices()` is Train (T), Metro (M), Bus (B) and Ferry (F), each with its letter, its accessible
-  name and its test tag (`intro.theme.train`, `intro.theme.metro`, `intro.theme.bus`, `intro.theme.ferry`). The colour is never
-  kept: it is read from `KrailThemeStyle`. The two fun themes stay in Settings, and Light rail and Coach have a colour in the app
+- **The choices.** `introThemeChoices()` is Train, Metro, Bus and Ferry, each with its `TransportMode`, its accessible
+  name and its test tag (`intro.theme.train`, `intro.theme.metro`, `intro.theme.bus`, `intro.theme.ferry`). The letter is not kept:
+  the badge is the app's icon and draws it. The theme colour is never kept: it is read from `KrailThemeStyle`, and
+  `IntroThemeChoicesTest` holds that it is the mode's own fill (`NswTransportConfig.colorFor`), which it is for all four
+  (#F6891F, #009B77, #00B5EF, #5AB031), so the badge and the recolour cannot disagree. The two fun themes stay in Settings, and Light rail and Coach have a colour in the app
   but no theme (no id and no tagline), so they are not offered. There is no cycle: the left button and `nextThemeChoice` are
   gone, and the badges are the only way to choose.
 - **The headline.** Before a choice it is `Pick`, `your ride`, `colour`, with the key word last, no question mark, no
@@ -430,13 +432,15 @@ three zone frame, and everything it decides is in pure functions with table test
   tagline again). It enters again with the kinetic headline motion each time the selection changes, because the headline is
   keyed on its phrase. The emoji is `introEmojiFor(THEME)`. `IntroHeadline` gained `minLines`: the headline keeps the height of the
   emoji and that many lines at the rider's text size, so the badges do not move when the words change.
-- **The badge.** A taj `RoundIconButton` in the theme's colour with the letter in `typography.introTagline` (the app's heaviest
-  display style), sized by modifier, with a white ring (`Modifier.border`, `strokeMedium`) and a soft shadow (`Modifier.shadow`).
-  `RoundIconButton` has a content slot and no border, which is the one gap and is listed in section 9. It is 64 dp at the
-  default text size and grows with the text to at most 96 dp (`badgeSizeDp`), so the letter always fits and a touch target is
-  never under 48 dp. The letter takes whichever of the app's light and dark text colours reads clearly on the theme's colour
-  (`getForegroundColor`). For a screen reader a badge is one button named for its theme with its selected state, and the letter is
-  hidden from it.
+- **The badge.** The app's own `TransportModeIcon` for the choice's mode, used unchanged: the circle in the mode's colour, the
+  mode's first letter in white (the component fixes the text colour, so the letter is white on every badge, in light and dark), and
+  its white ring (`displayBorder = true` on all four, like the website). Nothing is passed to it that picks a colour. It is drawn at
+  the component's largest size, `TransportModeIconSize.Large` (32 dp, growing with the text as the component does, to at most the
+  48 dp of its button). A taj `RoundIconButton` with a transparent fill carries it: that is the 48 dp touch target, the tag and
+  the semantics, and the float and the dance move it through `graphicsLayer`. The selected badge is shown by the dance and, with
+  no motion, by sitting lifted 4 dp. The hand-built circle, its fill, its ring, its thicker ring, the 64 to 96 dp growth and the
+  `getForegroundColor` letter are deleted. For a screen reader a badge is one button named for its theme with its selected state,
+  and the letter is hidden from it.
 - **The layout.** A `FlowRow` centred, with `spacingXXXL` (24 dp) between badges both ways, so whole badges wrap and nothing is
   squeezed: four in a row on a phone, and two and two at 320 dp with text at 200 percent. The middle zone scrolls with the
   headline when the room runs out.
@@ -448,7 +452,7 @@ three zone frame, and everything it decides is in pure functions with table test
   changes, so a badge never jumps. Both are `graphicsLayer` transforms read inside the layer lambda, so a tick redraws four layers
   and recomposes and lays out nothing. The clock runs only while the screen is RESUMED (its driver is composed only then, the
   same lifecycle gate the rest of the app uses) and ends when the screen leaves. With reduced motion, in a preview and in a
-  screenshot nothing moves: the selected badge sits lifted 4 dp with a thicker ring (`settledFrame`, `ringWidthDp`), and that
+  screenshot nothing moves: the selected badge sits lifted 4 dp (`settledFrame`), and that
   settled frame is also what every preview and snapshot draws.
 - **Selecting and the live recolour.** A tap on a badge selects a theme and does not move on. The selection is a
   state, and `IntroFlowRoute` applies it to the whole app through `onApplyTheme`, which the entry wires to the same
@@ -1035,8 +1039,8 @@ make a row fit, except the one rule below. A screen with nothing to decide has n
 |---|---|
 | None chosen | The headline `Pick`, `your ride`, `colour` and the four badges, drifting. Bar: the one button `Yes, this one`, full width, disabled |
 | A theme selected | The whole app in that theme's colour, the headline now that theme's tagline, the selected badge dancing and the others drifting. Bar: the one button live, in that theme's colour |
-| Reduced motion, preview or screenshot | The same, with nothing moving: the selected badge lifted 4 dp with a thicker ring |
-| 320 dp at 200 percent text | Two badges and two badges, each up to 96 dp. The bar is the one button across the window, whole. The middle zone scrolls with the headline |
+| Reduced motion, preview or screenshot | The same, with nothing moving: the selected badge lifted 4 dp |
+| 320 dp at 200 percent text | The four badges, each a 48 dp touch target, wrapping whole if the row is full. The bar is the one button across the window, whole. The middle zone scrolls with the headline |
 
 - The one button is the only button besides the badges, and each badge is a button. A tap on a badge is the only way to choose:
   the owner ruled that the rider just picks a colour, with no option to say no (2026-11-22), so there is no left button and no
@@ -1202,11 +1206,11 @@ in `searchstop/` touched:
   (every state of `introTripSections` as a pure test, then on a phone the heading, the lists, the collapsed row, the tile,
   changing a trip, a turn of the screen with the lists open, a stop that came back from the search closing them, and Getting
   ready and failed stops, then at 320 dp with text at 200% every row whole, stacked and at least 48 dp tall).
-- **Theme screen, built (unit R2).** Pure tables: `IntroThemeChoicesTest` (the four choices, their letters, names and tags, that
+- **Theme screen, built (unit R2).** Pure tables: `IntroThemeChoicesTest` (the four choices, their modes, names and tags, that the mode fills equal the theme colours, that
   every one is a theme of the app and the fun themes are not offered, `taglineLines` over a table, that
   the lines joined are the tagline again, and the headline before and after a choice), `IntroThemeMotionTest` (the drift
-  bounds and loops over many moments, the dance at its two ends and middle, the blend, the settled frame, the badge size at each
-  text scale and the ring), `IntroThemeClockTest` (the clock advancing across the transition's wrap) and `IntroScreenViewTest`
+  bounds and loops over many moments, the dance at its two ends and middle, the blend and the settled frame), `IntroThemeBadgeTest` (a white letter on every badge in light and dark, the 48 dp
+  touch target, tag, name and selected state), `IntroThemeClockTest` (the clock advancing across the transition's wrap) and `IntroScreenViewTest`
   (one screen view on entering and when the name changes). The view model with the fakes at the edges: `IntroFlowViewModelThemeTest`
   (a tap selects and stores, a repeat tap writes nothing, a theme not offered is ignored, taps in turn, one report on confirm with only
   the id, nothing on another screen, survival of a new view model) and `IntroFlowViewModelThemeBackTest` (the default first
@@ -1214,7 +1218,7 @@ in `searchstop/` touched:
   report, and `ThemeSelectionViewModelTest` is unchanged and green. Compose: `IntroThemeStepTest` on a phone (the badges, their
   tags, names and sizes, what each tap sends, the selected state, the headline before and after, the bar and its disabled right
   button, no back button, the order of the zones), `IntroThemeStepNarrowTest` at 320 dp and 200 percent (every badge whole inside
-  the window, two and two, at least 16 dp between any two, and the bar whole), `IntroFlowRouteThemeTest` (a badge applies the theme
+  the window and a full 48 dp, wrapping whole if the row is full, at least 16 dp between any two, and the bar whole), `IntroFlowRouteThemeTest` (a badge applies the theme
   to the app and stores it, badges tapped in turn, a turn of the screen applies it again, yes moves on, reports once and views the
   Intro once) and the entry test (choosing recolours through the navigator). The running clock is not driven in a test: its
   infinite transition is cancelled by the test's own policy, so a test is never held up by it, and what the clock feeds is the pure
@@ -1361,12 +1365,12 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | # | Decision | Why, and what changes if it is wrong | Decision |
 |---|---|---|---|
 | R2-1 | A pick stores the theme at once, one small local write per pick, and confirming writes nothing | The app reloads its theme from that table when it is recreated, so a theme held only until confirm would go back to the default on a rotation. A write that is only on confirm would need the Intro to survive that another way | Default, not yet seen by owner |
-| R2-2 | The letter takes the app's light or dark text colour by contrast on the theme's colour, and is not always white | White on the orange of Train is below the contrast the app holds text to. If every badge must be white, Train fails it | Default, not yet seen by owner |
-| R2-3 | The ring is `strokeMedium` (3 dp) for about 2.5 dp, and `strokeThick` (4 dp) for the chosen badge with no motion | Both are theme tokens, so no raw size is added. Exactly 2.5 dp would be a one line constant | Default, not yet seen by owner |
+| R2-2 | The badge is the app's `TransportModeIcon`, so its letter is always white | The owner's rule: the text inside a transport mode icon is always white, and the component already fixes it. Replaces the earlier choice of a light or dark letter by contrast | Decided by the owner, 2026-11-22 |
+| R2-3 | The ring is the component's own fixed white ring on every badge, with no thicker ring for the chosen one | The owner asked for the existing component unchanged. The chosen badge shows with the dance, and with no motion with the 4 dp lift | Decided by the owner, 2026-11-22 |
 | R2-4 | One dance leg is 0.65 s and the full swing out and back is 1.3 s | The website alternates, so one leg is 0.65 s. If 0.65 s is the whole swing, halve `DANCE_LEG_SECONDS` | Default, not yet seen by owner |
 | R2-5 | The drift loops are 8, 10, 12 and 13 s, and the amplitudes are under the 6 dp and 4 dp limits | The spec gave the ranges and not the values. Four periods with no common short multiple keep the badges from lining up | Default, not yet seen by owner |
 | R2-6 | A badge eases between drifting and dancing over 250 ms | Without it the chosen badge jumps from its drift to the first pose of the dance | Default, not yet seen by owner |
-| R2-7 | A badge grows with the text, from 64 dp to at most 96 dp | A fixed 64 dp circle is too small for the letter at 200 percent text. The cost is two and two badges at 320 dp, instead of three and one | Default, not yet seen by owner |
+| R2-7 | A badge is the component's largest size and grows only as the component does | No invented size and no scaled letter. The cost is a smaller badge than the first draft's 64 dp; a larger size on the component needs the owner's yes | Open, see the report |
 | R2-8 | The badges are 24 dp apart, over the 16 dp the spec asked for | The drift and the dance can bring neighbours 12 dp closer, so 16 dp could touch at the worst moment | Default, not yet seen by owner |
 | R2-9 | The theme bar is the one button `Yes, this one`, with no left button, no cycle and no compact label | The owner asked for it: "just let the user pick a colour, that's it, no option button to say no". The whole phrase is kept at every text size, and it is the one screen with a single button | Decided by the owner, 2026-11-22 |
 | R2-10 | The headline keeps the room of its longest version (the emoji and three lines) | Without it the badges move each time the words change. The cost is some empty room under a two line tagline | Default, not yet seen by owner |

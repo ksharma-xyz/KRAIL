@@ -15,6 +15,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
 import org.junit.Rule
 import org.junit.Test
@@ -93,20 +94,17 @@ class IntroThemeStepNarrowTest {
     }
 
     @Test
-    fun `every badge is whole inside the window, as big as the text asks, and wraps to two rows of two`() {
+    fun `every badge is whole inside the window, a full 48 dp to tap, and wraps whole if the row is full`() {
         show(none)
 
         introThemeChoices().forEach { choice ->
             composeRule.onNodeWithTag(choice.tag).assertIsDisplayed().assertInsideWindow(choice.name)
         }
         val bounds = badgeBounds()
-        bounds.forEach { assertTrue(it.width >= LARGEST_BADGE - ROUNDING, "a badge is only ${it.width} wide") }
-        assertEquals(
-            2,
-            bounds.map { it.top }.distinct().size,
-            "the badges are in ${bounds.map { it.top }.distinct()} rows",
-        )
-        assertEquals(listOf(2, 2), bounds.groupBy { it.top }.values.map { it.size })
+        bounds.forEach { assertTrue(it.width >= TOUCH_TARGET - ROUNDING, "a badge is only ${it.width} wide") }
+        bounds.forEach { assertTrue(it.height >= TOUCH_TARGET - ROUNDING, "a badge is only ${it.height} high") }
+        val rows = bounds.groupBy { it.top }.values.map { it.size }
+        assertTrue(rows.size in 1..2 && rows.sum() == 4, "the badges are in rows of $rows")
     }
 
     @Test
@@ -161,7 +159,7 @@ class IntroThemeStepNarrowTest {
 
     private companion object {
         const val LARGE_TEXT = 2.0f
-        val LARGEST_BADGE = 96.dp
+        val TOUCH_TARGET = 48.dp
         val MIN_GAP = 16.dp
         val ROUNDING = 1.dp
     }

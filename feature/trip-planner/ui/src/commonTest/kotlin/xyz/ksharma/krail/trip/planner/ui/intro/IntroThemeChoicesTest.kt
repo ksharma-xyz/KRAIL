@@ -1,5 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
@@ -14,16 +16,39 @@ class IntroThemeChoicesTest {
     private val choices = introThemeChoices()
 
     @Test
-    fun `the Intro offers the four transport themes, with their letters and names, in this order`() {
+    fun `the Intro offers the four transport themes, each with its transport mode and name, in this order`() {
         assertEquals(
             listOf(
-                Triple(KrailThemeStyle.Train, "T", "Train"),
-                Triple(KrailThemeStyle.Metro, "M", "Metro"),
-                Triple(KrailThemeStyle.Bus, "B", "Bus"),
-                Triple(KrailThemeStyle.Ferry, "F", "Ferry"),
+                Triple(KrailThemeStyle.Train, TransportMode.Train, "Train"),
+                Triple(KrailThemeStyle.Metro, TransportMode.Metro, "Metro"),
+                Triple(KrailThemeStyle.Bus, TransportMode.Bus, "Bus"),
+                Triple(KrailThemeStyle.Ferry, TransportMode.Ferry, "Ferry"),
             ),
-            choices.map { Triple(it.style, it.letter, it.name) },
+            choices.map { Triple(it.style, it.mode, it.name) },
         )
+    }
+
+    @Test
+    fun `the badge fill is the transport mode's own colour and it is the theme colour, so the recolour never disagrees`() {
+        // The badge is TransportModeIcon, which fills with NswTransportConfig.colorFor(mode). The theme the app
+        // switches to is the style's own hex. Both are read from their real sources here.
+        val modeFills = choices.map { NswTransportConfig.colorFor(it.mode).uppercase() }
+        val themeFills = choices.map { "#" + it.style.hexColorCode.uppercase().takeLast(HEX_RGB_LENGTH) }
+
+        assertEquals(themeFills, modeFills, "mode fills $modeFills, theme colours $themeFills")
+        assertEquals(
+            listOf("#F6891F", "#009B77", "#00B5EF", "#5AB031"),
+            modeFills,
+            "the four identity colours",
+        )
+    }
+
+    @Test
+    fun `the theme id is the mode's product class, and the spoken name is the mode's own name`() {
+        choices.forEach {
+            assertEquals(it.mode.productClass, it.style.id, it.name)
+            assertEquals(NswTransportConfig.nameFor(it.mode), it.name)
+        }
     }
 
     @Test
@@ -34,9 +59,9 @@ class IntroThemeChoicesTest {
     }
 
     @Test
-    fun `each theme has its own id, letter and tag, and the tag is the one the Maestro flow taps`() {
+    fun `each theme has its own id, mode and tag, and the tag is the one the Maestro flow taps`() {
         assertEquals(choices.size, choices.map { it.style.id }.toSet().size)
-        assertEquals(choices.size, choices.map { it.letter }.toSet().size)
+        assertEquals(choices.size, choices.map { it.mode }.toSet().size)
         assertEquals(
             listOf(
                 TripPlannerTestTags.INTRO_THEME_TRAIN,
@@ -131,5 +156,6 @@ class IntroThemeChoicesTest {
 
     private companion object {
         const val NOT_A_THEME = 12_345
+        const val HEX_RGB_LENGTH = 6
     }
 }

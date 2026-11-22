@@ -125,15 +125,3 @@ internal fun settledFrame(selected: Boolean): BadgeFrame =
  * which show the settled frame. Whether the screen is resumed is a second gate, held by the clock.
  */
 internal fun themeMotionRuns(reduceMotion: Boolean, inspection: Boolean): Boolean = !reduceMotion && !inspection
-
-// The badge is 64 dp at the default text size, and grows with the text so its letter always fits, up to a
-// half as big again. It is never smaller than 64 dp, and a touch target is never smaller than 48 dp.
-internal const val BADGE_BASE_SIZE_DP = 64f
-internal const val BADGE_MAX_GROWTH = 1.5f
-
-/** The badge's side in dp at [fontScale]: 64 dp, growing with the text to at most 96 dp. */
-internal fun badgeSizeDp(fontScale: Float): Float = BADGE_BASE_SIZE_DP * fontScale.coerceIn(1f, BADGE_MAX_GROWTH)
-
-/** The ring of a badge in dp: the regular one, and thicker for the chosen badge when there is no motion to show it. */
-internal fun ringWidthDp(selected: Boolean, motionRuns: Boolean, regularDp: Float, thickDp: Float): Float =
-    if (selected && !motionRuns) thickDp else regularDp

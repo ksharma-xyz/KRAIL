@@ -93,7 +93,10 @@ class IntroThemeStepTest {
             badge(choice).assertIsDisplayed().assertHasClickAction()
             composeRule.onNodeWithContentDescription(choice.name).assertExists()
             val bounds = badge(choice).getUnclippedBoundsInRoot()
-            assertTrue(bounds.width >= MIN_TOUCH && bounds.height >= MIN_TOUCH, "${choice.name} is $bounds")
+            assertTrue(
+                bounds.width >= MIN_TOUCH - 1.dp && bounds.height >= MIN_TOUCH - 1.dp,
+                "${choice.name} is $bounds",
+            )
         }
     }
 

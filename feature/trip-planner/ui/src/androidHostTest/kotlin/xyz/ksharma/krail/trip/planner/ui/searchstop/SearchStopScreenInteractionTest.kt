@@ -4,6 +4,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHeightIsEqualTo
@@ -312,7 +313,10 @@ class SearchStopScreenInteractionTest {
     ) {
         composeRule.setContent {
             PreviewTheme {
-                CompositionLocalProvider(LocalSoftwareKeyboardController provides quietKeyboard) {
+                CompositionLocalProvider(
+                    LocalInspectionMode provides true,
+                    LocalSoftwareKeyboardController provides quietKeyboard,
+                ) {
                     SearchStopScreen(
                         searchStopState = state,
                         fieldType = SearchStopFieldType.TO,
@@ -363,10 +367,11 @@ class SearchStopScreenInteractionTest {
         var chosen: Pair<StopItem, StopItem>? = null
         var wentBack = 0
         setForm(
-            state = SearchStopFixtures.recentWithDefaults(),
+            state = withMap(),
             onTripChosen = { from, to -> chosen = from to to },
             goBack = { wentBack++ },
         )
+        // From the map state, where the card is, so no keyboard or focus turns the first back into a step.
         composeRule.onNodeWithText("Central Station").performClick()
         composeRule.waitForIdle()
 
@@ -404,12 +409,24 @@ class SearchStopScreenInteractionTest {
     fun theMapStateCard_isCappedToAShareOfTheWindowAndScrollsInside() {
         val many = (1..5).map { SearchStopState.StopResult("Stop $it", "id_$it") }
         val state = withMap(SearchStopFixtures.recentWithHomeSet().copy(recentStops = many.toImmutableList()))
-        setScreen(state)
+        var windowHeight = 0.dp
+        composeRule.setContent {
+            CompositionLocalProvider(
+                LocalInspectionMode provides true,
+                LocalSoftwareKeyboardController provides quietKeyboard,
+            ) {
+                PreviewTheme {
+                    windowHeight = LocalWindowInfo.current.containerDpSize.height
+                    SearchStopScreen(searchStopState = state, onEvent = {})
+                }
+            }
+        }
+        composeRule.waitForIdle()
 
         val card = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST)
             .getUnclippedBoundsInRoot()
-        // The Pixel 6 window is 891 dp tall, so the card may take at most 40 percent of it.
-        val cap = mapStateCardMaxHeight(windowHeight = 891.dp)
+        // The card may take at most 40 percent of the window the screen is in.
+        val cap = mapStateCardMaxHeight(windowHeight = windowHeight)
 
         assert(card.height <= cap + 1.dp) { "the card $card stays within its cap $cap on the map state" }
     }

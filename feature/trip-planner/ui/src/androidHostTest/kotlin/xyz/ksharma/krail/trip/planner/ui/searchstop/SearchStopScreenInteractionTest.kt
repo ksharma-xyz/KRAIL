@@ -10,7 +10,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.assertHeightIsEqualTo
+import androidx.compose.ui.test.assertTouchHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -527,8 +527,8 @@ class SearchStopScreenInteractionTest {
 
         composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertCountEquals(1)
         composeRule.onNodeWithText("Location permission required").assertIsDisplayed()
-        // The chip is a taj small button inside a 48 tall hit area (rule 24), and the tag is on that box.
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertHeightIsEqualTo(48.dp)
+        // The chip is taj's extra small button with a 48 dp touch target from the interactive size modifier (rule 24).
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertTouchHeightIsEqualTo(48.dp)
     }
 
     // endregion

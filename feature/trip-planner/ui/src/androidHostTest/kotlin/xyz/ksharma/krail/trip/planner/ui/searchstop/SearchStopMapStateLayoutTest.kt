@@ -37,8 +37,9 @@ import kotlin.test.assertTrue
 
 /**
  * The layout of Search Stop's map state, read from the real bounds of the real screen: one group card at the
- * top holding the two bars as rows, a divider and the location chip, the list card under it as a separate card
- * one gap below, and the mode button and block at the bottom. Run at 411 dp, and at 320 dp with 200 percent
+ * top holding only the two bars as rows with a divider, the location chip as its own small button directly under
+ * it at its left edge, the list card under that as a separate card one gap below, and the mode button and block
+ * at the bottom. Run at 411 dp, and at 320 dp with 200 percent
  * text, in light and in dark app mode.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -78,6 +79,11 @@ class SearchStopMapStateLayoutTest {
     private fun boundsOf(tag: String): DpRect =
         composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
 
+    private fun touchBoundsOf(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true)
+        .fetchSemanticsNode().touchBoundsInRoot.let { rect ->
+            with(composeRule.density) { DpRect(rect.left.toDp(), rect.top.toDp(), rect.right.toDp(), rect.bottom.toDp()) }
+        }
+
     private fun assertNear(what: String, expected: Dp, actual: Dp) {
         assertTrue(abs((expected - actual).value) <= 1f, "$what: expected $expected, got $actual")
     }
@@ -115,28 +121,41 @@ class SearchStopMapStateLayoutTest {
 
     @Test
     @Config(qualifiers = W411)
-    fun `the status chip is its own row inside the card, left aligned, under the From bar`() {
+    fun `the status chip is its own button under the card, left aligned with it, one gap below and not inside it`() {
         setScreen()
 
         val card = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
-        val to = boundsOf(TripPlannerTestTags.SEARCH_ROW_TO)
         val from = boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM)
-        val chip = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
-        assertTrue(chip.top >= from.bottom, "The chip $chip is under the bars, never between them")
-        assertNear("one row gap above the chip", from.bottom + gaps.betweenRows, chip.top)
-        assertNear("left aligned with the bars", to.left, chip.left)
-        assertNear("one card padding under the chip", card.bottom - gaps.cardPadding, chip.bottom)
-        assertTrue(chip.right <= card.right - gaps.cardPadding + 1.dp, "The chip stays inside the card padding")
+        val chip = touchBoundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
+        assertTrue(from.bottom <= card.bottom - gaps.cardPadding + 1.dp, "The From bar ends the card's content")
+        assertNear("the card ends one padding under the From bar", from.bottom + gaps.cardPadding, card.bottom)
+        assertNear("one gap token under the card", card.bottom + gaps.betweenCards, chip.top)
+        assertNear("left aligned with the card", card.left, chip.left)
+        assertTrue(chip.top >= card.bottom, "The chip $chip is outside the card $card, never inside it")
+        assertTrue(chip.height >= 48.dp - 1.dp, "The chip keeps its 48 dp touch target: $chip")
+        assertTrue(chip.right <= card.right, "The chip $chip stays within the card's right edge")
     }
 
     @Test
     @Config(qualifiers = W411)
-    fun `the list card is a separate card one gap under the group card on the same edges`() {
+    fun `the list card is one gap under the chip, and under the card when the chip is not shown`() {
+        setScreen()
+
+        val chip = touchBoundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
+        val list = boundsOf(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST)
+        assertNear("gap between the chip's touch target and the list card", chip.bottom + gaps.betweenCards, list.top)
+    }
+
+    @Test
+    @Config(qualifiers = W411)
+    fun `the list card is a separate card under the group card on the same edges`() {
         setScreen()
 
         val group = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
         val list = boundsOf(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST)
-        assertNear("gap between the cards", group.bottom + gaps.betweenCards, list.top)
+        val chip = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
+        assertTrue(list.top >= group.bottom + gaps.betweenCards - 1.dp, "The list card $list is under the group card")
+        assertTrue(list.top >= chip.bottom, "The list card $list is under the chip $chip")
         assertNear("same left edge", group.left, list.left)
         assertNear("same right edge", group.right, list.right)
     }
@@ -213,11 +232,13 @@ class SearchStopMapStateLayoutTest {
         val list = boundsOf(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST)
         val block = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS)
         val button = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON)
-        assertTrue(chip.bottom <= group.bottom && chip.right <= group.right, "The chip $chip is inside the card $group")
+        assertTrue(chip.top >= group.bottom, "The chip $chip is under the card $group")
+        assertTrue(chip.left >= group.left - 1.dp && chip.right <= group.right + 1.dp, "The chip $chip stays in the width")
+        assertTrue(chip.bottom <= list.top, "The chip $chip is above the list card $list")
         assertTrue(group.bottom <= list.top, "The group card $group is above the list card $list")
         assertTrue(list.bottom <= block.top + 1.dp, "The list card $list yields to the block $block")
         assertTrue(block.bottom <= button.top + 1.dp, "The block $block is above its button $button")
-        for (box in listOf(group, list, block, button)) {
+        for (box in listOf(group, chip, list, block, button)) {
             assertTrue(box.left >= 0.dp && box.right <= 320.dp, "$box stays inside the 320 dp window")
             assertTrue(box.top >= 0.dp && box.bottom <= windowHeight, "$box stays inside the window height")
         }

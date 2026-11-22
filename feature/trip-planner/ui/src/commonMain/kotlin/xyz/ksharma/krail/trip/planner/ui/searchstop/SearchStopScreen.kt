@@ -596,7 +596,7 @@ private fun SearchStopScreenSinglePane(
             ) {}
         }
 
-        // The stack at the top: the group card, then the list card under it, one gap apart. Its height is capped
+        // The stack at the top: the group card, the location chip under it while it shows, then the list card, one gap apart. Its height is capped
         // above the mode controls, so on a short window it is the list card that gives.
         Column(
             modifier = Modifier
@@ -607,7 +607,7 @@ private fun SearchStopScreenSinglePane(
                 .statusBarsPadding()
                 .padding(gaps.edge),
         ) {
-            SearchStopGroupCard(
+            SearchStopTopBlock(
                 form = form,
                 location = location,
                 onBack = onBack,
@@ -741,7 +741,7 @@ private fun SearchStopScreenDualPane(
                         .statusBarsPadding()
                         .padding(KrailTheme.dimensions.spacingXL),
                 ) {
-                    SearchStopGroupCard(form = form, location = location, onBack = onBack)
+                    SearchStopTopBlock(form = form, location = location, onBack = onBack)
                     SearchStopListSection(
                         searchStopState = searchStopState,
                         fieldType = fieldType,

@@ -35,19 +35,44 @@ internal data class SearchStopFormModel(
 )
 
 /**
+ * The top of Search Stop's map state: the [SearchStopGroupCard] and, directly under it while the location is
+ * not allowed, the [LocationStatusChip], one [SearchStopGaps.betweenCards] below the card and at its left edge.
+ * The chip is not part of the card, so a card holds only the bars. The list card the caller draws next sits
+ * under this block with the same gap.
+ */
+@Composable
+internal fun SearchStopTopBlock(
+    form: SearchStopFormModel,
+    location: LocationPillState,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val gaps = rememberSearchStopGaps()
+    Column(modifier = modifier) {
+        SearchStopGroupCard(form = form, onBack = onBack)
+        if (locationChipShownFor(location.pill)) {
+            LocationStatusChip(
+                pill = location.pill,
+                onClick = location.onClick,
+                modifier = Modifier.padding(top = gaps.betweenCards),
+            )
+        }
+    }
+}
+
+/**
  * The group card at the top of Search Stop (rules 33, 35 and 36 of `docs/MAP_HOME_UX.md`): one rounded card, a
  * fixed dark surface with fixed light content in light and dark app modes, because the map under it is always
  * light. Inside, from the top and in the order [groupCardRows] gives: the To and From bars as two rows with a thin
- * divider between them, then the location status chip, only while it is shown. Every gap inside is the one
- * [SearchStopGaps.betweenRows], and the card's padding and corner are the card's own tokens.
+ * divider between them. Every gap inside is the one [SearchStopGaps.betweenRows], and the card's padding and
+ * corner are the card's own tokens.
  *
- * The bars are rows on this one surface and have no second fill each, and the recents or results card is a
- * separate card under this one, never inside it.
+ * The bars are rows on this one surface and have no second fill each, and the location chip and the recents or
+ * results card are separate, under this one, never inside it.
  */
 @Composable
 internal fun SearchStopGroupCard(
     form: SearchStopFormModel,
-    location: LocationPillState,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -77,7 +102,6 @@ internal fun SearchStopGroupCard(
                 onTextChange = form.onTextChange,
                 style = ToFromBlockStyle.FloatingRows(rowGap = gaps.betweenRows),
             )
-            LocationStatusChip(pill = location.pill, onClick = location.onClick)
         }
     }
 }

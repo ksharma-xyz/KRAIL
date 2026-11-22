@@ -11,32 +11,35 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 // decision is a pure function or one table, so the order of the rows, which of them show and every gap are
 // pinned without a layout.
 
-/** One row of the group card at the top, in the order it is drawn. */
-internal enum class GroupRow { To, Divider, From, LocationChip }
+/** One row of the group card at the top, in the order it is drawn. The card holds only the bars. */
+internal enum class GroupRow { To, Divider, From }
 
 /**
  * The rows of the group card, top to bottom. The To bar is always first. The From bar comes under it with a
  * thin divider between them when the form is [FormShape.ToAndFrom], and a single bar (a label, or one leg of
- * a trip) has neither. The location status chip is the last row and only while [pill] is not hidden, so it
- * never sits between the bars. The mode chips are not in this card at all (see [SearchStopModeControls]).
+ * a trip) has neither. The location status chip and the mode chips are not in this card at all: the chip is
+ * under it ([locationChipShownFor]) and the mode chips are in [SearchStopModeControls].
  */
-internal fun groupCardRows(shape: FormShape, pill: LocationPill): List<GroupRow> = buildList {
+internal fun groupCardRows(shape: FormShape): List<GroupRow> = buildList {
     add(GroupRow.To)
     if (shape == FormShape.ToAndFrom) {
         add(GroupRow.Divider)
         add(GroupRow.From)
     }
-    if (pill != LocationPill.Hidden) add(GroupRow.LocationChip)
 }
+
+/** Whether the location status chip is drawn under the group card: only while the location is not allowed. */
+internal fun locationChipShownFor(pill: LocationPill): Boolean = pill != LocationPill.Hidden
 
 /**
  * Every gap of the map state, from the one spacing scale in `KrailDimensions` (4, 8, 12, 16):
  * - [edge] is the system top inset to the group card, and the card to the screen's left and right edges.
  * - [cardPadding] is the inner padding of every card, the card's own padding token on all four sides.
  * - [cardCorner] is the corner of every card, the card's own radius token.
- * - [betweenRows] is the one gap between rows inside the group card, around its divider, and above the chip.
- * - [betweenCards] is the one gap between floating elements: group card to list card, mode block to its button,
- *   and the mode controls to the control row beneath them.
+ * - [betweenRows] is the one gap between rows inside the group card and around its divider.
+ * - [betweenCards] is the one gap between floating elements: group card to the location chip under it (or to the
+ *   list card with no chip), chip to list card, mode block to its button, and the mode controls to the control row
+ *   beneath them.
  */
 internal data class SearchStopGaps(
     val edge: Dp,

@@ -13,44 +13,33 @@ class SearchStopLayoutRulesTest {
     // region the rows of the group card
 
     @Test
-    fun `a To and From form is the To bar, a divider, the From bar and no chip while location is on`() {
-        assertEquals(
-            listOf(GroupRow.To, GroupRow.Divider, GroupRow.From),
-            groupCardRows(FormShape.ToAndFrom, LocationPill.Hidden),
-        )
-    }
-
-    @Test
-    fun `the location chip is the last row and never sits between the bars`() {
-        for (pill in listOf(LocationPill.Ask, LocationPill.OpenSettings)) {
-            val rows = groupCardRows(FormShape.ToAndFrom, pill)
-            assertEquals(GroupRow.LocationChip, rows.last())
-            assertTrue(rows.indexOf(GroupRow.LocationChip) > rows.indexOf(GroupRow.From))
-        }
+    fun `a To and From form is the To bar, a divider and the From bar`() {
+        assertEquals(listOf(GroupRow.To, GroupRow.Divider, GroupRow.From), groupCardRows(FormShape.ToAndFrom))
     }
 
     @Test
     fun `a single bar has no divider and no From row`() {
-        assertEquals(listOf(GroupRow.To), groupCardRows(FormShape.Single, LocationPill.Hidden))
-        assertEquals(
-            listOf(GroupRow.To, GroupRow.LocationChip),
-            groupCardRows(FormShape.Single, LocationPill.Ask),
-        )
+        assertEquals(listOf(GroupRow.To), groupCardRows(FormShape.Single))
     }
 
     @Test
     fun `the To bar is always first and a divider is always between two bars`() {
         for (shape in FormShape.entries) {
-            for (pill in LocationPill.entries) {
-                val rows = groupCardRows(shape, pill)
-                assertEquals(GroupRow.To, rows.first())
-                val divider = rows.indexOf(GroupRow.Divider)
-                if (divider >= 0) {
-                    assertEquals(GroupRow.To, rows[divider - 1])
-                    assertEquals(GroupRow.From, rows[divider + 1])
-                }
+            val rows = groupCardRows(shape)
+            assertEquals(GroupRow.To, rows.first())
+            val divider = rows.indexOf(GroupRow.Divider)
+            if (divider >= 0) {
+                assertEquals(GroupRow.To, rows[divider - 1])
+                assertEquals(GroupRow.From, rows[divider + 1])
             }
         }
+    }
+
+    @Test
+    fun `the location chip is under the card while the location is not allowed and never in its rows`() {
+        assertEquals(false, locationChipShownFor(LocationPill.Hidden))
+        assertEquals(true, locationChipShownFor(LocationPill.Ask))
+        assertEquals(true, locationChipShownFor(LocationPill.OpenSettings))
     }
 
     // endregion

@@ -300,10 +300,11 @@ private fun PreviewGround(content: @Composable () -> Unit) {
 @PreviewScreen
 @Composable
 private fun PreviewSearchStopGroupCard_WithStatusChip() {
-    // The top group card with the location status chip in its own row under the bars. Same in light and dark.
+    // The top group card, then the location status chip as its own small button under it at the card's left
+    // edge. Same in light and dark.
     PreviewTheme(themeStyle = KrailThemeStyle.Train) {
         PreviewGround {
-            SearchStopGroupCard(
+            SearchStopTopBlock(
                 form = previewFormModel(),
                 location = previewLocationState(LocationPill.Ask),
                 onBack = {},
@@ -317,7 +318,7 @@ private fun PreviewSearchStopGroupCard_WithStatusChip() {
 private fun PreviewSearchStopGroupCard_NoStatusChip() {
     PreviewTheme(themeStyle = KrailThemeStyle.Metro) {
         PreviewGround {
-            SearchStopGroupCard(
+            SearchStopTopBlock(
                 form = previewFormModel(),
                 location = previewLocationState(LocationPill.Hidden),
                 onBack = {},

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -101,31 +102,46 @@ internal fun StationLine(name: String, modifier: Modifier = Modifier, large: Boo
  * One car park of an open tile: its name, its numbers and time through the shared
  * [CarParkFigures], and its Directions when it has a position of its own. A car park with no
  * reading yet shows its name alone and never an error.
+ *
+ * With [holdsHeightWhileLoading] a car park with no reading yet keeps the room its numbers and its
+ * Directions will take, drawn clear and hidden from a screen reader, so the block is the same height
+ * before and after its reading lands (rule 22). The home tile is drawn as it was, without it. The map
+ * card sets it, because there the readings arrive after the card has opened.
  */
 @Composable
 internal fun CarParkBlockContent(
     carPark: CarParkBlock,
     onDirectionsClick: () -> Unit,
     modifier: Modifier = Modifier,
+    holdsHeightWhileLoading: Boolean = false,
 ) {
     val dim = KrailTheme.dimensions
+    val waiting = holdsHeightWhileLoading && carPark.freeSpots == null
     Column(
         modifier = modifier.testTag(TripPlannerTestTags.parkRideCarPark(carPark.facilityId)),
         verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
     ) {
         Text(text = carPark.name, style = KrailTheme.typography.bodyLarge)
-        carPark.freeSpots?.let { spots ->
+        if (carPark.freeSpots != null) {
             CarParkFigures(
-                spotsAvailable = spots,
+                spotsAvailable = carPark.freeSpots,
                 percentageFull = carPark.percentFull,
                 timeText = carPark.timeText,
             )
+        } else if (waiting) {
+            ReservedLine(present = false) {
+                CarParkFigures(spotsAvailable = 0, percentageFull = 0, timeText = RESERVED_TIME)
+            }
         }
         if (carPark.directionsTo != null) {
             DirectionsButton(carParkName = carPark.name, facilityId = carPark.facilityId, onClick = onDirectionsClick)
+        } else if (waiting) {
+            ReservedLine(present = false) { Spacer(modifier = Modifier.size(dim.textFieldHeight)) }
         }
     }
 }
+
+private const val RESERVED_TIME = "12:00 AM"
 
 /**
  * Directions to one car park: taj's [RoundIconButton], 48 dp, with no fill and a ring in the ink

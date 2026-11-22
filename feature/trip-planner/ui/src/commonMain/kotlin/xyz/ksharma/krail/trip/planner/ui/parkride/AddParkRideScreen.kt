@@ -70,7 +70,6 @@ internal fun AddParkRideScreen(
                     stations = state.visibleStations,
                     selectedStation = state.selectedStation,
                     details = state.selectedStationDetails,
-                    isLoadingDetails = state.isLoadingSelectedStation,
                     onStationSelected = { onEvent(AddParkRideUiEvent.StationSelected(it)) },
                     onDismissStation = { onEvent(AddParkRideUiEvent.StationDismissed) },
                     onToggleStation = { onEvent(AddParkRideUiEvent.ToggleStation(it)) },

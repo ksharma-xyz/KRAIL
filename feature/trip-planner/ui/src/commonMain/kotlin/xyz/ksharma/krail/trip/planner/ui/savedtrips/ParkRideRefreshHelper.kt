@@ -144,17 +144,43 @@ internal suspend fun filterRefreshableFacilities(
     val refreshable = mutableListOf<String>()
     facilityIds.forEach { facilityId ->
         val lastCallEpoch = parkRideSandook.getLastApiCallTimestamp(facilityId)
-            ?: Instant.DISTANT_PAST.epochSeconds
-        val lastCall = Instant.fromEpochSeconds(lastCallEpoch)
-        if (nowInstant - lastCall >= cooldown) {
+        if (isOffCooldown(lastCallEpochSeconds = lastCallEpoch, cooldown = cooldown, now = nowInstant)) {
             refreshable += facilityId
         } else {
-            val timeLeft = cooldown - (nowInstant - lastCall)
+            val timeLeft = cooldownLeft(lastCallEpochSeconds = lastCallEpoch, cooldown = cooldown, now = nowInstant)
             log("Facility $facilityId is on cooldown for another ${timeLeft.inWholeSeconds} seconds")
         }
     }
     return refreshable
 }
+
+/**
+ * Whether a facility last fetched at [lastCallEpochSeconds] may be fetched again at [now].
+ *
+ * The one decision every Park & Ride fetch goes through, whether it comes from opening home, from
+ * opening a tile or from a tick of the poll, so none of them can spend the shared NSW key faster
+ * than the cooldown allows. A facility never fetched (null) is always off cooldown, and so is one
+ * reset to the distant past after a failed call, which is how a retry skips the wait. The boundary
+ * is inclusive: exactly one cooldown later is allowed.
+ */
+@OptIn(ExperimentalTime::class)
+internal fun isOffCooldown(lastCallEpochSeconds: Long?, cooldown: Duration, now: Instant): Boolean =
+    cooldownLeft(lastCallEpochSeconds, cooldown, now) <= Duration.ZERO
+
+/** What is left of [cooldown] for a facility last fetched at [lastCallEpochSeconds], or zero. */
+@OptIn(ExperimentalTime::class)
+internal fun cooldownLeft(lastCallEpochSeconds: Long?, cooldown: Duration, now: Instant): Duration {
+    val lastCall = Instant.fromEpochSeconds(lastCallEpochSeconds ?: Instant.DISTANT_PAST.epochSeconds)
+    return (cooldown - (now - lastCall)).coerceAtLeast(Duration.ZERO)
+}
+
+/**
+ * The stops whose numbers are fetched when home opens or returns to the front: every saved
+ * station, once each, with the open tiles first. Each still goes through [isOffCooldown], so this
+ * only names who may be asked and never who is.
+ */
+internal fun stopsToRefreshOnOpen(savedStopIds: Collection<String>, openStopIds: Set<String>): List<String> =
+    (openStopIds.filter { it in savedStopIds } + savedStopIds).distinct()
 
 /**
  * Applies a successful BFF batch response to the local store. Facilities the

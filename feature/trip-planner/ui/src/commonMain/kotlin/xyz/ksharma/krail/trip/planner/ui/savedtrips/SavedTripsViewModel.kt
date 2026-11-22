@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
@@ -55,7 +57,6 @@ import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSourc
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.db.NSWParkRideFacilityDetail
-import xyz.ksharma.krail.sandook.db.SavedParkRide
 import xyz.ksharma.krail.sandook.db.SavedTrip
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchSessionStore
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
@@ -125,6 +126,14 @@ class SavedTripsViewModel(
     // Keeps the numbers on open Park & Ride cards moving. See pollExpandedParkRideStops.
     private var parkRidePollJob: Job? = null
 
+    // Asks for the numbers of every saved station once when home opens. See refreshSavedParkRidesOnOpen.
+    private var parkRideOpenRefreshJob: Job? = null
+
+    // One fetch pass at a time. Opening home and tapping a tile can land together, and the cooldown
+    // stamp is only written when a reading comes back, so without this both would see the same
+    // stale stamp and both would call the API for the same facility.
+    private val parkRideFetchMutex = Mutex()
+
     val trackedJourney: StateFlow<TrackedJourney?> = trackingManager.tracked
 
     // How many collectors uiState has RIGHT NOW, with no grace period.
@@ -154,7 +163,7 @@ class SavedTripsViewModel(
             observeStopLabels()
             seedDefaultLabelsIfEmpty()
             observeFacilityDetailsFromDb()
-            refreshFacilityDetails()
+            refreshSavedParkRidesOnOpen()
             pollExpandedParkRideStops()
             updateDiscoverState()
             updateInfoTilesUiState()
@@ -486,126 +495,15 @@ class SavedTripsViewModel(
                         val trips = savedTrips.map { it.toTrip() }.toImmutableList()
                         updateUiState { copy(savedTrips = trips, isSavedTripsLoading = false) }
 
-                        updateParkRideStopIdsInDb(savedTrips)
+                        syncSavedTripParkRides(
+                            savedTrips = savedTrips,
+                            facilityManager = nswParkRideFacilityManager,
+                            stopResultsManager = stopResultsManager,
+                            parkRideSandook = parkRideSandook,
+                            analytics = analytics,
+                        )
                     }
             }
-    }
-
-    /**
-     * Handles the logic for updating Park & Ride stop IDs in the database based on saved trips.
-     * Updates the database with (stopId, facilityId) pairs for all saved trips.
-     *
-     * For each unique stop ID found in the list of saved trips (from both `fromStopId` and `toStopId`),
-     * this method finds all associated Park & Ride facility IDs using the facility manager.
-     *
-     * Only stop IDs that have at least one facility are included.
-     * The resulting set of (stopId, facilityId) pairs is then inserted or replaced in the database.
-     *
-     * In short:
-     *      StopId -> FacilityId Mapping for StopIds in SavedTrips
-     *
-     * edge case solved, where multiple stop Ids have same facility Ids.
-     * {"stopId":"209325","parkRideFacilityId":"489","parkRideName":"Park&Ride - Manly Vale"},
-     * {"stopId":"209324","parkRideFacilityId":"489","parkRideName":"Park&Ride - Manly Vale"},
-     *
-     * @param savedTrips List of saved trips to extract stop IDs from.
-     */
-    @VisibleForTesting // TODO - write unit tests for this function.
-    suspend fun updateParkRideStopIdsInDb(savedTrips: List<SavedTrip>) {
-        // 1. Collect all unique stop IDs from the saved trips (both fromStopId and toStopId)
-        val uniqueStopIds: Set<String> = uniqueSavedTripStopIds(savedTrips)
-        log("Unique Stop IDs from Saved Trips: $uniqueStopIds")
-
-        // 2. Build a map from stopId to a list of associated park & ride facilities
-        val facilityDetailMap: Map<String, List<NswParkRideFacility>> = nswParkRideFacilityManager
-            .getParkRideFacilities()
-            .groupBy { it.stopId }
-        log("Facility Detail Map: $facilityDetailMap")
-
-        // 3. For each unique stopId, create SavedParkRide objects with all required data
-        val savedParkRideList: Set<SavedParkRide> = uniqueStopIds
-            .flatMap { stopId ->
-                // Try to resolve stopName for each stopId in priority order:
-                // 1. Use local DB (should always succeed for saved trips).
-                // 2. If not found, use Park & Ride facility name from facility mapping - remote config.
-                //    This can happen if the stopId in the saved trip is different from the one in
-                //    the park ride api call response. In that case, the remote config mapping
-                //    will provide the correct facility name for those stopId's.
-                // 3. If still not found, fallback to stopId itself (should rarely happen).
-                val stopName = stopResultsManager.fetchLocalStopName(stopId)
-                    ?: facilityDetailMap[stopId]?.firstOrNull()?.parkRideName
-                    ?: stopId
-
-                facilityDetailMap[stopId]?.map { facility ->
-                    SavedParkRide(
-                        stopId = stopId,
-                        facilityId = facility.parkRideFacilityId,
-                        stopName = stopName,
-                        facilityName = facility.parkRideName,
-                        source = SavedTrips.value,
-                    )
-                } ?: emptyList()
-            }
-            .toSet()
-
-        savedParkRideList.map {
-            it.stopId to it.facilityId + " (${it.stopName})"
-        }.let {
-            log("StopId -> FacilityId Mapping: \n${it.joinToString("\n")}")
-        }
-
-        // 4. Diff against the previously persisted set so add/remove can be tracked per facility.
-        val previousKeys = parkRideSandook.observeSavedParkRidesBySource(SavedTrips).first()
-            .map { it.stopId to it.facilityId }
-            .toSet()
-        val newKeys = savedParkRideList.map { it.stopId to it.facilityId }.toSet()
-        val addedKeys = newKeys - previousKeys
-        val removedKeys = previousKeys - newKeys
-
-        // Clear all existing saved park rides linked to saved trips for accuracy
-        parkRideSandook.clearAllSavedParkRidesBySource(source = SavedTrips)
-
-        if (savedParkRideList.isNotEmpty()) {
-            parkRideSandook.insertOrReplaceSavedParkRides(
-                parkRideInfoList = savedParkRideList,
-                source = SavedTrips,
-            )
-        }
-
-        trackParkRideAutoSync(addedKeys, removedKeys)
-    }
-
-    private fun trackParkRideAutoSync(
-        addedKeys: Set<Pair<String, String>>,
-        removedKeys: Set<Pair<String, String>>,
-    ) {
-        addedKeys.forEach { (stopId, facilityId) ->
-            analytics.track(
-                AnalyticsEvent.ParkRideUserFacilityEvent(
-                    facilityId = facilityId,
-                    stopId = stopId,
-                    action = AnalyticsEvent.ParkRideUserFacilityEvent.Action.ADD,
-                    source = AnalyticsEvent.ParkRideUserFacilityEvent.Source.SAVED_TRIPS_SCREEN,
-                ),
-            )
-        }
-        removedKeys.forEach { (stopId, facilityId) ->
-            analytics.track(
-                AnalyticsEvent.ParkRideUserFacilityEvent(
-                    facilityId = facilityId,
-                    stopId = stopId,
-                    action = AnalyticsEvent.ParkRideUserFacilityEvent.Action.REMOVE,
-                    source = AnalyticsEvent.ParkRideUserFacilityEvent.Source.SAVED_TRIPS_SCREEN,
-                ),
-            )
-        }
-    }
-
-    private fun uniqueSavedTripStopIds(savedTrips: List<SavedTrip>): Set<String> {
-        val uniqueSavedTripStopIds: Set<String> = savedTrips
-            .flatMap { listOf(it.fromStopId, it.toStopId) }
-            .toSet()
-        return uniqueSavedTripStopIds
     }
 
     private fun onMoveSavedTrip(tripId: String, targetIndex: Int) {
@@ -701,7 +599,7 @@ class SavedTripsViewModel(
                             latitude = 0.0,
                             longitude = 0.0,
                             // The mapping row already carries a resolved stop name, written
-                            // by the same priority chain updateParkRideStopIdsInDb uses. Fall
+                            // by the same priority chain syncSavedTripParkRides uses. Fall
                             // back to it before the raw stop ID, or a card whose stop is not
                             // in the local search index shows "2153478" instead of
                             // "Bella Vista" until its first availability fetch lands.
@@ -731,11 +629,11 @@ class SavedTripsViewModel(
     }
 
     @OptIn(ExperimentalTime::class)
-    suspend fun fetchAndSaveParkRideFacilityIfNeeded(stopId: String) {
+    suspend fun fetchAndSaveParkRideFacilityIfNeeded(stopId: String): Unit = parkRideFetchMutex.withLock {
         val facilityIds = convertStopIdListToFacilityIdList(setOf(stopId).toImmutableSet())
         if (facilityIds.isEmpty()) {
             logError("No Park Ride facilities found for stopId: $stopId")
-            return
+            return@withLock
         }
         val now = System.now().epochSeconds
         val refreshable = filterRefreshableFacilities(
@@ -744,7 +642,7 @@ class SavedTripsViewModel(
             cooldown = getApiCooldownDuration(),
             nowInstant = Instant.fromEpochSeconds(now),
         )
-        if (refreshable.isEmpty()) return
+        if (refreshable.isEmpty()) return@withLock
 
         // BFF batch path: one HTTP call resolves stop to facilities and returns
         // them all. NSW path returns null, the caller falls back to per-facility
@@ -769,6 +667,24 @@ class SavedTripsViewModel(
             .toSet()
 
         return facilityIdList
+    }
+
+    /**
+     * Asks for the numbers of every saved Park & Ride station when home opens or comes back to the
+     * front, so a tile has a current number without a tap. Cost: at most one call per saved
+     * facility, and only for the ones [isOffCooldown] lets through, which is the same decision the
+     * tap and the poll make. It runs beside the first frame and never ahead of it, a failure leaves
+     * the cached reading as it was, and nothing repeats: only an open tile is polled.
+     */
+    private fun refreshSavedParkRidesOnOpen() {
+        parkRideOpenRefreshJob?.cancel()
+        parkRideOpenRefreshJob = viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            val savedStopIds = parkRideSandook.observeSavedParkRides().first().map { it.stopId }
+            stopsToRefreshOnOpen(savedStopIds, _uiState.value.observeParkRideStopIdSet).forEach { stopId ->
+                log("Park & Ride on open for stopId: $stopId")
+                fetchAndSaveParkRideFacilityIfNeeded(stopId = stopId)
+            }
+        }
     }
 
     /** Keeps open Park & Ride cards fresh; the rules live on [pollWhileCardsAreOpen]. */
@@ -872,6 +788,8 @@ class SavedTripsViewModel(
         observeParkRideFacilityFromDatabaseJob = null
         parkRidePollJob?.cancel()
         parkRidePollJob = null
+        parkRideOpenRefreshJob?.cancel()
+        parkRideOpenRefreshJob = null
         log("Cleanup jobs in SavedTripsViewModel completed.")
     }
 }

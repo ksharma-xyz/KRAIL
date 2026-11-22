@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import xyz.ksharma.krail.taj.components.Text
@@ -66,6 +67,8 @@ internal fun CarParkFigures(
     percentageFull: Int?,
     timeText: String?,
     modifier: Modifier = Modifier,
+    // The time's colour: the card's own secondary text, or the fixed quieter light on a card that floats on the map.
+    secondaryColor: Color = KrailTheme.colors.secondaryLabel,
 ) {
     val dim = KrailTheme.dimensions
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(dim.spacingXS)) {
@@ -106,7 +109,7 @@ internal fun CarParkFigures(
             Text(
                 text = "Last updated at\u00A0$timeText",
                 style = KrailTheme.typography.bodySmall,
-                color = KrailTheme.colors.secondaryLabel,
+                color = secondaryColor,
             )
         }
     }

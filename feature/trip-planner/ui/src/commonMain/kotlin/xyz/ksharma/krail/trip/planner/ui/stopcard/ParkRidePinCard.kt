@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.testTag
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.components.FloatingDark
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.CarParkBlock
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.CarParkBlockContent
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.ParkRideTile
@@ -124,7 +125,7 @@ private fun StationTotal(tile: ParkRideTile) {
             Text(
                 text = "Last updated at ${tile.timeText ?: NO_TIME_YET}",
                 style = KrailTheme.typography.bodySmall,
-                color = KrailTheme.colors.secondaryLabel,
+                color = FloatingDark.softContent,
             )
         }
     }

@@ -30,9 +30,9 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.CardShape
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.krailRipple
-import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeDecorColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.components.FloatingDark
 
 /**
  * A line of a Park & Ride tile that keeps its box when it has nothing to say. With [present] false
@@ -49,12 +49,14 @@ internal fun ReservedLine(
 }
 
 /**
- * The shell every Park & Ride tile and card shares, the saved trip card's own: the theme colour wash on the
- * card corners. The padding is the caller's, because the closed tile centres its lines in the room it has.
+ * The shell every Park & Ride tile and card on the home shares, the saved trip card's own corners on the one
+ * fixed dark ([FloatingDark.container]), opaque and the same in light and dark app modes, because the map under
+ * it is always light. What is drawn on it is [FloatingContent]. The padding is the caller's, because the closed
+ * tile centres its lines in the room it has.
  */
 @Composable
 internal fun Modifier.tileShell(): Modifier =
-    clip(CardShape).background(color = themeBackgroundColor(), shape = CardShape)
+    clip(CardShape).background(color = FloatingDark.container, shape = CardShape)
 
 /**
  * The three lines of a closed Park & Ride tile: the free spots across the station's car parks as a big
@@ -76,7 +78,7 @@ internal fun ColumnScope.ClosedTileFigures(tile: ParkRideTile) {
         Text(
             text = "Last updated at\u00A0${tile.timeText ?: PLACEHOLDER_TIME}",
             style = KrailTheme.typography.bodySmall,
-            color = KrailTheme.colors.secondaryLabel,
+            color = FloatingDark.softContent,
         )
     }
 }
@@ -161,10 +163,16 @@ internal fun CarParkBlockContent(
                 spotsAvailable = carPark.freeSpots,
                 percentageFull = carPark.percentFull,
                 timeText = carPark.timeText,
+                secondaryColor = FloatingDark.softContent,
             )
         } else if (waiting) {
             ReservedLine(present = false) {
-                CarParkFigures(spotsAvailable = 0, percentageFull = 0, timeText = RESERVED_TIME)
+                CarParkFigures(
+                    spotsAvailable = 0,
+                    percentageFull = 0,
+                    timeText = RESERVED_TIME,
+                    secondaryColor = FloatingDark.softContent,
+                )
             }
         }
         if (carPark.directionsTo != null) {

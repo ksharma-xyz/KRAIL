@@ -25,6 +25,7 @@ import kotlinx.collections.immutable.ImmutableList
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.components.FloatingContent
 
 /**
  * The Park & Ride row on home, `docs/MAP_HOME_UX.md` rules 29 and 45: one block the full width of
@@ -111,7 +112,7 @@ private fun ClosedParkRideRow(
 /**
  * One closed tile: the free spots across the station's car parks as a big number with "spots" small
  * beside it, then the car icon and the station name, then the time of the oldest reading. The card
- * shell is the saved trip card's: the theme wash, 16 dp padding and corners.
+ * shell is the saved trip card's corners and 16 dp padding on the one fixed dark.
  *
  * With no reading yet, or a failed first fetch, the number and the time keep their line boxes
  * invisible, so the tile is the same height whether its numbers are loading, loaded or failed and
@@ -136,7 +137,7 @@ private fun ClosedParkRideTile(
             .padding(dim.spacingXL),
         verticalArrangement = Arrangement.spacedBy(dim.spacingM, Alignment.CenterVertically),
     ) {
-        ClosedTileFigures(tile)
+        FloatingContent { ClosedTileFigures(tile) }
     }
 }
 
@@ -161,18 +162,20 @@ private fun OpenParkRideTile(
             .padding(dim.spacingXL),
         verticalArrangement = Arrangement.spacedBy(dim.spacingXL),
     ) {
-        StationLine(
-            name = tile.stationName,
-            large = true,
-            modifier = Modifier
-                .testTag(TripPlannerTestTags.parkRideTileName(tile.stationId))
-                .fillMaxWidth()
-                .klickable(onClick = onNameClick)
-                .semantics { onClick(label = "Close ${tile.stationName}", action = null) },
-        )
-        tile.carParks.forEach { carPark ->
-            key(carPark.facilityId) {
-                CarParkBlockContent(carPark = carPark, onDirectionsClick = { onDirectionsClick(carPark) })
+        FloatingContent {
+            StationLine(
+                name = tile.stationName,
+                large = true,
+                modifier = Modifier
+                    .testTag(TripPlannerTestTags.parkRideTileName(tile.stationId))
+                    .fillMaxWidth()
+                    .klickable(onClick = onNameClick)
+                    .semantics { onClick(label = "Close ${tile.stationName}", action = null) },
+            )
+            tile.carParks.forEach { carPark ->
+                key(carPark.facilityId) {
+                    CarParkBlockContent(carPark = carPark, onDirectionsClick = { onDirectionsClick(carPark) })
+                }
             }
         }
     }

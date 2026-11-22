@@ -40,9 +40,10 @@ import app.krail.taj.resources.ic_close
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.modifier.CardShape
-import xyz.ksharma.krail.taj.modifier.cardBackground
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.components.FloatingContent
+import xyz.ksharma.krail.trip.planner.ui.components.FloatingDark
 import app.krail.taj.resources.Res as TajRes
 
 /**
@@ -87,11 +88,12 @@ internal fun StopCardPlacement(
 }
 
 /**
- * The shell of a stop card, the saved trip card's own: the theme wash on a solid surface, 16 dp above
- * and below and the card corners, one block under another 8 dp apart (`docs/MAP_HOME_UX.md`, the card
- * shell and Stop card). The solid surface is what a floating card needs over a map, where the wash
- * alone would show the map through the text. It is the card's only surface: nothing inside it draws a
- * card, a background or an inner padding of its own, so a block sits straight on it.
+ * The shell of a stop card, the saved trip card's own shape: the card corners and 16 dp above and below,
+ * one block under another 8 dp apart (`docs/MAP_HOME_UX.md`, the card shell and Stop card). Its surface is
+ * the fixed dark and its content the fixed light ([FloatingDark]), the same in light and dark app modes,
+ * because the map under it is always light and a translucent theme wash is unreadable over it. It is the
+ * card's only surface: nothing inside it draws a card, a background or an inner padding of its own, so a
+ * block sits straight on it.
  *
  * Line 1 is the [heading] with the 48 dp close button at the right. A card closes, a field does not.
  * Everything under it scrolls inside the room the card has, so the close button never leaves the
@@ -117,8 +119,7 @@ internal fun StopCardFrame(
             .testTag(TripPlannerTestTags.StopCard.CARD)
             .fillMaxWidth()
             .clip(CardShape)
-            .background(KrailTheme.colors.surface, CardShape)
-            .cardBackground()
+            .background(FloatingDark.container, CardShape)
             .semantics {
                 paneTitle = announcement
                 isTraversalGroup = true
@@ -126,24 +127,26 @@ internal fun StopCardFrame(
             .padding(vertical = dim.spacingXL),
         verticalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().cardInset(),
-            horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
-            verticalAlignment = Alignment.Top,
-        ) {
-            Box(
-                modifier = Modifier.weight(1f).heightIn(min = dim.textFieldHeight),
-                contentAlignment = Alignment.CenterStart,
+        FloatingContent {
+            Row(
+                modifier = Modifier.fillMaxWidth().cardInset(),
+                horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
+                verticalAlignment = Alignment.Top,
             ) {
-                heading()
+                Box(
+                    modifier = Modifier.weight(1f).heightIn(min = dim.textFieldHeight),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    heading()
+                }
+                CloseButton(label = closeLabel, onClick = onClose)
             }
-            CloseButton(label = closeLabel, onClick = onClose)
+            Column(
+                modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(dim.spacingM),
+                content = content,
+            )
         }
-        Column(
-            modifier = Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(dim.spacingM),
-            content = content,
-        )
     }
 }
 
@@ -166,7 +169,7 @@ private fun CloseButton(label: String, onClick: () -> Unit) {
         Image(
             painter = painterResource(TajRes.drawable.ic_close),
             contentDescription = label,
-            colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
+            colorFilter = ColorFilter.tint(FloatingDark.content),
             modifier = Modifier.size(KrailTheme.dimensions.iconS),
         )
     }

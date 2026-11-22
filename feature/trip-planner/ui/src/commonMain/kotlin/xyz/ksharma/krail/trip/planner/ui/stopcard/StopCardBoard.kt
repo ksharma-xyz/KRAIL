@@ -42,6 +42,8 @@ import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.DepartureBoardBody
+import xyz.ksharma.krail.trip.planner.ui.components.FloatingDark
+import xyz.ksharma.krail.trip.planner.ui.components.FloatingDarkTheme
 
 private const val BOARD_TITLE = "Departure Board"
 private const val CHEVRON_OPEN_DEGREES = 180f
@@ -159,7 +161,7 @@ private fun BoardHeading(
             if (board.refreshing) {
                 AnimatedDots(
                     modifier = Modifier.size(width = dim.spacingXXXXL, height = dim.spacingXL),
-                    color = KrailTheme.colors.softLabel,
+                    color = FloatingDark.softContent,
                 )
             }
             Chevron(open = boardOpen)
@@ -175,7 +177,7 @@ private fun Chevron(open: Boolean) {
         Image(
             painter = painterResource(Res.drawable.ic_arrow_down),
             contentDescription = null,
-            colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
+            colorFilter = ColorFilter.tint(FloatingDark.content),
             modifier = Modifier.size(dim.spacingXL).rotate(if (open) CHEVRON_OPEN_DEGREES else 0f),
         )
     }
@@ -195,21 +197,25 @@ private fun BoardBody(
 ) {
     val floor = if (board.holdsBodyFloor) boardFloorHeight(LocalDensity.current.fontScale) else 0.dp
     Box(modifier = Modifier.testTag(TripPlannerTestTags.StopCard.BOARD_BODY).heightIn(min = floor)) {
-        DepartureBoardBody(
-            state = state,
-            onRetry = { onEvent(DeparturesUiEvent.Refresh) },
-            onLoadPreviousDepartures = { onEvent(DeparturesUiEvent.LoadPreviousDepartures(stopId)) },
-            onLineFilterChange = { lineNumber, transportMode, selected ->
-                onEvent(
-                    DeparturesUiEvent.LineFilterChanged(
-                        stopId = stopId,
-                        selected = selected,
-                        lineNumber = lineNumber,
-                        transportMode = transportMode,
-                    ),
-                )
-            },
-            onShowPreviousToggle = { show -> onEvent(DeparturesUiEvent.TogglePreviousDepartures(stopId, show)) },
-        )
+        // The board's rows are the app's own and read mode adaptive tokens inside, with no colours to pass, so
+        // they are drawn in the dark scheme the card is.
+        FloatingDarkTheme {
+            DepartureBoardBody(
+                state = state,
+                onRetry = { onEvent(DeparturesUiEvent.Refresh) },
+                onLoadPreviousDepartures = { onEvent(DeparturesUiEvent.LoadPreviousDepartures(stopId)) },
+                onLineFilterChange = { lineNumber, transportMode, selected ->
+                    onEvent(
+                        DeparturesUiEvent.LineFilterChanged(
+                            stopId = stopId,
+                            selected = selected,
+                            lineNumber = lineNumber,
+                            transportMode = transportMode,
+                        ),
+                    )
+                },
+                onShowPreviousToggle = { show -> onEvent(DeparturesUiEvent.TogglePreviousDepartures(stopId, show)) },
+            )
+        }
     }
 }

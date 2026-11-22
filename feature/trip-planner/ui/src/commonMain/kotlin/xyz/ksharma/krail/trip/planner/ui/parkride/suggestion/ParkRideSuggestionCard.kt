@@ -27,6 +27,8 @@ import xyz.ksharma.krail.taj.components.OutlinedButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.components.FloatingContent
+import xyz.ksharma.krail.trip.planner.ui.components.FloatingDark
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.ClosedTileFigures
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.ParkRideTile
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.tileShell
@@ -59,36 +61,39 @@ internal fun ParkRideSuggestionCard(
             .padding(dim.spacingXL),
         verticalArrangement = Arrangement.spacedBy(dim.spacingXL),
     ) {
-        Column(
-            modifier = Modifier
-                .testTag(TripPlannerTestTags.ParkRideSuggestion.FIGURES)
-                .fillMaxWidth()
-                .clearAndSetSemantics { contentDescription = suggestionSpokenLabel(tile) },
-            verticalArrangement = Arrangement.spacedBy(dim.spacingM),
-        ) {
-            ClosedTileFigures(tile)
+        FloatingContent {
+            Column(
+                modifier = Modifier
+                    .testTag(TripPlannerTestTags.ParkRideSuggestion.FIGURES)
+                    .fillMaxWidth()
+                    .clearAndSetSemantics { contentDescription = suggestionSpokenLabel(tile) },
+                verticalArrangement = Arrangement.spacedBy(dim.spacingM),
+            ) {
+                ClosedTileFigures(tile)
+            }
+            SuggestionActions(
+                notNow = {
+                    OutlinedButton(
+                        onClick = onNotNow,
+                        colors = FloatingDark.outlinedButtonColors(),
+                        modifier = Modifier
+                            .testTag(TripPlannerTestTags.ParkRideSuggestion.NOT_NOW)
+                            .heightIn(min = dim.textFieldHeight),
+                        dimensions = ButtonDefaults.mediumButtonSize(),
+                    ) { Text(text = NOT_NOW_TEXT) }
+                },
+                addToHome = {
+                    Button(
+                        onClick = onAddToHome,
+                        modifier = Modifier
+                            .testTag(TripPlannerTestTags.ParkRideSuggestion.ADD_TO_HOME)
+                            .heightIn(min = dim.textFieldHeight)
+                            .semantics { onClick(label = addToHomeSpokenLabel(tile), action = null) },
+                        dimensions = ButtonDefaults.mediumButtonSize(),
+                    ) { Text(text = ADD_TO_HOME_TEXT) }
+                },
+            )
         }
-        SuggestionActions(
-            notNow = {
-                OutlinedButton(
-                    onClick = onNotNow,
-                    modifier = Modifier
-                        .testTag(TripPlannerTestTags.ParkRideSuggestion.NOT_NOW)
-                        .heightIn(min = dim.textFieldHeight),
-                    dimensions = ButtonDefaults.mediumButtonSize(),
-                ) { Text(text = NOT_NOW_TEXT) }
-            },
-            addToHome = {
-                Button(
-                    onClick = onAddToHome,
-                    modifier = Modifier
-                        .testTag(TripPlannerTestTags.ParkRideSuggestion.ADD_TO_HOME)
-                        .heightIn(min = dim.textFieldHeight)
-                        .semantics { onClick(label = addToHomeSpokenLabel(tile), action = null) },
-                    dimensions = ButtonDefaults.mediumButtonSize(),
-                ) { Text(text = ADD_TO_HOME_TEXT) }
-            },
-        )
     }
 }
 

@@ -2,7 +2,7 @@
 
 Status: Agreed for build (rows IA1 to IA13 of "Assumptions for approval" in section 9 approved by ksharma-xyz on 2026-11-21; the measurement targets and review points in section 11 are still owner decisions)
 Owner: ksharma-xyz
-Touches: `feature/trip-planner/ui` (`intro/`), `feature/trip-planner/state` (`intro/`), `core/analytics`, `io/gtfs` (stops readiness, first PR), `sandook` (one preference key), `.maestro/` (one shared flow, only if the tag changes)
+Touches: `feature/trip-planner/ui` (`intro/`), `feature/trip-planner/state` (`intro/`), `core/analytics`, `io/gtfs` (stops readiness, first PR), `sandook` (one preference key; the progress key of unit U10 is a constant in the Intro package), `.maestro/` (one shared flow, only if the tag changes)
 Rebuild: the Intro is being rebuilt as five screens, one question each (theme, Park & Ride, destination, origin, confirm), in four units. Unit R1 holds the step model, the decision bar, the headline and the Park & Ride screen, unit R2 the theme screen and the flip that makes it the first, unit R3 the other three screens, and unit R4 the finale after the last one (section 3, "Unit R4, as built", and section 5, "The finale"). Where sections 1, 2, 6, 9 and 11 still name two steps, Next, Skip for now or one bottom button, sections 3, 5, 7, 8 and 10 are the current text.
 
 The design behind this document was settled in review on 2026-11-21 against an interactive prototype that is not part of
@@ -1872,7 +1872,7 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | U9-6 | The origin screen's emoji is place 8 of the list, a number of its own | It was the screen's position plus 5, and the new order moves that position. Place 8 keeps the same emoji it had | Default, not yet seen by owner |
 | U9-7 | A Settings replay shows the Intro in the rider's current colour until the last screen, and not the default theme | The spec said default until the last screen, which is true of a first run. Forcing the default on a replay would recolour the whole app for the length of the Intro and back | Default, not yet seen by owner |
 | U9-8 | The Park & Ride answers show `Yes` and `No`, and `IntroBarAction` gets a `spokenLabel`. `compactLabel`, `visibleLabel` and the two compact constants are deleted | A button now shows one word and says a longer phrase at every size, which the old compact rule could not express, and nothing else used the compact form | Default, not yet seen by owner |
-| U9-9 | The five headlines are complete plain questions, and the longest word, TRANSPORT, is kept whole in a 320 dp window by holding the headline scale lower there only (0.94 in 288 dp, none from about 330 dp) | TRANSPORT does not fit 288 dp at the 1.05 ceiling (292 dp). The five line variant does not help, because it is the word that is wide. Lowering the ceiling would shrink every headline on every phone. If a 320 dp window is not worth a smaller headline, the alternative is to let that window scroll sideways, which the Intro never does, or to reword | Default, not yet seen by owner |
+| U9-9 | The five headlines are complete plain questions, and the longest word, TRANSPORT, is kept whole in a 320 dp window by holding the headline scale lower there only (0.94 in 288 dp, none from about 330 dp) | TRANSPORT does not fit 288 dp at the 1.05 ceiling (292 dp). The five line variant does not help, because it is the word that is wide. Lowering the ceiling would shrink every headline on every phone. If a 320 dp window is not worth a smaller headline, the alternative is to let that window scroll sideways, which the Intro never does, or to reword | OWNER APPROVED |
 | U9-10 | The headline room is given by the screen frame to its headline through `LocalHeadlineRoom`, and the headline reads it | The room is only known at layout, and the frame already measures it. A headline outside a frame, such as in a preview, has the ceiling alone | Default, not yet seen by owner |
 | U9-11 | The badges are two columns in reading order, the right column lowered by half a badge and 16 dp further out, the second left row moved in 16 dp, with 24 dp between any two | The spec gave an example of the stagger and left the numbers. 24 dp is the old gap and clears the drift and dance, and 16 dp is the token for a small offset. If the grid should read tighter or looser, change `spacingXL` and `spacingXXXL` at the one call | Default, not yet seen by owner |
 | U9-12 | The Maestro flow waits for `intro.screen` first, not a badge, and finds the Park & Ride screen as the one with a secondary button and no trip tile | The Train badge is no longer on the first screen. `intro.screen` is drawn at once on every screen and keeps the wait cheap. The Park & Ride screen has no tag of its own and no other screen has a secondary button without the tile. If a screen gains a tag, use it | Default, not yet seen by owner |
@@ -1966,8 +1966,10 @@ The rebuild, in three units on the same branch, in focused commits, none pushed:
   through `themeChoiceFor`, adds no analytics event name and no param, changes no taj file, and does not touch Saved Trips, Search Stop or any map.
 - **U9 part 1, built.** A new step order (Park & Ride, destination, origin, confirm, theme), the finish moved from the confirm screen to the
   theme screen, five complete question headlines, the Park & Ride buttons `Yes` and `No`, a loose staggered grid for the four badges, the
-  analytics screen name check and the Maestro flow for the new order, as focused commits. Resume after the app is killed and the finale
-  gradient are part 2.
+  analytics screen name check and the Maestro flow for the new order, as focused commits.
+- **U10 (part 2), built.** Resume after the app is killed (`IntroProgress`, `IntroProgressStore`, `IntroProgressSaver`, the view model and its
+  tests), the finale wordmark gradient built from the chosen theme (`FinaleGradient.kt`, behind `FINALE_GRADIENT_FROM_THEME`), and the
+  documentation leftovers, as focused commits. Device checks still to do: kill and relaunch at each screen, and the gradient colours on a phone.
 
 ## 11. Measurement plan (ROI)
 

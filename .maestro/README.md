@@ -80,7 +80,7 @@ maestro --device emulator-5554 test -e APP_ID=xyz.ksharma.krail.debug .maestro/s
 | `nightly/04-background-foreground.yaml` | Backgrounding and returning lands the rider on the screen they left, not on home. |
 | `nightly/05-kill-relaunch.yaml` | After a force-stop the app recovers to home and navigation still works. |
 | `nightly/06-permissions-denied.yaml` | With location denied the app still runs and a trip can still be planned by typing. |
-| `shared/dismiss-intro.yaml` | Not a test. Walks the first-run Intro so a clean device can reach the app, saying no to saving a trip on its last screen. |
+| `shared/dismiss-intro.yaml` | Not a test. Walks the first-run Intro so a clean device can reach the app: No to Park & Ride, a destination, an origin, Not now to saving the trip on the confirm screen, and a colour on the last screen, which ends the Intro. |
 
 ## Selectors
 

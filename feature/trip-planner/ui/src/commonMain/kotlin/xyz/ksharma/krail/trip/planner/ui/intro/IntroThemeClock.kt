@@ -9,12 +9,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableFloatState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.currentStateAsState
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.awaitCancellation
 
 // The transition counts from 0 to this many seconds and starts again. The clock is not that number: it keeps
 // adding what the transition moved, so it never goes back when the transition starts over.
@@ -44,10 +48,28 @@ internal fun clockAdvance(previous: Float, current: Float, loop: Float = CLOCK_L
 @Composable
 internal fun rememberThemeClock(running: Boolean): FloatState {
     val clock = remember { mutableFloatStateOf(0f) }
-    val lifecycle = LocalLifecycleOwner.current.lifecycle
-    val resumed = lifecycle.currentStateAsState().value.isAtLeast(Lifecycle.State.RESUMED)
+    val resumed = rememberIsResumed()
     if (running && resumed) ThemeClockDriver(clock)
     return clock
+}
+
+// True only while the lifecycle is RESUMED. It is `repeatOnLifecycle`, the pattern the rest of the Intro and the
+// app's polling use, so there is one way of watching the lifecycle and it is the one that runs on both platforms.
+@Composable
+private fun rememberIsResumed(): Boolean {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var resumed by remember { mutableStateOf(false) }
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            resumed = true
+            try {
+                awaitCancellation()
+            } finally {
+                resumed = false
+            }
+        }
+    }
+    return resumed
 }
 
 @Composable

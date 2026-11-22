@@ -105,13 +105,15 @@ internal fun SetLabelPill(
  *
  * Styling is locked inside the pill via composition locals. [showIcon] is false for
  * `StopLabelAssignRow`'s expand-wall pills, kept icon-free for density in the
- * horizontal scroll.
+ * horizontal scroll. [text] is the label's own name unless the caller words it, as the home
+ * chips do ("Set Home").
  */
 @Composable
 internal fun UnsetLabelPill(
     label: StopLabel,
     modifier: Modifier = Modifier,
     showIcon: Boolean = true,
+    text: String = label.label,
 ) {
     val dim = KrailTheme.dimensions
     val shape = RoundedCornerShape(dim.radiusFull)
@@ -140,7 +142,7 @@ internal fun UnsetLabelPill(
                     modifier = Modifier.size(dim.spacingXL),
                 )
             }
-            Text(text = label.label)
+            Text(text = text)
         }
     }
 }

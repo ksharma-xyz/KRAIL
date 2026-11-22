@@ -15,6 +15,13 @@ internal class RecordingTripPlannerNavigator : TripPlannerNavigator {
     /** Every stop-search request the entry made, oldest first. */
     val searchStopRequests = mutableListOf<SearchStopFieldType>()
 
+    /** The label key of each stop-search request, in the same order. Null for a From or To search. */
+    val searchStopLabelKeys = mutableListOf<String?>()
+
+    /** How many times the entry opened Manage stop labels. */
+    var manageStopLabelsRequests = 0
+        private set
+
     /** Every timetable the entry asked to open, as "fromStopId>toStopId" pairs. */
     val timeTableRequests = mutableListOf<Pair<String, String>>()
 
@@ -24,6 +31,7 @@ internal class RecordingTripPlannerNavigator : TripPlannerNavigator {
         editTripLeg: Boolean,
     ) {
         searchStopRequests += fieldType
+        searchStopLabelKeys += labelKey
     }
 
     override fun navigateToTimeTable(
@@ -39,7 +47,9 @@ internal class RecordingTripPlannerNavigator : TripPlannerNavigator {
     override fun navigateToJourneyMap(journeyId: String) = Unit
     override fun navigateToSettings() = Unit
     override fun navigateToDiscover() = Unit
-    override fun navigateToManageStopLabels() = Unit
+    override fun navigateToManageStopLabels() {
+        manageStopLabelsRequests++
+    }
     override fun navigateToAddParkRide() = Unit
     override fun navigateToThemeSelection() = Unit
     override fun navigateToOurStory() = Unit

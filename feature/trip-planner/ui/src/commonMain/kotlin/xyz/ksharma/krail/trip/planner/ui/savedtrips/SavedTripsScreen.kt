@@ -95,7 +95,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import app.krail.taj.resources.Res as TajRes
 
-private const val LAZY_COLUMN_BOTTOM_PADDING = 300
+// Clear of the bottom search row and the chip row above it, so the last card scrolls fully into view.
+private const val LAZY_COLUMN_BOTTOM_PADDING = 400
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -117,6 +118,8 @@ fun SavedTripsScreen(
     onTrackingCardClick: () -> Unit = {},
     onStopTracking: () -> Unit = {},
     onAddParkRideClick: () -> Unit = {},
+    onLabelChipClick: (labelKey: String) -> Unit = {},
+    onLabelChipLongClick: () -> Unit = {},
     // Slot for the dual-pane right side. SavedTrips knows nothing about its content —
     // entry passes a MapStopSelectionPane (or anything else). Empty slot = blank pane.
     rightPane: @Composable BoxScope.() -> Unit = {},
@@ -143,6 +146,9 @@ fun SavedTripsScreen(
 
     // When the pill condition isn't met, always show the expanded row.
     val effectiveIsExpanded = if (showPill) isSearchExpanded else true
+
+    // The Home, Work and Park & Ride chips above the search row (docs/MAP_HOME_UX.md rule 41).
+    val homeChips = remember(savedTripsState.stopLabels) { homeChipsFor(savedTripsState.stopLabels) }
 
     // Edit mode for trip cards — long-press enters, Done button exits.
     var editing by rememberSaveable { mutableStateOf(false) }
@@ -299,6 +305,10 @@ fun SavedTripsScreen(
                     isAiHandoffSettling = askKrailFocus.handoffSpin,
                     dateTimeSelectionText = savedTripsState.dateTimeSelectionItem?.toDateTimeText(),
                     onDateTimeSelectionClear = { onEvent(SavedTripUiEvent.DateTimeSelectionChanged(null)) },
+                    homeChips = homeChips,
+                    onLabelChipClick = onLabelChipClick,
+                    onLabelChipLongClick = onLabelChipLongClick,
+                    onParkRideChipClick = onAddParkRideClick,
                     modifier = Modifier.align(Alignment.BottomCenter).savedTripsColumn(),
                 )
             }

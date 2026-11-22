@@ -28,6 +28,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_settings
 import org.jetbrains.compose.resources.painterResource
@@ -327,6 +328,10 @@ internal fun BoxScope.SavedTripsBottomSearchRow(
     isAiHandoffSettling: Boolean = false,
     dateTimeSelectionText: String? = null,
     onDateTimeSelectionClear: () -> Unit = {},
+    homeChips: ImmutableList<HomeChip> = persistentListOf(),
+    onLabelChipClick: (labelKey: String) -> Unit = {},
+    onLabelChipLongClick: () -> Unit = {},
+    onParkRideChipClick: () -> Unit = {},
 ) {
     AnimatedVisibility(
         visible = visible,
@@ -336,22 +341,34 @@ internal fun BoxScope.SavedTripsBottomSearchRow(
         ) + fadeIn(animationSpec = tween(durationMillis = 200)),
         modifier = modifier,
     ) {
-        SearchStopRow(
-            fromStopItem = fromStopItem,
-            toStopItem = toStopItem,
-            isExpanded = isExpanded,
-            isFromHighlighted = isFromHighlighted,
-            onExpandRequest = onExpandRequest,
-            onCollapseRequest = if (showPill) onCollapseRequest else null,
-            fromButtonClick = fromButtonClick,
-            toButtonClick = toButtonClick,
-            onSearchButtonClick = onSearchButtonClick,
-            onReverseButtonClick = onReverseButtonClick,
-            onAiEvent = onAiEvent,
-            isAiSearchAvailable = isAiSearchAvailable,
-            isAiHandoffSettling = isAiHandoffSettling,
-            dateTimeSelectionText = dateTimeSelectionText,
-            onDateTimeSelectionClear = onDateTimeSelectionClear,
-        )
+        Column {
+            // Above the row and inside its column, so the chips share the cards' edges. Only while
+            // the row is open: phone landscape collapses it to one button because height is short.
+            if (isExpanded) {
+                HomeChipRow(
+                    chips = homeChips,
+                    onLabelClick = onLabelChipClick,
+                    onLabelLongClick = onLabelChipLongClick,
+                    onParkRideClick = onParkRideChipClick,
+                )
+            }
+            SearchStopRow(
+                fromStopItem = fromStopItem,
+                toStopItem = toStopItem,
+                isExpanded = isExpanded,
+                isFromHighlighted = isFromHighlighted,
+                onExpandRequest = onExpandRequest,
+                onCollapseRequest = if (showPill) onCollapseRequest else null,
+                fromButtonClick = fromButtonClick,
+                toButtonClick = toButtonClick,
+                onSearchButtonClick = onSearchButtonClick,
+                onReverseButtonClick = onReverseButtonClick,
+                onAiEvent = onAiEvent,
+                isAiSearchAvailable = isAiSearchAvailable,
+                isAiHandoffSettling = isAiHandoffSettling,
+                dateTimeSelectionText = dateTimeSelectionText,
+                onDateTimeSelectionClear = onDateTimeSelectionClear,
+            )
+        }
     }
 }

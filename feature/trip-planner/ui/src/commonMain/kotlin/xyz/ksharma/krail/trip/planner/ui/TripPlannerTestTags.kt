@@ -51,6 +51,11 @@ object TripPlannerTestTags {
     const val SAVED_TRIPS_ACTION_DISCOVER = "savedtrips.action.discover"
     const val SAVED_TRIPS_ACTION_DONE = "savedtrips.action.done"
 
+    // The Home, Work and Park & Ride chips above the search row. The Park & Ride chip is a
+    // constant, the Home and Work chips are per label, see [homeLabelChip].
+    const val SAVED_TRIPS_CHIP_ROW = "savedtrips.chips"
+    const val SAVED_TRIPS_CHIP_PARK_RIDE = "savedtrips.chip.parkride"
+
     // Search row (the bottom origin/destination bar on the home screen)
     const val SEARCH_ROW = "searchrow.root"
     const val SEARCH_ROW_FROM = "searchrow.from"
@@ -101,6 +106,9 @@ object TripPlannerTestTags {
 
     /** One saved trip row. Suffixed so a flow can target a known trip or glob the set. */
     fun savedTripCard(tripId: String): String = "savedtrips.card.$tripId"
+
+    /** One Home or Work chip, keyed by the label's name so it is the same whether the label is set or not. */
+    fun homeLabelChip(labelKey: String): String = "savedtrips.chip.label.$labelKey"
 
     /** One search result row, keyed by the stop it would select. */
     fun searchStopResult(stopId: String): String = "searchstop.result.$stopId"

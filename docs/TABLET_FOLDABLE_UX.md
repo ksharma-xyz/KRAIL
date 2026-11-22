@@ -156,7 +156,9 @@ SearchStop). `TimeTableRoute` navigation still works via back-stack push.
   phone-landscape collapses it to a button (see compact-height rules below).
 - **One column** (rule 45 in [`MAP_HOME_UX.md`](MAP_HOME_UX.md)): the trip cards, the Park &
   Ride section and the search row share one column, `min(pane width, 560 dp)` and centred
-  (`columnWidthFor` in `SavedTripsColumn.kt`). A phone narrower than 560 dp keeps its whole width.
+  (`columnWidthFor` in `SavedTripsColumn.kt`). The Home, Work and Park & Ride chips sit directly above the
+  search row in that column, on the cards' edges, and wrap whole chips (one sideways line over 130% text).
+  A phone narrower than 560 dp keeps its whole width.
   A single-pane window of 560 to 839 dp centres a 560 dp column. In the 480 dp left pane the column
   is the whole pane. The list stays the pane's full width so the gutter still scrolls.
 

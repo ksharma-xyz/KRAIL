@@ -17,8 +17,11 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.LabelChipTapEffect
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsScreen
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.currentLatLng
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.onLabelStopSelected
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputViewModel
 import xyz.ksharma.krail.trip.planner.ui.search.ai.isHandoffActionable
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
@@ -122,9 +125,18 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                     viewModel.onEvent(SavedTripUiEvent.FromStopChanged(stopItem.toJsonString()))
                 SearchStopFieldType.TO ->
                     viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stopItem.toJsonString()))
-                SearchStopFieldType.LABEL -> Unit
+                SearchStopFieldType.LABEL -> onLabelStopSelected(result, viewModel::onEvent)
             }
         }
+
+        // A Home or Work chip tap, played out from the ViewModel's state so a rotation mid tap
+        // loses nothing. The location manager is built here because it needs the screen.
+        LabelChipTapEffect(
+            tap = savedTripState.labelChipTap,
+            locate = userLocationManager::currentLatLng,
+            onEvent = viewModel::onEvent,
+            tripPlannerNavigator = tripPlannerNavigator,
+        )
 
         SavedTripsScreen(
             savedTripsState = savedTripState,
@@ -132,6 +144,8 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             onTrackingCardClick = { tripPlannerNavigator.navigateToTrackTrip() },
             onStopTracking = { viewModel.onEvent(SavedTripUiEvent.StopTracking) },
             onAddParkRideClick = { tripPlannerNavigator.navigateToAddParkRide() },
+            onLabelChipClick = { labelKey -> viewModel.onEvent(SavedTripUiEvent.LabelChipClick(labelKey)) },
+            onLabelChipLongClick = { tripPlannerNavigator.navigateToManageStopLabels() },
             fromButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsFromButtonClick)
                 tripPlannerNavigator.navigateToSearchStop(SearchStopFieldType.FROM)

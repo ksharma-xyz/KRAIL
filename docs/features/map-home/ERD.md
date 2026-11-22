@@ -120,6 +120,22 @@ internal fun directionsTarget(carPark: LatLng?, station: LatLng?): LatLng?
 internal fun nearestParkRideStation(location: LatLng, stations: List<ParkRideStationPickerItem>, radiusKm: Double): ParkRideStationPickerItem?
 ```
 
+Branch 7, the Home and Work chips. All pure, in `savedtrips/HomeLabelChips.kt`, so each rule is driven at its boundary
+without a layout, a location fix or a database:
+
+```kotlin
+// module: :feature:trip-planner:ui, caller: the chip row above the home search row
+internal fun chipRowModeFor(fontScale: Float): ChipRowMode               // Wrap up to and including 1.3, Scroll above it
+internal fun homeChipsFor(stopLabels: List<StopLabel>): ImmutableList<HomeChip>   // Home, Work, then Park & Ride
+internal fun startLabelChipTap(label: StopLabel): LabelChipTap           // set: Locating, unset: Decided(Assign)
+internal fun nearestStopTo(latitude: Double, longitude: Double, candidates: List<NearbyStop>, radiusKm: Double): NearbyStop?
+internal fun decideLabelTap(destination: StopItem, rider: LatLng?, candidates: List<NearbyStop>, radiusKm: Double): LabelTapOutcome
+```
+
+The tap is a small state machine held in `SavedTripsState.labelChipTap` (`Idle`, `Locating(labelKey)`, `Decided(outcome)`) so a
+rotation mid tap loses nothing. `LabelChipTapEffect` plays it out: it takes the one fix (`UserLocationManager.getCurrentLocation()`)
+and reports it, then acts on the decision once and reports it handled.
+
 Reused unchanged: `ParkRideAvailabilityLoader` (fetch for a set of facilities), `filterRefreshableFacilities` and
 `parkRideApiCooldown` (the cooldown), `pollWhileCardsAreOpen` (the expanded-card poll).
 
@@ -185,9 +201,21 @@ Numbers marked "measured" were taken on 2026-11-21. Anything else says what it i
 | Open home, all inside cooldown | 0 | 0 | 0 | 0 | local | local |
 | Open home, no saved car parks | 0 | 0 | 0 | 0 | local | local |
 | Home map tiles | none on home | not measured | none | not measured | none | not measured |
+| Open home, Home and Work chips | 0 | 0 | 0 | 0 | local | local, the chips read the labels the screen already observes |
+| Tap a set Home or Work chip | not a feature | 0 network calls, 1 location fix, 1 local query | not a feature | 0 over the wire, at most 5 local rows (about 1 kB decoded, a guess, not measured) | not a feature | one fix then the query, not measured on device |
 
 The added calls are paid for by the rider seeing current numbers on open instead of only after a tap. They are
 non-blocking, cached, lifecycle-gated and silent on failure.
+
+**Branch 7, the Home and Work chips (one row, numbers from code, guesses labelled).** Opening home adds 0 calls, 0 queries and
+no timer: the chips are drawn from `SavedTripsState.stopLabels`, which the ViewModel already observes. A tap on a set chip costs one
+`UserLocationManager.getCurrentLocation()` (one shot, 10 s timeout inside `UserLocationManagerImpl`, never `locationUpdates`, never
+polled) and, only when a fix came back, one `selectStopsNearby` query: bounding box on the existing `idx_stop_coordinates` index,
+radius 1.0 km, `LIMIT 5`, so at most 5 rows. No network. With no permission the fix returns at once with a failure and no query
+runs. A second tap while one is in flight changes nothing, so a tap is at most one fix. Radio and battery: one platform location
+fix per tap and nothing between taps (cost of a fix: a guess, not measured). A rotation during the fix cancels the screen's
+coroutine and the recreated screen asks once more for the same tap, so a rotation can cost one extra fix. Timing before and after on
+a device: not measured, the target is a result inside the 10 s timeout and a fallback, never a spinner, when there is no fix.
 
 ## 7. States and UX
 
@@ -197,6 +225,7 @@ non-blocking, cached, lifecycle-gated and silent on failure.
 | Park & Ride tile (one car park) | cached number, or placeholder in the same line box | no row | last reading with its age (A6) | number with "spots" beside it, station name small under it, and the age line |
 | Park & Ride card (several car parks) | per row, as above | as above | per row, as above | one card, a row per car park in a fixed order at equal weight (A3) |
 | Home map | flat ground and the rider dot | stops within the radius, or none | "Map offline" chip, flat ground, pins stay | pins, P pins, label pins |
+| Home chips | none until the labels have loaded | not applicable, Home and Work always have a chip | the fallback search when there is no fix, no permission or no stop near | Set Home or Home, Set Work or Work, then + Park & Ride, each 48 dp, wrapping whole or one sideways line over 130% text |
 | Search Stop | map state, no list, no keyboard | recents empty, nearest stops instead | offline chip | list state with recents or results |
 
 - Wireframes and the review page live outside this repo. The rules they enforce are in `docs/MAP_HOME_UX.md`.
@@ -231,6 +260,23 @@ Park & Ride cases from the brief (nothing decided, tests first):
 - `tile without coordinates has no Directions`
 - `unknown stop still offers Go here`
 - `p card in start search reads Start here`
+
+Home and Work chips (branch 7), written before the code:
+
+- `unset labels read Set Home and Set Work, then Park & Ride`, `set labels read Home and Work and the chips stay`, the order is
+  Home, Work, Park & Ride, a deleted Work still has its chip, no chips until the labels load
+- `the chip row wraps up to and including 130 percent text` and `scrolls sideways over 130 percent text`
+- `the nearest stop wins whatever order`, `equal distances go to the smaller stop id`, `no stop within the radius gives none`
+- `a fix and a stop near plans`, `no fix`, `no stop near`, `a failed lookup` and `the nearest stop is the labelled stop` all
+  fall back to the search
+- ViewModel: one tap at a time, a stale fix is ignored, handling steps the tap to idle, a tap in flight survives a rotation and is
+  dropped after the screen has been away, a chosen stop lands on its label, a deleted label is created again, a stop another label
+  holds is not given to a second label
+- Layout (Robolectric, real bounds): chips above the search row with 8 dp between, on the cards' edges in a phone, a 700 dp and the
+  dual pane, 48 dp tall, a chip is its icon and text and padding only so it has no chevron, wraps whole at 320 dp, one scrolling
+  line with the first chip fully visible at 320 dp and 200%, long press on a set chip opens Manage, tap plans
+- The screen's effect: one fix per tap, a plan opens the results once, a rotation during the fix reports the real fix once and
+  never a missing one
 
 State survival and lifecycle:
 
@@ -298,6 +344,18 @@ State survival and lifecycle:
 | A16 | The top row, the location status pill and a floating stop card join the stack at the places in section 10. A tapped pin opens a floating card, never a bottom sheet | Wireframe frames exist for each. Today's bottom sheet already runs the departure board with its own view model | The stop card must make no more departure calls than the sheet does today. To confirm before it is built | Approved by ksharma-xyz, 2026-11-21 (decision sheet M4, option A) |
 | A17 | Rule 29 settles how many show on open: two trips, then the Park & Ride row, then the rest. Nothing is capped, the stack scrolls and the row scrolls sideways | Rule 29 | A rider with many stations sees two and scrolls for the rest | Approved by ksharma-xyz, 2026-11-21 (decision sheet M5, option A) |
 
+Branch 7, the Home and Work chips. The spec was silent on each of these. Every one is `Default, not yet seen by owner`.
+
+| # | Assumption | Evidence | What breaks if it is wrong | Decision |
+|---|---|---|---|---|
+| A18 | Nearest stop to the rider means the nearest of at most 5 local stops within 1.0 km, by great circle distance, ties to the smaller stop id | 1.0 km is the radius Ask KRAIL's origin already uses (`RiderOriginLocator`). Stops are local, so the radius costs nothing | A rider more than 1 km from any stop gets the search instead of a trip. A larger radius plans a long walk as if it were a start | Default, not yet seen by owner |
+| A19 | The fallback (no permission, no fix, no stop near, or the nearest stop is the labelled stop) puts the labelled stop in To and opens the From search. It never opens trip results. It does not clear a From the rider chose earlier, because there is no event that can | The spec says the existing search flow with From empty. The home row's To and From live in `StopResultsManager` | A rider who had a From set sees it kept, not emptied, and picks again in the From search | Default, not yet seen by owner |
+| A20 | The chips sit on the cards' edges (16 inside the column), not on the column's own edges, because that is where the cards and the search row's fields are. The row has the screen's surface behind it so trips scrolling under it never show between chips. The chips show only while the search row is open, so not in phone landscape where it collapses to one button. They show only once the labels have loaded | Rule 45 says the cards, the chips and the pill share edges, and the cards sit 16 inside the column | A rider in phone landscape reaches the chips after opening the row. Chips drawn on the column's own edges would not line up with the cards | Default, not yet seen by owner |
+| A21 | An unset chip opens Search Stop with the LABEL field type, and the home screen now saves the result (it ignored it before). A stop another label already holds is not given to a second label and nothing happens, because a stop is on one label. A label deleted in Manage keeps its chip as unset, and setting it creates the label again | `SEARCH_STOP_UX.md` holds one stop to one label. No screen opened the LABEL search before this branch | A rider who picks a stop that is already Work for Home sees nothing change. The alternative, moving it, silently clears Work | Default, not yet seen by owner |
+| A22 | The Park & Ride chip is built. Its text is "+ Park & Ride", the plus a glyph as in the "+ New label" chip, and it opens the same picker as the Add card (`navigateToAddParkRide()`, a plain call from the home entry) | The Add card already calls it with no arguments | none, it is one more way into the existing picker | Default, not yet seen by owner |
+| A23 | A chip tap logs no analytics event. There is no new event name and no existing event that fits | The 500 name limit, and `AnalyticsSavedTripCardClick` means a saved card | The product cannot count chip use until an existing event gets a parameter | Default, not yet seen by owner |
+| A24 | A long press opens Manage only on a set chip. An unset chip has nothing to manage, so its long press does nothing. A tap left in flight is kept over a rotation (it is ViewModel state) and dropped when the screen has been away longer than the subscription grace, so coming back later never starts a trip | Rule 41 says a long press opens Manage and the chips "stay once set" | A rider cannot reach Manage from an unset chip, only from Settings or Search Stop | Default, not yet seen by owner |
+
 Source judgement, one row per rule that reads data:
 
 | Decision | Source (data field or parsed text) | Checked against | Reliable |
@@ -338,7 +396,11 @@ raised until the whole stack has passed device QA, then it merges bottom-up. No 
    line with the go circle, when they would not, so the names are never squeezed for it (rule 13).
    `actionPlacementFor` decides from the row's content width and the font scale. The block has no back arrow, X or
    edit in place of its own: those slots and `editing` are branch 4's to fill.
-7. `feat/home-label-chips`, Home chip plans from the nearest stop, long press opens Manage stop labels (rule 41).
+7. `feat/home-label-chips`, Home chip plans from the nearest stop, long press opens Manage stop labels (rule 41). Built as
+   `HomeChipRow` (`savedtrips/HomeChipRow.kt`) inside the search row's column, above the row and on the cards' edges, and the pure
+   rules in `HomeLabelChips.kt`. Set Home, Set Work, Home, Work and + Park & Ride, each at least 48 dp, whole chips that wrap, or
+   one sideways line with a fade over 130% text. Set chips plan from the nearest stop, unset chips open the stop search for the
+   label, a long press on a set chip opens Manage. Decisions A18 to A24 in section 9.
 8. `feat/home-park-ride-row`, the row after the second trip, the multi-car-park card at equal weight with every car
    park of the station and each age, Directions (rules 29, 40, A2b, A6, A8).
 9. `feat/home-reorder-block`, the row moves as a block, tip lines removed (rules 31, 38, A14).

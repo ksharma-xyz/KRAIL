@@ -16,10 +16,12 @@ import xyz.ksharma.krail.core.maps.data.location.UserLocationManager
 internal class FakeUserLocationManager(
     private val permissionStatus: PermissionStatus = PermissionStatus.NotDetermined,
     /** What one call to [getCurrentLocation] returns. It may suspend, to stand in for a dialog or a slow fix. */
-    private val currentLocation: suspend () -> Result<Location> = {
+    currentLocation: suspend () -> Result<Location> = {
         Result.failure(IllegalStateException("not used in these tests"))
     },
 ) : UserLocationManager {
+
+    private var answer: suspend () -> Result<Location> = currentLocation
 
     var currentLocationCalls = 0
         private set
@@ -32,7 +34,12 @@ internal class FakeUserLocationManager(
 
     override suspend fun getCurrentLocation(): Result<Location> {
         currentLocationCalls++
-        return currentLocation()
+        return answer()
+    }
+
+    /** Make every later call to [getCurrentLocation] answer with [result], in place of the constructor's answer. */
+    fun answerWith(result: Result<Location>) {
+        answer = { result }
     }
 
     override fun locationUpdates(config: LocationConfig): Flow<Location> = emptyFlow()

@@ -89,9 +89,9 @@ erDiagram
 | `ParkRideFacilityDetail` | ui | mapped from `CAR_PARK_READING` | facility id | one composition. **Adds nullable `latitude` and `longitude`** |
 | `PARK_RIDE_ROW_POSITION` | new, one Long in `SandookPreferences` under `KEY_PARK_RIDE_ROW_INDEX`, the store `KEY_HAS_SEEN_INTRO` uses (branch 9) | the rider (drag in reorder mode), written by Done | one per rider | until changed. Absent until the first drag, which puts the row after the second trip. Read clamped to the trips there are, so it is never wrong after a delete |
 | `REORDER_SESSION` | new, ui state only, `SavedTripsState.reorder`, never stored | the rider's long press, ended by Done, cancel or being away | one at a time | a rotation keeps it, Done and cancel end it, leaving the screen for longer than the 5 s grace drops it unsaved |
-| `SUGGESTION_SHOWN` | new, one boolean in `SandookPreferences` (the store `KEY_HAS_SEEN_INTRO` uses) | the app, set the first time the card is shown | one per install | permanent, the suggestion is shown once |
+| `SUGGESTION_SHOWN` | one boolean in `SandookPreferences` (the store `KEY_HAS_SEEN_INTRO` uses), `KEY_PARK_RIDE_SUGGESTION_SHOWN`, **the Intro's own key** (branch 12 adds none) | the Intro when it asks, else the home card the first time it is drawn (A111) | one per install | permanent, the suggestion is shown once |
 | `nearby_stops_radius_km` | Remote Config, new | Remote Config, default 3.0 | key | per config fetch |
-| `park_ride_suggestion_radius_km` | Remote Config, new | Remote Config, default 5.0 to match the Intro (`docs/features/intro/ERD.md`, IA2, approved 2026-11-21). Earlier draft said 10.0 | key | per config fetch |
+| `park_ride_suggestion_radius_km` | Remote Config, new (branch 12) | Remote Config, default 5.0 to match the Intro (`docs/features/intro/ERD.md`, IA2, approved 2026-11-21). Earlier draft said 10.0. Read once as the suggestion's ViewModel is made. A number from 0.5 to 10 is used, one outside it is ignored whole and 5.0 applies, as `nearby_stops_radius_km` does (A114) | key | per config fetch |
 
 **Collision check, from the real default catalogue** (42 entries, 37 car parks, 37 stop ids; live Remote Config
 may differ):
@@ -456,6 +456,24 @@ tap makes 0 calls of its own: the card draws the station's cached readings the h
 | Remove from home on a P card | not a feature | 0 network, up to one local delete per car park | not a feature | 0 | not a feature | local |
 | Home in the background | 0 | 0, tracking and the ViewModel stop | 0 | 0 | none | none |
 
+**Branch 12, the one-time Park & Ride suggestion (numbers from code, guesses labelled).** **0 network calls, 0 timers, 0 background work,
+0 new location fixes.** Opening home with the maps flag on reads one preference (`KEY_PARK_RIDE_SUGGESTION_SHOWN`) and, only while the
+card is still on offer, keeps three local reads open: the saved stations (one observed query), the stop labels (one observed query, plus
+one coordinate lookup only when Home has a stop) and, per offered station, one read of the stored readings. The station list is the
+in-memory catalogue (the default one has 42 entries, per the collision check above), so choosing the nearest is about 40 distance
+computations per anchor change, a guess of well under a millisecond. The anchor is Home or the position the map home already tracks, so
+there is no extra fix and no extra permission prompt. Anchor changes before the first draw recompute the offer (a few at most, a guess);
+once drawn the station is held and later fixes are ignored. The write is one boolean, once, ever. **Payload:** a stored row per car
+park, so under 5 KB for any one station (a guess: 3 car parks of a few fields each), no wire bytes, no parsing beyond the existing row
+mapping. **Time to first content:** the card never blocks the home stack, it is added in the row's place as soon as a fix gives a
+station, so the trips draw first. The cost is one list item appearing after the first fix, which the page accepts (A113). **UX:**
+loading, slow and offline are the same because nothing is fetched. A station with no stored reading shows its name alone at the same
+height (rule 22), and Add does not fetch, so its numbers arrive on the next open or tap (A108). **Caching and dedupe:**
+`distinctUntilChanged` on every input, the first draw holds the station, a second tap on Add adds nothing, and the shown flag is written
+once. **Battery:** no radio wake-up and no background work. `uiState` is `WhileSubscribed` and collected with the lifecycle, so it
+stops five seconds after the screen leaves. It is registered in `docs/POLLING_LIFECYCLE.md` as state only. **Shared rate limits:** none
+used. A BFF would collapse nothing here.
+
 **Branch 7, the Home and Work chips (one row, numbers from code, guesses labelled).** Opening home adds 0 calls, 0 queries and
 no timer: the chips are drawn from `SavedTripsState.stopLabels`, which the ViewModel already observes. A tap on a set chip costs one
 `UserLocationManager.getCurrentLocation()` (one shot, 10 s timeout inside `UserLocationManagerImpl`, never `locationUpdates`, never
@@ -520,6 +538,7 @@ Shared rate limits: none touched, nothing for a BFF to collapse.
 | Home map | flat ground and the rider dot, the cards draw at once from local state | stops within the radius, or none | "Map offline" chip when the OS reports the transport down, flat ground, pins and the dot stay | stop pins, `P` pins for the saved stations, Home and Work pins, no locate button, decorative to a screen reader |
 | Home top row | the logo, Discover beside Settings, always | not applicable | the notices row holds the location pill and the Map offline chip as whole items, centred, wrapping one under the other at large text | logo at the left, Discover and Settings at the right, 48 dp, 16 dp insets, the stack below it |
 | Home bottom | nothing until the trips have loaded | the chips and the pill, no empty state card | as content | the pill with Ask KRAIL's microphone where the flag and the device allow it, or the To and From block while a stop is held, or a pin's card in their place |
+| Park & Ride suggestion card | nothing is drawn until a fix or Home gives a station near, the trips draw first | no card: a station already saved, the Intro or an earlier card already asked, no station within the radius, the maps flag off | no card, never an error, nothing is fetched. With no stored reading the card shows the station name alone at the same height | the free spots, car icon and station name and time of the closed tile, then Not now at the left and Add to home at the right, stacked with Add to home on top when two whole buttons do not fit. No heading, tip or caption |
 | Home chips | none until the labels have loaded | not applicable, Home and Work always have a chip | the fallback search when there is no fix, no permission or no stop near | Set Home or Home, Set Work or Work, then + Park & Ride, each 48 dp, wrapping whole or one sideways line over 130% text |
 | Search Stop | map state, no list, no keyboard | recents empty, nearest stops instead | offline chip | list state with recents or results |
 | Stop card | the board is closed on open, so nothing loads. Open, the board holds its floor of height (A81) with the loading dots, and the Lines chip keeps its room | a stop with no departures shows the existing empty message inside the floor | the existing error with Retry inside the floor, the rows kept if a refresh fails | the stop name and a 48 dp close button, the stop's mode icons, the Departure Board in its own light card with the title, the one Lines chip (more than one line only) and the chevron, then the action slot |
@@ -693,6 +712,17 @@ State survival and lifecycle:
 - Device QA, Android: the Pixel 6 Pro, the tablet AVD and a Pixel 9 Pro Fold AVD. iOS: the simulators `iphone-duo`
   and `iphone-pro`. The iOS build must compile (`compileKotlinIosSimulatorArm64`) and install with Xcode 27.2 and
   spmForKmp 1.9.7, which is already on main.
+
+Branch 12, the one-time suggestion. Pure tables first (`ParkRideSuggestionRulesTest`, 22), then the real stations table
+(`ParkRideSuggestionRealStationsTest`, 7: Tallawong, Kellyville, Town Hall, Central, Parramatta, Ashfield at 8 km and a West Ryde with no
+coordinates), the radius guard (`ParkRideSuggestionRadiusTest`, 7), the shared add (`ParkRideStationAdderTest`, 7, and two more in
+`AddParkRideViewModelTest` for the picker), the ViewModel on the canonical fakes (`ParkRideSuggestionViewModelTest`, 25), the button
+placement rule (`SuggestionActionsLayoutTest`, 2) and the stack key (`HomeStackOrderTest`, 2 more). Robolectric on real nodes
+(`ParkRideSuggestionCardLayoutTest`, 14, at 411 dp, 320 dp at 200% text and 840 dp): beside or stacked with the primary on top, whole
+labels, every control at least 48 dp, the same height loaded, name alone and stale, one region for a screen reader, exactly two
+controls and no other text, and shown raised once however often it recomposes. `ParkRideSuggestionRotationTest` (4) turns the device three
+times with the real ViewModel: an unanswered card stays and is not marked twice, Add keeps its stations, Not now adds nothing, no
+position draws nothing. Not run: a device, Roborazzi record or verify, iOS.
 
 ### Existing rules and components this stack touches
 
@@ -876,6 +906,38 @@ Branch 11, the map home. The spec was silent on each of these. Every one is `Def
 | A103 | The chips float with no surface behind them (`HomeChipRow(floating = true)`). In phone landscape the chips go and the pill stays, as the search row's collapse always took the chips away. The Discover button shows when the title bar showed it, so on the same flag and with at least one saved trip | A20, rule 2 and `SavedTripsViewModel.updateDiscoverState` | A landscape rider reaches the chips only in portrait | Default, not yet seen by owner |
 | A104 | No new analytics event and no new parameter, so no ledger row. The pill's tap keeps `AnalyticsToButtonClick`, Settings and Discover keep theirs, and a pin tap, the location pill and Remove from home raise none | The 500 name limit | The product cannot count pin taps or Map offline. An existing event would need a parameter first | Default, not yet seen by owner |
 | A105 | The Maestro flows are not edited. They run on the flag's default, off, where every tag they read still exists. With the flag on, the smoke flow's first step taps `searchrow.from`, which is not drawn until a stop is held, so `02-plan-trip.yaml`, `03-rotation-sweep.yaml` and `05-kill-relaunch.yaml` need their first tap to be `searchrow.to` on the pill, and a go tap after both stops are held | `.maestro` read, no device was run | The lanes break the day the flag is turned on in a build they run against | Default, not yet seen by owner |
+| A106 | The suggestion is measured from Home when Home has a stop, else from the rider's current position, never both. A Home with no station within the radius gives no card even when the rider is standing at one | Rule 47, "the nearest one to Home, or to the current location before Home is set" | A rider whose Home is far from any station and who commutes by one near their work is not offered it. Falling back to the fix would offer a station that is not on their trip | Default, not yet seen by owner |
+| A107 | The card names the station with the stop's own name from the catalogue ("Tallawong Station"), and the catalogue's station name only when that is blank | The Park & Ride row's tile, which names the stop | The card and the row it becomes read the same | Default, not yet seen by owner |
+| A108 | The card's figures are the stored readings only, 0 network calls. With none it shows the station name alone. After Add the numbers arrive on the next open or tap through the existing on open fetch | The cost budget (branch 12) and rule 22 | A rider who adds a station sees no number for it until the next open | Default, not yet seen by owner |
+| A109 | The card is a map home feature only. With the maps flag off the classic home never shows it, reads nothing and writes nothing | `mapHomeEnabled`, shared with `HomeMapViewModel` | The classic home never offers a first station | Default, not yet seen by owner |
+| A110 | Add reports the existing `park_ride_user_facility` event with the new `source` value `home_suggestion`, so no new event name (the 500 limit). Not now reports nothing. The value is a Pending row in `docs/ANALYTICS_REGISTRY_HANDOFF.md` | The 500 name limit and the registered source values | The product cannot count Not now. An existing event would need a parameter first | Default, not yet seen by owner |
+| A111 | "Shown" is written the first time the card is drawn, not when it is chosen, so a card never scrolled into view is not counted. The station is held on the first draw and a rotation keeps the card and the decision, because both are in the ViewModel. A process killed with the card unanswered never offers it again | A10, "set the first time the card is shown" | A rider who is killed before answering never gets the card back. Accepted by A10 | Default, not yet seen by owner |
+| A112 | The two buttons sit beside each other, Not now at the left and Add to home at the right, only while both fit whole at the width each asks for alone (`maxIntrinsicWidth`), and stack with Add to home on top otherwise. They are taj's `OutlinedButton` and `Button` at `mediumButtonSize`, with a 48 dp minimum height, because taj's large size fills the width and the chip size has no height. No taj change was made | Rules 13 and 43, and the 320 dp at 200% frame | The width judgement is made on one pass of measuring. A gap in taj: there is no button that sizes to its label at 48 dp | Default, not yet seen by owner |
+| A113 | The card takes the Park & Ride row's place in the stack, after the second trip until the row was dragged, only while there is no row, never in reorder mode, and it is not draggable. It appears when the first fix gives a station, so it can be inserted under a card the rider is already reading | Rule 29 and the stack's key order | A rider scrolling in the first moments may see the cards below it move down | Default, not yet seen by owner |
+| A114 | The radius is read once as the ViewModel is made. A value outside 0.5 to 10 is ignored whole and 5.0 applies, not clamped. Two stations the same distance away tie by lower-case name then stop id, so the answer never depends on list order | `resolveNearbyStopsRadiusKm`, which does the same | A change of the Remote Config value shows on the next launch | Default, not yet seen by owner |
+| A115 | Rule 46, the first run with only a "Show stops near you" card, is not built here. This branch is the existing riders' half, as section 10 says. The Intro owns the first run. Rule 47 says the button is "Add", and the card says "Add to home" and "Not now", the words the Park & Ride pin card already uses. `IntroEventsTest` pins the source set, which now has `home_suggestion` | Section 10, branch 12 and the Intro ERD | A new rider whose Intro is skipped has no first-run card. A person reading rule 47 will find "Add to home" | Default, not yet seen by owner |
+
+Branch 12, the one-time Park & Ride suggestion. All pure, in `parkride/suggestion/ParkRideSuggestionRules.kt` and
+`ParkRideSuggestionRadius.kt`, so each rule is driven at its boundary without a layout, a fix or a database:
+
+```kotlin
+// module: :feature:trip-planner:ui, caller: ParkRideSuggestionViewModel
+internal fun canSuggest(mapHomeOn: Boolean, alreadyAsked: Boolean, hasSavedStation: Boolean): Boolean
+internal fun suggestionAnchor(home: LatLng?, currentFix: LatLng?): LatLng?       // Home, else the fix, never both (A106)
+internal fun stationToSuggest(anchor: LatLng?, stations: List<ParkRideStationPickerItem>, radiusKm: Double): ParkRideStationPickerItem?
+internal fun homeStopId(labels: List<StopLabel>): String?                        // the protected Home label, only when it has a stop
+internal fun homePosition(labels: List<StopLabel>, coordinates: (String) -> LatLng?): LatLng?
+internal fun suggestionTile(station: ParkRideStationPickerItem, cachedReadings: List<NSWParkRideFacilityDetail>): ParkRideTile
+internal fun suggestionSpokenLabel(tile: ParkRideTile): String                   // one line for a screen reader
+internal fun addToHomeSpokenLabel(tile: ParkRideTile): String                    // "Add Tallawong Station to home"
+internal fun resolveParkRideSuggestionRadiusKm(flag: Flag): Double
+internal fun suggestionActionsLayout(notNowWidth: Int, addToHomeWidth: Int, gap: Int, available: Int): SuggestionActionsLayout
+internal fun withSuggestionKey(keys: List<String>, show: Boolean, storedIndex: Int?): List<String>
+```
+
+`ParkRideSuggestionViewModel` takes the preferences, `ParkRideSuggestionSources` (the catalogue, the stops table and the saved
+stations), `ParkRideStationAdder` (the add the picker uses) and the flag. `ParkRideSuggestionEvent` is `LocationChanged(fix)`, `Shown(stationId)`,
+`AddToHome` and `NotNow`. The Intro supplies only `nearestParkRideStation` and `KEY_PARK_RIDE_SUGGESTION_SHOWN`.
 
 Source judgement, one row per rule that reads data:
 
@@ -884,7 +946,7 @@ Source judgement, one row per rule that reads data:
 | A6 | data fields `MessageDate` and the stored `timestamp` | the 9 real facilities above | yes, no text parsed |
 | A5 | clock and the cooldown stored per facility | code read, not run | to verify on device |
 | A8 | data fields `location.latitude`, `location.longitude` | the 9 real facilities above | yes, 9 of 9 present. The `0.0` path is untested on real data |
-| A10 | local stops table positions | not checked | to verify in branch 10 |
+| A10 | local stops table positions | `BundledStops.defaultStations()`, 7 cases in `ParkRideSuggestionRealStationsTest` | checked in branch 12 against the real catalogue. A station with no position is never offered |
 | A2b, A12 | Private evidence, shown to the owner in the message that introduces this ERD | Kept outside the repository | Not stated here |
 
 ## 10. Build order
@@ -969,7 +1031,13 @@ raised until the whole stack has passed device QA, then it merges bottom-up. No 
     Not built here: the `P` disc's cached number, a station that is not saved, a pin's content description, the dark inverted
     pill and the Search Stop stay-after-pick flow (A92, A93, A96, A99).
 12. `feat/home-first-run`, rules 46 and 47. Shrinks to existing riders once the Intro stack has shipped: the one-time
-    suggestion (A10) using `nearestParkRideStation` and the shared flag from the Intro ERD.
+    suggestion (A10) using `nearestParkRideStation` and the shared flag from the Intro ERD. Built as
+    `parkride/suggestion/ParkRideSuggestionRules.kt` and `ParkRideSuggestionRadius.kt` (the pure rules and the Remote Config guard),
+    `ParkRideSuggestionViewModel.kt` and `ParkRideSuggestionSources.kt` (when the card is on offer and what it reads),
+    `ParkRideSuggestionCard.kt` and `SuggestionActionsLayout.kt` (the card, from the row's `tileShell` and `ClosedTileFigures`, with
+    taj's `Button` and `OutlinedButton`), `ParkRideStationAdder.kt` (the add the picker and the card share), the stack item in
+    `SavedTripsStackItems.kt` and `park_ride_suggestion_radius_km` in `FlagKeys` and `RemoteConfigDefaults`. Rule 46 is **not built**: the
+    Intro owns the first run (A115). Decisions A106 to A115 in section 9.
 13. `feat/saved-trip-labels-go-here`, the label shown whenever a card's stop is the labelled stop, and the Go here
     cases. Blocked on decision 16. Its size depends on a diff against today's `SavedTripCard`, which has not been done.
 

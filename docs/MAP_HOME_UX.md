@@ -180,8 +180,11 @@ If a design breaks one of these rules, the design changes, not the rule.
     they answer, the rest appears: the chips, the pill and the suggestion below. A plain fade is acceptable, a choreographed
     one is not.
 47. **A Park & Ride suggestion appears when a station is within 5 km:** the nearest one to Home, or to the current location
-    before Home is set, as a card with Add and Not now, so the first station never needs the + chip. Local only, no network.
-    The radius is the Remote Config value `park_ride_suggestion_radius_km` and a dismissed card stays gone.
+    before Home is set, as a card with Add to home and Not now, so the first station never needs the + chip. Local only, no
+    network. The radius is the Remote Config value `park_ride_suggestion_radius_km` and a dismissed card stays gone. It shows
+    once, never when a station is already saved, and never when the Intro already asked. The card is the Park & Ride tile's own
+    shell and figures with the two buttons under them, in the row's place while there is no row. Home that has no station near
+    gives no card, even with the rider at one.
 
 ## Design rules
 
@@ -333,7 +336,7 @@ A tapped pin opens a floating stop card, never a bottom sheet.
 |---|---|
 | Home pill | Where are you going? |
 | Search placeholders | Choose destination, Choose starting point, Choose a stop (when assigning a label) |
-| Buttons | Change start, Show trips, Go here, Start here, Choose start |
+| Buttons | Change start, Show trips, Go here, Start here, Choose start, Add to home, Not now |
 | Chips | Set Home, Set Work, Park & Ride (with a plus) |
 | Park & Ride | spots available, full, Last updated at |
 | Section names | Recent, Near you |

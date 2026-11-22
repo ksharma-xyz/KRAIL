@@ -17,6 +17,9 @@ import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import xyz.ksharma.krail.feature.track.TrackingManager
 import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapViewModel
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
+import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideStationAdder
+import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionSources
+import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionViewModel
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputViewModel
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.ChainedStopTextResolver
@@ -31,6 +34,7 @@ import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAppReviewManager
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeInviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeNearbyStopsManagerForMap
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeNearbyStopsRepository
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeParkRideCatalogue
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeSpeechToTextService
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
 
@@ -41,7 +45,7 @@ import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
  * resolver chain (in the same order [xyz.ksharma.krail.trip.planner.ui.di.viewModelsModule]
  * builds it), the real screen.
  *
- * The three ViewModels are built here rather than by Koin so a flow test can drive them with
+ * The ViewModels are built here rather than by Koin so a flow test can drive them with
  * the same events the surface sends. Koin hands out these instances, so the ones under test
  * and the ones on screen are the same objects. Reading state off them is not how a flow test
  * asserts — that is what the semantics tree is for — but sending them an event is how a rider
@@ -112,8 +116,25 @@ internal class HomeFlowFakes {
         ioDispatcher = Dispatchers.Unconfined,
     )
 
+    // The Park & Ride suggestion. Off with the maps flag, so it offers nothing here and reads nothing.
+    val parkRideSuggestionViewModel = ParkRideSuggestionViewModel(
+        preferences = FakeSandookPreferences(),
+        sources = ParkRideSuggestionSources(
+            catalogue = FakeParkRideCatalogue(),
+            sandook = sandook,
+            parkRideSandook = FakeNswParkRideSandook(),
+        ),
+        adder = ParkRideStationAdder(
+            parkRideSandook = FakeNswParkRideSandook(),
+            analytics = FakeAnalytics(),
+            appReviewManager = FakeAppReviewManager(),
+        ),
+        flag = flag,
+        ioDispatcher = Dispatchers.Unconfined,
+    )
+
     /**
-     * What the entry resolves through `koinViewModel()`. Only the three ViewModels the home
+     * What the entry resolves through `koinViewModel()`. The ViewModels the home
      * entry asks for — everything else it needs is already inside them.
      */
     val koinModule: Module = module {
@@ -121,5 +142,6 @@ internal class HomeFlowFakes {
         viewModel<AiSearchInputViewModel> { aiSearchInputViewModel }
         viewModel<MapStopSelectionViewModel> { mapStopSelectionViewModel }
         viewModel<HomeMapViewModel> { homeMapViewModel }
+        viewModel<ParkRideSuggestionViewModel> { parkRideSuggestionViewModel }
     }
 }

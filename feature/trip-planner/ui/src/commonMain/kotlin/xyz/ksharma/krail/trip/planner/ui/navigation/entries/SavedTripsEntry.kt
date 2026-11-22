@@ -24,6 +24,9 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
+import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionEvent
+import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionViewModel
+import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.rememberParkRideSuggestionSlot
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.LabelChipTapEffect
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsScreen
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
@@ -33,6 +36,7 @@ import xyz.ksharma.krail.trip.planner.ui.savedtrips.toTile
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputViewModel
 import xyz.ksharma.krail.trip.planner.ui.search.ai.isHandoffActionable
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
@@ -55,6 +59,9 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
         // below is drawn, so a build without the flag keeps today's screen.
         val homeMapViewModel: HomeMapViewModel = koinViewModel()
         val homeMapState by homeMapViewModel.uiState.collectAsStateWithLifecycle()
+        // The one-time Park & Ride suggestion. It does no work unless the map home is on, and it reads local data only.
+        val suggestionViewModel: ParkRideSuggestionViewModel = koinViewModel()
+        val suggestionState by suggestionViewModel.uiState.collectAsStateWithLifecycle()
         val savedTripState by viewModel.uiState.collectAsStateWithLifecycle()
 
         val trackedJourney by viewModel.trackedJourney.collectAsStateWithLifecycle()
@@ -212,6 +219,12 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                     HomeMapEvent.InputsChanged(HomeMapInputs(labels = savedTripState.stopLabels, tiles = tiles)),
                 )
             }
+            // The suggestion is measured from Home, or from the position the map already tracks before Home is set.
+            val position = (mapUiState as? MapUiState.Ready)?.mapDisplay?.userLocation
+            LaunchedEffect(position) {
+                suggestionViewModel.onEvent(ParkRideSuggestionEvent.LocationChanged(position))
+            }
+            val suggestion = rememberParkRideSuggestionSlot(suggestionViewModel, suggestionState)
             HomeMapEntryContent(
                 savedTripsState = savedTripState,
                 homeMapState = homeMapState,
@@ -223,6 +236,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                 onAiEvent = aiSearchInputViewModel::onEvent,
                 aiVoiceLevel = { aiSearchInputViewModel.voiceLevel.value },
                 actions = actions,
+                suggestion = suggestion,
             )
         } else {
             SavedTripsScreen(

@@ -1,12 +1,14 @@
 package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.heightIn
@@ -17,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.testTag
@@ -32,8 +35,10 @@ import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.contrast.ContrastAnalyzer.Companion.UI_COMPONENT_CONTRAST_AA
+import xyz.ksharma.krail.taj.modifier.CardShape
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.krailRipple
+import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeDecorColor
 import xyz.ksharma.krail.taj.themeInkColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
@@ -52,6 +57,44 @@ internal fun ReservedLine(
 ) {
     Box(modifier = if (present) modifier else modifier.alpha(0f).clearAndSetSemantics {}) { content() }
 }
+
+/**
+ * The shell every Park & Ride tile and card shares, the saved trip card's own: the theme colour wash on the
+ * card corners. The padding is the caller's, because the closed tile centres its lines in the room it has.
+ */
+@Composable
+internal fun Modifier.tileShell(): Modifier =
+    clip(CardShape).background(color = themeBackgroundColor(), shape = CardShape)
+
+/**
+ * The three lines of a closed Park & Ride tile: the free spots across the station's car parks as a big
+ * number with "spots" small beside it, then the car icon and the station name, then the time of the oldest
+ * reading. Drawn into the caller's column so the home row's tile and the one-time suggestion card on home
+ * read the same figures the same way and cannot drift.
+ *
+ * With no reading yet, or a failed first fetch, the number and the time keep their line boxes invisible, so
+ * the tile is the same height whether its numbers are loading, loaded or failed and shows the station name
+ * alone, never an error.
+ */
+@Composable
+internal fun ColumnScope.ClosedTileFigures(tile: ParkRideTile) {
+    ReservedLine(present = tile.totalFreeSpots != null) {
+        SpotsLine(spots = tile.totalFreeSpots ?: PLACEHOLDER_SPOTS)
+    }
+    StationLine(name = tile.stationName)
+    ReservedLine(present = tile.timeText != null) {
+        Text(
+            text = "Last updated at\u00A0${tile.timeText ?: PLACEHOLDER_TIME}",
+            style = KrailTheme.typography.bodySmall,
+            color = KrailTheme.colors.secondaryLabel,
+        )
+    }
+}
+
+private const val PLACEHOLDER_SPOTS = 0
+
+// Non-breaking, so the clear line box is as wide as a real time, which never breaks inside itself.
+private const val PLACEHOLDER_TIME = "12:00\u00A0AM"
 
 /** The big number with "spots" small beside it, on one baseline, wrapping whole items when short. */
 @Composable

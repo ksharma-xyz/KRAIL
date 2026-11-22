@@ -20,6 +20,8 @@ import xyz.ksharma.krail.feature.track.TrackedJourney
 import xyz.ksharma.krail.feature.track.ui.components.TrackingCard
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionItem
+import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionSlot
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.PARK_RIDE_ROW_KEY
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
@@ -67,6 +69,7 @@ internal class HomeStackContext(
     val expandedMap: SnapshotStateMap<String, Boolean>,
     val reorderState: ReorderableLazyListState,
     val actions: SavedTripActions,
+    val suggestion: ParkRideSuggestionSlot? = null,
 )
 
 /**
@@ -77,18 +80,24 @@ internal class HomeStackContext(
 internal fun LazyListScope.homeStackItems(context: HomeStackContext) {
     val state = context.state
     val hasRow = state.parkRideUiState.any { it.facilities.isNotEmpty() }
-    val keys = homeStackKeys(
-        tripIds = state.savedTrips.map { it.tripId },
-        hasRow = hasRow,
+    // The one-time suggestion takes the row's place while there is no row, and never in reorder mode.
+    val showsSuggestion = context.suggestion != null && !hasRow && state.reorder == null
+    val keys = withSuggestionKey(
+        keys = homeStackKeys(
+            tripIds = state.savedTrips.map { it.tripId },
+            hasRow = hasRow,
+            storedIndex = state.parkRideRowIndex,
+            session = state.reorder,
+        ),
+        show = showsSuggestion,
         storedIndex = state.parkRideRowIndex,
-        session = state.reorder,
     )
     val tripsById = state.savedTrips.associateBy { it.tripId }
     items(items = keys, key = { it }) { key ->
-        if (key == PARK_RIDE_ROW_KEY) {
-            ParkRideRowEntry(context)
-        } else {
-            tripsById[key]?.let { trip ->
+        when (key) {
+            PARK_RIDE_ROW_KEY -> ParkRideRowEntry(context)
+            PARK_RIDE_SUGGESTION_KEY -> context.suggestion?.let { ParkRideSuggestionItem(it) }
+            else -> tripsById[key]?.let { trip ->
                 SavedTripItem(
                     trip = trip,
                     stopLabels = state.stopLabels,

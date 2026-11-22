@@ -115,4 +115,46 @@ class HomeStackOrderTest {
     fun `the default place is two trips in`() {
         assertEquals(2, DEFAULT_PARK_RIDE_ROW_AFTER_TRIPS)
     }
+
+    // region the one-time suggestion takes the row's place
+
+    private class SuggestionCase(
+        val name: String,
+        val trips: List<String>,
+        val show: Boolean,
+        val stored: Int?,
+        val expected: List<String>,
+    )
+
+    @Test
+    fun `the suggestion card sits where the row would, after the second trip until the row was dragged`() {
+        val key = PARK_RIDE_SUGGESTION_KEY
+        val four = listOf("a", "b", "c", "d")
+        listOf(
+            SuggestionCase("no trips, the card comes first", emptyList(), true, null, listOf(key)),
+            SuggestionCase("one trip, the card follows it", listOf("a"), true, null, listOf("a", key)),
+            SuggestionCase("two trips, the card follows both", listOf("a", "b"), true, null, listOf("a", "b", key)),
+            SuggestionCase("four trips, after the second", four, true, null, listOf("a", "b", key, "c", "d")),
+            SuggestionCase("a dragged place is kept", four, true, 3, listOf("a", "b", "c", key, "d")),
+            SuggestionCase(
+                "a dragged place past the trips is clamped",
+                listOf("a", "b"),
+                true,
+                9,
+                listOf("a", "b", key),
+            ),
+            SuggestionCase("a dragged place at the top", listOf("a", "b"), true, 0, listOf(key, "a", "b")),
+            SuggestionCase("not shown, the trips alone", listOf("a", "b", "c"), false, null, listOf("a", "b", "c")),
+            SuggestionCase("not shown with no trips, an empty stack", emptyList(), false, null, emptyList()),
+        ).forEach { case ->
+            assertEquals(case.expected, withSuggestionKey(case.trips, case.show, case.stored), case.name)
+        }
+    }
+
+    @Test
+    fun `the suggestion key cannot be mistaken for the row`() {
+        assertEquals(false, PARK_RIDE_SUGGESTION_KEY == PARK_RIDE_ROW_KEY)
+    }
+
+    // endregion
 }

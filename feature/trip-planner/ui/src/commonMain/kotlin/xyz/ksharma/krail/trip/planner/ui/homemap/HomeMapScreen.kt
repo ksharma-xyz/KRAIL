@@ -56,6 +56,7 @@ import xyz.ksharma.krail.trip.planner.ui.components.SearchStopRow
 import xyz.ksharma.krail.trip.planner.ui.components.ai.AskKrailScreen
 import xyz.ksharma.krail.trip.planner.ui.components.ai.rememberAiGreeting
 import xyz.ksharma.krail.trip.planner.ui.navigation.savers.parkRideExpansionSaver
+import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionSlot
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.HomeChipRow
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.ReorderTopRow
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsTitleBarActions
@@ -124,6 +125,8 @@ internal fun HomeMapScreen(
     // Read while drawing, not collected: it changes many times a second while a rider speaks.
     aiVoiceLevel: () -> Float = { 0f },
     actions: HomeMapActions = HomeMapActions(),
+    // The one-time Park & Ride suggestion, or null with none to show. It takes the row's place in the stack.
+    suggestion: ParkRideSuggestionSlot? = null,
 ) {
     val adaptiveLayoutInfo = rememberAdaptiveLayoutInfo()
     val dualPane = adaptiveLayoutInfo.shouldShowDualPane
@@ -156,7 +159,7 @@ internal fun HomeMapScreen(
         cardEdge = KrailTheme.dimensions.spacingXL + navigationBar,
     )
 
-    val stack = rememberHomeStack(actions.onEvent)
+    val stack = rememberHomeStack(actions.onEvent, suggestion)
     val chrome = HomeChrome(
         topRowHeight = { topRowHeight = it },
         bottomHeight = { bottomHeight = it },
@@ -246,10 +249,11 @@ private class HomeStack(
     val lazyListState: LazyListState,
     val reorderState: ReorderableLazyListState,
     val expandedMap: SnapshotStateMap<String, Boolean>,
+    val suggestion: ParkRideSuggestionSlot?,
 )
 
 @Composable
-private fun rememberHomeStack(onEvent: (SavedTripUiEvent) -> Unit): HomeStack {
+private fun rememberHomeStack(onEvent: (SavedTripUiEvent) -> Unit, suggestion: ParkRideSuggestionSlot?): HomeStack {
     // Saveable, not remembered: the ViewModel's matching refresh set survives recreation, so losing this half
     // leaves the two out of step. See parkRideExpansionSaver. Declared above the dual pane branch, because the
     // cards are called from two places that are two different composition slots.
@@ -260,7 +264,7 @@ private fun rememberHomeStack(onEvent: (SavedTripUiEvent) -> Unit): HomeStack {
         val toKey = to.key as? String ?: return@rememberReorderableLazyListState
         onEvent(SavedTripUiEvent.ReorderMove(fromKey = fromKey, toKey = toKey))
     }
-    return HomeStack(lazyListState, reorderState, expandedMap)
+    return HomeStack(lazyListState, reorderState, expandedMap, suggestion)
 }
 
 /**
@@ -396,6 +400,7 @@ private fun HomeCardStack(
                 onStopTracking = actions.onStopTracking,
                 expandedMap = stack.expandedMap,
                 reorderState = stack.reorderState,
+                suggestion = stack.suggestion,
             )
         }
     }

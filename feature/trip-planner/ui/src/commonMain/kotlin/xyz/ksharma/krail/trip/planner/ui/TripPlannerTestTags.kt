@@ -166,6 +166,14 @@ object TripPlannerTestTags {
         fun lineBadge(lineNumber: String): String = "stopcard.board.badge.$lineNumber"
     }
 
+    /** The one-time Park & Ride suggestion card on the map home, kept in its own object so this one stays under its limit. */
+    object ParkRideSuggestion {
+        const val CARD = "parkridesuggestion.card"
+        const val FIGURES = "parkridesuggestion.figures"
+        const val ADD_TO_HOME = "parkridesuggestion.add"
+        const val NOT_NOW = "parkridesuggestion.notnow"
+    }
+
     /** One Home or Work chip, keyed by the label's name so it is the same whether the label is set or not. */
     fun homeLabelChip(labelKey: String): String = "savedtrips.chip.label.$labelKey"
 

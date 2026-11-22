@@ -43,3 +43,19 @@ internal fun homeStackKeys(
     val rowIndex = if (hasRow) rowIndexFor(tripIds.size, storedIndex) else null
     return ReorderSession.start(tripIds = tripIds, rowIndex = rowIndex).keys
 }
+
+/** The key of the one-time Park & Ride suggestion card among the trips' ids, in the row's place. */
+internal const val PARK_RIDE_SUGGESTION_KEY = "park_ride_suggestion"
+
+/**
+ * The home stack's keys with the suggestion card in the Park & Ride row's place, or just [keys] when it is not shown.
+ *
+ * The card takes the place the row would, [storedIndex] if the rider dragged the row there and after the second trip
+ * if not, clamped to the trips there are, so it follows the same rule 29 the row does. [keys] holds only trips, as
+ * the suggestion is shown only while there is no row.
+ */
+internal fun withSuggestionKey(keys: List<String>, show: Boolean, storedIndex: Int?): List<String> {
+    if (!show) return keys
+    val at = rowIndexFor(tripCount = keys.size, storedIndex = storedIndex)
+    return keys.take(at) + PARK_RIDE_SUGGESTION_KEY + keys.drop(at)
+}

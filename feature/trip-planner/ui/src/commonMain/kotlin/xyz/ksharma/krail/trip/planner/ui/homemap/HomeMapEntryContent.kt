@@ -12,6 +12,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import xyz.ksharma.krail.core.maps.data.location.UserLocationManager
 import xyz.ksharma.krail.feature.track.TrackedJourney
+import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionSlot
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.toTile
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
@@ -46,6 +47,7 @@ internal fun HomeMapEntryContent(
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
     aiVoiceLevel: () -> Float = { 0f },
     actions: HomeMapActions = HomeMapActions(),
+    suggestion: ParkRideSuggestionSlot? = null,
 ) {
     var cardKey by rememberSaveable { mutableStateOf<String?>(null) }
     val ready = mapUiState as? MapUiState.Ready
@@ -95,6 +97,7 @@ internal fun HomeMapEntryContent(
         onAiEvent = onAiEvent,
         aiVoiceLevel = aiVoiceLevel,
         actions = actions,
+        suggestion = suggestion,
     )
 }
 

@@ -1,6 +1,5 @@
 package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -17,18 +16,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import kotlinx.collections.immutable.ImmutableList
-import xyz.ksharma.krail.taj.components.Text
-import xyz.ksharma.krail.taj.modifier.CardShape
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 
 /**
@@ -136,23 +131,12 @@ private fun ClosedParkRideTile(
             .testTag(TripPlannerTestTags.parkRideTile(tile.stationId))
             .width(width)
             .fillMaxHeight()
-            .clip(CardShape)
-            .background(color = themeBackgroundColor(), shape = CardShape)
+            .tileShell()
             .tileClick(label = "Show car parks at ${tile.stationName}", onClick = onClick, onLongClick = onLongClick)
             .padding(dim.spacingXL),
         verticalArrangement = Arrangement.spacedBy(dim.spacingM, Alignment.CenterVertically),
     ) {
-        ReservedLine(present = tile.totalFreeSpots != null) {
-            SpotsLine(spots = tile.totalFreeSpots ?: PLACEHOLDER_SPOTS)
-        }
-        StationLine(name = tile.stationName)
-        ReservedLine(present = tile.timeText != null) {
-            Text(
-                text = "Last updated at ${tile.timeText ?: PLACEHOLDER_TIME}",
-                style = KrailTheme.typography.bodySmall,
-                color = KrailTheme.colors.secondaryLabel,
-            )
-        }
+        ClosedTileFigures(tile)
     }
 }
 
@@ -173,8 +157,7 @@ private fun OpenParkRideTile(
         modifier = modifier
             .testTag(TripPlannerTestTags.parkRideTileOpen(tile.stationId))
             .fillMaxWidth()
-            .clip(CardShape)
-            .background(color = themeBackgroundColor(), shape = CardShape)
+            .tileShell()
             .padding(dim.spacingXL),
         verticalArrangement = Arrangement.spacedBy(dim.spacingXL),
     ) {
@@ -194,6 +177,3 @@ private fun OpenParkRideTile(
         }
     }
 }
-
-private const val PLACEHOLDER_SPOTS = 0
-private const val PLACEHOLDER_TIME = "12:00 AM"

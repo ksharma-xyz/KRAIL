@@ -40,6 +40,7 @@ import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.CityCodeText
 import xyz.ksharma.krail.trip.planner.ui.components.SavedTripCard
 import xyz.ksharma.krail.trip.planner.ui.components.SearchStopRow
+import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionSlot
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ReorderSession
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
@@ -64,6 +65,7 @@ internal fun LazyListScope.savedTripsListBody(
     onStopTracking: () -> Unit,
     expandedMap: SnapshotStateMap<String, Boolean>,
     reorderState: ReorderableLazyListState,
+    suggestion: ParkRideSuggestionSlot? = null,
 ) {
     if (savedTripsState.isSavedTripsLoading) return
 
@@ -75,6 +77,7 @@ internal fun LazyListScope.savedTripsListBody(
             expandedMap = expandedMap,
             reorderState = reorderState,
             actions = SavedTripActions(onCardClick = onSavedTripCardClick, onEvent = onEvent),
+            suggestion = suggestion,
         ),
     )
 }

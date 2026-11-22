@@ -101,7 +101,14 @@ internal fun NSWParkRideFacilityDetail.toParkRideState(): ParkRideFacilityDetail
         timeText = timeText,
         stopId = stopId,
         facilityId = facilityId,
+        // The mapper stores 0.0 for a position the reading did not carry, so 0.0 and 0.0 is read
+        // back as missing here and never reaches the tile as a place.
+        latitude = latitude.takeIf { hasPosition() },
+        longitude = longitude.takeIf { hasPosition() },
+        readAtEpochSeconds = timestamp,
     )
+
+private fun NSWParkRideFacilityDetail.hasPosition(): Boolean = !(latitude == 0.0 && longitude == 0.0)
 
 /**
  * Maps a list of [NSWParkRideFacilityDetail] entities to a list of [ParkRideUiState]s for UI display.

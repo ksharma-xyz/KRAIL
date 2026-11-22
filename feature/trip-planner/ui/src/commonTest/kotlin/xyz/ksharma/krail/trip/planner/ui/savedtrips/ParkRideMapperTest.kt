@@ -221,11 +221,51 @@ class ParkRideMapperTest {
         tfnswFacilityId = "2250TPR001",
     )
 
+    @Test
+    fun `a stored position and the time it was stored reach the UI state`() {
+        val state = facilityDetail(
+            facilityId = "26",
+            stopId = "S",
+            latitude = -33.69,
+            longitude = 150.90,
+            timestamp = 1_700L,
+        )
+            .toParkRideState()
+
+        assertEquals(-33.69, state.latitude)
+        assertEquals(150.90, state.longitude)
+        assertEquals(1_700L, state.readAtEpochSeconds)
+    }
+
+    @Test
+    fun `a reading that carried no position reads back as no position and not as 0,0`() {
+        val state = facilityDetail(facilityId = "26", stopId = "S", latitude = 0.0, longitude = 0.0).toParkRideState()
+
+        assertEquals(null, state.latitude)
+        assertEquals(null, state.longitude)
+    }
+
+    @Test
+    fun `a position with one zero coordinate is still a place`() {
+        val state = facilityDetail(
+            facilityId = "26",
+            stopId = "S",
+            latitude = 0.0,
+            longitude = 150.90,
+        ).toParkRideState()
+
+        assertEquals(0.0, state.latitude)
+        assertEquals(150.90, state.longitude)
+    }
+
     private fun facilityDetail(
         facilityId: String,
         stopId: String,
         facilityName: String = "Car park $facilityId",
         percentageFull: Long = 60,
+        latitude: Double = 0.0,
+        longitude: Double = 0.0,
+        timestamp: Long = 0,
     ) = NSWParkRideFacilityDetail(
         facilityId = facilityId,
         spotsAvailable = 40,
@@ -237,8 +277,8 @@ class ParkRideMapperTest {
         timeText = "8:00 AM",
         suburb = "",
         address = "",
-        latitude = 0.0,
-        longitude = 0.0,
-        timestamp = 0,
+        latitude = latitude,
+        longitude = longitude,
+        timestamp = timestamp,
     )
 }

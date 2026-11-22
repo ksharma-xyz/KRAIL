@@ -99,6 +99,20 @@ class IntroParkRideStepNarrowTest {
     }
 
     @Test
+    fun `at 200 percent every line of the headline is whole, left aligned and one under the next`() {
+        show(PreviewAskState)
+
+        val lines = PARK_RIDE_HEADLINE.map { line ->
+            composeRule.onNodeWithText(line, useUnmergedTree = true).assertInsideWindow(line)
+            composeRule.onNodeWithText(line, useUnmergedTree = true).getUnclippedBoundsInRoot()
+        }
+        lines.zipWithNext().forEach { (above, below) ->
+            assertTrue(above.bottom <= below.top + ROUNDING, "a line starts at ${below.top}, over the one above")
+        }
+        assertTrue(lines.map { it.left }.distinct().size == 1, "the lines are not on one left edge: $lines")
+    }
+
+    @Test
     fun `at 200 percent text the answers are the short Yes and No, in one row, and read in full to a screen reader`() {
         show(PreviewAskState)
 
@@ -173,5 +187,6 @@ class IntroParkRideStepNarrowTest {
 
     private companion object {
         const val LARGE_TEXT = 2.0f
+        val ROUNDING = 1.dp
     }
 }

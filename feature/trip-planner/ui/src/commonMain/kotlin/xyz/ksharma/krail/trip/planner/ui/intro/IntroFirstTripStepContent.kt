@@ -71,9 +71,10 @@ internal fun IntroFirstTripStepContent(
         modifier = modifier.fillMaxWidth().padding(bottom = dim.spacingXL),
         verticalArrangement = Arrangement.spacedBy(dim.spacingXL),
     ) {
-        IntroHeading(
+        IntroHeadline(
+            lines = FIRST_TRIP_HEADLINE,
+            emphasisIndex = FIRST_TRIP_HEADLINE.lastIndex,
             emoji = introEmojiFor(IntroStep.DESTINATION),
-            text = FIRST_TRIP_HEADING,
             modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
         )
         introTripSections(state, changing).forEach { section ->

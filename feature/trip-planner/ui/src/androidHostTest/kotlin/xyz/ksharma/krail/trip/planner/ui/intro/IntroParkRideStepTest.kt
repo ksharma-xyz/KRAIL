@@ -3,11 +3,14 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.height
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
@@ -20,6 +23,7 @@ import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -72,6 +76,33 @@ class IntroParkRideStepTest {
         composeRule.onNodeWithText(PARK_RIDE_YES).assertIsDisplayed()
         composeRule.onNodeWithText(PARK_RIDE_NO).assertIsDisplayed()
         composeRule.onNodeWithText(PARK_RIDE_ADD).assertDoesNotExist()
+    }
+
+    @Test
+    fun `the headline is one heading with the whole phrase, and the emoji is hidden from a screen reader`() {
+        show(PreviewAskState)
+
+        composeRule.onAllNodes(isHeading()).assertCountEquals(1)
+        composeRule.onNode(isHeading()).assertTextEquals(PARK_RIDE_HEADING)
+        val emoji = introEmojiFor(IntroStep.PARK_RIDE)
+        composeRule.onNodeWithText(emoji).assertDoesNotExist()
+        composeRule.onNodeWithText(emoji, useUnmergedTree = true).assertExists()
+    }
+
+    @Test
+    fun `the headline sits above the card, the card above the bar, and the bar is inside the window`() {
+        show(PreviewCardContentState)
+
+        val headline = composeRule.onNode(isHeading()).getUnclippedBoundsInRoot()
+        val card = composeRule.onNodeWithTag(INTRO_CARD_SLOT_TAG).getUnclippedBoundsInRoot()
+        val bar = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).getUnclippedBoundsInRoot()
+        val window = composeRule.onRoot().getUnclippedBoundsInRoot()
+        assertTrue(
+            headline.bottom <= card.top,
+            "the headline ends at ${headline.bottom}, below the card at ${card.top}",
+        )
+        assertTrue(card.bottom <= bar.top, "the card ends at ${card.bottom}, below the bar at ${bar.top}")
+        assertTrue(bar.bottom <= window.bottom, "the bar ends at ${bar.bottom}, outside the ${window.bottom} window")
     }
 
     @Test

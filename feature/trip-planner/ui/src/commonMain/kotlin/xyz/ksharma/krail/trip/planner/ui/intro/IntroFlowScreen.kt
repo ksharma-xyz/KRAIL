@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.platform.testTag
 import xyz.ksharma.krail.core.adaptiveui.DUAL_PANE_LIST_WIDTH
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
@@ -74,17 +75,19 @@ internal fun IntroFlowScreen(
 
             AnimatedContent(
                 targetState = state.step,
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-                transitionSpec = { introStepTransition(reduceMotion) },
+                // Clipped, so a screen sliding past the edge of a capped column never draws in the margin.
+                modifier = Modifier.weight(1f).fillMaxWidth().clipToBounds(),
+                transitionSpec = { introScreenTransition(initialState, targetState, reduceMotion) },
                 label = "intro-step",
             ) { step ->
-                Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-                    when (step) {
-                        IntroStep.PARK_RIDE -> IntroParkRideStepContent(state = state)
-                        IntroStep.DESTINATION -> firstTripStep(state, suggestedStops, onEvent)
-                        // Temporary, until the theme, origin and confirm screens are built.
-                        IntroStep.THEME, IntroStep.ORIGIN, IntroStep.CONFIRM -> IntroPendingStepBody(step)
+                when (step) {
+                    IntroStep.PARK_RIDE -> IntroParkRideStepContent(state = state)
+                    // Temporary: the first trip screen has its own layout until the destination screen is built.
+                    IntroStep.DESTINATION -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                        firstTripStep(state, suggestedStops, onEvent)
                     }
+                    // Temporary, until the theme, origin and confirm screens are built.
+                    IntroStep.THEME, IntroStep.ORIGIN, IntroStep.CONFIRM -> IntroPendingStepBody(step)
                 }
             }
 

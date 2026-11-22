@@ -1,0 +1,61 @@
+package xyz.ksharma.krail.trip.planner.ui.intro
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.unit.Constraints
+import xyz.ksharma.krail.taj.theme.KrailTheme
+import kotlin.math.max
+
+/**
+ * Where the middle zone starts, in pixels from the top. It sits just under the headline, and when there is
+ * room to spare in the [zone] below the headline it is centred in that room. When there is none, because
+ * the headline and the middle fill the zone or more, it starts straight under the headline.
+ */
+internal fun introMiddleTop(zone: Int, headline: Int, middle: Int): Int =
+    headline + max(0, zone - headline - middle) / 2
+
+/**
+ * The shape every Intro question screen shares: the headline at the top, the thing to decide on in the
+ * middle, centred in the space under the headline, and the decision bar below, which the shell pins and this
+ * does not hold. Both zones sit in one scrolling column, so when the text is large or the screen is short the
+ * headline and the middle scroll together and nothing is clipped or out of reach. With room to spare the
+ * headline stays at the top and the middle is centred.
+ */
+@Composable
+internal fun IntroStepFrame(
+    headline: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    middle: @Composable () -> Unit,
+) {
+    val dim = KrailTheme.dimensions
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val zone = maxHeight
+        Layout(
+            content = {
+                Box(modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding, vertical = dim.spacingM)) {
+                    headline()
+                }
+                Box(modifier = Modifier.fillMaxWidth().padding(bottom = dim.spacingXL)) { middle() }
+            },
+            modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+        ) { measurables, constraints ->
+            val loose = Constraints(maxWidth = constraints.maxWidth)
+            val headlinePlaceable = measurables[0].measure(loose)
+            val middlePlaceable = measurables[1].measure(loose)
+            val zonePx = zone.roundToPx()
+            val middleTop = introMiddleTop(zonePx, headlinePlaceable.height, middlePlaceable.height)
+            layout(constraints.maxWidth, max(zonePx, middleTop + middlePlaceable.height)) {
+                headlinePlaceable.place(0, 0)
+                middlePlaceable.place(0, middleTop)
+            }
+        }
+    }
+}

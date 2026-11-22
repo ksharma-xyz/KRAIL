@@ -1,10 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -19,25 +16,29 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 
-internal const val PARK_RIDE_HEADING = "Driving to the station"
+/** The headline, a line to a thought, with the key word last and heaviest. */
+internal val PARK_RIDE_HEADLINE = listOf("Driving", "to the", "station")
+
+/** The whole headline as one phrase, which a screen reader reads as the heading. */
+internal val PARK_RIDE_HEADING = introHeadlinePhrase(PARK_RIDE_HEADLINE)
 
 /**
- * The Park & Ride screen: the headline, and under it the card that the answer found. The answers
- * and the card's own action are the decision bar at the bottom of the screen, so nothing here is a
- * button, and the card keeps one height from the moment it is asked for.
+ * The Park & Ride screen: the headline at the top and, in the middle, the card that the answer found.
+ * The answers and the card's own action are the decision bar at the bottom of the screen, so nothing here
+ * is a button, and the card keeps one height from the moment it is asked for.
  */
 @Composable
 internal fun IntroParkRideStepContent(state: IntroState, modifier: Modifier = Modifier) {
-    val dim = KrailTheme.dimensions
-    Column(
-        modifier = modifier.fillMaxWidth().padding(bottom = dim.spacingXL),
-        verticalArrangement = Arrangement.spacedBy(dim.spacingXL),
+    IntroStepFrame(
+        headline = {
+            IntroHeadline(
+                lines = PARK_RIDE_HEADLINE,
+                emphasisIndex = PARK_RIDE_HEADLINE.lastIndex,
+                emoji = introEmojiFor(IntroStep.PARK_RIDE),
+            )
+        },
+        modifier = modifier,
     ) {
-        IntroHeading(
-            emoji = introEmojiFor(IntroStep.PARK_RIDE),
-            text = PARK_RIDE_HEADING,
-            modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
-        )
         IntroParkRideCardSlot(slot = introCardSlot(state))
     }
 }

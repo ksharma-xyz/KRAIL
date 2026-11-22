@@ -2,7 +2,9 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 
-internal const val FIRST_TRIP_HEADING = "Save your first trip"
+/** The temporary first trip screen's headline, until the destination screen has its own. */
+internal val FIRST_TRIP_HEADLINE = listOf("Save your", "first trip")
+internal val FIRST_TRIP_HEADING = introHeadlinePhrase(FIRST_TRIP_HEADLINE)
 internal const val FIRST_TRIP_FROM = "From"
 internal const val FIRST_TRIP_TO = "To"
 internal const val SEARCH_ANOTHER_STOP = "Search another stop"

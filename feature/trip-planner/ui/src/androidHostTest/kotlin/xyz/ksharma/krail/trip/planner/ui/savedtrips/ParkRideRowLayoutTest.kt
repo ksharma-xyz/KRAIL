@@ -19,10 +19,13 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
 import kotlinx.collections.immutable.toImmutableSet
@@ -287,6 +290,34 @@ class ParkRideRowLayoutTest {
         val node = composeRule.onNodeWithTag(TripPlannerTestTags.parkRideTile(LOADED.stopId)).fetchSemanticsNode()
         assertEquals("Show car parks at Bella Vista", node.config[SemanticsActions.OnClick].label)
         assertTrue(SemanticsProperties.Role in node.config, "A tile is announced as a button")
+    }
+
+    // endregion
+
+    // region type
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `a station name and a car park name are in the name style of the old Park and Ride card`() {
+        setRow(stations = listOf(TALLAWONG))
+        assertNameStyle("Tallawong")
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.parkRideTile(TALLAWONG.stopId)).performClick()
+        composeRule.waitForIdle()
+
+        assertNameStyle("Tallawong")
+        assertNameStyle("Tallawong P1")
+        assertNameStyle("Tallawong P2")
+    }
+
+    /** `displaySmall` at the normal weight, 20 sp, which is what the home's Park & Ride card has always used. */
+    private fun assertNameStyle(name: String) {
+        val layouts = mutableListOf<TextLayoutResult>()
+        val node = composeRule.onNodeWithText(name, useUnmergedTree = true).fetchSemanticsNode()
+        node.config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
+        val style = layouts.single().layoutInput.style
+        assertEquals(20.sp, style.fontSize, "$name size")
+        assertEquals(FontWeight.Normal, style.fontWeight, "$name weight")
     }
 
     // endregion

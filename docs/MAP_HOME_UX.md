@@ -126,7 +126,7 @@ If a design breaks one of these rules, the design changes, not the rule.
 28. **Chips share the pill's row** when the row is wide enough (about 650 and up) and otherwise sit above it, so a wide
     screen never shows a short row of chips beside empty space.
 29. **Home order: two trips, one Park & Ride row, then the rest.** The top two saved trips come first as the app's normal
-    cards, then one horizontal row of Park & Ride cards (big number, station name small), then any further trips. With one
+    cards, then one horizontal row of Park & Ride cards (big number, then the station name in the name type of the old card), then any further trips. With one
     trip the row follows it, with none it comes first, with no stations there is no row. Trips and the row itself are
     reordered in reorder mode (rule 31). There is no Settings choice for the row's place: it sits after the second trip
     until it is dragged. A tapped station expands in place to the full row width with each car park's numbers and a
@@ -219,8 +219,8 @@ If a design breaks one of these rules, the design changes, not the rule.
 - Padding 16, corner radius 16, 8 between cards in the stack.
 - A card is a whole tap target. Minimum height 48.
 - Saved trip: two stop names stacked, 12 apart. A labelled end follows rule 37.
-- Park & Ride: the free spots as a large number with "spots" small beside it, and the car icon and station name small under
-  it, then the time of the oldest reading. The number is the total across the station's car parks. Expands in place to each car park with its count, percent full
+- Park & Ride: the free spots as a large number with "spots" small beside it, and the car icon and station name under
+  it, in the name type of the old Park & Ride card (`displaySmall`, normal weight), then the time of the oldest reading. The number is the total across the station's car parks. Expands in place to each car park with its count, percent full
   and time, each car park its own stacked block, wrapping whole items and never squeezing at any size or text scale.
 - No white card wrapping a group of cards. No heading card.
 

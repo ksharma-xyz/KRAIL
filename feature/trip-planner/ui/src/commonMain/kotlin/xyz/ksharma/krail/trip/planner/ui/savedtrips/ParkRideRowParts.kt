@@ -22,6 +22,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import xyz.ksharma.krail.park.ride.ui.components.CarIcon
 import xyz.ksharma.krail.park.ride.ui.components.DirectionsButton
@@ -104,10 +105,18 @@ internal fun SpotsLine(spots: Int, modifier: Modifier = Modifier) {
 }
 
 /**
+ * The type of every station and car park name in Park & Ride: `displaySmall` at the normal weight, the
+ * name style of the Park & Ride card the home has always had, so a name reads the same on a closed tile,
+ * an open tile, the pin card and the old card.
+ */
+@Composable
+internal fun parkRideNameStyle(): TextStyle = KrailTheme.typography.displaySmall.copy(fontWeight = FontWeight.Normal)
+
+/**
  * The car icon and the station's name. Whole items: when the name is too long to sit beside the
- * icon it goes under it, and it is never squeezed or cut. The [large] form is the open tile's
- * header, in the weight the old Park & Ride card gave a station name, and at least 48 dp tall so it
- * is a touch target when it closes the tile.
+ * icon it goes under it, and it is never squeezed or cut. The name is in [parkRideNameStyle]. The
+ * [large] form is the open tile's header, with a bigger icon, and at least 48 dp tall so it is a
+ * touch target when it closes the tile.
  */
 @Composable
 internal fun StationLine(name: String, modifier: Modifier = Modifier, large: Boolean = false) {
@@ -119,14 +128,7 @@ internal fun StationLine(name: String, modifier: Modifier = Modifier, large: Boo
         itemVerticalAlignment = Alignment.CenterVertically,
     ) {
         CarIcon(modifier = Modifier.size(if (large) dim.iconM else dim.iconXS))
-        Text(
-            text = name,
-            style = if (large) {
-                KrailTheme.typography.displaySmall.copy(fontWeight = FontWeight.Normal)
-            } else {
-                KrailTheme.typography.bodySmall
-            },
-        )
+        Text(text = name, style = parkRideNameStyle())
     }
 }
 
@@ -153,7 +155,7 @@ internal fun CarParkBlockContent(
         modifier = modifier.testTag(TripPlannerTestTags.parkRideCarPark(carPark.facilityId)),
         verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
     ) {
-        Text(text = carPark.name, style = KrailTheme.typography.bodyLarge)
+        Text(text = carPark.name, style = parkRideNameStyle())
         if (carPark.freeSpots != null) {
             CarParkFigures(
                 spotsAvailable = carPark.freeSpots,

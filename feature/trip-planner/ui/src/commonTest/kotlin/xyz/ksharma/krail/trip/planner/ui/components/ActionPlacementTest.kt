@@ -8,7 +8,7 @@ import kotlin.test.assertEquals
 /**
  * The switch behind the search row's action button: beside the bars while they keep room for a
  * typical stop name, under the From bar once they would not. The numbers are the row's real ones,
- * a 48 dp button and 16 dp gap beside the bars and 100 dp of end columns inside each bar, and
+ * a 48 dp button and 16 dp gap beside the bars and 108 dp of end columns inside each bar, and
  * the widths are the row's content width, its window less 16 dp of page padding either side.
  */
 class ActionPlacementTest {
@@ -27,8 +27,8 @@ class ActionPlacementTest {
         Case("a 560 dp column at 200 percent", 528.dp, 2f, ActionPlacement.Beside),
         Case("the 480 dp list pane at 150 percent", 448.dp, 1.5f, ActionPlacement.Beside),
         Case("the 480 dp list pane at 200 percent", 448.dp, 2f, ActionPlacement.Under),
-        Case("exactly room for a typical name", 309.dp, 1f, ActionPlacement.Beside),
-        Case("half a dp short of it", 308.5.dp, 1f, ActionPlacement.Under),
+        Case("exactly room for a typical name", 317.dp, 1f, ActionPlacement.Beside),
+        Case("half a dp short of it", 316.5.dp, 1f, ActionPlacement.Under),
         Case("no width at all", 0.dp, 1f, ActionPlacement.Under),
         Case("a negative width a measure pass can hand over", (-10).dp, 1f, ActionPlacement.Under),
     )
@@ -37,7 +37,7 @@ class ActionPlacementTest {
         contentWidth = width,
         fontScale = fontScale,
         besideCost = 64.dp,
-        barReserved = 100.dp,
+        barReserved = 108.dp,
     )
 
     @Test

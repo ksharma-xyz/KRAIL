@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.components
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
@@ -12,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -19,8 +22,11 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -42,12 +48,15 @@ import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import kotlin.math.abs
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
  * Rules 35 and 36 of `docs/MAP_HOME_UX.md` on the real block and the real search row: To is the
  * top bar, From is under it, neither ever moves, both share both edges, and the go circle is
- * 40 dp inside the From bar in the same column as the clear X above it.
+ * 40 dp inside the From bar in the same column as the clear X above it. The bar being edited is
+ * taj's dark text field and the other is taj's light text field button, and nothing moves when
+ * the field changes bars.
  *
  * Every test runs in a window of its own width (density 1, so a dp is a pixel) and reads where the
  * real nodes landed. The two end columns of the To bar are stood in for by 48 dp probes, which is
@@ -136,24 +145,24 @@ class ToFromBlockLayoutTest {
         setBlock()
 
         val x = boundsOf(TO_TRAILING_PROBE)
-        val column = boundsOf(TripPlannerTestTags.SEARCH_ROW_SEARCH)
+        val button = boundsOf(TripPlannerTestTags.SEARCH_ROW_SEARCH)
         val circle = boundsOf(GO_CIRCLE)
 
-        assertNear("column left edge", x.left, column.left)
-        assertNear("column right edge", x.right, column.right)
         assertNear("circle centre", centreX(x), centreX(circle))
+        assertNear("button centre", centreX(x), centreX(button))
+        assertTrue(circle.right <= x.right, "The circle $circle runs past the end column $x.")
     }
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `the go circle is one tap target of 48 dp that searches and does not edit From`() {
+    fun `the go circle is one 40 dp tap target that searches and does not edit From`() {
         var searched = 0
         var fromTapped = 0
         setBlock(onGo = { searched++ }, onFrom = { fromTapped++ })
 
-        val column = boundsOf(TripPlannerTestTags.SEARCH_ROW_SEARCH)
-        assertNear("tap target width", 48.dp, column.width)
-        assertNear("tap target height", 48.dp, column.height)
+        val button = boundsOf(TripPlannerTestTags.SEARCH_ROW_SEARCH)
+        assertNear("tap target width", 40.dp, button.width)
+        assertNear("tap target height", 40.dp, button.height)
 
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_SEARCH).performClick()
 
@@ -182,17 +191,17 @@ class ToFromBlockLayoutTest {
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `the origin ring is in the From bar and the back slot in the To bar`() {
+    fun `the origin dot is in the From bar and the back slot in the To bar`() {
         setBlock()
 
         val from = boundsOf(FROM)
         val to = boundsOf(TO)
-        val ring = boundsOf(TripPlannerTestTags.SEARCH_ROW_ORIGIN_RING)
+        val dot = boundsOf(TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT)
         val back = boundsOf(TO_LEADING_PROBE)
 
-        assertTrue(ring.isWithinRows(from), "The ring $ring is not on the From bar $from.")
+        assertTrue(dot.isWithinRows(from), "The dot $dot is not on the From bar $from.")
         assertTrue(back.isWithinRows(to), "The back slot $back is not on the To bar $to.")
-        assertNear("ring and back arrow share a centre line", centreX(back), centreX(ring))
+        assertNear("dot and back arrow share a centre line", centreX(back), centreX(dot))
         assertNear("back slot starts at the bar's edge", to.left, back.left)
     }
 
@@ -215,9 +224,9 @@ class ToFromBlockLayoutTest {
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `no part of either bar moves when the dark fill moves from To to From and back`() {
+    fun `no part of either bar moves when the field moves from To to From and back`() {
         val editing = mutableStateOf<ToFromField?>(ToFromField.To)
-        setBlock(editing = editing)
+        setBlock(editing = editing, editor = true)
         val whileEditingTo = everyPart()
 
         setEditing(editing, ToFromField.From)
@@ -228,6 +237,66 @@ class ToFromBlockLayoutTest {
 
         setEditing(editing, null)
         assertEquals(whileEditingTo, everyPart(), "Nothing may move when neither is edited.")
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `the bar being edited is the text field and the other is the button, whichever it is`() {
+        val editing = mutableStateOf<ToFromField?>(ToFromField.To)
+        setBlock(editing = editing, editor = true)
+
+        assertIsTextField(TO)
+        assertIsButton(FROM)
+
+        setEditing(editing, ToFromField.From)
+
+        assertIsButton(TO)
+        assertIsTextField(FROM)
+
+        setEditing(editing, null)
+
+        assertIsButton(TO)
+        assertIsButton(FROM)
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `the text in the dark bar starts where the stop starts in the light one, one x in both`() {
+        val editing = mutableStateOf<ToFromField?>(ToFromField.To)
+        setBlock(editing = editing, editor = true)
+        val to = boundsOf(TO)
+
+        assertNear("placeholder in To", to.left + 52.dp, textBounds(TO_PLACEHOLDER).left)
+        assertNear("the stop in From", to.left + 52.dp, textBounds(CENTRAL.stopName).left)
+
+        setEditing(editing, ToFromField.From)
+
+        assertNear("placeholder in From", to.left + 52.dp, textBounds(FROM_PLACEHOLDER).left)
+        assertNear("the stop in To", to.left + 52.dp, textBounds(TOWN_HALL.stopName).left)
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `a long name in the light bar ends before the end column`() {
+        setBlock(to = LONG_STOP, fontScale = 1f)
+        val to = boundsOf(TO)
+        val text = textBounds(LONG_STOP.stopName)
+
+        assertTrue(text.right <= to.right - 56.dp + 1.dp, "A name runs into the end column: $text in $to.")
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `at 200 percent the dark bar loses at most 4 dp of its line, to taj's room above a trailing control`() {
+        val editing = mutableStateOf<ToFromField?>(null)
+        setBlock(fontScale = 2f, editing = editing, editor = true)
+        val light = textBounds(TOWN_HALL.stopName).height
+        setEditing(editing, ToFromField.To)
+        val dark = textBounds(TO_PLACEHOLDER).height
+
+        // taj's text field keeps 8 dp above and below its text when it has a trailing control, so a
+        // 48 dp bar has 32 dp for the line. The light bar's line is 35 dp at 200 percent.
+        assertTrue(dark >= light - 4.dp, "The dark bar's line is clipped: light=$light dark=$dark")
     }
 
     @Test
@@ -248,6 +317,21 @@ class ToFromBlockLayoutTest {
 
         composeRule.onNodeWithTag(TO).assertIsNotSelected()
         composeRule.onNodeWithTag(FROM).assertIsNotSelected()
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `the dark bar holding a field is marked selected too`() {
+        val editing = mutableStateOf<ToFromField?>(ToFromField.To)
+        setBlock(editing = editing, editor = true)
+
+        composeRule.onNodeWithTag(TO).assertIsSelected()
+        composeRule.onNodeWithTag(FROM).assertIsNotSelected()
+
+        setEditing(editing, ToFromField.From)
+
+        composeRule.onNodeWithTag(TO).assertIsNotSelected()
+        composeRule.onNodeWithTag(FROM).assertIsSelected()
     }
 
     @Test
@@ -324,9 +408,9 @@ class ToFromBlockLayoutTest {
 
     @Test
     @Config(qualifiers = NARROW)
-    fun `at 320 dp and 200 percent nothing moves when the dark fill moves`() {
+    fun `at 320 dp and 200 percent nothing moves when the field moves`() {
         val editing = mutableStateOf<ToFromField?>(ToFromField.To)
-        setBlock(to = LONG_STOP, fontScale = 2f, editing = editing)
+        setBlock(to = LONG_STOP, fontScale = 2f, editing = editing, editor = true)
         val whileEditingTo = everyPart(toName = LONG_STOP.stopName)
 
         setEditing(editing, ToFromField.From)
@@ -427,12 +511,21 @@ class ToFromBlockLayoutTest {
     @Test
     @Config(qualifiers = PHONE)
     fun `an editor stands in for the bar's text and the bar keeps its size`() {
-        setBlock(toEditor = { Box(Modifier.size(1.dp).testTag(EDITOR_PROBE)) })
+        setBlock(editing = mutableStateOf(ToFromField.To), editor = true)
 
-        composeRule.onNodeWithTag(EDITOR_PROBE).assertExists()
+        composeRule.onNodeWithText(TO_PLACEHOLDER).assertExists()
         composeRule.onNodeWithText(TOWN_HALL.stopName).assertDoesNotExist()
         val height = boundsOf(TO).height.value
         assertTrue(abs(height - BAR_HEIGHT_DP) < 0.5f, "A bar holding a field is a bar tall, not $height.")
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `without an editor the edited bar stays the button`() {
+        setBlock(editing = mutableStateOf(ToFromField.To), editor = false)
+
+        assertIsButton(TO)
+        composeRule.onNodeWithText(TOWN_HALL.stopName).assertExists()
     }
 
     // endregion
@@ -446,7 +539,7 @@ class ToFromBlockLayoutTest {
         editing: MutableState<ToFromField?> = mutableStateOf(null),
         showFrom: MutableState<Boolean> = mutableStateOf(true),
         showGo: Boolean = true,
-        toEditor: (@Composable () -> Unit)? = null,
+        editor: Boolean = false,
         onTo: () -> Unit = {},
         onFrom: () -> Unit = {},
         onGo: () -> Unit = {},
@@ -461,9 +554,9 @@ class ToFromBlockLayoutTest {
                         onFromClick = onFrom,
                         onGoClick = onGo,
                         editing = editing.value,
+                        editor = if (editor) ToFromEditor(state = rememberTextFieldState()) else null,
                         showFrom = showFrom.value,
                         showGo = showGo,
-                        toEditor = toEditor,
                         toLeading = { Box(Modifier.size(48.dp).testTag(TO_LEADING_PROBE)) },
                         toTrailing = { Box(Modifier.size(48.dp).testTag(TO_TRAILING_PROBE)) },
                     )
@@ -516,18 +609,61 @@ class ToFromBlockLayoutTest {
         composeRule.waitForIdle()
     }
 
-    /** Every part of both bars that must stay where it is, by name, so a failure says which moved. */
-    private fun everyPart(toName: String = TOWN_HALL.stopName): Map<String, DpRect> = mapOf(
+    /**
+     * Every part of both bars that must stay where it is, by name, so a failure says which moved.
+     * The two values are compared by where they start, because the dark bar holds the typed text
+     * and the other holds its stop, and they are not the same width.
+     */
+    private fun everyPart(toName: String = TOWN_HALL.stopName): Map<String, Any> = mapOf(
         "To bar" to boundsOf(TO),
         "From bar" to boundsOf(FROM),
         "back slot" to boundsOf(TO_LEADING_PROBE),
         "clear slot" to boundsOf(TO_TRAILING_PROBE),
-        "origin ring" to boundsOf(TripPlannerTestTags.SEARCH_ROW_ORIGIN_RING),
-        "go column" to boundsOf(TripPlannerTestTags.SEARCH_ROW_SEARCH),
+        "origin dot" to boundsOf(TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT),
+        "go button" to boundsOf(TripPlannerTestTags.SEARCH_ROW_SEARCH),
         "go circle" to boundsOf(GO_CIRCLE),
-        "To value" to textBounds(toName),
-        "From value" to textBounds(CENTRAL.stopName),
+        "To value starts at" to valueLeft(TO, toName),
+        "From value starts at" to valueLeft(FROM, CENTRAL.stopName),
     )
+
+    /**
+     * Where the text in the bar tagged [barTag] starts: its stop in the light bar, or the placeholder
+     * in the dark one, whichever has its centre inside that bar.
+     */
+    private fun valueLeft(barTag: String, stopName: String): Dp {
+        val bar = boundsOf(barTag)
+        return listOf(stopName, TO_PLACEHOLDER, FROM_PLACEHOLDER)
+            .flatMap { text ->
+                composeRule.onAllNodesWithText(text, useUnmergedTree = true).fetchSemanticsNodes()
+            }
+            .filter { node ->
+                val centreY = node.boundsInRoot.center.y
+                centreY >= bar.top.value && centreY <= bar.bottom.value
+            }
+            .map { node -> node.boundsInRoot.left.dp }
+            .single()
+    }
+
+    private fun editableTextIn(barTag: String): Int = composeRule.onAllNodes(
+        hasAnyAncestor(hasTestTag(barTag)) and SemanticsMatcher.keyIsDefined(SemanticsProperties.EditableText),
+        useUnmergedTree = true,
+    ).fetchSemanticsNodes().size
+
+    private fun hasTap(barTag: String): Boolean =
+        SemanticsActions.OnClick in
+            composeRule.onNodeWithTag(barTag, useUnmergedTree = true).fetchSemanticsNode().config
+
+    /** Whether the bar is a taj text field, which holds the editable text and has no tap of its own. */
+    private fun assertIsTextField(barTag: String) {
+        assertEquals(1, editableTextIn(barTag), "The bar $barTag should hold one text field.")
+        assertFalse(hasTap(barTag), "The bar $barTag holds a field, so it has no tap of its own.")
+    }
+
+    /** Whether the bar is a taj text field button: a tap of its own and no text field in it. */
+    private fun assertIsButton(barTag: String) {
+        assertTrue(hasTap(barTag), "The bar $barTag should be a button.")
+        assertEquals(0, editableTextIn(barTag), "The bar $barTag is a button, so it holds no text field.")
+    }
 
     private fun boundsOf(tag: String): DpRect =
         composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
@@ -562,7 +698,6 @@ class ToFromBlockLayoutTest {
         const val TO = TripPlannerTestTags.SEARCH_ROW_TO
         const val FROM = TripPlannerTestTags.SEARCH_ROW_FROM
         const val GO_CIRCLE = TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE
-        const val EDITOR_PROBE = "toFromBlock.editorProbe"
         const val BAR_HEIGHT_DP = 48f
         const val TO_LEADING_PROBE = "probe.to.leading"
         const val TO_TRAILING_PROBE = "probe.to.trailing"

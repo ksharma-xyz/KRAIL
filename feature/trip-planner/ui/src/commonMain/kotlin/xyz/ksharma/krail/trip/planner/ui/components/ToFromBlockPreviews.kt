@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
@@ -16,12 +17,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalThemeColor
+import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
@@ -30,7 +33,8 @@ import xyz.ksharma.krail.trip.planner.ui.savedtrips.SAVED_TRIPS_COLUMN_MAX_WIDTH
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 // The To and From block (docs/MAP_HOME_UX.md rules 35 and 36) in every state a rider sees, one
-// above the other: To edited, From edited, and neither. The narrow and wide previews sit in the
+// above the other: To edited, From edited, and neither. The edited bar is taj's dark text field and
+// the other is taj's text field button. The narrow and wide previews sit in the
 // `timetable.narrow` and `timetable.wide` packages, which their own snapshot tests scan, and draw
 // the same frame. The 320 dp one at 2x font is the frame where long names end in an ellipsis.
 
@@ -64,6 +68,8 @@ internal fun ToFromBlockStates() {
 
 @Composable
 private fun ToFromBlockPreviewBlock(editing: ToFromField?, to: StopItem) {
+    // The dark bar holds the text the rider has typed, so it shows that and not its stop.
+    val typed = rememberTextFieldState("Cen")
     ToFromBlock(
         toStopItem = to,
         fromStopItem = previewFromStop,
@@ -71,20 +77,24 @@ private fun ToFromBlockPreviewBlock(editing: ToFromField?, to: StopItem) {
         onFromClick = {},
         onGoClick = {},
         editing = editing,
-        toLeading = { PreviewSlotIcon(Icons.AutoMirrored.Filled.ArrowBack) },
-        toTrailing = { PreviewSlotIcon(Icons.Default.Close) },
+        editor = editing?.let { ToFromEditor(state = typed) },
+        toLeading = { PreviewSlotButton(Icons.AutoMirrored.Filled.ArrowBack) },
+        toTrailing = { PreviewSlotButton(Icons.Default.Close) },
     )
 }
 
 /** Stands in for the back arrow and the X the Search Stop screen puts in the To bar's end columns. */
 @Composable
-private fun PreviewSlotIcon(icon: ImageVector) {
-    Image(
-        imageVector = icon,
-        contentDescription = null,
-        colorFilter = ColorFilter.tint(LocalContentColor.current),
-        modifier = Modifier.size(24.dp),
-    )
+private fun PreviewSlotButton(icon: ImageVector) {
+    val barContent = LocalContentColor.current
+    RoundIconButton(onClick = {}, color = Color.Transparent) {
+        Image(
+            imageVector = icon,
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(barContent),
+            modifier = Modifier.size(24.dp),
+        )
+    }
 }
 
 /** A phone: the bars take the whole width less the 16 dp padding, on 411 dp. */

@@ -65,10 +65,10 @@ object TripPlannerTestTags {
     const val SEARCH_ROW_REVERSE = "searchrow.reverse"
     const val SEARCH_ROW_COLLAPSED_PILL = "searchrow.collapsedpill"
 
-    // The go circle itself (40 dp), inside the 48 dp tap target that carries [SEARCH_ROW_SEARCH],
-    // and the origin ring in the From bar's leading column.
+    // The go circle itself (40 dp), which wraps the button that carries [SEARCH_ROW_SEARCH], and the
+    // origin dot in the From bar's leading column.
     const val SEARCH_ROW_GO_CIRCLE = "searchrow.gocircle"
-    const val SEARCH_ROW_ORIGIN_RING = "searchrow.originring"
+    const val SEARCH_ROW_ORIGIN_DOT = "searchrow.origindot"
 
     // Search stop
     const val SEARCH_STOP_QUERY_FIELD = "searchstop.query"

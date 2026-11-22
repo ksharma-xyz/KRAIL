@@ -344,7 +344,7 @@ private fun ExpandedSearchRow(
                     contentWidth = maxWidth,
                     fontScale = LocalDensity.current.fontScale,
                     besideCost = dim.iconXXXL + dim.spacingXL,
-                    barReserved = dim.iconXXXL * 2 + dim.spacingXS,
+                    barReserved = toFromBarInsets().reserved,
                 )
                 when (placement) {
                     // Centred on the two bars so it sits between the stops it acts on.

@@ -1,8 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
@@ -20,16 +18,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.semantics
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.components.CloseIcon
 import xyz.ksharma.krail.taj.components.RoundIconButton
-import xyz.ksharma.krail.taj.components.TextField
-import xyz.ksharma.krail.taj.components.TextFieldColors
-import xyz.ksharma.krail.taj.components.TextFieldDefaults
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromBlock
+import xyz.ksharma.krail.trip.planner.ui.components.ToFromEditor
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -37,10 +33,11 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
  * The form at the top of Search Stop: the app's To and From block with the search field typed into
  * the bar being edited, in place (rules 35 and 36 of `docs/MAP_HOME_UX.md`).
  *
- * - The back arrow stays on the To bar and the origin ring on the From bar in every state.
+ * - The bar being edited is the dark one and holds taj's text field, and the other is the light
+ *   button. Tapping the other bar swaps which is which and the field with it. No row moves.
+ * - The back arrow stays on the To bar and the origin dot on the From bar in every state.
  * - The X shows only while the field has text, and only clears it. It never leaves the screen, so
  *   the recents stay where they are.
- * - Tapping the other bar moves the dark fill to it and the field with it. No row moves.
  * - The go circle is drawn only when [goVisible] says the trip can start.
  * - From shows [autoFrom], the stop nearest the rider, when location is known.
  */
@@ -59,10 +56,8 @@ internal fun SearchStopForm(
     modifier: Modifier = Modifier,
 ) {
     val hasText by remember(fieldState) { derivedStateOf { fieldState.text.isNotEmpty() } }
-    val placeholder = if (editing == ToFromField.From) fromPlaceholder else toPlaceholder
-    val editor: @Composable () -> Unit = {
-        SearchStopFieldEditor(
-            placeholder = placeholder,
+    val editor = remember(fieldState, focusRequester, onFlowEvent, onTextChange) {
+        searchStopEditor(
             fieldState = fieldState,
             focusRequester = focusRequester,
             onFocused = { onFlowEvent(SearchStopFlowEvent.BarTapped) },
@@ -83,14 +78,13 @@ internal fun SearchStopForm(
         onGoClick = {},
         modifier = modifier,
         editing = editing,
+        editor = editor,
         showFrom = shape == FormShape.ToAndFrom,
         toLeading = { BackArrowButton(onClick = onBack) },
         toTrailing = { if (editing == ToFromField.To) clear() },
         toPlaceholder = toPlaceholder,
         fromPlaceholder = fromPlaceholder,
         showGo = goVisible(from = autoFrom, to = null),
-        toEditor = if (editing == ToFromField.To) editor else null,
-        fromEditor = if (editing == ToFromField.From) editor else null,
         fromTrailing = if (editing == ToFromField.From) clear else null,
     )
 }
@@ -107,41 +101,27 @@ private fun switchEditing(
 }
 
 /**
- * The text field inside the dark bar: no fill of its own, the bar's colours, and the one query
- * field tag every flow and test reaches the field by. Gaining focus is the tap that raises the
- * list state.
+ * The text field the dark bar holds: the one query field tag every flow and test reaches the field
+ * by, and focus. Gaining focus is the tap that raises the list state.
  */
-@Composable
-private fun SearchStopFieldEditor(
-    placeholder: String,
+private fun searchStopEditor(
     fieldState: TextFieldState,
     focusRequester: FocusRequester,
     onFocused: () -> Unit,
     onTextChange: (String) -> Unit,
-) {
-    val inverted = TextFieldDefaults.invertedColors()
-    TextField(
-        state = fieldState,
-        placeholder = placeholder,
-        modifier = Modifier
-            .fillMaxWidth()
-            .focusRequester(focusRequester)
-            .onFocusChanged { if (it.isFocused) onFocused() }
-            .testTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD),
-        // The redaction cap, not a second number. A query longer than this is dropped from
-        // analytics entirely, so a field that accepted more would collect text the rider could
-        // never see reported, and one that accepts less makes that branch unreachable.
-        maxLength = SearchQueryAnalyticsRedaction.MAX_QUERY_LENGTH,
-        filter = { input -> input.filter { it.isLetterOrDigit() || it.isWhitespace() || it == ',' } },
-        colors = TextFieldColors(
-            containerColor = Color.Transparent,
-            contentColor = inverted.contentColor,
-            placeholderColor = inverted.placeholderColor,
-            cursorColor = inverted.cursorColor,
-        ),
-        contentPadding = PaddingValues(0.dp),
-    ) { value -> onTextChange(value.toString()) }
-}
+): ToFromEditor = ToFromEditor(
+    state = fieldState,
+    modifier = Modifier
+        .focusRequester(focusRequester)
+        .onFocusChanged { if (it.isFocused) onFocused() }
+        .testTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD),
+    // The redaction cap, not a second number. A query longer than this is dropped from
+    // analytics entirely, so a field that accepted more would collect text the rider could
+    // never see reported, and one that accepts less makes that branch unreachable.
+    maxLength = SearchQueryAnalyticsRedaction.MAX_QUERY_LENGTH,
+    filter = { input -> input.filter { it.isLetterOrDigit() || it.isWhitespace() || it == ',' } },
+    onTextChange = { value -> onTextChange(value.toString()) },
+)
 
 /**
  * The back arrow in the To bar's start column: taj's [RoundIconButton] with no fill, so it is the app's
@@ -173,6 +153,10 @@ private fun ClearTextButton(onClick: () -> Unit) {
  * One icon button inside a bar. [RoundIconButton] swaps in its own content colour, so the bar's is
  * read first and the icon is tinted with it, which keeps the arrow and the X legible on the white
  * bar and on the dark one in both themes.
+ *
+ * In the dark bar the button is inside taj's text field, whose semantics merge everything in it, and
+ * a tag on a node that does not merge is dropped by that. The tag's node merges its own children, so
+ * it stays a node of its own and the tag is still how a test or a flow finds the button.
  */
 @Composable
 private fun BarIconButton(
@@ -185,7 +169,7 @@ private fun BarIconButton(
     RoundIconButton(
         onClick = onClick,
         color = Color.Transparent,
-        modifier = Modifier.testTag(tag),
+        modifier = Modifier.testTag(tag).semantics(mergeDescendants = true) {},
     ) {
         Image(
             imageVector = icon,

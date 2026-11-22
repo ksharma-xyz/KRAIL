@@ -730,8 +730,8 @@ where it changes something an earlier unit said, the earlier text is edited to m
   the first row of a list. The room under the emoji is the headline's own (`introEmojiTitleGap`, 20 dp growing with the text to 40 dp) and
   the room between two lines of a headline is `spacingS` (6 dp). The rows keep what `StopLabelAssignRow` gives them, 8 dp above, 8 dp
   below and 8 dp under the tint, so two names are 24 dp apart and the selected tint never meets the field or the next row. `IntroStepFrame`
-  applies the first, second and third, and the stop screens' field the fourth. The screens scroll above the pinned bar, which is outside the
-  scrolling part and sits on the keyboard's top edge through `safeDrawingPadding`, so with the keyboard up the middle zone is what scrolls.
+  applies the first, second and third, and the stop screens' field the fourth. The screens scroll under the bar, which is laid over the bottom of the
+  screen and sits on the keyboard's top edge through `safeDrawingPadding`, so with the keyboard up the middle zone is what scrolls.
   Checked in tests at 320 dp and 200 percent text (the field is 24 dp under the title and the first row 16 dp under the field, the badges
   are 24 dp under the title). The keyboard itself is not driven in a test, so the bar staying above it is the shell's existing behaviour and
   is a device case.
@@ -762,7 +762,13 @@ Unit R1, as built, where this document was silent:
   `IntroMotion.kt`, each with a table test.
 - **Frame.** (Unit U8 gave it one vertical rhythm, `IntroRhythm`, see below.) `IntroStepFrame(headline, middle)` is the three zones: the headline on top, the thing to decide in the middle
   (centred in the room under the headline by `introMiddleTop`, and scrolling with the headline when the room runs out), and the
-  decision bar pinned below by the shell.
+  decision bar, which the shell (`IntroBarLayer`) lays over the bottom of the screen (unit U11). The scrolling column is full
+  height, edge to edge down to the bottom of the shell's room, and is never shortened to the bar's top, so nothing is clipped by
+  the bar's slot. The bar is measured first and its height reaches the frame in the same pass through `LocalIntroBarInset`
+  (`reservedPx`, and `shown`). The slot is always kept out of the room the middle is centred in, so the headline and a centred
+  middle (Park & Ride, confirm, theme) do not move when the bar appears. The column gets that height as room at its end
+  (`scrollEndPx`) only while the bar is shown, so the last row can scroll fully clear of it and, with no bar, scrolls to the
+  bottom. It changes only how far the column scrolls, never where a row on screen is, and the scroll position is not touched.
 - **Emoji.** `introEmojiFor(step, selectedThemeId)` is pure and is a table. The destination screen has the pin, the confirm
   screen the star, the Park & Ride screen a car, and the theme screen the transport emoji of the theme chosen: train, metro, bus
   or ferry, and before a choice (or for an id the Intro does not offer) the scooter, entry 0 of `FestivalManager.commonEmojiList`,
@@ -1231,7 +1237,7 @@ Every screen has three zones:
   rather than shrink at a large text size.
 - **Middle, the thing to decide.** Centred in the room under the headline. When the text is large or the screen is short it
   scrolls with the headline, so nothing is clipped or out of reach.
-- **Bottom, the decision bar,** pinned and never scrolling.
+- **Bottom, the decision bar,** laid over the bottom of the screen and never scrolling. The middle zone scrolls under it and ends clear of it while it is shown.
 
 **The destination and origin screens (unit R3).**
 
@@ -1282,8 +1288,8 @@ Every screen has three zones:
 | 320 dp at 200 percent text | The two lines are scaled down together to fit, whole, inside the system bars and the side padding. Nothing is squeezed or cut |
 | Screen reader | Hears `Let's KRAIL` once. The app behind it is not read while the layer is up |
 
-At a large text size or a narrow window nothing is squeezed. The headline, field and rows are in one scrolling column above the pinned
-bar, a stop's name wraps inside its row, and the bar stacks its two whole buttons when they do not fit in a row. The keyboard resizes
+At a large text size or a narrow window nothing is squeezed. The headline, field and rows are in one scrolling column under the
+bar, which the column's end clears while the bar is shown, a stop's name wraps inside its row, and the bar stacks its two whole buttons when they do not fit in a row. The keyboard resizes
 the window (`adjustResize`) and the bar rides above it. `IntroStopStepNarrowTest` checks 320 dp at 200 percent text; the keyboard and
 the focus are on the device list in section 8.
 
@@ -1899,6 +1905,17 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | U10-11 | A stop darker than the chosen colour is mixed with white until it is as light as the chosen colour, by Rec. 709 luma on the colour's own channels | The spec said no stop darker than the chosen colour. Train's partner is Purple Drip and Ferry's is Barbie Pink, both darker than their theme, so they come out lighter and softer than the partner on its own. If that is too pale, the floor is the one number to lower, or the partner can be left as it is for those two | Default, not yet seen by owner |
 | U10-12 | The switch is the constant `FINALE_GRADIENT_FROM_THEME`, `true`, in `FinaleGradient.kt` | The spec asked for one named constant to compare on a device. It is a build time constant and not a Remote Config flag, so no flag default is touched | Default, not yet seen by owner |
 | U10-13 | The glow is left as it is: the theme colour at the existing opacity, in the existing twelve steps | The spec said colours only for the gradient. The four old stops hold no dark colour (the darkest, Metro, is about 0.47), so if the dark areas on a phone are the translucent glow over the dark ground rather than the gradient, this switch will not remove them, and the glow's opacity is the next thing to look at | Default, not yet seen by owner |
+
+### Unit U11, decisions where the spec was silent
+
+Each is a default taken to keep moving. None has been seen by the owner. The scroll position is never touched by any of them.
+
+| # | Decision | Why, and what changes if it is wrong | Decision |
+|---|---|---|---|
+| U11-1 | The decision bar is laid over the bottom of the screen (`IntroBarLayer`) and the scrolling content is full height under it. The column's end gets the bar's height only while the bar is shown | The bar's slot used to be a row of the shell's column, and the list was clipped at the slot's top even when no button showed, so the last row was cut in half above empty space. Now nothing is clipped by an invisible region, and a shown bar never covers the last row. If the owner wants the old pinned slot back, put the bar back in a `Column` under a `weight(1f)` zone | Default, not yet seen by owner |
+| U11-2 | The bar's slot stays out of the room the middle is centred in, shown or not | The reserved height exists so the headline and the middle do not jump when the button appears. Centring in the whole screen would move the middle of Park & Ride, confirm and theme by half a bar when it appears. Only the end of the scroll depends on `shown` | Default, not yet seen by owner |
+| U11-3 | The bar is measured first, in a `SubcomposeLayout`, and its height reaches each frame as `LocalIntroBarInset`. A frame outside the shell, such as a preview, sees no bar | A height read after layout would draw one frame with the wrong room and then move. The cost is one subcomposition of the bar per pass, which is two taj buttons | Default, not yet seen by owner |
+| U11-4 | If the bar goes while the list is scrolled to its very end, the scroll clamps and the rows slide down by up to the bar's height, once | The room for the bar is only there while it is, and the rider cannot un-pick a stop, so this happens only when typing drops the selection, and the list is replaced by the search at the same moment. Keeping the room with no bar would put a hole under the list | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

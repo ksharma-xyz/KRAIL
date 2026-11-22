@@ -44,10 +44,16 @@ internal fun introMiddleTop(zone: Int, headline: Int, middle: Int): Int =
 
 /**
  * The shape every Intro question screen shares: the headline at the top, the thing to decide on in the
- * middle, centred in the space under the headline, and the decision bar below, which the shell pins and this
- * does not hold. Both zones sit in one scrolling column, so when the text is large or the screen is short the
- * headline and the middle scroll together and nothing is clipped or out of reach. With room to spare the
- * headline stays at the top and the middle is centred.
+ * middle, centred in the space under the headline, and the decision bar, which the shell lays over the bottom of the
+ * screen and this does not hold. Both zones sit in one scrolling column that goes full height, edge to edge down to the
+ * bottom of the screen's room, so nothing is clipped by the bar's slot. When the text is large or the screen is short
+ * the headline and the middle scroll together and nothing is out of reach. With room to spare the headline stays at the
+ * top and the middle is centred.
+ *
+ * The bar is read from [LocalIntroBarInset]. Its slot is always kept out of the room the middle is centred in, so the
+ * middle does not move when the bar appears. Only while the bar is shown does the column get room at its end for it
+ * (the height of the bar), so the last row can always scroll clear of it, and that changes only how far the column
+ * scrolls, never where a row on screen is.
  *
  * A screen whose middle changes height while the rider uses it, such as a list that is searched, passes
  * [centreMiddle] false: the middle then starts straight under the headline, so it never moves when its own
@@ -62,6 +68,7 @@ internal fun IntroStepFrame(
 ) {
     val dim = KrailTheme.dimensions
     val rhythm = introRhythm(dim)
+    val bar = LocalIntroBarInset.current
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val zone = maxHeight
         // The headline's room, which it reads to keep its widest word whole in the narrowest windows.
@@ -69,6 +76,7 @@ internal fun IntroStepFrame(
         CompositionLocalProvider(LocalHeadlineRoom provides headlineRoom) {
             IntroFrameLayout(
                 zone = zone,
+                bar = bar,
                 centreMiddle = centreMiddle,
                 headline = {
                     Box(
@@ -90,10 +98,13 @@ internal fun IntroStepFrame(
     }
 }
 
-// The two zones in one scrolling column: the headline at the top, and the middle just under it or centred in the room.
+// The two zones in one scrolling column: the headline at the top, and the middle just under it or centred in the room
+// that is left once the bar's slot is taken out. The column is as tall as the zone or its content plus, while the bar
+// is shown, the bar's height, so the end of the scroll clears the bar and nothing above it moves.
 @Composable
 private fun IntroFrameLayout(
     zone: Dp,
+    bar: IntroBarInset,
     centreMiddle: Boolean,
     headline: @Composable () -> Unit,
     middle: @Composable () -> Unit,
@@ -110,11 +121,11 @@ private fun IntroFrameLayout(
         val middlePlaceable = measurables[1].measure(loose)
         val zonePx = zone.roundToPx()
         val middleTop = if (centreMiddle) {
-            introMiddleTop(zonePx, headlinePlaceable.height, middlePlaceable.height)
+            introMiddleTop(max(0, zonePx - bar.reservedPx), headlinePlaceable.height, middlePlaceable.height)
         } else {
             headlinePlaceable.height
         }
-        layout(constraints.maxWidth, max(zonePx, middleTop + middlePlaceable.height)) {
+        layout(constraints.maxWidth, max(zonePx, middleTop + middlePlaceable.height + bar.scrollEndPx)) {
             headlinePlaceable.place(0, 0)
             middlePlaceable.place(0, middleTop)
         }

@@ -3,10 +3,8 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.widthIn
@@ -41,7 +39,8 @@ private val IntroMaxContentWidth = DUAL_PANE_LIST_WIDTH
  * The flow only moves forward. There is no back button, and system back and the back swipe do nothing on every
  * screen after the first, where they are consumed. On the first screen they follow the platform and leave the app.
  * Content is capped to a phone width and centred, and each screen scrolls, so nothing is ever clipped at a large
- * font or a narrow window. The decision bar stays where it is and the screen scrolls above it.
+ * font or a narrow window. The decision bar is laid over the bottom of the screen and the content goes full height
+ * beneath it: while the bar is shown each screen keeps its last row able to scroll clear of it (`IntroBarLayer`).
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -67,11 +66,30 @@ internal fun IntroFlowScreen(
             .safeDrawingPadding(),
         contentAlignment = Alignment.TopCenter,
     ) {
-        Column(modifier = Modifier.widthIn(max = IntroMaxContentWidth).fillMaxHeight()) {
+        val bar = introBar(state, readiness)
+        IntroBarLayer(
+            barShown = bar?.shown == true,
+            modifier = Modifier.widthIn(max = IntroMaxContentWidth).fillMaxHeight(),
+            bar = bar?.let {
+                {
+                    IntroDecisionBar(
+                        left = it.left,
+                        right = it.right,
+                        onEvent = send,
+                        rightEnabled = it.rightEnabled,
+                        shown = it.shown,
+                        modifier = Modifier.padding(
+                            horizontal = dim.pageHorizontalPadding,
+                            vertical = dim.spacingL,
+                        ),
+                    )
+                }
+            },
+        ) {
             AnimatedContent(
                 targetState = state.step,
                 // Clipped, so a screen sliding past the edge of a capped column never draws in the margin.
-                modifier = Modifier.weight(1f).fillMaxWidth().clipToBounds(),
+                modifier = Modifier.fillMaxSize().clipToBounds(),
                 transitionSpec = { introScreenTransition(initialState, targetState, reduceMotion) },
                 label = "intro-step",
             ) { step ->
@@ -85,20 +103,6 @@ internal fun IntroFlowScreen(
                     )
                     IntroStep.CONFIRM -> IntroConfirmStepContent(state = state)
                 }
-            }
-
-            introBar(state, readiness)?.let { bar ->
-                IntroDecisionBar(
-                    left = bar.left,
-                    right = bar.right,
-                    onEvent = send,
-                    rightEnabled = bar.rightEnabled,
-                    shown = bar.shown,
-                    modifier = Modifier.padding(
-                        horizontal = dim.pageHorizontalPadding,
-                        vertical = dim.spacingL,
-                    ),
-                )
             }
         }
     }

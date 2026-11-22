@@ -4,12 +4,15 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
@@ -80,13 +83,27 @@ class IntroThemeBadgeGridShortTest {
         assertTrue(lastBadgeBottom > barTop, "everything fits above the bar at $barTop, so the scroll is not being tested")
     }
 
+    // The bar is over the bottom of the content now, so a badge scrolled into view can be under it. The content has room
+    // at its end for the bar, so scrolling on by what is under the bar always brings the badge clear of it.
+    private fun scrollClearOfBar(tag: String) {
+        composeRule.onNodeWithTag(tag).performScrollTo()
+        val barTop = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).getUnclippedBoundsInRoot().top
+        val under = composeRule.onNodeWithTag(tag).getUnclippedBoundsInRoot().bottom - barTop
+        if (under > 0.dp) {
+            val px = with(composeRule.density) { under.toPx() }
+            composeRule.onNode(hasScrollAction()).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, px) }
+            composeRule.waitForIdle()
+        }
+    }
+
     @Test
     fun `every badge scrolls fully into view above the bar, whole inside the window and never behind the button`() {
         show()
 
         val window = composeRule.onRoot().getUnclippedBoundsInRoot()
         introThemeChoices().forEach { choice ->
-            composeRule.onNodeWithTag(choice.tag).performScrollTo().assertIsDisplayed()
+            scrollClearOfBar(choice.tag)
+            composeRule.onNodeWithTag(choice.tag).assertIsDisplayed()
 
             val bounds = composeRule.onNodeWithTag(choice.tag).getUnclippedBoundsInRoot()
             val barTop = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).getUnclippedBoundsInRoot().top

@@ -461,6 +461,7 @@ can be saved while the stops failed, (3) the finish never blocks on the stops, i
 | UI branch | Network calls | Location | Timers and polling | Battery | Payload |
 |---|---|---|---|---|---|
 | `IntroFlowScreen`, step 1 and the route | 0 of its own. The one availability call of the Park & Ride step is unchanged. | One fix per Yes, taken by `getCurrentLocation()` (10 s inside the manager, 120 s outside it for the permission dialog, a guess). A turn of the screen before the fix lands may ask again, still one result. | None. Animations only, each once: heading rise 400 ms, cross-fade 120 ms out and 180 ms in, dot width 200 ms. The screen reads `AppDataReadiness.state`, a state flow, and does not poll. | None beyond the fix. Foreground only. | None. The preview and layout tests are test code. |
+| `IntroFirstTripStepContent`, step 2 | 0. It shows names only. The suggestions are the two lists read once from Remote Config (or the bundled default) when the view model is made, and a stop the rider searches for comes from the existing stop search, which the rider opens and which keeps its own cost. The stops table is not read by this step, so it can show before the stops are ready. | None. | None. No timer, no polling and no animation of its own beyond the heading rise, once. | None. Foreground only, and no radio is woken by this step. | None on the wire. About ten short strings in memory. |
 
 Decision rule met: the added calls buy a live car park card and a one tap add for riders who park and ride. They are
 optional, non-blocking, once only and silent on failure.
@@ -539,6 +540,31 @@ Step 1, as built (`IntroParkRideStepContent`), where this document was silent:
   existing goldens are unchanged). On, an open card lists every car park by name and holds the lines for any car park that has
   no reading yet.
 
+Step 2, as built (`IntroFirstTripStepContent`, with the decision in the pure `introTripSections`), where this document was
+silent:
+
+- The heading is "Save your first trip" with a train sticker, in the same type and motion as step 1. Under it, each section
+  is named by a heading, From and To, because a collapsed row shows only a stop name and would not say which end it is.
+- Nothing chosen shows From with the start suggestions and Search another stop. The To section waits for a start, so the rider
+  is asked one thing at a time.
+- A start with no end, which includes the start Add to home filled in, shows From as one collapsed row and To with the end
+  suggestions and Search another stop. The collapsed row is `SavedTripCard`'s container (shape, theme tint, padding and text)
+  drawn for one stop, because `SavedTripCard` itself has no one stop form.
+- Both chosen shows the real `SavedTripCard`, unchanged, with the two names stacked. One tap on it, or on a collapsed row,
+  opens both lists with the current picks marked, so either end is changed from one place. A pick from a list or from the
+  search closes them. The open flag is saved with the screen, so a turn of the screen keeps the lists open, and it is keyed on
+  the picks, so a new pick shows the tile again at once.
+- A list leaves out the stop chosen for the other end, so the rider cannot make a trip from a stop to itself. The suggestions
+  are the shared answer buttons from step 1, the chosen one filled in neutral ink. The theme tint appears on the tile and the
+  collapsed row, as it does on the saved trip card, and on the bottom button.
+- Stops loading shows the suggestions as usual and the button reads Getting ready. Stops that failed show no error and the
+  button works. There is no Try again anywhere in the step.
+- A screen reader hears each row's stop and role: "Change start stop, now Tallawong Station", "Change stops, now Tallawong
+  Station to Central Station" for the tile, "Pick Central Station as the end stop" for a suggestion, and "Search another stop
+  for the start" for the search row. Each contains the words on screen.
+- Every row is a whole item that wraps inside its own width and is at least 48 dp tall. The step scrolls. A test holds this at
+  320 dp with text at 200%, with a stop name long enough to wrap.
+
 ## 8. Test plan
 
 - **Pure logic, fixtures first.**
@@ -572,14 +598,19 @@ Step 1, as built (`IntroParkRideStepContent`), where this document was silent:
 - **Screenshot tests.** Step 1 and step 2 in every state above, light and dark, 320 dp at 200%, using `@PreviewScreen` and
   `@PreviewComponent`. The old `IntroContent*` previews and screenshots are deleted with their code.
   Built so far: step 1 in seven states on a phone (Ask, Locating, No station near, Card loading, Card with numbers, Card
-  unavailable, Added), the tallest card (three car parks) on a 320 dp canvas and on a tablet canvas, and the shell with an empty
-  step 2. Each preview is recorded light, dark and light at 200% text, 36 images in all. The 320 dp and tablet previews live in
+  unavailable, Added) and the tallest card (three car parks) on a 320 dp canvas and on a tablet canvas, and step 2 in four states
+  on a phone (Getting ready, start list, pre-filled start with the end list, tile), the last two on a 320 dp canvas and the tile
+  on a tablet canvas. Each preview is recorded light, dark and light at 200% text. The 320 dp and tablet previews live in
   `intro/v2/narrow` and `intro/v2/wide`, each recorded by its own snapshot class, and are skipped by the phone class by name.
+  The step 2 previews are recorded once, at the end of the Intro work.
 - **UI tests, built.** The shell (the button's words and disabled states, the dots reading Step 1 of 2 and Step 2 of 2, the back
   button, system back on both steps), step 1 (every card state, the answers, the Add row, one card height from the skeleton to the
   numbers and to Added at 411 dp and at 320 dp with text at 200%, nothing outside the window), the location effect (one result for
   each Yes through a turn of the screen before and after the fix, a No in flight, a dismissed dialog, a failure), the route with
-  the real view model, the view model's one `view_screen` for each step visit, and the guard that the fix is never held.
+  the real view model, the view model's one `view_screen` for each step visit, and the guard that the fix is never held. Step 2
+  (every state of `introTripSections` as a pure test, then on a phone the heading, the lists, the collapsed row, the tile,
+  changing a trip, a turn of the screen with the lists open, a stop that came back from the search closing them, and Getting
+  ready and failed stops, then at 320 dp with text at 200% every row whole, stacked and at least 48 dp tall).
 - **Guards that already exist and must stay green.** `ThemeColorRoleRule`, `ClockSystemBan`, `CollectAsStateBan`,
   `SnackbarBan`, `PollingLifecycleGuardTest` (the Intro must not poll), `ViewModelStateDurabilityTest`,
   `NavKeySerializationConfigTest`, `verifyTestWiring`.

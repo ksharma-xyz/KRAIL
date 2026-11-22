@@ -48,6 +48,9 @@ class TripPlannerUiSnapshotTest : BaseSnapshotTest() {
         "PreviewIntroParkRideNarrowCardContent",
         "PreviewIntroParkRideNarrowAdded",
         "PreviewIntroParkRideWideCardContent",
+        "PreviewIntroFirstTripNarrowPrefilled",
+        "PreviewIntroFirstTripNarrowBothChosen",
+        "PreviewIntroFirstTripWideBothChosen",
     )
 
     @Test

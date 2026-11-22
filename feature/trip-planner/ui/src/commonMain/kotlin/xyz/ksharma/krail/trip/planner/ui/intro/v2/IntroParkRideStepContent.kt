@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -68,14 +69,24 @@ internal fun IntroParkRideStepContent(
 
 /**
  * An answer is a neutral button, not one in the theme colour, which belongs to the bottom button
- * alone. The chosen one is filled, and every taj button colours its own label.
+ * alone. The chosen one is filled, and every taj button colours its own label. Step 2 uses the same
+ * button for its suggestions, with [description] for a screen reader when the words on screen are
+ * only a stop name.
  */
 @Composable
-private fun IntroAnswerButton(text: String, selected: Boolean, onClick: () -> Unit) {
+internal fun IntroAnswerButton(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    description: String? = null,
+) {
     val modifier = Modifier
         .fillMaxWidth()
         .heightIn(min = KrailTheme.dimensions.iconXXXL)
-        .semantics { this.selected = selected }
+        .semantics {
+            this.selected = selected
+            description?.let { contentDescription = it }
+        }
     if (selected) {
         Button(onClick = onClick, colors = ButtonDefaults.monochromeButtonColors(), modifier = modifier) {
             Text(text = text, textAlign = TextAlign.Center)

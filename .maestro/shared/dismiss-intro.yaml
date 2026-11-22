@@ -1,5 +1,5 @@
-# Gets past the first-run intro carousel, and is safe to call on a device that
-# has already been through it.
+# Gets past the first-run Intro, and is safe to call on a device that has
+# already been through it.
 #
 # Callers invoke this unconditionally, immediately after `launchApp`. It used to
 # be guarded by the caller on `intro.screen` being visible, which is what broke
@@ -8,14 +8,21 @@
 # against a hierarchy that had nothing in it yet. It skipped, the carousel stayed
 # up, and the caller's next wait counted down against a screen that was never
 # going to arrive. Every flow failed on its first assertion for that reason and
-# no other. Settling here, inside the one file that knows about the carousel, is
+# no other. Settling here, inside the one file that knows about the Intro, is
 # what makes the check meaningful, and it keeps the six callers identical.
 #
-# The carousel is driven by a single button whose label changes per page
-# ("Next", then "Let's KRAIL" on the last one). `intro.action.primary` is the
-# same node throughout, so looping on the tag walks the whole thing without this
-# flow knowing how many pages there are or what any of them say. Adding a page
-# does not require touching this file.
+# The Intro is driven by a single button whose label changes per step ("Next" on
+# the Park & Ride question, then "Skip for now" on the first trip step).
+# `intro.action.primary` is the same node throughout, so looping on the tag
+# walks the whole thing without this flow knowing how many steps there are or
+# what any of them say. Nothing is picked, so the first trip step is skipped.
+#
+# On a cold install the stops are still loading when the first trip step opens.
+# The button then reads "Getting ready" and is disabled for a few seconds, and a
+# tap on it does nothing, so each pass waits for the button to be enabled before
+# it taps. Without that wait the taps are spent on the disabled button and the
+# cap below runs out before the stops are ready. Two passes are enough once the
+# wait is there.
 #
 # `times` is a safety net, not the exit condition: `while` is what ends the
 # loop. Without the cap a button that stops responding would hang the run
@@ -26,12 +33,12 @@
 appId: ${APP_ID}
 ---
 # Wait for the app to stop drawing before looking at anything. Cheap on a warm
-# device, and on a cold one it is the difference between seeing the carousel and
+# device, and on a cold one it is the difference between seeing the Intro and
 # seeing an empty window.
 - waitForAnimationToEnd:
     timeout: 30000
 
-# `optional`, because a device that has already been through the carousel never
+# `optional`, because a device that has already been through the Intro never
 # shows this button. There it warns, costs the timeout below, and the repeat that
 # follows then does nothing. On a clean device it is what absorbs the rest of a
 # slow cold start.
@@ -47,9 +54,17 @@ appId: ${APP_ID}
       visible:
         id: "intro.action.primary"
     commands:
+      # Optional, so a device that never reports the state costs the timeout
+      # once for each pass and then taps as before.
+      - extendedWaitUntil:
+          visible:
+            id: "intro.action.primary"
+            enabled: true
+          timeout: 30000
+          optional: true
       - tapOn:
           id: "intro.action.primary"
-      # The pager animates between pages. Tapping through that animation lands
-      # the second tap on the page that is still sliding in.
+      # The step cross-fades into the next. Tapping through that lands the
+      # second tap on the step that is still fading in.
       - waitForAnimationToEnd:
           timeout: 5000

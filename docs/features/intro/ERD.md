@@ -3,7 +3,7 @@
 Status: Agreed for build (rows IA1 to IA13 of "Assumptions for approval" in section 9 approved by ksharma-xyz on 2026-11-21; the measurement targets and review points in section 11 are still owner decisions)
 Owner: ksharma-xyz
 Touches: `feature/trip-planner/ui` (`intro/`), `feature/trip-planner/state` (`intro/`), `core/analytics`, `io/gtfs` (stops readiness, first PR), `sandook` (one preference key), `.maestro/` (one shared flow, only if the tag changes)
-Rebuild: the Intro is being rebuilt as five screens, one question each (theme, Park & Ride, destination, origin, confirm), in three units. Unit R1 holds the step model, the decision bar, the headline and the Park & Ride screen, and unit R2 the theme screen and the flip that makes it the first. Where sections 1, 2, 6, 9 and 11 still name two steps, Next, Skip for now or one bottom button, sections 3, 5, 7, 8 and 10 are the current text.
+Rebuild: the Intro is being rebuilt as five screens, one question each (theme, Park & Ride, destination, origin, confirm), in four units. Unit R1 holds the step model, the decision bar, the headline and the Park & Ride screen, unit R2 the theme screen and the flip that makes it the first, unit R3 the other three screens, and unit R4 the finale after the last one (section 3, "Unit R4, as built", and section 5, "The finale"). Where sections 1, 2, 6, 9 and 11 still name two steps, Next, Skip for now or one bottom button, sections 3, 5, 7, 8 and 10 are the current text.
 
 The design behind this document was settled in review on 2026-11-21 against an interactive prototype that is not part of
 this repository. Everything a builder needs from it is restated here, so this file stands alone.
@@ -478,6 +478,24 @@ three zone frame, and everything it decides is in pure functions with table test
   `tripBar` with the bars of its three screens, replaced `IntroPendingStepBody` for the origin and confirm screens and deleted it,
   kept `IntroFlowRoute`'s `onApplyTheme` as it is, and sends no `view_screen` of its own: the two names already cover its screens.
 
+Unit R4, as built (the finale), where this document was silent. The finale is the last thing the Intro does: after the trip
+is written and both flags are set, the gradient wordmark `#LET'S KRAIL` glows, settles into the rider's theme colour, that colour
+floods the screen, the app navigates to Saved Trips underneath it, and the colour fades out on an app that is already there. Its
+files are in `intro/finale/`, and everything it decides is a pure function with a table test:
+
+- **The timeline.** `finaleFrameAt(elapsedMs, reduceMotion, fadeMs)` returns one immutable `FinaleFrame`: the phase, how long the
+  wordmark has been entering (which fixes every letter through `letterProgress(index)`), the wordmark's opacity, the glow, the colour
+  blend from the brand gradient to the theme colour, how far the flood has grown, the backdrop's opacity and the whole overlay's
+  opacity. It takes no clock. The phases are ENTER, HOLD, BLEND, FLOOD, NAVIGATE, FADE and DONE, and the table is in section 5.
+- **The run.** `finaleStep(state, tick, reduceMotion)` is one frame of the run, also pure: it moves the clock, says when the app
+  is to be asked to navigate (once), counts the frames the destination has been drawn, and decides when the colour may lift
+  (`isSettled`). The overlay host only feeds it the frame time, the Intro's "navigated" and a tap, so the whole behaviour is
+  tested with a simulated clock and no real time.
+- **The wordmark's numbers.** `FinaleWordmarkSpec.kt`: the two lines `#LET'S` and `KRAIL`, the label read once for a screen reader,
+  the fit (`fitScale`, `wordmarkFitScale`), the brand gradient moved toward the theme colour (`finaleGradientColors`), the glow in twelve
+  steps (`glowStep`, `glowBlurPx`, `glowAlpha`), where the gradient sits as it slides (`gradientRangePx`) and the circle that floods
+  the screen (`floodRadiusPx`).
+
 Unit R1, as built, where this document was silent:
 
 - **Flow order, one place.** `IntroStepFlow.kt` holds the order as pure functions of the state: `stepsInFlow`, `stepAfter`,
@@ -734,6 +752,37 @@ Operator decisions of 2026-11-22: (1) exactly one of start or end picked disable
 are picked (superseded in unit R3: both stops are always chosen before the confirm screen, whose right button saves them and whose
 left button, Not now, leaves without saving), (2) there is no Try again and no error state, a Failed readiness behaves like Ready for the button and a trip
 can be saved while the stops failed, (3) the finish never blocks on the stops, it waits at most 15 s and then proceeds.
+
+### The finale (unit R4)
+
+The timeline, in milliseconds from the first frame, with every number a named constant (`FinaleTimeline.kt`) so a table holds it.
+They are starting points to tune on a phone.
+
+| From | To | Phase | The wordmark | Glow | Colour | Overlay |
+|---|---|---|---|---|---|---|
+| 0 | 600 | ENTER | Eleven letters spring up one after another, 35 ms apart, 250 ms each, with a small overshoot. The backdrop fades in over the first 250 ms | Rises from 0 to 0.6 | The brand gradient (the app's four AI gradient stops) slides across | 1 |
+| 600 | 1500 | HOLD | In place | Swells to 1 and back to 0.6, once | The gradient keeps sliding | 1 |
+| 1500 | 2000 | BLEND | In place | 0.6 | Every gradient stop moves to the theme colour | 1 |
+| 2000 | 2500 | FLOOD | Fades out as the circle grows over it | 0.6 to 0 | A circle of the theme colour grows from the middle of the wordmark to the farthest corner | 1 |
+| 2500 | 2500 | NAVIGATE | Gone | 0 | The theme colour covers the whole screen. The app is asked to navigate, once, and the clock waits here | 1 |
+| 2500 | 3200 | FADE | Gone | 0 | The theme colour | 1 down to 0, eased |
+| 3200 | | DONE | Nothing is drawn | | | 0 |
+
+The real run differs from that table in three ways, all in `finaleStep`:
+
+- **The clock waits at NAVIGATE.** Until the colour covers the screen the clock is the real time. At 2500 ms it stops there, the
+  Intro is asked to navigate (once), and it carries on, from 2500, only when the destination has settled. So the fade is not a fixed
+  700 ms after the cover: it is after the settle.
+- **Settling.** The fade starts when the destination has been drawn for at least two frames since the Intro said it navigated and
+  at least 300 ms have passed since then, or 1500 ms after the app was asked, whichever is first, so the colour can never hang
+  over the app. The overlay counts its own frames. Nothing is called back from Saved Trips, so that screen is not touched.
+- **A tap.** A tap anywhere moves the clock to the covered moment at once (the wordmark is gone and the screen is the solid colour),
+  asks the app to navigate if it has not been asked, drops the 300 ms hold and fades in 300 ms. It is a gesture, never a button. It
+  changes nothing once the fade has started.
+
+Reduced motion (`isReduceMotionEnabled()`) has no wordmark, no glow, no letters and no flood. The theme colour is there on the
+first frame, the app is asked to navigate on it, and it cross-fades away over 200 ms once the destination has settled, by the same
+rule. The whole run with an instant navigation takes about 3.5 s (2.5 s to the cover, about 0.3 s settling, 0.7 s fading).
 
 ## 6. Cost budget (mandatory, never "N/A")
 
@@ -1142,6 +1191,15 @@ in `searchstop/` touched:
   `IntroEntryTest` (the entry opens on the theme screen and chooses one to reach Park & Ride) and `IntroCopyTest` (the tagline
   exemption). `IntroRig` opens on Park & Ride by default so the tests about the later screens still start there, and the
   Park & Ride preview states name that screen. Nothing was deleted.
+- **The finale, pure (unit R4).** `FinaleTimelineTest` (the phases and where they change, every number inside its range at
+  every millisecond from 0 to 4000, flood and colour blend only growing and the wordmark and overlay only fading, the glow swelling
+  once, the app asked to navigate at exactly the covered moment and nowhere else, the letters' spring starting at 0, overshooting by
+  under 15 percent and settling at exactly 1, the reduced motion table, the tap target frame), `FinaleRunTest` (a simulated clock
+  and screen: the app asked once and only at full cover, a long frame that jumps past the cover, the clock waiting at the cover
+  until the settle, the settle table, a navigation that never reports back still revealed at 1500 ms, a slow navigation waited
+  for, a tap during the entrance and after the lift, reduced motion, the run's length) and `FinaleWordmarkSpecTest` (the lines, the
+  label, the fit at a narrow width and at 200 percent text, the gradient at blend 0, halfway and 1, the glow's steps, the flood
+  radius from the middle and from a centre that is not).
 - **Guards added in R1.** `IntroBannedWordsTest` (banned words and characters in every Intro string and string resource,
   with a self check that catches each one), `IntroCopyTest` (every label the bar can show and every headline) and
   `IntroEmojiGuardTest` (any emoji outside the shared list, the pin and the star, and those two outside their one file).

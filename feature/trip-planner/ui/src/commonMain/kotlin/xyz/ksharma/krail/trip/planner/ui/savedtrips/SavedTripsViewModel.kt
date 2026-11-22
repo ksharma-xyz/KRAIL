@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.ksharma.krail.core.analytics.Analytics
@@ -173,6 +174,7 @@ class SavedTripsViewModel(
             // was never saved: the rider backgrounded the app mid edit, and that is a cancel.
             updateUiState { copy(labelChipTap = LabelChipTap.Idle, reorder = null) }
             updateInviteFriendsTileSeenState()
+            loadReorderTipSeenState()
             maybeRequestReview()
         }
         .onCompletion {
@@ -198,6 +200,7 @@ class SavedTripsViewModel(
 
     fun onEvent(event: SavedTripUiEvent) {
         when (event) {
+            is SavedTripUiEvent.DeleteSavedTrip -> onDeleteSavedTrip(event.trip)
             is SavedTripUiEvent.AnalyticsSavedTripCardClick -> onSavedTripCardClick(event)
             SavedTripUiEvent.ReverseStopClick -> {
                 stopResultsManager.reverseSelectedStops()
@@ -243,6 +246,8 @@ class SavedTripsViewModel(
                 copy(dateTimeSelectionItem = event.dateTimeJson?.let(DateTimeSelectionItem::fromJsonString))
             }
             SavedTripUiEvent.StopTracking -> trackingManager.stop()
+            is SavedTripUiEvent.MoveSavedTripToIndex -> onMoveSavedTrip(event.tripId, event.targetIndex)
+            SavedTripUiEvent.MarkReorderTipSeen -> onMarkReorderTipSeen()
             is SavedTripUiEvent.EnterReorder -> updateReorder { it ?: beginReorder(event.liftedKey) }
             is SavedTripUiEvent.ReorderMove -> updateReorder { it?.move(event.fromKey, event.toKey) }
             is SavedTripUiEvent.ReorderRemove -> updateReorder { it?.remove(event.tripId) }
@@ -531,6 +536,53 @@ class SavedTripsViewModel(
                         )
                     }
             }
+    }
+
+    private fun onMoveSavedTrip(tripId: String, targetIndex: Int) {
+        val trips = _uiState.value.savedTrips.toMutableList()
+        val fromIndex = trips.indexOfFirst { it.tripId == tripId }
+        if (fromIndex == -1 || targetIndex !in trips.indices) return
+        if (fromIndex == targetIndex) return
+        val moved = trips.removeAt(fromIndex)
+        trips.add(targetIndex, moved)
+        updateUiState { copy(savedTrips = trips.toImmutableList()) }
+        analytics.track(
+            AnalyticsEvent.SavedTripCardReorderedEvent(
+                fromStopId = moved.fromStopId,
+                toStopId = moved.toStopId,
+                previousIndex = fromIndex,
+                newIndex = targetIndex,
+                totalCount = trips.size,
+            ),
+        )
+        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            trips.forEachIndexed { index, trip ->
+                sandook.updateSavedTripSortOrder(tripId = trip.tripId, sortOrder = index.toLong())
+            }
+        }
+    }
+
+    private fun onDeleteSavedTrip(savedTrip: Trip) {
+        log("onDeleteSavedTrip: $savedTrip")
+        viewModelScope.launch(context = ioDispatcher) {
+            sandook.deleteTrip(tripId = savedTrip.tripId)
+            analytics.trackDeleteSavedTrip(
+                fromStopId = savedTrip.fromStopId,
+                toStopId = savedTrip.toStopId,
+            )
+        }
+    }
+
+    private suspend fun loadReorderTipSeenState() {
+        val hasSeen = preferences.getBoolean(SandookPreferences.KEY_HAS_SEEN_SAVED_TRIP_CARD_REORDER_TIP) ?: false
+        if (!hasSeen) updateUiState { copy(hasSeenReorderTip = false) }
+    }
+
+    private fun onMarkReorderTipSeen() {
+        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            preferences.setBoolean(SandookPreferences.KEY_HAS_SEEN_SAVED_TRIP_CARD_REORDER_TIP, true)
+            // No UI state update, the tip stays visible for the current session, hidden on next launch.
+        }
     }
 
     /** Changes the open reorder session, or starts or drops it. Nothing is written until Done. */

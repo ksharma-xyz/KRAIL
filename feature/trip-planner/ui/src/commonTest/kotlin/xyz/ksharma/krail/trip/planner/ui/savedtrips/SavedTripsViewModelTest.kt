@@ -39,6 +39,7 @@ import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAppReviewManager
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeInviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
@@ -163,6 +164,41 @@ class SavedTripsViewModelTest {
                 assertFalse(item.isSavedTripsLoading)
                 assertTrue(item.savedTrips.isNotEmpty())
 
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN a saved trip WHEN DeleteSavedTrip event is triggered THEN the trip should be deleted and UiState should update`() =
+        runTest {
+            // GIVEN a saved trip
+            val trip = Trip(
+                fromStopId = "FROM_STOP_ID_1",
+                fromStopName = "STOP_NAME_1",
+                toStopId = "TO_ID_1",
+                toStopName = "STOP_NAME_2",
+            )
+            sandook.insertOrReplaceTrip(
+                tripId = trip.tripId,
+                fromStopId = trip.fromStopId,
+                fromStopName = trip.fromStopName,
+                toStopId = trip.toStopId,
+                toStopName = trip.toStopName,
+            )
+
+            // Ensure initial state
+            viewModel.uiState.test {
+                skipItems(2)
+
+                // WHEN the DeleteSavedTrip event is triggered
+                viewModel.onEvent(
+                    SavedTripUiEvent.DeleteSavedTrip(trip = trip),
+                )
+
+                // THEN verify that the trip is deleted and the state is updated
+                val item = awaitItem()
+                assertFalse(item.isSavedTripsLoading)
+                assertTrue(item.savedTrips.isEmpty())
                 cancelAndIgnoreRemainingEvents()
             }
         }
@@ -756,6 +792,91 @@ class SavedTripsViewModelTest {
         }
 
     // endregion Selected Stop Events Tests
+
+    // region MoveSavedTrip, reorder analytics
+    //
+    // The reorder handler is the only path that writes to `sort_order` based on
+    // user gesture. These tests lock down the analytics wire-up so the
+    // dashboard "is reorder used?" question keeps a reliable signal.
+
+    @Test
+    fun `GIVEN three saved trips WHEN MoveSavedTripToIndex fires THEN reorder event is tracked`() =
+        runTest {
+            // Seed three trips so the move has somewhere to go and totalCount > 1.
+            sandook.insertOrReplaceTrip(
+                tripId = "AB",
+                fromStopId = "A",
+                fromStopName = "Alpha",
+                toStopId = "B",
+                toStopName = "Bravo",
+            )
+            sandook.insertOrReplaceTrip(
+                tripId = "CD",
+                fromStopId = "C",
+                fromStopName = "Charlie",
+                toStopId = "D",
+                toStopName = "Delta",
+            )
+            sandook.insertOrReplaceTrip(
+                tripId = "EF",
+                fromStopId = "E",
+                fromStopName = "Echo",
+                toStopId = "F",
+                toStopName = "Foxtrot",
+            )
+            val analytics = fakeAnalytics as FakeAnalytics
+
+            viewModel.uiState.test {
+                skipItems(1)
+                // Wait for savedTrips to land in state before issuing the move.
+                awaitItem()
+
+                viewModel.onEvent(SavedTripUiEvent.MoveSavedTripToIndex("A->B", 2))
+
+                // Drain emissions until we have the reorder event tracked. The
+                // optimistic state update can emit before analytics fires, so we
+                // assert on the tracker rather than racing on uiState.
+                advanceUntilIdle()
+                val tracked = analytics.getTrackedEvent("saved_trip_card_reordered")
+                assertNotNull(tracked, "expected saved_trip_card_reordered to fire")
+                val event = assertIs<AnalyticsEvent.SavedTripCardReorderedEvent>(tracked)
+                assertEquals("A", event.fromStopId)
+                assertEquals("B", event.toStopId)
+                assertEquals(0, event.previousIndex)
+                assertEquals(2, event.newIndex)
+                assertEquals(3, event.totalCount)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN target equals source WHEN MoveSavedTripToIndex fires THEN no reorder event is tracked`() =
+        runTest {
+            sandook.insertOrReplaceTrip(
+                tripId = "AB",
+                fromStopId = "A",
+                fromStopName = "Alpha",
+                toStopId = "B",
+                toStopName = "Bravo",
+            )
+            val analytics = fakeAnalytics as FakeAnalytics
+
+            viewModel.uiState.test {
+                skipItems(1)
+                awaitItem()
+
+                // Source == target is a no-op in the handler. Analytics must mirror
+                // that, otherwise drop-in-place gestures inflate reorder counts.
+                viewModel.onEvent(SavedTripUiEvent.MoveSavedTripToIndex("A->B", 0))
+                advanceUntilIdle()
+
+                assertFalse(analytics.isEventTracked("saved_trip_card_reordered"))
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    // endregion MoveSavedTrip
 
     // region Park & Ride auto-sync analytics (SAVED_TRIPS_SCREEN source)
     //

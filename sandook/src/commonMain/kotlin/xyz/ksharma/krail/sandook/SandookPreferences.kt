@@ -45,6 +45,8 @@ interface SandookPreferences {
 
         const val KEY_LOCATION_PERMISSION_EVER_REQUESTED = "KEY_LOCATION_PERMISSION_EVER_REQUESTED"
 
+        const val KEY_HAS_SEEN_SAVED_TRIP_CARD_REORDER_TIP = "KEY_HAS_SEEN_SAVED_TRIP_CARD_REORDER_TIP"
+
         /**
          * How many saved trips come before the Park & Ride row on home, once the rider has dragged
          * it there. Absent until then, which puts the row after the second trip.

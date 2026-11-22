@@ -1,8 +1,11 @@
 package xyz.ksharma.krail.trip.planner.ui.state.savedtrip
 
 import xyz.ksharma.krail.info.tile.state.InfoTileData
+import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 sealed interface SavedTripUiEvent {
+
+    data class DeleteSavedTrip(val trip: Trip) : SavedTripUiEvent
 
     data class AnalyticsSavedTripCardClick(val fromStopId: String, val toStopId: String) :
         SavedTripUiEvent
@@ -58,6 +61,10 @@ sealed interface SavedTripUiEvent {
     data class DateTimeSelectionChanged(val dateTimeJson: String?) : SavedTripUiEvent
 
     data object StopTracking : SavedTripUiEvent
+
+    data class MoveSavedTripToIndex(val tripId: String, val targetIndex: Int) : SavedTripUiEvent
+
+    data object MarkReorderTipSeen : SavedTripUiEvent
 
     /**
      * A long press on a card began reorder mode, with that card lifted: a trip's id, or

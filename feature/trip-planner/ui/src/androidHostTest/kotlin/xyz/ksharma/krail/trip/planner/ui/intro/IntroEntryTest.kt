@@ -23,6 +23,8 @@ import org.koin.mp.KoinPlatform
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import xyz.ksharma.krail.sandook.SandookPreferences
+import xyz.ksharma.krail.sandook.SandookPreferences.Companion.KEY_HAS_SEEN_INTRO
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
@@ -184,8 +186,25 @@ class IntroEntryTest {
         composeRule.onNodeWithText(PARK_RIDE_HEADING).assertDoesNotExist()
     }
 
+    // The Intro has been finished before, so a new visit is a replay from Settings: nothing is left over.
     @Test
-    fun `a new visit to the Intro starts on the first question again`() {
+    fun `a new visit to a finished Intro, a replay from Settings, starts on the first question again`() {
+        launch()
+        answerNo()
+        composeRule.onNodeWithText(DESTINATION_HEADING).assertIsDisplayed()
+        KoinPlatform.getKoin().get<SandookPreferences>().setBoolean(KEY_HAS_SEEN_INTRO, true)
+
+        leave()
+        composeRule.runOnIdle { holder?.removeState(VISIT) }
+        comeBack()
+
+        composeRule.onNodeWithText(PARK_RIDE_HEADING).assertIsDisplayed()
+        composeRule.onNodeWithText(DESTINATION_HEADING).assertDoesNotExist()
+    }
+
+    // A new view model and a new saved state, as after the app was swiped away, with the Intro not yet finished.
+    @Test
+    fun `a new visit before the Intro is finished, as after the app was killed, opens on the screen the rider left`() {
         launch()
         answerNo()
         composeRule.onNodeWithText(DESTINATION_HEADING).assertIsDisplayed()
@@ -194,8 +213,8 @@ class IntroEntryTest {
         composeRule.runOnIdle { holder?.removeState(VISIT) }
         comeBack()
 
-        composeRule.onNodeWithText(PARK_RIDE_HEADING).assertIsDisplayed()
-        composeRule.onNodeWithText(DESTINATION_HEADING).assertDoesNotExist()
+        composeRule.onNodeWithText(DESTINATION_HEADING).assertIsDisplayed()
+        composeRule.onNodeWithText(PARK_RIDE_HEADING).assertDoesNotExist()
     }
 
     private companion object {

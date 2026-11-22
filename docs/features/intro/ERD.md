@@ -1739,6 +1739,9 @@ in `searchstop/` touched:
   the effect and nothing writes after it, a finished Intro is never resumed). `IntroRig` keeps the progress in a store of its own (a parameter), so
   the order held by the finish tests is not about a write that is not part of it. Changed on purpose: `IntroSavedStateTest` no longer says the
   confirm answer is not saved (it is now saved with the screen, with a test of its own and a snapshot from before it reads as none).
+  `IntroEntryTest` (the real Koin registration, so the real `IntroProgressStore` on the one preference store): "a new visit to the Intro starts on
+  the first question again" now sets the seen flag first and is named for a replay from Settings, because a new visit before the Intro is
+  finished is a resume, and a new test holds that a new visit before the Intro is finished opens on the screen the rider left.
 - **U10 tests, the wordmark's gradient.** `FinaleGradientTest`: for every theme there are four stops and the first is the theme colour, **no stop is darker
   than the theme colour and, for the four themes the Intro offers, none is below a stated luma floor of 0.45** (the darkest offered theme, Metro, is
   about 0.47), the blend to the theme colour never takes a stop below that at 0, a quarter, a half, three quarters and 1, a partner as light as the theme

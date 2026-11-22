@@ -257,22 +257,6 @@ class IntroStopStepTest {
     }
 
     @Test
-    fun `back from the origin screen returns to the destination with the earlier choice listed first`() {
-        show()
-        row(ends[2].stopId).performClick()
-        composeRule.waitForIdle()
-
-        composeRule.onNodeWithContentDescription(BACK_DESCRIPTION).performClick()
-        composeRule.waitForIdle()
-
-        composeRule.onNodeWithText(DESTINATION_HEADING).assertIsDisplayed()
-        assertEquals(
-            true,
-            row(ends[2].stopId).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Selected),
-        )
-    }
-
-    @Test
     fun `the origin screen lists the curated starts, leaves out the chosen end and highlights the first`() {
         show()
         row(ends[1].stopId).performClick()

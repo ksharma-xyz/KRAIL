@@ -28,6 +28,7 @@ import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroFirstStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 
@@ -35,14 +36,13 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 private val IntroMaxContentWidth = DUAL_PANE_LIST_WIDTH
 
 /**
- * The Intro: the back button, the screen, and the decision bar. It holds no state of its own
- * beyond scroll, so every decision is [state] and [readiness], and everything the rider does leaves
- * through [onEvent].
+ * The Intro: the screen and the decision bar. It holds no state of its own beyond scroll, so every decision is
+ * [state] and [readiness], and everything the rider does leaves through [onEvent].
  *
- * System back, like the back button, is [IntroUiEvent.Back] whenever there is a screen to go back
- * to, and on the first screen it follows the platform. Content is capped to a phone width and
- * centred, and each screen scrolls, so nothing is ever clipped at a large font or a narrow window.
- * The decision bar stays where it is and the screen scrolls above it.
+ * The flow only moves forward. There is no back button, and system back and the back swipe do nothing on every
+ * screen after the first, where they are consumed. On the first screen they follow the platform and leave the app.
+ * Content is capped to a phone width and centred, and each screen scrolls, so nothing is ever clipped at a large
+ * font or a narrow window. The decision bar stays where it is and the screen scrolls above it.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -58,8 +58,8 @@ internal fun IntroFlowScreen(
     val searchFocus = remember { FocusRequester() }
     val send = rememberIntroSender(searchFocus, onEvent)
 
-    val canGoBack = state.stepBefore() != null
-    BackHandler(enabled = canGoBack) { send(IntroUiEvent.Back) }
+    // Consumed on every screen after the first, so the rider cannot go back. On the first it is not handled here.
+    BackHandler(enabled = state.step != IntroFirstStep) {}
 
     Box(
         modifier = modifier
@@ -70,8 +70,6 @@ internal fun IntroFlowScreen(
         contentAlignment = Alignment.TopCenter,
     ) {
         Column(modifier = Modifier.widthIn(max = IntroMaxContentWidth).fillMaxHeight()) {
-            IntroTopBar(showBack = canGoBack, onBack = { send(IntroUiEvent.Back) })
-
             AnimatedContent(
                 targetState = state.step,
                 // Clipped, so a screen sliding past the edge of a capped column never draws in the margin.
@@ -110,7 +108,7 @@ internal fun IntroFlowScreen(
 
 /**
  * The way the screen sends an event: to [onEvent], after doing what only the screen can for the keyboard. No search
- * focuses [searchFocus] and shows the keyboard, and a choice or Back hides it and lets go of the focus, so it never
+ * focuses [searchFocus] and shows the keyboard, and a choice hides it and lets go of the focus, so it never
  * stays up over the next screen.
  */
 @OptIn(ExperimentalComposeUiApi::class)

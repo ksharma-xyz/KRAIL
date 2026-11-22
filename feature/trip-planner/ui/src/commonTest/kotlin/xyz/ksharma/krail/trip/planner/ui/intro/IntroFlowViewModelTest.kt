@@ -63,40 +63,6 @@ class IntroFlowViewModelTest {
         }
 
     @Test
-    fun `back returns from the trip step to the question, then to the theme screen, and never goes before it`() =
-        krailRunTest {
-            val rig = IntroRig(this)
-
-            rig.send(IntroUiEvent.AnswerParkRide(yes = false))
-            assertEquals(IntroStep.DESTINATION, rig.state.step)
-            rig.send(IntroUiEvent.Back)
-            assertEquals(IntroStep.PARK_RIDE, rig.state.step)
-            rig.send(IntroUiEvent.Back)
-            assertEquals(IntroStep.THEME, rig.state.step)
-            rig.send(IntroUiEvent.Back)
-            assertEquals(IntroStep.THEME, rig.state.step)
-        }
-
-    @Test
-    fun `back never returns to a Park and Ride screen that had nothing to decide`() = krailRunTest {
-        val noLocation = IntroRig(this)
-        noLocation.send(
-            IntroUiEvent.AnswerParkRide(yes = true),
-            IntroUiEvent.LocationResultReceived(LocationResult.DENIED, null),
-        )
-        assertEquals(IntroStep.DESTINATION, noLocation.state.step)
-
-        noLocation.send(IntroUiEvent.Back)
-
-        assertEquals(IntroStep.THEME, noLocation.state.step, "denied leaves nothing to answer, so back skips it")
-
-        val declined = IntroRig(this)
-        declined.send(IntroUiEvent.AnswerParkRide(yes = false), IntroUiEvent.Back)
-
-        assertEquals(IntroStep.PARK_RIDE, declined.state.step, "a no can still be changed")
-    }
-
-    @Test
     fun `there is no way past the question without answering it`() = krailRunTest {
         val rig = IntroRig(this)
 
@@ -110,22 +76,6 @@ class IntroFlowViewModelTest {
         assertEquals(ON_PARK_RIDE, rig.state)
         assertEquals(emptyList(), rig.log.entries)
     }
-
-    @Test
-    fun `answering no and then going back and answering no again marks the suggestion only once`() =
-        krailRunTest {
-            val rig = IntroRig(this)
-
-            rig.send(IntroUiEvent.AnswerParkRide(yes = false))
-            assertEquals(IntroStep.DESTINATION, rig.state.step)
-            assertEquals(ParkRideAnswer.NO, rig.state.parkRideAnswer)
-            assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE))
-
-            rig.send(IntroUiEvent.Back, IntroUiEvent.AnswerParkRide(yes = false))
-
-            assertEquals(IntroStep.DESTINATION, rig.state.step)
-            assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE))
-        }
 
     @Test
     fun `answering yes keeps the question step and writes nothing until a result arrives, and not now gives up`() =

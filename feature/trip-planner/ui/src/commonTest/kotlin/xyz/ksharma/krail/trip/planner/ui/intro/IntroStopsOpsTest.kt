@@ -134,20 +134,5 @@ class IntroStopsOpsTest {
         assertEquals(IntroSearchPhase.Idle, typed.withSearchResult("cen", null).search)
     }
 
-    @Test
-    fun `leaving a stop screen drops the text and what was found`() {
-        val typed = IntroState(
-            query = "cen",
-            search = IntroSearchPhase.Results(persistentListOf(CENTRAL_STOP)),
-            stopModes = persistentMapOf("200060" to persistentListOf(TransportMode.Train)),
-        )
-
-        val left = typed.withoutSearch()
-
-        assertEquals("", left.query)
-        assertEquals(IntroSearchPhase.Idle, left.search)
-        assertEquals(typed.stopModes, left.stopModes, "the badges are kept, they say nothing about the rider")
-    }
-
     // endregion
 }

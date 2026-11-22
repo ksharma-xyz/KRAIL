@@ -12,7 +12,6 @@ class IntroKeyboardActionTest {
     private val close = listOf(
         IntroUiEvent.ChooseStop(CENTRAL_STOP),
         IntroUiEvent.UseHighlightedStop,
-        IntroUiEvent.Back,
     )
 
     private val leaveAlone = listOf(
@@ -34,7 +33,7 @@ class IntroKeyboardActionTest {
     }
 
     @Test
-    fun `a choice and Back close the keyboard, so it never stays up over the next screen`() {
+    fun `a choice closes the keyboard, so it never stays up over the next screen`() {
         close.forEach { assertEquals(IntroKeyboardAction.Close, it.keyboardAction(), "$it") }
     }
 

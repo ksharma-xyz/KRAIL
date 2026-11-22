@@ -151,13 +151,11 @@ class IntroFlowScreenTest {
     }
 
     @Test
-    fun `every Park and Ride screen that asks has exactly two clickable buttons and no third, and the back button`() {
+    fun `every Park and Ride screen that asks has exactly two clickable buttons and no third`() {
         listOf(ON_PARK_RIDE, PreviewLocatingState, PreviewCardContentState, PreviewAddedState).forEach { state ->
             show(state)
 
-            composeRule.onAllNodes(hasClickAction().and(hasContentDescription(BACK_DESCRIPTION).not()))
-                .assertCountEquals(2)
-            composeRule.onNodeWithContentDescription(BACK_DESCRIPTION).assertExists()
+            composeRule.onAllNodes(hasClickAction()).assertCountEquals(2)
         }
     }
 
@@ -234,57 +232,35 @@ class IntroFlowScreenTest {
     }
 
     @Test
-    fun `the theme screen, the first, has no back button`() {
-        show(IntroState(step = IntroStep.THEME))
+    fun `no screen has a back button`() {
+        IntroStep.entries.forEach { step ->
+            show(IntroState(step = step))
 
-        composeRule.onNodeWithContentDescription("Back").assertDoesNotExist()
+            composeRule.onNodeWithContentDescription("Back").assertDoesNotExist()
+        }
     }
 
     @Test
-    fun `the Park and Ride screen has a back button that sends Back, to the theme screen`() {
-        show(ON_PARK_RIDE)
-
-        composeRule.onNodeWithContentDescription("Back").performClick()
-
-        assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.Back), events)
-    }
-
-    @Test
-    fun `the back button on step 2 sends Back`() {
-        show(stepTwo)
-
-        composeRule.onNodeWithContentDescription("Back").performClick()
-
-        assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.Back), events)
-    }
-
-    @Test
-    fun `system back on step 2 sends Back`() {
-        show(stepTwo)
-
-        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
-        composeRule.waitForIdle()
-
-        assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.Back), events)
-    }
-
-    @Test
-    fun `system back on the theme screen, the first, is left to the platform`() {
+    fun `system back on the theme screen, the first, is left to the platform and leaves the app`() {
         show(IntroState(step = IntroStep.THEME))
 
         composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
         composeRule.waitForIdle()
 
         assertEquals<List<IntroUiEvent>>(emptyList(), events)
+        assertTrue(composeRule.activity.isFinishing, "the platform handled it")
     }
 
     @Test
-    fun `system back on the Park and Ride screen sends Back`() {
-        show(ON_PARK_RIDE)
+    fun `system back on every screen after the first is consumed, so nothing is sent and the app stays`() {
+        IntroStep.entries.filter { it != IntroStep.THEME }.forEach { step ->
+            show(IntroState(step = step))
 
-        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
-        composeRule.waitForIdle()
+            composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
+            composeRule.waitForIdle()
 
-        assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.Back), events)
+            assertEquals<List<IntroUiEvent>>(emptyList(), events, "$step")
+            assertTrue(!composeRule.activity.isFinishing, "$step left the app")
+        }
     }
 }

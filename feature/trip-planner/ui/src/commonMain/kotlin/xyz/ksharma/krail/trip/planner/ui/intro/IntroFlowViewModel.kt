@@ -100,11 +100,6 @@ internal class IntroFlowViewModel(
 
     fun onEvent(event: IntroUiEvent) {
         when (event) {
-            // Back goes one screen back, and does nothing on the first. What was typed on a screen is not kept.
-            IntroUiEvent.Back -> {
-                stopsStep.cancelSearch()
-                update { movedBack().withoutSearch() }
-            }
             is IntroUiEvent.PickTheme -> themeStep.pick(event.themeId)
             IntroUiEvent.ConfirmTheme -> themeStep.confirm()
             is IntroUiEvent.AnswerParkRide -> answerParkRide(event.yes)
@@ -123,10 +118,9 @@ internal class IntroFlowViewModel(
 
     /**
      * The screen shows [step]. Reported as a screen view once each time the step on screen changes to a
-     * different analytics screen, so a turn of the screen that shows the same step again reports nothing,
-     * going from the theme screen to Park & Ride (both the Intro) reports nothing more, and going back to
-     * an earlier screen with a different name is a new visit. After the process is killed the restored step
-     * is reported once more, as a new run.
+     * different analytics screen, so a turn of the screen that shows the same step again reports nothing and
+     * going from the theme screen to Park & Ride (both the Intro) reports nothing more. After the process is
+     * killed the restored step is reported once more, as a new run.
      */
     fun onStepShown(step: IntroStep) {
         val previous = lastStepShown
@@ -180,7 +174,7 @@ internal class IntroFlowViewModel(
      * outcome and only then tells the screen to leave. The wait ends on Ready, on Failed, or after
      * FINISH_WAIT_TIMEOUT_MS, and the finish goes ahead whichever it was. When the stops are not
      * Ready by then the load is asked to carry on in the background, once. A press that no longer has
-     * a screen to finish, because the rider went back while it waited, is abandoned. [save] is the
+     * a screen to finish, because the rider is no longer on the confirm screen, is abandoned. [save] is the
      * positive answer: the trip is written when there is a complete pair, and with the negative answer
      * none is.
      */

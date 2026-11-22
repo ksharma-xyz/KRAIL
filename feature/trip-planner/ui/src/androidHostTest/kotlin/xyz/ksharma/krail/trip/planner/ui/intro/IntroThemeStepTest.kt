@@ -213,11 +213,10 @@ class IntroThemeStepTest {
     }
 
     @Test
-    fun `the screen has the four badges and the one button, and no back button on the first screen`() {
+    fun `the screen has the four badges and the one button`() {
         show(none)
 
         composeRule.onAllNodes(hasClickAction()).assertCountEquals(introThemeChoices().size + 1)
-        composeRule.onNodeWithContentDescription(BACK_DESCRIPTION).assertDoesNotExist()
     }
 
     @Test

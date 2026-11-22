@@ -45,6 +45,3 @@ internal fun IntroState.withSearchResult(text: String, found: List<ListedStop>?)
     found.isEmpty() -> copy(search = IntroSearchPhase.NoMatch)
     else -> copy(search = IntroSearchPhase.Results(found.map { it.stop }.toImmutableList())).withModesOf(found)
 }
-
-/** The state with the typed text and what was found for it dropped, as it is when the rider leaves a stop screen. */
-internal fun IntroState.withoutSearch(): IntroState = copy(query = "", search = IntroSearchPhase.Idle)

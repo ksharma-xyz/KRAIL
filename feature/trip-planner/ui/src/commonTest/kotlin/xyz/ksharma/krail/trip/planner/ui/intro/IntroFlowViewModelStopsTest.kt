@@ -19,8 +19,8 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * The destination and origin screens in the view model: choosing a stop, the right button, the typed search and what
- * Back does. The lists they act on are held by `IntroStopRowsTest`, so these are about the events.
+ * The destination and origin screens in the view model: choosing a stop, the right button and the typed search. The
+ * lists they act on are held by `IntroStopRowsTest`, so these are about the events.
  */
 class IntroFlowViewModelStopsTest {
 
@@ -144,7 +144,7 @@ class IntroFlowViewModelStopsTest {
     }
 
     @Test
-    fun `with a car park as the start the destination goes to the confirm screen and back returns to the destination`() =
+    fun `with a car park as the start the destination goes to the confirm screen`() =
         krailRunTest {
             val parkRideStart = onDestination.copy(
                 parkRideAnswer = ParkRideAnswer.YES,
@@ -157,72 +157,8 @@ class IntroFlowViewModelStopsTest {
 
             rig.send(IntroUiEvent.ChooseStop(CENTRAL_STOP))
             assertEquals(IntroStep.CONFIRM, rig.state.step, "the origin screen is passed over")
-            rig.send(IntroUiEvent.Back)
-
-            assertEquals(IntroStep.DESTINATION, rig.state.step)
-            assertEquals(CENTRAL_STOP.stopId, rig.state.endStopId, "the choice is still there")
+            assertEquals(CENTRAL_STOP.stopId, rig.state.endStopId)
         }
-
-    // endregion
-
-    // region back
-
-    @Test
-    fun `back from the origin screen returns to the destination with the earlier choice leading the list`() =
-        krailRunTest {
-            val rig = IntroRig(this, handle = savedAt(onDestination))
-            rig.send(IntroUiEvent.ChooseStop(WYNYARD_STOP))
-
-            rig.send(IntroUiEvent.Back)
-
-            assertEquals(IntroStep.DESTINATION, rig.state.step)
-            assertEquals(WYNYARD_STOP, rig.state.highlightedStop(rig.viewModel.suggestedStops))
-        }
-
-    @Test
-    fun `back from the confirm screen returns to the origin screen with the start highlighted`() = krailRunTest {
-        val rig = IntroRig(this, handle = savedAt(onDestination))
-        rig.send(IntroUiEvent.ChooseStop(WYNYARD_STOP), IntroUiEvent.ChooseStop(SCHOFIELDS_STOP))
-
-        rig.send(IntroUiEvent.Back)
-
-        assertEquals(IntroStep.ORIGIN, rig.state.step)
-        assertEquals(SCHOFIELDS_STOP, rig.state.highlightedStop(rig.viewModel.suggestedStops))
-    }
-
-    @Test
-    fun `back from the destination goes to the Park and Ride screen, or the theme screen when it was passed over`() =
-        krailRunTest {
-            val asked = IntroRig(this, handle = savedAt(onDestination.copy(parkRideAnswer = ParkRideAnswer.ASK)))
-            asked.send(IntroUiEvent.Back)
-            assertEquals(IntroStep.PARK_RIDE, asked.state.step)
-
-            val passedOver = IntroRig(
-                this,
-                handle = savedAt(
-                    onDestination.copy(
-                        parkRideAnswer = ParkRideAnswer.YES,
-                        locationResult = LocationResult.DENIED,
-                    ),
-                ),
-            )
-            passedOver.send(IntroUiEvent.Back)
-            assertEquals(IntroStep.THEME, passedOver.state.step)
-        }
-
-    @Test
-    fun `back drops the typed text and what it found`() = krailRunTest {
-        val rig = IntroRig(this, handle = savedAt(onDestination.copy(step = IntroStep.ORIGIN)))
-        rig.stopResults.answer = listOf(result(CHATSWOOD_STOP, TransportMode.Train))
-        rig.send(IntroUiEvent.QueryChanged("chat"))
-        pumpOnce(INTRO_SEARCH_DEBOUNCE_MS)
-        assertTrue(rig.state.search is IntroSearchPhase.Results)
-
-        rig.send(IntroUiEvent.Back)
-
-        assertEquals("", rig.state.query)
-        assertEquals(IntroSearchPhase.Idle, rig.state.search)
-    }
 
     // endregion
 

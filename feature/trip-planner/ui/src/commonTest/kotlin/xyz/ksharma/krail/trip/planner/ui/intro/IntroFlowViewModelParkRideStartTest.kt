@@ -127,79 +127,7 @@ class IntroFlowViewModelParkRideStartTest {
     }
 
     @Test
-    fun `coming back and saying not now removes the user added rows only and clears the start the intro filled in`() = krailRunTest {
-        val rig = IntroRig(this)
-        rig.parkRideSandook.insertOrReplaceSavedParkRides(
-            setOf(SavedParkRide("2153478", "31", "Bella Vista Station", "Bella Vista", SavedTrips.value)),
-            SavedTrips,
-        )
-        rig.showBellaVista()
-        rig.send(IntroUiEvent.AddParkRideAndContinue)
-        assertEquals(1, rig.savedRows(UserAdded).size)
-        assertEquals(BELLA_VISTA_STOP.stopId, rig.state.startStopId)
-
-        rig.send(IntroUiEvent.Back, IntroUiEvent.DeclineParkRide)
-
-        assertFalse(rig.state.addedParkRide)
-        assertTrue(rig.savedRows(UserAdded).isEmpty())
-        assertEquals(1, rig.savedRows(SavedTrips).size, "a row a saved trip holds is not the Intro's to remove")
-        assertNull(rig.state.startStopId)
-        assertNull(rig.state.startName)
-        assertFalse(rig.state.startFromParkRide)
-        assertEquals(listOf("add", "remove"), rig.parkRideEvents().map { it.properties?.get("action") })
-        assertEquals(setOf("intro"), rig.parkRideEvents().map { it.properties?.get("source") }.toSet())
-    }
-
-    @Test
-    fun `removal keeps a start the rider picked after the pre-fill`() = krailRunTest {
-        val rig = IntroRig(this)
-        rig.showBellaVista()
-        rig.send(IntroUiEvent.AddParkRideAndContinue)
-        assertTrue(rig.state.startFromParkRide, "the Intro filled it in first")
-        // Choosing the car park's own stop as the destination brings the origin screen back, where the rider picks.
-        rig.send(
-            IntroUiEvent.ChooseStop(BELLA_VISTA_STOP.toIntroStop()),
-            IntroUiEvent.ChooseStop(CENTRAL.toIntroStop()),
-        )
-        assertEquals(IntroStep.CONFIRM, rig.state.step)
-
-        rig.send(IntroUiEvent.Back, IntroUiEvent.Back, IntroUiEvent.Back, IntroUiEvent.DeclineParkRide)
-
-        assertFalse(rig.state.addedParkRide)
-        assertEquals(CENTRAL.stopId, rig.state.startStopId)
-    }
-
-    @Test
-    fun `removal keeps a start the rider picked before the add`() = krailRunTest {
-        val rig = IntroRig(
-            this,
-            handle = savedAt(ON_PARK_RIDE.copy(startStopId = CENTRAL.stopId, startName = CENTRAL.name)),
-        )
-        rig.showBellaVista()
-        rig.send(IntroUiEvent.AddParkRideAndContinue)
-
-        rig.send(IntroUiEvent.Back, IntroUiEvent.DeclineParkRide)
-
-        assertEquals(CENTRAL.stopId, rig.state.startStopId)
-    }
-
-    @Test
-    fun `adding again after removing saves the rows and fills in the start again`() = krailRunTest {
-        val rig = IntroRig(this)
-        rig.showBellaVista()
-        rig.send(IntroUiEvent.AddParkRideAndContinue)
-        rig.send(IntroUiEvent.Back, IntroUiEvent.DeclineParkRide)
-        assertNull(rig.state.startStopId)
-
-        rig.send(IntroUiEvent.Back, IntroUiEvent.AddParkRideAndContinue)
-
-        assertTrue(rig.state.addedParkRide)
-        assertEquals(1, rig.savedRows(UserAdded).size)
-        assertEquals(BELLA_VISTA_STOP.stopId, rig.state.startStopId)
-    }
-
-    @Test
-    fun `the added station, its start and the answer survive a new view model and the card can still be removed`() =
+    fun `the added station, its start and the answer survive a new view model`() =
         krailRunTest {
             val before = IntroRig(this)
             before.showBellaVista()
@@ -211,11 +139,7 @@ class IntroFlowViewModelParkRideStartTest {
             assertEquals(before.state, after.state, "the same Added card, the same start")
             assertTrue(after.state.addedParkRide)
             assertTrue(after.state.startFromParkRide)
-
-            after.send(IntroUiEvent.Back, IntroUiEvent.DeclineParkRide)
-
-            assertTrue(after.savedRows(UserAdded).isEmpty())
-            assertNull(after.state.startStopId)
+            assertEquals(1, after.savedRows(UserAdded).size)
         }
 
     @Test
@@ -242,7 +166,7 @@ class IntroFlowViewModelParkRideStartTest {
         }
 
     @Test
-    fun `a Park and Ride start is the origin, so the origin screen is passed over, and removing it brings it back`() =
+    fun `a Park and Ride start is the origin, so the origin screen is passed over`() =
         krailRunTest {
             val rig = IntroRig(this)
             rig.showBellaVista()
@@ -251,19 +175,6 @@ class IntroFlowViewModelParkRideStartTest {
 
             assertEquals(
                 listOf(IntroStep.THEME, IntroStep.PARK_RIDE, IntroStep.DESTINATION, IntroStep.CONFIRM),
-                rig.state.stepsInFlow(),
-            )
-
-            rig.send(IntroUiEvent.Back, IntroUiEvent.DeclineParkRide)
-
-            assertEquals(
-                listOf(
-                    IntroStep.THEME,
-                    IntroStep.PARK_RIDE,
-                    IntroStep.DESTINATION,
-                    IntroStep.ORIGIN,
-                    IntroStep.CONFIRM,
-                ),
                 rig.state.stepsInFlow(),
             )
         }

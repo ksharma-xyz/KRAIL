@@ -80,7 +80,7 @@ class IntroCopyTest {
     @Test
     fun `no button and no headline has a question mark, an exclamation mark, a colon, a dash, an arrow or a dot`() {
         val strings = barWords() + PARK_RIDE_HEADLINE + DESTINATION_HEADLINE + ORIGIN_HEADLINE + PARK_RIDE_HEADING +
-            DESTINATION_HEADING + ORIGIN_HEADING + STOP_NO_MATCH + BACK_DESCRIPTION + PICK_THEME_HEADLINE +
+            DESTINATION_HEADING + ORIGIN_HEADING + STOP_NO_MATCH + PICK_THEME_HEADLINE +
             PICK_THEME_HEADING
 
         strings.forEach { text ->

@@ -201,18 +201,6 @@ class IntroFlowViewModelFinishTest {
     }
 
     @Test
-    fun `going back while the finish waits abandons it`() = krailRunTest {
-        val rig = rigAt(tripPicked, readiness = StopsReadiness.Loading)
-
-        rig.send(IntroUiEvent.FinishPressed, IntroUiEvent.Back)
-        rig.readiness.emit(StopsReadiness.Ready(stopCount = 100))
-        rig.send()
-
-        assertEquals(listOf("awaitReady"), rig.log.entries)
-        assertEquals(IntroStep.ORIGIN, rig.state.step)
-    }
-
-    @Test
     fun `the finish happens in order readiness then trip then both flags then tracking then the effect`() =
         krailRunTest {
             val rig = rigAt(tripPicked)

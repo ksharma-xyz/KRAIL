@@ -231,21 +231,6 @@ class IntroFlowViewModelParkRideAddTest {
         }
 
     @Test
-    fun `add pressed again on a card that is already added moves on and adds nothing twice`() = krailRunTest {
-        val rig = IntroRig(this)
-        rig.showTallawong()
-        rig.send(IntroUiEvent.AddParkRideAndContinue)
-        rig.send(IntroUiEvent.Back)
-        assertEquals(IntroStep.PARK_RIDE, rig.state.step)
-
-        rig.send(IntroUiEvent.AddParkRideAndContinue)
-
-        assertEquals(IntroStep.DESTINATION, rig.state.step)
-        assertEquals(3, rig.savedRows(UserAdded).size)
-        assertEquals(1, rig.parkRideEvents().size)
-    }
-
-    @Test
     fun `not now on the card moves on, adds nothing and leaves the card as it was`() = krailRunTest {
         val rig = IntroRig(this)
         rig.showTallawong()
@@ -260,33 +245,6 @@ class IntroFlowViewModelParkRideAddTest {
         assertEquals(1, rig.log.count("pref:KEY_PARK_RIDE_SUGGESTION_SHOWN=true"))
     }
 
-    @Test
-    fun `not now after adding takes the station off home again and tracks the removal`() = krailRunTest {
-        val rig = IntroRig(this)
-        rig.showTallawong()
-        rig.send(IntroUiEvent.AddParkRideAndContinue)
-        rig.send(IntroUiEvent.Back)
-
-        rig.send(IntroUiEvent.DeclineParkRide)
-
-        assertFalse(rig.state.addedParkRide)
-        assertTrue(rig.savedRows(UserAdded).isEmpty())
-        assertEquals(listOf("add", "remove"), rig.parkRideEvents().map { it.properties?.get("action") })
-        assertEquals(IntroStep.DESTINATION, rig.state.step)
-    }
-
-    @Test
-    fun `a removal that fails still lets the rider move on and leaves the station added`() = krailRunTest {
-        val rig = IntroRig(this, parkRideSandook = DeleteFailsParkRideSandook())
-        rig.showBellaVista()
-        rig.send(IntroUiEvent.AddParkRideAndContinue)
-        rig.send(IntroUiEvent.Back)
-
-        rig.send(IntroUiEvent.DeclineParkRide)
-
-        assertEquals(IntroStep.DESTINATION, rig.state.step, "never trapped on a failing write")
-        assertTrue(rig.state.addedParkRide, "the row is still there, so the state says so")
-    }
 }
 
 /** Wraps the shared fake and fails the delete, the one write a rider taking Add back cannot be held up by. */

@@ -139,7 +139,7 @@ class IntroParkRideStepNarrowTest {
         val secondary = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION)
         primary.assertTextEquals(PARK_RIDE_ADD).assertInsideWindow("Add to home")
         secondary.assertTextEquals(PARK_RIDE_NOT_NOW).assertInsideWindow("Not now")
-        composeRule.onAllNodes(hasClickAction().and(hasContentDescription(BACK_DESCRIPTION).not())).assertCountEquals(2)
+        composeRule.onAllNodes(hasClickAction()).assertCountEquals(2)
     }
 
     @Test

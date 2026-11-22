@@ -112,10 +112,6 @@ class IntroFlowViewModelParkRideLocateTest {
             assertEquals(ParkRideCardPhase.None, rig.state.parkRideCard, "$result $location")
             assertEquals(ParkRideAnswer.YES, rig.state.parkRideAnswer, "$result $location")
             assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE), "$result $location")
-
-            rig.send(IntroUiEvent.Back)
-            assertEquals(IntroStep.THEME, rig.state.step, "back skips the screen that had nothing to decide")
-            assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE), "written once however often the step is left")
         }
     }
 

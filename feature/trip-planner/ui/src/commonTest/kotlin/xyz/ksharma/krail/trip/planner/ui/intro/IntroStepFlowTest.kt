@@ -58,43 +58,34 @@ class IntroStepFlowTest {
     }
 
     @Test
-    fun `after and before are the neighbours in that order, and null at either end`() {
+    fun `after is the next screen in that order, and null on the last`() {
         orders.forEach { row ->
             row.order.forEachIndexed { index, step ->
                 val at = row.state.copy(step = step)
                 assertEquals(row.order.getOrNull(index + 1), at.stepAfter(row.first), "${row.name}: after $step")
-                assertEquals(row.order.getOrNull(index - 1), at.stepBefore(row.first), "${row.name}: before $step")
             }
         }
     }
 
     @Test
-    fun `the default flow is the five screens in order, opening on the theme screen, with no back on it`() {
+    fun `the default flow is the five screens in order, opening on the theme screen`() {
         assertEquals(THEME, IntroState().step)
         assertEquals(
             listOf(THEME, PARK_RIDE, DESTINATION, ORIGIN, CONFIRM),
             untouched.copy(step = CONFIRM).stepsInFlow(),
         )
-        assertNull(untouched.copy(step = THEME).stepBefore())
-        assertEquals(THEME, untouched.copy(step = THEME).movedBack().step)
         assertEquals(PARK_RIDE, untouched.copy(step = THEME).stepAfter())
         assertEquals(PARK_RIDE, untouched.copy(step = THEME).movedOn().step)
-        assertEquals(THEME, untouched.copy(step = PARK_RIDE).stepBefore())
-        assertEquals(THEME, untouched.copy(step = PARK_RIDE).movedBack().step)
     }
 
     @Test
-    fun `from the theme screen the flow passes over a Park and Ride screen with nothing to decide, both ways`() {
+    fun `from the theme screen the flow passes over a Park and Ride screen with nothing to decide`() {
         assertEquals(DESTINATION, noStationNear.copy(step = THEME).stepAfter())
-        assertEquals(THEME, noStationNear.copy(step = DESTINATION).stepBefore())
         assertEquals(PARK_RIDE, declined.copy(step = THEME).stepAfter())
     }
 
     @Test
-    fun `the first screen has nothing before it and the last has nothing after it`() {
-        assertNull(untouched.copy(step = PARK_RIDE).stepBefore(PARK_RIDE))
-        assertNull(untouched.copy(step = THEME).stepBefore(THEME))
-        assertEquals(THEME, untouched.copy(step = PARK_RIDE).stepBefore(THEME))
+    fun `the last screen has nothing after it`() {
         assertNull(untouched.copy(step = CONFIRM).stepAfter())
     }
 
@@ -104,16 +95,6 @@ class IntroStepFlowTest {
 
         assertEquals(listOf(PARK_RIDE, DESTINATION, ORIGIN, CONFIRM), onIt.stepsInFlow(PARK_RIDE))
         assertEquals(DESTINATION, onIt.stepAfter(PARK_RIDE))
-        assertEquals(THEME, onIt.stepBefore(THEME))
-    }
-
-    @Test
-    fun `back from the destination passes over a Park and Ride screen with nothing to decide`() {
-        assertNull(noStationNear.copy(step = DESTINATION).stepBefore(PARK_RIDE))
-        assertNull(noLocation.copy(step = DESTINATION).stepBefore(PARK_RIDE))
-        assertEquals(THEME, noStationNear.copy(step = DESTINATION).stepBefore(THEME))
-        assertEquals(PARK_RIDE, declined.copy(step = DESTINATION).stepBefore(PARK_RIDE))
-        assertEquals(PARK_RIDE, cardShown.copy(step = DESTINATION).stepBefore(PARK_RIDE))
     }
 
     @Test
@@ -134,7 +115,7 @@ class IntroStepFlowTest {
     fun `leaving Park and Ride moves to the next screen only while the rider is still on it`() {
         assertEquals(DESTINATION, untouched.leavingParkRide(PARK_RIDE).step)
         assertEquals(DESTINATION, noStationNear.copy(step = PARK_RIDE).leavingParkRide(THEME).step)
-        // A look that ends after Back has taken the rider to the theme screen never pulls them forward.
+        // A look that ends after the rider is on another screen never pulls them forward.
         assertEquals(THEME, untouched.copy(step = THEME).leavingParkRide(THEME).step)
         assertEquals(DESTINATION, untouched.copy(step = DESTINATION).leavingParkRide(THEME).step)
     }
@@ -159,23 +140,18 @@ class IntroStepFlowTest {
     }
 
     @Test
-    fun `when a car park is the start the origin screen is passed over, forward and back`() {
+    fun `when a car park is the start the origin screen is passed over`() {
         val onDestination = parkRideStart.copy(step = DESTINATION)
-        val onConfirm = parkRideStart.copy(step = CONFIRM)
 
         assertEquals(CONFIRM, onDestination.stepAfter(), "forward from the destination")
         assertEquals(CONFIRM, onDestination.movedOn().step)
-        assertEquals(DESTINATION, onConfirm.stepBefore(), "back from the confirm screen")
-        assertEquals(DESTINATION, onConfirm.movedBack().step)
     }
 
     @Test
     fun `without a car park start the origin screen sits between the destination and the confirm screen`() {
         val onDestination = declined.copy(step = DESTINATION)
-        val onConfirm = declined.copy(step = CONFIRM)
 
         assertEquals(ORIGIN, onDestination.stepAfter())
-        assertEquals(ORIGIN, onConfirm.stepBefore())
     }
 
     @Test

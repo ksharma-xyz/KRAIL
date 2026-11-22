@@ -146,7 +146,7 @@ class IntroFlowViewModelParkRideAvailabilityTest {
         assertEquals(listOf(TALLAWONG_STATION.mappings), rig.loader.refreshedMappings)
 
         pumpOnce(60 * 60 * 1_000L)
-        rig.send(IntroUiEvent.DeclineParkRide, IntroUiEvent.Back)
+        rig.send(IntroUiEvent.DeclineParkRide)
 
         assertEquals(1, rig.loader.refreshedMappings.size, "no timer, no poll and no retry, only the one call")
     }

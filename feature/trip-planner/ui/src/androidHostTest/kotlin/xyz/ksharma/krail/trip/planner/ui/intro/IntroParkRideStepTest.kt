@@ -110,7 +110,7 @@ class IntroParkRideStepTest {
     fun `the answers are not in the screen, only in the bar, so the screen holds no button of its own`() {
         show(PreviewAskState)
 
-        composeRule.onAllNodes(hasClickAction().and(hasContentDescription(BACK_DESCRIPTION).not())).assertCountEquals(2)
+        composeRule.onAllNodes(hasClickAction()).assertCountEquals(2)
     }
 
     @Test

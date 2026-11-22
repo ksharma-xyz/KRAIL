@@ -6,8 +6,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 
 /** What the Intro screens tell the view model. */
 internal sealed interface IntroUiEvent {
-    data object Back : IntroUiEvent
-
     /**
      * A badge on the theme screen was tapped. It selects the theme and does not move on. An id the Intro does not
      * offer, or the theme already selected, changes nothing.

@@ -140,11 +140,12 @@ If a design breaks one of these rules, the design changes, not the rule.
 35. **The search pill has a back arrow and an X.** Back is a 48 box at the left, like today's search bar. The X shows only
     when the field has content and only clears it, and never dismisses the screen. Back follows rule 39, except from the
     start field, where it returns to To and From with the destination kept. System back and the iOS swipe do the same. In To
-    and From the X clears the destination and raises the keyboard. The From row has a matching 48 column with an origin dot
-    so To and From values start at one x.
+    and From the X clears the destination and raises the keyboard. The From row has a matching 48 column with a filled origin
+    dot so To and From values start at one x.
 36. **To is on top, From is below, and neither row ever moves.** While To is being edited, From shows under it when the
-    rider's location is known. Tapping From edits it in place: the dark fill moves to From and no row changes position. The
-    back arrow stays on the To row and the origin ring on the From row in every state. Both rows are the same width and
+    rider's location is known. Tapping From edits it in place: From becomes the dark text field and To becomes the light
+    button, and no row changes position. The dark fill never slides between rows, because the bar being edited is the dark
+    one. The back arrow stays on the To row and the origin dot on the From row in every state. Both rows are the same width and
     share both edges. The go circle is 40, inside the From bar with 4 around it, in the same column as the clear X above it,
     and has one state. The block has two surface colours in light and dark.
 37. **Every end of a saved trip follows one rule.** A labelled end is the label in bold with its stop small under it. An
@@ -160,8 +161,10 @@ If a design breaks one of these rules, the design changes, not the rule.
     Back, or a tap on the map, returns to the map state, and back again goes home. System back is a two-step exit.
 40. **A Park & Ride card never promises a trip it cannot start.**
 41. **Home and Work chips stay once set.** Tapping Home plans a trip from the nearest stop to Home with no saved trip
-    needed. A long press opens the app's own Manage stop labels screen (expand a row: Save changes, Remove, Delete). There
-    is no floating menu. The chips sit above the pill, in the same column as the cards.
+    needed. There is no long press on a chip. The app's own Manage stop labels screen (expand a row: Save changes, Remove,
+    Delete) opens from the Manage button on the label row in Search Stop. There is no floating menu. The chips sit above
+    the pill, in the same column as the cards. Each chip is taj's chip sized button: a set label is the filled one and an
+    unset label and Park & Ride are the outlined one.
 42. **Nothing is ever laid over content.** No toast, snackbar, banner or floating menu. The result of an action is shown by
     the screen changing. Where a message is needed, it takes a place in the layout and everything else moves to make room.
 43. **Icons and behaviours are the app's own.** Find the app's version of a control before drawing it. A new icon, menu or

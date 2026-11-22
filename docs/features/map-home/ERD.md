@@ -112,9 +112,9 @@ Pure logic first, each its own function with no I/O so one fixture suite covers 
 /** "Last updated x mins ago", stepping to hours and days. Never hides a number. See A6. */
 internal fun ageText(readAt: Instant, now: Instant): String
 
-// module: :feature:trip-planner:ui, caller: the Directions button
-/** Car park coordinates, else the station position, else null. 0.0 / 0.0 counts as missing. */
-internal fun directionsTarget(carPark: LatLng?, station: LatLng?): LatLng?
+// module: :feature:trip-planner:ui, caller: the Directions button. Built in branch 8, see below
+/** The car park's own position, else null. Never the station's. 0.0 / 0.0 counts as missing. */
+internal fun directionsTarget(latitude: Double?, longitude: Double?): LatLng?
 
 // module: :feature:trip-planner:ui, caller: first-run suggestion. Defined by the Intro stack, see docs/features/intro/ERD.md
 internal fun nearestParkRideStation(location: LatLng, stations: List<ParkRideStationPickerItem>, radiusKm: Double): ParkRideStationPickerItem?
@@ -154,6 +154,33 @@ A bar at rest is taj's `TextFieldButton`. The bar being edited, when an `editor`
 `TextFieldDefaults.invertedColors()`, with the slots as its `leadingIcon` and `trailingIcon`. The back arrow and the X are
 taj's `RoundIconButton` with no fill, the origin marker is taj's `SeparatorIcon` and the go circle is taj's `RoundIconButton`
 sized to 40 by modifier. `editor` replaces the earlier `toEditor` and `fromEditor` slots.
+
+Branch 8, the Park & Ride row. All pure, in `savedtrips/ParkRideTile.kt`, `HomeStackOrder.kt` and `ParkRideRefreshHelper.kt`, so each
+rule is a table test and none needs a layout, a clock or a database:
+
+```kotlin
+// module: :feature:trip-planner:ui, callers: ParkRideRow (home), the home list body, SavedTripsViewModel
+internal fun ParkRideUiState.toTile(): ParkRideTile                              // one block per car park, fixed order by name then id
+internal fun totalFreeSpots(facilities: Collection<ParkRideFacilityDetail>): Int? // sum of the car parks with a reading, null with none
+internal fun oldestReadingTime(facilities: Collection<ParkRideFacilityDetail>): String?
+internal fun directionsTarget(latitude: Double?, longitude: Double?): LatLng?    // the car park's own position or null
+internal fun parkRideTileWidth(columnWidth: Dp, fontScale: Float): Dp            // min(148 dp x font scale, column less 60 dp)
+internal fun openTilesAfterTap(open: Set<String>, tapped: String): Set<String>   // one open at a time
+internal fun rowIndexFor(tripCount: Int, storedIndex: Int? = null): Int          // trips before the row: 2 by default, clamped
+internal fun <T> List<T>.splitAroundParkRideRow(rowIndex: Int): Pair<List<T>, List<T>>
+internal fun isOffCooldown(lastCallEpochSeconds: Long?, cooldown: Duration, now: Instant): Boolean // the one decision every fetch makes
+internal fun stopsToRefreshOnOpen(savedStopIds: Collection<String>, openStopIds: Set<String>): List<String>
+```
+
+`ParkRideTile` carries `stationId`, `stationName`, every `stopId` of its car parks (so the Go here branch of branch 13 can pick the
+smallest one that exists in the stops table without reading the state again), `totalFreeSpots`, the time of the oldest reading and one
+`CarParkBlock` per car park (name, free spots, percent full, time, and `directionsTo`, null without a position of its own). The tile has
+no Go here and no Directions of its own: a tile never promises a trip it cannot start (rule 40).
+
+`ParkRideFacilityDetail` gains `latitude` and `longitude` (nullable, null when the stored 0.0 and 0.0 says the reading carried none) and
+`readAtEpochSeconds` (the stored `timestamp`, so the oldest reading can be told). The screen draws `ParkRideRow` from the tiles. A tap on a
+tile raises the existing `ParkRideCardClick`, so the ViewModel's refresh set and poll stay in step, and a tap on Directions raises the new
+`ParkRideDirectionsClick`, which calls `PlatformOps.openMapDirections`, the call the Add Park & Ride sheet already makes.
 
 Reused unchanged: `ParkRideAvailabilityLoader` (fetch for a set of facilities), `filterRefreshableFacilities` and
 `parkRideApiCooldown` (the cooldown), `pollWhileCardsAreOpen` (the expanded-card poll).
@@ -226,6 +253,34 @@ Numbers marked "measured" were taken on 2026-11-21. Anything else says what it i
 The added calls are paid for by the rider seeing current numbers on open instead of only after a tap. They are
 non-blocking, cached, lifecycle-gated and silent on failure.
 
+**Branch 8, the Park & Ride row (one row, numbers from code, guesses labelled).** Opening home asks for the saved stations' numbers once
+(`refreshSavedParkRidesOnOpen`, started from the same `onStart` as the rest of the screen, so also once on each return to the front after
+the 5 s grace). **At most one call per saved car park, only for the ones `isOffCooldown` lets through**, which is the same decision the
+tile tap and the poll make: 120 s in the morning peak (05:00 to 10:00), 600 s outside it, Remote Config defaults. A saved Tallawong is 3
+calls and about 1.0 kB on the wire (the measured 344 to 356 bytes gzip each), a single car park 1 call and about 350 bytes, a station
+inside its cooldown 0 calls and the cached number at once. Opening a tile adds 0 calls beyond what open already spent, because the car
+parks are inside their cooldown. The poll is unchanged and runs only while a tile is open and the screen is in front. **Nothing blocks the
+first frame**: the fetch is its own coroutine, and a test holds the first request open and checks the cached screen has already been
+drawn. The fetch pass is serialized by a mutex, so open and a tile tap landing together call the API once per car park and not twice (the
+cooldown stamp is only written when a reading comes back). A failed call leaves the cached reading as it was and resets the stamp, so
+the next open asks again, and nothing is shown for it: no banner, no toast. The row draws from the database as before: parse cost is the
+existing mapper, and the tile model is a sort of at most a few car parks and a sum (a guess, microseconds, not measured). The row adds no
+timer, so no wake-up: the time on a tile is the stored time of the reading (`Last updated at 8:05 AM`), which needs no tick, and A6's
+once-a-minute redraw of a relative age is not built (A58). Layout: tiles are measured once per frame, the row is `horizontalScroll` with
+the tallest tile setting the height (`IntrinsicSize.Max`), a handful of tiles by construction, so there is no lazy list and no
+subcomposition to pay for. Shared limits: unchanged, still one NSW key shared by every phone, at most 30 calls per car park per hour in
+the peak window and 6 outside it, a ceiling and not a forecast.
+
+| Flow | Calls before | Calls after | Bytes before | Bytes after | Time to results before | after |
+|---|---|---|---|---|---|---|
+| Open home, saved Tallawong (3 car parks), all off cooldown | 0 | 3 | 0 | about 1.0 kB wire | local, not measured | local, the screen is drawn before the first reply, not measured on device |
+| Open home, one saved single car park, off cooldown | 0 | 1 | 0 | about 350 bytes wire | local | local |
+| Open home, every saved car park inside its cooldown | 0 | 0 | 0 | 0 | local | local |
+| Open home, no saved station | 0 | 0 | 0 | 0 | local | local |
+| Tap a tile open (cooldown path) | up to the saved car parks of that station | 0 more when open already asked | up to the same | 0 more | local plus fetch | local, the open tile shows the cached numbers at once |
+| A tile stays open, screen in front | the poll, each cooldown | the same poll | the same | the same | not a feature | unchanged |
+| Home in the background | 0 | 0 | 0 | 0 | none | none |
+
 **Branch 7, the Home and Work chips (one row, numbers from code, guesses labelled).** Opening home adds 0 calls, 0 queries and
 no timer: the chips are drawn from `SavedTripsState.stopLabels`, which the ViewModel already observes. A tap on a set chip costs one
 `UserLocationManager.getCurrentLocation()` (one shot, 10 s timeout inside `UserLocationManagerImpl`, never `locationUpdates`, never
@@ -284,15 +339,16 @@ Shared rate limits: none touched, nothing for a BFF to collapse.
 | Surface | Loading | Empty | Error or offline | Content |
 |---|---|---|---|---|
 | Home trips | cached rows | no trips, map only, no card | as content | the app's `SavedTripCard`. Both ends labelled stays the one-line "Home to Work" form (A1) |
-| Park & Ride tile (one car park) | cached number, or placeholder in the same line box | no row | last reading with its age (A6) | number with "spots" beside it, station name small under it, and the age line |
-| Park & Ride card (several car parks) | per row, as above | as above | per row, as above | one card, a row per car park in a fixed order at equal weight (A3) |
+| Park & Ride tile (closed, any number of car parks) | the cached number at once. With none yet the number and time keep their line boxes, drawn clear and hidden from a screen reader, so the tile shows the station name alone at the same height | no row (no saved station) | last reading with the time it was read (A6, A58), never an error and never hidden for being old | the free spots across the station's car parks with "spots" small beside it, the car icon and station name, and the time of the oldest reading |
+| Park & Ride tile (open) | per car park, the name alone until its reading lands | as above | per car park, the last reading with its time | the station name (closes it), then one block per car park in a fixed order at equal weight (A3, A59), each stacked under the last at every width and text size, with its numbers, its time and, when it has a position of its own, a 48 dp round Directions button (A8) |
 | Home map | flat ground and the rider dot | stops within the radius, or none | "Map offline" chip, flat ground, pins stay | pins, P pins, label pins |
 | Home chips | none until the labels have loaded | not applicable, Home and Work always have a chip | the fallback search when there is no fix, no permission or no stop near | Set Home or Home, Set Work or Work, then + Park & Ride, each 48 dp, wrapping whole or one sideways line over 130% text |
 | Search Stop | map state, no list, no keyboard | recents empty, nearest stops instead | offline chip | list state with recents or results |
 
 - Wireframes and the review page live outside this repo. The rules they enforce are in `docs/MAP_HOME_UX.md`.
-- The multi-car-park card was drawn at normal text (decision sheet, M1, equal weight picked). It is still to be
-  drawn at 320 dp and 200% text before branch 8 is built.
+- The multi-car-park tile was drawn at normal text (decision sheet, M1, equal weight picked). Branch 8 draws it at 320 dp and 200% text
+  in `ParkRideRowPreviews.kt` (closed row, open with several car parks, open with one, no coordinates, loading, stale, each at 100 and
+  200 percent text in light and dark) and pins it with `ParkRideRowLayoutTest`, which reads real node bounds at 320 dp and 200%.
 - A card never changes height because data arrived. Only a tap expands a Park & Ride card.
 
 ## 8. Test plan
@@ -307,7 +363,8 @@ Pure logic, written before the code:
 - `age text steps from minutes to hours to days`
 - `car park rows keep their order when numbers change`
 - `station card lists every car park of the station, saved or not`
-- `directions prefers car park coordinates, then the station, then none`
+- `directions go to the car parks own position or nowhere` (replaces "prefers car park, then the station, then none": the owner ruled that
+  a car park never borrows the station's position, see A8)
 - `directions ignores 0,0 coordinates`
 - `suggests the nearest station within the radius`
 - `suggestion shows once, then never again, whether or not the rider added`
@@ -322,6 +379,34 @@ Park & Ride cases from the brief (nothing decided, tests first):
 - `tile without coordinates has no Directions`
 - `unknown stop still offers Go here`
 - `p card in start search reads Start here`
+
+Park & Ride row (branch 8), written before the code:
+
+- Pure (`ParkRideTileTest`, `HomeStackOrderTest`, `ParkRideCooldownTest`): `the total is the free spots of every car park with a reading`
+  (one car park, three, a full car park, all full is 0 and not missing, a car park with no reading left out, none at all gives no total),
+  `the time is the oldest reading the total is made of`, `an old reading is still shown and never hidden for being old`,
+  `directions go to the car parks own position or nowhere` (a real position, either coordinate missing, 0.0 and 0.0, one zero, off the
+  globe, the edge of the globe), `a car park without a position has no Directions and never borrows the stations`, `car parks keep their
+  order when the numbers change`, `every car park of the station is listed at equal weight, with or without a reading`, `a tile carries
+  every stop id of its station for the Go here branch`, `a station with no car park has no tile`, `a tile is 148 dp scaling with the text
+  and never wider than the column less 60` (the 320 dp at 200% case stops at 260), `a closed tile always leaves 60 dp for the next one`,
+  `tapping a tile opens it, and only one tile is open at a time`, `the row is after the second trip until dragged` (0, 1, 2, 3 and many
+  trips), `a dragged place is kept and clamped`, `a facility is off cooldown once a full cooldown has passed` (never fetched, one second
+  inside, exactly the cooldown, past it, reset by a failed call, a zero cooldown, a stamp in the future).
+- ViewModel (`SavedTripsParkRideOnOpenTest`, existing fakes): `opening home fetches each car park of a saved station once`, `opening
+  home again inside the cooldown spends nothing`, `a car park past its cooldown is fetched again and its neighbour is not`, `several saved
+  stations are each asked once`, `no saved station means no call`, `a failed fetch is retried on the next open`, `opening home does not
+  wait for the network`, `a tap while the open fetch is in flight does not call the same car park twice`, `Directions open the maps app on
+  the car parks own position and name`.
+- Layout (`ParkRideRowLayoutTest`, Robolectric, real bounds): tiles 148 dp wide, 8 dp apart, the first 16 dp in; the next tile peeks past
+  the right edge; the last tile ends 16 dp in at the end of the scroll; 296 dp at 200% in the 560 dp column; 260 dp at 320 dp and 200%
+  with the second tile peeking; the same height with the number loaded, loading or stale, at 411 dp and at 320 dp and 200%; a tile with
+  no reading shows its name alone; a tap opens the tile to the row's width, 16 dp in both sides; every car park a block of its own under
+  the last at one left edge, at 411 dp and at 320 dp and 200%; the name closes the tile and is at least 48 dp tall; Directions is 48 by 48
+  and only on a car park with a position, and tells a screen reader which car park it is for; a closed tile says what a tap does.
+  `SavedTripsListBodyTest`: the row after the second trip, after the only trip, first with no trips, absent with no station, and no
+  heading and no Add card. `SavedTripsColumnLayoutTest`: the row and its first tile sit on the column's edges at every window width.
+  `SavedTripsParkRideRestoreTest`: an open tile survives recreation and the next tap closes it.
 
 Home and Work chips (branch 7), written before the code:
 
@@ -347,7 +432,7 @@ State survival and lifecycle:
   (`rememberSaveable`, never `remember`, for each).
 - `uiState` collected with `collectAsStateWithLifecycle()`. The on-open fetch starts in `repeatOnLifecycle(STARTED)`.
 - No new navigation route is expected. If one is added it goes in `SerializationConfig.kt`.
-- Existing screenshots (`ParkRideCardPreview` and the saved trips ones) change and are re-recorded.
+- Existing screenshots (the saved trips ones, `ParkRideCardPreview` is unchanged because the Intro still draws it) change and are re-recorded.
 - Maestro smoke selectors on home and Search Stop are checked after branches 2 and 3.
 - Device QA, Android: the Pixel 6 Pro, the tablet AVD and a Pixel 9 Pro Fold AVD. iOS: the simulators `iphone-duo`
   and `iphone-pro`. The iOS build must compile (`compileKotlinIosSimulatorArm64`) and install with Xcode 27.2 and
@@ -371,7 +456,7 @@ State survival and lifecycle:
 
 | Gap or decision | Owner | Needed by |
 |---|---|---|
-| The multi-car-park card at 320 dp and 200% text is not drawn yet | ksharma-xyz | before branch 8 |
+| The multi-car-park tile at 320 dp and 200% text. Drawn in `ParkRideRowPreviews.kt` and pinned by `ParkRideRowLayoutTest` in branch 8 | ksharma-xyz | built in branch 8, to look at on a device |
 | Where the shortcuts for custom labels (beyond Home and Work) live in the new Search Stop. Decided (G4): one row at the top of the recents card, scrolling sideways | ksharma-xyz | decided, built in branch 4 |
 | Whether the curated first-open stops (Town Hall, Central, Parramatta, Wynyard) stay for a new rider with location off and no recents. Decided (G5): the Intro's suggested stops list replaces them, each row carrying its own stop id and name | ksharma-xyz | decided, built in branch 4 |
 | Whether the home pill is the same entry as today's search row, with the mic opening Ask KRAIL unchanged | ksharma-xyz | before the home map branch |
@@ -396,7 +481,7 @@ State survival and lifecycle:
 | A5 | Fetch every saved car park on open and on return to foreground, cooldown-gated. No timer on home. The timer runs only while a tile is expanded (existing) | Cooldown 120 s and 600 s from `RemoteConfigDefaults.kt`. Code read: no call on open today | Too few: numbers older than the rider expects. Too many: shared NSW key pressure | Approved by ksharma-xyz, 2026-11-21 |
 | A6 | A number is never hidden for being old. Every Park & Ride number shows its age in words, "Last updated x mins ago" (final wording not chosen, no colon in rider-facing copy), stepping to hours and days when old | The number is from the last successful fetch, so with no network it can be hours old. The reading already carries its time (`timeText`, `timestamp`), and the expanded card already shows "Last updated at". Choosing a cutoff would need data on how fast a lot's number changes, and none exists | A rider reads an old number as current if they miss the age, so the age line is the safeguard and must be on the card face, in the same line box in every state. It adds one line to each tile face. The age text is redrawn once a minute by a local tick while the screen is in front (no network). Showing the absolute time instead would need no tick | Approved by ksharma-xyz, 2026-11-21 (show the age, never hide). The once-a-minute redraw is `Default, not yet seen by owner` |
 | A7 | The map keeps a mode filter. It moves out of the deleted Map Options sheet into a row of the existing `TransportModeChip`s on the Search Stop map state only, under the search pill. The six modes the nearby map offers: Train, Metro, Bus, Light rail, Ferry, Coach. All on by default, not saved between launches (as today). The home map shows every mode | Today the filter is a sideways `LazyRow` of `TransportModeChip` inside `MapOptionsBottomSheet`, which rule 30 deletes. The nearby query is capped at 200 results (`MAX_NEARBY_RESULTS`) and the radius goes from 1 km to 3 km, so in a dense area buses can fill the cap and hide stations. The filter is the rider's way out | Normal text wraps as whole items (rule 13). Over 130% text the row scrolls sideways with a fade at the right edge and the first chip fully visible, the exception rule 4 gives the Home chips. Wrapping at 200% text would cover about half the map, read off the drawn frame and not measured | Approved by ksharma-xyz, 2026-11-21 (decision sheet M2, option B). Keeping the filter was approved earlier |
-| A8 | Directions use car park coordinates, else the station position from the stops table, else no button. A coordinate of exactly 0.0, 0.0 counts as missing | 9 of 9 real responses carry coordinates. The mapper writes `?: 0.0` into `NOT NULL` columns, so a missing value would route to 0,0. No migration is needed: `NSWParkRideFacilityDetail` already stores latitude and longitude | A rider is sent to the wrong place. A car park with no reading yet has no coordinates at all | Approved by ksharma-xyz, 2026-11-21 |
+| A8 | Directions use the car park's own coordinates and nothing else. A car park without them has no Directions button, and never falls back to the station position. A coordinate of exactly 0.0, 0.0 counts as missing | 9 of 9 real responses carry coordinates. The mapper writes `?: 0.0` into `NOT NULL` columns, so a missing value would route to 0,0. No migration is needed: `NSWParkRideFacilityDetail` already stores latitude and longitude | A rider is sent to the wrong place. A car park with no reading yet has no coordinates at all and so no button | Approved by ksharma-xyz, 2026-11-21 (car park, else station, else none). **Narrowed by the owner's ruling (G3, built in branch 8): the car park's own position only, no station fallback** |
 | A9 | First run shows only the "Show stops near you" card, then the rest appears after any answer (rule 46) | The app already has an Intro (seven content pages, gated by `KEY_HAS_SEEN_INTRO`, and Splash sends a first launch to `IntroRoute`). So this first run is the home a rider reaches after the Intro | A new rider sees an empty-looking home | Approved by ksharma-xyz, 2026-11-21 (one choice at a time on home). Superseded in part by `docs/features/intro/ERD.md` (IA1 to IA9): new riders answer the Park & Ride question in the Intro. Pending the owner's approval of that ERD |
 | A10 | A Park & Ride suggestion appears once, when a station is within 5 km (the Intro's approved radius, IA2; this row said 10 km before) of the rider's Home (or their current location before Home is set). Add saves it. Whether or not they add, it is never shown again: one boolean in `SandookPreferences`, set the first time the card is shown. No suggestion if a station is already saved. The radius is Remote Config | Station positions are local, so no network. The earlier 10 km came from rule 47 and is replaced by the Intro's 5 km, to be confirmed by the owner for this stack | A rider who ignores the one card never gets another chance. Accepted | Approved by ksharma-xyz, 2026-11-21 (show once, then never). Superseded in part by the Intro ERD: the Intro sets the flag when it asks, so new riders are not asked again on home, and the radius is decided once, in IA2 there. Pending the owner's approval |
 | A11 | Stations keep the order they were added and do not reorder one by one (rule 38) | none | A rider who wants a different order removes and re-adds a station. Accepted for now, dragging inside the row can come later | Approved by ksharma-xyz, 2026-11-21 (simple for now) |
@@ -466,6 +551,21 @@ The taj compliance pass over the To and From block and the home chips. The spec 
 | A55 | The back arrow and the X keep their tags inside the dark bar by merging their own children, because taj's text field merges the semantics of everything inside it and drops a tag on a node that does not merge. The go circle and the dot are not given the same, because Search Stop never puts them in the dark bar | The Search Stop X test failed until the tag's node merged | A tag that Maestro reads inside the dark bar goes missing again if it is not given the same | Default, not yet seen by owner |
 | A56 | Search Stop opens on the map state, so `02-plan-trip.yaml` and `03-rotation-sweep.yaml` wait for `searchstop.query`, tap it, and only then wait for `searchstop.recents` and type. No flow is changed in any other way. The recents list is not on screen before the tap | Rule 39 | A device with no map still opens on the list, and the extra tap is harmless there | Default, not yet seen by owner |
 
+Branch 8, the Park & Ride row. The spec was silent on each of these. Every one is `Default, not yet seen by owner`.
+
+| # | Assumption | Evidence | What breaks if it is wrong | Decision |
+|---|---|---|---|---|
+| A57 | The Saved Trips and Park & Ride headings, the Add Park & Ride and Add another card and the helper line under it are gone from home. With no saved station there is no row and nothing in its place. The + Park & Ride chip is the way in | Rule 19 bans helper text, the card stack has no headings, and rule 29 says no stations means no row. The chip row already carries "+ Park & Ride" and opens the same picker | A phone in landscape collapses the chips behind the "Plan a trip" button, so a rider with no station opens that first. The "Save a trip and its station's parking shows here" line is gone with its card | Default, not yet seen by owner |
+| A58 | A tile shows the stored time of its oldest reading as `Last updated at 8:05 AM`, the words the open card already used. A6's relative age ("x mins ago") and its once-a-minute redraw are not built | A6 names the absolute time as the alternative that needs no tick, and the owner's brief for this branch says "the time of the reading". The closed tile's time is the oldest of its readings because the total is only as fresh as that | A rider reads "8:05 AM" less quickly than "3 mins ago". The tick is one local timer and can be added later without changing the tile | Default, not yet seen by owner |
+| A59 | An open tile takes the whole row and the other tiles are not drawn while it is open. Tapping the station name closes it. Every car park of the station is one block, stacked under the last at every width, with its own Directions button when it has a position | Rule 29 says one tile open at a time and expanded to the full row width. Drawing the others behind it would stretch every tile to the open one's height | A rider cannot see the next station's tile while one is open and closes it to move on | Default, not yet seen by owner |
+| A60 | The closed tile's total adds the car parks that have a reading and leaves out the ones that do not. With none it shows no number | G1 gives a total across the car parks. A station with one car park still loading or failed would otherwise read as full (0) or hide the others | The total understates until the last car park lands. It can only understate, never promise a space | Default, not yet seen by owner |
+| A61 | A tile with no reading yet, or a failed first fetch, shows the station name alone. The number and the time keep their line boxes, drawn clear and hidden from a screen reader, so the tile is the same height in every state | Rule 22, and "a failed reading shows the cached number or the name without numbers, never a banner" | A permanent failure on first ever load reads as a tile with only a name | Default, not yet seen by owner |
+| A62 | Directions is taj's `RoundIconButton`, 48 dp, with no fill and a ring in the ink colour drawn by a border modifier, because taj has no outlined round icon button. It carries the car park's own name for a screen reader and for the maps app's label, and it raises no analytics event | The UX doc says 48 round, outline. The set chip uses the same border modifier on taj's button (A53). `ParkRideCardClickEvent` still reports a tile open and close | The ring is a border modifier and not a taj outline. The product cannot count Directions taps | Default, not yet seen by owner |
+| A63 | A tile is one saved stop id, as the home cards were, with the car parks the saved rows hold for it. A station whose car parks sit behind several stop ids would draw as several tiles | The default catalogue has none: the four stations with several stop ids (Mona Vale, Sutherland, Hornsby, 489) each have one car park, and the mapper already keeps a car park under one stop id | A live catalogue with a multi stop, multi car park station shows it as two tiles | Default, not yet seen by owner |
+| A64 | In a window wider than the 560 dp column the row runs to the column's edge and not the screen's, so it shares the stack's edges (rule 45). On a phone the column is the screen, so it runs off the screen edge | Rule 45 and the home stack section | On a 700 dp window the peeking tile is cut at the column edge inside the screen | Default, not yet seen by owner |
+| A65 | At 320 dp and normal text two 148 dp tiles and their gaps exactly fill the row, so a third tile has no peek. The 60 dp cap keeps a peek at large text, and at 411 dp the third tile peeks by 83 dp | 16 + 148 + 8 + 148 is 320. The brief fixes 148 dp | A rider with three stations on the narrowest phone at normal text has no sign there is a third | Default, not yet seen by owner |
+| A66 | Opening home fetches every car park the catalogue puts at a saved stop id (the saved rows already hold all of them, because adding a station and a saved trip both store every car park), through `fetchAndSaveParkRideFacilityIfNeeded`, one pass at a time, and the pass is cancelled when the screen has been away longer than the grace | A2b, and the shipped path, which the tap already used | A station saved with only some of its car parks would be asked for all of them | Default, not yet seen by owner |
+
 Source judgement, one row per rule that reads data:
 
 | Decision | Source (data field or parsed text) | Checked against | Reliable |
@@ -524,7 +624,14 @@ raised until the whole stack has passed device QA, then it merges bottom-up. No 
    chips open the stop search for the label, and Manage stop labels opens from the label row on Search Stop. Decisions A18 to A24
    in section 9, and A53 and A54 for the taj parts.
 8. `feat/home-park-ride-row`, the row after the second trip, the multi-car-park card at equal weight with every car
-   park of the station and each age, Directions (rules 29, 40, A2b, A6, A8).
+   park of the station and each age, Directions (rules 29, 40, A2b, A6, A8). Built as `ParkRideTile.kt` (the tile, its total, its time,
+   Directions' target, the width and which tile is open), `HomeStackOrder.kt` (`rowIndexFor`, where the row sits), `ParkRideRow.kt`
+   and `ParkRideRowParts.kt` (the row, the closed and open tile, the car park block and Directions, built from taj's `RoundIconButton`
+   and `Text`, the app's `klickable`, the card shell of `SavedTripCard`, `CarParkFigures` shared with the map sheet card and `CarIcon`
+   from the park ride ui module), `SavedTripsStackItems.kt` (the stack in order, no headings) and the on open fetch in
+   `SavedTripsViewModel` through the existing cooldown. The Saved Trips and Park & Ride headings, the Add card and its helper line
+   are gone. Decisions A57 to A66 in section 9, and the owner's ruling that Directions use a car park's own position only (A8).
+   Left to branch 9: the tip lines, reorder mode and the row's drag.
 9. `feat/home-reorder-block`, the row moves as a block, tip lines removed (rules 31, 38, A14).
 10. `feat/stop-card`, the floating stop card replacing the bottom sheet, with the Park & Ride pin card (A16).
 11. `feat/home-map-background`, the map behind the cards, P pins and label pins, the top row with Discover beside

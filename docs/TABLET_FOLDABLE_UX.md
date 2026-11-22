@@ -159,7 +159,10 @@ SearchStop). `TimeTableRoute` navigation still works via back-stack push.
   Ride section and the search row share one column, `min(pane width, 560 dp)` and centred
   (`columnWidthFor` in `SavedTripsColumn.kt`). The Home, Work and Park & Ride chips sit directly above the
   search row in that column, on the cards' edges, and wrap whole chips (one sideways line over 130% text).
-  A phone narrower than 560 dp keeps its whole width.
+  A phone narrower than 560 dp keeps its whole width. The Park & Ride row is one block in that column,
+  after the second trip, and scrolls sideways inside it: it runs to the screen's edge on a phone and to the
+  column's edge in the wider windows and in the 480 dp pane, with the 16 dp inset at both ends of the scroll.
+  An open tile takes the row's width, so it is as wide as a card in every window.
   A single-pane window of 560 to 839 dp centres a 560 dp column. In the 480 dp left pane the column
   is the whole pane. The list stays the pane's full width so the gutter still scrolls.
 

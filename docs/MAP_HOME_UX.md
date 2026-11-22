@@ -201,7 +201,7 @@ If a design breaks one of these rules, the design changes, not the rule.
 - A card is a whole tap target. Minimum height 48.
 - Saved trip: two stop names stacked, 12 apart. A labelled end follows rule 37.
 - Park & Ride: the free spots as a large number with "spots" small beside it, and the car icon and station name small under
-  it. The number is the total across the station's car parks. Expands in place to each car park with its count, percent full
+  it, then the time of the oldest reading. The number is the total across the station's car parks. Expands in place to each car park with its count, percent full
   and time, each car park its own stacked block, wrapping whole items and never squeezing at any size or text scale.
 - No white card wrapping a group of cards. No heading card.
 
@@ -212,8 +212,10 @@ If a design breaks one of these rules, the design changes, not the rule.
 - Its tiles are 148 wide (scaling with text, never more than the width less 60) and all the same height.
 - The row runs off the right screen edge, with the 16 inset at the left and at the end of the scroll, so the next tile is
   cut by the screen edge and there is no mask or gap.
-- Tapping a tile expands it in place to the full row width: the station name, the car park's spots, percent full and time,
-  and a Directions button (48 round, outline). Tapping the name collapses it.
+- Tapping a tile expands it in place to the full row width: the station name, each car park's spots, percent full and time,
+  and a Directions button (48 round, outline) on each car park that has a position of its own. Tapping the name collapses it.
+  One tile is open at a time and the others wait behind it.
+- No heading sits above the trips or the row, and nothing takes the row's place when no station is saved.
 - The rest of the trips follow the row and scroll vertically inside the stack.
 - A Park & Ride tile is left-aligned like the trip cards. The number line ("124 spots") and the station line (car icon and
   name) share one left edge at 16 padding, 8 apart, with equal padding top and bottom and at least 16 on the right.

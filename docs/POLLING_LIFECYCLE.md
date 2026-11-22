@@ -151,6 +151,17 @@ it compares **instants**, not calendar dates. Comparing dates — which is what 
 screen refreshed a plan every 30 seconds for the rest of the day. Both `LEAVE` and `ARRIVE`
 resolve to the one moment the rider named; a selection at or before now is a live board again.
 
+## Rule: asking once on open is not a poll, and it is the same budget
+
+Home asks for the numbers of every saved Park & Ride station once when it opens or comes back to the
+front (`SavedTripsViewModel.refreshSavedParkRidesOnOpen`). That is one pass, not a loop: nothing
+repeats, so it is not in the register above, and it starts from the same `onStart` that
+`WhileSubscribed` gates, so a backgrounded screen asks for nothing. It goes through
+`fetchAndSaveParkRideFacilityIfNeeded`, which is `isOffCooldown` per facility, so open, a tile tap
+and the poll tick share one budget, and a mutex serialises the passes so an open and a tap that land
+together call the API once per car park. The pass is its own coroutine and never sits inside
+`onStart`, where it would hold up the first emission of `uiState`.
+
 ## Rule: a refresh interval is a budget per subject, not per collector
 
 `WhileSubscribed` stops polling when nobody is looking. It says nothing about what happens

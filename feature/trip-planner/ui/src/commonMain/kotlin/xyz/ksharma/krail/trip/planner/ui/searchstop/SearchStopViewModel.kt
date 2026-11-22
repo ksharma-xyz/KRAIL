@@ -38,7 +38,7 @@ import xyz.ksharma.krail.coroutines.ext.suspendSafeResult
 import xyz.ksharma.krail.sandook.RecentSearchLocation
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.trip.planner.ui.components.normaliseLabelName
-import xyz.ksharma.krail.trip.planner.ui.intro.v2.introSuggestedStops
+import xyz.ksharma.krail.trip.planner.ui.intro.introSuggestedStops
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.AddressSearchEligibility
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.AddressSearchGate

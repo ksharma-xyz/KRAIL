@@ -119,7 +119,6 @@ fun SavedTripsScreen(
     onStopTracking: () -> Unit = {},
     onAddParkRideClick: () -> Unit = {},
     onLabelChipClick: (labelKey: String) -> Unit = {},
-    onLabelChipLongClick: () -> Unit = {},
     // Slot for the dual-pane right side. SavedTrips knows nothing about its content —
     // entry passes a MapStopSelectionPane (or anything else). Empty slot = blank pane.
     rightPane: @Composable BoxScope.() -> Unit = {},
@@ -307,7 +306,6 @@ fun SavedTripsScreen(
                     onDateTimeSelectionClear = { onEvent(SavedTripUiEvent.DateTimeSelectionChanged(null)) },
                     homeChips = homeChips,
                     onLabelChipClick = onLabelChipClick,
-                    onLabelChipLongClick = onLabelChipLongClick,
                     onParkRideChipClick = onAddParkRideClick,
                     modifier = Modifier.align(Alignment.BottomCenter).savedTripsColumn(),
                 )

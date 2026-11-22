@@ -1,10 +1,9 @@
 package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.FlowRow
@@ -13,48 +12,52 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
 import kotlinx.collections.immutable.ImmutableList
+import krail.feature.trip_planner.ui.generated.resources.Res
+import krail.feature.trip_planner.ui.generated.resources.ic_location_on
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.taj.LocalTextColor
+import xyz.ksharma.krail.taj.components.Button
+import xyz.ksharma.krail.taj.components.ButtonDefaults
+import xyz.ksharma.krail.taj.components.OutlinedButton
+import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.theme.krailRipple
-import xyz.ksharma.krail.taj.themeDecorColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
-import xyz.ksharma.krail.trip.planner.ui.components.SetLabelPill
-import xyz.ksharma.krail.trip.planner.ui.components.UnsetLabelPill
+import xyz.ksharma.krail.trip.planner.ui.components.stopLabelIcon
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 
 /**
  * The Home, Work and Park & Ride chips above the home search row, `docs/MAP_HOME_UX.md` rule 41.
  *
- * Whole chips, each at least as tall as the search bar (48 dp, rule 21) and a whole pill with no
- * chevron: they are not dropdowns. When width is short the row wraps whole chips onto the next
+ * Whole chips, each taj's button at its chip size and at least as tall as the search bar (48 dp,
+ * rule 21), a whole pill with no chevron: they are not dropdowns. A set label is taj's filled
+ * [Button] on the stop label surface, and an unset one and Park & Ride are taj's [OutlinedButton]. When width is short the row wraps whole chips onto the next
  * line. Over 130 percent text it is instead one line that scrolls sideways under a fade at the
  * right edge, the one sideways row rule 4 allows here, with the first chip fully visible. The row
  * sits on the screen's own surface so the trips scrolling behind it never show between chips.
  *
- * Tap on a set label plans a trip to it, tap on an unset label starts setting it, and a long press
- * on a set label opens Manage stop labels. Nothing floats over anything: the answer to each is
- * the screen changing.
+ * Tap on a set label plans a trip to it and tap on an unset label starts setting it. There is no
+ * long press: Manage stop labels opens from the label row on Search Stop. Nothing floats over
+ * anything: the answer to each is the screen changing.
  */
 @Composable
 internal fun HomeChipRow(
     chips: ImmutableList<HomeChip>,
     onLabelClick: (labelKey: String) -> Unit,
-    onLabelLongClick: () -> Unit,
     onParkRideClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -72,7 +75,6 @@ internal fun HomeChipRow(
                     label = chip.label,
                     text = chip.text,
                     onClick = { onLabelClick(chip.label.label) },
-                    onLongClick = onLabelLongClick,
                 )
                 HomeChip.ParkRide -> ParkRideChip(onClick = onParkRideClick)
             }
@@ -115,88 +117,91 @@ private fun ScrollingChips(modifier: Modifier, content: @Composable () -> Unit) 
 }
 
 /**
- * Home or Work. Set is the app's solid label pill and unset is its outlined one, so a chip reads the
- * same here as on Search Stop. A long press only means something on a set label.
+ * Home or Work. Set is taj's filled [Button] on the stop label surface and unset is taj's
+ * [OutlinedButton], so a chip reads the same here as on Search Stop.
  */
 @Composable
-private fun LabelChip(
-    label: StopLabel,
-    text: String,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit,
-) {
-    val modifier = Modifier.chipTap(
+private fun LabelChip(label: StopLabel, text: String, onClick: () -> Unit) {
+    val modifier = Modifier.chipTarget(
         tag = TripPlannerTestTags.homeLabelChip(label.label),
         onClickLabel = if (label.isSet) "Plan a trip to ${label.label}" else null,
-        onLongClickLabel = if (label.isSet) "Manage stop labels" else null,
-        onLongClick = if (label.isSet) onLongClick else null,
-        onClick = onClick,
     )
+    val icon = stopLabelIcon(label.label) ?: Res.drawable.ic_location_on
     if (label.isSet) {
-        // The solid label pill is the same near black as the dark screen behind the chip row, so in
-        // dark mode it would show as bare text. The outline token gives it its edge back, drawn over
-        // the fill, and is fainter than an unset chip's ring so the two still read apart.
-        Box(
-            modifier = Modifier.border(
+        Button(
+            onClick = onClick,
+            // The stop label surface is the same near black as the dark screen behind the chip
+            // row, so in dark mode the fill alone would show as bare text. The outline token gives
+            // it its edge back, drawn over the fill, and is fainter than an unset chip's ring so
+            // the two still read apart. taj's Button has no border of its own.
+            modifier = modifier.border(
                 width = KrailTheme.dimensions.strokeThin,
                 color = KrailTheme.colors.outlineSubtle,
-                shape = RoundedCornerShape(KrailTheme.dimensions.radiusFull),
+                shape = ButtonDefaults.chipButtonSize().shape,
             ),
-        ) {
-            SetLabelPill(label = label, modifier = modifier)
-        }
+            colors = ButtonDefaults.buttonColors(
+                customContainerColor = KrailTheme.colors.stopLabelSurface,
+                customContentColor = KrailTheme.colors.onStopLabelSurface,
+            ),
+            dimensions = ButtonDefaults.chipButtonSize(),
+        ) { ChipLabel(icon = icon, text = text) }
     } else {
-        UnsetLabelPill(label = label, text = text, modifier = modifier)
+        OutlinedButton(
+            onClick = onClick,
+            modifier = modifier,
+            dimensions = ButtonDefaults.chipButtonSize(),
+        ) { ChipLabel(icon = icon, text = text) }
     }
 }
 
 /** The way into Park & Ride. Outlined, with the plus the New label chip on Search Stop uses. */
 @Composable
 private fun ParkRideChip(onClick: () -> Unit) {
-    UnsetLabelPill(
-        label = StopLabel(emoji = "", label = PARK_RIDE_LABEL),
-        text = "+ $PARK_RIDE_LABEL",
-        showIcon = false,
-        modifier = Modifier.chipTap(
+    OutlinedButton(
+        onClick = onClick,
+        modifier = Modifier.chipTarget(
             tag = TripPlannerTestTags.SAVED_TRIPS_CHIP_PARK_RIDE,
             onClickLabel = "Add $PARK_RIDE_LABEL",
-            onClick = onClick,
         ),
-    )
+        dimensions = ButtonDefaults.chipButtonSize(),
+    ) { ChipLabel(icon = null, text = "+ $PARK_RIDE_LABEL") }
 }
 
 private const val PARK_RIDE_LABEL = "Park & Ride"
 
+/** A chip's content: its icon, when it has one, and its text, in the button's own colour and type. */
+@Composable
+private fun ChipLabel(icon: DrawableResource?, text: String) {
+    val dim = KrailTheme.dimensions
+    val content = LocalTextColor.current
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (icon != null) {
+            Image(
+                painter = painterResource(icon),
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(content),
+                modifier = Modifier.size(dim.spacingXL),
+            )
+        }
+        Text(text = text)
+    }
+}
+
 /**
- * A whole chip's touch target: at least the search bar's height, clipped to the pill so the
- * ripple stays inside it, tap and, where there is one, long press.
+ * What a chip adds to taj's button: its test tag, the screen reader's name for what a tap does
+ * where the label alone does not say it, and a height of at least the search bar's (48 dp).
  */
 @Composable
-private fun Modifier.chipTap(
-    tag: String,
-    onClick: () -> Unit,
-    onClickLabel: String? = null,
-    onLongClickLabel: String? = null,
-    onLongClick: (() -> Unit)? = null,
-): Modifier {
-    val dim = KrailTheme.dimensions
-    val haptic = LocalHapticFeedback.current
-    return this
-        .testTag(tag)
-        .heightIn(min = dim.textFieldHeight)
-        .clip(RoundedCornerShape(dim.radiusFull))
-        .combinedClickable(
-            interactionSource = remember { MutableInteractionSource() },
-            indication = krailRipple(color = themeDecorColor()),
-            role = Role.Button,
-            onClickLabel = onClickLabel,
-            onLongClickLabel = onLongClickLabel,
-            onLongClick = onLongClick?.let { longClick ->
-                {
-                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    longClick()
-                }
-            },
-            onClick = onClick,
-        )
-}
+private fun Modifier.chipTarget(tag: String, onClickLabel: String?): Modifier = this
+    .testTag(tag)
+    .heightIn(min = KrailTheme.dimensions.textFieldHeight)
+    .then(
+        if (onClickLabel != null) {
+            Modifier.semantics { onClick(label = onClickLabel, action = null) }
+        } else {
+            Modifier
+        },
+    )

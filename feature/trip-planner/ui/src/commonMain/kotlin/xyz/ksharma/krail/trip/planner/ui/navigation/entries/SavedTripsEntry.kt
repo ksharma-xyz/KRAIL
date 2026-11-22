@@ -148,7 +148,6 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             onStopTracking = { viewModel.onEvent(SavedTripUiEvent.StopTracking) },
             onAddParkRideClick = { tripPlannerNavigator.navigateToAddParkRide() },
             onLabelChipClick = { labelKey -> viewModel.onEvent(SavedTripUiEvent.LabelChipClick(labelKey)) },
-            onLabelChipLongClick = { tripPlannerNavigator.navigateToManageStopLabels() },
             fromButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsFromButtonClick)
                 tripPlannerNavigator.navigateToSearchStop(SearchStopFieldType.FROM)

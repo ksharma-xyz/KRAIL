@@ -330,7 +330,6 @@ internal fun BoxScope.SavedTripsBottomSearchRow(
     onDateTimeSelectionClear: () -> Unit = {},
     homeChips: ImmutableList<HomeChip> = persistentListOf(),
     onLabelChipClick: (labelKey: String) -> Unit = {},
-    onLabelChipLongClick: () -> Unit = {},
     onParkRideChipClick: () -> Unit = {},
 ) {
     AnimatedVisibility(
@@ -348,7 +347,6 @@ internal fun BoxScope.SavedTripsBottomSearchRow(
                 HomeChipRow(
                     chips = homeChips,
                     onLabelClick = onLabelChipClick,
-                    onLabelLongClick = onLabelChipLongClick,
                     onParkRideClick = onParkRideChipClick,
                 )
             }

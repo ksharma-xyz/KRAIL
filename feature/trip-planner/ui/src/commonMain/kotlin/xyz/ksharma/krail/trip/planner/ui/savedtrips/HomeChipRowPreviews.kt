@@ -50,7 +50,6 @@ private fun PreviewChips(home: StopLabel, work: StopLabel) {
     HomeChipRow(
         chips = homeChipsFor(persistentListOf(home, work)),
         onLabelClick = {},
-        onLabelLongClick = {},
         onParkRideClick = {},
     )
 }

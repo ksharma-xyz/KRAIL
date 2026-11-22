@@ -3,15 +3,14 @@ package xyz.ksharma.krail.trip.planner.ui.savedtrips
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpRect
@@ -39,7 +38,7 @@ import kotlin.test.assertTrue
  * Rule 41 and the chip row of `docs/MAP_HOME_UX.md` on the real home screen: the chips sit above
  * the search row on the cards' edges, each is 48 dp and a whole pill with no chevron, a short row
  * wraps whole chips, over 130 percent text it scrolls sideways with the first chip fully visible, a
- * long press on a set chip opens Manage and a tap plans.
+ * tap plans and there is no long press.
  *
  * Each test runs in a window of its own width (density 1, so a dp is a pixel) and reads where the
  * real nodes landed.
@@ -218,7 +217,7 @@ class HomeChipRowLayoutTest {
 
     // endregion
 
-    // region taps and long presses
+    // region taps
 
     @Test
     @Config(qualifiers = PHONE)
@@ -234,27 +233,37 @@ class HomeChipRowLayoutTest {
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `a long press on a set chip opens Manage and does not plan`() {
-        var manage = 0
-        val clicked = mutableListOf<String>()
-        setScreen(onChipClick = { clicked += it }, onChipLongClick = { manage++ })
+    fun `no chip has a long press, so Manage stop labels is not behind one`() {
+        setScreen()
 
-        composeRule.onNodeWithTag(TripPlannerTestTags.homeLabelChip("Home")).performTouchInput { longClick() }
-
-        assertEquals(1, manage, "A long press on a set chip opens Manage stop labels.")
-        assertEquals(emptyList(), clicked, "A long press is not also a tap.")
+        allChips().forEach { tag ->
+            val config = composeRule.onNodeWithTag(tag).fetchSemanticsNode().config
+            assertTrue(SemanticsActions.OnLongClick !in config, "The chip $tag should have no long press.")
+            assertTrue(SemanticsActions.OnClick in config, "The chip $tag should still be tappable.")
+        }
     }
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `a long press on an unset chip or the Park & Ride chip opens nothing`() {
-        var manage = 0
-        setScreen(onChipLongClick = { manage++ })
+    fun `a screen reader hears what a tap does on a set chip and on Park & Ride`() {
+        setScreen()
 
-        composeRule.onNodeWithTag(TripPlannerTestTags.homeLabelChip("Work")).performTouchInput { longClick() }
-        composeRule.onNodeWithTag(TripPlannerTestTags.SAVED_TRIPS_CHIP_PARK_RIDE).performTouchInput { longClick() }
+        fun clickLabel(tag: String): String? = composeRule.onNodeWithTag(tag).fetchSemanticsNode()
+            .config[SemanticsActions.OnClick].label
 
-        assertEquals(0, manage)
+        assertEquals("Plan a trip to Home", clickLabel(TripPlannerTestTags.homeLabelChip("Home")))
+        assertEquals("Add Park & Ride", clickLabel(TripPlannerTestTags.SAVED_TRIPS_CHIP_PARK_RIDE))
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `an unset chip has no click label of its own, its text says what it does`() {
+        setScreen()
+
+        val label = composeRule.onNodeWithTag(TripPlannerTestTags.homeLabelChip("Work")).fetchSemanticsNode()
+            .config[SemanticsActions.OnClick].label
+
+        assertEquals(null, label)
     }
 
     @Test
@@ -297,7 +306,6 @@ class HomeChipRowLayoutTest {
         labels: kotlinx.collections.immutable.ImmutableList<StopLabel> = LABELS,
         loading: Boolean = false,
         onChipClick: (String) -> Unit = {},
-        onChipLongClick: () -> Unit = {},
         onAddParkRide: () -> Unit = {},
     ) {
         composeRule.setContent {
@@ -310,7 +318,6 @@ class HomeChipRowLayoutTest {
                             stopLabels = labels,
                         ),
                         onLabelChipClick = onChipClick,
-                        onLabelChipLongClick = onChipLongClick,
                         onAddParkRideClick = onAddParkRide,
                     )
                 }

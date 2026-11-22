@@ -43,6 +43,9 @@ import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
  *
  * @param openStationId the station whose tile is open, or null with every tile closed. Held by the
  * screen, saved across a rotation, so this draws and never decides.
+ * @param interactive false in reorder mode: every tile is closed, none takes a tap or a long press
+ * and the row does not scroll.
+ * @param onTileLongClick a long press on a closed tile, which begins reorder mode.
  */
 @Composable
 internal fun ParkRideRow(
@@ -51,8 +54,11 @@ internal fun ParkRideRow(
     onTileClick: (ParkRideTile) -> Unit,
     onDirectionsClick: (CarParkBlock) -> Unit,
     modifier: Modifier = Modifier,
+    interactive: Boolean = true,
+    onTileLongClick: (() -> Unit)? = null,
 ) {
-    val open = tiles.firstOrNull { it.stationId == openStationId }
+    // Reorder mode draws the row shut and still: a touch on it is a drag of the whole block.
+    val open = tiles.firstOrNull { it.stationId == openStationId }.takeIf { interactive }
     if (open != null) {
         OpenParkRideTile(
             tile = open,
@@ -61,7 +67,13 @@ internal fun ParkRideRow(
             modifier = modifier.padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding),
         )
     } else {
-        ClosedParkRideRow(tiles = tiles, onTileClick = onTileClick, modifier = modifier)
+        ClosedParkRideRow(
+            tiles = tiles,
+            onTileClick = onTileClick,
+            interactive = interactive,
+            onTileLongClick = onTileLongClick,
+            modifier = modifier,
+        )
     }
 }
 
@@ -69,6 +81,8 @@ internal fun ParkRideRow(
 private fun ClosedParkRideRow(
     tiles: ImmutableList<ParkRideTile>,
     onTileClick: (ParkRideTile) -> Unit,
+    interactive: Boolean,
+    onTileLongClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
@@ -79,7 +93,7 @@ private fun ClosedParkRideRow(
                 .testTag(TripPlannerTestTags.SAVED_TRIPS_PARK_RIDE_ROW)
                 // The viewport is the whole column, so a row of one tile is as wide as one of six.
                 .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
+                .horizontalScroll(rememberScrollState(), enabled = interactive)
                 // The tallest tile sets the height and every other tile stretches to it.
                 .height(IntrinsicSize.Max)
                 .padding(horizontal = dim.pageHorizontalPadding),
@@ -87,7 +101,12 @@ private fun ClosedParkRideRow(
         ) {
             tiles.forEach { tile ->
                 key(tile.stationId) {
-                    ClosedParkRideTile(tile = tile, width = tileWidth, onClick = { onTileClick(tile) })
+                    ClosedParkRideTile(
+                        tile = tile,
+                        width = tileWidth,
+                        onClick = if (interactive) ({ onTileClick(tile) }) else null,
+                        onLongClick = onTileLongClick.takeIf { interactive },
+                    )
                 }
             }
         }
@@ -107,7 +126,8 @@ private fun ClosedParkRideRow(
 private fun ClosedParkRideTile(
     tile: ParkRideTile,
     width: Dp,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
+    onLongClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
@@ -118,8 +138,7 @@ private fun ClosedParkRideTile(
             .fillMaxHeight()
             .clip(CardShape)
             .background(color = themeBackgroundColor(), shape = CardShape)
-            .klickable(onClick = onClick)
-            .semantics { onClick(label = "Show car parks at ${tile.stationName}", action = null) }
+            .tileClick(label = "Show car parks at ${tile.stationName}", onClick = onClick, onLongClick = onLongClick)
             .padding(dim.spacingXL),
         verticalArrangement = Arrangement.spacedBy(dim.spacingM, Alignment.CenterVertically),
     ) {

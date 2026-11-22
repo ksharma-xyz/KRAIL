@@ -2,6 +2,8 @@ package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,13 +12,17 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import app.krail.taj.resources.ic_location
 import org.jetbrains.compose.resources.painterResource
@@ -26,6 +32,8 @@ import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.contrast.ContrastAnalyzer.Companion.UI_COMPONENT_CONTRAST_AA
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.krailRipple
+import xyz.ksharma.krail.taj.themeDecorColor
 import xyz.ksharma.krail.taj.themeInkColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import app.krail.taj.resources.Res as TajRes
@@ -146,4 +154,25 @@ private fun DirectionsButton(carParkName: String, facilityId: String, onClick: (
             modifier = Modifier.size(KrailTheme.dimensions.iconS),
         )
     }
+}
+
+/**
+ * A closed tile's touch: a tap opens it and a long press begins reorder mode, so it is the card's
+ * own [combinedClickable] with the app's ripple, as the saved trip card has. taj's `klickable` has
+ * no long press, and the long press is the one way into reorder mode. With no [onClick] the tile is
+ * not touchable at all, which is how reorder mode keeps the whole block one drag target.
+ */
+@Composable
+internal fun Modifier.tileClick(label: String, onClick: (() -> Unit)?, onLongClick: (() -> Unit)?): Modifier {
+    if (onClick == null) return this
+    val interactionSource = remember { MutableInteractionSource() }
+    return this
+        .combinedClickable(
+            interactionSource = interactionSource,
+            indication = krailRipple(color = themeDecorColor()),
+            role = Role.Button,
+            onLongClick = onLongClick,
+            onClick = onClick,
+        )
+        .semantics { onClick(label = label, action = null) }
 }

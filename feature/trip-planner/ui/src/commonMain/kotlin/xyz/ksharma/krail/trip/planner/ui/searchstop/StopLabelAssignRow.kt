@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.core.transport.TransportMode
@@ -105,9 +106,7 @@ internal fun StopLabelAssignRow(
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
                     verticalAlignment = Alignment.CenterVertically,
-                    // A touch more breathing room between the stop name and the
-                    // mode-icon/pill row underneath it.
-                    modifier = Modifier.padding(top = dim.spacingXXS),
+                    modifier = Modifier.padding(top = StopNameToModeIconsGap),
                 ) {
                     transportModeSet.forEach { mode ->
                         TransportModeIcon(transportMode = mode, size = TransportModeIconSize.Small)
@@ -151,6 +150,9 @@ internal fun StopLabelAssignRow(
         Spacer(modifier = Modifier.height(dim.spacingM))
     }
 }
+
+/** The gap between a stop name and the row of mode icons under it. There is no 3 dp token, so this is 1.5 times the old XXS. */
+private val StopNameToModeIconsGap = 3.dp
 
 @Composable
 private fun NewLabelAssignChip(onClick: () -> Unit) {

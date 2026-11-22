@@ -121,8 +121,11 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                 addressType = result.addressType,
             )
             when (result.fieldType) {
+                // A start Search Stop filled in by itself never replaces one that is already set.
                 SearchStopFieldType.FROM ->
-                    viewModel.onEvent(SavedTripUiEvent.FromStopChanged(stopItem.toJsonString()))
+                    if (!result.onlyIfEmpty || viewModel.uiState.value.fromStop == null) {
+                        viewModel.onEvent(SavedTripUiEvent.FromStopChanged(stopItem.toJsonString()))
+                    }
                 SearchStopFieldType.TO ->
                     viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stopItem.toJsonString()))
                 SearchStopFieldType.LABEL -> onLabelStopSelected(result, viewModel::onEvent)

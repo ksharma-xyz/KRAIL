@@ -1,17 +1,23 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,7 +25,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -55,6 +63,11 @@ class SearchStopScreenInteractionTest {
     @get:Rule
     val composeRule = createComposeRule()
 
+    private val quietKeyboard = object : SoftwareKeyboardController {
+        override fun show() = Unit
+        override fun hide() = Unit
+    }
+
     // region Pill row visibility
 
     @Test
@@ -69,7 +82,7 @@ class SearchStopScreenInteractionTest {
         }
 
         // Home + Work pills should NOT be in the tree because there are no
-        // recents below to interact with — see shouldShowPillRow().
+        // recents below to interact with, see shouldShowLabelRow().
         composeRule.onNodeWithText("Home").assertDoesNotExist()
         composeRule.onNodeWithText("Work").assertDoesNotExist()
     }
@@ -89,7 +102,7 @@ class SearchStopScreenInteractionTest {
             }
         }
 
-        // The pill row should be visible because we have recent stops, showing the
+        // The label row leads the card because a label is set, showing the
         // one set label (Home) plus the trailing Manage button. Work stays hidden
         // because it's unset. "Home" renders twice total (pill row + Central
         // Station's own inline pill) — see assignedStop_showsLabelPillInline.
@@ -99,74 +112,164 @@ class SearchStopScreenInteractionTest {
 
     // endregion
 
-    // region Landing surface
+    // region The map state and the list state
 
-    @Test
-    fun singlePane_opensOnTheList_evenWhenAMapIsAlreadyInitialised() {
-        // An initialised map is the case that matters: while `mapUiState` is null the list
-        // renders regardless of the map/list flag, so a fixture without one cannot tell the
-        // two apart. This is how the flag was flipped to map-first in an unrelated commit
-        // and no test noticed.
+    /** A map the rider can open on, with the ground drawn as a stand-in because Robolectric has no GPU. */
+    private fun withMap(state: SearchStopState = SearchStopFixtures.recentWithDefaults()) =
+        state.copy(isMapsAvailable = true, mapUiState = MapUiState.Ready())
+
+    private fun setScreen(
+        state: SearchStopState,
+        keyboard: SoftwareKeyboardController = quietKeyboard,
+        onEvent: (SearchStopUiEvent) -> Unit = {},
+        goBack: () -> Unit = {},
+    ) {
         composeRule.setContent {
             PreviewTheme {
-                SearchStopScreen(
-                    searchStopState = SearchStopFixtures.recentWithDefaults().copy(
-                        isMapsAvailable = true,
-                        mapUiState = MapUiState.Ready(),
-                    ),
-                    onEvent = {},
-                )
+                CompositionLocalProvider(
+                    LocalInspectionMode provides true,
+                    LocalSoftwareKeyboardController provides keyboard,
+                ) {
+                    SearchStopScreen(searchStopState = state, onEvent = onEvent, goBack = goBack)
+                }
             }
         }
+    }
 
-        // The rider's recents, not a map. The map is reached from the button in this list.
+    @Test
+    fun singlePane_opensOnTheMapState_withTheBarAndNoListAndNoKeyboard() {
+        val shown = mutableListOf<String>()
+        val keyboard = object : SoftwareKeyboardController {
+            override fun show() {
+                shown += "show"
+            }
+
+            override fun hide() = Unit
+        }
+        setScreen(withMap(), keyboard = keyboard)
+
+        // Rule 39: the map and one dark pill. The rider's recents are one tap away, not on screen.
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertDoesNotExist()
+        composeRule.onNodeWithText("Central Station").assertDoesNotExist()
+        assert(shown.isEmpty()) { "the map state raises no keyboard, got $shown" }
+    }
+
+    @Test
+    fun tappingTheBar_raisesTheListState() {
+        setScreen(withMap())
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertIsDisplayed()
         composeRule.onNodeWithText("Central Station").assertIsDisplayed()
-        composeRule.onNodeWithText("Town Hall").assertIsDisplayed()
     }
 
     @Test
-    fun selectOnMap_isOfferedInTheList_whenMapsAreAvailable() {
-        composeRule.setContent {
-            PreviewTheme {
-                SearchStopScreen(
-                    searchStopState = SearchStopFixtures.recentWithDefaults()
-                        .copy(isMapsAvailable = true),
-                    onEvent = {},
-                )
-            }
-        }
+    fun theArrowIsTwoStepsBack_listToMapToHome() {
+        var wentBack = 0
+        setScreen(withMap(), goBack = { wentBack++ })
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertIsDisplayed()
 
-        // The only way into the map: the top-bar map pill was removed, so if this row
-        // stops rendering the map becomes unreachable rather than merely opt-in.
-        composeRule.onNodeWithText("Select on map").assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_BACK).performClick()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertDoesNotExist()
+        assert(wentBack == 0) { "the first back returns to the map state and does not leave" }
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_BACK).performClick()
+        composeRule.waitForIdle()
+
+        assert(wentBack == 1) { "the second back goes home, got $wentBack" }
     }
 
     @Test
-    fun selectOnMap_asksForTheMap_whenTapped() {
+    fun theX_showsOnlyWithText_clearsItAndKeepsTheRecents() {
+        var wentBack = 0
+        setScreen(withMap(), goBack = { wentBack++ })
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_CLEAR).assertDoesNotExist()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performTextInput("Cen")
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_CLEAR).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_CLEAR).performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_CLEAR).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertIsDisplayed()
+        assert(wentBack == 0) { "the X never dismisses the screen" }
+    }
+
+    @Test
+    fun withNoMapToOpenOn_theListIsTheScreen() {
+        // Maps are off for this rider: there is no map state to start in, so the list shows at once.
+        setScreen(SearchStopFixtures.recentWithDefaults())
+
+        composeRule.onNodeWithText("Central Station").assertIsDisplayed()
+    }
+
+    @Test
+    fun theMapStateAsksForTheMapOnOpen() {
         val events = mutableListOf<SearchStopUiEvent>()
-        composeRule.setContent {
-            PreviewTheme {
-                SearchStopScreen(
-                    // mapUiState stays null so the map never composes here — this test is
-                    // about the request, and MapLibre does not belong in Robolectric.
-                    searchStopState = SearchStopFixtures.recentWithDefaults()
-                        .copy(isMapsAvailable = true),
-                    onEvent = { events += it },
-                )
-            }
-        }
+        setScreen(SearchStopFixtures.recentWithDefaults().copy(isMapsAvailable = true), onEvent = { events += it })
 
-        composeRule.onNodeWithText("Select on map").performClick()
+        assert(events.contains(SearchStopUiEvent.InitializeMap)) { "expected InitializeMap, got $events" }
+    }
 
-        // Both halves matter: the analytics event says a rider asked for the map, and
-        // InitializeMap is what actually builds it, since nothing initialises it on open
-        // any more.
-        assert(events.contains(SearchStopUiEvent.SelectOnMapButtonClicked)) {
-            "expected SelectOnMapButtonClicked, got $events"
-        }
-        assert(events.contains(SearchStopUiEvent.InitializeMap)) {
-            "expected InitializeMap, got $events"
-        }
+    @Test
+    fun noSelectOnMapRowAnywhere() {
+        setScreen(withMap())
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
+
+        composeRule.onNodeWithText("Select on map").assertDoesNotExist()
+    }
+
+    // endregion
+
+    // region The recents card
+
+    @Test
+    fun theCardShowsAtMostFiveRecents() {
+        val many = (1..8).map { SearchStopState.StopResult("Stop $it", "id_$it") }
+        setScreen(SearchStopFixtures.recentWithDefaults().copy(recentStops = many.toImmutableList()))
+
+        for (shown in 1..5) composeRule.onNodeWithText("Stop $shown").assertIsDisplayed()
+        for (hidden in 6..8) composeRule.onNodeWithText("Stop $hidden").assertDoesNotExist()
+    }
+
+    @Test
+    fun withNoRecentsAndNoLocation_theSuggestedStopsShowAsRows() {
+        val suggested = persistentListOf(SearchStopState.StopResult("Town Hall Station", "200070"))
+        setScreen(
+            SearchStopFixtures.freshInstall().copy(
+                curatedStartStops = suggested,
+                curatedEndStops = suggested,
+            ),
+        )
+
+        composeRule.onNodeWithText("Town Hall Station").assertIsDisplayed()
+        composeRule.onNodeWithText("Recent").assertDoesNotExist()
+    }
+
+    @Test
+    fun theLabelRowScrollsAndLeadsTheCard() {
+        setScreen(SearchStopFixtures.recentWithHomeSet())
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_LABEL_ROW).assertIsDisplayed()
+    }
+
+    // endregion
+
+    // region The location pill
+
+    @Test
+    fun theLocationPillIsOneItemUnderTheForm_onlyWhenPermissionIsNotGranted() {
+        // A fresh Robolectric device has no permission decision recorded, so the one pill shows.
+        setScreen(SearchStopFixtures.recentWithDefaults())
+        composeRule.waitForIdle()
+
+        composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertCountEquals(1)
+        composeRule.onNodeWithText("Location permission required").assertIsDisplayed()
     }
 
     // endregion
@@ -386,7 +489,7 @@ class SearchStopScreenInteractionTest {
         }
 
         // Same "close keyboard before navigating" order as the back button
-        // (SearchTopBar's NavActionButton) — the keyboard must hide before the nav
+        // (the back arrow in the bar): the keyboard must hide before the nav
         // callback fires, otherwise it stays up mid-navigation.
         composeRule.onNodeWithText("Manage").performClick()
 

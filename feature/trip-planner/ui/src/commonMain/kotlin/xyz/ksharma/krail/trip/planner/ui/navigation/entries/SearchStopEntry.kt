@@ -58,9 +58,10 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
             searchStopState = searchStopState,
             fieldType = key.fieldType,
             editTripLeg = key.editTripLeg,
-            onStopSelect = { stopItem ->
+            onStopPicked = { pick ->
+                val stopItem = pick.stop
                 if (key.editTripLeg) {
-                    // Leg-scoped edit from the timetable header — deliver on a
+                    // Leg-scoped edit from the timetable header: deliver on a
                     // dedicated channel so SavedTrips' StopSelectedResult
                     // listener never consumes it.
                     resultEventBus.sendResult(
@@ -71,10 +72,11 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
                         ),
                     )
                 } else {
-                    // Send result using captured bus reference
+                    // The field is the one the rider was editing, which is the one the route named
+                    // unless they switched to the other bar in place.
                     resultEventBus.sendResult(
                         result = StopSelectedResult(
-                            fieldType = key.fieldType,
+                            fieldType = pick.field,
                             stopId = stopItem.stopId,
                             stopName = stopItem.stopName,
                             labelKey = key.labelKey,
@@ -82,6 +84,18 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
                             addressType = stopItem.addressType,
                         ),
                     )
+                    // The start that filled itself in with the stop nearest the rider rides along, and
+                    // is only used where there is no start yet, so a start the rider chose is kept.
+                    pick.autoStart?.let { start ->
+                        resultEventBus.sendResult(
+                            result = StopSelectedResult(
+                                fieldType = SearchStopFieldType.FROM,
+                                stopId = start.stopId,
+                                stopName = start.stopName,
+                                onlyIfEmpty = true,
+                            ),
+                        )
+                    }
                 }
 
                 // Navigate back

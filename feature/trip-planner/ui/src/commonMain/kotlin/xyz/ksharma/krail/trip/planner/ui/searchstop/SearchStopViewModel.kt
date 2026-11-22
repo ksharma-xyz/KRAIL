@@ -39,6 +39,8 @@ import xyz.ksharma.krail.sandook.RecentSearchLocation
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.trip.planner.ui.components.normaliseLabelName
+import xyz.ksharma.krail.trip.planner.ui.intro.v2.introSuggestedStops
+import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.AddressSearchEligibility
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.AddressSearchGate
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.DEFAULT_ADDRESS_SEARCH_MIN_QUERY_LENGTH
@@ -71,7 +73,15 @@ class SearchStopViewModel(
     private val addressSearchMinQueryLength: () -> Int = { DEFAULT_ADDRESS_SEARCH_MIN_QUERY_LENGTH },
 ) : ViewModel() {
 
-    private val _uiState: MutableStateFlow<SearchStopState> = MutableStateFlow(SearchStopState())
+    private val isMapsAvailable: Boolean by lazy {
+        flag.getFlagValue(FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key)
+            .asBoolean(fallback = false)
+    }
+
+    // Starts with the flag already read, so the first frame knows whether there is a map to open on
+    // and a rider without one never sees the list for a frame before the map state takes over.
+    private val _uiState: MutableStateFlow<SearchStopState> =
+        MutableStateFlow(SearchStopState(isMapsAvailable = isMapsAvailable))
     val uiState: StateFlow<SearchStopState> = _uiState
         .onStart {
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SearchStop)
@@ -82,17 +92,18 @@ class SearchStopViewModel(
             if (!hasSeenOptions) {
                 updateUiState { copy(showMapOptionsOnOpen = true) }
             }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SearchStopState())
+        }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            SearchStopState(isMapsAvailable = isMapsAvailable),
+        )
 
     init {
         // Single VM-lifetime observer so DB updates always reach the UI even if
         // the screen briefly unsubscribes (e.g. across config changes).
         observeStopLabels()
-    }
-
-    private val isMapsAvailable: Boolean by lazy {
-        flag.getFlagValue(FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key)
-            .asBoolean(fallback = false)
+        loadCuratedStops()
     }
 
     private var searchJob: Job? = null
@@ -229,10 +240,6 @@ class SearchStopViewModel(
             is SearchStopUiEvent.ShowCompassToggled -> {
                 log("[NEARBY_STOPS] ShowCompassToggled: ${event.enabled}")
                 onShowCompassToggled(event.enabled)
-            }
-
-            SearchStopUiEvent.SelectOnMapButtonClicked -> {
-                analytics.track(AnalyticsEvent.SelectOnMapButtonClickEvent)
             }
 
             SearchStopUiEvent.MapOptionsButtonClicked -> {
@@ -660,6 +667,20 @@ class SearchStopViewModel(
         val recentStops = stopResultsManager.recentSearchStops().toImmutableList()
         log("fetchRecentStops: ${recentStops.map { it.stopName }}")
         updateUiState { copy(recentStops = recentStops) }
+    }
+
+    /**
+     * The Intro's suggested stops as rows, for a rider with no recents and no location. Read once,
+     * from Remote Config or the bundled lists, with no query: each row carries its own id and name.
+     */
+    private fun loadCuratedStops() {
+        val suggested = flag.introSuggestedStops()
+        updateUiState {
+            copy(
+                curatedStartStops = curatedStopRows(SearchStopFieldType.FROM, suggested),
+                curatedEndStops = curatedStopRows(SearchStopFieldType.TO, suggested),
+            )
+        }
     }
 
     private fun checkMapsAvailability() {

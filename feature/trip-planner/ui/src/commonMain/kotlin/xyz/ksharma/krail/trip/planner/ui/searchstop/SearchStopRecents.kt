@@ -116,3 +116,7 @@ internal fun shouldShowLabelRow(listState: ListState, stopLabels: List<StopLabel
         ListState.NoMatch, ListState.Error -> false
     }
 }
+
+/** The suggested stops to fall back on: starts for a start field, ends for everything else. */
+internal fun SearchStopState.curatedStopsFor(fieldType: SearchStopFieldType): List<SearchStopState.StopResult> =
+    if (fieldType == SearchStopFieldType.FROM) curatedStartStops else curatedEndStops

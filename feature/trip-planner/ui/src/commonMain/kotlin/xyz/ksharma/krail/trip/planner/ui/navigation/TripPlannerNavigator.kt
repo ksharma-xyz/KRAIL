@@ -59,6 +59,11 @@ data class StopSelectedResult(
     val labelKey: String? = null,
     val locationKind: LocationKind = LocationKind.TRANSIT_STOP,
     val addressType: String? = null,
+    /**
+     * True for a start Search Stop filled in by itself (the stop nearest the rider): the receiver
+     * takes it only where there is no start yet, never over one the rider chose.
+     */
+    val onlyIfEmpty: Boolean = false,
 )
 
 /**

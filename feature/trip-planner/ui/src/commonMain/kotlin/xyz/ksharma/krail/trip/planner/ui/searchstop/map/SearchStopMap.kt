@@ -1,11 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop.map
 
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
@@ -22,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -29,7 +27,6 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
@@ -39,14 +36,13 @@ import org.maplibre.compose.map.MapOptions
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.OrnamentOptions
 import org.maplibre.compose.style.BaseStyle
+import org.maplibre.compose.util.ClickResult
 import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.state.NearbyStopsConfig
 import xyz.ksharma.krail.core.maps.state.UserLocationConfig
-import xyz.ksharma.krail.core.maps.ui.components.LocationPermissionBanner
-import xyz.ksharma.krail.core.maps.ui.components.MapTimetableDataBadge
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.ATTRIBUTION_ALIGNMENT
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.ATTRIBUTION_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.LOGO_ENABLED
@@ -76,7 +72,10 @@ fun SearchStopMap(
     onShowOptionsSheet: () -> Unit = {},
     onEvent: (SearchStopUiEvent) -> Unit = {},
     onStopSelect: (StopItem) -> Unit = {},
-    onPermissionBannerVisibilityChanged: (Boolean) -> Unit = {},
+    allowPermissionRequest: Boolean = false,
+    onPermissionStatus: (PermissionStatus) -> Unit = {},
+    onRequestPermission: () -> Unit = {},
+    onMapTap: () -> Unit = {},
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         when (mapUiState) {
@@ -96,7 +95,10 @@ fun SearchStopMap(
                     onShowOptionsSheet = onShowOptionsSheet,
                     onEvent = onEvent,
                     onStopSelect = onStopSelect,
-                    onPermissionBannerVisibilityChanged = onPermissionBannerVisibilityChanged,
+                    allowPermissionRequest = allowPermissionRequest,
+                    onPermissionStatus = onPermissionStatus,
+                    onRequestPermission = onRequestPermission,
+                    onMapTap = onMapTap,
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -146,7 +148,10 @@ private fun MapContent(
     ornamentTopPadding: Dp = 0.dp,
     autoShowOptionsSheet: Boolean = false,
     onShowOptionsSheet: () -> Unit = {},
-    onPermissionBannerVisibilityChanged: (Boolean) -> Unit = {},
+    allowPermissionRequest: Boolean = false,
+    onPermissionStatus: (PermissionStatus) -> Unit = {},
+    onRequestPermission: () -> Unit = {},
+    onMapTap: () -> Unit = {},
 ) {
     log(
         "[NEARBY_STOPS_UI] MapContent rendered: nearbyStops.size=${mapState.mapDisplay.nearbyStops.size}, " +
@@ -170,24 +175,9 @@ private fun MapContent(
     var selectedStopId by rememberSaveable { mutableStateOf<String?>(null) }
     val selectedStop = rememberStopForSheet(selectedStopId, mapState.mapDisplay.nearbyStops)
 
-    // User location state
-    var permissionStatus by remember { mutableStateOf<PermissionStatus>(PermissionStatus.NotDetermined) }
-    var showPermissionBanner by remember { mutableStateOf(false) }
-    LaunchedEffect(showPermissionBanner) {
-        onPermissionBannerVisibilityChanged(showPermissionBanner)
-    }
-    // False until the user explicitly taps the location button.
-    // When true, TrackUserLocation is allowed to trigger the system permission dialog.
-    var allowPermissionRequest by remember { mutableStateOf(false) }
-
-    // Badge expand animation — rememberSaveable so rotation doesn't replay it.
-    var badgeExpanded by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        if (!badgeExpanded) {
-            delay(500)
-            badgeExpanded = true
-        }
-    }
+    // The permission is the screen's now: the location pill under the form says what is wrong and
+    // asks or opens Settings, and [allowPermissionRequest] is false until the rider taps it (or the
+    // location button), the only moments tracking may raise the system dialog.
     val userLocationManager = rememberUserLocationManager()
     val scope = rememberCoroutineScope()
 
@@ -214,14 +204,10 @@ private fun MapContent(
             userLocationManager = userLocationManager,
             allowPermissionRequest = allowPermissionRequest,
             onLocationUpdate = { latLng ->
-                permissionStatus = PermissionStatus.Granted
-                showPermissionBanner = false
+                onPermissionStatus(PermissionStatus.Granted)
                 onEvent(SearchStopUiEvent.UserLocationUpdated(latLng))
             },
-            onPermissionDeny = { status ->
-                permissionStatus = status
-                showPermissionBanner = true
-            },
+            onPermissionDeny = onPermissionStatus,
         )
 
         // Auto-center on first user location, exactly once, smoothly.
@@ -283,6 +269,7 @@ private fun MapContent(
                     selectedStopId = stop.stopId
                     onEvent(SearchStopUiEvent.NearbyStopClicked(stop))
                 },
+                onMapTap = onMapTap,
             )
 
             // Bottom left action buttons (Options and Location).
@@ -302,51 +289,13 @@ private fun MapContent(
                             userLoc = mapState.mapDisplay.userLocation,
                             cameraState = cameraState,
                             userLocationManager = userLocationManager,
-                            onPermissionDenied = { status ->
-                                permissionStatus = status
-                                showPermissionBanner = true
-                            },
-                            onRequestPermission = { allowPermissionRequest = true },
+                            onPermissionDenied = onPermissionStatus,
+                            onRequestPermission = onRequestPermission,
                         )
                     }
                 },
                 modifier = Modifier.align(Alignment.BottomStart),
             )
-
-            // Permission badge — shown when permission is not yet determined.
-            // Gives users a visible entry point to grant location access beyond the
-            // small location button. Disappears once the request is in-flight or
-            // a location fix arrives. Mutually exclusive with the banner (denied state).
-            if (permissionStatus is PermissionStatus.NotDetermined) {
-                MapTimetableDataBadge(
-                    text = if (badgeExpanded) "Location Permission Required" else "",
-                    onClick = { allowPermissionRequest = true },
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = ornamentTopPadding)
-                        .defaultMinSize(minWidth = 36.dp, minHeight = 36.dp)
-                        .animateContentSize(
-                            animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
-                        ),
-                )
-            }
-
-            // Permission banner (shown when permission is denied).
-            // Top padding matches ornamentTopPadding so it clears the floating search bar
-            // (single-pane) or the status bar (dual-pane). Horizontal padding gives the
-            // rounded card visual some breathing room from screen edges.
-            if (showPermissionBanner) {
-                LocationPermissionBanner(
-                    onGoToSettings = {
-                        onEvent(SearchStopUiEvent.LocationPermissionSettingsClicked)
-                        userLocationManager.openAppSettings()
-                    },
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = ornamentTopPadding)
-                        .padding(horizontal = 16.dp),
-                )
-            }
 
             // Options Bottom Sheet
             if (showOptionsBottomSheet) {
@@ -427,6 +376,7 @@ private fun MapSurface(
     cameraState: org.maplibre.compose.camera.CameraState,
     ornamentTopPadding: Dp,
     onStopSelected: (NearbyStopFeature) -> Unit,
+    onMapTap: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // LATCH the "has had a real size" flag — never reset it to false. During a rotation the
@@ -442,11 +392,21 @@ private fun MapSurface(
                 if (it.width > 0 && it.height > 0) hasHadValidSize = true
             },
     ) {
-        if (hasHadValidSize) {
+        // Previews and snapshot tests run with no GPU and no native MapLibre, so they draw a flat
+        // stand-in for the ground and keep everything that floats over it.
+        if (LocalInspectionMode.current) {
+            Box(modifier = Modifier.fillMaxSize().background(KrailTheme.colors.onSurface.copy(alpha = 0.08f)))
+        } else if (hasHadValidSize) {
             MaplibreMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraState = cameraState,
                 baseStyle = BaseStyle.Uri(OPEN_FREE_MAP_LIBERTY),
+                // A tap on the map itself, not on a stop (the stop layer consumes its own taps),
+                // is the first step back to the map state. Passed on so nothing else loses it.
+                onMapClick = { _, _ ->
+                    onMapTap()
+                    ClickResult.Pass
+                },
                 options = MapOptions(
                     ornamentOptions = OrnamentOptions(
                         padding = PaddingValues(top = ornamentTopPadding),

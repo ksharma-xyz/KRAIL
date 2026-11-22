@@ -6,13 +6,11 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -127,11 +125,14 @@ internal fun StopLabelAssignRow(
         if (expanded && assignedLabel == null && showLabelAssign) {
             val unsetLabels = remember(stopLabels) { stopLabels.filterNot { it.isSet } }
 
-            LazyRow(
-                contentPadding = PaddingValues(top = dim.spacingM),
+            // Whole chips wrap onto the next line, never a row that scrolls off the edge: nothing on
+            // this screen scrolls sideways except the label row at the top of the card.
+            FlowRow(
+                modifier = Modifier.padding(top = dim.spacingM),
                 horizontalArrangement = Arrangement.spacedBy(dim.spacingS),
+                verticalArrangement = Arrangement.spacedBy(dim.spacingS),
             ) {
-                items(items = unsetLabels, key = { it.label }) { label ->
+                unsetLabels.forEach { label ->
                     UnsetLabelPill(
                         label = label,
                         showIcon = false,
@@ -140,9 +141,7 @@ internal fun StopLabelAssignRow(
                             .klickable { onLabelPillClick(label) },
                     )
                 }
-                item(key = "new-label") {
-                    NewLabelAssignChip(onClick = onNewLabelClick)
-                }
+                NewLabelAssignChip(onClick = onNewLabelClick)
             }
         }
 

@@ -38,9 +38,6 @@ sealed interface SearchStopUiEvent {
 
     data class ShowCompassToggled(val enabled: Boolean) : SearchStopUiEvent
 
-    /** Fired when the user taps the "Select on map" button in the stop list. Analytics-only. */
-    data object SelectOnMapButtonClicked : SearchStopUiEvent
-
     /** Fired when the user taps the Options button on the SearchStopMap. Analytics-only. */
     data object MapOptionsButtonClicked : SearchStopUiEvent
 

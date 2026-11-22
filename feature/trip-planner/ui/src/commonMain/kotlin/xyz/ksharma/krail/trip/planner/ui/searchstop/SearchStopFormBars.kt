@@ -119,7 +119,7 @@ private fun searchStopEditor(
     // analytics entirely, so a field that accepted more would collect text the rider could
     // never see reported, and one that accepts less makes that branch unreachable.
     maxLength = SearchQueryAnalyticsRedaction.MAX_QUERY_LENGTH,
-    filter = { input -> input.filter { it.isLetterOrDigit() || it.isWhitespace() || it == ',' } },
+    filter = ::stopSearchInputFilter,
     onTextChange = { value -> onTextChange(value.toString()) },
 )
 

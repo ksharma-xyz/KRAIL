@@ -384,7 +384,8 @@ fun IntroState.toOutcome(stopsWait: StopsWait, declined: Boolean = false): Intro
   `StopLabelAssignRow`, the row Search Stop draws, with a new `showLabelAssign` parameter (default on, so Search Stop is unchanged)
   turned off so there is no chevron. The highlighted row takes the app's activated row treatment (`themeBackgroundColor()` with a
   rounded shape, as `ManageStopLabelRow` does) and is announced as selected. The field's placeholder is Search Stop's own
-  (`searchFieldPlaceholder`, now internal), its filter is Search Stop's (`stopSearchInputFilter`, extracted from `SearchTopBar`) and its
+  (`barPlaceholderFor` with the To or From bar, which the To and From form uses too), its filter is Search Stop's
+  (`stopSearchInputFilter`, extracted from the old `SearchTopBar` and now the filter of the form's bars as well) and its
   cap is `SearchQueryAnalyticsRedaction.MAX_QUERY_LENGTH`. `IntroStepFrame` gained `centreMiddle` (default true): the stop screens
   pass false, so the field and rows start straight under the headline and never move when the list changes length.
 - **The keyboard.** Only the screen can open it, so `IntroKeyboardAction` (a pure table over the event) says what an event does to

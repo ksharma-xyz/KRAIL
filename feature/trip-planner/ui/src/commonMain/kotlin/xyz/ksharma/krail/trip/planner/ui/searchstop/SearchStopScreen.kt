@@ -397,20 +397,6 @@ internal data class NewLabelTarget(
     val surface: LabelAssignSurface,
 )
 
-/**
- * Search-field placeholder. Doubles as the screen's scope label: when [editTripLeg] is
- * true the search replaces one leg of the trip shown in the timetable, so the copy
- * switches to "Change origin" / "Change destination".
- */
-internal fun searchFieldPlaceholder(
-    fieldType: SearchStopFieldType,
-    editTripLeg: Boolean,
-): String = when (fieldType) {
-    SearchStopFieldType.FROM -> if (editTripLeg) "Change origin" else "Choose starting point"
-    SearchStopFieldType.TO -> if (editTripLeg) "Change destination" else "Choose destination"
-    SearchStopFieldType.LABEL -> "Choose a stop"
-}
-
 // Saver<T?, Any> shape (rather than mapSaver which requires `Original : Any`) so a nullable
 // MutableState can be backed by a Saver. Returning null from save tells the framework "nothing to
 // persist"; restore is only called when there IS something saved. Held as strings and ints so no

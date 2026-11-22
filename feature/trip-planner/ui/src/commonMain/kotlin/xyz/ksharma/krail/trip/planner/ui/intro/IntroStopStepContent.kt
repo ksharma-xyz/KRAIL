@@ -25,9 +25,10 @@ import xyz.ksharma.krail.taj.components.TextField
 import xyz.ksharma.krail.taj.components.TextFieldDefaults
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchQueryAnalyticsRedaction
-import xyz.ksharma.krail.trip.planner.ui.searchstop.searchFieldPlaceholder
+import xyz.ksharma.krail.trip.planner.ui.searchstop.barPlaceholderFor
 import xyz.ksharma.krail.trip.planner.ui.searchstop.stopSearchInputFilter
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroSearchPhase
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
@@ -105,9 +106,10 @@ private fun IntroStopField(
     // The field reports the text it starts with as well, which the view model already has, so that is not sent.
     val lastSent = remember { mutableStateOf(startText) }
     val fieldType = if (step == IntroStep.ORIGIN) SearchStopFieldType.FROM else SearchStopFieldType.TO
+    val bar = if (step == IntroStep.ORIGIN) ToFromField.From else ToFromField.To
     TextField(
         state = fieldState,
-        placeholder = searchFieldPlaceholder(fieldType, editTripLeg = false),
+        placeholder = barPlaceholderFor(bar, fieldType, editTripLeg = false),
         imeAction = ImeAction.Search,
         // The search field of the page it is on, dark on a light page and light on a dark one, as Add Park & Ride has.
         colors = TextFieldDefaults.invertedColors(),

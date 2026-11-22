@@ -18,7 +18,7 @@ internal enum class HomeNotice {
 }
 
 /**
- * The notices under the top row, in order. Both can apply at once, and then they are two whole items
+ * The notices above the search pill, in order. Both can apply at once, and then they are two whole items
  * in one wrapping row. Neither is ever squeezed or hidden to make the other fit.
  */
 internal fun homeNoticesFor(pill: LocationPill, mapOffline: Boolean): List<HomeNotice> = buildList {
@@ -59,10 +59,10 @@ internal fun homeMapPlacementFor(mapsAvailable: Boolean, dualPane: Boolean): Hom
 
 /** What sits at the bottom of home. */
 internal enum class HomeBottom {
-    /** The chips and the one search pill. Home never shows a second bar. */
+    /** The chips, the notices and the one search pill. Home never shows a second bar. */
     Pill,
 
-    /** A pin's floating card, which takes the room the chips and the pill held. */
+    /** A pin's floating card, which takes the room the chips, the notices and the pill held. */
     Card,
 
     /** Nothing: still loading, or reorder mode, which takes the chrome away. */
@@ -71,7 +71,7 @@ internal enum class HomeBottom {
 
 /**
  * What the bottom of home shows. Reorder mode wins over everything, a card open on the map takes the
- * place of the chips and the pill so nothing is ever laid over content (rule 42), and
+ * place of the chips, the notices and the pill so nothing is ever laid over content (rule 42), and
  * otherwise the pill is always the one search bar, whatever stops the rider holds elsewhere. A pick, a
  * pin card or an Ask KRAIL answer opens Search Stop, which holds the To and From form.
  */
@@ -87,9 +87,17 @@ internal fun homeBottomFor(
 }
 
 /**
- * The height the card stack stops short of at the bottom: what the chips and the pill measure, or an
- * open card and its edge, or nothing while the bottom is empty. The stack scrolls inside what is left,
- * so a short stack leaves the map under it free to touch.
+ * Whether the notices row (the location pill and the Map offline chip) is drawn. It sits in the bottom
+ * group directly above the search pill and below the chips, so it shows with them and goes with them: an
+ * open card or reorder mode takes the whole group, and the top row never holds it.
+ */
+internal fun noticesShownFor(bottom: HomeBottom): Boolean = bottom == HomeBottom.Pill
+
+/**
+ * The height the card stack stops short of at the bottom: what the chips, the notices and the pill measure
+ * together, or an open card and its edge, or nothing while the bottom is empty. The stack scrolls inside
+ * what is left, so a short stack leaves the map under it free to touch, and a notice appearing makes the
+ * stack shorter and never overlaps it.
  */
 internal fun stackBottomReserve(bottom: HomeBottom, blockHeight: Dp, cardHeight: Dp, cardEdge: Dp): Dp =
     when (bottom) {

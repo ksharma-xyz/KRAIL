@@ -83,7 +83,7 @@ class HomeMapChromeRulesTest {
     }
 
     @Test
-    fun `an open card takes the place of the chips and the pill`() {
+    fun `an open card takes the place of the chips, the notices and the pill`() {
         assertEquals(HomeBottom.Card, bottom(cardOpen = true))
     }
 
@@ -96,6 +96,13 @@ class HomeMapChromeRulesTest {
     fun `reorder mode takes the whole bottom away, even from an open card`() {
         assertEquals(HomeBottom.Hidden, bottom(reordering = true))
         assertEquals(HomeBottom.Hidden, bottom(reordering = true, cardOpen = true))
+    }
+
+    @Test
+    fun `the notices row lives in the bottom group and goes with it`() {
+        assertTrue(noticesShownFor(HomeBottom.Pill), "The notices sit directly above the pill.")
+        assertFalse(noticesShownFor(HomeBottom.Card), "A card takes the whole group.")
+        assertFalse(noticesShownFor(HomeBottom.Hidden), "Loading and reorder mode take the whole group.")
     }
 
     private fun reserve(bottom: HomeBottom) =

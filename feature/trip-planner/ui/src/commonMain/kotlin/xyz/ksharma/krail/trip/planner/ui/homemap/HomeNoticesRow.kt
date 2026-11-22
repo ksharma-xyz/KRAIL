@@ -24,10 +24,11 @@ import xyz.ksharma.krail.trip.planner.ui.searchstop.StatusPill
 internal const val MAP_OFFLINE_TEXT = "Map offline"
 
 /**
- * The notices under the home top row, rule 24 of `docs/MAP_HOME_UX.md`: the location status pill and the
- * Map offline chip, centred. Each is one whole item in a wrapping row, so with both showing they sit side
- * by side while there is room and one under the other when there is not. Nothing is squeezed, clipped or
- * hidden to make the other fit, which is what a [FlowRow] of whole items gives at any width and font scale.
+ * The notices directly above the home search pill, rule 24 of `docs/MAP_HOME_UX.md`: the location status pill
+ * and the Map offline chip, centred in the bottom group. Each is one whole item in a wrapping row, so with both
+ * showing they sit side by side while there is room and one under the other when there is not. Nothing is
+ * squeezed, clipped or hidden to make the other fit, which is what a [FlowRow] of whole items gives at any
+ * width and font scale.
  *
  * The location pill is the same pill Search Stop draws, asking for the permission or opening Settings. The
  * Map offline chip is that pill's twin, a status and not a control, so it does nothing when it is tapped.

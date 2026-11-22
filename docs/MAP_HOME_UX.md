@@ -84,8 +84,8 @@ If a design breaks one of these rules, the design changes, not the rule.
 ### Geometry and stability
 
 20. **One geometry.** The logo and Settings share one horizontal centre line, with equal 16 insets left and right, and the
-    notices row (the location pill and the Map offline chip) sits directly under them, centred on the screen. Heights may
-    differ; centres do not. Every size, gap and inset is
+    top row holds nothing else: the notices row (the location pill and the Map offline chip) is in the bottom group, directly
+    above the search pill (rule 24). Heights may differ; centres do not. Every size, gap and inset is
     a multiple of 4. There is no locate button: the blue location dot on the map does that job, keeps its tap and has a
     screen-reader label.
 21. **Chips and the search pill are the same height, 48,** which is also the touch target.
@@ -109,8 +109,11 @@ If a design breaks one of these rules, the design changes, not the rule.
 24. **Location needs one pill.** When location permission is not granted, one status pill sits directly under the whole form
     on Search Stop (under the bar, or under the From row once a destination is picked), always, centred, above the recents
     or the results, which move down by one pill and one gap. Tapping it asks for permission, or opens Settings if refused.
-    On home it sits directly under the top row, centred. "Map offline" is the same pill. If both apply they are two whole items
-    in one wrapping row, side by side when there is room and one under the other when there is not.
+    On home it sits directly above the search pill, centred, in the bottom group: from the bottom the search pill, then this
+    row, then the chips, then the cards. The group grows upward and the cards give way to it, and an open card or reorder mode
+    takes the whole group. "Map offline" is the same pill. If both apply they are two whole items in one wrapping row, side by
+    side when there is room and one under the other when there is not. The pill is solid with a shadow, so it reads over the
+    always light map.
 25. Replaced by rule 36.
 26. **The go circle has one state.** It is a plain arrow. The next screen owns loading, success and error, so this screen
     never shows a trips error. The chips have no chevron: they are not dropdowns.
@@ -198,9 +201,10 @@ If a design breaks one of these rules, the design changes, not the rule.
 | Layer | What | Rules |
 |---|---|---|
 | Map | Full screen, pins for nearby stops, the rider dot | Draws behind everything. Pins under the card stack are not tappable, so nothing the rider must reach sits there. |
-| Top | KRAIL logo (left), Discover and Settings (right), the notices under them: the location pill and the Map offline chip, centred | One centre line, 16 insets, solid, floating. The card stack never rises into it. |
+| Top | KRAIL logo (left), Discover and Settings (right), nothing else | One centre line, 16 insets, solid, floating. The card stack never rises into it. |
 | Card stack | Two trips, the Park & Ride row, the rest of the trips | Scrolls vertically inside its own height. The Park & Ride row scrolls sideways. |
 | Chips | Set Home, Set Work, + Park & Ride | One wrapping row above the pill, 48 tall. Home and Work chips stay once set. The Park & Ride chip stays, so Add is always one tap. From about 650 wide they share the pill's row and the pill takes the rest. At text over 130% the row scrolls sideways. |
+| Notices | The location pill and the Map offline chip, only while one applies | Centred, one wrapping row of whole items, directly above the pill (rule 24). |
 | Pill | Dark search bar, mic at the end | Bottom, in the thumb's reach. Shares the column's edges (rule 45). The only search bar home ever shows: no To and From block, no go circle, no swap button. |
 
 ### The card shell

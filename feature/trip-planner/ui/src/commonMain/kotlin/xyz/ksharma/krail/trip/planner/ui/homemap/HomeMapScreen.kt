@@ -80,8 +80,9 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 internal class HomeCardPlacement(val topReserve: Dp, val onHeight: (Dp) -> Unit)
 
 /**
- * What the entry fills the map home with: the one map, the notices and what the pill does, and the card an
- * open pin shows. Held as slots so the screen knows nothing of the map, of the permission or of the pins.
+ * What the entry fills the map home with: the one map, the notices (drawn above the search pill) and what
+ * the status pill does, and the card an open pin shows. Held as slots so the screen knows nothing of the map,
+ * of the permission or of the pins.
  *
  * @property map the one map, given the room its controls must keep clear of at the top.
  * @property card the floating card of the open pin, or null with none open.
@@ -98,8 +99,8 @@ internal class HomeMapHost(
 
 /**
  * The home screen with the map behind it, `docs/MAP_HOME_UX.md` rules 1, 6, 12, 20 and 24 and the Home structure
- * table. The map is the screen and everything else floats on it: the top row, the card stack, the chips and the
- * one search pill. There is no bottom sheet, no docked panel and no scrim, and no second bar:
+ * table. The map is the screen and everything else floats on it: the top row, the card stack, the chips, the
+ * notices and the one search pill. There is no bottom sheet, no docked panel and no scrim, and no second bar:
  * the pill is the only search field home ever shows.
  *
  * **The map is a sibling.** On iOS a MapLibre `UIKitView` cannot composite into an offscreen layer, so the map
@@ -294,7 +295,6 @@ private fun BoxScope.HomeCardsLayer(
             } else {
                 HomeTopRow(
                     savedTripsState = savedTripsState,
-                    host = host,
                     actions = actions,
                     onHeight = chrome.topRowHeight,
                 )
@@ -311,6 +311,7 @@ private fun BoxScope.HomeCardsLayer(
 
         HomeBottomBlock(
             savedTripsState = savedTripsState,
+            host = host,
             chrome = chrome,
             actions = actions,
             aiState = aiState,
@@ -321,14 +322,13 @@ private fun BoxScope.HomeCardsLayer(
 }
 
 /**
- * The top row, rules 12, 20 and 24: the KRAIL logo at the left, Discover beside Settings at the right, with the
- * notices under it, centred. The buttons are the title bar's own, solid and the same on both platforms. The
- * card stack never rises into it because it is laid out below it, in the same column.
+ * The top row, rules 12 and 20: the KRAIL logo at the left, Discover beside Settings at the right, and nothing
+ * else (the notices are in the bottom group, rule 24). The buttons are the title bar's own, solid and the same
+ * on both platforms. The card stack never rises into it because it is laid out below it, in the same column.
  */
 @Composable
 private fun HomeTopRow(
     savedTripsState: SavedTripsState,
-    host: HomeMapHost,
     actions: HomeMapActions,
     onHeight: (Dp) -> Unit,
 ) {
@@ -352,11 +352,6 @@ private fun HomeTopRow(
                     onSettingsButtonClick = actions.onSettingsButtonClick,
                 )
             },
-        )
-        HomeNoticesRow(
-            notices = host.notices,
-            pill = host.locationPill,
-            onLocationClick = host.onLocationClick,
         )
     }
 }
@@ -406,13 +401,16 @@ private fun HomeCardStack(
 }
 
 /**
- * The chips and the pill at the bottom, in the thumb's reach and on the cards' edges, 16 dp above the
- * navigation bar. There is never a second search row: a pick, a pin card and an Ask KRAIL answer all open
- * Search Stop, which holds the To and From form.
+ * The bottom group, in the thumb's reach and on the cards' edges, 16 dp above the navigation bar. From the
+ * bottom: the one search pill, the notices row directly above it (the location pill and the Map offline
+ * chip, centred, in a wrapping row of whole items), then the chips, then the cards. The group grows upward
+ * and the card stack stops short of all of it. There is never a second search row: a pick, a pin card and
+ * an Ask KRAIL answer all open Search Stop, which holds the To and From form.
  */
 @Composable
 private fun BoxScope.HomeBottomBlock(
     savedTripsState: SavedTripsState,
+    host: HomeMapHost,
     chrome: HomeChrome,
     actions: HomeMapActions,
     aiState: AiSearchInputUiState,
@@ -438,6 +436,13 @@ private fun BoxScope.HomeBottomBlock(
                 onLabelClick = actions.onLabelChipClick,
                 onParkRideClick = actions.onAddParkRideClick,
                 floating = true,
+            )
+        }
+        if (noticesShownFor(chrome.bottom)) {
+            HomeNoticesRow(
+                notices = host.notices,
+                pill = host.locationPill,
+                onLocationClick = host.onLocationClick,
             )
         }
         HomeSearchPill(

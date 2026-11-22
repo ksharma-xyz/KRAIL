@@ -51,8 +51,8 @@ import kotlin.test.assertTrue
 /**
  * The map home on the real screen, `docs/MAP_HOME_UX.md` rules 1, 6, 12, 20 and 24, the Home structure table and
  * decision G6: the map behind everything, the top row with the logo at the left and Discover beside Settings at
- * the right, the notices centred under it, the card stack below it, and the chips and the one search pill at the
- * bottom with the microphone inside the pill.
+ * the right and nothing else, the card stack below it, and the bottom group. From the bottom that group is the
+ * one search pill with the microphone inside it, the notices row directly above it, then the chips.
  *
  * The map is a flat stand-in, because a host test has no GPU. Each test runs in a window of its own width (density
  * 1, so a dp is a pixel) and reads where the real nodes landed.
@@ -129,19 +129,67 @@ class HomeMapScreenLayoutTest {
         assertTrue(card.top >= topRow.bottom, "The card $card starts below the top row $topRow.")
     }
 
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `the top row holds only the logo and the buttons, never a notice`() {
+        setScreen(
+            state = state(discover = true),
+            notices = persistentListOf(HomeNotice.LocationPermission, HomeNotice.MapOffline),
+        )
+
+        val topRow = bounds(TripPlannerTestTags.HOME_MAP_TOP_ROW)
+        val settings = bounds(TripPlannerTestTags.SAVED_TRIPS_ACTION_SETTINGS)
+        val notices = bounds(TripPlannerTestTags.HOME_MAP_NOTICES)
+        assertTrue(topRow.bottom - settings.bottom <= 24.dp, "Nothing sits under the buttons in the top row $topRow.")
+        assertTrue(notices.top >= topRow.bottom, "The notices $notices are below the top row $topRow, not in it.")
+    }
+
     // endregion
 
     // region the notices, rule 24
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `the location pill is centred under the buttons`() {
+    fun `the location pill is centred just above the search pill`() {
         setScreen(notices = persistentListOf(HomeNotice.LocationPermission))
 
-        val pill = bounds(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
-        val settings = bounds(TripPlannerTestTags.SAVED_TRIPS_ACTION_SETTINGS)
-        assertNear("the pill is centred on the screen", PHONE_WIDTH / 2, pill.left + pill.width / 2)
-        assertTrue(pill.top >= settings.bottom - 1.dp, "The pill $pill is under the buttons $settings.")
+        val status = bounds(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
+        val search = bounds(TripPlannerTestTags.SEARCH_ROW_TO)
+        assertNear("the pill is centred on the screen", PHONE_WIDTH / 2, status.left + status.width / 2)
+        assertTrue(status.bottom <= search.top + 1.dp, "The status pill $status is above the search pill $search.")
+        assertTrue(search.top - status.bottom <= 1.dp, "Directly above: the pill's own 8 dp is the gap.")
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `from the bottom the order is the search pill, the notices, the chips, then the cards`() {
+        setScreen(notices = persistentListOf(HomeNotice.LocationPermission, HomeNotice.MapOffline))
+
+        val search = bounds(TripPlannerTestTags.SEARCH_ROW_TO)
+        val notices = bounds(TripPlannerTestTags.HOME_MAP_NOTICES)
+        val chips = bounds(TripPlannerTestTags.SAVED_TRIPS_CHIP_ROW)
+        val list = bounds(TripPlannerTestTags.SAVED_TRIPS_LIST)
+        assertTrue(notices.bottom <= search.top + 1.dp, "The notices $notices are above the pill $search.")
+        assertTrue(chips.bottom <= notices.top + 1.dp, "The chips $chips are above the notices $notices.")
+        assertTrue(list.bottom <= chips.top + 1.dp, "The cards $list stop above the chips $chips.")
+    }
+
+    @Test
+    @Config(qualifiers = NARROW)
+    fun `at 320 dp and 200 percent text nothing in the bottom group overlaps and the stack gives way`() {
+        setScreen(
+            fontScale = 2f,
+            notices = persistentListOf(HomeNotice.LocationPermission, HomeNotice.MapOffline),
+        )
+
+        val search = bounds(TripPlannerTestTags.SEARCH_ROW_TO)
+        val notices = bounds(TripPlannerTestTags.HOME_MAP_NOTICES)
+        val chips = bounds(TripPlannerTestTags.SAVED_TRIPS_CHIP_ROW)
+        val list = bounds(TripPlannerTestTags.SAVED_TRIPS_LIST)
+        assertTrue(notices.bottom <= search.top + 1.dp, "The notices $notices stay above the pill $search.")
+        assertTrue(chips.bottom <= notices.top + 1.dp, "The chips $chips stay above the notices $notices.")
+        assertTrue(list.bottom <= chips.top + 1.dp, "The stack $list shrinks to stop above the chips $chips.")
+        assertTrue(search.bottom <= PHONE_NARROW_HEIGHT - 16.dp + 1.dp, "The pill keeps its 16 dp at the bottom.")
     }
 
     @Test
@@ -470,6 +518,7 @@ class HomeMapScreenLayoutTest {
         val PHONE_WIDTH = 411.dp
         val PHONE_HEIGHT = 891.dp
         val NARROW_WIDTH = 320.dp
+        val PHONE_NARROW_HEIGHT = 1280.dp
 
         val TRIP = Trip(
             fromStopId = "200060",

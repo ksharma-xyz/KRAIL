@@ -86,7 +86,7 @@ private fun HomeMapRestingPreview() {
     }
 }
 
-/** Both notices under the top row, wrapping whole items at a large font scale. */
+/** Both notices above the pill, wrapping whole items at a large font scale, with the cards giving way. */
 @PreviewScreen
 @Composable
 private fun HomeMapNoticesPreview() {

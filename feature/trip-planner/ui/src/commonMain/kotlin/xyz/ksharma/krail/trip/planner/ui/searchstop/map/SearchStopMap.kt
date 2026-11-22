@@ -15,14 +15,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.FlowPreview
@@ -55,12 +56,16 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.trip.planner.ui.components.map.StopActionButton
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardAction
+import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardPlacement
+import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardWithDepartures
+import xyz.ksharma.krail.trip.planner.ui.stopcard.controlsClearance
+import xyz.ksharma.krail.trip.planner.ui.stopcard.nearbyStopFor
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
@@ -125,17 +130,7 @@ private fun ErrorMessage(
     )
 }
 
-// Resolves the open sheet's stop id back to the stop the map is drawing, which is where the
-// tap that opened it came from in the first place. A stop that has since left the nearby set
-// leaves the sheet closed.
-@Composable
-private fun rememberStopForSheet(
-    selectedStopId: String?,
-    nearbyStops: ImmutableList<NearbyStopFeature>,
-): NearbyStopFeature? = remember(selectedStopId, nearbyStops) {
-    selectedStopId?.let { stopId -> nearbyStops.firstOrNull { it.stopId == stopId } }
-}
-
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun MapContent(
     mapState: MapUiState.Ready,
@@ -156,13 +151,19 @@ private fun MapContent(
             "selectedModes=${mapState.mapDisplay.selectedTransportModes}",
     )
 
-    // Which stop's details sheet is open, held as the stop id because that is the part worth
-    // saving: the feature itself is map-rendering data the ViewModel still holds after the
-    // Activity is recreated, so it can be looked up again rather than serialised. Held in a
-    // plain `remember` this closed the sheet on every rotation, theme switch and font-size
-    // change (see SearchStopMapSheetRestoreTest).
+    // Which stop's card is open, held as the stop id because that is the part worth saving: the
+    // feature itself is map-rendering data the ViewModel still holds after the Activity is recreated,
+    // so it can be looked up again rather than serialised. Held in a plain `remember` this closed the
+    // card on every rotation, theme switch and font-size change. A stop that has since left the nearby
+    // set leaves the card closed.
     var selectedStopId by rememberSaveable { mutableStateOf<String?>(null) }
-    val selectedStop = rememberStopForSheet(selectedStopId, mapState.mapDisplay.nearbyStops)
+    val nearbyStops = mapState.mapDisplay.nearbyStops
+    val selectedStop = remember(selectedStopId, nearbyStops) { nearbyStopFor(selectedStopId, nearbyStops) }
+    var cardHeight by remember { mutableStateOf(0.dp) }
+
+    // System back closes the card first. It is registered after the screen's own two step back, so
+    // while a card is open it is the one that answers, and with none it is off and the screen's is.
+    BackHandler(enabled = selectedStop != null) { selectedStopId = null }
 
     // The permission is the screen's now: the location pill under the form says what is wrong and
     // asks or opens Settings, and [allowPermissionRequest] is false until the rider taps it (or the
@@ -258,7 +259,9 @@ private fun MapContent(
                     selectedStopId = stop.stopId
                     onEvent(SearchStopUiEvent.NearbyStopClicked(stop))
                 },
-                onMapTap = onMapTap,
+                // A tap on the map closes an open card and is the whole of that tap. With none open it
+                // is the screen's first step back to the map state.
+                onMapTap = { if (selectedStopId != null) selectedStopId = null else onMapTap() },
             )
 
             // The location button, bottom end. All location business logic lives here, not inside
@@ -279,50 +282,54 @@ private fun MapContent(
                         )
                     }
                 },
-                modifier = Modifier.align(Alignment.BottomStart),
+                // Rides above an open card, so the card never covers it.
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(bottom = if (selectedStop != null) controlsClearance(cardHeight) else 0.dp),
             )
 
-            // Stop Details Bottom Sheet
+            // The floating stop card, over the map and never a sheet.
             selectedStop?.let { stop ->
-                StopDetailsBottomSheet(
-                    stop = stop,
-                    onDismiss = { selectedStopId = null },
-                    actionContent = {
-                        StopActionButton(
-                            text = "Select Stop",
-                            onClick = {
-                                // Dismiss keyboard and clear focus - IMPORTANT: Order matters!
-                                keyboard?.hide()
-                                focusRequester?.freeFocus()
+                StopCardPlacement(topReserve = ornamentTopPadding, onHeight = { cardHeight = it }) {
+                    StopCardWithDepartures(
+                        stop = stop,
+                        onClose = { selectedStopId = null },
+                        // The slot Save as, Go here and Start here fill later. Today it holds the one
+                        // action the sheet had.
+                        actions = {
+                            StopCardAction(
+                                text = "Select stop",
+                                onClick = {
+                                    // Dismiss keyboard and clear focus - IMPORTANT: Order matters!
+                                    keyboard?.hide()
+                                    focusRequester?.freeFocus()
 
-                                val stopItem = StopItem(
-                                    stopId = stop.stopId,
-                                    stopName = stop.stopName,
-                                )
-                                onStopSelect(stopItem)
+                                    val stopItem = StopItem(stopId = stop.stopId, stopName = stop.stopName)
+                                    onStopSelect(stopItem)
 
-                                onEvent(
-                                    SearchStopUiEvent.TrackStopSelected(
-                                        stopItem = stopItem,
-                                        isRecentSearch = false,
-                                    ),
-                                )
+                                    onEvent(
+                                        SearchStopUiEvent.TrackStopSelected(
+                                            stopItem = stopItem,
+                                            isRecentSearch = false,
+                                        ),
+                                    )
 
-                                onEvent(
-                                    SearchStopUiEvent.TrackStopSelectedFromMap(
-                                        stopId = stop.stopId,
-                                        searchRadiusKm = mapState.mapDisplay.searchRadiusKm,
-                                        enabledModesCount = mapState.mapDisplay.selectedTransportModes.size,
-                                        nearbyStopsCount = mapState.mapDisplay.nearbyStops.size,
-                                        hadUserLocation = mapState.mapDisplay.userLocation != null,
-                                    ),
-                                )
+                                    onEvent(
+                                        SearchStopUiEvent.TrackStopSelectedFromMap(
+                                            stopId = stop.stopId,
+                                            searchRadiusKm = mapState.mapDisplay.searchRadiusKm,
+                                            enabledModesCount = mapState.mapDisplay.selectedTransportModes.size,
+                                            nearbyStopsCount = mapState.mapDisplay.nearbyStops.size,
+                                            hadUserLocation = mapState.mapDisplay.userLocation != null,
+                                        ),
+                                    )
 
-                                selectedStopId = null
-                            },
-                        )
-                    },
-                )
+                                    selectedStopId = null
+                                },
+                            )
+                        },
+                    )
+                }
             }
         }
     }

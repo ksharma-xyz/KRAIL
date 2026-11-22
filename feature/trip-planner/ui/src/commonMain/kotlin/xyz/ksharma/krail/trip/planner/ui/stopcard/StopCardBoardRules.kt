@@ -83,11 +83,14 @@ internal fun stopCardBoard(state: DeparturesState, expanded: Boolean): StopCardB
 }
 
 /**
- * The height an open board never shrinks below at 100 percent text, about three departure rows. A
- * guess, to be read against a device: it only has to be tall enough that the loading dots, the
- * error and a one row board are all the same height as a full one starts to be.
+ * The height an open board never shrinks below at 100 percent text. It is the height of the tallest
+ * thing a board shows in place of rows, the failed message with its Retry, which the layout test
+ * measured at 296 dp at normal text on a density 1 window, so the loading dots, the empty message
+ * and a short list all stand in the room the failed message takes and the card does not change
+ * height from one phase to the next. A board with four or more rows is taller than this and grows
+ * past it. Measured in a host test, not on a device: read it against a device.
  */
-internal val BOARD_FLOOR_BASE_HEIGHT: Dp = 168.dp
+internal val BOARD_FLOOR_BASE_HEIGHT: Dp = 296.dp
 
 /** The board's floor at [fontScale], growing with the text because the rows do. */
 internal fun boardFloorHeight(fontScale: Float): Dp = BOARD_FLOOR_BASE_HEIGHT * fontScale.coerceAtLeast(1f)

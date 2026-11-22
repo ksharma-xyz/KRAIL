@@ -20,7 +20,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
  *
  * - [mapUiState] is collected by the entry and passed in — the pane holds no VM reference.
  * - [onEvent] forwards map interactions (center change, user location) back to the caller.
- * - [onStopSelected] fires when the user confirms a stop pick from the map's bottom sheet.
+ * - [onStopSelected] fires when the user confirms a stop pick from the floating stop card a pin opens.
  *   Defaults to a no-op — callers that don't need stop-picking can omit it (read-only map).
  *
  * See docs/TABLET_FOLDABLE_UX.md §4.

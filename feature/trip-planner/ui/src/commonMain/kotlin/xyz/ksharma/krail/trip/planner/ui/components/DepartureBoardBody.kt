@@ -34,6 +34,14 @@ import xyz.ksharma.krail.trip.planner.ui.components.crowding.rememberExpandedDep
 private val LOADING_DOTS_WIDTH = 64.dp
 
 /**
+ * The line filter held by the surface that hosts the board, for a surface that draws its own Lines
+ * chip (the stop card). With one given the board filters its rows to [selectedLine] and does not
+ * draw its own filter row, so the host's chip is the only one. Null leaves the board owning the
+ * filter, as the timetable's stop sheet has it.
+ */
+internal data class HostedLineFilter(val selectedLine: String?)
+
+/**
  * Shared departure board content area used by both [DepartureBoardStopCard] (bottom-sheet card)
  * and the accordion sections on the Saved Trips screen.
  *
@@ -64,6 +72,7 @@ internal fun DepartureBoardBody(
     onLineFilterChange: ((lineNumber: String?, transportMode: String?, selected: Boolean) -> Unit)? = null,
     onShowPreviousToggle: ((show: Boolean) -> Unit)? = null,
     maxItems: Int? = null,
+    hostedLine: HostedLineFilter? = null,
 ) {
     // Hoisted above every branch that draws rows, so opened rows survive the branch changing.
     CompositionLocalProvider(LocalExpandedDepartures provides rememberExpandedDepartures()) {
@@ -75,6 +84,7 @@ internal fun DepartureBoardBody(
             onLineFilterChange = onLineFilterChange,
             onShowPreviousToggle = onShowPreviousToggle,
             maxItems = maxItems,
+            hostedLine = hostedLine,
         )
     }
 }
@@ -88,11 +98,12 @@ private fun DepartureBoardBodyContent(
     onLineFilterChange: ((lineNumber: String?, transportMode: String?, selected: Boolean) -> Unit)?,
     onShowPreviousToggle: ((show: Boolean) -> Unit)?,
     maxItems: Int?,
+    hostedLine: HostedLineFilter?,
 ) {
     val dim = KrailTheme.dimensions
     // Empty string = no filter. rememberSaveable round-trips safely as a String primitive.
     var selectedLineKey by rememberSaveable { mutableStateOf("") }
-    val selectedLine: String? = selectedLineKey.ifEmpty { null }
+    val selectedLine: String? = if (hostedLine != null) hostedLine.selectedLine else selectedLineKey.ifEmpty { null }
 
     var showPrevious by rememberSaveable { mutableStateOf(false) }
     // Guards against a one-frame flash of "No previous departures" before the repository
@@ -133,6 +144,7 @@ private fun DepartureBoardBodyContent(
                 filteredDepartures = filteredDepartures,
                 filteredPreviousDepartures = filteredPreviousDepartures,
                 maxItems = maxItems,
+                showsLinesRow = hostedLine == null,
                 onLineSelect = { newLine ->
                     // Capture the previously selected line BEFORE updating state so
                     // we can report it when the filter is being cleared (deselected).
@@ -170,11 +182,12 @@ private fun DepartureBoardSuccessContent(
     filteredDepartures: ImmutableList<StopDeparture>,
     filteredPreviousDepartures: ImmutableList<StopDeparture>,
     maxItems: Int?,
+    showsLinesRow: Boolean,
     onLineSelect: (String?) -> Unit,
     onTogglePrevious: () -> Unit,
 ) {
     val dim = KrailTheme.dimensions
-    if (state.departures.isNotEmpty()) {
+    if (showsLinesRow && state.departures.isNotEmpty()) {
         LinesServedRow(
             departures = state.departures,
             selectedLine = selectedLine,

@@ -142,6 +142,22 @@ object TripPlannerTestTags {
         fun delete(tripId: String): String = "savedtrips.reorder.delete.$tripId"
     }
 
+    /** The floating stop card's tags, kept in their own object so this one stays under its limit. */
+    object StopCard {
+        const val CARD = "stopcard.card"
+        const val CLOSE = "stopcard.close"
+        const val MODES = "stopcard.modes"
+        const val BOARD_CHEVRON = "stopcard.board.chevron"
+        const val BOARD_BODY = "stopcard.board.body"
+        const val LINES_CHIP = "stopcard.board.lines"
+        const val LINE_BADGES = "stopcard.board.badges"
+        const val ACTIONS = "stopcard.actions"
+        const val PARK_RIDE_TOTAL = "stopcard.parkride.total"
+
+        /** One line badge of the Lines chip's row, by the line's number. */
+        fun lineBadge(lineNumber: String): String = "stopcard.board.badge.$lineNumber"
+    }
+
     /** One Home or Work chip, keyed by the label's name so it is the same whether the label is set or not. */
     fun homeLabelChip(labelKey: String): String = "savedtrips.chip.label.$labelKey"
 

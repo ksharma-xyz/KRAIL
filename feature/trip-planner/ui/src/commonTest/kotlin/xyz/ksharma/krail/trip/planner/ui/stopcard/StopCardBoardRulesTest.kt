@@ -202,16 +202,16 @@ class StopCardBoardRulesTest {
     // region the floor
 
     @Test
-    fun `the board floor is three rows at normal text and grows with the text`() {
-        assertEquals(168.dp, boardFloorHeight(1f))
-        assertEquals(336.dp, boardFloorHeight(2f))
-        assertEquals(168.dp * 1.3f, boardFloorHeight(1.3f))
+    fun `the board floor is the failed message's height at normal text and grows with the text`() {
+        assertEquals(296.dp, boardFloorHeight(1f))
+        assertEquals(592.dp, boardFloorHeight(2f))
+        assertEquals(296.dp * 1.3f, boardFloorHeight(1.3f))
     }
 
     @Test
     fun `text smaller than normal does not shrink the floor`() {
-        assertEquals(168.dp, boardFloorHeight(0.85f))
-        assertEquals(168.dp, boardFloorHeight(0f))
+        assertEquals(296.dp, boardFloorHeight(0.85f))
+        assertEquals(296.dp, boardFloorHeight(0f))
     }
 
     // endregion

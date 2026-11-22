@@ -23,6 +23,7 @@ import kotlinx.collections.immutable.ImmutableMap
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextField
+import xyz.ksharma.krail.taj.components.TextFieldColors
 import xyz.ksharma.krail.taj.components.TextFieldDefaults
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
@@ -139,8 +140,7 @@ private fun IntroSearchField(
         state = fieldState,
         placeholder = barPlaceholderFor(bar, fieldType, editTripLeg = false),
         imeAction = ImeAction.Search,
-        // The search field of the page it is on, dark on a light page and light on a dark one, as Add Park & Ride has.
-        colors = TextFieldDefaults.invertedColors(),
+        colors = introStopFieldColors(),
         // The same cap and the same filter as Search Stop's field, so a query works the same in both.
         maxLength = SearchQueryAnalyticsRedaction.MAX_QUERY_LENGTH,
         filter = ::stopSearchInputFilter,
@@ -155,6 +155,13 @@ private fun IntroSearchField(
             .testTag(TripPlannerTestTags.INTRO_STOP_FIELD),
     )
 }
+
+/**
+ * The colours of the stop field, in the one place: taj's own default field colours as they ship, a white field with dark text
+ * in light mode and a dark field with light text in dark mode, never the inverted set.
+ */
+@Composable
+internal fun introStopFieldColors(): TextFieldColors = TextFieldDefaults.colors()
 
 // One item for each stop, keyed by the stop. A stop is listed once, because a list refuses a key it has seen.
 private fun LazyListScope.introStopItems(

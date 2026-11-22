@@ -1,8 +1,13 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.lifecycle.SavedStateHandle
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.persistentMapOf
+import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroSearchPhase
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStop
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
@@ -52,6 +57,46 @@ class IntroSavedStateTest {
             """"addedParkRide":false,"usedSearch":false,"saved":false}"""
         assertEquals(IntroStep.DESTINATION, older.restoreIntroState().step)
         assertNull(older.restoreIntroState().selectedThemeId)
+    }
+
+    @Test
+    fun `the stations near the rider, the badges, the typed text and its results are never saved`() {
+        val handle = SavedStateHandle()
+        val kept = IntroState(
+            step = IntroStep.ORIGIN,
+            endStopId = "200060",
+            endName = "Central Station",
+            startStopId = "201510",
+            startName = "Redfern Station",
+        )
+        val withTransient = kept.copy(
+            nearbyStops = persistentListOf(IntroStop("201510", "Redfern Station")),
+            stopModes = persistentMapOf("201510" to persistentListOf(TransportMode.Train)),
+            query = "redf",
+            search = IntroSearchPhase.Results(persistentListOf(IntroStop("201510", "Redfern Station"))),
+        )
+
+        handle.saveIntroState(withTransient)
+
+        assertEquals(kept, handle.restoreIntroState(), "the chosen stops and the screen come back, the rest does not")
+        val saved = handle.get<String>(INTRO_SAVED_STATE_KEY).orEmpty()
+        assertEquals(false, "redf" in saved, "the typed text is not in the saved text: $saved")
+    }
+
+    @Test
+    fun `the chosen stops are saved as an id and a name each`() {
+        val handle = SavedStateHandle()
+        val chosen = IntroState(
+            step = IntroStep.CONFIRM,
+            startStopId = "2155384",
+            startName = "Tallawong Station",
+            endStopId = "200080",
+            endName = "Wynyard Station",
+        )
+
+        handle.saveIntroState(chosen)
+
+        assertEquals(chosen, handle.restoreIntroState())
     }
 
     @Test

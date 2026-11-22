@@ -9,6 +9,9 @@ class FakeAnalytics(private val callLog: CallLog? = null) : Analytics {
     private val trackedEvents = mutableListOf<AnalyticsEvent>()
     private var fakeUserId: String? = null
 
+    /** Every event tracked so far, in order, for a test that has to look at all of them and not at one by name. */
+    val events: List<AnalyticsEvent> get() = trackedEvents.toList()
+
     fun isEventTracked(eventName: String): Boolean {
         println("trackedEvents: $trackedEvents")
         return trackedEvents.any { it.name == eventName }

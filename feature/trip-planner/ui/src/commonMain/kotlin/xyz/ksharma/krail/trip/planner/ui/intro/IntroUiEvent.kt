@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStop
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 
 /** What the Intro screens tell the view model. */
@@ -43,6 +44,28 @@ internal sealed interface IntroUiEvent {
      * already added off home, because this answer is their latest.
      */
     data object DeclineParkRide : IntroUiEvent
+
+    /**
+     * A row of the destination or origin list was tapped, or the right button took the highlighted one: the stop is
+     * the end on the destination screen and the start on the origin screen, and the Intro moves on. There is no Next.
+     */
+    data class ChooseStop(val stop: IntroStop) : IntroUiEvent
+
+    /** `Yes, this one`: takes the highlighted row, which is the first one listed, and does what tapping it does. */
+    data object UseHighlightedStop : IntroUiEvent
+
+    /**
+     * `No, search`: the search field takes the focus and the keyboard opens. The screen answers it, because only the
+     * screen has the field, and the view model ignores it. It never leaves a screen and never chooses anything.
+     */
+    data object FocusSearch : IntroUiEvent
+
+    /**
+     * The text in the search field changed. The view model runs the local stop search for it after a short pause in
+     * the typing and the list shows what it finds. The text goes nowhere else: not to analytics, not to a log and
+     * not to the saved state.
+     */
+    data class QueryChanged(val text: String) : IntroUiEvent
 
     data class PickStart(val stop: SuggestedStop) : IntroUiEvent
 

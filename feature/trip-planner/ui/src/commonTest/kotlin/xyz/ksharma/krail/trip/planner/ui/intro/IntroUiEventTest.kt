@@ -25,6 +25,8 @@ class IntroUiEventTest {
         IntroUiEvent.StopPickedFromSearch(isStart = false, stopId = "9", stopName = "Nine").let {
             assertEquals(listOf(false, "9", "Nine"), listOf(it.isStart, it.stopId, it.stopName))
         }
+        assertEquals(CENTRAL_STOP, IntroUiEvent.ChooseStop(CENTRAL_STOP).stop)
+        assertEquals("chat", IntroUiEvent.QueryChanged("chat").text)
     }
 
     @Test
@@ -35,9 +37,11 @@ class IntroUiEventTest {
             IntroUiEvent.DeclineParkRide,
             IntroUiEvent.FinishPressed,
             IntroUiEvent.FinishWithoutTrip,
+            IntroUiEvent.UseHighlightedStop,
+            IntroUiEvent.FocusSearch,
         )
 
-        assertEquals(5, plain.size)
+        assertEquals(7, plain.size)
         assertSame(IntroEffect.NavigateToSavedTrips, IntroEffect.NavigateToSavedTrips)
     }
 }

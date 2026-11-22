@@ -370,6 +370,10 @@ fun IntroState.toOutcome(stopsWait: StopsWait, declined: Boolean = false): Intro
   and moves on in the flow as it stands after the pick. With a Park & Ride start the flow goes from the destination to the confirm
   screen and Back from the confirm screen returns to the destination (`IntroStepFlow`, table tests). Any two chosen stops reach the
   confirm screen with a complete trip, which a test holds for every pair of the real curated lists.
+- **The events.** `ChooseStop(stop)` is a tap on a row, `UseHighlightedStop` is the right button and takes the first listed row,
+  `FocusSearch` is the left button and `QueryChanged(text)` is the field. `FocusSearch` is answered by the screen, which has the
+  field, and ignored by the view model: it never chooses and never leaves a screen. `PickStart`, `PickEnd` and `StopPickedFromSearch`
+  belong to the earlier first trip screen and go with it.
 - **The outcome.** `skipped` in `intro_lets_krail` is true only when the rider answered Not now on the confirm screen, and a saved
   trip is never skipped. It is no longer inferred from the picks. No event name and no param was added, and the other params keep
   their meaning.
@@ -652,6 +656,22 @@ Decisions unit R3 made for the stations near the rider, where this document was 
 - **What is kept.** `IntroState.nearbyStops` (ids and names) and `stopModes` (id to modes) live in the state and are never saved:
   after the process is killed they are empty and the curated list shows. Nothing about the position is in either.
 
+Decisions unit R3 made for the typed search and choosing, where this document was silent:
+
+- **The same search.** Typing runs `StopResultsManager.fetchStopResults`, the local stop search the Search Stop screen runs, with
+  routes left out (only a stop can end a trip here) and addresses never asked for, after the same pause in the typing as Search Stop
+  (`SearchStopViewModel.SEARCH_DEBOUNCE_MS`, 100 ms, shared and not copied). It shows at most 20 results, best first. A new keystroke
+  cancels the search that was waiting or running, and an answer for text the rider has typed past is dropped.
+- **The text.** The view model keeps the text in the state only so the answer can be matched to it. It is never saved, never reported and never
+  logged: there is no search event, and `usedSearch` is the one flag, true only when the stop chosen is one of the typed results.
+  Leaving the screen, by a choice or by Back, drops the text and the results.
+- **A stops table that is not ready.** The field stays usable and finds nothing. The search waits for the stops to be Ready, which
+  is a collector on the readiness and not a poll, and the suggestions keep showing, so the results fill in as soon as the stops are
+  ready. Stops that Failed, and a search that throws, leave the suggestions showing, with no error state and no Try again.
+- **Choosing.** A tap on a row and the right button both choose and move on in the one flow function, so there is one path to test.
+  The right button takes the first listed row: the nearest station on the origin screen when there is a fix, the first curated stop
+  when there is none, the first result when results show, and the rider's earlier choice when they come back.
+
 Operator decisions of 2026-11-22: (1) exactly one of start or end picked disables the bottom button until both or neither
 are picked (superseded in unit R1: the temporary right button on the trip screens is enabled whatever is picked, saves a trip
 only for a complete pair, and ends the Intro either way, until the confirm screen decides this), (2) there is no Try again and no error state, a Failed readiness behaves like Ready for the button and a trip
@@ -702,6 +722,18 @@ The stations near the rider (unit R3), the seven questions, with numbers where t
 | 5 | **Network efficiency.** | Not applicable, since there is no call. The curated list is bundled, the stations are worked out once per Yes, and nothing is cached across runs (a stale nearby list would be wrong the next time the rider stands somewhere else). |
 | 6 | **Battery.** | One fix, already taken for Park & Ride. No timer, no polling and no background work: the two jobs run in the view model's scope and end with it, and the wait for the stops is a collector on the readiness state. |
 | 7 | **Shared limits.** | None. No NSW call, nothing for a BFF to collapse. |
+
+The typed search and choosing (unit R3), the seven questions, with numbers where there are any:
+
+| # | Question | Answer |
+|---|---|---|
+| 1 | **API calls.** | None. Each pause in the typing makes at most one local search on the stops table (the query the Search Stop screen already makes, with routes left out). A rider who types makes as many as their pauses, and a rider who taps a row makes none. Nothing is sent to analytics or to any service. |
+| 2 | **Payload.** | None on the wire. At most 20 result rows are kept in memory, ids names and modes, a few hundred bytes. |
+| 3 | **Timing.** | The screen shows at once with the curated list and needs no data to be used. A result arrives 100 ms after the last keystroke plus the local search, which Search Stop already runs on every keystroke pause, so this adds no new cost that screen does not have. It runs on the IO dispatcher. **Not measured** for this screen. |
+| 4 | **UX.** | Loading: the suggestions stay and the results replace them when they arrive. Not ready: the suggestions stay and the results fill in when the stops are ready. Failed: the suggestions stay, no message. No match is its own state. Offline is not a state, because the search is local. The list is capped at 20 rows. |
+| 5 | **Network efficiency.** | Not applicable, no call. Each keystroke cancels the search before it, so a burst of typing is one search. |
+| 6 | **Battery.** | The keyboard and the field exist only while the destination or origin screen is in front. No timer and no polling: a search is a coroutine that runs once for each pause and ends. The focus is taken only when the rider taps the left button or the field. |
+| 7 | **Shared limits.** | None. |
 
 Decision rule met: the added calls buy a live car park card and a one tap add for riders who park and ride. They are
 optional, non-blocking, once only and silent on failure.
@@ -964,6 +996,15 @@ The search hand-off, as built, with nothing in `searchstop/` touched:
   not ready, ready inside the wait, failed, a failing query, nothing saved, and the badges read when the stops are ready).
   `IntroLocationNeverHeldTest` now allows stops as ids and names (with modes) in the state and still fails on a coordinate in any field
   of it, on a stop's position read in the gateway, and on the fix logged or held in any of the five files that touch it.
+- **Choosing and the typed search, built (unit R3).** `IntroFlowViewModelStopsTest`: a tap on each screen, the right button on each
+  (the first curated stop, the nearest station, the next when the destination was the nearest, the first result), No search doing
+  nothing, a choice on another screen doing nothing, a Park & Ride start going from the destination to the confirm screen and back,
+  Back returning with the earlier choice leading the list and dropping what was typed, the pause and only the last text being
+  searched, a cleared field cancelling the search, the same text searching nothing more, a stops table that is Loading then Ready or
+  Failed, a search that throws, a choice cancelling a waiting search, `usedSearch` only for a typed result, no tracked event carrying
+  the typed text or a stop name, nothing typed in the saved text, the chosen stops surviving a new view model, and two chosen stops
+  reaching a saved trip or a skip. `IntroSavedStateTest` holds that the stations, badges, text and results are never saved and the
+  chosen stops are.
 - **Existing tests changed in R2.** `IntroBarTest` (the theme row is now a bar), `IntroFlowScreenTest` (the theme screen is no longer
   one with no bar, Park & Ride now has a back button and the theme screen has none), `IntroParkRideStepTest` and
   `IntroParkRideStepNarrowTest` (the back button is not one of the two answers), `IntroStateTest` (the first screen is the theme
@@ -1044,6 +1085,8 @@ Each is a default taken to keep moving. None has been seen by the owner. The lis
 | R3-6 | The stations that arrive after the rider is on the origin screen are dropped | The rows must not move under a finger. The cost is the curated list for that visit when the stops were slow | Default, not yet seen by owner |
 | R3-7 | The curated stops' badges are read from the stops table once it is Ready, and drawn without badges until then | The curated lists carry only an id and a name. The cost is rows that gain a badge a moment later on a slow first run | Default, not yet seen by owner |
 | R3-8 | The nearby query goes to the stops table directly and not through `NearbyStopsRepository` | That repository logs the centre it is given in every build, and the Intro never logs the fix | Default, not yet seen by owner |
+| R3-10 | The typed search shows at most 20 stops and leaves routes and addresses out | Only a stop can end a trip here. Search Stop shows up to 50, which is more than a rider scrolls in an Intro | Default, not yet seen by owner |
+| R3-12 | A tap on any row and the right button both choose and move on in one function | There is no Next. One path means one set of tests | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

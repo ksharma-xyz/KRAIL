@@ -17,6 +17,7 @@ import xyz.ksharma.krail.io.gtfs.readiness.AppDataReadiness
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStop
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
@@ -87,6 +88,7 @@ internal class IntroFlowViewModel(
         scope = viewModelScope,
         readiness = appDataReadiness,
         gateway = stops,
+        read = { _state.value },
         write = ::update,
     )
 
@@ -98,8 +100,11 @@ internal class IntroFlowViewModel(
 
     fun onEvent(event: IntroUiEvent) {
         when (event) {
-            // Back goes one screen back, and does nothing on the first.
-            IntroUiEvent.Back -> update { movedBack() }
+            // Back goes one screen back, and does nothing on the first. What was typed on a screen is not kept.
+            IntroUiEvent.Back -> {
+                stopsStep.cancelSearch()
+                update { movedBack().withoutSearch() }
+            }
             is IntroUiEvent.PickTheme -> themeStep.pick(event.themeId)
             IntroUiEvent.ShowAnotherTheme -> themeStep.showAnother()
             IntroUiEvent.ConfirmTheme -> themeStep.confirm()
@@ -107,6 +112,11 @@ internal class IntroFlowViewModel(
             is IntroUiEvent.LocationResultReceived -> onLocationResult(event.result, event.location)
             IntroUiEvent.AddParkRideAndContinue -> parkRideStep.addAndContinue()
             IntroUiEvent.DeclineParkRide -> parkRideStep.decline()
+            is IntroUiEvent.ChooseStop -> chooseStop(event.stop)
+            IntroUiEvent.UseHighlightedStop -> _state.value.highlightedStop(suggestedStops)?.let(::chooseStop)
+            // The screen has the search field, so it answers this one. It never chooses and never leaves a screen.
+            IntroUiEvent.FocusSearch -> Unit
+            is IntroUiEvent.QueryChanged -> if (_state.value.step.isStopScreen()) stopsStep.onQueryChanged(event.text)
             is IntroUiEvent.PickStart -> update { withPick(isStart = true, event.stop.stopId, event.stop.name) }
             is IntroUiEvent.PickEnd -> update { withPick(isStart = false, event.stop.stopId, event.stop.name) }
             is IntroUiEvent.StopPickedFromSearch -> update {
@@ -129,6 +139,14 @@ internal class IntroFlowViewModel(
         if (step == previous) return
         lastStepShown = step
         if (shouldTrackScreenView(previous, step)) completion.trackStepView(step)
+    }
+
+    // A tap on a row and the right button both end here: the stop is the end or the start, whichever screen it is,
+    // what was typed is dropped, and the Intro moves on in the flow as it stands after the pick.
+    private fun chooseStop(stop: IntroStop) {
+        if (!_state.value.step.isStopScreen()) return
+        stopsStep.cancelSearch()
+        update { withStopChosen(stop) }
     }
 
     // The fix the Park & Ride question took is the only one, and the stations near the rider come from it too. It is

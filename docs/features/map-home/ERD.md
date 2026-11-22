@@ -240,6 +240,22 @@ the same slot with Save as, Go here and Start here and the card does not change 
 row draws, so a station's total, its time and each car park's block read the same on both surfaces, and `directionsTarget` is the one rule
 for where Directions go.
 
+Branch 13, the stop card actions. All pure, in `stopcard/StopCardActionRules.kt`, so each rule is a table test and none needs a layout, a clock or a
+database:
+
+```kotlin
+// module: :feature:trip-planner:ui, callers: StopCardActions (the stop card), ParkRidePinCard, SearchStopScreen, HomeMapEntryContent
+enum class PickRole { Destination, Start, Choose }                                  // the field being filled in: Go here, Start here, Select stop
+internal fun pickRoleFor(field: SearchStopFieldType): PickRole                      // TO, FROM, LABEL
+internal fun pickActionText(role: PickRole): String
+internal fun offersPick(stopId: String): Boolean                                    // any stop with an id, known to the stops table or not
+internal fun offersSaveAs(role: PickRole): Boolean                                  // not while choosing a stop for a label
+internal fun saveAsPillsFor(stopId: String, role: PickRole, labels: List<StopLabel>): List<SaveAsPill>   // Saved (this stop's label) or Offered (unset labels)
+internal fun reservedRoom(reserved: Dp, measured: Dp): Dp                           // the Save as row never gives back height
+internal fun goHereStopId(stopIds: Collection<String>, inStopsTable: Set<String>): String?   // smallest id the table holds, else none
+internal fun parkRidePinActionsFor(stationName: String, goHereStopId: String?, role: PickRole, isOnHome: Boolean): ParkRidePinActions
+```
+
 Branch 11, the map home. Pure rules in `homemap/HomeMapPins.kt` and `homemap/HomeMapChromeRules.kt`, the camera rule beside the other map
 helpers in `searchstop/map/MapLocationHelpers.kt`, so each is a table test and none needs a map, a layout or a database:
 

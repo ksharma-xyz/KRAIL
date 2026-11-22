@@ -113,15 +113,48 @@ class FinaleGradientTest {
     }
 
     @Test
-    fun `the old stops are still there behind the switch`() {
+    fun `the old stops and the theme and partner stops are still there behind the switch`() {
         KrailThemeStyle.entries.forEach { style ->
-            assertEquals(AiGradientTokens.stops, finaleBrandStops(style.colour(), fromTheme = false))
-            assertEquals(themeGradientStops(style.colour()), finaleBrandStops(style.colour(), fromTheme = true))
+            assertEquals(AiGradientTokens.stops, finaleBrandStops(style.colour(), FinaleWordmarkFill.Original))
+            assertEquals(themeGradientStops(style.colour()), finaleBrandStops(style.colour(), FinaleWordmarkFill.ThemePartner))
+            assertEquals(websiteSweepStops(), finaleBrandStops(style.colour(), FinaleWordmarkFill.WebsiteModes))
         }
+        assertEquals(FinaleWordmarkFill.WebsiteModes, FINALE_WORDMARK_FILL)
+        assertEquals(websiteSweepStops(), finaleBrandStops(KrailThemeStyle.Bus.colour()))
+    }
+
+    @Test
+    fun `the website fill is the four mode colours in order and each is the app's own theme colour`() {
+        val modes = websiteModeColours()
+
+        assertEquals(4, modes.size)
         assertEquals(
-            if (FINALE_GRADIENT_FROM_THEME) themeGradientStops(KrailThemeStyle.Bus.colour()) else AiGradientTokens.stops,
-            finaleBrandStops(KrailThemeStyle.Bus.colour()),
+            listOf(KrailThemeStyle.Train, KrailThemeStyle.Metro, KrailThemeStyle.Bus, KrailThemeStyle.Ferry).map { it.colour() },
+            modes,
         )
+        assertEquals(listOf(Color(0xFFF6891F), Color(0xFF009B77), Color(0xFF00B5EF), Color(0xFF5AB031)), modes)
+        modes.forEach { assertEquals(1f, it.alpha, "$it is not opaque") }
+    }
+
+    @Test
+    fun `the sweep goes train, metro, bus, ferry and back to train, every stop opaque and none darker than the darkest mode`() {
+        val sweep = websiteSweepStops()
+        val modes = websiteModeColours()
+
+        assertEquals(modes + modes.first(), sweep)
+        assertEquals(sweep.first(), sweep.last(), "the loop closes on the colour it started with")
+        sweep.forEach { assertEquals(1f, it.alpha, "$it is not opaque") }
+        val darkest = modes.minOf { lumaOf(it) }
+        sweep.forEach { assertTrue(lumaOf(it) >= darkest, "a stop is darker than the darkest mode colour: $it") }
+    }
+
+    @Test
+    fun `the sweep settles into the theme colour like any other fill, every stop on it at 1 and the sweep itself at 0`() {
+        val train = KrailThemeStyle.Train.colour()
+        val sweep = websiteSweepStops()
+
+        assertEquals(sweep, finaleGradientColors(0f, train, sweep))
+        assertEquals(List(sweep.size) { train }, finaleGradientColors(1f, train, sweep))
     }
 
     @Test

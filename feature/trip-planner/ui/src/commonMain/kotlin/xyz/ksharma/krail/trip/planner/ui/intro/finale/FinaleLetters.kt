@@ -29,3 +29,9 @@ internal fun letterProgressAt(index: Int, wordmarkMs: Long): Float {
 
 /** How far the brand gradient has travelled across the wordmark, 0 to 1, over the entrance and the hold. */
 internal fun gradientTravelAt(wordmarkMs: Long): Float = smoothstep(shareOf(wordmarkMs, 0L, FINALE_HOLD_END_MS))
+
+// The whole word fades in as one layer over this long, while its letters rise one after another.
+internal const val WORDMARK_FADE_IN_MS = 250L
+
+/** The opacity of the whole word [wordmarkMs] after it started entering: 0 at the start and 1 from [WORDMARK_FADE_IN_MS] on. */
+internal fun wordmarkFadeInAt(wordmarkMs: Long): Float = smoothstep(shareOf(wordmarkMs, 0L, WORDMARK_FADE_IN_MS))

@@ -661,9 +661,10 @@ files are in `intro/finale/`, and everything it decides is a pure function with 
   the fit (`fitScale`, `wordmarkFitScale`), the gradient's stops moved toward the theme colour (`finaleGradientColors`), the glow in twelve
   steps (`glowStep`, `glowBlurPx`, `glowAlpha`), where the gradient sits as it slides (`gradientRangePx`) and the circle that floods
   the screen (`floodRadiusPx`).
-- **The wordmark's colours (unit U10).** `FinaleGradient.kt`. `FINALE_GRADIENT_FROM_THEME` (a constant, `true`) chooses between the two gradients so
-  the owner can compare them on a device: true is `themeGradientStops(themeColour)`, false is the app's four AI gradient stops as before.
-  `finaleBrandStops` is the one function that reads it. Nothing else differs between the two: four stops, the slide (`gradientRangePx`), the blend to
+- **The wordmark's colours (unit U10, the switch replaced in unit V1).** `FinaleGradient.kt`. Unit U10 had a Boolean constant, `FINALE_GRADIENT_FROM_THEME`,
+  that chose between two gradients so the owner could compare them on a device: true was `themeGradientStops(themeColour)`, false the app's four AI
+  gradient stops. Unit V1 replaced it with `FINALE_WORDMARK_FILL`, an enum of three values (see below, the website's mode colours are now the default),
+  and `themeGradientStops` is the `ThemePartner` value. `finaleBrandStops(themeColour, fill)` is the one function that reads it. Nothing else differs between the two: four stops, the slide (`gradientRangePx`), the blend to
   the theme colour (`finaleGradientColors`), the glow, the timeline and the reduced motion path.
   - The four stops are the theme colour, the point halfway to its partner round the colour wheel (taken from `AiThemeGradientTokens.stopsFor`, the
     app's own AI gradient for that theme, not new colour maths), the partner, and the halfway point again, so the colour travels out to the
@@ -805,6 +806,24 @@ Three changes to the colour screen and the finale, each its own commit. Everythi
   zone ends past the middle of the window, and the grid starts a gap under it, with its centre at about 554 dp of 915, 60 percent and not 50, and
   never overlapping. The grid is on the exact middle of the window only from about 1110 dp of height, which the layout tests show at 411 by
   1280 dp. Getting nearer 50 percent on a phone means a shorter headline zone, which is a decision for the owner and not made here.
+- **The wordmark takes the website's colours, and is one layer.** `FinaleWordmarkFill` (`FinaleGradient.kt`) has three values and one constant,
+  `FINALE_WORDMARK_FILL`, picks one: `Original` (the four AI gradient stops the wordmark first had), `ThemePartner` (the chosen colour and its
+  partner, unit U10) and `WebsiteModes`, the **default**. `WebsiteModes` is the website's `.lets-krail-big`: one solid, fully opaque horizontal
+  gradient across the whole word, train, metro, bus, ferry and train again (`websiteSweepStops`, from `websiteModeColours`), still, with no hue
+  animation. The four colours are the taj theme colours `train_theme`, `metro_theme`, `bus_theme` and `ferry_theme` by name
+  (`WEBSITE_TRAIN`, `WEBSITE_METRO`, `WEBSITE_BUS`, `WEBSITE_FERRY`), so no hex is written twice and none is darker than the colours themselves.
+  The settle into the chosen theme colour (`finaleGradientColors`, every stop moves to the theme colour from 1500 to 2000 ms), the timeline,
+  the flood, a tap to finish and reduced motion are exactly as they were.
+  What is drawn is `finaleWordmarkLook(fill)`, plain values a table holds. For the website fill there is **no coloured glow** (the glow code is
+  kept for the other two fills), **one static drop shadow**, black at 16 percent, 14 px of blur and 4 px down at the website's largest size
+  (130 px letters, `WORDMARK_SHADOW_DESIGN_FONT_PX`), scaled with the letter size on a phone and set once on the text style and never changed, and
+  **one layer for the word's opacity**: the whole word is a single `graphicsLayer` with `CompositingStrategy.Offscreen` whose alpha is
+  `wordmarkAlpha` times a 250 ms fade in (`wordmarkFadeInAt`), so the word fades in as one opaque picture and no two glyphs are translucent layers
+  over each other. No letter has an opacity or a scale of its own any more: the letters still rise one after another, 35 ms apart, by
+  translation only. The shadow is a second set of the same letters under the first, in the shadow's own black, covered exactly by the fill, and
+  hidden from a screen reader and a test, because the sweep is blended into the letters with `SrcIn`, which would have coloured a shadow that
+  was part of the same layer. The fill's own layer holds only the letters, as before. The wordmark's room for a glow becomes the room for the
+  shadow's blur and drop.
 ## 4. External contracts
 
 | Call | Method and path | Key params | Auth | Response format | Measured wire size | Measured latency |
@@ -1104,6 +1123,10 @@ They are starting points to tune on a phone.
 | 2500 | 3200 | FADE | Gone | 0 | The theme colour | 1 down to 0, eased |
 | 3200 | | DONE | Nothing is drawn | | | 0 |
 
+Since unit V1 the default wordmark is the website's (section 3, unit V1): the timeline above is unchanged, but the Glow column is not drawn for the
+default fill (the finale frame still carries it, for the other two fills), the gradient column is one still sweep of the four mode colours that
+settles into the theme colour in BLEND as before, and the letters rise by translation while the whole word fades in over the first 250 ms.
+
 The real run differs from that table in three ways, all in `finaleStep`:
 
 - **The clock waits at NAVIGATE.** Until the colour covers the screen the clock is the real time. At 2500 ms it stops there, the
@@ -1241,6 +1264,14 @@ one more `when` in the frame's existing layout pass, two integer adds and a `max
 already applies with `safeDrawingPadding`, so nothing is laid out twice and nothing waits. **UX** the grid is nearer the middle of the screen, and it
 scrolls with the headline in the windows that cannot hold both, as before. **Caching** none. **Battery** none, no animation and no timer. **Shared
 limits** none.
+
+Unit V1, the wordmark's colours, the same questions: **API calls** none. **Payload** none: the five stops are the taj colours, built once per run
+(`remember`, a list of five), and the shadow is set once on the text style when the size is known. **Timing** unchanged, the timeline is not touched.
+The first 250 ms of the word's opacity now follow a 250 ms fade over all the letters, and the letters' own fades are gone. **UX** one solid sweep of
+the four mode colours instead of the theme and its partner, a soft shadow and no halo, and the word fades in as one picture. Reduced motion has no
+wordmark and is unchanged. **Caching** the stops and the shadow style are remembered. **Battery** one offscreen layer for the word and one inside it for
+the letters (two, where it was one, a guess at a small cost for the 2.5 s of the finale, to check on a phone), a gradient rect on a frame, no per-frame
+text style and no glow steps, so the text is no longer re-laid out as the glow changes (12 style changes before, none now). **Shared limits** none.
 
 ## 7. States and UX
 
@@ -1791,6 +1822,13 @@ in `searchstop/` touched:
   centre is the window middle to 2 dp when it fits and it starts under the headline's gap when it does not, no nearer the headline than one gap, not
   moved by any of the four taglines (the picked badge's own 4 dp lift aside), and scrolled to the end one gap above the bar, never behind it, with no
   two badges overlapping. Nothing was deleted or loosened.
+- **V1 tests, the wordmark's colours.** `FinaleGradientTest` (changed: the Boolean switch is now the three fills, and "the old stops are still there" holds for
+  all three; new: the four website colours are in order and each equals its theme colour and is opaque, the sweep is the four and train again with the first
+  stop equal to the last, every stop opaque and none darker than the darkest mode, and the sweep settles to the theme colour at a blend of 1 and is itself
+  at 0). `FinaleWordmarkLookTest` (the default fill is the website's, the default path has no animated glow, no slide, no opacity on a letter and one layer for the
+  word's opacity, one static shadow of 16 percent, 14 px blur and 4 px down at 130 px letters, scaling with the letter and never changing, the other two fills as they
+  were, the gradient still across the word for the website fill and sliding for the others, and the 250 ms fade in of the whole word). `FinaleWordmarkNarrowTest` and the rest of
+  the finale tests are unchanged and pass: the lines are still 6 and 5 letters, nothing is cut at 320 dp at 200 percent and the letters keep their size.
 ## 9. Open gaps and decisions
 
 | Gap or decision | Owner | Needed by |
@@ -1968,6 +2006,16 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | V1-1 | The grid is clamped under the headline zone with the zone's own 24 dp gap (`titleToMiddle`) and above the bar's slot with a 16 dp gap (`middleBottom`), the two gaps the frame already had, and not two equal gaps | The spec said one spacing step each. Reusing the frame's two keeps every other screen's rhythm. If both should be 24 dp, `middleBottom` is the one number, and it moves the other screens too | Default, not yet seen by owner |
 | V1-2 | The window middle is worked out from `WindowInsets.safeDrawing`, the insets `IntroFlowScreen` already pads by, and not from the position of the frame on screen | A position read after layout would draw a frame in the wrong place and then move. The two give the same number while the screen pads by those insets. If the keyboard were up it would count in the window, but this screen has none | Default, not yet seen by owner |
 | V1-3 | On a phone the grid centre is not 50 percent of the screen height, because the headline zone ends past the middle (about 60 percent at 411 by 915 dp at 100 percent text) | The spec asked for 50 percent clamped so it never overlaps the headline. Both cannot hold. The clamp wins, as the spec said. A shorter headline zone or a smaller question would bring it nearer 50 | Default, not yet seen by owner |
+
+### Unit V1, decisions where the spec was silent: the wordmark
+
+| # | Decision | Why, and what changes if it is wrong | Decision |
+|---|---|---|---|
+| V1-4 | The sweep is five stops, train, metro, bus, ferry and train again, evenly spaced across the word | The website spaces six modes and its own `krail-sweep` slides, and the spec said four colours then back to train, still. If the word should show only part of the sweep, the range is `wordmarkGradientRangePx` | Default, not yet seen by owner |
+| V1-5 | The drop shadow is black at 16 percent, 14 px blur and 4 px down at 130 px letters, and scales with the letter | The spec said about 14 px at the design size. The website sets 130 px letters at its widest, so that is the design size, and a phone's letters are larger, so the shadow is about 24 px of blur there. If it is too soft or too hard, `WORDMARK_SHADOW_*` are the numbers | Default, not yet seen by owner |
+| V1-6 | The shadow is a second set of the same letters under the first, and not a shadow on the first set | The fill is blended in with `SrcIn`, which turns everything in its layer, a shadow included, into the fill colour at the shadow's opacity, a tinted halo, which is what was to go. A second set keeps the shadow black. It is not a different look from one text with a shadow | Default, not yet seen by owner |
+| V1-7 | The word fades in over 250 ms as one layer, and the letters rise by translation only, with no scale | The spec said no opacity on a letter and translation only. The 250 ms matches the backdrop's own fade in. If the word should appear faster, `WORDMARK_FADE_IN_MS` | Default, not yet seen by owner |
+| V1-8 | `FINALE_GRADIENT_FROM_THEME` is gone and `FINALE_WORDMARK_FILL` takes its place, a build time `val`, not a Remote Config flag | The spec asked for three values, which a Boolean cannot hold. No flag default was touched | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

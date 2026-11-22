@@ -107,6 +107,13 @@ internal fun gradientRangePx(widthPx: Float, travel: Float): Pair<Float, Float> 
 }
 
 /**
+ * Where the gradient sits across a word [widthPx] wide for [look]: sliding with [travel] when the look slides it, and, when it does
+ * not, still, from the left edge to the right edge of the word, whatever [travel] is. The website's sweep is the second.
+ */
+internal fun wordmarkGradientRangePx(look: FinaleWordmarkLook, widthPx: Float, travel: Float): Pair<Float, Float> =
+    if (look.gradientSlides) gradientRangePx(widthPx, travel) else 0f to widthPx
+
+/**
  * How far the circle that floods the screen is, in pixels, when it is [share] of the way grown from a centre at
  * ([centerX], [centerY]) on a screen [width] by [height]. At 1 it reaches the farthest corner, which is the
  * whole screen from any centre.

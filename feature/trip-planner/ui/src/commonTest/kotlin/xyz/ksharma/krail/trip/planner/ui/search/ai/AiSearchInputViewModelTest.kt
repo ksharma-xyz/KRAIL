@@ -540,6 +540,51 @@ class AiSearchInputViewModelTest {
     }
 
     @Test
+    fun `a flag that turns on after the screen was built brings the way in back when asked again`() =
+        runTest(testDispatcher) {
+            var enabled = false
+            viewModel = AiSearchInputViewModel(
+                aiTextService = aiTextService,
+                speechToTextService = speechToTextService,
+                stopTextResolver = stopTextResolver,
+                riderOriginLocator = RiderOriginLocator(nearbyStopsRepository = nearbyStopsRepository),
+                isAiSearchInputEnabled = { enabled },
+            )
+            advanceUntilIdle()
+            assertFalse(viewModel.uiState.value.isWayInAvailable)
+
+            enabled = true
+            assertFalse(viewModel.uiState.value.isWayInAvailable, "Nothing re-reads the flag until it is asked to")
+
+            viewModel.onEvent(AiSearchInputEvent.RefreshFeatureFlag)
+            assertTrue(viewModel.uiState.value.isFeatureEnabled)
+            assertTrue(viewModel.uiState.value.isWayInAvailable)
+
+            enabled = false
+            viewModel.onEvent(AiSearchInputEvent.RefreshFeatureFlag)
+            assertFalse(viewModel.uiState.value.isWayInAvailable)
+        }
+
+    @Test
+    fun `asking again leaves a phone that cannot run the model without the way in`() = runTest(testDispatcher) {
+        aiTextService.extractionAvailability =
+            AiAvailability.Unavailable(reason = AiUnavailableReasons.DEVICE_UNSUPPORTED)
+        viewModel = AiSearchInputViewModel(
+            aiTextService = aiTextService,
+            speechToTextService = speechToTextService,
+            stopTextResolver = stopTextResolver,
+            riderOriginLocator = RiderOriginLocator(nearbyStopsRepository = nearbyStopsRepository),
+            isAiSearchInputEnabled = { true },
+        )
+        advanceUntilIdle()
+
+        viewModel.onEvent(AiSearchInputEvent.RefreshFeatureFlag)
+
+        assertTrue(viewModel.uiState.value.isFeatureEnabled)
+        assertFalse(viewModel.uiState.value.isWayInAvailable)
+    }
+
+    @Test
     fun `a model still downloading keeps the way in`() = runTest(testDispatcher) {
         aiTextService.extractionAvailability =
             AiAvailability.Unavailable(reason = AiUnavailableReasons.MODEL_DOWNLOADING)

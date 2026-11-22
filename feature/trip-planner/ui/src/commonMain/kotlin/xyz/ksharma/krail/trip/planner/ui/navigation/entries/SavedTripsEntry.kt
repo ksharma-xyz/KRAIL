@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
@@ -36,6 +38,7 @@ import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.currentLatLng
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.onLabelStopSelected
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.toTile
+import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputViewModel
 import xyz.ksharma.krail.trip.planner.ui.search.ai.isHandoffActionable
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
@@ -92,6 +95,11 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             },
         )
         val aiSearchInputState by aiSearchInputViewModel.uiState.collectAsStateWithLifecycle()
+        // The microphone follows the flag. This ViewModel outlives the home while Search Stop or Settings sit on
+        // top of it, so the flag is read again each time the home comes to the front.
+        LifecycleEventEffect(Lifecycle.Event.ON_START) {
+            aiSearchInputViewModel.onEvent(AiSearchInputEvent.RefreshFeatureFlag)
+        }
 
         // Whatever the AI resolved is written into SavedTripsState the same way a manual
         // SearchStop pick does (FromStopChanged/ToStopChanged) — per field, so a half-resolved

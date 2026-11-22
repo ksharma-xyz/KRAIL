@@ -228,6 +228,8 @@ class AiSearchInputViewModel(
 
             AiSearchInputEvent.StartListening -> startListening()
             AiSearchInputEvent.StopListening -> stopListening()
+            AiSearchInputEvent.RefreshFeatureFlag ->
+                _uiState.update { it.copy(isFeatureEnabled = isAiSearchInputEnabled()) }
         }
     }
 

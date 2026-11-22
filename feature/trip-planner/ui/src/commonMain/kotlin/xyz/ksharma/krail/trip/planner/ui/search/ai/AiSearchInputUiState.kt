@@ -128,6 +128,15 @@ sealed interface AiSearchInputEvent {
     data object StartListening : AiSearchInputEvent
     data object StopListening : AiSearchInputEvent
 
+    /**
+     * Read the feature flag again. The flag is read when the ViewModel is built, and the ViewModel
+     * outlives the screen it serves while Search Stop or Settings are open on top of it, so a flag
+     * that turned on in the meantime (a Remote Config activation, the debug override) would never
+     * bring the microphone back. The home asks each time it comes to the front. It is a local read,
+     * no network.
+     */
+    data object RefreshFeatureFlag : AiSearchInputEvent
+
     /** Refused just now, and the system will ask again next time the mic is tapped. */
     data object MicPermissionDenied : AiSearchInputEvent
 

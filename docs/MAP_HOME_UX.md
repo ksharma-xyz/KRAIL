@@ -283,7 +283,8 @@ A tapped pin opens a floating stop card, never a bottom sheet.
 
 - Dark inverted field, 48 tall, 16 in from the screen edge, shadow only (no outline).
 - Home: placeholder "Where are you going?" with the microphone at the end. The pill opens Search Stop. The microphone opens
-  Ask KRAIL and shows only when the feature flag and the device allow it, never as a dead icon.
+  Ask KRAIL and shows only when the feature flag and the device allow it, never as a dead icon. The flag is read again each time home
+  comes to the front.
 - Search Stop: placeholder per field, no microphone (rules 7, 35 and 39).
 
 ### Search Stop

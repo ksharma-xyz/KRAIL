@@ -261,8 +261,8 @@ A tapped pin opens a floating stop card, never a bottom sheet.
 - Line 2 is the mode badges, left.
 - Then the Departure Board in its own light card.
 - Padding 16 all round, 8 between the three blocks.
-- The board heading holds the title and the chevron. The board is closed until the heading is tapped, and only then is it
-  fetched. Open, it lists every departure for every line, and the rider narrows it with the board's own filter, the pill and
+- The board heading holds the title and the chevron, and the whole row, at least 48 tall, opens and closes the board, not only
+  the arrow. The board is closed until the heading is tapped, and only then is it fetched. Open, it lists every departure for every line, and the rider narrows it with the board's own filter, the pill and
   the per mode line groups above the rows. There is no Lines chip.
 - Buttons at the bottom: Save as pills, then Go here or Start here. The pills are the app's own label pills, a label no stop
   carries outlined and worded "Save as Home", and the label this stop carries one filled pill that is not a control. A label

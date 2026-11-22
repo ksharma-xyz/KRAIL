@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -49,7 +50,7 @@ import kotlin.test.assertTrue
 /**
  * The floating stop card of `docs/MAP_HOME_UX.md` (Stop card, rules 22 and 45) on real nodes: it
  * floats at the bottom of the pane in the one column and never over the form above it, closes from a
- * 48 dp button, holds its board closed until the chevron is tapped, lists every line on the board
+ * 48 dp button, holds its board closed until the heading is tapped, lists every line on the board
  * with the board's own filter, keeps its height in every phase and keeps its state across recreation.
  *
  * Each test runs in a window of its own size (density 1, so a dp is a pixel). A board that is
@@ -118,7 +119,7 @@ class StopCardLayoutTest {
 
     // endregion
 
-    // region close, chevron and the one chip
+    // region close and the heading
 
     @Test
     @Config(qualifiers = PHONE)
@@ -136,13 +137,13 @@ class StopCardLayoutTest {
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `a pin tap opens the board closed and asks for nothing until the chevron is tapped`() {
+    fun `a pin tap opens the board closed and asks for nothing until the heading is tapped`() {
         showCard(MULTI_LINE_STOP, MANY_LINE_BOARD)
 
         composeRule.onAllNodesWithTag(StopCard.BOARD_BODY).assertCountEquals(0)
         assertTrue(events.none { it is DeparturesUiEvent.LoadDepartures }, "Opening the card must not fetch: $events")
 
-        composeRule.onNodeWithTag(StopCard.BOARD_CHEVRON).performClick()
+        composeRule.onNodeWithTag(StopCard.BOARD_HEADING).performClick()
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag(StopCard.BOARD_BODY).assertExists()
@@ -153,11 +154,50 @@ class StopCardLayoutTest {
 
     @Test
     @Config(qualifiers = PHONE)
+    fun `tapping the title opens and closes the board, not only the arrow`() {
+        showCard(MULTI_LINE_STOP, MANY_LINE_BOARD)
+
+        composeRule.onNodeWithText("Departure Board").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(StopCard.BOARD_BODY).assertExists()
+
+        composeRule.onNodeWithText("Departure Board").performClick()
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithTag(StopCard.BOARD_BODY).assertCountEquals(0)
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `the heading is one button at least 48 dp tall that says whether the board is open`() {
+        showCard(MULTI_LINE_STOP, MANY_LINE_BOARD)
+
+        assertTrue(bounds(StopCard.BOARD_HEADING).height >= 48.dp - TOLERANCE, "The heading is too short to tap")
+        assertEquals("Collapsed", headingConfig()[SemanticsProperties.StateDescription])
+        assertEquals(Role.Button, headingConfig()[SemanticsProperties.Role])
+
+        composeRule.onNodeWithTag(StopCard.BOARD_HEADING).performClick()
+        composeRule.waitForIdle()
+        assertEquals("Expanded", headingConfig()[SemanticsProperties.StateDescription])
+    }
+
+    @Test
+    @Config(qualifiers = "w320dp-h800dp")
+    fun `at 320 dp and 200 percent the heading stays whole, 48 dp and inside the card`() {
+        showCard(MULTI_LINE_STOP, MANY_LINE_BOARD, boardOpen = true, fontScale = 2f)
+
+        val heading = bounds(StopCard.BOARD_HEADING)
+        val card = bounds(StopCard.CARD)
+        assertTrue(heading.height >= 48.dp - TOLERANCE, "The heading is ${heading.height} tall")
+        assertTrue(heading.right <= card.right + TOLERANCE, "The heading ends at ${heading.right}, past the card")
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
     fun `closing the board stops the poll`() {
         showCard(MULTI_LINE_STOP, MANY_LINE_BOARD, boardOpen = true)
         events.clear()
 
-        composeRule.onNodeWithTag(StopCard.BOARD_CHEVRON).performClick()
+        composeRule.onNodeWithTag(StopCard.BOARD_HEADING).performClick()
         composeRule.waitForIdle()
 
         assertTrue(events.any { it == DeparturesUiEvent.StopPolling }, "Closing the board must stop polling: $events")
@@ -212,7 +252,7 @@ class StopCardLayoutTest {
     fun `an open board is still open after the screen is recreated`() {
         restorationTester.setContent { PreviewTheme { CardOf(MULTI_LINE_STOP, MANY_LINE_BOARD, boardOpen = false) } }
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(StopCard.BOARD_CHEVRON).performClick()
+        composeRule.onNodeWithTag(StopCard.BOARD_HEADING).performClick()
         composeRule.waitForIdle()
 
         restorationTester.emulateSavedInstanceStateRestore()
@@ -227,7 +267,7 @@ class StopCardLayoutTest {
         var stop by mutableStateOf(MULTI_LINE_STOP)
         composeRule.setContent { PreviewTheme { CardOf(stop, MANY_LINE_BOARD, boardOpen = false) } }
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(StopCard.BOARD_CHEVRON).performClick()
+        composeRule.onNodeWithTag(StopCard.BOARD_HEADING).performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(StopCard.BOARD_BODY).assertExists()
 
@@ -292,6 +332,8 @@ class StopCardLayoutTest {
             content = content,
         )
     }
+
+    private fun headingConfig() = composeRule.onNodeWithTag(StopCard.BOARD_HEADING).fetchSemanticsNode().config
 
     private fun bounds(tag: String): DpRect = composeRule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
 

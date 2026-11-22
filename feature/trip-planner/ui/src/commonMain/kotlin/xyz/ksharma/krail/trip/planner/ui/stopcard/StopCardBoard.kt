@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -22,10 +23,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_arrow_down
@@ -34,9 +38,9 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DepartureBoardSourc
 import xyz.ksharma.krail.departures.ui.state.DeparturesState
 import xyz.ksharma.krail.departures.ui.state.DeparturesUiEvent
 import xyz.ksharma.krail.taj.components.AnimatedDots
-import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.CardShape
+import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.DepartureBoardBody
@@ -46,9 +50,9 @@ private const val CHEVRON_OPEN_DEGREES = 180f
 
 /**
  * The Departure Board on a stop card, in its own light card: a heading that holds the title and the
- * chevron, then, once the chevron is open, the board's own rows for every line the stop serves.
+ * chevron, then, once the heading is tapped open, the board's own rows for every line the stop serves.
  *
- * The board is closed until the chevron is tapped, and only then is it fetched, so a pin tap costs
+ * The board is closed until the heading is tapped, and only then is it fetched, so a pin tap costs
  * no call and an open board costs the one the sheet's board cost, through the same
  * [DeparturesUiEvent.LoadDepartures] and cooldown. The fetch and its 30 second poll run while this
  * is on screen and the screen is in front, because the departures state is collected with the
@@ -84,7 +88,7 @@ internal fun StopCardBoardSection(
         BoardHeading(
             board = board,
             boardOpen = boardOpen,
-            onChevronClick = {
+            onClick = {
                 boardOpen = !boardOpen
                 onEvent(
                     DeparturesUiEvent.DepartureBoardToggle(stopId, stopName, boardOpen, DepartureBoardSource.MAP_SHEET),
@@ -122,19 +126,32 @@ private fun BoardPollingEffect(
 }
 
 /**
- * The heading: the title at the start, then the refresh dots and the chevron as one end cluster.
- * They are whole items in a wrapping row, so at large text the cluster goes under the title and
- * nothing is squeezed or cut.
+ * The heading, one button: the title at the start, then the refresh dots and the chevron as one end
+ * cluster. The whole row opens and closes the board, not only the arrow, and is at least 48 dp tall.
+ * The chevron is the visual cue only. A screen reader hears one expandable button, the title, and
+ * whether it is expanded or collapsed. The title and the cluster are whole items in a wrapping row,
+ * so at large text the cluster goes under the title and nothing is squeezed or cut.
  */
 @Composable
 private fun BoardHeading(
     board: StopCardBoard,
     boardOpen: Boolean,
-    onChevronClick: () -> Unit,
+    onClick: () -> Unit,
 ) {
     val dim = KrailTheme.dimensions
+    val label = if (boardOpen) "Collapse the departure board" else "Expand the departure board"
     FlowRow(
-        modifier = Modifier.fillMaxWidth().padding(start = dim.pageHorizontalPadding),
+        modifier = Modifier
+            .testTag(TripPlannerTestTags.StopCard.BOARD_HEADING)
+            .fillMaxWidth()
+            .heightIn(min = dim.textFieldHeight)
+            .clip(RoundedCornerShape(dim.radiusM))
+            .klickable(role = Role.Button, onClick = onClick)
+            .semantics {
+                stateDescription = if (boardOpen) "Expanded" else "Collapsed"
+                onClick(label = label, action = null)
+            }
+            .padding(start = dim.pageHorizontalPadding),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
         itemVerticalAlignment = Alignment.CenterVertically,
@@ -150,28 +167,21 @@ private fun BoardHeading(
                     color = KrailTheme.colors.softLabel,
                 )
             }
-            Chevron(open = boardOpen, onClick = onChevronClick)
+            Chevron(open = boardOpen)
         }
     }
 }
 
-/** The chevron, taj's round icon button with no fill, 48 dp, turned over while the board is open. */
+/** The chevron, the existing arrow icon in a 48 dp box, turned over while the board is open. A cue, not a control. */
 @Composable
-private fun Chevron(open: Boolean, onClick: () -> Unit) {
-    val label = if (open) "Collapse the departure board" else "Expand the departure board"
-    RoundIconButton(
-        onClick = onClick,
-        color = Color.Transparent,
-        onClickLabel = label,
-        modifier = Modifier.testTag(TripPlannerTestTags.StopCard.BOARD_CHEVRON),
-    ) {
+private fun Chevron(open: Boolean) {
+    val dim = KrailTheme.dimensions
+    Box(modifier = Modifier.size(dim.textFieldHeight), contentAlignment = Alignment.Center) {
         Image(
             painter = painterResource(Res.drawable.ic_arrow_down),
-            contentDescription = label,
+            contentDescription = null,
             colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
-            modifier = Modifier
-                .size(KrailTheme.dimensions.spacingXL)
-                .rotate(if (open) CHEVRON_OPEN_DEGREES else 0f),
+            modifier = Modifier.size(dim.spacingXL).rotate(if (open) CHEVRON_OPEN_DEGREES else 0f),
         )
     }
 }

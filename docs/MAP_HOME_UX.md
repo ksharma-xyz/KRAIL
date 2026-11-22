@@ -250,11 +250,16 @@ A tapped pin opens a floating stop card, never a bottom sheet.
 - The board heading holds the title, one Lines chip (only when the stop has more than one line) and the chevron. The board
   is closed until the chevron is tapped, and only then is it fetched. The chip opens a row of the stop's line badges, and a
   badge filters the board to its line.
-- Buttons at the bottom: Save as pills, then Go here or Start here. The card keeps the room for them, and until the label
-  branch fills it the slot holds the stop's one pick action, Select stop.
+- Buttons at the bottom: Save as pills, then Go here or Start here. The pills are the app's own label pills, a label no stop
+  carries outlined and worded "Save as Home", and the label this stop carries one filled pill that is not a control. A label
+  sitting on another stop is not offered. The pills are whole items that wrap, 48 tall, and the row keeps the tallest room it
+  has held so assigning a label never shortens the card. The action reads Go here when choosing a destination and Start here in
+  a start search. While a stop is being chosen for a label it stays Select stop and there is no Save as.
 - A Park & Ride pin shows the station's numbers instead of the board: the total and its time when the station has several car
   parks, then every car park stacked at equal weight, each with its own Directions button, then Add to home or Remove from
   home. Directions use the car park's own coordinates. A car park without them has no Directions button.
+  Go here sits under Add to home, the primary action, when the station has a stop in the stops table, the smallest stop id the table holds, and a station
+  with no stop has no Go here, so the card never promises a trip it cannot start (rule 40).
 - The card floats at the bottom of the map in the one column of rule 45, on a solid surface under the card wash, and closes
   with its close button, a tap on the map or system back.
 
@@ -336,7 +341,8 @@ A tapped pin opens a floating stop card, never a bottom sheet.
 |---|---|
 | Home pill | Where are you going? |
 | Search placeholders | Choose destination, Choose starting point, Choose a stop (when assigning a label) |
-| Buttons | Change start, Show trips, Go here, Start here, Choose start, Add to home, Not now |
+| Buttons | Change start, Show trips, Go here, Start here, Select stop, Choose start, Add to home, Not now |
+| Save as pills | Save as Home, Save as Work, Save as and the label's own name |
 | Chips | Set Home, Set Work, Park & Ride (with a plus) |
 | Park & Ride | spots available, full, Last updated at |
 | Section names | Recent, Near you |

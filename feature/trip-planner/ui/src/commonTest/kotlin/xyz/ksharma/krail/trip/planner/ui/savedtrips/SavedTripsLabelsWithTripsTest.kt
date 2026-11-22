@@ -17,9 +17,13 @@ import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import xyz.ksharma.krail.feature.track.TrackingManager
 import xyz.ksharma.krail.trip.planner.ui.searchstop.RealSearchSessionStore
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.fromStopDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.toStopDisplay
+import xyz.ksharma.krail.trip.planner.ui.stopcard.PickRole
+import xyz.ksharma.krail.trip.planner.ui.stopcard.SaveAsPill
+import xyz.ksharma.krail.trip.planner.ui.stopcard.saveAsPillsFor
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAppReviewManager
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeInviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
@@ -30,7 +34,8 @@ import kotlin.test.assertTrue
 
 /**
  * A saved trip card shows a label whenever its stop is the labelled stop (`docs/MAP_HOME_UX.md` rule 37),
- * and it must never draw first without it. The labels are read with the trips, so the first state that
+ * and it must never draw first without it. The Save as pills on a stop card give a stop its label through the
+ * same event the chips use, so the cases at the end follow a label from the card to the saved trip. The labels are read with the trips, so the first state that
  * holds a trip to draw already holds the labels, and a card cannot grow when its label lands (rule 22).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -100,7 +105,41 @@ class SavedTripsLabelsWithTripsTest {
         leave(screen)
     }
 
-    private fun labelStop(label: String, emoji: String, stopId: String, stopName: String, sortOrder: Long) =
+    @Test
+    fun `save as on a stop card gives the stop a custom label and the card then shows it filled`() = krailRunTest {
+        labelStop("Gym", GYM_EMOJI, null, null, sortOrder = 0)
+        saveTrip(CENTRAL_ID, CENTRAL_NAME, TOWN_HALL_ID, TOWN_HALL_NAME)
+        val viewModel = buildViewModel()
+        val screen = watch(viewModel)
+
+        viewModel.onEvent(SavedTripUiEvent.LabelStopAssigned("Gym", TOWN_HALL_ID, TOWN_HALL_NAME))
+        runCurrent()
+
+        val state = viewModel.uiState.value
+        assertEquals("Gym", state.savedTrips.single().toStopDisplay(state.stopLabels).label)
+        val pills = saveAsPillsFor(TOWN_HALL_ID, PickRole.Destination, state.stopLabels)
+        assertEquals(listOf("Gym"), pills.map { it.label.label })
+        assertTrue(pills.single() is SaveAsPill.Saved, "The stop now carries the label, so the pill is filled.")
+        leave(screen)
+    }
+
+    @Test
+    fun `save as does not offer a label to a stop that another label already holds`() = krailRunTest {
+        labelStop("Home", HOME_EMOJI, CENTRAL_ID, CENTRAL_NAME, sortOrder = 0)
+        labelStop("Gym", GYM_EMOJI, null, null, sortOrder = 1)
+        val viewModel = buildViewModel()
+        val screen = watch(viewModel)
+
+        viewModel.onEvent(SavedTripUiEvent.LabelStopAssigned("Gym", CENTRAL_ID, CENTRAL_NAME))
+        runCurrent()
+
+        val labels = viewModel.uiState.value.stopLabels
+        assertNull(labels.single { it.label == "Gym" }.stopId, "A stop is on one label.")
+        assertEquals(listOf("Home"), saveAsPillsFor(CENTRAL_ID, PickRole.Destination, labels).map { it.label.label })
+        leave(screen)
+    }
+
+    private fun labelStop(label: String, emoji: String, stopId: String?, stopName: String?, sortOrder: Long) =
         sandook.upsertStopLabel(label, emoji, stopId, stopName, sortOrder)
 
     private fun saveTrip(fromId: String, fromName: String, toId: String, toName: String) =

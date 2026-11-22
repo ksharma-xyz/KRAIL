@@ -150,8 +150,8 @@ SearchStop). `TimeTableRoute` navigation still works via back-stack push.
   portrait, just width-capped.
 - **Right pane** (`weight(1f)`): a **read-only nearby-stops map** powered by
   `MapStopSelectionPane` (singleton `MapStopSelectionViewModel`). Users can
-  explore nearby stops and view stop details; tapping a stop has no
-  trip-planning side-effect. The right pane is purely contextual.
+  explore nearby stops and view stop details. A tapped stop opens the floating stop card,
+  whose Go here sets the destination and whose Save as pills give the stop a label.
 - Trip planning is done via the SearchStopRow at the bottom of the left pane.
   On tablet and foldable-unfolded the row is **always expanded**; only
   phone-landscape collapses it to a button (see compact-height rules below).
@@ -233,7 +233,8 @@ Files:
   `ThemeContrastTest`.
 - Marker tap opens the floating Park & Ride card (`stopcard/ParkRidePinCard.kt`), over the
   map and never a bottom sheet: the station name with a close button, every car park stacked
-  with its numbers and its own Directions, and the action Add to home or Remove from home. It
+  with its numbers and its own Directions, and the action Add to home or Remove from home (on the Add Park & Ride
+  screen, which is not choosing a trip, and with Go here under it on the home map's `P` pin). It
   is the stop card's shell, so selecting from a map feels identical across both screens. It
   floats at the bottom of the map pane in the one column of rule 45 (at most 560 dp, 16 dp in
   from each side, so 448 dp in the 480 dp pane), the location button rides above it, a tap on

@@ -133,10 +133,14 @@ class IntroParkRideCardTest {
     }
 
     @Test
-    fun `no rider facing string has a colon, a question mark, an em dash, an arrow or a middle dot`() {
+    fun `no rider facing string has a colon, a question mark, an em dash, an arrow or a middle dot, except the question itself`() {
         val banned = listOf(':', '?', '!', Char(EM_DASH), Char(RIGHT_ARROW), Char(LEFT_ARROW), Char(MIDDLE_DOT))
+        // The heading is the question, so its one question mark is allowed and every other banned glyph is not.
+        banned.filter { it != '?' }.forEach { glyph ->
+            assertFalse(PARK_RIDE_HEADING.contains(glyph), "\"$PARK_RIDE_HEADING\" contains $glyph")
+        }
+        assertEquals(1, PARK_RIDE_HEADING.count { it == '?' })
         val strings = listOf(
-            PARK_RIDE_HEADING,
             PARK_RIDE_YES,
             PARK_RIDE_YES_SPOKEN,
             PARK_RIDE_NO,

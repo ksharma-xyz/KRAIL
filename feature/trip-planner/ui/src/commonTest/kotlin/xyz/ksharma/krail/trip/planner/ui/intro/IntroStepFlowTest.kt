@@ -96,7 +96,7 @@ class IntroStepFlowTest {
     fun `the screen the rider is on stays in the order even when it has just become skippable`() {
         val onIt = noStationNear.copy(step = PARK_RIDE)
 
-        assertEquals(listOf(PARK_RIDE, DESTINATION, ORIGIN, CONFIRM), onIt.stepsInFlow(PARK_RIDE))
+        assertEquals(listOf(PARK_RIDE, DESTINATION, ORIGIN, CONFIRM, THEME), onIt.stepsInFlow(PARK_RIDE))
         assertEquals(DESTINATION, onIt.stepAfter(PARK_RIDE))
     }
 

@@ -80,7 +80,7 @@ maestro --device emulator-5554 test -e APP_ID=xyz.ksharma.krail.debug .maestro/s
 | `nightly/04-background-foreground.yaml` | Backgrounding and returning lands the rider on the screen they left, not on home. |
 | `nightly/05-kill-relaunch.yaml` | After a force-stop the app recovers to home and navigation still works. |
 | `nightly/06-permissions-denied.yaml` | With location denied the app still runs and a trip can still be planned by typing. |
-| `shared/dismiss-intro.yaml` | Not a test. Walks the first-run carousel so a clean device can reach the app. |
+| `shared/dismiss-intro.yaml` | Not a test. Walks the first-run Intro so a clean device can reach the app, saying no to saving a trip on its last screen. |
 
 ## Selectors
 
@@ -119,16 +119,16 @@ These are all fixes for failures this suite actually hit, not style preferences.
 - **Settle before you look, and never guard on a node the app has not drawn yet.** The intro
   dismissal used to be a caller-side `runFlow` conditioned on `intro.screen`. `launchApp`
   returns once the process is foregrounded, not once Compose has drawn, so on a freshly booted
-  CI emulator that condition was evaluated against an empty hierarchy: it skipped, the carousel
+  CI emulator that condition was evaluated against an empty hierarchy: it skipped, the Intro
   stayed up, and every flow failed on its first assertion. `shared/dismiss-intro.yaml` now waits
-  for the app to settle and no-ops by itself, and callers invoke it unconditionally. A condition
+  for the first Intro screen to be drawn and no-ops by itself, and callers invoke it unconditionally. A condition
   is only as good as the frame it is tested against.
 
 ## Permission prep
 
 `06-permissions-denied.yaml` sets the permission itself via `launchApp: permissions:`. It
 deliberately does **not** use `clearState: true`, which would also wipe the "intro seen" flag
-and spend the flow walking the carousel instead of testing a denial.
+and spend the flow walking the Intro instead of testing a denial.
 
 If a device already granted location and you want to be certain the denial is real:
 

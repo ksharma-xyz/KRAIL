@@ -1149,16 +1149,17 @@ in `searchstop/` touched:
   `SnackbarBan`, `PollingLifecycleGuardTest` (the Intro must not poll), `ViewModelStateDurabilityTest`,
   `NavKeySerializationConfigTest`, `verifyTestWiring`.
 - **Maestro.** `.maestro/shared/dismiss-intro.yaml` loops on the tag `intro.action.primary`, which the Intro keeps on the
-  right button, so the six flows that call it are untouched. The first screen's primary, `Yes, this one`, is disabled until a
-  badge is tapped, so unit R2 adds one step to each pass: tap `intro.theme.train` when it is on screen (a `runFlow` with a `when
-  visible` condition), then wait for the primary to be enabled and tap it, as before. On every later screen the badge is not there
-  and the pass is as it was. The header comment of the file is rewritten for the five screens and names no old label. On the Park &
-  Ride screen the right button is `Yes, show me free spots`, so the loop answers Yes. With Maestro's default of granting location, a
-  phone that is not near a Park & Ride station finds none, moves straight on and reaches the temporary trip bar, whose right button
-  is enabled and ends the Intro with nothing saved. A phone near a Park & Ride station would add it. The badges drift and the chosen
-  one dances for as long as the first screen is up, so the screen never stops moving there and a wait for the animation to end runs
-  to its timeout: a few seconds, not a failure. `maestro check-syntax` accepts the file. A device case, because nothing is run on a
-  device here. CI and workflow files are not touched.
+  right button, so the six flows that call it are untouched. It starts with a wait for the first screen to be drawn, the
+  Train badge `intro.theme.train` (optional, 30 s), and no longer waits for the animation to end, which the drifting badges keep
+  running for the full 30 s every time. Each pass of the loop then does one of two things. When the trip tile `intro.confirm.tile`
+  is on screen, which is the confirm screen, it taps `intro.action.secondary`, Not now, and waits for the animation. Otherwise
+  it taps `intro.theme.train` when that is on screen, waits for the primary to be enabled and taps it, as before. So the theme
+  screen is answered with a badge and the primary, Park & Ride with Yes (a phone not near a Park & Ride station finds none and moves
+  on, and one near a station adds it), the destination and origin screens with `Yes, this one`, and the confirm screen with Not now, so
+  a cold run ends with two stops chosen and nothing saved, as it did before. Typing is never needed. The follow-on flows do not
+  rely on a saved trip: `01-launch-home` asserts the list container and never its contents, and `02-plan-trip` plans from the home
+  bar. `maestro check-syntax` accepts the file and every flow. A device case, because nothing is run on a device here. CI and
+  workflow files are not touched.
 - **Coverage.** Every PR passes `scripts/patch_coverage.py` at 80 percent or more. The result goes in the PR's Testing section.
 - **Manual cases** (nothing automated reaches them): a real permission dialog on both platforms, a real fix indoors, airplane
   mode on the Yes path, a fresh install on a slow device.

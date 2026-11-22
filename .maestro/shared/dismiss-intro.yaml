@@ -5,20 +5,23 @@
 # be guarded by the caller on `intro.screen` being visible, which is what broke
 # the lane on CI: `launchApp` returns once the process is in the foreground, not
 # once Compose has drawn, so on a freshly booted emulator the guard was evaluated
-# against a hierarchy that had nothing in it yet. It skipped, the carousel stayed
+# against a hierarchy that had nothing in it yet. It skipped, the Intro stayed
 # up, and the caller's next wait counted down against a screen that was never
 # going to arrive. Every flow failed on its first assertion for that reason and
 # no other. Settling here, inside the one file that knows about the Intro, is
 # what makes the check meaningful, and it keeps the six callers identical.
 #
 # The Intro is five screens with one question each: the theme colour, Park & Ride,
-# where to, where from, and save this trip. Every screen asks yes or no with the same
-# two buttons, and the right one is `intro.action.primary`, the positive answer.
-# Looping on that tag walks the whole thing without this flow knowing how many
-# screens there are or what any of them say. Saying yes everywhere means a cold run
-# adds the Park & Ride station when the phone is near one, and saves a trip only when
-# a pair was picked, which a cold run never does, so the last screens end the Intro
-# with nothing saved.
+# where you go, where you start, and save this trip. The right button is
+# `intro.action.primary`, the positive answer, and the left one is
+# `intro.action.secondary`. Looping on the primary tag walks the whole thing without
+# this flow knowing how many screens there are or what any of them say. Saying yes
+# everywhere means a cold run adds the Park & Ride station when the phone is near one.
+# The destination and origin screens each take the highlighted stop with the primary
+# button, so a cold run ends on the last screen with two stops chosen. That screen is
+# the one place the loop answers with the left button, Not now, found by its trip tile
+# `intro.confirm.tile`, so the Intro ends with nothing saved and a cold run starts the
+# app with no saved trip, as it always has. Typing in the search field is never needed.
 #
 # The first screen is the one exception. Its primary button, "Yes, this one", is
 # disabled until a theme badge has been tapped, because the rider has to choose a
@@ -27,16 +30,16 @@
 # nothing is tapped.
 #
 # The badges on the first screen drift and the chosen one dances for as long as the
-# screen is up, so that screen never stops moving. The waits for the animation to end
-# run to their timeouts there and then carry on. That costs a few seconds and is not
-# a failure.
+# screen is up, so that screen never stops moving, and a wait for the animation to end
+# there only ever runs to its timeout. So the first wait below is for the first screen
+# itself, its Train badge, which ends the moment it is drawn, and the one wait after a
+# tap is short and its timeout is never what the run depends on.
 #
-# On a cold install the stops are still loading when the last screens open. Their
-# primary button is then disabled for a few seconds, and a tap on a disabled button
-# does nothing, so each pass waits for the button to be enabled before it taps. The
-# Park & Ride screen does the same while its station is looked for. Without that wait
-# the taps are spent on a disabled button and the cap below runs out before the app
-# is ready.
+# On a cold install the stops are still loading when the last screens open. The primary
+# button is then disabled for a few seconds, and a tap on a disabled button does
+# nothing, so each pass waits for the button to be enabled before it taps. The Park &
+# Ride screen does the same while its station is looked for. Without that wait the taps
+# are spent on a disabled button and the cap below runs out before the app is ready.
 #
 # `times` is a safety net, not the exit condition: `while` is what ends the
 # loop. Without the cap a button that stops responding would hang the run
@@ -46,20 +49,17 @@
 # because `.maestro/shared/` sits outside both `smoke/` and `nightly/`.
 appId: ${APP_ID}
 ---
-# Wait for the app to stop drawing before looking at anything. Cheap on a warm
-# device, and on a cold one it is the difference between seeing the Intro and
-# seeing an empty window.
-- waitForAnimationToEnd:
-    timeout: 30000
-
-# `optional`, because a device that has already been through the Intro never
-# shows this button. There it warns, costs the timeout below, and the repeat that
-# follows then does nothing. On a clean device it is what absorbs the rest of a
-# slow cold start.
+# Wait for the first screen to be drawn, which is the Train badge on the theme screen.
+# Cheap on a warm device, and on a cold one it is the difference between seeing the
+# Intro and seeing an empty window. `optional`, because a device that has already been
+# through the Intro never shows it: there it warns, costs the timeout once, and the
+# repeat that follows then does nothing. The wait ends as soon as the badge is on screen,
+# unlike a wait for the animation to end, which the badges keep running for the full
+# timeout.
 - extendedWaitUntil:
     visible:
-      id: "intro.action.primary"
-    timeout: 15000
+      id: "intro.theme.train"
+    timeout: 30000
     optional: true
 
 - repeat:
@@ -68,26 +68,46 @@ appId: ${APP_ID}
       visible:
         id: "intro.action.primary"
     commands:
-      # Only the theme screen has this badge. Choosing a colour is what turns its
-      # primary button on.
+      # The last screen: Not now, so nothing is saved. Its trip tile is what says it is
+      # the last screen. Once this is tapped the Intro leaves, so the rest of the pass
+      # does not run for it.
       - runFlow:
           when:
             visible:
-              id: "intro.theme.train"
+              id: "intro.confirm.tile"
           commands:
             - tapOn:
-                id: "intro.theme.train"
-      # Optional, so a device that never reports the state costs the timeout
-      # once for each pass and then taps as before.
-      - extendedWaitUntil:
-          visible:
-            id: "intro.action.primary"
-            enabled: true
-          timeout: 30000
-          optional: true
-      - tapOn:
-          id: "intro.action.primary"
-      # The screen slides into the next. Tapping through that lands the
-      # second tap on the screen that is still moving in.
-      - waitForAnimationToEnd:
-          timeout: 5000
+                id: "intro.action.secondary"
+            - waitForAnimationToEnd:
+                timeout: 5000
+      # Every other screen: the positive answer.
+      - runFlow:
+          when:
+            notVisible:
+              id: "intro.confirm.tile"
+            visible:
+              id: "intro.action.primary"
+          commands:
+            # Only the theme screen has this badge. Choosing a colour is what turns its
+            # primary button on.
+            - runFlow:
+                when:
+                  visible:
+                    id: "intro.theme.train"
+                commands:
+                  - tapOn:
+                      id: "intro.theme.train"
+            # Optional, so a device that never reports the state costs the timeout
+            # once for each pass and then taps as before.
+            - extendedWaitUntil:
+                visible:
+                  id: "intro.action.primary"
+                  enabled: true
+                timeout: 30000
+                optional: true
+            - tapOn:
+                id: "intro.action.primary"
+            # The screen slides into the next. Tapping through that lands the
+            # second tap on the screen that is still moving in.
+            - waitForAnimationToEnd:
+                timeout: 5000

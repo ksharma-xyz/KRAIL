@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -15,6 +16,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
@@ -50,6 +52,8 @@ class IntroThemeStepTest {
 
     @get:Rule
     val composeRule = createComposeRule()
+
+    private val window get() = composeRule.onRoot().getUnclippedBoundsInRoot()
 
     private val events = mutableListOf<IntroUiEvent>()
     private val none = IntroState(step = IntroStep.THEME)
@@ -138,29 +142,43 @@ class IntroThemeStepTest {
     }
 
     @Test
-    fun `the bar is the two buttons, with the right one off until a theme is selected`() {
+    fun `the bar is the one button, off until a theme is selected, and there is no way to say no`() {
         show(none)
 
-        secondary().assertTextEquals(THEME_ANOTHER).assertIsEnabled()
         primary().assertTextEquals(THEME_CONFIRM).assertIsNotEnabled()
-        assertTrue(
-            secondary().getUnclippedBoundsInRoot().left <= primary().getUnclippedBoundsInRoot().left,
-            "the left button is first, on the left or above",
-        )
+        secondary().assertDoesNotExist()
+        composeRule.onNodeWithText("No", substring = true).assertDoesNotExist()
 
         show(none.copy(selectedThemeId = KrailThemeStyle.Ferry.id))
 
         primary().assertTextEquals(THEME_CONFIRM).assertIsEnabled()
+        secondary().assertDoesNotExist()
     }
 
     @Test
-    fun `the left button asks for another theme and the right one confirms`() {
+    fun `the one button is the width of the bar and the same height as the two button bar, with a screen reader name that matches`() {
+        show(none)
+
+        val bounds = primary().getUnclippedBoundsInRoot()
+        val pad = window.width - bounds.width
+        assertEquals(pad / 2, bounds.left, "the button is not centred in the window: $bounds in $window")
+        assertTrue(
+            bounds.width > window.width / 2,
+            "the one button is not the full width of the bar: $bounds in $window",
+        )
+        assertEquals(
+            THEME_CONFIRM,
+            primary().fetchSemanticsNode().config[SemanticsProperties.ContentDescription].single(),
+        )
+    }
+
+    @Test
+    fun `the one button confirms, and nothing else on the screen sends a confirm`() {
         show(none.copy(selectedThemeId = KrailThemeStyle.Metro.id))
 
-        secondary().performClick()
         primary().performClick()
 
-        assertEquals(listOf<IntroUiEvent>(IntroUiEvent.ShowAnotherTheme, IntroUiEvent.ConfirmTheme), events)
+        assertEquals(listOf<IntroUiEvent>(IntroUiEvent.ConfirmTheme), events)
     }
 
     @Test
@@ -173,10 +191,10 @@ class IntroThemeStepTest {
     }
 
     @Test
-    fun `the screen has the four badges and the two buttons, and no back button on the first screen`() {
+    fun `the screen has the four badges and the one button, and no back button on the first screen`() {
         show(none)
 
-        composeRule.onAllNodes(hasClickAction()).assertCountEquals(introThemeChoices().size + 2)
+        composeRule.onAllNodes(hasClickAction()).assertCountEquals(introThemeChoices().size + 1)
         composeRule.onNodeWithContentDescription(BACK_DESCRIPTION).assertDoesNotExist()
     }
 
@@ -186,10 +204,9 @@ class IntroThemeStepTest {
 
         val headline = composeRule.onNodeWithText(PICK_THEME_HEADING).getUnclippedBoundsInRoot()
         val badges = introThemeChoices().map { badge(it).getUnclippedBoundsInRoot() }
-        val bar = secondary().getUnclippedBoundsInRoot()
+        val barTop = primary().getUnclippedBoundsInRoot().top
 
         assertTrue(badges.all { it.top >= headline.bottom }, "a badge starts over the headline: $headline $badges")
-        val barTop = minOf(bar.top, primary().getUnclippedBoundsInRoot().top)
         assertTrue(badges.all { it.bottom <= barTop }, "a badge ends under the top of the bar at $barTop: $badges")
     }
 

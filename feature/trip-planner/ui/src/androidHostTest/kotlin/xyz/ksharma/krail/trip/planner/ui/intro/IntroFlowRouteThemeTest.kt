@@ -115,15 +115,16 @@ class IntroFlowRouteThemeTest {
     }
 
     @Test
-    fun `the left button applies the themes in turn, one after another`() {
+    fun `tapping one badge after another applies each theme in turn, and the right button stays on`() {
         show()
 
-        repeat(2) {
-            composeRule.onNodeWithText(THEME_ANOTHER).performClick()
+        listOf(KrailThemeStyle.Train, KrailThemeStyle.Metro).forEach {
+            badge(it).performClick()
             composeRule.waitForIdle()
         }
 
         assertEquals(listOf(KrailThemeStyle.Train.hexColorCode, KrailThemeStyle.Metro.hexColorCode), appliedThemes)
+        primary().assertIsEnabled()
     }
 
     @Test

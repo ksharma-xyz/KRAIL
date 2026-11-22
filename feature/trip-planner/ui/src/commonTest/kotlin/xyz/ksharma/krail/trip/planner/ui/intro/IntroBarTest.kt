@@ -18,6 +18,9 @@ import kotlin.test.assertTrue
 
 class IntroBarTest {
 
+    // Every screen but the theme screen has a left button, so reading it is an assertion that there is one.
+    private val IntroBar.negative: IntroBarAction get() = requireNotNull(left) { "no left button on $this" }
+
     private val unknown = StopsReadiness.Unknown
     private val loading = StopsReadiness.Loading
     private val ready = StopsReadiness.Ready(stopCount = 100)
@@ -69,7 +72,7 @@ class IntroBarTest {
     )
 
     private fun theme(enabled: Boolean) = IntroBar(
-        left = IntroBarAction("No, show me another", IntroUiEvent.ShowAnotherTheme),
+        left = null,
         right = IntroBarAction("Yes, this one", IntroUiEvent.ConfirmTheme),
         rightEnabled = enabled,
     )
@@ -97,7 +100,7 @@ class IntroBarTest {
         assertEquals("Yes", PARK_RIDE_YES_COMPACT)
         assertEquals("Not now", PARK_RIDE_NOT_NOW)
         assertEquals("Add to home", PARK_RIDE_ADD)
-        assertNull(decide(true).left.compactLabel)
+        assertNull(decide(true).negative.compactLabel)
         assertNull(decide(true).right.compactLabel)
     }
 
@@ -106,7 +109,7 @@ class IntroBarTest {
         val bars = parkRideRows.mapNotNull { it.bar }
 
         assertTrue(bars.isNotEmpty())
-        bars.forEach { bar -> assertNotEquals(bar.left.event, bar.right.event) }
+        bars.forEach { bar -> assertNotEquals(bar.negative.event, bar.right.event) }
     }
 
     private fun stops(enabled: Boolean) = IntroBar(
@@ -139,13 +142,13 @@ class IntroBarTest {
 
         assertEquals("No, search", STOP_SEARCH)
         assertEquals("Yes, this one", STOP_CHOOSE)
-        assertNull(bar.left.compactLabel)
+        assertNull(bar.negative.compactLabel)
         assertNull(bar.right.compactLabel)
         listOf(1.0f, 1.31f, 2.0f).forEach { scale ->
-            assertEquals("No, search", bar.left.visibleLabel(scale), "left at $scale")
+            assertEquals("No, search", bar.negative.visibleLabel(scale), "left at $scale")
             assertEquals("Yes, this one", bar.right.visibleLabel(scale), "right at $scale")
         }
-        assertEquals(IntroUiEvent.FocusSearch, bar.left.event)
+        assertEquals(IntroUiEvent.FocusSearch, bar.negative.event)
     }
 
     @Test
@@ -168,7 +171,7 @@ class IntroBarTest {
     }
 
     @Test
-    fun `the theme screen asks for another theme on the left, and the right one waits for a theme to be selected`() {
+    fun `the theme screen is one button, and the right one waits for a theme to be selected`() {
         val none = IntroState(step = IntroStep.THEME)
         val selected = none.copy(selectedThemeId = KrailThemeStyle.Metro.id)
 
@@ -179,19 +182,45 @@ class IntroBarTest {
     }
 
     @Test
-    fun `the theme bar keeps both buttons, in the exact words, with no short form`() {
+    fun `the theme bar is the one button, in the exact words, with no short form and nothing to its left`() {
         val bar = requireNotNull(introBar(IntroState(step = IntroStep.THEME), ready))
 
-        assertEquals("No, show me another", bar.left.label)
+        assertNull(bar.left, "the theme screen has no way to say no")
         assertEquals("Yes, this one", bar.right.label)
-        assertEquals(IntroUiEvent.ShowAnotherTheme, bar.left.event)
         assertEquals(IntroUiEvent.ConfirmTheme, bar.right.event)
-        assertNull(bar.left.compactLabel)
         assertNull(bar.right.compactLabel)
         listOf(1.0f, 1.31f, 2.0f).forEach { scale ->
-            assertEquals("No, show me another", bar.left.visibleLabel(scale), "left at $scale")
             assertEquals("Yes, this one", bar.right.visibleLabel(scale), "right at $scale")
         }
+    }
+
+    @Test
+    fun `the theme screen is the only screen with one button, so no other step can lose its left one`() {
+        val oneButton = IntroStep.entries.filter { step ->
+            val states = listOf(
+                IntroState(step = step),
+                IntroState(step = step, saved = true),
+                IntroState(step = step, parkRideAnswer = ParkRideAnswer.NO),
+                IntroState(
+                    step = step,
+                    parkRideAnswer = ParkRideAnswer.YES,
+                    parkRideCard = card(ParkRideAvailabilityState.Loading),
+                ),
+                IntroState(
+                    step = step,
+                    parkRideAnswer = ParkRideAnswer.YES,
+                    parkRideCard = ParkRideCardPhase.Locating(),
+                ),
+                IntroState(step = step, search = IntroSearchPhase.NoMatch),
+            )
+            val readinesses = listOf(unknown, loading, ready, failed)
+            val bars = states.flatMap { state ->
+                readinesses.mapNotNull { introBar(state, it) }
+            }
+            bars.any { it.left == null }
+        }
+
+        assertEquals(listOf(IntroStep.THEME), oneButton)
     }
 
     @Test
@@ -224,7 +253,7 @@ class IntroBarTest {
     @Test
     fun `the label is the whole phrase at or below 130 percent and the short form above it`() {
         val yes = ask.right
-        val no = ask.left
+        val no = ask.negative
         val rows = listOf(
             // font scale, yes, no
             Triple(1.0f, "Yes, show me free spots", "No thanks"),
@@ -247,13 +276,13 @@ class IntroBarTest {
 
         listOf(1.0f, 1.3f, 1.31f, 2.0f).forEach { scale ->
             assertEquals("Add to home", add.visibleLabel(scale), "at $scale")
-            assertEquals("Not now", decide(true).left.visibleLabel(scale), "at $scale")
+            assertEquals("Not now", decide(true).negative.visibleLabel(scale), "at $scale")
         }
     }
 
     @Test
     fun `the whole phrase is kept as the label whatever is shown, for a screen reader`() {
         assertEquals("Yes, show me free spots", ask.right.label)
-        assertEquals("No thanks", ask.left.label)
+        assertEquals("No thanks", ask.negative.label)
     }
 }

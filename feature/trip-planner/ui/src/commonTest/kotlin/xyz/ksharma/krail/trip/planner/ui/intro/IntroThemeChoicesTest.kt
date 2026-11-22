@@ -69,31 +69,6 @@ class IntroThemeChoicesTest {
     }
 
     @Test
-    fun `the left button moves to the next choice and wraps, and the first press picks the first`() {
-        val ids = choices.map { it.style.id }
-        val expected = listOf(
-            Row("nothing chosen", null, ids[0]),
-            Row("an id that is not offered", NOT_A_THEME, ids[0]),
-            Row("a fun theme that is not offered", KrailThemeStyle.PurpleDrip.id, ids[0]),
-            Row("the first", ids[0], ids[1]),
-            Row("the second", ids[1], ids[2]),
-            Row("the third", ids[2], ids[3]),
-            Row("the last wraps to the first", ids[3], ids[0]),
-        )
-
-        expected.forEach { row -> assertEquals(row.next, nextThemeChoice(row.current).style.id, row.name) }
-    }
-
-    @Test
-    fun `cycling visits every choice once before it comes round`() {
-        var current: Int? = null
-        val seen = List(choices.size) { nextThemeChoice(current).also { current = it.style.id }.style.id }
-
-        assertEquals(choices.map { it.style.id }, seen)
-        assertEquals(choices.first().style.id, nextThemeChoice(current).style.id)
-    }
-
-    @Test
     fun `a tagline splits after its first comma and is one line without one, and the lines are the tagline again`() {
         val table = listOf(
             "On the track, no lookin' back!" to listOf("On the track,", "no lookin' back!"),
@@ -153,8 +128,6 @@ class IntroThemeChoicesTest {
         assertEquals(DEFAULT_THEME_STYLE.hexColorCode, finaleThemeHex(KrailThemeStyle.PurpleDrip.id))
         assertEquals(DEFAULT_THEME_STYLE.hexColorCode, finaleThemeHex(-1))
     }
-
-    private class Row(val name: String, val current: Int?, val next: Int)
 
     private companion object {
         const val NOT_A_THEME = 12_345

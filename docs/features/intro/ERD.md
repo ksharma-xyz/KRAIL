@@ -188,12 +188,14 @@ internal fun parkRideStartPrefill(station: ParkRideStationPickerItem, stopNameLo
 
 /**
  * What the decision bar says and does, or null when the screen shows no bar. A table over the step, so a new step is a
- * compile error and not a screen with the wrong bar. Always exactly two buttons, never three: the negative answer on the
+ * compile error and not a screen with the wrong bar. Two buttons, never three: the negative answer on the
  * left (an outlined button) and the primary on the right (filled in the theme colour, test tag `intro.action.primary`).
- * Only the right one is ever disabled.
- *   THEME:        "No, show me another" and "Yes, this one". The left one selects the next theme in the cycle, the first
- *                 when none is selected, and the right one confirms the theme on show and is disabled until a theme is
- *                 selected. No compact forms: at a large text size, or a narrow window, the bar stacks.
+ * Only the right one is ever disabled. The one exception is the THEME screen (owner's ruling, 2026-11-22), whose bar is
+ * the primary alone and whose `left` is null: `IntroBarTest` pins that no other step can lose its left button.
+ *   THEME:        "Yes, this one" alone, a full width taj button, the same height as the two button bar so nothing moves
+ *                 when it turns on. It confirms the theme on show and is disabled until a badge is tapped. There is no
+ *                 no, and no way to cycle: a theme is chosen only by tapping its badge. No compact form, and the same
+ *                 words for a screen reader (the visible label is contained in the spoken one, so voice control works).
  *   PARK_RIDE:    asking is "No thanks" and "Yes, show me free spots". A card, or a station still being looked for, is
  *                 "Not now" and "Add to home". While the station is looked for, or its numbers are awaited, the bar keeps
  *                 both buttons and the right one is disabled, so the bar never changes size or jumps.
@@ -205,7 +207,7 @@ internal fun parkRideStartPrefill(station: ParkRideStationPickerItem, stopNameLo
  *                 for the stops data to be Ready or Failed, and a trip already written needs no wait.
  */
 internal fun introBar(state: IntroState, readiness: StopsReadiness): IntroBar?
-internal data class IntroBar(val left: IntroBarAction, val right: IntroBarAction, val rightEnabled: Boolean = true)
+internal data class IntroBar(val left: IntroBarAction?, val right: IntroBarAction, val rightEnabled: Boolean = true) // left is null on THEME only
 /** [label] is the whole phrase and is the screen reader description at every text size. [compactLabel] shows above 130 percent text. */
 internal data class IntroBarAction(val label: String, val event: IntroUiEvent, val compactLabel: String? = null)
 /** The compact label above `L_FONT_SCALE_THRESHOLD` (1.3), the whole label at or below it, and the whole label when there is no compact one. */
@@ -282,8 +284,7 @@ sealed interface IntroUiEvent {
     data object FinishPressed : IntroUiEvent           // "Yes, save it" on the confirm screen: saves the trip
     data object FinishWithoutTrip : IntroUiEvent       // "Not now" on the confirm screen: ends the Intro with nothing saved
     data class PickTheme(val themeId: Int) : IntroUiEvent // a badge was tapped: selects the theme, does not move on
-    data object ShowAnotherTheme : IntroUiEvent        // "No, show me another": selects the next theme, the first when none
-    data object ConfirmTheme : IntroUiEvent            // "Yes, this one": reports the choice once and moves on
+    data object ConfirmTheme : IntroUiEvent            // "Yes, this one", the only button on THEME: reports the choice once and moves on
 }
 
 /** One shot, delivered once through a Channel and never replayed after rotation. */
@@ -421,8 +422,8 @@ three zone frame, and everything it decides is in pure functions with table test
 - **The choices.** `introThemeChoices()` is Train (T), Metro (M), Bus (B) and Ferry (F), each with its letter, its accessible
   name and its test tag (`intro.theme.train`, `intro.theme.metro`, `intro.theme.bus`, `intro.theme.ferry`). The colour is never
   kept: it is read from `KrailThemeStyle`. The two fun themes stay in Settings, and Light rail and Coach have a colour in the app
-  but no theme (no id and no tagline), so they are not offered. `nextThemeChoice(currentId)` cycles and wraps, and starts at
-  the first when nothing, or a theme the Intro does not offer, is selected.
+  but no theme (no id and no tagline), so they are not offered. There is no cycle: the left button and `nextThemeChoice` are
+  gone, and the badges are the only way to choose.
 - **The headline.** Before a choice it is `Pick`, `your ride`, `colour`, with the key word last, no question mark, no
   exclamation mark and no colon. After a choice it is that theme's `KrailThemeStyle.tagLine`, shown exactly as the app wrote it,
   split by `taglineLines` after its first comma (one line when there is none, and the lines joined with a space are the
@@ -449,7 +450,7 @@ three zone frame, and everything it decides is in pure functions with table test
   same lifecycle gate the rest of the app uses) and ends when the screen leaves. With reduced motion, in a preview and in a
   screenshot nothing moves: the selected badge sits lifted 4 dp with a thicker ring (`settledFrame`, `ringWidthDp`), and that
   settled frame is also what every preview and snapshot draws.
-- **Selecting and the live recolour.** A tap, or the left button, selects a theme and does not move on. The selection is a
+- **Selecting and the live recolour.** A tap on a badge selects a theme and does not move on. The selection is a
   state, and `IntroFlowRoute` applies it to the whole app through `onApplyTheme`, which the entry wires to the same
   `TripPlannerNavigator.updateTheme` the Settings theme screen calls, so the Intro's buttons and every screen after it take the
   colour through the normal `KrailTheme`. It applies again each time the Intro is composed with a theme selected, such as after
@@ -462,7 +463,7 @@ three zone frame, and everything it decides is in pure functions with table test
   Sandook, Analytics and the IO dispatcher, because the view model is at the constructor limit.
 - **Confirming.** `Yes, this one` is disabled until a theme is selected. It reports the choice once with the existing
   `analytics.trackThemeSelectionEvent(themeId)` (event `theme_selected`, param `themeId` only, no new name and no new param,
-  and the ledger has no Pending row for it), and moves on to Park & Ride. Cycling and tapping report nothing. Going back and
+  and the ledger has no Pending row for it), and moves on to Park & Ride. Tapping a badge reports nothing. Going back and
   confirming the same theme again reports nothing more, and a different theme reports again.
 - **The flow.** `IntroFirstStep` is THEME. Back from Park & Ride shows the theme screen with the choice still selected, the theme
   screen has no back button, and a Park & Ride screen with nothing to decide is passed over in both directions. The selected
@@ -1032,13 +1033,14 @@ make a row fit, except the one rule below. A screen with nothing to decide has n
 
 | State | The rider sees |
 |---|---|
-| None chosen | The headline `Pick`, `your ride`, `colour` and the four badges, drifting. Bar: `No, show me another` on the left, and `Yes, this one` on the right, disabled |
-| A theme selected | The whole app in that theme's colour, the headline now that theme's tagline, the selected badge dancing and the others drifting. Bar: both buttons live |
+| None chosen | The headline `Pick`, `your ride`, `colour` and the four badges, drifting. Bar: the one button `Yes, this one`, full width, disabled |
+| A theme selected | The whole app in that theme's colour, the headline now that theme's tagline, the selected badge dancing and the others drifting. Bar: the one button live, in that theme's colour |
 | Reduced motion, preview or screenshot | The same, with nothing moving: the selected badge lifted 4 dp with a thicker ring |
-| 320 dp at 200 percent text | Two badges and two badges, each up to 96 dp. The bar stacks, `Yes, this one` on top, both whole. The middle zone scrolls with the headline |
+| 320 dp at 200 percent text | Two badges and two badges, each up to 96 dp. The bar is the one button across the window, whole. The middle zone scrolls with the headline |
 
-- The two buttons are the only buttons besides the badges, and each badge is a button. The left one cycles, so the first press
-  selects Train, and a tap on a badge is the shortcut to a specific theme.
+- The one button is the only button besides the badges, and each badge is a button. A tap on a badge is the only way to choose:
+  the owner ruled that the rider just picks a colour, with no option to say no (2026-11-22), so there is no left button and no
+  cycle. This is the one screen with a single button, an explicit exception to the two button bar.
 - Nothing is written under the headline or the badges: no caption, no count and no hint.
 - A turn of the screen keeps the selection, applies the theme again and keeps the headline in place.
 
@@ -1201,19 +1203,19 @@ in `searchstop/` touched:
   changing a trip, a turn of the screen with the lists open, a stop that came back from the search closing them, and Getting
   ready and failed stops, then at 320 dp with text at 200% every row whole, stacked and at least 48 dp tall).
 - **Theme screen, built (unit R2).** Pure tables: `IntroThemeChoicesTest` (the four choices, their letters, names and tags, that
-  every one is a theme of the app and the fun themes are not offered, the cycle and its wrap, `taglineLines` over a table, that
+  every one is a theme of the app and the fun themes are not offered, `taglineLines` over a table, that
   the lines joined are the tagline again, and the headline before and after a choice), `IntroThemeMotionTest` (the drift
   bounds and loops over many moments, the dance at its two ends and middle, the blend, the settled frame, the badge size at each
   text scale and the ring), `IntroThemeClockTest` (the clock advancing across the transition's wrap) and `IntroScreenViewTest`
   (one screen view on entering and when the name changes). The view model with the fakes at the edges: `IntroFlowViewModelThemeTest`
-  (a tap selects and stores, a repeat tap writes nothing, a theme not offered is ignored, the cycle, one report on confirm with only
+  (a tap selects and stores, a repeat tap writes nothing, a theme not offered is ignored, taps in turn, one report on confirm with only
   the id, nothing on another screen, survival of a new view model) and `IntroFlowViewModelThemeBackTest` (the default first
   screen, going back with the choice kept, and one report for the same theme again). `ThemeChoiceTest` holds the shared write and
   report, and `ThemeSelectionViewModelTest` is unchanged and green. Compose: `IntroThemeStepTest` on a phone (the badges, their
   tags, names and sizes, what each tap sends, the selected state, the headline before and after, the bar and its disabled right
   button, no back button, the order of the zones), `IntroThemeStepNarrowTest` at 320 dp and 200 percent (every badge whole inside
   the window, two and two, at least 16 dp between any two, and the bar whole), `IntroFlowRouteThemeTest` (a badge applies the theme
-  to the app and stores it, the left button in turn, a turn of the screen applies it again, yes moves on, reports once and views the
+  to the app and stores it, badges tapped in turn, a turn of the screen applies it again, yes moves on, reports once and views the
   Intro once) and the entry test (choosing recolours through the navigator). The running clock is not driven in a test: its
   infinite transition is cancelled by the test's own policy, so a test is never held up by it, and what the clock feeds is the pure
   functions above. Previews, compile only here: none chosen and each of the four themes chosen, and none, Metro and Bus at 320 dp,
@@ -1366,7 +1368,7 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | R2-6 | A badge eases between drifting and dancing over 250 ms | Without it the chosen badge jumps from its drift to the first pose of the dance | Default, not yet seen by owner |
 | R2-7 | A badge grows with the text, from 64 dp to at most 96 dp | A fixed 64 dp circle is too small for the letter at 200 percent text. The cost is two and two badges at 320 dp, instead of three and one | Default, not yet seen by owner |
 | R2-8 | The badges are 24 dp apart, over the 16 dp the spec asked for | The drift and the dance can bring neighbours 12 dp closer, so 16 dp could touch at the worst moment | Default, not yet seen by owner |
-| R2-9 | The theme bar has no compact labels: it stacks at large text instead | `No, show me another` and `Yes, this one` are answers that lose their meaning as `No` and `Yes`. The cost is a taller bar at 200 percent | Default, not yet seen by owner |
+| R2-9 | The theme bar is the one button `Yes, this one`, with no left button, no cycle and no compact label | The owner asked for it: "just let the user pick a colour, that's it, no option button to say no". The whole phrase is kept at every text size, and it is the one screen with a single button | Decided by the owner, 2026-11-22 |
 | R2-10 | The headline keeps the room of its longest version (the emoji and three lines) | Without it the badges move each time the words change. The cost is some empty room under a two line tagline | Default, not yet seen by owner |
 | R2-11 | A tap on the badge already selected does nothing, and an id the Intro does not offer is ignored | Nothing to store or report again | Default, not yet seen by owner |
 | R2-12 | `theme_selected` is reported once on confirm, and again only when the confirmed theme differs from the last one reported in this Intro. No param is added | The ledger has no Pending row for a source param. Settings and the Intro cannot be told apart in the data | Default, not yet seen by owner |

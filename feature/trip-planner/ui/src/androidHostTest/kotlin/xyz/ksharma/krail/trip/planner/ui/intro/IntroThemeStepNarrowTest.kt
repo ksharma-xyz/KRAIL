@@ -130,29 +130,24 @@ class IntroThemeStepNarrowTest {
         val headline = composeRule.onNodeWithText(PICK_THEME_HEADING)
         headline.assertInsideWindow("headline")
         val primary = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION)
-        val secondary = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION)
         primary.assertIsDisplayed().assertInsideWindow("Yes, this one")
-        secondary.assertIsDisplayed().assertInsideWindow("No, show me another")
 
-        val bars = listOf(primary, secondary).map { it.getUnclippedBoundsInRoot() }
+        val bar = primary.getUnclippedBoundsInRoot()
         assertTrue(badgeBounds().all { it.top >= headline.getUnclippedBoundsInRoot().bottom - ROUNDING })
-        assertTrue(badgeBounds().all { badge -> bars.all { badge.bottom <= it.top + ROUNDING } })
+        assertTrue(badgeBounds().all { badge -> badge.bottom <= bar.top + ROUNDING })
     }
 
     @Test
-    fun `at 200 percent the bar keeps both whole labels, stacked with the right one on top or in one row`() {
+    fun `at 200 percent the bar is the one whole button across the window, and nothing sits beside it`() {
         show(none)
 
         val primary = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION)
-        val secondary = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION)
         primary.assertTextEquals(THEME_CONFIRM)
-        secondary.assertTextEquals(THEME_ANOTHER)
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION).assertDoesNotExist()
 
         val p = primary.getUnclippedBoundsInRoot()
-        val s = secondary.getUnclippedBoundsInRoot()
-        val stacked = p.bottom <= s.top + ROUNDING
-        val inOneRow = s.right <= p.left + ROUNDING && p.top == s.top
-        assertTrue(stacked || inOneRow, "neither stacked nor in one row: $p $s")
+        assertTrue(p.width > windowWidth() / 2, "the one button is not across the window: $p in ${windowWidth()}")
+        assertEquals(p.left, windowWidth() - p.right, "the button is not centred: $p in ${windowWidth()}")
     }
 
     @Test

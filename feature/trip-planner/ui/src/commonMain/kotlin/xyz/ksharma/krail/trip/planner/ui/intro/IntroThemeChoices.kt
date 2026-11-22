@@ -45,25 +45,12 @@ private val TransportThemeChoices = listOf(
     ),
 )
 
-/** The themes the first Intro screen offers, in the order they are drawn and in the order the left button cycles. */
+/** The themes the first Intro screen offers, in the order they are drawn. */
 internal fun introThemeChoices(): List<IntroThemeChoice> = TransportThemeChoices
 
 /** The choice with theme id [themeId], or null for no id and for a theme the Intro does not offer. */
 internal fun themeChoiceFor(themeId: Int?): IntroThemeChoice? =
     introThemeChoices().firstOrNull { it.style.id == themeId }
-
-/**
- * The choice the left button moves to: the one after [currentId] in [choices], wrapping from the last to
- * the first. With no choice made yet, or an id that is not offered, it is the first, so the first press
- * both starts the choice and shows a theme.
- */
-internal fun nextThemeChoice(
-    currentId: Int?,
-    choices: List<IntroThemeChoice> = introThemeChoices(),
-): IntroThemeChoice {
-    val index = choices.indexOfFirst { it.style.id == currentId }
-    return choices[(index + 1) % choices.size]
-}
 
 /**
  * The lines of a theme's tagline, which is the app's own copy and is shown exactly as it is written. It is

@@ -17,7 +17,6 @@ internal const val PARK_RIDE_YES = "Yes, show me free spots"
 internal const val PARK_RIDE_YES_COMPACT = "Yes"
 internal const val PARK_RIDE_NOT_NOW = "Not now"
 internal const val PARK_RIDE_ADD = "Add to home"
-internal const val THEME_ANOTHER = "No, show me another"
 internal const val THEME_CONFIRM = "Yes, this one"
 internal const val STOP_SEARCH = "No, search"
 internal const val STOP_CHOOSE = "Yes, this one"
@@ -37,12 +36,15 @@ internal data class IntroBarAction(
 )
 
 /**
- * The decision bar of a screen: always two buttons, the negative answer on the left and the positive
+ * The decision bar of a screen: two buttons, the negative answer on the left and the positive
  * one on the right. The right one is the primary and is the only place the theme colour is drawn.
  * Only the right one is ever disabled.
+ *
+ * The theme screen is the one exception, by the owner's ruling: it asks for a colour and offers no way to say no,
+ * so [left] is null there and the bar is the primary alone. Every other screen has both. `IntroBarTest` pins that.
  */
 internal data class IntroBar(
-    val left: IntroBarAction,
+    val left: IntroBarAction?,
     val right: IntroBarAction,
     val rightEnabled: Boolean = true,
 )
@@ -79,13 +81,13 @@ private fun stopBar(state: IntroState) = IntroBar(
 )
 
 /**
- * The theme screen. The left button moves to the next theme, so it is always available and the first press
- * both starts the choice and shows a theme, and the right button confirms the theme on show. The rider must
- * pick a colour to go on, so the right one is off until a theme is selected. Neither has a compact form: at a
- * large text size, or a narrow window, the bar stacks the two whole buttons instead.
+ * The theme screen: the one button on the Intro with nothing beside it. A theme is chosen by tapping its badge,
+ * there is no answer of no, and the rider must pick a colour to go on, so the single button is off until a theme
+ * is selected. It is a full width taj button the height of the two button bar, so nothing moves when it turns on.
+ * Its words are the whole phrase at every text size, and a screen reader hears the same words.
  */
 private fun themeBar(state: IntroState) = IntroBar(
-    left = IntroBarAction(THEME_ANOTHER, IntroUiEvent.ShowAnotherTheme),
+    left = null,
     right = IntroBarAction(THEME_CONFIRM, IntroUiEvent.ConfirmTheme),
     rightEnabled = state.selectedThemeId != null,
 )

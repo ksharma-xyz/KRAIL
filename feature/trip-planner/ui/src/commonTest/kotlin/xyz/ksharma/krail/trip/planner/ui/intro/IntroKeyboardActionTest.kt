@@ -18,7 +18,6 @@ class IntroKeyboardActionTest {
     private val leaveAlone = listOf(
         IntroUiEvent.QueryChanged("chat"),
         IntroUiEvent.QueryChanged(""),
-        IntroUiEvent.ShowAnotherTheme,
         IntroUiEvent.ConfirmTheme,
         IntroUiEvent.PickTheme(1),
         IntroUiEvent.AnswerParkRide(yes = true),

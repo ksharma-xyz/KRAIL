@@ -76,20 +76,20 @@ class IntroFlowViewModelThemeTest {
         assertNull(rig.stored())
 
         val elsewhere = IntroRig(this, handle = savedAt(IntroState(step = IntroStep.PARK_RIDE)))
-        elsewhere.send(IntroUiEvent.PickTheme(metro), IntroUiEvent.ShowAnotherTheme)
+        elsewhere.send(IntroUiEvent.PickTheme(metro), IntroUiEvent.ConfirmTheme)
 
         assertNull(elsewhere.state.selectedThemeId)
         assertNull(elsewhere.stored())
     }
 
     @Test
-    fun `the left button selects Train first, then each theme in turn, and wraps round`() = krailRunTest {
+    fun `tapping each badge in turn selects it and stores it, and moves nowhere`() = krailRunTest {
         val rig = IntroRig(this, handle = savedAt(onTheme))
         val seen = mutableListOf<Int?>()
         val stored = mutableListOf<Long?>()
 
-        repeat(5) {
-            rig.send(IntroUiEvent.ShowAnotherTheme)
+        listOf(train, metro, bus, ferry, train).forEach { id ->
+            rig.send(IntroUiEvent.PickTheme(id))
             seen += rig.state.selectedThemeId
             stored += rig.stored()
         }
@@ -101,19 +101,10 @@ class IntroFlowViewModelThemeTest {
     }
 
     @Test
-    fun `the left button moves on from the theme that was tapped`() = krailRunTest {
-        val rig = IntroRig(this, handle = savedAt(onTheme))
-
-        rig.send(IntroUiEvent.PickTheme(bus), IntroUiEvent.ShowAnotherTheme)
-
-        assertEquals(ferry, rig.state.selectedThemeId)
-    }
-
-    @Test
     fun `yes with a theme selected reports it once, with only its id, and moves on to Park and Ride`() = krailRunTest {
         val rig = IntroRig(this, handle = savedAt(onTheme))
-        rig.send(IntroUiEvent.ShowAnotherTheme, IntroUiEvent.ShowAnotherTheme, IntroUiEvent.ShowAnotherTheme)
-        assertEquals(emptyList<Any?>(), rig.reported(), "three presses of the left button report nothing")
+        rig.send(IntroUiEvent.PickTheme(train), IntroUiEvent.PickTheme(metro), IntroUiEvent.PickTheme(bus))
+        assertEquals(emptyList<Any?>(), rig.reported(), "three taps on badges report nothing")
 
         rig.send(IntroUiEvent.ConfirmTheme)
 

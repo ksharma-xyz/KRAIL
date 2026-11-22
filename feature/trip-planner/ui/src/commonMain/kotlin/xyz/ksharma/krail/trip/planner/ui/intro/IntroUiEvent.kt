@@ -14,10 +14,10 @@ internal sealed interface IntroUiEvent {
      */
     data class PickTheme(val themeId: Int) : IntroUiEvent
 
-    /** `No, show me another`: selects the next theme in the cycle, the first when none is selected yet. */
-    data object ShowAnotherTheme : IntroUiEvent
-
-    /** `Yes, this one`: the selected theme is the rider's choice, and the Intro moves on. Ignored with none selected. */
+    /**
+     * `Yes, this one`, the only button on the theme screen: the selected theme is the rider's choice, and the Intro moves
+     * on. Ignored with none selected.
+     */
     data object ConfirmTheme : IntroUiEvent
 
     /**

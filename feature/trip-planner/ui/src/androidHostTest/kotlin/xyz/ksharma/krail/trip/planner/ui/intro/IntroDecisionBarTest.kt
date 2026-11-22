@@ -30,6 +30,8 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -54,12 +56,17 @@ class IntroDecisionBarTest {
     private val width = mutableStateOf(PHONE_WIDTH)
     private val fontScale = mutableStateOf(1f)
     private val rightEnabled = mutableStateOf(true)
+    private val single = mutableStateOf(false)
     private var contentSet = false
 
     private val bar = requireNotNull(introBar(PreviewAskState, PreviewReady))
+    private val themeBar = requireNotNull(
+        introBar(IntroState(step = IntroStep.THEME, selectedThemeId = 1), PreviewReady),
+    )
 
-    private fun show(widthDp: Int, scale: Float, enabled: Boolean = true) {
+    private fun show(widthDp: Int, scale: Float, enabled: Boolean = true, onlyRight: Boolean = false) {
         width.value = widthDp
+        single.value = onlyRight
         fontScale.value = scale
         rightEnabled.value = enabled
         if (!contentSet) {
@@ -70,8 +77,8 @@ class IntroDecisionBarTest {
                     PreviewTheme {
                         Box(modifier = Modifier.width(width.value.dp)) {
                             IntroDecisionBar(
-                                left = bar.left,
-                                right = bar.right,
+                                left = bar.left.takeUnless { single.value },
+                                right = if (single.value) themeBar.right else bar.right,
                                 onEvent = { events += it },
                                 rightEnabled = rightEnabled.value,
                             )
@@ -182,11 +189,41 @@ class IntroDecisionBarTest {
         }
     }
 
+    @Test
+    fun `with no left button the bar is the one primary across the whole width, as tall as the two button bar`() {
+        show(PHONE_WIDTH, 1f)
+        val rowHeight = primary().bounds().height
+
+        show(PHONE_WIDTH, 1f, onlyRight = true)
+
+        secondary().assertDoesNotExist()
+        composeRule.onAllNodes(hasClickAction()).assertCountEquals(1)
+        val only = primary().bounds()
+        assertTrue(only.width >= PHONE_WIDTH.dp - ROUNDING, "the one button is not the full width: $only")
+        assertEquals(0.dp, only.left)
+        assertEquals(rowHeight, only.height, "the one button is not as tall as the two button bar")
+    }
+
+    @Test
+    fun `the one button keeps its whole label and the full width at the narrowest window at 200 percent, and stays off until enabled`() {
+        show(NARROW_WIDTH, 2f, enabled = false, onlyRight = true)
+
+        primary().assertTextEquals(themeBar.right.label).assertIsNotEnabled()
+        assertTrue(primary().bounds().width >= NARROW_WIDTH.dp - ROUNDING, "not the full width: ${primary().bounds()}")
+        primary().performClick()
+        assertEquals<List<IntroUiEvent>>(emptyList(), events)
+
+        show(NARROW_WIDTH, 2f, enabled = true, onlyRight = true)
+        primary().performClick()
+        assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.ConfirmTheme), events)
+    }
+
     private companion object {
         const val PHONE_WIDTH = 379
         const val WIDE_WIDTH = 480
         const val NARROW_WIDTH = 288
         const val LARGE_BUT_NOT_SHORTENED = 1.3f
+        val ROUNDING = 1.dp
         val ONE_LINE_BUTTON_MAX = 64.dp
     }
 }

@@ -106,7 +106,6 @@ internal class IntroFlowViewModel(
                 update { movedBack().withoutSearch() }
             }
             is IntroUiEvent.PickTheme -> themeStep.pick(event.themeId)
-            IntroUiEvent.ShowAnotherTheme -> themeStep.showAnother()
             IntroUiEvent.ConfirmTheme -> themeStep.confirm()
             is IntroUiEvent.AnswerParkRide -> answerParkRide(event.yes)
             is IntroUiEvent.LocationResultReceived -> onLocationResult(event.result, event.location)

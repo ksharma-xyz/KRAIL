@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
@@ -26,6 +27,9 @@ import kotlin.math.max
  * answer on the left in outline and the positive one on the right in the theme colour. The right one
  * carries the `intro.action.primary` tag that the Maestro flow taps.
  *
+ * With no [left], which only the theme screen has, the bar is the one positive button at the full width.
+ * It is the same taj button, so it is the same height as the two button bar, and nothing is left empty beside it.
+ *
  * The two sit in one row. When two whole buttons cannot fit side by side, as at 320 dp with large text,
  * the bar stacks them with the primary on top, and never squeezes, shrinks or truncates a label. It
  * never holds more than two buttons. Above the large text threshold the labels that have a compact form
@@ -33,33 +37,48 @@ import kotlin.math.max
  */
 @Composable
 internal fun IntroDecisionBar(
-    left: IntroBarAction,
+    left: IntroBarAction?,
     right: IntroBarAction,
     onEvent: (IntroUiEvent) -> Unit,
     modifier: Modifier = Modifier,
     rightEnabled: Boolean = true,
 ) {
     val fontScale = LocalDensity.current.fontScale
-    IntroBarLayout(gap = KrailTheme.dimensions.spacingL, modifier = modifier) {
-        OutlinedButton(
-            onClick = { onEvent(left.event) },
-            dimensions = ButtonDefaults.largeButtonSize(),
-            modifier = Modifier
-                .testTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION)
-                .semantics { contentDescription = left.label },
-        ) {
-            Text(text = left.visibleLabel(fontScale), textAlign = TextAlign.Center)
+    if (left == null) {
+        PrimaryButton(right, onEvent, rightEnabled, fontScale, modifier.fillMaxWidth())
+    } else {
+        IntroBarLayout(gap = KrailTheme.dimensions.spacingL, modifier = modifier) {
+            OutlinedButton(
+                onClick = { onEvent(left.event) },
+                dimensions = ButtonDefaults.largeButtonSize(),
+                modifier = Modifier
+                    .testTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION)
+                    .semantics { contentDescription = left.label },
+            ) {
+                Text(text = left.visibleLabel(fontScale), textAlign = TextAlign.Center)
+            }
+            PrimaryButton(right, onEvent, rightEnabled, fontScale)
         }
-        // A taj button colours its own label, so the label carries no colour of its own.
-        Button(
-            onClick = { onEvent(right.event) },
-            enabled = rightEnabled,
-            modifier = Modifier
-                .testTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION)
-                .semantics { contentDescription = right.label },
-        ) {
-            Text(text = right.visibleLabel(fontScale), textAlign = TextAlign.Center)
-        }
+    }
+}
+
+// A taj button colours its own label, so the label carries no colour of its own.
+@Composable
+private fun PrimaryButton(
+    action: IntroBarAction,
+    onEvent: (IntroUiEvent) -> Unit,
+    enabled: Boolean,
+    fontScale: Float,
+    modifier: Modifier = Modifier,
+) {
+    Button(
+        onClick = { onEvent(action.event) },
+        enabled = enabled,
+        modifier = modifier
+            .testTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION)
+            .semantics { contentDescription = action.label },
+    ) {
+        Text(text = action.visibleLabel(fontScale), textAlign = TextAlign.Center)
     }
 }
 

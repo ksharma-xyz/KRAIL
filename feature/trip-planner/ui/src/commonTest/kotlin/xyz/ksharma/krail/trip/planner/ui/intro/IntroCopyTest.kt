@@ -53,7 +53,7 @@ class IntroCopyTest {
 
     private fun barWords(): List<String> = states.flatMap { state ->
         readiness.mapNotNull { introBar(state, it) }.flatMap { bar ->
-            listOf(bar.left, bar.right).flatMap { listOfNotNull(it.label, it.compactLabel) }
+            listOfNotNull(bar.left, bar.right).flatMap { listOfNotNull(it.label, it.compactLabel) }
         }
     }.distinct()
 

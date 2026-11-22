@@ -7,7 +7,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 
 /**
- * The theme screen of the Intro: picking a theme, moving to the next one, and confirming. It runs in [scope],
+ * The theme screen of the Intro: picking a theme by tapping its badge, and confirming. It runs in [scope],
  * the view model's scope, and starts no timer.
  *
  * Picking stores the theme at once, one small local write, so the app starts in it whatever happens next, and
@@ -33,11 +33,6 @@ internal class IntroThemeStep(
         write { copy(selectedThemeId = themeId) }
         saveJob?.cancel()
         saveJob = scope.launch { attempt { completion.saveTheme(themeId) } }
-    }
-
-    /** `No, show me another`: the next theme in the cycle, the first when none is selected. */
-    fun showAnother() {
-        pick(nextThemeChoice(read().selectedThemeId).style.id)
     }
 
     /** `Yes, this one`: reports the choice once and moves to the next screen. Ignored with no theme selected. */

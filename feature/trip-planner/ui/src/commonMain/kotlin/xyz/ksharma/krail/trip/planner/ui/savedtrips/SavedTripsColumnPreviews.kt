@@ -8,6 +8,7 @@ import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
@@ -53,6 +54,12 @@ internal val previewSavedTripsColumnState = SavedTripsState(
     ),
     fromStop = StopItem(stopId = "200060", stopName = "Central Station"),
     toStop = StopItem(stopId = "200070", stopName = "Town Hall Station"),
+    // Home set and Work not, so the chip row above the search row shows a set and an unset chip.
+    // Home is a stop no trip above uses, so the trip cards are drawn exactly as before.
+    stopLabels = persistentListOf(
+        StopLabel(emoji = "🏠", label = "Home", stopId = "200080", stopName = "Wynyard Station"),
+        StopLabel(emoji = "💼", label = "Work"),
+    ),
 )
 
 /** A phone: the column is the whole window, with the 16 dp page padding either side. */

@@ -9,6 +9,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -136,7 +137,7 @@ class IntroParkRideStepNarrowTest {
         val secondary = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION)
         primary.assertTextEquals(PARK_RIDE_ADD).assertInsideWindow("Add to home")
         secondary.assertTextEquals(PARK_RIDE_NOT_NOW).assertInsideWindow("Not now")
-        composeRule.onAllNodes(hasClickAction()).assertCountEquals(2)
+        composeRule.onAllNodes(hasClickAction().and(hasContentDescription(BACK_DESCRIPTION).not())).assertCountEquals(2)
     }
 
     @Test

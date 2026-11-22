@@ -7,7 +7,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.lifecycle.SavedStateHandle
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -66,7 +65,7 @@ class IntroFlowRouteTest {
     private val appliedThemes = mutableListOf<String>()
 
     private val viewModel = IntroFlowViewModel(
-        savedStateHandle = SavedStateHandle(),
+        savedStateHandle = savedAt(ON_PARK_RIDE),
         appDataReadiness = FakeAppDataReadiness(initial = StopsReadiness.Ready(stopCount = 100)),
         completion = IntroCompletion(FakeSandook(), FakeSandookPreferences(), analytics, Dispatchers.Unconfined),
         flag = FakeFlag(),

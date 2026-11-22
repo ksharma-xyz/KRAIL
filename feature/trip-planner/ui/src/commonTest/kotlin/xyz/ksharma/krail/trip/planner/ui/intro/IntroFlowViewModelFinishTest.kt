@@ -363,7 +363,7 @@ class IntroFlowViewModelFinishTest {
 
         rig.send(IntroUiEvent.FinishPressed, IntroUiEvent.FinishWithoutTrip)
 
-        assertEquals(IntroState(), rig.state)
+        assertEquals(ON_PARK_RIDE, rig.state)
         assertEquals(emptyList(), rig.log.entries)
     }
 

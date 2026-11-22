@@ -17,10 +17,10 @@ private const val SUGGESTION_FLAG_WRITE = "pref:KEY_PARK_RIDE_SUGGESTION_SHOWN=t
 class IntroFlowViewModelTest {
 
     @Test
-    fun `the first screen is the park and ride question with nothing chosen`() = krailRunTest {
+    fun `the park and ride question opens with nothing chosen`() = krailRunTest {
         val rig = IntroRig(this)
 
-        assertEquals(IntroState(), rig.state)
+        assertEquals(ON_PARK_RIDE, rig.state)
     }
 
     @Test
@@ -62,16 +62,19 @@ class IntroFlowViewModelTest {
         }
 
     @Test
-    fun `back returns from the trip step to the question and never goes before it`() = krailRunTest {
-        val rig = IntroRig(this)
+    fun `back returns from the trip step to the question, then to the theme screen, and never goes before it`() =
+        krailRunTest {
+            val rig = IntroRig(this)
 
-        rig.send(IntroUiEvent.AnswerParkRide(yes = false))
-        assertEquals(IntroStep.DESTINATION, rig.state.step)
-        rig.send(IntroUiEvent.Back)
-        assertEquals(IntroStep.PARK_RIDE, rig.state.step)
-        rig.send(IntroUiEvent.Back)
-        assertEquals(IntroStep.PARK_RIDE, rig.state.step)
-    }
+            rig.send(IntroUiEvent.AnswerParkRide(yes = false))
+            assertEquals(IntroStep.DESTINATION, rig.state.step)
+            rig.send(IntroUiEvent.Back)
+            assertEquals(IntroStep.PARK_RIDE, rig.state.step)
+            rig.send(IntroUiEvent.Back)
+            assertEquals(IntroStep.THEME, rig.state.step)
+            rig.send(IntroUiEvent.Back)
+            assertEquals(IntroStep.THEME, rig.state.step)
+        }
 
     @Test
     fun `back never returns to a Park and Ride screen that had nothing to decide`() = krailRunTest {
@@ -84,7 +87,7 @@ class IntroFlowViewModelTest {
 
         noLocation.send(IntroUiEvent.Back)
 
-        assertEquals(IntroStep.DESTINATION, noLocation.state.step, "denied leaves nothing to answer")
+        assertEquals(IntroStep.THEME, noLocation.state.step, "denied leaves nothing to answer, so back skips it")
 
         val declined = IntroRig(this)
         declined.send(IntroUiEvent.AnswerParkRide(yes = false), IntroUiEvent.Back)
@@ -97,14 +100,13 @@ class IntroFlowViewModelTest {
         val rig = IntroRig(this)
 
         rig.send(
-            IntroUiEvent.Back,
             IntroUiEvent.FinishPressed,
             IntroUiEvent.FinishWithoutTrip,
             IntroUiEvent.AddParkRideAndContinue,
             IntroUiEvent.DeclineParkRide,
         )
 
-        assertEquals(IntroState(), rig.state)
+        assertEquals(ON_PARK_RIDE, rig.state)
         assertEquals(emptyList(), rig.log.entries)
     }
 
@@ -149,7 +151,7 @@ class IntroFlowViewModelTest {
 
         rig.send(IntroUiEvent.AddParkRideAndContinue)
 
-        assertEquals(IntroState(), rig.state)
+        assertEquals(ON_PARK_RIDE, rig.state)
         assertFalse(rig.state.addedParkRide)
     }
 

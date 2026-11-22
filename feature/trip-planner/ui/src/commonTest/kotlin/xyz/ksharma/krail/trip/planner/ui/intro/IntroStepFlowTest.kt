@@ -20,7 +20,7 @@ class IntroStepFlowTest {
 
     private val card = ParkRideCardPhase.Card(ParkRideCardStation(stationId = "1", stationName = "Bella Vista"))
 
-    private val untouched = IntroState()
+    private val untouched = ON_PARK_RIDE
     private val declined = IntroState(parkRideAnswer = ParkRideAnswer.NO)
     private val cardShown = IntroState(parkRideAnswer = ParkRideAnswer.YES, parkRideCard = card)
     private val noStationNear = IntroState(
@@ -69,6 +69,28 @@ class IntroStepFlowTest {
     }
 
     @Test
+    fun `the default flow is the five screens in order, opening on the theme screen, with no back on it`() {
+        assertEquals(THEME, IntroState().step)
+        assertEquals(
+            listOf(THEME, PARK_RIDE, DESTINATION, ORIGIN, CONFIRM),
+            untouched.copy(step = CONFIRM).stepsInFlow(),
+        )
+        assertNull(untouched.copy(step = THEME).stepBefore())
+        assertEquals(THEME, untouched.copy(step = THEME).movedBack().step)
+        assertEquals(PARK_RIDE, untouched.copy(step = THEME).stepAfter())
+        assertEquals(PARK_RIDE, untouched.copy(step = THEME).movedOn().step)
+        assertEquals(THEME, untouched.copy(step = PARK_RIDE).stepBefore())
+        assertEquals(THEME, untouched.copy(step = PARK_RIDE).movedBack().step)
+    }
+
+    @Test
+    fun `from the theme screen the flow passes over a Park and Ride screen with nothing to decide, both ways`() {
+        assertEquals(DESTINATION, noStationNear.copy(step = THEME).stepAfter())
+        assertEquals(THEME, noStationNear.copy(step = DESTINATION).stepBefore())
+        assertEquals(PARK_RIDE, declined.copy(step = THEME).stepAfter())
+    }
+
+    @Test
     fun `the first screen has nothing before it and the last has nothing after it`() {
         assertNull(untouched.copy(step = PARK_RIDE).stepBefore(PARK_RIDE))
         assertNull(untouched.copy(step = THEME).stepBefore(THEME))
@@ -111,7 +133,7 @@ class IntroStepFlowTest {
     @Test
     fun `leaving Park and Ride moves to the next screen only while the rider is still on it`() {
         assertEquals(DESTINATION, untouched.leavingParkRide(PARK_RIDE).step)
-        assertEquals(DESTINATION, noStationNear.leavingParkRide(THEME).step)
+        assertEquals(DESTINATION, noStationNear.copy(step = PARK_RIDE).leavingParkRide(THEME).step)
         // A look that ends after Back has taken the rider to the theme screen never pulls them forward.
         assertEquals(THEME, untouched.copy(step = THEME).leavingParkRide(THEME).step)
         assertEquals(DESTINATION, untouched.copy(step = DESTINATION).leavingParkRide(THEME).step)

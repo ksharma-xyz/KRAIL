@@ -21,6 +21,7 @@ import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideAvailabilityLoader
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRideStationPickerItem
@@ -36,11 +37,17 @@ internal val TALLAWONG = SuggestedStop(stopId = "2155384", name = "Tallawong Sta
 internal val CENTRAL = SuggestedStop(stopId = "200060", name = "Central Station")
 internal val WYNYARD = SuggestedStop(stopId = "200080", name = "Wynyard Station")
 
+/**
+ * The Park & Ride question with nothing answered, which the rig opens on unless a test gives it a saved state of
+ * its own. The first screen of the flow is the theme screen, and most of these tests are about the screens after it.
+ */
+internal val ON_PARK_RIDE = IntroState(step = IntroStep.PARK_RIDE)
+
 /** Everything the Intro view model touches, as fakes that share one ordered [log]. */
 internal class IntroRig(
     private val scope: KrailTestScope,
     initialReadiness: StopsReadiness = StopsReadiness.Ready(stopCount = 100),
-    val handle: SavedStateHandle = SavedStateHandle(),
+    val handle: SavedStateHandle = savedAt(ON_PARK_RIDE),
     timeSource: TimeSource? = null,
     stations: List<ParkRideStationPickerItem> = INTRO_STATIONS,
     availabilityLoader: ParkRideAvailabilityLoader? = null,

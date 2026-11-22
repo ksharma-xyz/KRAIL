@@ -114,7 +114,7 @@ class IntroFlowViewModelParkRideLocateTest {
             assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE), "$result $location")
 
             rig.send(IntroUiEvent.Back)
-            assertEquals(IntroStep.DESTINATION, rig.state.step, "nothing to go back to when nothing was asked")
+            assertEquals(IntroStep.THEME, rig.state.step, "back skips the screen that had nothing to decide")
             assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE), "written once however often the step is left")
         }
     }
@@ -125,7 +125,7 @@ class IntroFlowViewModelParkRideLocateTest {
 
         rig.send(IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, AT_TALLAWONG))
 
-        assertEquals(IntroState(), rig.state)
+        assertEquals(ON_PARK_RIDE, rig.state)
 
         rig.send(
             IntroUiEvent.AnswerParkRide(yes = false),

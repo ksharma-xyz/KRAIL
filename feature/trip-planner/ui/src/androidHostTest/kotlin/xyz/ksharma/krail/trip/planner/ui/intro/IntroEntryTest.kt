@@ -24,6 +24,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.core.navigation.ResultEventBus
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.di.viewModelsModule
@@ -95,15 +96,34 @@ class IntroEntryTest {
         composeRule.waitForIdle()
     }
 
+    // The theme screen comes first, and its right button only comes on once a theme is selected.
+    private fun chooseTheme() {
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_THEME_METRO).performClick()
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
+        composeRule.waitForIdle()
+    }
+
     private fun answerNo() {
+        chooseTheme()
         composeRule.onNodeWithText(PARK_RIDE_NO).performClick()
         composeRule.waitForIdle()
     }
 
     @Test
-    fun `the entry opens on the Park & Ride question`() {
+    fun `the entry opens on the theme question, with the Park and Ride question not yet shown`() {
         launch()
 
+        composeRule.onNodeWithText(PICK_THEME_HEADING).assertIsDisplayed()
+        composeRule.onNodeWithText(PARK_RIDE_HEADING).assertDoesNotExist()
+    }
+
+    @Test
+    fun `choosing a theme recolours the whole app through the navigator and moves on to Park & Ride`() {
+        launch()
+
+        chooseTheme()
+
+        assertEquals(listOf(KrailThemeStyle.Metro.hexColorCode), navigator.themes)
         composeRule.onNodeWithText(PARK_RIDE_HEADING).assertIsDisplayed()
     }
 
@@ -161,7 +181,7 @@ class IntroEntryTest {
     }
 
     @Test
-    fun `a new visit to the Intro starts on the question again`() {
+    fun `a new visit to the Intro starts on the first question again`() {
         launch()
         answerNo()
         composeRule.onNodeWithText(FIRST_TRIP_HEADING).assertIsDisplayed()
@@ -170,7 +190,7 @@ class IntroEntryTest {
         composeRule.runOnIdle { holder?.removeState(VISIT) }
         comeBack()
 
-        composeRule.onNodeWithText(PARK_RIDE_HEADING).assertIsDisplayed()
+        composeRule.onNodeWithText(PICK_THEME_HEADING).assertIsDisplayed()
         composeRule.onNodeWithText(FIRST_TRIP_HEADING).assertDoesNotExist()
     }
 
@@ -191,6 +211,11 @@ private class IntroRecordingNavigator(
     val recorded: RecordingTripPlannerNavigator = RecordingTripPlannerNavigator(),
 ) : TripPlannerNavigator by recorded {
     val cleared = mutableListOf<NavKey>()
+    val themes = mutableListOf<String>()
+
+    override fun updateTheme(hexColorCode: String) {
+        themes += hexColorCode
+    }
 
     override fun clearBackStackAndNavigate(route: NavKey) {
         cleared += route

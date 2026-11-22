@@ -253,12 +253,21 @@ class IntroFlowViewModelParkRideStartTest {
 
             rig.send(IntroUiEvent.AddParkRideAndContinue)
 
-            assertEquals(listOf(IntroStep.PARK_RIDE, IntroStep.DESTINATION, IntroStep.CONFIRM), rig.state.stepsInFlow())
+            assertEquals(
+                listOf(IntroStep.THEME, IntroStep.PARK_RIDE, IntroStep.DESTINATION, IntroStep.CONFIRM),
+                rig.state.stepsInFlow(),
+            )
 
             rig.send(IntroUiEvent.Back, IntroUiEvent.DeclineParkRide)
 
             assertEquals(
-                listOf(IntroStep.PARK_RIDE, IntroStep.DESTINATION, IntroStep.ORIGIN, IntroStep.CONFIRM),
+                listOf(
+                    IntroStep.THEME,
+                    IntroStep.PARK_RIDE,
+                    IntroStep.DESTINATION,
+                    IntroStep.ORIGIN,
+                    IntroStep.CONFIRM,
+                ),
                 rig.state.stepsInFlow(),
             )
         }

@@ -10,6 +10,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -57,7 +58,7 @@ class IntroFlowScreenTest {
         endName = "Wynyard Station",
     )
 
-    private val shownState = mutableStateOf(IntroState())
+    private val shownState = mutableStateOf(ON_PARK_RIDE)
     private val shownReadiness = mutableStateOf<StopsReadiness>(ready)
     private var contentSet = false
 
@@ -87,7 +88,7 @@ class IntroFlowScreenTest {
 
     @Test
     fun `asking shows the two answers, no on the left and yes on the right under the test tags`() {
-        show(IntroState())
+        show(ON_PARK_RIDE)
 
         secondary().assertTextEquals(PARK_RIDE_NO).assertIsEnabled()
         primary().assertTextEquals(PARK_RIDE_YES).assertIsEnabled()
@@ -99,7 +100,7 @@ class IntroFlowScreenTest {
 
     @Test
     fun `each answer sends its own event, and only the right one is the primary`() {
-        show(IntroState())
+        show(ON_PARK_RIDE)
 
         secondary().performClick()
         primary().performClick()
@@ -138,8 +139,8 @@ class IntroFlowScreenTest {
     @Test
     fun `a Park and Ride screen with nothing to decide shows no bar`() {
         listOf(
-            IntroState(parkRideAnswer = ParkRideAnswer.YES, parkRideCard = ParkRideCardPhase.NoStationNear),
-            IntroState(parkRideAnswer = ParkRideAnswer.YES, parkRideCard = ParkRideCardPhase.None),
+            ON_PARK_RIDE.copy(parkRideAnswer = ParkRideAnswer.YES, parkRideCard = ParkRideCardPhase.NoStationNear),
+            ON_PARK_RIDE.copy(parkRideAnswer = ParkRideAnswer.YES, parkRideCard = ParkRideCardPhase.None),
         ).forEach { state ->
             show(state)
 
@@ -149,11 +150,13 @@ class IntroFlowScreenTest {
     }
 
     @Test
-    fun `every screen that asks has exactly two clickable buttons and no third`() {
-        listOf(IntroState(), PreviewLocatingState, PreviewCardContentState, PreviewAddedState).forEach { state ->
+    fun `every Park and Ride screen that asks has exactly two clickable buttons and no third, and the back button`() {
+        listOf(ON_PARK_RIDE, PreviewLocatingState, PreviewCardContentState, PreviewAddedState).forEach { state ->
             show(state)
 
-            composeRule.onAllNodes(hasClickAction()).assertCountEquals(2)
+            composeRule.onAllNodes(hasClickAction().and(hasContentDescription(BACK_DESCRIPTION).not()))
+                .assertCountEquals(2)
+            composeRule.onNodeWithContentDescription(BACK_DESCRIPTION).assertExists()
         }
     }
 
@@ -187,7 +190,7 @@ class IntroFlowScreenTest {
     @Test
     fun `no screen has a button worded as a way past a question`() {
         val banned = listOf("Skip", "Later", "Next", "Continue", "Done")
-        listOf(IntroState(), PreviewCardContentState, stepTwo, tripPair).forEach { state ->
+        listOf(ON_PARK_RIDE, PreviewCardContentState, stepTwo, tripPair).forEach { state ->
             show(state)
 
             listOf(primary(), secondary()).forEach { button ->
@@ -210,10 +213,19 @@ class IntroFlowScreenTest {
     }
 
     @Test
-    fun `step 1 has no back button`() {
-        show(IntroState())
+    fun `the theme screen, the first, has no back button`() {
+        show(IntroState(step = IntroStep.THEME))
 
         composeRule.onNodeWithContentDescription("Back").assertDoesNotExist()
+    }
+
+    @Test
+    fun `the Park and Ride screen has a back button that sends Back, to the theme screen`() {
+        show(ON_PARK_RIDE)
+
+        composeRule.onNodeWithContentDescription("Back").performClick()
+
+        assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.Back), events)
     }
 
     @Test
@@ -236,12 +248,22 @@ class IntroFlowScreenTest {
     }
 
     @Test
-    fun `system back on step 1 is left to the platform`() {
-        show(IntroState())
+    fun `system back on the theme screen, the first, is left to the platform`() {
+        show(IntroState(step = IntroStep.THEME))
 
         composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
         composeRule.waitForIdle()
 
         assertEquals<List<IntroUiEvent>>(emptyList(), events)
+    }
+
+    @Test
+    fun `system back on the Park and Ride screen sends Back`() {
+        show(ON_PARK_RIDE)
+
+        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
+        composeRule.waitForIdle()
+
+        assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.Back), events)
     }
 }

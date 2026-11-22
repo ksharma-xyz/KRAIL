@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -109,7 +110,7 @@ class IntroParkRideStepTest {
     fun `the answers are not in the screen, only in the bar, so the screen holds no button of its own`() {
         show(PreviewAskState)
 
-        composeRule.onAllNodes(hasClickAction()).assertCountEquals(2)
+        composeRule.onAllNodes(hasClickAction().and(hasContentDescription(BACK_DESCRIPTION).not())).assertCountEquals(2)
     }
 
     @Test

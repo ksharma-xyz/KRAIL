@@ -55,10 +55,10 @@ enum class IntroStep {
 }
 
 /**
- * The screen the Intro opens on. It is [IntroStep.THEME] once that screen has content, and until
- * then the Park & Ride screen, so this one value is the only thing that changes when it lands.
+ * The screen the Intro opens on, the theme colour. It is one value so a screen can be put before it or
+ * taken off the front without changing anything else: the flow, Back and the default state all read it.
  */
-val IntroFirstStep: IntroStep = IntroStep.PARK_RIDE
+val IntroFirstStep: IntroStep = IntroStep.THEME
 
 /** [ASK] is the unanswered question. */
 enum class ParkRideAnswer { ASK, YES, NO }

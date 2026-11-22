@@ -16,6 +16,7 @@ class IntroStateTest {
         val state = IntroState()
 
         assertEquals(IntroFirstStep, state.step)
+        assertNull(state.selectedThemeId)
         assertEquals(ParkRideAnswer.ASK, state.parkRideAnswer)
         assertEquals(LocationResult.NOT_ASKED, state.locationResult)
         assertEquals(ParkRideCardPhase.None, state.parkRideCard)
@@ -42,9 +43,9 @@ class IntroStateTest {
     }
 
     @Test
-    fun `the flow opens on the Park and Ride screen until the theme screen has content`() {
-        // The one value that flips when the theme screen lands. Until then it must name a screen that exists.
-        assertEquals(IntroStep.PARK_RIDE, IntroFirstStep)
+    fun `the flow opens on the theme screen, the first of the five`() {
+        assertEquals(IntroStep.THEME, IntroFirstStep)
+        assertEquals(IntroStep.entries.first(), IntroFirstStep)
     }
 
     @Test

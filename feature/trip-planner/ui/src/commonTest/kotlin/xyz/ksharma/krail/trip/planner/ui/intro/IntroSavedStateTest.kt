@@ -61,7 +61,7 @@ class IntroSavedStateTest {
 
         handle.saveIntroState(IntroState(step = IntroStep.PARK_RIDE))
 
-        assertEquals(IntroState(), handle.restoreIntroState())
+        assertEquals(IntroState(step = IntroStep.PARK_RIDE), handle.restoreIntroState())
     }
 
     @Test

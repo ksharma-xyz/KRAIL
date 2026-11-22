@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
@@ -35,7 +34,6 @@ import org.jetbrains.compose.resources.painterResource
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.ReorderableLazyListState
 import xyz.ksharma.krail.feature.track.TrackedJourney
-import xyz.ksharma.krail.park.ride.ui.components.AddParkRideCard
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
@@ -44,7 +42,6 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.CityCodeText
-import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
 import xyz.ksharma.krail.trip.planner.ui.components.SavedTripCard
 import xyz.ksharma.krail.trip.planner.ui.components.SearchStopRow
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
@@ -57,8 +54,9 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 /**
- * Full LazyColumn body for [SavedTripsScreen]. Info tiles, then the Saved Trips section only
- * when there is something saved, then Park & Ride which always renders.
+ * Full LazyColumn body for [SavedTripsScreen], `docs/MAP_HOME_UX.md` rule 29: info tiles, the
+ * tracked trip, two trips, the one Park & Ride row, then the rest of the trips. With one trip the
+ * row follows it, with none it comes first, and with no saved station there is no row at all.
  */
 internal fun LazyListScope.savedTripsListBody(
     savedTripsState: SavedTripsState,
@@ -71,37 +69,22 @@ internal fun LazyListScope.savedTripsListBody(
     editing: Boolean,
     reorderState: ReorderableLazyListState,
     onEnterEditing: () -> Unit,
-    onAddParkRideClick: () -> Unit,
 ) {
     if (savedTripsState.isSavedTripsLoading) return
 
     savedTripsInfoTiles(savedTripsState, onEvent)
+    trackingSection(trackedJourney, onTrackingCardClick, onStopTracking)
 
-    // Nothing saved means no Saved Trips section at all — not a heading over an empty space.
-    // The bottom search row is already the "plan a trip" affordance, so an empty section only
-    // pushed Park & Ride down behind a header that explained nothing.
-    if (savedTripsState.savedTrips.isNotEmpty()) {
-        savedTripsContent(
-            savedTripsState = savedTripsState,
-            trackedJourney = trackedJourney,
-            onEvent = onEvent,
-            onSavedTripCardClick = onSavedTripCardClick,
-            onTrackingCardClick = onTrackingCardClick,
-            onStopTracking = onStopTracking,
-            editing = editing,
-            reorderState = reorderState,
-            onEnterEditing = onEnterEditing,
-        )
+    val trips = savedTripsState.savedTrips
+    if (trips.isNotEmpty()) {
+        reorderTipItems(savedTripsState.hasSeenReorderTip, editing, onEvent)
     }
 
-    // Outside the saved-trips branch on purpose: Park & Ride has to be reachable by a rider
-    // who has saved nothing, which is exactly the case the old empty branch skipped it in.
-    parkRideSection(
-        savedTripsState = savedTripsState,
-        expandedMap = expandedMap,
-        onEvent = onEvent,
-        onAddParkRideClick = onAddParkRideClick,
-    )
+    val actions = SavedTripActions(onSavedTripCardClick, onEnterEditing, onEvent)
+    val (before, after) = trips.splitAroundParkRideRow(rowIndexFor(trips.size))
+    tripItems(before, savedTripsState.stopLabels, editing, reorderState, actions)
+    parkRideRowItem(savedTripsState.parkRideUiState, expandedMap, onEvent)
+    tripItems(after, savedTripsState.stopLabels, editing, reorderState, actions)
 }
 
 private fun LazyListScope.savedTripsInfoTiles(
@@ -115,82 +98,6 @@ private fun LazyListScope.savedTripsInfoTiles(
             onDismissClick = { tileData -> onEvent(SavedTripUiEvent.DismissInfoTile(tileData)) },
             onTileExpand = { onEvent(SavedTripUiEvent.InfoTileExpand(it.key)) },
         )
-    }
-}
-
-/**
- * The home screen's Park & Ride section.
- *
- * Always rendered, including for a rider with nothing saved: with no cards the section is
- * just the "+ Add" card, so Park & Ride is discoverable without first saving a trip. The
- * cards themselves are the existing [ParkRideCard] unchanged — whether a card came from a
- * saved trip or an explicit add is internal, used only for de-duplication and removal, and is
- * deliberately not surfaced on the card.
- *
- * Expansion still drives polling exactly as before: tapping a card raises
- * [SavedTripUiEvent.ParkRideCardClick], and nothing here fetches on its own.
- */
-internal fun LazyListScope.parkRideSection(
-    savedTripsState: SavedTripsState,
-    expandedMap: SnapshotStateMap<String, Boolean>,
-    onEvent: (SavedTripUiEvent) -> Unit,
-    onAddParkRideClick: () -> Unit,
-) {
-    stickyHeader(key = "park_ride_title") {
-        SavedTripsTitle {
-            Text(text = "Park & Ride")
-        }
-    }
-
-    items(
-        items = savedTripsState.parkRideUiState,
-        key = { parkRide -> parkRide.stopId },
-    ) { parkRide ->
-        val dim = KrailTheme.dimensions
-        val isExpanded = expandedMap[parkRide.stopId] ?: false
-
-        ParkRideCard(
-            isExpanded = isExpanded,
-            modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
-            onClick = {
-                val newExpanded = !isExpanded
-                expandedMap[parkRide.stopId] = newExpanded
-                onEvent(
-                    SavedTripUiEvent.ParkRideCardClick(
-                        parkRideState = parkRide,
-                        isExpanded = newExpanded,
-                    ),
-                )
-            },
-            parkRideUiState = parkRide,
-        )
-
-        Spacer(modifier = Modifier.height(dim.spacingXL))
-    }
-
-    item(key = "park_ride_add_card") {
-        val dim = KrailTheme.dimensions
-        val hasCards = savedTripsState.parkRideUiState.isNotEmpty()
-
-        Column(modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding)) {
-            AddParkRideCard(
-                label = if (hasCards) "Add another" else "Add Park & Ride",
-                onClick = onAddParkRideClick,
-            )
-
-            // Only worth saying while the section has nothing in it. Once cards exist the
-            // rider has already found the feature and the line is just noise under it.
-            if (!hasCards) {
-                Text(
-                    text = "Save a trip and its station's parking shows here automatically.",
-                    style = KrailTheme.typography.bodySmall,
-                    color = KrailTheme.colors.softLabel,
-                    modifier = Modifier.padding(top = dim.spacingM),
-                )
-            }
-
-            Spacer(modifier = Modifier.height(dim.spacingXL))
-        }
     }
 }
 

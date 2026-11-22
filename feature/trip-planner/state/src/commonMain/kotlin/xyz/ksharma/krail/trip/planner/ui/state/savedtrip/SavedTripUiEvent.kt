@@ -28,6 +28,16 @@ sealed interface SavedTripUiEvent {
         val isExpanded: Boolean,
     ) : SavedTripUiEvent
 
+    /**
+     * Directions to a car park were tapped. Carries the car park's own position, which the tile only
+     * offers when it has one, and its name for the maps app to show.
+     */
+    data class ParkRideDirectionsClick(
+        val latitude: Double,
+        val longitude: Double,
+        val label: String,
+    ) : SavedTripUiEvent
+
     data class DismissInfoTile(val infoTile: InfoTileData) : SavedTripUiEvent
 
     data class InfoTileCtaClick(val infoTile: InfoTileData) : SavedTripUiEvent

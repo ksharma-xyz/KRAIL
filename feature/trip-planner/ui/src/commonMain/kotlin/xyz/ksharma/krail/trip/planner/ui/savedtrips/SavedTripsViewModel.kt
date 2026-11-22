@@ -223,6 +223,11 @@ class SavedTripsViewModel(
                 parkRideState = event.parkRideState,
                 isExpanded = event.isExpanded,
             )
+            is SavedTripUiEvent.ParkRideDirectionsClick -> platformOps.openMapDirections(
+                latitude = event.latitude,
+                longitude = event.longitude,
+                label = event.label,
+            )
             SavedTripUiEvent.AnalyticsDiscoverButtonClick -> {
                 analytics.track(AnalyticsEvent.DiscoverButtonClick)
                 preferences.markDiscoverAsClicked()

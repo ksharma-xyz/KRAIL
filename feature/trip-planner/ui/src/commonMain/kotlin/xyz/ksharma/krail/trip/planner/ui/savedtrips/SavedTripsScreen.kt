@@ -11,10 +11,6 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -25,7 +21,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
@@ -46,7 +41,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -67,13 +61,11 @@ import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_close
 import kotlinx.collections.immutable.ImmutableList
 import org.jetbrains.compose.resources.painterResource
-import sh.calvin.reorderable.ReorderableLazyListState
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import xyz.ksharma.krail.core.adaptiveui.DualPaneScaffold
 import xyz.ksharma.krail.core.adaptiveui.rememberAdaptiveLayoutInfo
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.feature.track.TrackedJourney
-import xyz.ksharma.krail.feature.track.ui.components.TrackingCard
 import xyz.ksharma.krail.info.tile.state.InfoTileData
 import xyz.ksharma.krail.info.tiles.ui.InfoTile
 import xyz.ksharma.krail.taj.LocalTextStyle
@@ -262,7 +254,6 @@ fun SavedTripsScreen(
                                 editing = editing,
                                 reorderState = reorderState,
                                 onEnterEditing = { editing = true },
-                                onAddParkRideClick = onAddParkRideClick,
                             )
                         }
                     }
@@ -391,98 +382,6 @@ internal fun LazyListScope.infoTiles(
                     .padding(horizontal = dim.pageHorizontalPadding, vertical = dim.spacingM),
             )
         }
-    }
-}
-
-internal fun LazyListScope.savedTripsContent(
-    savedTripsState: SavedTripsState,
-    trackedJourney: TrackedJourney?,
-    onEvent: (SavedTripUiEvent) -> Unit,
-    onSavedTripCardClick: (StopItem?, StopItem?) -> Unit = { _, _ -> },
-    onTrackingCardClick: () -> Unit = {},
-    onStopTracking: () -> Unit = {},
-    editing: Boolean,
-    reorderState: ReorderableLazyListState,
-    onEnterEditing: () -> Unit,
-) {
-    if (trackedJourney != null) {
-        stickyHeader(key = "tracking_title") {
-            SavedTripsTitle {
-                Text(text = "Tracking Real Time")
-            }
-        }
-
-        item(key = "tracking_card") {
-            TrackingCard(
-                tracked = trackedJourney,
-                onCardClick = onTrackingCardClick,
-                onStopTracking = onStopTracking,
-                modifier = Modifier.padding(horizontal = KrailTheme.dimensions.spacingXL),
-            )
-            Spacer(modifier = Modifier.height(KrailTheme.dimensions.spacingXL))
-        }
-    }
-
-    stickyHeader(key = "saved_trips_title") {
-        SavedTripsTitle {
-            Text(text = "Saved Trips")
-        }
-    }
-
-    item(key = "onboarding_reorder_tip") {
-        val dim = KrailTheme.dimensions
-        AnimatedVisibility(
-            visible = !savedTripsState.hasSeenReorderTip && !editing,
-            enter = expandVertically(animationSpec = tween(durationMillis = 300)) +
-                fadeIn(animationSpec = tween(durationMillis = 250)),
-            exit = shrinkVertically(animationSpec = tween(durationMillis = 200)) +
-                fadeOut(animationSpec = tween(durationMillis = 150)),
-        ) {
-            LaunchedEffect(Unit) { onEvent(SavedTripUiEvent.MarkReorderTipSeen) }
-            Text(
-                text = "💡 Long press any trip to reorder or remove it.",
-                style = KrailTheme.typography.bodySmall,
-                color = KrailTheme.colors.softLabel,
-                modifier = Modifier
-                    .padding(horizontal = dim.pageHorizontalPadding)
-                    .padding(bottom = dim.spacingM),
-            )
-        }
-    }
-
-    item(key = "reorder_hint") {
-        val dim = KrailTheme.dimensions
-        AnimatedVisibility(
-            visible = editing,
-            enter = expandVertically(animationSpec = tween(durationMillis = 250)) +
-                fadeIn(animationSpec = tween(durationMillis = 200)),
-            exit = shrinkVertically(animationSpec = tween(durationMillis = 200)) +
-                fadeOut(animationSpec = tween(durationMillis = 150)),
-        ) {
-            Text(
-                text = "💡 Long press and drag cards to reorder. Tap Done when finished.",
-                style = KrailTheme.typography.bodySmall,
-                color = KrailTheme.colors.softLabel,
-                modifier = Modifier
-                    .padding(horizontal = dim.pageHorizontalPadding)
-                    .padding(bottom = dim.spacingM),
-            )
-        }
-    }
-
-    items(
-        items = savedTripsState.savedTrips,
-        key = { trip -> trip.tripId },
-    ) { trip ->
-        SavedTripItem(
-            trip = trip,
-            stopLabels = savedTripsState.stopLabels,
-            editing = editing,
-            reorderState = reorderState,
-            onSavedTripCardClick = onSavedTripCardClick,
-            onEnterEditing = onEnterEditing,
-            onDelete = { onEvent(SavedTripUiEvent.DeleteSavedTrip(trip)) },
-        )
     }
 }
 

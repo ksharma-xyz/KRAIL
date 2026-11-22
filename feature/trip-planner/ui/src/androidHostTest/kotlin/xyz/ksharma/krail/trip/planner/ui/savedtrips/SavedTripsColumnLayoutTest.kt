@@ -3,7 +3,6 @@ package xyz.ksharma.krail.trip.planner.ui.savedtrips
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
@@ -26,7 +25,7 @@ import kotlin.test.assertTrue
 
 /**
  * Rule 45 of `docs/MAP_HOME_UX.md` on the real screen: trips are one column, at most 560 dp
- * wide and centred, and the trip cards, the Park & Ride section and the bottom search row share
+ * wide and centred, and the trip cards, the Park & Ride row and the bottom search row share
  * its edges at every window size.
  *
  * Each test runs in a window of its own width (density 1, so a dp is a pixel) and reads where
@@ -88,14 +87,15 @@ class SavedTripsColumnLayoutTest {
         val trip = boundsOfTag(TripPlannerTestTags.savedTripCard(STATE.savedTrips.first().tripId))
         assertEdges("saved trip card $at", trip, cardLeft, cardRight)
 
-        val parkRide = boundsOfText(STOP_NAME)
-        assertEdges("Park & Ride card $at", parkRide, cardLeft, cardRight)
-
-        val addCard = boundsOfText(ADD_ANOTHER)
-        assertEdges("Add another card $at", addCard, cardLeft, cardRight)
-
-        assertLeft("Saved Trips heading $at", boundsOfText(SAVED_TRIPS_TITLE), cardLeft)
-        assertLeft("Park & Ride heading $at", boundsOfText(PARK_RIDE_TITLE), cardLeft)
+        // The Park & Ride row is one block on the column's own edges. Its first tile starts one page
+        // padding in, where the cards do, and the row has no heading or card of its own around it.
+        assertEdges(
+            "Park & Ride row $at",
+            boundsOfTag(TripPlannerTestTags.SAVED_TRIPS_PARK_RIDE_ROW),
+            columnLeft,
+            columnRight,
+        )
+        assertLeft("first Park & Ride tile $at", boundsOfTag(TripPlannerTestTags.parkRideTile(STATION_ID)), cardLeft)
 
         val searchRow = boundsOfTag(TripPlannerTestTags.SEARCH_ROW)
         assertEdges("search row block $at", searchRow, columnLeft, columnRight)
@@ -105,9 +105,6 @@ class SavedTripsColumnLayoutTest {
 
     private fun boundsOfTag(tag: String): DpRect =
         composeRule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
-
-    private fun boundsOfText(text: String): DpRect =
-        composeRule.onNodeWithText(text).getUnclippedBoundsInRoot()
 
     private fun assertEdges(what: String, actual: DpRect, left: Dp, right: Dp) {
         assertLeft(what, actual, left)
@@ -126,9 +123,7 @@ class SavedTripsColumnLayoutTest {
 
     private companion object {
         const val STOP_NAME = "Bella Vista"
-        const val ADD_ANOTHER = "Add another"
-        const val SAVED_TRIPS_TITLE = "Saved Trips"
-        const val PARK_RIDE_TITLE = "Park & Ride"
+        const val STATION_ID = "2153478"
         const val EDGE_TOLERANCE_DP = 1f
 
         /** The page padding every card and field sits inside the column by. */

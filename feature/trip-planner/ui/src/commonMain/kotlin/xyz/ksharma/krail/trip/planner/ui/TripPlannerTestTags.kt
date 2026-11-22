@@ -56,6 +56,10 @@ object TripPlannerTestTags {
     const val SAVED_TRIPS_CHIP_ROW = "savedtrips.chips"
     const val SAVED_TRIPS_CHIP_PARK_RIDE = "savedtrips.chip.parkride"
 
+    // The Park & Ride row of tiles on home. The tiles and their car parks are per station and per
+    // car park, see [parkRideTile], [parkRideCarPark] and [parkRideDirections].
+    const val SAVED_TRIPS_PARK_RIDE_ROW = "savedtrips.parkride.row"
+
     // Search row (the bottom origin/destination bar on the home screen)
     const val SEARCH_ROW = "searchrow.root"
     const val SEARCH_ROW_FROM = "searchrow.from"
@@ -112,6 +116,17 @@ object TripPlannerTestTags {
 
     /** One saved trip row. Suffixed so a flow can target a known trip or glob the set. */
     fun savedTripCard(tripId: String): String = "savedtrips.card.$tripId"
+
+    /** One closed Park & Ride tile, by its station's id (the smallest stop id of the group). */
+    fun parkRideTile(stationId: String): String = "savedtrips.parkride.tile.$stationId"
+
+    /** The one open Park & Ride tile, and its station name, which closes it. */
+    fun parkRideTileOpen(stationId: String): String = "savedtrips.parkride.open.$stationId"
+    fun parkRideTileName(stationId: String): String = "savedtrips.parkride.name.$stationId"
+
+    /** One car park block of an open tile, and its Directions button when it has a position. */
+    fun parkRideCarPark(facilityId: String): String = "savedtrips.parkride.carpark.$facilityId"
+    fun parkRideDirections(facilityId: String): String = "savedtrips.parkride.directions.$facilityId"
 
     /** One Home or Work chip, keyed by the label's name so it is the same whether the label is set or not. */
     fun homeLabelChip(labelKey: String): String = "savedtrips.chip.label.$labelKey"

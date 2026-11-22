@@ -1,0 +1,149 @@
+package xyz.ksharma.krail.trip.planner.ui.savedtrips
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.font.FontWeight
+import app.krail.taj.resources.ic_location
+import org.jetbrains.compose.resources.painterResource
+import xyz.ksharma.krail.park.ride.ui.components.CarIcon
+import xyz.ksharma.krail.taj.LocalContentColor
+import xyz.ksharma.krail.taj.components.RoundIconButton
+import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.contrast.ContrastAnalyzer.Companion.UI_COMPONENT_CONTRAST_AA
+import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.themeInkColor
+import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import app.krail.taj.resources.Res as TajRes
+
+/**
+ * A line of a Park & Ride tile that keeps its box when it has nothing to say. With [present] false
+ * the content is still measured, so the tile is the same height, but it is drawn clear and hidden
+ * from a screen reader: a placeholder is never read out as if it were a number.
+ */
+@Composable
+internal fun ReservedLine(
+    present: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Box(modifier = if (present) modifier else modifier.alpha(0f).clearAndSetSemantics {}) { content() }
+}
+
+/** The big number with "spots" small beside it, on one baseline, wrapping whole items when short. */
+@Composable
+internal fun SpotsLine(spots: Int, modifier: Modifier = Modifier) {
+    val dim = KrailTheme.dimensions
+    FlowRow(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(dim.spacingXS)) {
+        Text(
+            text = "$spots",
+            style = KrailTheme.typography.headlineMedium,
+            modifier = Modifier.alignByBaseline(),
+        )
+        Text(
+            text = "spots",
+            style = KrailTheme.typography.bodyMedium,
+            modifier = Modifier.alignByBaseline(),
+        )
+    }
+}
+
+/**
+ * The car icon and the station's name. Whole items: when the name is too long to sit beside the
+ * icon it goes under it, and it is never squeezed or cut. The [large] form is the open tile's
+ * header, in the weight the old Park & Ride card gave a station name, and at least 48 dp tall so it
+ * is a touch target when it closes the tile.
+ */
+@Composable
+internal fun StationLine(name: String, modifier: Modifier = Modifier, large: Boolean = false) {
+    val dim = KrailTheme.dimensions
+    FlowRow(
+        modifier = if (large) modifier.heightIn(min = dim.textFieldHeight) else modifier,
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
+        verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
+        itemVerticalAlignment = Alignment.CenterVertically,
+    ) {
+        CarIcon(modifier = Modifier.size(if (large) dim.iconM else dim.iconXS))
+        Text(
+            text = name,
+            style = if (large) {
+                KrailTheme.typography.displaySmall.copy(fontWeight = FontWeight.Normal)
+            } else {
+                KrailTheme.typography.bodySmall
+            },
+        )
+    }
+}
+
+/**
+ * One car park of an open tile: its name, its numbers and time through the shared
+ * [CarParkFigures], and its Directions when it has a position of its own. A car park with no
+ * reading yet shows its name alone and never an error.
+ */
+@Composable
+internal fun CarParkBlockContent(
+    carPark: CarParkBlock,
+    onDirectionsClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val dim = KrailTheme.dimensions
+    Column(
+        modifier = modifier.testTag(TripPlannerTestTags.parkRideCarPark(carPark.facilityId)),
+        verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
+    ) {
+        Text(text = carPark.name, style = KrailTheme.typography.bodyLarge)
+        carPark.freeSpots?.let { spots ->
+            CarParkFigures(
+                spotsAvailable = spots,
+                percentageFull = carPark.percentFull,
+                timeText = carPark.timeText,
+            )
+        }
+        if (carPark.directionsTo != null) {
+            DirectionsButton(carParkName = carPark.name, facilityId = carPark.facilityId, onClick = onDirectionsClick)
+        }
+    }
+}
+
+/**
+ * Directions to one car park: taj's [RoundIconButton], 48 dp, with no fill and a ring in the ink
+ * colour for its outline. The ring is a border modifier because taj's round button has no outline
+ * of its own, the same closest fit the set label chip uses. It opens the default maps app on the
+ * car park's own position, and the screen reader hears which car park it is for.
+ */
+@Composable
+private fun DirectionsButton(carParkName: String, facilityId: String, onClick: () -> Unit) {
+    RoundIconButton(
+        onClick = onClick,
+        color = Color.Transparent,
+        onClickLabel = "Directions to $carParkName",
+        modifier = Modifier
+            .testTag(TripPlannerTestTags.parkRideDirections(facilityId))
+            .border(
+                width = KrailTheme.dimensions.strokeThin,
+                color = themeInkColor(UI_COMPONENT_CONTRAST_AA),
+                shape = CircleShape,
+            ),
+    ) {
+        Image(
+            painter = painterResource(TajRes.drawable.ic_location),
+            contentDescription = "Directions to $carParkName",
+            colorFilter = ColorFilter.tint(LocalContentColor.current),
+            modifier = Modifier.size(KrailTheme.dimensions.iconS),
+        )
+    }
+}

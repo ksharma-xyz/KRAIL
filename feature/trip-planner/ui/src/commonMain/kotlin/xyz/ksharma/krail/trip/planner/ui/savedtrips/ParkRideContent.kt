@@ -46,29 +46,50 @@ fun ParkRideLoadedContent(
                 style = KrailTheme.typography.displaySmall.copy(fontWeight = FontWeight.Normal),
             )
 
-            // Spots Information
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(dim.spacingML),
-                verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
-            ) {
+            CarParkFigures(
+                spotsAvailable = parkRideFacilityDetail.spotsAvailable,
+                percentageFull = parkRideFacilityDetail.percentageFull,
+                timeText = parkRideFacilityDetail.timeText,
+            )
+        }
+    }
+}
+
+/**
+ * The numbers of one car park: the free spots, the percent full and the time of the reading, in the
+ * type the card and the map sheet both use. Shared with the open Park & Ride tile on home, so a car
+ * park reads the same wherever it is shown. Whole items wrap and nothing is squeezed.
+ */
+@Composable
+internal fun CarParkFigures(
+    spotsAvailable: Int,
+    percentageFull: Int?,
+    timeText: String?,
+    modifier: Modifier = Modifier,
+) {
+    val dim = KrailTheme.dimensions
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(dim.spacingXS)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(dim.spacingML),
+            verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
+        ) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(dim.spacingXS)) {
+                Text(
+                    text = "$spotsAvailable",
+                    style = KrailTheme.typography.headlineMedium,
+                    modifier = Modifier.alignByBaseline(),
+                )
+                Text(
+                    text = "spots available",
+                    style = KrailTheme.typography.bodyMedium,
+                    modifier = Modifier.alignByBaseline(),
+                )
+            }
+
+            if (percentageFull != null) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(dim.spacingXS)) {
                     Text(
-                        text = "${parkRideFacilityDetail.spotsAvailable}",
-                        style = KrailTheme.typography.headlineMedium,
-                        modifier = Modifier.alignByBaseline(),
-                    )
-                    Text(
-                        text = "spots available",
-                        style = KrailTheme.typography.bodyMedium,
-                        modifier = Modifier.alignByBaseline(),
-                    )
-                }
-
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
-                ) {
-                    Text(
-                        text = "${parkRideFacilityDetail.percentageFull}%",
+                        text = "$percentageFull%",
                         style = KrailTheme.typography.headlineMedium,
                         modifier = Modifier.alignByBaseline(),
                     )
@@ -79,14 +100,14 @@ fun ParkRideLoadedContent(
                     )
                 }
             }
+        }
 
-            if (parkRideFacilityDetail.timeText.isNotBlank()) {
-                Text(
-                    text = "Last updated at\u00A0${parkRideFacilityDetail.timeText}",
-                    style = KrailTheme.typography.bodySmall,
-                    color = KrailTheme.colors.secondaryLabel,
-                )
-            }
+        if (!timeText.isNullOrBlank()) {
+            Text(
+                text = "Last updated at\u00A0$timeText",
+                style = KrailTheme.typography.bodySmall,
+                color = KrailTheme.colors.secondaryLabel,
+            )
         }
     }
 }

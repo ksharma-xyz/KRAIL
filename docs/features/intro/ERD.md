@@ -322,6 +322,7 @@ sequenceDiagram
     participant C as ParkRideCatalogue
     participant A as Availability
     participant DB as Sandook
+    participant S as App stop search
     App->>R: retry (launch trigger: stops insert, then bus routes best effort)
     UI->>VM: AnswerParkRide(yes)
     UI->>L: permission and one fix
@@ -338,6 +339,9 @@ sequenceDiagram
     UI->>VM: ToggleParkRide
     VM->>DB: insertOrReplaceSavedParkRides(UserAdded)
     UI->>VM: PickStart, PickEnd
+    UI->>S: Search another stop (SearchStopRoute FROM or TO)
+    S-->>UI: StopSelectedResult on the result bus, once
+    UI->>VM: StopPickedFromSearch(isStart, stopId, stopName)
     UI->>VM: FinishPressed
     VM->>R: awaitReady
     VM->>DB: insertOrReplaceTrip, then flags
@@ -640,9 +644,13 @@ The search hand-off, as built, with nothing in `searchstop/` touched:
 - **Guards that already exist and must stay green.** `ThemeColorRoleRule`, `ClockSystemBan`, `CollectAsStateBan`,
   `SnackbarBan`, `PollingLifecycleGuardTest` (the Intro must not poll), `ViewModelStateDurabilityTest`,
   `NavKeySerializationConfigTest`, `verifyTestWiring`.
-- **Maestro.** `.maestro/shared/dismiss-intro.yaml` loops on the tag `intro.action.primary` and needs no page count. The new
-  Intro keeps that tag, so six flows keep working. Check its `times` cap against a disabled Getting ready button on a cold
-  device. Do not touch CI or workflow files.
+- **Maestro.** `.maestro/shared/dismiss-intro.yaml` loops on the tag `intro.action.primary`, which the new Intro keeps, so the
+  six flows that call it are untouched. On a cold install the old loop would have failed: Next on step 1 and then, on step 2, a
+  disabled Getting ready button that a tap does nothing to, with the stops loading for seconds. Each pass is one tap and one
+  animation wait, so the twelve passes could be spent on the disabled button before the stops were ready. The one edit is a
+  wait, inside each pass, for the button to be enabled (`enabled: true` on the selector, which `maestro check-syntax` accepts and
+  rejects an unknown key for). `times: 12` stays: with the wait, two passes (Next, then Skip for now) are enough. It cannot be run
+  here, because nothing is run on a device, so it is a device case. CI and workflow files are not touched.
 - **Coverage.** Every PR passes `scripts/patch_coverage.py` at 80 percent or more. The result goes in the PR's Testing section.
 - **Manual cases** (nothing automated reaches them): a real permission dialog on both platforms, a real fix indoors, airplane
   mode on the Yes path, a fresh install on a slow device.
@@ -703,6 +711,11 @@ Each PR is under 500 lines with one concern, stacked with Graphite. Nothing is p
 6. `feat/intro-step-first-trip`: step 2 UI, the tile, the search hand-off, previews and screenshots. Deletes the old
    `IntroContent*` files.
 7. `test/intro-maestro`: only if the tag or the cap needs a change.
+
+As built on one branch (`feat/intro-step-park-ride-shell`), in focused commits, none pushed: the shell, step 1 and the location
+glue (5), then step 2, the search hand-off, the entry wiring, the carousel deletion, the move out of `v2` and the one Maestro wait
+(6 and 7). The one thing left of the old Intro is the carousel params in `IntroLetsKrailClickEvent`: their call sites are gone and
+the definition stays until the analytics side records the removal.
 
 ## 11. Measurement plan (ROI)
 

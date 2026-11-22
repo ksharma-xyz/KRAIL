@@ -429,8 +429,8 @@ three zone frame, and everything it decides is in pure functions with table test
 - **The headline.** Before a choice it is `Pick`, `your ride`, `colour`, with the key word last, no question mark, no
   exclamation mark and no colon. After a choice it is that theme's `KrailThemeStyle.tagLine`, shown exactly as the app wrote it,
   split by `taglineLines` after its first comma (one line when there is none, and the lines joined with a space are the
-  tagline again). It enters again with the kinetic headline motion each time the selection changes, because the headline is
-  keyed on its phrase. The emoji is `introEmojiFor(THEME, selectedThemeId)`: the scooter before a choice, then the train, metro, bus or ferry of the chosen badge. `IntroHeadline` has `minLines`: the headline keeps the height of the
+  tagline again). When the selection changes after the first entrance, the old headline fades out while the new one fades in and
+  rises 16 dp in one 350 ms move with no overshoot (unit U8, `headlineChangeSpec`), and nothing enters line by line again. The emoji is `introEmojiFor(THEME, selectedThemeId)`: the scooter before a choice, then the train, metro, bus or ferry of the chosen badge. `IntroHeadline` has `minLines`: the headline keeps the height of the
   emoji and that many lines at the rider's text size, so the badges do not move when the words change. The theme screen no longer
   holds a fixed three: it measures every version it can show (the question and the four taglines, in capitals, as drawn, at the
   width and text size it has) with a `TextMeasurer` and keeps the room of the longest (`reservedHeadlineLines`,
@@ -571,6 +571,14 @@ where it changes something an earlier unit said, the earlier text is edited to m
 - **Room under the emoji.** The emoji sits `introEmojiTitleGap` above the first line: `spacingXXL` (20 dp) at 100 percent text and
   growing with the system font scale to twice that at 200 percent (a pure function, table tested). The lines keep `spacingS` (6 dp)
   between them. The reserved headline height includes this gap, so nothing below the theme headline moves.
+- **The tagline change.** `IntroHeadline` is an `AnimatedContent` over a `HeadlineContent` (the lines, the key word's index and the
+  emoji), so a headline already on screen is replaced by `headlineChangeTransition(headlineChangeSpec(reduceMotion), risePx)`: the new one
+  fades in over 350 ms (`FastOutSlowInEasing`) while it rises 16 dp from below, and the old one fades out over 175 ms at the same time. No
+  spring, no overshoot, no per-line start, and no size animation, because both are as tall as the room the screen keeps for its longest
+  headline, so nothing below moves. With reduced motion it is a plain swap. The headline the screen opened with still plays the
+  kinetic entrance (the saved `entered` flag keeps a turn of the screen from playing it again), and the emoji, which changes with the
+  theme, joins the fade and rise and no longer pops again. The spec is a pure function with a table test, and a compose test holds
+  that both are on screen part way and only the new one after the change.
 
 Unit R1, as built, where this document was silent:
 
@@ -607,8 +615,9 @@ Unit R1, as built, where this document was silent:
   train U+1F686, metro U+1F687, bus U+1F68C, ferry U+26F4 followed by U+FE0F, and car U+1F697 (code points looked up from the
   Unicode names TRAIN, METRO, BUS, FERRY, AUTOMOBILE). The list is read from `FestivalManager.commonEmojiList` and never typed. No
   festival emoji is used, so the Intro does not change with the date. `IntroEmojiGuardTest` reads the Intro sources and fails on any
-  other emoji, and on any of the seven outside their one file. The headline's emoji re-pops with the existing bounce and one
-  wobble each time the choice changes (the headline is keyed on its phrase), and is settled under reduced motion. The confirm screen's star is the star emoji, not the save star icon, and may be swapped for the icon when that
+  other emoji, and on any of the seven outside their one file. The headline's emoji pops with the existing bounce and one
+  wobble when the screen opens, and when the choice changes it changes with the words in the same fade and rise (unit U8), and is
+  settled under reduced motion. The confirm screen's star is the star emoji, not the save star icon, and may be swapped for the icon when that
   screen is built. `:feature:trip-planner:ui` already depends on `core:festival`, so no new module edge was needed.
 - **Analytics.** No new event name and no new param. `intro_lets_krail` keeps its params and their meaning. `skipped` is
   completed with the confirm screen, where it will mean the rider answered No there. Until then it still means no complete trip
@@ -1401,6 +1410,8 @@ in `searchstop/` touched:
   weight, the emoji gap table from 85 to 300 percent text with the 16 dp floor, the follow-the-scale table against the new ceiling),
   `IntroHeadlineLayoutTest` (the drawn size and weight on every line, and the ceiling against the measured width of the widest word at
   320 dp, which fails above 1.09). Deleted on purpose in `IntroHeadlineMotionTest`: the two tests of `leadLineWeight`, which is gone.
+- **Unit U8 tests, tagline change.** `IntroHeadlineMotionTest` (the change spec table, instant under reduced motion; headline equality), and
+  `IntroHeadlineLayoutTest` (the old and the new headline overlap part way through the change and only the new one is left after it).
 
 ## 9. Open gaps and decisions
 
@@ -1499,6 +1510,8 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | U8-3 | Every headline line is Black, and the lead lines no longer step down to Bold | "The title much bolder": Bold under a Black key word read as a lighter title. With every line the same weight the key word is the last line and lands last, and no longer the heaviest. If the key word should stand out again, restore a lighter lead line | Default, not yet seen by owner |
 | U8-4 | The ceiling is 1.05, not the 1.09 the arithmetic allows | A twelfth to spare is measured on the test font. The system font on iOS is wider, which is a guess, so there is another 4 percent. Raise to 1.09 if a phone shows room | Default, not yet seen by owner |
 | U8-5 | The gap under the emoji is `spacingXXL` at 100 percent text and up to twice that at 200 percent | The spec said at least 16 dp and more on larger text. 20 dp is the nearest token above 16 dp. The headline zone is taller as a result, and it scrolls when it does not fit | Default, not yet seen by owner |
+| U8-6 | The emoji of the theme headline changes with the words in the same fade and rise, and no longer pops again with each pick | The spec asked for the tagline to change smoothly with no restart mid-way. A pop on every pick would be the restart. The first pop when the screen opens stays | Default, not yet seen by owner |
+| U8-7 | The old headline fades out in 175 ms, half the 350 ms the new one takes | Two full-length fades leave both readable on top of each other for most of the move. The spec gave only about 350 ms for the new one | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

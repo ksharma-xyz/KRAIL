@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.keyframes
@@ -109,11 +110,16 @@ private val LineRiseDistance = 24.dp
  * [HEADLINE_FONT_SCALE_CEILING], so its longest word always fits. The emoji sits [introEmojiTitleGap] above the first
  * line, further as the text grows.
  *
- * Each line is its own animated unit and enters one after another: it rises with a small spring overshoot,
- * grows a little and fades in, [LINE_STAGGER_MS] after the one before. The [emoji] pops with a bounce and
- * one wobble, then rests, so every animation is finite. With reduced motion, in a preview and after a turn
- * of the screen the headline is simply in place. Only transforms are animated, through `graphicsLayer`, so
- * nothing is laid out again on a frame.
+ * The first time the screen shows its headline, each line is its own animated unit and enters one after another:
+ * it rises with a small spring overshoot, grows a little and fades in, [LINE_STAGGER_MS] after the one before. The
+ * [emoji] pops with a bounce and one wobble, then rests, so every animation is finite. With reduced motion, in a
+ * preview and after a turn of the screen the headline is simply in place. Only transforms are animated, through
+ * `graphicsLayer`, so nothing is laid out again on a frame.
+ *
+ * When the words change after that, as the theme screen's do with each badge, nothing enters again line by line: the
+ * old headline fades out while the new one fades in and rises [HeadlineChangeSpec.riseDp] to its place, in one smooth
+ * move with no overshoot ([headlineChangeSpec]), and with reduced motion it is simply swapped. Both are the same
+ * height, so nothing below the headline moves.
  *
  * [celebrate] is for the confirm screen's star. With it the star also throws a burst of plain shapes in the theme
  * colour, drawn behind it, which flies out and fades in [BURST_DURATION_MS]. With reduced motion the star fades in at
@@ -134,12 +140,49 @@ internal fun IntroHeadline(
     minLines: Int = 0,
     celebrate: Boolean = false,
 ) {
+    val reduceMotion = isReduceMotionEnabled()
+    val inspection = LocalInspectionMode.current
+    // Saved, so a turn of the screen does not play the first entrance again. It is read once, at the start.
+    var entered by rememberSaveable { mutableStateOf(false) }
+    val startsSettled = remember { headlineStartsSettled(reduceMotion, inspection, entered) }
+    LaunchedEffect(Unit) { entered = true }
+
+    val content = HeadlineContent(lines, emphasisIndex, emoji)
+    // The headline the screen opened with is the one that enters line by line. Every later one arrives by the change.
+    val first = remember { content }
+    val spec = headlineChangeSpec(reduceMotion)
+    val risePx = with(LocalDensity.current) { spec.riseDp.dp.roundToPx() }
+    AnimatedContent(
+        targetState = content,
+        modifier = modifier,
+        transitionSpec = { headlineChangeTransition(spec, risePx) },
+        contentAlignment = Alignment.TopStart,
+        label = "intro-headline",
+    ) { shown ->
+        IntroHeadlineBody(
+            content = shown,
+            kinetic = shown == first && !startsSettled,
+            minLines = minLines,
+            celebrate = celebrate,
+        )
+    }
+}
+
+/** One headline as it is drawn: the words, the line with the key word, and the emoji above them. */
+@Composable
+private fun IntroHeadlineBody(
+    content: HeadlineContent,
+    kinetic: Boolean,
+    minLines: Int,
+    celebrate: Boolean,
+) {
+    val lines = content.lines
+    val emphasisIndex = content.emphasisIndex
+    val emoji = content.emoji
     val phrase = introHeadlinePhrase(lines)
     val reduceMotion = isReduceMotionEnabled()
     val inspection = LocalInspectionMode.current
-    // Saved, so a turn of the screen does not play it again. Keyed on the phrase, so a new headline does.
-    var played by rememberSaveable(phrase) { mutableStateOf(false) }
-    val animate = remember(phrase) { !headlineStartsSettled(reduceMotion, inspection, played) }
+    val animate = kinetic
     val celebration = rememberCelebration(phrase, celebrate, reduceMotion, inspection)
 
     val progress = remember(phrase) { lines.map { Animatable(if (animate) 0f else 1f) } }
@@ -148,7 +191,6 @@ internal fun IntroHeadline(
 
     LaunchedEffect(phrase) {
         if (!animate) return@LaunchedEffect
-        played = true
         val timeline = headlineTimeline(lines.size, emphasisIndex)
         launch { popEmoji(emojiScale, emojiTilt, timeline.emojiDelayMs) }
         progress.forEachIndexed { index, line ->
@@ -164,7 +206,7 @@ internal fun IntroHeadline(
     val emojiGap = introEmojiTitleGap(KrailTheme.dimensions.spacingXXL, LocalDensity.current.fontScale)
     CompositionLocalProvider(LocalDensity provides headlineDensity()) {
         Column(
-            modifier = modifier
+            modifier = Modifier
                 .heightIn(min = reservedHeadlineHeight(minLines, hasEmoji = emoji.isNotEmpty(), emojiGap = emojiGap))
                 .clearAndSetSemantics {
                     heading()

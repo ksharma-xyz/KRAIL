@@ -114,6 +114,26 @@ class IntroHeadlineMotionTest {
         }
     }
 
+    @Test
+    fun `a headline that changes on screen fades and rises over 350 ms with no overshoot, and is a plain swap with reduced motion`() {
+        val moving = headlineChangeSpec(reduceMotion = false)
+        val still = headlineChangeSpec(reduceMotion = true)
+
+        assertEquals(HeadlineChangeSpec(animated = true, enterMs = 350, exitMs = 175, riseDp = 16), moving)
+        assertEquals(HeadlineChangeSpec(animated = false, enterMs = 0, exitMs = 0, riseDp = 0), still)
+        assertTrue(moving.exitMs <= moving.enterMs, "the old words are gone before the new ones settle")
+    }
+
+    @Test
+    fun `two headlines are the same only when the words, the key word and the emoji all match`() {
+        val base = HeadlineContent(listOf("On the track,", "no lookin' back!"), 1, "\uD83D\uDE86")
+
+        assertEquals(base, base.copy())
+        assertFalse(base == base.copy(lines = listOf("On the track,", "no lookin' back")))
+        assertFalse(base == base.copy(emphasisIndex = 0))
+        assertFalse(base == base.copy(emoji = "\uD83D\uDE87"))
+    }
+
     private companion object {
         const val MAX_WOBBLE_MS = 600
         const val MAX_SWINGS = 3

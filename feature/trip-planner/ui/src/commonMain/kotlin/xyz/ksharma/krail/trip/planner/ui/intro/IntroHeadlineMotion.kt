@@ -9,6 +9,12 @@ internal const val LINE_RISE_FRACTION = 0.5f
 internal const val LINE_STAGGER_MS = 70L
 internal const val EMPHASIS_BEAT_MS = 40L
 
+/**
+ * What a headline says, as a value: its [lines], the one with the key word and the [emoji] above them. Two headlines
+ * are the same headline when all three are equal, so the screen can tell a change of words from a redraw.
+ */
+internal data class HeadlineContent(val lines: List<String>, val emphasisIndex: Int, val emoji: String)
+
 /** The words of a headline as one phrase, which is what a screen reader reads and what a test finds. */
 internal fun introHeadlinePhrase(lines: List<String>): String = lines.joinToString(separator = " ")
 
@@ -59,3 +65,28 @@ internal val EmojiWobble: List<Pair<Int, Float>> = listOf(
  */
 internal fun headlineStartsSettled(reduceMotion: Boolean, inspection: Boolean, played: Boolean): Boolean =
     reduceMotion || inspection || played
+
+// How a headline that is already on screen is replaced by another: one fade and one gentle rise, with no spring.
+internal const val HEADLINE_CHANGE_ENTER_MS = 350
+internal const val HEADLINE_CHANGE_EXIT_MS = 175
+internal const val HEADLINE_CHANGE_RISE_DP = 16
+
+/**
+ * How a headline is replaced by another once it is on screen. [animated] false is the plain swap with nothing moving.
+ * Otherwise the new headline fades in over [enterMs] while it rises [riseDp] from below to its place, and the old one
+ * fades out over [exitMs], at the same time, so the old words are gone before the new ones settle. Nothing
+ * overshoots and no line starts on its own timer, so a change that comes while another is running just carries on.
+ */
+internal data class HeadlineChangeSpec(val animated: Boolean, val enterMs: Int, val exitMs: Int, val riseDp: Int)
+
+/** The change for the rider's motion setting: instant under reduced motion, and [HEADLINE_CHANGE_ENTER_MS] otherwise. */
+internal fun headlineChangeSpec(reduceMotion: Boolean): HeadlineChangeSpec = if (reduceMotion) {
+    HeadlineChangeSpec(animated = false, enterMs = 0, exitMs = 0, riseDp = 0)
+} else {
+    HeadlineChangeSpec(
+        animated = true,
+        enterMs = HEADLINE_CHANGE_ENTER_MS,
+        exitMs = HEADLINE_CHANGE_EXIT_MS,
+        riseDp = HEADLINE_CHANGE_RISE_DP,
+    )
+}

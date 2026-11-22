@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
@@ -191,6 +192,29 @@ class IntroHeadlineLayoutTest {
             "200 percent fits without a ceiling, so the ceiling is not needed",
         )
         assertTrue(widestWordDp(HEADLINE_FONT_SCALE_CEILING) < NARROW_ROOM_DP)
+    }
+
+    @Test
+    fun `when the words change the old and the new headline overlap for the change, then only the new one is left`() {
+        start(PHONE_ROOM_DP, 1.0f)
+        val metro = taglineLines(KrailThemeStyle.Metro.tagLine)
+        composeRule.mainClock.autoAdvance = false
+
+        composeRule.runOnUiThread {
+            lines.value = metro
+            Snapshot.sendApplyNotifications()
+        }
+        composeRule.mainClock.advanceTimeBy(100)
+
+        assertEquals(
+            PICK_THEME_HEADLINE.size + metro.size,
+            drawnLayouts().size,
+            "both are on screen part way: ${drawnLayouts().map { it.layoutInput.text.text }}",
+        )
+
+        composeRule.mainClock.advanceTimeBy(HEADLINE_CHANGE_ENTER_MS + 100L)
+
+        assertEquals(metro.map { introHeadlineDisplay(it) }, drawnLayouts().map { it.layoutInput.text.text })
     }
 
     private companion object {

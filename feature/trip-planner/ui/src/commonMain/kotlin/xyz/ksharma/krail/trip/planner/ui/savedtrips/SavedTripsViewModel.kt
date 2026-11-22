@@ -53,6 +53,7 @@ import xyz.ksharma.krail.park.ride.network.service.ParkRideService
 import xyz.ksharma.krail.platform.ops.PlatformOps
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.SavedTrips
+import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.UserAdded
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.db.NSWParkRideFacilityDetail
@@ -222,6 +223,7 @@ class SavedTripsViewModel(
                 parkRideState = event.parkRideState,
                 isExpanded = event.isExpanded,
             )
+            is SavedTripUiEvent.RemoveParkRideStation -> removeParkRideStation(event.parkRideState)
             is SavedTripUiEvent.ParkRideDirectionsClick -> platformOps.openMapDirections(
                 latitude = event.latitude,
                 longitude = event.longitude,
@@ -374,6 +376,23 @@ class SavedTripsViewModel(
             updateUiState { copy(fromStop = stopResultsManager.selectedFromStop) }
         } ?: run {
             log("StopItem - Failed to parse fromStop from JSON: $fromJson")
+        }
+    }
+
+    /**
+     * Removes the car parks the rider added at this station, one row each, and nothing else. The home card
+     * and its `P` pin follow from the table the screen already observes, so nothing is set here by hand.
+     * A row a saved trip holds is left alone, because the delete names the source.
+     */
+    private fun removeParkRideStation(parkRideState: ParkRideUiState) {
+        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            parkRideState.facilities.forEach { facility ->
+                parkRideSandook.deleteSavedParkRide(
+                    stopId = facility.stopId,
+                    facilityId = facility.facilityId,
+                    source = UserAdded,
+                )
+            }
         }
     }
 

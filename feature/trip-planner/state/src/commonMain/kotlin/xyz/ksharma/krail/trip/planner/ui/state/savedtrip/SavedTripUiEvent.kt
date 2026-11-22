@@ -35,6 +35,12 @@ sealed interface SavedTripUiEvent {
         val label: String,
     ) : SavedTripUiEvent
 
+    /**
+     * Remove from home was tapped on a saved station's card on the map. Only the car parks the rider added
+     * themselves are removed, so a station a saved trip holds stays, as it does on the Park & Ride picker.
+     */
+    data class RemoveParkRideStation(val parkRideState: ParkRideUiState) : SavedTripUiEvent
+
     data class DismissInfoTile(val infoTile: InfoTileData) : SavedTripUiEvent
 
     data class InfoTileCtaClick(val infoTile: InfoTileData) : SavedTripUiEvent

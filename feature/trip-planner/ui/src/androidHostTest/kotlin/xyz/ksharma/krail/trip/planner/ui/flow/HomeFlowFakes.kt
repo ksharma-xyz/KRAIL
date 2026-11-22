@@ -5,6 +5,7 @@ import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
+import xyz.ksharma.krail.core.testing.fakes.FakeConnectivityObserver
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.testing.fakes.FakeInfoTileManager
 import xyz.ksharma.krail.core.testing.fakes.FakeNswParkRideSandook
@@ -14,6 +15,7 @@ import xyz.ksharma.krail.core.testing.fakes.FakePlatformOps
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import xyz.ksharma.krail.feature.track.TrackingManager
+import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapViewModel
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputViewModel
@@ -102,6 +104,14 @@ internal class HomeFlowFakes {
         nearbyStopsManager = FakeNearbyStopsManagerForMap(),
     )
 
+    // Maps flag off in the harness, as in a build with no map, so home is today's screen.
+    val homeMapViewModel = HomeMapViewModel(
+        sandook = sandook,
+        connectivity = FakeConnectivityObserver(),
+        flag = flag,
+        ioDispatcher = Dispatchers.Unconfined,
+    )
+
     /**
      * What the entry resolves through `koinViewModel()`. Only the three ViewModels the home
      * entry asks for — everything else it needs is already inside them.
@@ -110,5 +120,6 @@ internal class HomeFlowFakes {
         viewModel<SavedTripsViewModel> { savedTripsViewModel }
         viewModel<AiSearchInputViewModel> { aiSearchInputViewModel }
         viewModel<MapStopSelectionViewModel> { mapStopSelectionViewModel }
+        viewModel<HomeMapViewModel> { homeMapViewModel }
     }
 }

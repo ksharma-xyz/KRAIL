@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.core.maps.state.NearbyStopsConfig
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.NearbyStopsManager
 import xyz.ksharma.krail.trip.planner.ui.state.mapstopselection.MapStopSelectionEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
@@ -34,13 +35,17 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
  */
 class MapStopSelectionViewModel(
     private val nearbyStopsManager: NearbyStopsManager,
+    // The one radius `nearby_stops_radius_km` sets, read once as the map starts, as Search Stop does.
+    searchRadiusKm: Double = NearbyStopsConfig.DEFAULT_RADIUS_KM,
 ) : ViewModel() {
 
     init {
         log("[MAP_STOP_SEL] VM init — seeded MapUiState.Ready")
     }
 
-    private val _mapUiState: MutableStateFlow<MapUiState> = MutableStateFlow(MapUiState.Ready())
+    private val initialState = MapUiState.Ready(mapDisplay = MapDisplay(searchRadiusKm = searchRadiusKm))
+
+    private val _mapUiState: MutableStateFlow<MapUiState> = MutableStateFlow(initialState)
 
     val mapUiState: StateFlow<MapUiState> = _mapUiState
         .onStart { log("[MAP_STOP_SEL] consumer attached") }
@@ -48,7 +53,7 @@ class MapStopSelectionViewModel(
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(SUBSCRIBER_TIMEOUT_MS),
-            initialValue = MapUiState.Ready(),
+            initialValue = initialState,
         )
 
     fun onEvent(event: MapStopSelectionEvent) {

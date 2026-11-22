@@ -23,6 +23,7 @@ import xyz.ksharma.krail.trip.planner.ui.alerts.summary.AlertSummaryViewModel
 import xyz.ksharma.krail.trip.planner.ui.alerts.summary.isAlertSummaryEnabled
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorViewModel
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverViewModel
+import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapViewModel
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroCompletion
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroFlowViewModel
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroParkRideGateway
@@ -55,6 +56,7 @@ import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.DefaultFuzzyStopRanker
 import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.FuzzyStopRanker
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.NearbyStopsManager
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.createNearbyStopsManager
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.resolveNearbyStopsRadiusKm
 import xyz.ksharma.krail.trip.planner.ui.settings.SettingsViewModel
 import xyz.ksharma.krail.trip.planner.ui.settings.story.OurStoryViewModel
 import xyz.ksharma.krail.trip.planner.ui.themeselection.ThemeSelectionViewModel
@@ -299,7 +301,20 @@ val viewModelsModule = module {
     // instance so screens never share state or compete for NearbyStopsManager queries.
     // NearbyStopsManager itself is a single so network/cache work is still deduplicated.
     viewModel {
-        MapStopSelectionViewModel(nearbyStopsManager = get())
+        MapStopSelectionViewModel(
+            nearbyStopsManager = get(),
+            searchRadiusKm = resolveNearbyStopsRadiusKm(get()),
+        )
+    }
+
+    // The home map's pins and its offline notice, built from state the saved trips screen already holds.
+    viewModel {
+        HomeMapViewModel(
+            sandook = get(),
+            connectivity = get(),
+            flag = get(),
+            ioDispatcher = get(named(IODispatcher)),
+        )
     }
 
     single<InviteFriendsTileManager> { RealInviteFriendsTileManager(get()) }

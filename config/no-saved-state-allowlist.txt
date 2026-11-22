@@ -25,6 +25,7 @@ DateTimeSelectorViewModel # its StateFlow carries Unit, so there is nothing to l
 DebugSettingsViewModel # debug-only surface; state comes from DebugNetworkConfigStore and a live flag re-read in init
 DeparturesViewModel # the stop id arrives from the screen as a LoadDepartures event, so a recreated VM is re-told what to show
 DiscoverViewModel # cards are refetched in onStart; the seen-card set is analytics-only and expendable
+HomeMapViewModel # pins are re-derived from the labels and saved stations the screen sends again each time it is built, and the offline notice from the live connectivity flow
 MapStopSelectionViewModel # camera and nearby stops are re-derived from the next location update; deliberately per-nav-entry
 OurStoryViewModel # display-only text recomposed from Remote Config inside the presenter
 SavedTripsViewModel # every section is re-observed from Sandook in uiState.onStart; nothing is held that is not re-read

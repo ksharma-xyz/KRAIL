@@ -25,6 +25,7 @@ import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromBlock
+import xyz.ksharma.krail.trip.planner.ui.components.ToFromBlockStyle
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromEditor
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
@@ -33,8 +34,11 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
  * The form at the top of Search Stop: the app's To and From block with the search field typed into
  * the bar being edited, in place (rules 35 and 36 of `docs/MAP_HOME_UX.md`).
  *
- * - The bar being edited is the dark one and holds taj's text field, and the other is the light
- *   button. Tapping the other bar swaps which is which and the field with it. No row moves.
+ * - With [ToFromBlockStyle.FloatingRows], which the map state uses, both bars are the same taj text field
+ *   on the group card's one dark surface, the same colour whichever has focus. The bar being edited holds
+ *   the query field, the other is that field unfocused, and tapping it moves the field and the keyboard to
+ *   it. With [ToFromBlockStyle.Classic] the bar being edited is the dark one and the other the light
+ *   button. No row moves either way.
  * - The back arrow stays on the To bar and the origin dot on the From bar in every state.
  * - The X shows only while the field has text, and only clears it. It never leaves the screen, so
  *   the recents stay where they are.
@@ -43,7 +47,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
  * - Each bar shows its stop. From shows [fromStop], which is the stop the rider picked or else the one
  *   nearest them, and it stays editable. A bar edited while it holds a stop reads that stop as its
  *   placeholder until the rider types.
- * - [editing] null means both bars hold a stop and neither is being edited, so both are the light bar.
+ * - [editing] null means both bars hold a stop and neither is being edited, so neither bar holds the field.
  */
 @Composable
 internal fun SearchStopForm(
@@ -60,6 +64,7 @@ internal fun SearchStopForm(
     onGoClick: () -> Unit,
     onTextChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    style: ToFromBlockStyle = ToFromBlockStyle.Classic,
 ) {
     val hasText by remember(fieldState) { derivedStateOf { fieldState.text.isNotEmpty() } }
     val editor = remember(fieldState, focusRequester, onFlowEvent, onTextChange) {
@@ -92,6 +97,7 @@ internal fun SearchStopForm(
         fromPlaceholder = fromPlaceholder,
         showGo = goVisible(from = fromStop, to = toStop),
         fromTrailing = if (editing == ToFromField.From) clear else null,
+        style = style,
     )
 }
 

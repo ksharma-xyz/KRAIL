@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.searchstop.map
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -91,6 +92,9 @@ fun SearchStopMap(
     extraLayers: @Composable () -> Unit = {},
     // What the floating stop card offers besides the stop's board: Save as, and Go here or Start here.
     stopCardOptions: StopCardOptions = StopCardOptions(),
+    // Controls a host draws over the map's bottom edge. They get the height that lifts them above an open stop card,
+    // the same value that lifts the location button, so the card never covers them. Search Stop's mode button.
+    bottomControls: @Composable BoxScope.(clearance: Dp) -> Unit = {},
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         when (mapUiState) {
@@ -117,6 +121,7 @@ fun SearchStopMap(
                     showsLocationButton = showsLocationButton,
                     extraLayers = extraLayers,
                     stopCardOptions = stopCardOptions,
+                    bottomControls = bottomControls,
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -162,6 +167,7 @@ private fun MapContent(
     showsLocationButton: Boolean = true,
     extraLayers: @Composable () -> Unit = {},
     stopCardOptions: StopCardOptions = StopCardOptions(),
+    bottomControls: @Composable BoxScope.(clearance: Dp) -> Unit = {},
 ) {
     log(
         "[NEARBY_STOPS_UI] MapContent rendered: nearbyStops.size=${mapState.mapDisplay.nearbyStops.size}, " +
@@ -315,6 +321,8 @@ private fun MapContent(
                         .padding(bottom = if (selectedStop != null) controlsClearance(cardHeight) else 0.dp),
                 )
             }
+
+            bottomControls(if (selectedStop != null) controlsClearance(cardHeight) else 0.dp)
 
             // The floating stop card, over the map and never a sheet.
             selectedStop?.let { stop ->

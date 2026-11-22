@@ -57,7 +57,7 @@ private fun LabelShortcutsRow(
         contentPadding = PaddingValues(
             start = dim.pageHorizontalPadding,
             end = dim.pageHorizontalPadding,
-            top = dim.spacingL,
+            top = dim.spacingNone,
             bottom = dim.spacingS,
         ),
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),

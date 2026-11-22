@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.trip.planner.ui.components.FloatingDark
+import xyz.ksharma.krail.trip.planner.ui.components.FloatingDarkTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
@@ -20,8 +22,9 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 
 /**
  * The card the list and the results share (rule 9 of `docs/MAP_HOME_UX.md`): one vertical floating
- * card under the form, with the map visible around it. It is as tall as its rows, up to the room
- * the caller gives it, and then scrolls.
+ * card under the group card, never inside it, with the map visible around it. A fixed dark surface with
+ * fixed light content in both app modes, the group card's corner and padding, as tall as its rows up to the
+ * room the caller gives it, and then it scrolls inside.
  */
 @Composable
 internal fun SearchStopListContent(
@@ -36,24 +39,34 @@ internal fun SearchStopListContent(
     val hasNothingToShow = listState == ListState.Recent && recentsCard == null && !showLabelRow
     if (hasNothingToShow) return
 
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(KrailTheme.dimensions.radiusL))
-            .background(KrailTheme.colors.surface),
-    ) {
-        when (listState) {
-            ListState.Recent -> RecentsList(showLabelRow, recentsCard, searchStopState, actions, onManageClick)
-            is ListState.Results ->
-                ResultsList(listState, showLabelRow, searchStopState, actions, onManageClick)
-            ListState.NoMatch -> NoMatchContent(searchStopState, actions)
-            ListState.Error -> ErrorMessage(
-                title = "Something went wrong!",
-                message = "Let's try searching again.",
-                modifier = Modifier.fillMaxWidth(),
-            )
+    val gaps = rememberSearchStopGaps()
+    FloatingDarkTheme {
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(gaps.cardCorner))
+                .background(FloatingDark.container),
+        ) {
+            when (listState) {
+                ListState.Recent -> RecentsList(showLabelRow, recentsCard, searchStopState, actions, onManageClick)
+                is ListState.Results ->
+                    ResultsList(listState, showLabelRow, searchStopState, actions, onManageClick)
+                ListState.NoMatch -> NoMatchContent(searchStopState, actions)
+                ListState.Error -> ErrorMessage(
+                    title = "Something went wrong!",
+                    message = "Let's try searching again.",
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
+}
+
+/** The card's inner padding above its first row and under its last, the same token as the group card's. */
+@Composable
+private fun cardListPadding(): PaddingValues {
+    val padding = rememberSearchStopGaps().cardPadding
+    return PaddingValues(top = padding, bottom = padding)
 }
 
 @Composable
@@ -68,7 +81,7 @@ private fun RecentsList(
         modifier = Modifier
             .fillMaxWidth()
             .testTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST),
-        contentPadding = PaddingValues(bottom = KrailTheme.dimensions.spacingM),
+        contentPadding = cardListPadding(),
     ) {
         labelRowSection(
             show = showLabelRow,
@@ -80,6 +93,7 @@ private fun RecentsList(
             card = recentsCard,
             recentCount = searchStopState.recentStops.size,
             actions = actions,
+            afterLabelRow = showLabelRow,
         )
     }
 }
@@ -97,7 +111,7 @@ private fun ResultsList(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag(TripPlannerTestTags.SEARCH_STOP_RESULTS_LIST),
-            contentPadding = PaddingValues(bottom = KrailTheme.dimensions.spacingM),
+            contentPadding = cardListPadding(),
         ) {
             labelRowSection(
                 show = showLabelRow,
@@ -134,7 +148,7 @@ private fun NoMatchContent(searchStopState: SearchStopState, actions: StopRowAct
     if (hasAddressContent) {
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),
-            contentPadding = PaddingValues(bottom = KrailTheme.dimensions.spacingM),
+            contentPadding = cardListPadding(),
         ) {
             addressResultsSection(
                 addressResults = searchStopState.addressResults,

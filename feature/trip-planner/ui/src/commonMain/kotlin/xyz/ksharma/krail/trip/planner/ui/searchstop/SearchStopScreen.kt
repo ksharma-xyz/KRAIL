@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
@@ -291,40 +290,6 @@ fun SearchStopScreen(
     labels.NewLabelSheet(stopLabels = searchStopState.stopLabels, onEvent = onEvent)
 }
 
-/** Everything the form needs, in one holder so the two layouts take it as one argument. */
-internal data class SearchStopFormModel(
-    val shape: FormShape,
-    val editing: ToFromField?,
-    val toPlaceholder: String,
-    val fromPlaceholder: String,
-    val toStop: StopItem?,
-    val fromStop: StopItem?,
-    val fieldState: TextFieldState,
-    val focusRequester: FocusRequester,
-    val onFlowEvent: (SearchStopFlowEvent) -> Unit,
-    val onGoClick: () -> Unit,
-    val onTextChange: (String) -> Unit,
-)
-
-@Composable
-private fun FormContent(form: SearchStopFormModel, onBack: () -> Unit, modifier: Modifier = Modifier) {
-    SearchStopForm(
-        shape = form.shape,
-        editing = form.editing,
-        toPlaceholder = form.toPlaceholder,
-        fromPlaceholder = form.fromPlaceholder,
-        toStop = form.toStop,
-        fromStop = form.fromStop,
-        fieldState = form.fieldState,
-        focusRequester = form.focusRequester,
-        onFlowEvent = form.onFlowEvent,
-        onBack = onBack,
-        onGoClick = form.onGoClick,
-        onTextChange = form.onTextChange,
-        modifier = modifier,
-    )
-}
-
 /** The stop nearest the rider that fills the From bar by itself, or null. See [autoFromStop]. */
 @Composable
 private fun rememberAutoFrom(shape: FormShape, state: SearchStopState): StopItem? {
@@ -563,13 +528,25 @@ private fun SearchStopScreenSinglePane(
     // Force dark status bar icons while the map is visible (the map is always light-themed).
     StatusBarAppearanceEffect(lightStatusBar = mapState != null)
 
-    // Header height after layout, so map ornaments (compass, scale bar) start below the floating form.
+    // Header height after layout, so map ornaments (compass, scale bar) start below the floating group card.
     var headerHeightPx by remember { mutableStateOf(0) }
     val density = LocalDensity.current
     val headerHeight: Dp by remember { derivedStateOf { with(density) { headerHeightPx.toDp() } } }
 
     // The card on the map state keeps to a share of the window, so the pins around it stay usable.
     val mapStateCardCap = mapStateCardMaxHeight(windowHeight = LocalWindowInfo.current.containerDpSize.height)
+
+    // The mode block is open or shut for the map state only, and the controls report where they start so the
+    // stack at the top ends above them and the list card inside it is what yields height.
+    var modeBlockOpen by rememberSaveable { mutableStateOf(false) }
+    var controlsTop by remember { mutableStateOf<Dp?>(null) }
+    val controlsShown = modeControlsShown(flow.mode, mapReady = mapState is MapUiState.Ready)
+    LaunchedEffect(flow.mode) {
+        if (flow.mode != SearchStopMode.Map) {
+            modeBlockOpen = reduceModeBlock(modeBlockOpen, ModeBlockEvent.LeftMapState)
+        }
+    }
+    val gaps = rememberSearchStopGaps()
 
     Box(modifier = modifier.fillMaxSize().imePadding()) {
         if (mapState != null) {
@@ -584,8 +561,25 @@ private fun SearchStopScreenSinglePane(
                 allowPermissionRequest = location.allowPermissionRequest,
                 onPermissionStatus = location.onPermissionStatus,
                 onRequestPermission = location.onRequestPermission,
-                onMapTap = onMapTap,
+                onMapTap = {
+                    modeBlockOpen = reduceModeBlock(modeBlockOpen, ModeBlockEvent.MapTapped)
+                    onMapTap()
+                },
                 stopCardOptions = rows.stopCardOptions,
+                bottomControls = { clearance ->
+                    if (controlsShown && mapState is MapUiState.Ready) {
+                        SearchStopModeControls(
+                            open = modeBlockOpen,
+                            selectedModes = mapState.mapDisplay.selectedTransportModes,
+                            onButtonClick = {
+                                modeBlockOpen = reduceModeBlock(modeBlockOpen, ModeBlockEvent.ButtonTapped)
+                            },
+                            onToggleMode = { onEvent(SearchStopUiEvent.TransportModeFilterToggled(it)) },
+                            onTopChanged = { controlsTop = it },
+                            clearance = clearance,
+                        )
+                    }
+                },
             )
         } else {
             // No map to show (maps are off for this rider): the gradient stands in. It has no map
@@ -597,45 +591,30 @@ private fun SearchStopScreenSinglePane(
             ) {}
         }
 
+        // The stack at the top: the group card, then the list card under it, one gap apart. Its height is capped
+        // above the mode controls, so on a short window it is the list card that gives.
         Column(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .fillMaxWidth()
+                .heightIn(max = if (controlsShown) topStackMaxHeight(controlsTop, gaps) else Dp.Unspecified)
                 .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal))
                 .statusBarsPadding()
-                .padding(KrailTheme.dimensions.spacingXL),
+                .padding(gaps.edge),
         ) {
-            Column(modifier = Modifier.onGloballyPositioned { headerHeightPx = it.size.height }) {
-                FormContent(form = form, onBack = onBack)
-                LocationStatusPill(
-                    pill = location.pill,
-                    onClick = location.onClick,
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                )
-                // The mode filter belongs to the map state only, directly under the pill. The pill's own
-                // 8 dp above and below are the gap, so with no pill the chips bring their own.
-                if (flow.mode == SearchStopMode.Map && mapState is MapUiState.Ready) {
-                    SearchStopModeChips(
-                        selectedModes = mapState.mapDisplay.selectedTransportModes,
-                        onToggle = { onEvent(SearchStopUiEvent.TransportModeFilterToggled(it)) },
-                        modifier = Modifier.padding(
-                            top = if (location.pill != LocationPill.Hidden) {
-                                KrailTheme.dimensions.spacingNone
-                            } else {
-                                KrailTheme.dimensions.spacingM
-                            },
-                        ),
-                    )
-                }
-            }
-            // The card is under the bars and the mode chips in both states (rule 9). On the map state it is
-            // capped and scrolls inside, and on the list state it grows into the whole list.
+            SearchStopGroupCard(
+                form = form,
+                location = location,
+                onBack = onBack,
+                modifier = Modifier.onGloballyPositioned { headerHeightPx = it.size.height },
+            )
+            // The card is under the group card in both states (rule 9). On the map state it is capped and scrolls
+            // inside, and on the list state it grows into the whole list.
             if (flow.editing != null) {
                 SearchStopListSection(
                     searchStopState = searchStopState,
                     fieldType = fieldType,
                     rows = rows,
-                    pillShown = location.pill != LocationPill.Hidden,
                     onManageClick = onManageClick,
                     maxHeight = if (flow.mode == SearchStopMode.Map) mapStateCardCap else Dp.Unspecified,
                 )
@@ -645,15 +624,14 @@ private fun SearchStopScreenSinglePane(
 }
 
 /**
- * The card under the form, with a gap above it unless the pill's own hit area already makes one. A
- * [maxHeight] caps it and the card scrolls inside; unspecified leaves it as tall as the room allows.
+ * The card under the group card, one [SearchStopGaps.betweenCards] below it. A [maxHeight] caps it and the card
+ * scrolls inside; unspecified leaves it as tall as the room allows.
  */
 @Composable
 private fun ColumnScope.SearchStopListSection(
     searchStopState: SearchStopState,
     fieldType: SearchStopFieldType,
     rows: StopRowActions,
-    pillShown: Boolean,
     onManageClick: () -> Unit,
     maxHeight: Dp = Dp.Unspecified,
 ) {
@@ -686,7 +664,7 @@ private fun ColumnScope.SearchStopListSection(
         modifier = Modifier
             .weight(1f, fill = false)
             .heightIn(max = maxHeight)
-            .padding(top = if (pillShown) KrailTheme.dimensions.spacingNone else KrailTheme.dimensions.spacingM),
+            .padding(top = rememberSearchStopGaps().betweenCards),
     )
 }
 
@@ -758,17 +736,11 @@ private fun SearchStopScreenDualPane(
                         .statusBarsPadding()
                         .padding(KrailTheme.dimensions.spacingXL),
                 ) {
-                    FormContent(form = form, onBack = onBack)
-                    LocationStatusPill(
-                        pill = location.pill,
-                        onClick = location.onClick,
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                    )
+                    SearchStopGroupCard(form = form, location = location, onBack = onBack)
                     SearchStopListSection(
                         searchStopState = searchStopState,
                         fieldType = fieldType,
                         rows = rows,
-                        pillShown = location.pill != LocationPill.Hidden,
                         onManageClick = onManageClick,
                     )
                 }

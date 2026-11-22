@@ -6,6 +6,9 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.SoftwareKeyboardController
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
@@ -147,7 +150,7 @@ class SearchStopScreenInteractionTest {
     }
 
     @Test
-    fun singlePane_opensOnTheMapState_withTheBarsTheChipsTheRecentsCardAndNoKeyboard() {
+    fun singlePane_opensOnTheMapState_withTheBarsTheModeButtonTheRecentsCardAndNoKeyboard() {
         val shown = mutableListOf<String>()
         val keyboard = object : SoftwareKeyboardController {
             override fun show() {
@@ -158,20 +161,23 @@ class SearchStopScreenInteractionTest {
         }
         setScreen(withMap(), keyboard = keyboard)
 
-        // Rules 9 and 39: the map, the bars, the mode chips and the recents card floating under them, with no
-        // keyboard. The card is the same one the list state grows into.
+        // Rules 9 and 39: the map, the group card with the bars, the recents card floating under it and the small
+        // mode button at the bottom, with no keyboard. The mode block is shut until asked for. The card is the same
+        // one the list state grows into.
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).assertIsDisplayed()
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertDoesNotExist()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertIsDisplayed()
         composeRule.onNodeWithText("Central Station").assertIsDisplayed()
         assert(shown.isEmpty()) { "the map state raises no keyboard, got $shown" }
     }
 
     @Test
-    fun theModeChipsSitInTheMapStateOnly_andATapTogglesThatMode() {
+    fun theModeBlockOpensFromTheButtonInTheMapStateOnly_andATapTogglesThatMode() {
         val events = mutableListOf<SearchStopUiEvent>()
         setScreen(withMap(), onEvent = { events += it })
 
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).performClick()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertIsDisplayed()
         composeRule.onNodeWithTag(
             TripPlannerTestTags.searchStopModeChip(TransportMode.Ferry.productClass),
@@ -184,6 +190,22 @@ class SearchStopScreenInteractionTest {
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
 
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertDoesNotExist()
+    }
+
+    @Test
+    fun theModeButton_opensAndShutsTheBlock_andSaysWhichItIs() {
+        setScreen(withMap())
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON)
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, MODE_BUTTON_COLLAPSED))
+            .performClick()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON)
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, MODE_BUTTON_EXPANDED))
+            .performClick()
+
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertDoesNotExist()
     }
 
@@ -191,19 +213,20 @@ class SearchStopScreenInteractionTest {
     fun withNoMap_thereIsNoModeFilterBecauseThereIsNothingToFilter() {
         setScreen(SearchStopFixtures.recentWithDefaults())
 
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertDoesNotExist()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertDoesNotExist()
     }
 
     @Test
     fun tappingTheBar_raisesTheListState_andTheCardGrowsIntoIt() {
         setScreen(withMap())
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertIsDisplayed()
 
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
 
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertIsDisplayed()
         composeRule.onNodeWithText("Central Station").assertIsDisplayed()
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertDoesNotExist()
     }
 
     @Test
@@ -213,11 +236,11 @@ class SearchStopScreenInteractionTest {
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertIsDisplayed()
 
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertDoesNotExist()
 
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_BACK).performClick()
 
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertIsDisplayed()
         assert(wentBack == 0) { "the first back returns to the map state and does not leave" }
 
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_BACK).performClick()
@@ -344,13 +367,14 @@ class SearchStopScreenInteractionTest {
         composeRule.onNodeWithText("Central Station").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_TO).assertIsDisplayed()
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE, useUnmergedTree = true).assertDoesNotExist()
         assert(selected == 0 && chosen == null) { "a pick on the form never leaves the screen" }
 
         // The start: both bars hold a stop, so nothing is edited, the go circle shows and the list is gone.
         composeRule.onNodeWithText("Town Hall").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE).assertIsDisplayed()
+        // The go circle is in the From field's own end column, so it is reached in the unmerged tree.
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE, useUnmergedTree = true).assertIsDisplayed()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertDoesNotExist()
         assert(chosen == null) { "the go circle is the only way out with a trip" }
 
@@ -397,7 +421,7 @@ class SearchStopScreenInteractionTest {
         composeRule.onNodeWithText("Central Station").performClick()
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertIsDisplayed()
         assert(shown.isEmpty()) { "a pick from the map state raises no keyboard, got $shown" }
     }
 
@@ -433,7 +457,7 @@ class SearchStopScreenInteractionTest {
 
     @Test
     @Config(qualifiers = "w320dp-h640dp")
-    fun at320dpAndTwoTimesText_theChipsAndTheCardDoNotOverlap_andBothStayInTheWindow() {
+    fun at320dpAndTwoTimesText_theGroupCardTheListCardAndTheModeControlsDoNotOverlap_andAllStayInTheWindow() {
         composeRule.setContent {
             CompositionLocalProvider(
                 LocalDensity provides Density(LocalDensity.current.density, fontScale = 2f),
@@ -449,13 +473,21 @@ class SearchStopScreenInteractionTest {
             }
         }
         composeRule.waitForIdle()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).performClick()
+        composeRule.waitForIdle()
 
-        val chips = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS)
-            .getUnclippedBoundsInRoot()
+        val group = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_TO).getUnclippedBoundsInRoot()
         val card = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST)
             .getUnclippedBoundsInRoot()
-        assert(chips.bottom <= card.top + 1.dp) { "the chips $chips sit above the card $card, never over it" }
-        assert(card.left >= 0.dp && card.right <= 320.dp) { "the card $card stays inside the 320 dp window" }
+        val block = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).getUnclippedBoundsInRoot()
+        val button = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON)
+            .getUnclippedBoundsInRoot()
+        assert(group.bottom <= card.top) { "the group card's bars $group sit above the list card $card" }
+        assert(card.bottom <= block.top + 1.dp) { "the list card $card yields to the mode block $block" }
+        assert(block.bottom <= button.top + 1.dp) { "the block $block sits above its button $button" }
+        for (box in listOf(card, block, button)) {
+            assert(box.left >= 0.dp && box.right <= 320.dp) { "$box stays inside the 320 dp window" }
+        }
     }
 
     // endregion
@@ -470,7 +502,7 @@ class SearchStopScreenInteractionTest {
 
         composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertCountEquals(1)
         composeRule.onNodeWithText("Location permission required").assertIsDisplayed()
-        // The pill is a taj Button 32 tall inside a 48 tall box (rule 24), and the tag is on the box.
+        // The chip is a taj small button inside a 48 tall hit area (rule 24), and the tag is on that box.
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertHeightIsEqualTo(48.dp)
     }
 
@@ -479,7 +511,7 @@ class SearchStopScreenInteractionTest {
     // region StopLabelAssignRow icon state
 
     @Test
-    fun assignedStop_hidesAssignIcon() {
+    fun aPlainRecentRow_hasNoChevron_becauseItHasNothingToExpand() {
         composeRule.setContent {
             PreviewTheme {
                 SearchStopScreen(
@@ -489,12 +521,10 @@ class SearchStopScreenInteractionTest {
             }
         }
 
-        // Central Station is saved as Home; Town Hall isn't. v4: once a stop is
-        // assigned its row shows no icon at all (not even a tick) — only the unset
-        // Town Hall row gets the "+". recentWithHomeSet has exactly one unset recent
-        // stop, so exactly one icon should exist.
+        // Central Station is saved as Home and shows its label pill. Town Hall is a plain recent row. Neither
+        // draws a chevron: only a result row that opens its label wall does.
         composeRule.onAllNodesWithContentDescription("Assign to a label")
-            .assertCountEquals(1)
+            .assertCountEquals(0)
     }
 
     @Test

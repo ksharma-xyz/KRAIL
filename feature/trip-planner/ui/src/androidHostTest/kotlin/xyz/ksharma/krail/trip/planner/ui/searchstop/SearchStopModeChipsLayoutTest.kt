@@ -6,9 +6,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -34,10 +36,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * The mode filter row of Search Stop's map state: whole chips that wrap when text is normal and one
- * sideways line over 130 percent, with nothing shrunk, clipped or split to make it fit. Each test
- * runs in a window of its own width (density 1, so a dp is a pixel) and reads where the real chips
- * landed.
+ * The mode filter block of Search Stop's map state: whole chips that wrap at every text size and never scroll
+ * sideways or fade at an edge, with nothing shrunk, clipped or split to make it fit. Each test runs in a window
+ * of its own width (density 1, so a dp is a pixel) and reads where the real chips landed.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -53,38 +54,50 @@ class SearchStopModeChipsLayoutTest {
 
     @Test
     @Config(qualifiers = NARROW)
-    fun `at normal text every mode is a whole chip and the row wraps onto more lines`() {
+    fun `at normal text every mode is a whole chip and the block wraps onto more lines`() {
         setChips()
 
         val chips = chipBounds()
         assertEquals(modes.size, chips.size, "One chip for every mode the map can show.")
-        assertTrue(chips.map { it.top }.distinct().size > 1, "A 320 dp row of ${modes.size} chips wraps.")
-        for (chip in chips) {
-            assertTrue(chip.right <= NARROW_WIDTH.dp, "A chip is never pushed past the edge: $chip")
-        }
+        assertTrue(chips.map { it.top }.distinct().size > 1, "A 320 dp block of ${modes.size} chips wraps.")
+        assertAllInsideTheBlock(chips)
         assertNoChipSqueezed(chips)
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS_FADE).assertDoesNotExist()
     }
 
     @Test
     @Config(qualifiers = NARROW)
-    fun `at exactly 130 percent the chips still wrap`() {
+    fun `at exactly 130 percent the chips still wrap and stay inside the block`() {
         setChips(fontScale = 1.3f)
 
-        assertTrue(chipBounds().map { it.top }.distinct().size > 1)
+        val chips = chipBounds()
+        assertTrue(chips.map { it.top }.distinct().size > 1)
+        assertAllInsideTheBlock(chips)
+        assertNoChipSqueezed(chips)
     }
 
     @Test
     @Config(qualifiers = NARROW)
-    fun `over 130 percent the row is one line that runs past the edge and scrolls`() {
+    fun `at 200 percent the chips wrap onto more lines and none runs past the edge`() {
         setChips(fontScale = 2f)
 
         val chips = chipBounds()
-        assertEquals(1, chips.map { it.top }.distinct().size, "One line, so no chip wraps under another.")
-        assertTrue(chips.first().left >= 0.dp, "The first chip starts fully visible.")
-        assertTrue(chips.last().right > NARROW_WIDTH.dp, "The rest is reached by scrolling sideways.")
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS_FADE).assertExists()
+        assertTrue(chips.map { it.top }.distinct().size > 1, "Larger text wraps whole chips, never a scrolling row.")
+        assertAllInsideTheBlock(chips)
         assertNoChipSqueezed(chips)
+    }
+
+    @Test
+    @Config(qualifiers = NARROW)
+    fun `the block is a card with the card corner and padding and has no sideways scroll or fade`() {
+        setChips(fontScale = 2f)
+
+        val block = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).getUnclippedBoundsInRoot()
+        val gaps = searchStopGaps()
+        val chips = chipBounds()
+        assertEquals(gaps.cardPadding, chips.minOf { it.left } - block.left, "Chips start one card padding in.")
+        assertEquals(gaps.cardPadding, chips.minOf { it.top } - block.top, "Chips start one card padding down.")
+        assertTrue(chips.maxOf { it.right } <= block.right - gaps.cardPadding + 1.dp, "No chip passes the padding.")
+        composeRule.onAllNodes(hasScrollAction()).assertCountEquals(0)
     }
 
     @Test
@@ -113,6 +126,13 @@ class SearchStopModeChipsLayoutTest {
         assertEquals(1, chips.map { it.height }.distinct().size, "Every chip is as tall as the rest: $chips")
     }
 
+    private fun assertAllInsideTheBlock(chips: List<DpRect>) {
+        val block = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).getUnclippedBoundsInRoot()
+        for (chip in chips) {
+            assertTrue(chip.left >= block.left && chip.right <= block.right, "A chip $chip stays in the block $block")
+        }
+    }
+
     private fun chipBounds(): List<DpRect> = modes.map { mode ->
         composeRule.onNodeWithTag(chipTag(mode), useUnmergedTree = true).getUnclippedBoundsInRoot()
     }
@@ -126,7 +146,7 @@ class SearchStopModeChipsLayoutTest {
             WithFontScale(fontScale) {
                 PreviewTheme {
                     Box(modifier = Modifier.width(NARROW_WIDTH.dp)) {
-                        SearchStopModeChips(selectedModes = selected, onToggle = onToggle)
+                        SearchStopModeBlock(selectedModes = selected, onToggle = onToggle)
                     }
                 }
             }

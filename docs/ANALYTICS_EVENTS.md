@@ -149,6 +149,30 @@ whole facility objects instead of their ids, which is a call-site bug, not a len
 When adding a param that can carry a location id or a user-visible place name, add its key
 to the relevant set in `AnalyticsParamSanitizer` rather than sanitizing at the call site.
 
+## Retired names: where the question went
+
+Deleting the code that fires an event does not free its name. Firebase counts a name for the life of
+the app, so a retired class is removed from `AnalyticsEvent.kt` and its row stays in the ledger as
+retired, not deleted. Nothing re-uses a spent name for a different meaning.
+
+The map Options sheet was deleted with the Search Stop map-first work (`docs/features/map-home/ERD.md`,
+branch 5). Two names went quiet with it, and the questions they answered went to an event that was already
+there, so no new name was added:
+
+- `search_stop_map_options_opened` (the Options button was tapped) has no successor. The button is gone.
+- `search_stop_map_options_saved` (a snapshot of radius, modes and map chrome at Save) has no successor
+  as a snapshot. The radius is now one Remote Config number (`nearby_stops_radius_km`) the rider cannot
+  change, and the chrome toggles are gone. What survives is on `stop_selected_from_map`: `searchRadiusKm`
+  is that number, and `enabledModesCount` is how many mode chips were on at the pick. Which modes were on,
+  and every toggle on the way there, is not reported: the chips are a filter on the rider's own map, not a
+  setting, and a name for each tap would spend the budget on a control whose result the pick already shows.
+- `select_on_map_button_click` (from the earlier branch) goes the same way: the button is gone and there
+  is no successor.
+
+Rows from before the change keep their old shape. A `stop_selected_from_map` row from an older build
+carries a `searchRadiusKm` the rider chose (1, 3 or 5), and a newer one carries the config value, so the
+param is only comparable within one side of the release.
+
 ## Window, fold and pane reporting: how to read it
 
 `device_window`, `device_window_changed` and the `pane` param answer "is anyone on a large

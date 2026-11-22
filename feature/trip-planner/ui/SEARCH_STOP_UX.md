@@ -29,6 +29,12 @@ The screen has two states and a two step back (`docs/MAP_HOME_UX.md` rule 39), h
   `effectiveFlow` shows it and the keyboard comes up as it did before the map state existed. Back leaves in
   one step.
 
+The map state carries the one filter the map has: a row of `TransportModeChip`s, one per mode the nearby map shows, directly under the
+pill (`SearchStopModeChips`). Whole chips wrap, and over 130 percent text the row is one line that scrolls sideways with the first chip
+fully visible and a fade at the right edge (`chipRowModeFor`, the same rule as the home chips). A tap turns a mode on or off and the map
+reloads its stops. The list state has no chips. There is no Options sheet: the radius is Remote Config `nearby_stops_radius_km`
+(default 3.0 km, read once as the map starts) and the compass is on with the scale bar off.
+
 Only the single pane layout reads the mode. Tablet, foldable and phone landscape use `SearchStopScreenDualPane`,
 which always draws the list left and the map right through `DualPaneScaffold`, with no keyboard on open.
 

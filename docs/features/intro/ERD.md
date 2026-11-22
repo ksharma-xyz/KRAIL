@@ -1431,7 +1431,7 @@ in `searchstop/` touched:
 - **Guards that already exist and must stay green.** `ThemeColorRoleRule`, `ClockSystemBan`, `CollectAsStateBan`,
   `SnackbarBan`, `PollingLifecycleGuardTest` (the Intro must not poll), `ViewModelStateDurabilityTest`,
   `NavKeySerializationConfigTest`, `verifyTestWiring`.
-- **Maestro.** `.maestro/shared/dismiss-intro.yaml` loops on the tag `intro.action.primary`, which the Intro keeps on the
+- **Maestro.** (Changed in unit U8, see the last paragraph of this bullet.) `.maestro/shared/dismiss-intro.yaml` loops on the tag `intro.action.primary`, which the Intro keeps on the
   right button, so the six flows that call it are untouched. It starts with a wait for the first screen to be drawn, the
   Train badge `intro.theme.train` (optional, 30 s), and no longer waits for the animation to end, which the drifting badges keep
   running for the full 30 s every time. Each pass of the loop then does one of two things. When the trip tile `intro.confirm.tile`
@@ -1443,6 +1443,13 @@ in `searchstop/` touched:
   rely on a saved trip: `01-launch-home` asserts the list container and never its contents, and `02-plan-trip` plans from the home
   bar. `maestro check-syntax` accepts the file and every flow. A device case, because nothing is run on a device here. CI and
   workflow files are not touched.
+  Unit U8: three screens show no button until the rider has picked something, so `intro.action.primary` is not on screen at the start of
+  the theme, destination and origin screens and the loop can no longer run on it. It now runs while `intro.screen` is on screen, which is the
+  whole Intro and not the finale. Each pass answers the screen it finds, in this order: a screen that already shows the primary and has no trip
+  tile (Park & Ride) is answered with it; the confirm screen, found by its tile, with `intro.action.secondary`, Not now; the theme screen, found
+  by `intro.theme.train`, with that badge and then the primary once it has appeared; and the destination and origin screens, found by the new
+  tag `intro.stop.first` on the first listed row, with that row and then the primary. A cold run still ends with two stops chosen and
+  nothing saved. `maestro check-syntax` accepts the file. Nothing was run on a device.
   In unit R4 the file ends with one more wait, `extendedWaitUntil` on `savedtrips.screen` (15 s, optional), because Not now now hands over to the
   finale, which takes about 3.5 s before Saved Trips can be used. While the finale is up the app behind it is hidden from the accessibility
   tree, so none of the Intro's tags is visible, the loop ends, and the wait is what lets the finale finish instead of racing it. The six flows that

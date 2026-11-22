@@ -14,20 +14,20 @@
 # The Intro is five screens with one question each: the theme colour, Park & Ride,
 # where you go, where you start, and save this trip. The right button is
 # `intro.action.primary`, the positive answer, and the left one is
-# `intro.action.secondary`. Looping on the primary tag walks the whole thing without
-# this flow knowing how many screens there are or what any of them say. Saying yes
-# everywhere means a cold run adds the Park & Ride station when the phone is near one.
-# The destination and origin screens each take the highlighted stop with the primary
-# button, so a cold run ends on the last screen with two stops chosen. That screen is
+# `intro.action.secondary`. Saying yes everywhere means a cold run adds the Park & Ride
+# station when the phone is near one. The loop runs for as long as the Intro is on
+# screen, `intro.screen`, and each pass answers the screen it finds, so this flow does not
+# need to know how many screens there are.
+#
+# Three screens do not show their button until the rider has picked something: the theme
+# screen until a badge is tapped, and the destination and origin screens until a stop is
+# tapped. On those the button is not on screen at all, so a pass first picks, the Train
+# badge, `intro.theme.train`, or the first listed stop, `intro.stop.first`, and then taps
+# the primary button. On the destination and origin screens that selects a stop and
+# confirms it, so a cold run ends on the last screen with two stops chosen. That screen is
 # the one place the loop answers with the left button, Not now, found by its trip tile
 # `intro.confirm.tile`, so the Intro ends with nothing saved and a cold run starts the
 # app with no saved trip, as it always has. Typing in the search field is never needed.
-#
-# The first screen is the one exception. Its primary button, "Yes, this one", is
-# disabled until a theme badge has been tapped, because the rider has to choose a
-# colour before going on. So each pass first taps the Train badge, `intro.theme.train`,
-# but only while that badge is on screen. On every other screen it is not there and
-# nothing is tapped.
 #
 # The badges on the first screen drift and the chosen one dances for as long as the
 # screen is up, so that screen never stops moving, and a wait for the animation to end
@@ -74,21 +74,11 @@ appId: ${APP_ID}
     times: 12
     while:
       visible:
-        id: "intro.action.primary"
+        id: "intro.screen"
     commands:
-      # The last screen: Not now, so nothing is saved. Its trip tile is what says it is
-      # the last screen. Once this is tapped the Intro leaves, so the rest of the pass
-      # does not run for it.
-      - runFlow:
-          when:
-            visible:
-              id: "intro.confirm.tile"
-          commands:
-            - tapOn:
-                id: "intro.action.secondary"
-            - waitForAnimationToEnd:
-                timeout: 5000
-      # Every other screen: the positive answer.
+      # Park & Ride, or any screen that already shows its button: the positive answer. It is first in the
+      # pass, before anything is picked, so the theme and stop screens, which show no button until a pick,
+      # are not answered here, and the last screen, which has the trip tile, is left to the block below.
       - runFlow:
           when:
             notVisible:
@@ -96,15 +86,6 @@ appId: ${APP_ID}
             visible:
               id: "intro.action.primary"
           commands:
-            # Only the theme screen has this badge. Choosing a colour is what turns its
-            # primary button on.
-            - runFlow:
-                when:
-                  visible:
-                    id: "intro.theme.train"
-                commands:
-                  - tapOn:
-                      id: "intro.theme.train"
             # Optional, so a device that never reports the state costs the timeout
             # once for each pass and then taps as before.
             - extendedWaitUntil:
@@ -117,6 +98,53 @@ appId: ${APP_ID}
                 id: "intro.action.primary"
             # The screen slides into the next. Tapping through that lands the
             # second tap on the screen that is still moving in.
+            - waitForAnimationToEnd:
+                timeout: 5000
+      # The last screen: Not now, so nothing is saved. Its trip tile is what says it is
+      # the last screen. Once this is tapped the Intro leaves, so the rest of the pass
+      # does not run for it.
+      - runFlow:
+          when:
+            visible:
+              id: "intro.confirm.tile"
+          commands:
+            - tapOn:
+                id: "intro.action.secondary"
+            - waitForAnimationToEnd:
+                timeout: 5000
+      # The theme screen: pick the Train badge, which brings the button in, then the positive answer.
+      - runFlow:
+          when:
+            visible:
+              id: "intro.theme.train"
+          commands:
+            - tapOn:
+                id: "intro.theme.train"
+            - extendedWaitUntil:
+                visible:
+                  id: "intro.action.primary"
+                timeout: 30000
+                optional: true
+            - tapOn:
+                id: "intro.action.primary"
+            - waitForAnimationToEnd:
+                timeout: 5000
+      # The destination and origin screens: select the first listed stop, which brings the button
+      # in, then the positive answer.
+      - runFlow:
+          when:
+            visible:
+              id: "intro.stop.first"
+          commands:
+            - tapOn:
+                id: "intro.stop.first"
+            - extendedWaitUntil:
+                visible:
+                  id: "intro.action.primary"
+                timeout: 30000
+                optional: true
+            - tapOn:
+                id: "intro.action.primary"
             - waitForAnimationToEnd:
                 timeout: 5000
 

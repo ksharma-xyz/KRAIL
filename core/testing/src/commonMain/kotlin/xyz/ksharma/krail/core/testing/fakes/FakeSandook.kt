@@ -3,6 +3,7 @@ package xyz.ksharma.krail.core.testing.fakes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import xyz.ksharma.krail.core.testing.helpers.CallLog
 import xyz.ksharma.krail.sandook.RecentSearchLocation
 import xyz.ksharma.krail.sandook.Sandook
@@ -143,8 +144,10 @@ class FakeSandook(private val callLog: CallLog? = null) : Sandook {
         return tripsFlow.value
     }
 
+    // Ordered by sort_order as the real query is, and stable, so trips that were never moved keep the
+    // order they were saved in.
     override fun observeAllTrips(): Flow<List<SavedTrip>> {
-        return tripsFlow.asStateFlow()
+        return tripsFlow.asStateFlow().map { trips -> trips.sortedBy { it.sort_order } }
     }
 
     override fun selectTripById(tripId: String): SavedTrip? {

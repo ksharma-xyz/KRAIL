@@ -48,6 +48,12 @@ interface SandookPreferences {
         const val KEY_HAS_SEEN_SAVED_TRIP_CARD_REORDER_TIP = "KEY_HAS_SEEN_SAVED_TRIP_CARD_REORDER_TIP"
 
         /**
+         * How many saved trips come before the Park & Ride row on home, once the rider has dragged
+         * it there. Absent until then, which puts the row after the second trip.
+         */
+        const val KEY_PARK_RIDE_ROW_INDEX = "KEY_PARK_RIDE_ROW_INDEX"
+
+        /**
          * Prefix for per-trip "Save this trip?" prompt dismissal counters.
          * Full key is this prefix + tripId; value is the number of times the
          * user dismissed the prompt for that origin-destination pair.

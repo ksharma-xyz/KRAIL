@@ -10,9 +10,10 @@ import xyz.ksharma.krail.core.log.logError
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.UserAdded
-import xyz.ksharma.krail.sandook.db.SavedParkRide
 import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideAvailabilityLoader
 import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideCatalogue
+import xyz.ksharma.krail.trip.planner.ui.parkride.savedStopName
+import xyz.ksharma.krail.trip.planner.ui.parkride.toSavedParkRides
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.toParkRideState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCarPark
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRideStationPickerItem
@@ -79,15 +80,7 @@ internal class IntroParkRideGateway(
     suspend fun saveStation(station: ParkRideStationPickerItem) {
         withContext(ioDispatcher) {
             parkRideSandook.insertOrReplaceSavedParkRides(
-                parkRideInfoList = station.mappings.map { mapping ->
-                    SavedParkRide(
-                        stopId = mapping.stopId,
-                        facilityId = mapping.facilityId,
-                        stopName = station.savedStopName(),
-                        facilityName = mapping.facilityName,
-                        source = UserAdded.value,
-                    )
-                }.toSet(),
+                parkRideInfoList = station.toSavedParkRides(),
                 source = UserAdded,
             )
         }
@@ -139,9 +132,6 @@ internal class IntroParkRideGateway(
         )
     }
 }
-
-// The name the picker saves a station under, so a car park added here reads the same everywhere.
-private fun ParkRideStationPickerItem.savedStopName(): String = stopName.ifBlank { stationName }
 
 /**
  * [block]'s result, or null when it failed. The Intro never shows an error, so a failure is only

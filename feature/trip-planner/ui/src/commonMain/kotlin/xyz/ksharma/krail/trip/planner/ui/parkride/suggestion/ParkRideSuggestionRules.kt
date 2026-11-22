@@ -4,6 +4,7 @@ import kotlinx.collections.immutable.toImmutableSet
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.sandook.db.NSWParkRideFacilityDetail
 import xyz.ksharma.krail.trip.planner.ui.intro.nearestParkRideStation
+import xyz.ksharma.krail.trip.planner.ui.parkride.savedStopName
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.ParkRideTile
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.directionsTarget
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.toParkRideState
@@ -98,7 +99,7 @@ internal fun suggestionTile(
     }
     return ParkRideUiState(
         stopId = station.stationId,
-        stopName = station.stopName.ifBlank { station.stationName },
+        stopName = station.savedStopName(),
         facilities = carParks.toImmutableSet(),
     ).toTile()
 }

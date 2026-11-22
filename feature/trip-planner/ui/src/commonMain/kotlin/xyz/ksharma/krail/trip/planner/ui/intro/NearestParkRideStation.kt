@@ -2,10 +2,14 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.sandook.utils.GeoUtils
+import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.PARK_RIDE_SUGGESTION_DEFAULT_RADIUS_KM
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRideStationPickerItem
 
-/** How far from the rider the Intro looks for a Park & Ride station. */
-internal const val INTRO_PARK_RIDE_RADIUS_KM = 5.0
+/**
+ * How far from the rider the Intro looks for a Park & Ride station. It is the radius the home suggestion
+ * falls back on, so the two ask within the same distance by construction and not by two copies of 5.0.
+ */
+internal const val INTRO_PARK_RIDE_RADIUS_KM = PARK_RIDE_SUGGESTION_DEFAULT_RADIUS_KM
 
 /**
  * The single nearest station within [radiusKm] of [location], or null. A station with no coordinates

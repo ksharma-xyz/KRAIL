@@ -30,15 +30,7 @@ internal class ParkRideStationAdder(
      */
     suspend fun add(station: ParkRideStationPickerItem, source: ParkRideUserFacilityEvent.Source) {
         parkRideSandook.insertOrReplaceSavedParkRides(
-            parkRideInfoList = station.mappings.map { mapping ->
-                SavedParkRide(
-                    stopId = mapping.stopId,
-                    facilityId = mapping.facilityId,
-                    stopName = station.stopName.ifBlank { station.stationName },
-                    facilityName = mapping.facilityName,
-                    source = UserAdded.value,
-                )
-            }.toSet(),
+            parkRideInfoList = station.toSavedParkRides(),
             source = UserAdded,
         )
         appReviewManager.onDelightMoment(DelightMoment.PARK_RIDE_ADDED)
@@ -52,3 +44,21 @@ internal class ParkRideStationAdder(
         )
     }
 }
+
+/**
+ * The name a station is saved under: its own stop name, or the station's name when it has none. The
+ * rows of the picker's Add, the home suggestion, the Intro's Add and the name the home card shows all
+ * use this one rule, so a car park reads the same wherever it was added.
+ */
+internal fun ParkRideStationPickerItem.savedStopName(): String = stopName.ifBlank { stationName }
+
+/** One `UserAdded` row for every car park at the station, as every add stores them. */
+internal fun ParkRideStationPickerItem.toSavedParkRides(): Set<SavedParkRide> = mappings.map { mapping ->
+    SavedParkRide(
+        stopId = mapping.stopId,
+        facilityId = mapping.facilityId,
+        stopName = savedStopName(),
+        facilityName = mapping.facilityName,
+        source = UserAdded.value,
+    )
+}.toSet()

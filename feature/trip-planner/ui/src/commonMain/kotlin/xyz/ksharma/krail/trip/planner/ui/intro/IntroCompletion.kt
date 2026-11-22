@@ -21,6 +21,8 @@ internal class IntroCompletion(
     private val preferences: SandookPreferences,
     private val analytics: Analytics,
     private val ioDispatcher: CoroutineDispatcher,
+    /** Where the rider's progress through the Intro is kept, so a relaunch after a kill carries on. */
+    val progress: IntroProgressStore = IntroProgressStore(preferences, ioDispatcher),
 ) {
     // The same write and the same event as the Settings theme screen, so the two can never differ.
     private val theme = ThemeChoice(sandook, analytics)
@@ -49,6 +51,9 @@ internal class IntroCompletion(
     suspend fun writeIntroSeen() = withContext(ioDispatcher) {
         preferences.setBoolean(SandookPreferences.KEY_HAS_SEEN_INTRO, true)
     }
+
+    /** Whether the Intro was finished before, so this run is a replay from Settings. One small read. */
+    fun hasSeenIntro(): Boolean = preferences.getBoolean(SandookPreferences.KEY_HAS_SEEN_INTRO) == true
 
     /** The `view_screen` event for the step the rider is looking at. */
     fun trackStepView(step: IntroStep) {

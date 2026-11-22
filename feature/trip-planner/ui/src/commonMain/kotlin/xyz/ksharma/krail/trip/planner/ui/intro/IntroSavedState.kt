@@ -8,12 +8,14 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
+import xyz.ksharma.krail.trip.planner.ui.state.intro.TripDecision
 
 internal const val INTRO_SAVED_STATE_KEY = "intro_state"
 
 /**
- * What the Intro keeps across the process being killed: the step, the theme the rider picked, the answer,
- * the permission result, the picks and the flags, and which station the card was for. The rider's position
+ * What the Intro keeps across a turn of the screen and the system saving its state: the step, the theme the rider
+ * picked, the answer, the permission result, the picks, the answer on the confirm screen and the flags, and which
+ * station the card was for. What survives the app being swiped away is [IntroProgress]. The rider's position
  * is never kept, and neither are the card's car parks or their live spots: the Park & Ride step works the
  * card out again from the station id, which costs no call while the readings are inside the cooldown. A
  * location still being awaited is not kept either, so that rider is asked again.
@@ -34,6 +36,7 @@ private data class IntroSnapshot(
     val cardStationId: String? = null,
     val noStationNear: Boolean = false,
     val selectedThemeId: Int? = null,
+    val tripDecision: TripDecision? = null,
 )
 
 internal fun SavedStateHandle.saveIntroState(state: IntroState) {
@@ -52,6 +55,7 @@ private fun IntroState.toSnapshot() = IntroSnapshot(
     addedParkRide, usedSearch, saved,
     startFromParkRide = startFromParkRide,
     selectedThemeId = selectedThemeId,
+    tripDecision = tripDecision,
     cardStationId = when (val card = parkRideCard) {
         is ParkRideCardPhase.Card -> card.station.stationId
         is ParkRideCardPhase.Locating -> card.stationId
@@ -73,6 +77,7 @@ private fun IntroSnapshot.toState() = IntroState(
     saved = saved,
     startFromParkRide = startFromParkRide,
     selectedThemeId = selectedThemeId,
+    tripDecision = tripDecision,
     parkRideCard = when {
         // Shown as the skeleton until the Park & Ride step has worked the station out again.
         cardStationId != null -> ParkRideCardPhase.Locating(cardStationId)

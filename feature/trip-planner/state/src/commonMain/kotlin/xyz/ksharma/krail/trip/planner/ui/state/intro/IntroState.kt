@@ -37,8 +37,8 @@ data class IntroState(
     /**
      * The answer the rider gave on the confirm screen, or null before one. The confirm screen only records it, and
      * the finish on the last screen acts on it: the trip is written when it is [TripDecision.SAVED] and both stops are
-     * set. Transient, like [query]: it is not part of what a later unit persists, it carries no stop and no name, and a
-     * missing answer, such as after the process was killed, writes nothing.
+     * set. It is saved with the rest of the Intro's progress, so a rider who is back on the theme screen after the app was
+     * killed keeps the answer. It carries no stop and no name of its own, and a missing answer writes nothing.
      */
     val tripDecision: TripDecision? = null,
     /**

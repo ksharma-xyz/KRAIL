@@ -34,6 +34,7 @@ class IntroSavedStateTest {
         usedSearch = true,
         saved = true,
         selectedThemeId = 5,
+        tripDecision = TripDecision.SAVED,
     )
 
     @Test
@@ -61,7 +62,7 @@ class IntroSavedStateTest {
     }
 
     @Test
-    fun `the stations near the rider, the badges, the typed text, its results, the selected stop and the confirm answer are not saved`() {
+    fun `the stations near the rider, the badges, the typed text, its results and the selected stop are not saved`() {
         val handle = SavedStateHandle()
         val kept = IntroState(
             step = IntroStep.ORIGIN,
@@ -76,7 +77,6 @@ class IntroSavedStateTest {
             query = "redf",
             search = IntroSearchPhase.Results(persistentListOf(IntroStop("201510", "Redfern Station"))),
             selectedStop = IntroStop("200080", "Wynyard Station"),
-            tripDecision = TripDecision.SAVED,
         )
 
         handle.saveIntroState(withTransient)
@@ -85,6 +85,31 @@ class IntroSavedStateTest {
         val saved = handle.get<String>(INTRO_SAVED_STATE_KEY).orEmpty()
         assertEquals(false, "redf" in saved, "the typed text is not in the saved text: $saved")
         assertEquals(false, "200080" in saved || "Wynyard" in saved, "the selected stop is not saved: $saved")
+    }
+
+    @Test
+    fun `the answer on the confirm screen is saved with the screen, and a snapshot from before it existed has none`() {
+        listOf(TripDecision.SAVED, TripDecision.DECLINED).forEach { decision ->
+            val handle = SavedStateHandle()
+            val state = IntroState(
+                step = IntroStep.THEME,
+                startStopId = "2155384",
+                startName = "Tallawong Station",
+                endStopId = "200080",
+                endName = "Wynyard Station",
+                tripDecision = decision,
+            )
+
+            handle.saveIntroState(state)
+
+            assertEquals(state, handle.restoreIntroState(), "decision $decision")
+        }
+
+        val older = SavedStateHandle()
+        older[INTRO_SAVED_STATE_KEY] = """{"step":"THEME","parkRideAnswer":"NO","locationResult":"NOT_ASKED",""" +
+            """"startStopId":null,"startName":null,"endStopId":null,"endName":null,""" +
+            """"addedParkRide":false,"usedSearch":false,"saved":false}"""
+        assertNull(older.restoreIntroState().tripDecision)
     }
 
     @Test

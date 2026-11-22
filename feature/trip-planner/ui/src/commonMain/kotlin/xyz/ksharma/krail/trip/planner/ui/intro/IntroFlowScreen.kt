@@ -38,13 +38,14 @@ internal val EmptyIntroStep: IntroStepContent = { _, _, _ -> }
 private val IntroMaxContentWidth = DUAL_PANE_LIST_WIDTH
 
 /**
- * The two step Intro: the bar with the progress dots, the step, and the one bottom button. It holds
- * no state of its own beyond scroll, so every decision is [state] and [readiness], and everything
- * the rider does leaves through [onEvent].
+ * The Intro: the back button, the screen, and the one bottom button. It holds no state of its own
+ * beyond scroll, so every decision is [state] and [readiness], and everything the rider does leaves
+ * through [onEvent].
  *
- * System back on step 2 is [IntroUiEvent.Back], and on step 1 it follows the platform. Content is
- * capped to a phone width and centred, and each step scrolls, so nothing is ever clipped at a large
- * font or a narrow window. The bottom button stays where it is and the step scrolls above it.
+ * System back, like the back button, is [IntroUiEvent.Back] whenever there is a screen to go back
+ * to, and on the first screen it follows the platform. Content is capped to a phone width and
+ * centred, and each screen scrolls, so nothing is ever clipped at a large font or a narrow window.
+ * The bottom button stays where it is and the screen scrolls above it.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -59,7 +60,8 @@ internal fun IntroFlowScreen(
     val dim = KrailTheme.dimensions
     val reduceMotion = isReduceMotionEnabled()
 
-    BackHandler(enabled = state.step == IntroStep.FIRST_TRIP) { onEvent(IntroUiEvent.Back) }
+    val canGoBack = state.stepBefore() != null
+    BackHandler(enabled = canGoBack) { onEvent(IntroUiEvent.Back) }
 
     Box(
         modifier = modifier
@@ -70,7 +72,7 @@ internal fun IntroFlowScreen(
         contentAlignment = Alignment.TopCenter,
     ) {
         Column(modifier = Modifier.widthIn(max = IntroMaxContentWidth).fillMaxHeight()) {
-            IntroTopBar(step = state.step, onBack = { onEvent(IntroUiEvent.Back) })
+            IntroTopBar(showBack = canGoBack, onBack = { onEvent(IntroUiEvent.Back) })
 
             AnimatedContent(
                 targetState = state.step,
@@ -81,7 +83,9 @@ internal fun IntroFlowScreen(
                 Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                     when (step) {
                         IntroStep.PARK_RIDE -> IntroParkRideStepContent(state = state, onEvent = onEvent)
-                        IntroStep.FIRST_TRIP -> firstTripStep(state, suggestedStops, onEvent)
+                        IntroStep.DESTINATION -> firstTripStep(state, suggestedStops, onEvent)
+                        // Temporary, until the theme, origin and confirm screens are built.
+                        IntroStep.THEME, IntroStep.ORIGIN, IntroStep.CONFIRM -> IntroPendingStepBody(step)
                     }
                 }
             }

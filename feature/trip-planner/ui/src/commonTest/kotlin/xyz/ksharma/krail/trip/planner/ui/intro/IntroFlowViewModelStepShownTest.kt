@@ -25,8 +25,8 @@ class IntroFlowViewModelStepShownTest {
         val rig = IntroRig(this)
 
         rig.viewModel.onStepShown(IntroStep.PARK_RIDE)
-        rig.viewModel.onStepShown(IntroStep.FIRST_TRIP)
-        rig.viewModel.onStepShown(IntroStep.FIRST_TRIP)
+        rig.viewModel.onStepShown(IntroStep.DESTINATION)
+        rig.viewModel.onStepShown(IntroStep.DESTINATION)
         rig.viewModel.onStepShown(IntroStep.PARK_RIDE)
 
         assertEquals(listOf<Any?>("Intro", "IntroFirstTrip", "Intro"), rig.screenViews())

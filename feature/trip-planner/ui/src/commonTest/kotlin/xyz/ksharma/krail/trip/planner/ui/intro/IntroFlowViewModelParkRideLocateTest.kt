@@ -106,7 +106,7 @@ class IntroFlowViewModelParkRideLocateTest {
 
             rig.send(IntroUiEvent.AnswerParkRide(yes = true), IntroUiEvent.LocationResultReceived(result, location))
 
-            assertEquals(IntroStep.FIRST_TRIP, rig.state.step, "$result $location")
+            assertEquals(IntroStep.DESTINATION, rig.state.step, "$result $location")
             assertEquals(recorded, rig.state.locationResult, "$result $location")
             assertEquals(ParkRideCardPhase.None, rig.state.parkRideCard, "$result $location")
             assertEquals(ParkRideAnswer.YES, rig.state.parkRideAnswer, "$result $location")
@@ -181,7 +181,7 @@ class IntroFlowViewModelParkRideLocateTest {
         rig.send()
 
         assertEquals(ParkRideAnswer.NO, rig.state.parkRideAnswer)
-        assertEquals(IntroStep.FIRST_TRIP, rig.state.step)
+        assertEquals(IntroStep.DESTINATION, rig.state.step)
         assertEquals(ParkRideCardPhase.None, rig.state.parkRideCard, "the look that was waiting is cancelled")
         assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE))
     }
@@ -197,7 +197,7 @@ class IntroFlowViewModelParkRideLocateTest {
             assertEquals(ParkRideCardPhase.Locating(), rig.state.parkRideCard, "waiting for the stops")
 
             rig.send(IntroUiEvent.Next)
-            assertEquals(IntroStep.FIRST_TRIP, rig.state.step, "the rider is not held on the wait")
+            assertEquals(IntroStep.DESTINATION, rig.state.step, "the rider is not held on the wait")
             assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE))
 
             pumpOnce(PARK_RIDE_STOPS_WAIT_MS - 1)

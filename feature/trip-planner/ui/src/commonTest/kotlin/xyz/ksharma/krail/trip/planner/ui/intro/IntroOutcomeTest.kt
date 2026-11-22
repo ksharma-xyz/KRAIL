@@ -17,10 +17,10 @@ class IntroOutcomeTest {
     private val failed = StopsReadiness.Failed(attempt = 1, reason = "disk full")
 
     // A rider who got to step 2 and picked nothing, so every flag is in its resting position.
-    private val resting = IntroState(step = IntroStep.FIRST_TRIP)
+    private val resting = IntroState(step = IntroStep.DESTINATION)
     private val restingOutcome = IntroOutcome(
         introVersion = 2,
-        finishedOn = IntroStep.FIRST_TRIP,
+        finishedOn = IntroStep.DESTINATION,
         parkRideAnswer = ParkRideAnswer.ASK,
         locationResult = LocationResult.NOT_ASKED,
         addedParkRide = false,
@@ -100,7 +100,7 @@ class IntroOutcomeTest {
     fun `the parameters carry the names and values the registry expects`() {
         val outcome = IntroOutcome(
             introVersion = 2,
-            finishedOn = IntroStep.FIRST_TRIP,
+            finishedOn = IntroStep.DESTINATION,
             parkRideAnswer = ParkRideAnswer.YES,
             locationResult = LocationResult.GRANTED,
             addedParkRide = true,

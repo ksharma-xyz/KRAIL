@@ -5,6 +5,7 @@ import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 import xyz.ksharma.krail.core.testing.coroutines.krailRunTest
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
+import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -65,11 +66,30 @@ class IntroFlowViewModelTest {
         val rig = IntroRig(this)
 
         rig.send(IntroUiEvent.Next)
-        assertEquals(IntroStep.FIRST_TRIP, rig.state.step)
+        assertEquals(IntroStep.DESTINATION, rig.state.step)
         rig.send(IntroUiEvent.Back)
         assertEquals(IntroStep.PARK_RIDE, rig.state.step)
         rig.send(IntroUiEvent.Back)
         assertEquals(IntroStep.PARK_RIDE, rig.state.step)
+    }
+
+    @Test
+    fun `back never returns to a Park and Ride screen that had nothing to decide`() = krailRunTest {
+        val noLocation = IntroRig(this)
+        noLocation.send(
+            IntroUiEvent.AnswerParkRide(yes = true),
+            IntroUiEvent.LocationResultReceived(LocationResult.DENIED, null),
+        )
+        assertEquals(IntroStep.DESTINATION, noLocation.state.step)
+
+        noLocation.send(IntroUiEvent.Back)
+
+        assertEquals(IntroStep.DESTINATION, noLocation.state.step, "denied leaves nothing to answer")
+
+        val declined = IntroRig(this)
+        declined.send(IntroUiEvent.AnswerParkRide(yes = false), IntroUiEvent.Back)
+
+        assertEquals(IntroStep.PARK_RIDE, declined.state.step, "a no can still be changed")
     }
 
     @Test
@@ -79,7 +99,7 @@ class IntroFlowViewModelTest {
 
             rig.send(IntroUiEvent.Next, IntroUiEvent.Next)
 
-            assertEquals(IntroStep.FIRST_TRIP, rig.state.step)
+            assertEquals(IntroStep.DESTINATION, rig.state.step)
             assertEquals(ParkRideAnswer.ASK, rig.state.parkRideAnswer)
             assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE))
             assertEquals(0, rig.log.count(SEEN_INTRO_WRITE))
@@ -91,13 +111,13 @@ class IntroFlowViewModelTest {
             val rig = IntroRig(this)
 
             rig.send(IntroUiEvent.AnswerParkRide(yes = false))
-            assertEquals(IntroStep.FIRST_TRIP, rig.state.step)
+            assertEquals(IntroStep.DESTINATION, rig.state.step)
             assertEquals(ParkRideAnswer.NO, rig.state.parkRideAnswer)
             assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE))
 
             rig.send(IntroUiEvent.Back, IntroUiEvent.Next)
 
-            assertEquals(IntroStep.FIRST_TRIP, rig.state.step)
+            assertEquals(IntroStep.DESTINATION, rig.state.step)
             assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE))
         }
 
@@ -115,7 +135,7 @@ class IntroFlowViewModelTest {
             rig.send(IntroUiEvent.Next)
 
             assertEquals(ParkRideAnswer.YES, rig.state.parkRideAnswer)
-            assertEquals(IntroStep.FIRST_TRIP, rig.state.step)
+            assertEquals(IntroStep.DESTINATION, rig.state.step)
             assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE))
         }
 
@@ -202,7 +222,7 @@ class IntroFlowViewModelTest {
 
             assertEquals(
                 IntroState(
-                    step = IntroStep.FIRST_TRIP,
+                    step = IntroStep.DESTINATION,
                     parkRideAnswer = ParkRideAnswer.NO,
                     startStopId = TALLAWONG.stopId,
                     startName = TALLAWONG.name,
@@ -216,7 +236,7 @@ class IntroFlowViewModelTest {
 
     @Test
     fun `unreadable saved state falls back to the first screen`() = krailRunTest {
-        val handle = savedAt(IntroState(step = IntroStep.FIRST_TRIP))
+        val handle = savedAt(IntroState(step = IntroStep.DESTINATION))
         handle[INTRO_SAVED_STATE_KEY] = "{not a snapshot"
 
         assertEquals(IntroState(), IntroRig(this, handle = handle).state)

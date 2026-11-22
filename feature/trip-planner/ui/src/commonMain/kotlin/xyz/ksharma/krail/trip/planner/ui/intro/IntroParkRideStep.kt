@@ -7,7 +7,6 @@ import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.io.gtfs.readiness.AppDataReadiness
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
-import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
@@ -71,9 +70,7 @@ internal class IntroParkRideStep(
             resolve { gateway.nearestStation(location) }
         } else {
             val recorded = if (result == LocationResult.GRANTED) LocationResult.UNAVAILABLE else result
-            write {
-                copy(locationResult = recorded, step = IntroStep.FIRST_TRIP, parkRideCard = ParkRideCardPhase.None)
-            }
+            write { copy(locationResult = recorded, parkRideCard = ParkRideCardPhase.None).leavingParkRide() }
             onLeftQuestion()
         }
     }

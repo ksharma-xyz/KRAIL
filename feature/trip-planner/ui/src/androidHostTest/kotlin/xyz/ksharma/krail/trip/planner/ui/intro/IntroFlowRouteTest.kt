@@ -114,7 +114,7 @@ class IntroFlowRouteTest {
     }
 
     @Test
-    fun `a denied permission moves on to step 2 and the card is not left locating`() {
+    fun `a denied permission moves on to the trip screen and the card is not left locating`() {
         val manager = FakeUserLocationManager(currentLocation = { Result.failure(LocationError.PermissionDenied()) })
         show(manager)
 
@@ -122,9 +122,9 @@ class IntroFlowRouteTest {
         composeRule.waitForIdle()
 
         assertEquals(LocationResult.DENIED, viewModel.state.value.locationResult)
-        assertEquals(IntroStep.FIRST_TRIP, viewModel.state.value.step)
+        assertEquals(IntroStep.DESTINATION, viewModel.state.value.step)
         assertEquals(ParkRideCardPhase.None, viewModel.state.value.parkRideCard)
-        composeRule.onNodeWithContentDescription("Step 2 of 2").assertIsDisplayed()
+        composeRule.onNodeWithText(FIRST_TRIP_HEADING).assertIsDisplayed()
     }
 
     @Test

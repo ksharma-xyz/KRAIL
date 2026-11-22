@@ -2,7 +2,6 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
-import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 
 /**
  * What the bottom button says and does. [GettingReady] and [PickBothStops] are disabled, and
@@ -20,19 +19,17 @@ internal enum class IntroFinishAction { Next, GettingReady, PickBothStops, SaveA
  * table.
  */
 internal fun introFinishAction(state: IntroState, readiness: StopsReadiness): IntroFinishAction =
-    when (state.step) {
-        IntroStep.PARK_RIDE -> IntroFinishAction.Next
-        IntroStep.FIRST_TRIP -> firstTripAction(state, readiness)
-    }
+    if (state.step.isTripStep()) firstTripAction(state, readiness) else IntroFinishAction.Next
 
 /**
  * The button once the stops no longer matter, which is where a finish that has waited for them as
  * long as it will ends up: the picks alone decide.
  */
 internal fun introFinishActionIgnoringStops(state: IntroState): IntroFinishAction =
-    when (state.step) {
-        IntroStep.PARK_RIDE -> IntroFinishAction.Next
-        IntroStep.FIRST_TRIP -> if (state.saved) IntroFinishAction.LetsKrail else picksAction(state)
+    when {
+        !state.step.isTripStep() -> IntroFinishAction.Next
+        state.saved -> IntroFinishAction.LetsKrail
+        else -> picksAction(state)
     }
 
 // Once the trip is written there is nothing left to wait for, so readiness no longer matters.

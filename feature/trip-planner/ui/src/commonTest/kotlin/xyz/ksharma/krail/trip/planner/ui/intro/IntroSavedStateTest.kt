@@ -15,7 +15,7 @@ class IntroSavedStateTest {
 
     // Every saved field is off its default, so a field left out of the snapshot fails the round trip.
     private val everyFieldSet = IntroState(
-        step = IntroStep.FIRST_TRIP,
+        step = IntroStep.DESTINATION,
         parkRideAnswer = ParkRideAnswer.YES,
         locationResult = LocationResult.GRANTED,
         startStopId = "200060",
@@ -115,12 +115,12 @@ class IntroSavedStateTest {
     @Test
     fun `a snapshot saved before the card existed still reads`() {
         val handle = SavedStateHandle()
-        handle[INTRO_SAVED_STATE_KEY] = """{"step":"FIRST_TRIP","parkRideAnswer":"NO","locationResult":"NOT_ASKED",""" +
+        handle[INTRO_SAVED_STATE_KEY] = """{"step":"DESTINATION","parkRideAnswer":"NO","locationResult":"NOT_ASKED",""" +
             """"startStopId":null,"startName":null,"endStopId":null,"endName":null,""" +
             """"addedParkRide":false,"usedSearch":false,"saved":false}"""
 
         assertEquals(
-            IntroState(step = IntroStep.FIRST_TRIP, parkRideAnswer = ParkRideAnswer.NO),
+            IntroState(step = IntroStep.DESTINATION, parkRideAnswer = ParkRideAnswer.NO),
             handle.restoreIntroState(),
         )
     }

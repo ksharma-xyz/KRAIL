@@ -81,7 +81,8 @@ internal class IntroFlowViewModel(
 
     fun onEvent(event: IntroUiEvent) {
         when (event) {
-            IntroUiEvent.Back -> update { copy(step = IntroStep.PARK_RIDE) }
+            // Back goes one screen back, and does nothing on the first.
+            IntroUiEvent.Back -> update { movedBack() }
             IntroUiEvent.Next -> next()
             is IntroUiEvent.AnswerParkRide -> answerParkRide(event.yes)
             is IntroUiEvent.LocationResultReceived -> parkRideStep.onLocationResult(event.result, event.location)
@@ -108,7 +109,7 @@ internal class IntroFlowViewModel(
 
     private fun next() {
         if (_state.value.step != IntroStep.PARK_RIDE) return
-        update { copy(step = IntroStep.FIRST_TRIP) }
+        update { leavingParkRide() }
         markSuggestionShown()
     }
 
@@ -118,13 +119,7 @@ internal class IntroFlowViewModel(
             parkRideStep.askLocation()
         } else {
             parkRideStep.cancel()
-            update {
-                copy(
-                    parkRideAnswer = ParkRideAnswer.NO,
-                    step = IntroStep.FIRST_TRIP,
-                    parkRideCard = ParkRideCardPhase.None,
-                )
-            }
+            update { copy(parkRideAnswer = ParkRideAnswer.NO, parkRideCard = ParkRideCardPhase.None).leavingParkRide() }
             markSuggestionShown()
         }
     }

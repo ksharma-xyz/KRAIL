@@ -30,7 +30,7 @@ class IntroOutcomeEventTest {
     fun `the event carries exactly what the outcome reports for each flag`() {
         listOf(true, false).forEach { flag ->
             val outcome = outcome(
-                IntroStep.FIRST_TRIP,
+                IntroStep.DESTINATION,
                 ParkRideAnswer.YES,
                 LocationResult.GRANTED,
                 StopsWait.NONE,

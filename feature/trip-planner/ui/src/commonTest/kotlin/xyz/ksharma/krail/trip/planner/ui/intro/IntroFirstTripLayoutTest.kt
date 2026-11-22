@@ -13,7 +13,7 @@ import kotlin.test.assertTrue
  */
 class IntroFirstTripLayoutTest {
 
-    private val nothing = IntroState(step = IntroStep.FIRST_TRIP)
+    private val nothing = IntroState(step = IntroStep.DESTINATION)
     private val startOnly = nothing.copy(startStopId = TALLAWONG.stopId, startName = TALLAWONG.name)
     private val both = startOnly.copy(endStopId = CENTRAL.stopId, endName = CENTRAL.name)
 

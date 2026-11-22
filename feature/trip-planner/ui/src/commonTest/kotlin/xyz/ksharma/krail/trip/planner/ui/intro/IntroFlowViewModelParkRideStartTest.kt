@@ -120,7 +120,7 @@ class IntroFlowViewModelParkRideStartTest {
 
         rig.send(IntroUiEvent.Next)
 
-        assertEquals(IntroStep.FIRST_TRIP, rig.state.step)
+        assertEquals(IntroStep.DESTINATION, rig.state.step)
         assertNull(rig.state.startStopId)
         assertFalse(rig.state.addedParkRide)
         assertTrue(rig.savedRows(UserAdded).isEmpty())

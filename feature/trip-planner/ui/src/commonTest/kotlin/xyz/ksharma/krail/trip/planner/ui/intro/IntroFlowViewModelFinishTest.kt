@@ -26,14 +26,14 @@ private const val SAVED_TRIP = "trip:2155384->200060"
 class IntroFlowViewModelFinishTest {
 
     private val tripPicked = IntroState(
-        step = IntroStep.FIRST_TRIP,
+        step = IntroStep.DESTINATION,
         parkRideAnswer = ParkRideAnswer.NO,
         startStopId = TALLAWONG.stopId,
         startName = TALLAWONG.name,
         endStopId = CENTRAL.stopId,
         endName = CENTRAL.name,
     )
-    private val nothingPicked = IntroState(step = IntroStep.FIRST_TRIP, parkRideAnswer = ParkRideAnswer.NO)
+    private val nothingPicked = IntroState(step = IntroStep.DESTINATION, parkRideAnswer = ParkRideAnswer.NO)
 
     private fun KrailTestScope.rigAt(
         state: IntroState,
@@ -353,7 +353,7 @@ class IntroFlowViewModelFinishTest {
 
         rig.send(IntroUiEvent.FinishPressed)
 
-        assertEquals(IntroStep.FIRST_TRIP, rig.state.step)
+        assertEquals(IntroStep.DESTINATION, rig.state.step)
         assertEquals(listOf(SUGGESTION_SHOWN), rig.log.entries)
     }
 

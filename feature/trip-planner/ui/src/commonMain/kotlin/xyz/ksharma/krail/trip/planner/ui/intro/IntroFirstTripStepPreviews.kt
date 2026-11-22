@@ -11,11 +11,11 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 // Real station names, never a rider's trip. Step 2 is shared by the phone, the 320dp and the tablet previews
 // and by the layout tests, which draw the same states.
 
-internal val PreviewTripNothingChosen = IntroState(step = IntroStep.FIRST_TRIP)
+internal val PreviewTripNothingChosen = IntroState(step = IntroStep.DESTINATION)
 
 /** The start is the station Add to home filled in, so the end list follows below it. */
 internal val PreviewTripPrefilled = IntroState(
-    step = IntroStep.FIRST_TRIP,
+    step = IntroStep.DESTINATION,
     startStopId = "2155384",
     startName = "Tallawong Station",
     startFromParkRide = true,
@@ -23,7 +23,7 @@ internal val PreviewTripPrefilled = IntroState(
 )
 
 internal val PreviewTripBothChosen = IntroState(
-    step = IntroStep.FIRST_TRIP,
+    step = IntroStep.DESTINATION,
     startStopId = "2155384",
     startName = "Tallawong Station",
     endStopId = "200060",

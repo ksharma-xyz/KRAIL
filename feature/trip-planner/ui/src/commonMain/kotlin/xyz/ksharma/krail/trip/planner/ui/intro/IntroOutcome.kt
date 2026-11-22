@@ -66,7 +66,7 @@ internal fun stopsWaitBucket(waited: Duration, readiness: StopsReadiness): Stops
  */
 internal fun IntroOutcome.toParams(): Map<String, Any> = mapOf(
     "introVersion" to introVersion,
-    "finishedOn" to finishedOn.name.lowercase(),
+    "finishedOn" to finishedOn.toEventValue().value,
     "parkRideAnswer" to when (parkRideAnswer) {
         ParkRideAnswer.ASK -> "skipped"
         ParkRideAnswer.YES -> "yes"

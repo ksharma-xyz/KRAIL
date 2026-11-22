@@ -63,8 +63,13 @@ internal class IntroCompletion(
     }
 }
 
-/** Step 1 is the Intro screen and step 2 is its own, so the funnel reads from the two. */
+/**
+ * The funnel reads from two screen names, and a new name needs a ledger row, so the rebuilt Intro
+ * keeps them: the theme and Park & Ride screens are the Intro, and the screens that ask for a trip
+ * are the first trip. A rider who moves from the theme screen to Park & Ride sends the Intro name
+ * twice, which the next unit of the rebuild settles with the analytics side.
+ */
 internal fun IntroStep.toAnalyticsScreen(): AnalyticsScreen = when (this) {
-    IntroStep.PARK_RIDE -> AnalyticsScreen.Intro
-    IntroStep.FIRST_TRIP -> AnalyticsScreen.IntroFirstTrip
+    IntroStep.THEME, IntroStep.PARK_RIDE -> AnalyticsScreen.Intro
+    IntroStep.DESTINATION, IntroStep.ORIGIN, IntroStep.CONFIRM -> AnalyticsScreen.IntroFirstTrip
 }

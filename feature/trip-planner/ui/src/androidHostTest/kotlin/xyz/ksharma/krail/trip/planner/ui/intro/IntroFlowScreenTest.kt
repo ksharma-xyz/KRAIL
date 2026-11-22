@@ -2,7 +2,6 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
@@ -25,8 +24,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import kotlin.test.assertEquals
 
 /**
- * The shell of the two step Intro: the bottom button, the progress dots, the back button and system
- * back. Both steps are left empty here, because the shell is what is under test.
+ * The shell of the Intro: the bottom button, the back button and system back. The screens are left
+ * empty here, because the shell is what is under test.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -42,7 +41,7 @@ class IntroFlowScreenTest {
 
     private val events = mutableListOf<IntroUiEvent>()
     private val ready = StopsReadiness.Ready(stopCount = 100)
-    private val stepTwo = IntroState(step = IntroStep.FIRST_TRIP)
+    private val stepTwo = IntroState(step = IntroStep.DESTINATION)
 
     private val shownState = mutableStateOf(IntroState())
     private val shownReadiness = mutableStateOf<StopsReadiness>(ready)
@@ -135,17 +134,13 @@ class IntroFlowScreenTest {
     }
 
     @Test
-    fun `the progress dots read Step 1 of 2 on the first step`() {
-        show(IntroState())
+    fun `there are no progress dots on any screen`() {
+        IntroStep.entries.forEach { step ->
+            show(IntroState(step = step))
 
-        composeRule.onNodeWithContentDescription("Step 1 of 2").assertIsDisplayed()
-    }
-
-    @Test
-    fun `the progress dots read Step 2 of 2 on the trip step`() {
-        show(stepTwo)
-
-        composeRule.onNodeWithContentDescription("Step 2 of 2").assertIsDisplayed()
+            composeRule.onNodeWithContentDescription("Step 1 of 2").assertDoesNotExist()
+            composeRule.onNodeWithContentDescription("Step 2 of 2").assertDoesNotExist()
+        }
     }
 
     @Test

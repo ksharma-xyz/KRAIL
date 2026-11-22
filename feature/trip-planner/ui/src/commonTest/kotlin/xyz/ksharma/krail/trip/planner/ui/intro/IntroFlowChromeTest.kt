@@ -2,23 +2,12 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 
 class IntroFlowChromeTest {
-
-    @Test
-    fun `the progress dots read one step of two to a screen reader`() {
-        assertEquals("Step 1 of 2", introStepLabel(IntroStep.PARK_RIDE))
-    }
-
-    @Test
-    fun `the progress dots read the second step of two on the trip step`() {
-        assertEquals("Step 2 of 2", introStepLabel(IntroStep.FIRST_TRIP))
-    }
 
     @Test
     fun `reduced motion swaps the steps with no fade and no size animation`() {

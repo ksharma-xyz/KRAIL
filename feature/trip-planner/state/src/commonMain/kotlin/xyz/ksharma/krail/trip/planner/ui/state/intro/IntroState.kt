@@ -4,10 +4,10 @@ import androidx.compose.runtime.Stable
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 
-/** State of the two step Intro, the Park & Ride question and then the first trip. */
+/** State of the Intro, one screen and one question at a time. */
 @Stable
 data class IntroState(
-    val step: IntroStep = IntroStep.PARK_RIDE,
+    val step: IntroStep = IntroFirstStep,
     val parkRideAnswer: ParkRideAnswer = ParkRideAnswer.ASK,
     val locationResult: LocationResult = LocationResult.NOT_ASKED,
     /** What the question step shows below the question. [ParkRideCardPhase.Card] with [addedParkRide] is Added. */
@@ -32,7 +32,27 @@ data class IntroState(
     val hasTrip: Boolean get() = startStopId != null && endStopId != null
 }
 
-enum class IntroStep { PARK_RIDE, FIRST_TRIP }
+/**
+ * The Intro screens in the order a rider meets them, one question on each. Screens the rider has
+ * no decision to make on are skipped, and the order in which the rest are shown is decided in one
+ * place, the UI module's `IntroStepFlow`.
+ */
+enum class IntroStep {
+    /** The theme colour. Not built yet, so the flow starts later, see [IntroFirstStep]. */
+    THEME,
+    PARK_RIDE,
+    DESTINATION,
+
+    /** Skipped when a Park & Ride station was added, because that station is already the start. */
+    ORIGIN,
+    CONFIRM,
+}
+
+/**
+ * The screen the Intro opens on. It is [IntroStep.THEME] once that screen has content, and until
+ * then the Park & Ride screen, so this one value is the only thing that changes when it lands.
+ */
+val IntroFirstStep: IntroStep = IntroStep.PARK_RIDE
 
 /** [ASK] is the unanswered question. */
 enum class ParkRideAnswer { ASK, YES, NO }

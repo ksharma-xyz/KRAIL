@@ -103,7 +103,8 @@ data class StopPick(
  *
  * On the To and From form a pick of any kind (a recents row, a label shortcut, a result, a stop card
  * action) fills its bar and the screen stays, editing moves to the other bar, and only the go circle
- * leaves, through [onTripChosen] with both stops. Back leaves with nothing, so a half pick is dropped.
+ * leaves, through [onTripChosen] with both stops, and the trip results open over this screen so back from
+ * them lands here with both stops still set. Back before the go leaves with nothing, so a half pick is dropped.
  * [presetFrom] and [presetTo] open the form with a stop already held. A label or one leg of a trip is a
  * single field, so its pick leaves at once through [onStopPicked] with the stop and its field.
  * [onStopSelect] is told the stop alone.
@@ -193,6 +194,10 @@ fun SearchStopScreen(
             go?.let { (from, to) ->
                 keyboard?.hide()
                 focusRequester.freeFocus()
+                // The trip results open over this screen, so it is saved as the map state with nothing
+                // edited and the typed text cleared: back from them lands on both bars set, no keyboard.
+                onFlowEvent(SearchStopFlowEvent.TripSent)
+                fieldState.clearText()
                 onTripChosen(from, to)
             }
         },

@@ -27,7 +27,6 @@ import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewMo
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
-import xyz.ksharma.krail.trip.planner.ui.navigation.TripChosenResult
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionEvent
 import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionViewModel
@@ -58,7 +57,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
 ) {
     entry<SavedTripsRoute> {
         // Scoped ViewModel that survives navigation
-        val viewModel: SavedTripsViewModel = koinViewModel(key = "SavedTripsNav")
+        val viewModel: SavedTripsViewModel = koinViewModel(key = SAVED_TRIPS_VIEW_MODEL_KEY)
         val mapStopSelectionViewModel: MapStopSelectionViewModel = koinViewModel()
         val mapUiState by mapStopSelectionViewModel.mapUiState.collectAsStateWithLifecycle()
         // The map home's pins and offline notice. With the maps flag off it does no work and the classic home
@@ -140,21 +139,6 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             }
         }
 
-        // The go circle on Search Stop: both stops are set, so the trip results open. The stops are also
-        // written to the ViewModel, which the classic home's bars still read, and a time the rider set
-        // (Ask KRAIL's "by 6pm") travels with the trip.
-        ResultEffect<TripChosenResult> { result ->
-            viewModel.onEvent(SavedTripUiEvent.FromStopChanged(result.from.toJsonString()))
-            viewModel.onEvent(SavedTripUiEvent.ToStopChanged(result.to.toJsonString()))
-            triggerTripSearch(
-                fromStop = result.from,
-                toStop = result.to,
-                viewModel = viewModel,
-                tripPlannerNavigator = tripPlannerNavigator,
-                dateTimeSelectionJson = viewModel.uiState.value.dateTimeSelectionItem?.toJsonString(),
-            )
-        }
-
         // Listen for StopSelected results from SearchStop screen
         // This uses the singleton ResultEventBus to ensure results are received
         // even when screens are in different composition scopes (two-pane layout)
@@ -192,7 +176,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             triggerTripSearch(
                 fromStop = savedTripState.fromStop,
                 toStop = savedTripState.toStop,
-                viewModel = viewModel,
+                onEvent = viewModel::onEvent,
                 tripPlannerNavigator = tripPlannerNavigator,
                 dateTimeSelectionJson = savedTripState.dateTimeSelectionItem?.toJsonString(),
             )
@@ -308,29 +292,5 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                 },
             )
         }
-    }
-}
-
-private fun triggerTripSearch(
-    fromStop: StopItem?,
-    toStop: StopItem?,
-    viewModel: SavedTripsViewModel,
-    tripPlannerNavigator: TripPlannerNavigator,
-    dateTimeSelectionJson: String? = null,
-) {
-    if (fromStop != null && toStop != null && fromStop.stopId != toStop.stopId) {
-        viewModel.onEvent(
-            SavedTripUiEvent.AnalyticsLoadTimeTableClick(
-                fromStopId = fromStop.stopId,
-                toStopId = toStop.stopId,
-            ),
-        )
-        tripPlannerNavigator.navigateToTimeTable(
-            fromStopId = fromStop.stopId,
-            fromStopName = fromStop.stopName,
-            toStopId = toStop.stopId,
-            toStopName = toStop.stopName,
-            dateTimeSelectionJson = dateTimeSelectionJson,
-        )
     }
 }

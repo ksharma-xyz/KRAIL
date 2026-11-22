@@ -14,8 +14,8 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
 import xyz.ksharma.krail.trip.planner.ui.navigation.TimetableStopChangedResult
-import xyz.ksharma.krail.trip.planner.ui.navigation.TripChosenResult
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopScreen
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
@@ -52,6 +52,10 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
             viewModel.onEvent(SearchStopUiEvent.RefreshRecentStopsList)
         }
 
+        // The home's ViewModel, the one the go circle writes the trip and reads the held time from. It is the same
+        // instance Saved Trips holds (see SAVED_TRIPS_VIEW_MODEL_KEY), so nothing is copied across the screens.
+        val savedTripsViewModel: SavedTripsViewModel = koinViewModel(key = SAVED_TRIPS_VIEW_MODEL_KEY)
+
         // Capture ResultEventBus in composable scope for use in callbacks
         // This uses the singleton instance to ensure results reach SavedTrips
         // even in two-pane layouts where screens are in different composition scopes
@@ -67,11 +71,17 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
             editTripLeg = key.editTripLeg,
             presetFrom = presetFrom,
             presetTo = presetTo,
-            // The To and From form stays on screen through every pick. Only its go circle leaves, with
-            // both stops, and back leaves with nothing.
+            // The To and From form stays on screen through every pick. Only its go circle leaves, and it opens the
+            // trip results ON TOP of this screen, so back from the results lands here with both stops still
+            // filled. Back from here before the go leaves with nothing, so a half pick is dropped.
             onTripChosen = { from, to ->
-                resultEventBus.sendResult(result = TripChosenResult(from = from, to = to))
-                tripPlannerNavigator.goBack()
+                startTripFromSearchStop(
+                    from = from,
+                    to = to,
+                    dateTimeSelectionJson = savedTripsViewModel.uiState.value.dateTimeSelectionItem?.toJsonString(),
+                    onEvent = savedTripsViewModel::onEvent,
+                    tripPlannerNavigator = tripPlannerNavigator,
+                )
             },
             // A single field (a label, or one leg of a trip) leaves at once with its stop.
             onStopPicked = { pick ->

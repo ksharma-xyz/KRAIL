@@ -181,6 +181,26 @@ class SearchStopFlowTest {
         assertFalse(step.exit)
     }
 
+    @Test
+    fun `sending a trip saves the screen as the map state with nothing edited, from the list state too`() {
+        val editingTo = SearchStopFlow(mode = SearchStopMode.List, editing = ToFromField.To, openedOn = ToFromField.To)
+
+        val step = editingTo.after(SearchStopFlowEvent.TripSent)
+
+        assertEquals(SearchStopMode.Map, step.flow.mode, "Back from the results must not raise the keyboard.")
+        assertNull(step.flow.editing, "Both bars are set, so nothing is being edited and the go circle shows.")
+        assertFalse(step.exit, "Sending a trip leaves through the entry, not through this table.")
+    }
+
+    @Test
+    fun `back from the results lands on this state, and back from there leaves with nothing`() {
+        val sent = opening.after(SearchStopFlowEvent.TripSent).flow
+
+        // The rider is back on Search Stop. One back press leaves, so no result is sent and the half pick rule holds.
+        assertEquals(sent, sent.after(SearchStopFlowEvent.MapTapped).flow)
+        assertTrue(sent.after(SearchStopFlowEvent.BackPressed()).exit)
+    }
+
     // endregion
 
     // region maps off

@@ -42,6 +42,12 @@ internal sealed interface SearchStopFlowEvent {
      * from the list state lands on a bar that still needs one.
      */
     data class BackPressed(val filled: Set<ToFromField> = emptySet()) : SearchStopFlowEvent
+
+    /**
+     * The go circle left with a trip. The trip results open on top of this screen and back from them
+     * returns to it, so it is saved as the map state with nothing edited and no keyboard, both bars set.
+     */
+    data object TripSent : SearchStopFlowEvent
 }
 
 /** The next [flow], and whether the screen leaves instead (back from the map state goes home). */
@@ -62,6 +68,8 @@ internal fun reduceSearchStopFlow(flow: SearchStopFlow, event: SearchStopFlowEve
             SearchStopStep(flow.copy(mode = SearchStopMode.List, editing = event.field))
 
         SearchStopFlowEvent.MapTapped -> SearchStopStep(flow.copy(mode = SearchStopMode.Map))
+
+        SearchStopFlowEvent.TripSent -> SearchStopStep(flow.copy(mode = SearchStopMode.Map, editing = null))
 
         is SearchStopFlowEvent.BackPressed -> when (flow.mode) {
             // Back from a start field switched to in place lands on the field the screen was opened on,

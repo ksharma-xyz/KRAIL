@@ -59,7 +59,8 @@ interface TripPlannerNavigator {
 
 /**
  * Result when a stop is selected for one field. Search Stop sends it for a label. The To and From form
- * sends a [TripChosenResult] instead, so a pick on it never reaches the caller on its own.
+ * sends no result at all: its go circle opens the trip results itself, so a pick on it never reaches the
+ * caller on its own.
  */
 data class StopSelectedResult(
     val fieldType: SearchStopFieldType,
@@ -68,16 +69,6 @@ data class StopSelectedResult(
     val labelKey: String? = null,
     val locationKind: LocationKind = LocationKind.TRANSIT_STOP,
     val addressType: String? = null,
-)
-
-/**
- * Result when the rider pressed the go circle on Search Stop with both stops set. It is the only
- * result a To and From form sends, so a half pick that is backed out of leaves nothing behind. The
- * receiver opens the trip results.
- */
-data class TripChosenResult(
-    val from: StopItem,
-    val to: StopItem,
 )
 
 /**

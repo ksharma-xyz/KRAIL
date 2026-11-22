@@ -26,6 +26,13 @@ internal class RecordingTripPlannerNavigator : TripPlannerNavigator {
     /** Every timetable the entry asked to open, as "fromStopId>toStopId" pairs. */
     val timeTableRequests = mutableListOf<Pair<String, String>>()
 
+    /** The serialised time each timetable request carried, in the same order. Null means now. */
+    val timeTableDateTimes = mutableListOf<String?>()
+
+    /** How many times the entry asked to go back. */
+    var goBackRequests = 0
+        private set
+
     /** The start and destination each stop-search request opened holding, in the same order. */
     val searchStopPresets = mutableListOf<Pair<StopItem?, StopItem?>>()
 
@@ -49,6 +56,7 @@ internal class RecordingTripPlannerNavigator : TripPlannerNavigator {
         dateTimeSelectionJson: String?,
     ) {
         timeTableRequests += fromStopId to toStopId
+        timeTableDateTimes += dateTimeSelectionJson
     }
 
     override fun navigateToJourneyMap(journeyId: String) = Unit
@@ -64,7 +72,9 @@ internal class RecordingTripPlannerNavigator : TripPlannerNavigator {
     override fun navigateToTrackTrip(encodedData: String?) = Unit
     override fun navigateToDebugConfig() = Unit
     override fun navigateToDebugConfigNetwork() = Unit
-    override fun goBack() = Unit
+    override fun goBack() {
+        goBackRequests++
+    }
     override fun updateTheme(hexColorCode: String) = Unit
     override fun clearBackStackAndNavigate(route: NavKey) = Unit
 }

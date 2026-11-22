@@ -202,6 +202,22 @@ padding was pointless there.
 
 ---
 
+## 8. A map behind a scrolling list, and a card that has to sit above both
+
+**Symptom (map home, by design, not yet seen on a device).** A full screen map with a `LazyColumn` over it gets no
+touches under the list, because a list's scroll handler takes every pointer inside its bounds. A card drawn by the
+map itself ends up under the cards and the pill.
+
+**Rules that follow.**
+- Size the list to its content (`heightIn(max = what is left)`), not to the screen, so a short stack leaves the map
+  under it free to touch. Pins under a card are not reachable on purpose.
+- The map reports a pin tap as a key and draws **no card**. The screen draws the card above the stack, in the
+  chips and the pill's place, so it never sits under them.
+- Put a blur or a gradient on the **cards**, never above the map. `HomeMapScreen` applies Ask KRAIL's blur inside the
+  list layer and keeps the map a sibling, and the dual pane hands the same map composable to `DualPaneScaffold`.
+
+---
+
 ## Debugging method that actually worked
 
 The breakthrough was **comparison logging across a working screen and a broken one**, all

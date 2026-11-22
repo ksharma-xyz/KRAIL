@@ -240,6 +240,33 @@ the same slot with Save as, Go here and Start here and the card does not change 
 row draws, so a station's total, its time and each car park's block read the same on both surfaces, and `directionsTarget` is the one rule
 for where Directions go.
 
+Branch 11, the map home. Pure rules in `homemap/HomeMapPins.kt` and `homemap/HomeMapChromeRules.kt`, the camera rule beside the other map
+helpers in `searchstop/map/MapLocationHelpers.kt`, so each is a table test and none needs a map, a layout or a database:
+
+```kotlin
+// module: :feature:trip-planner:ui, callers: HomeMapViewModel, HomeMapEntryContent, HomeMapScreen, SearchStopMap
+internal fun labelPinsFor(labels: List<StopLabel>, coordinates: Map<String, Pair<Double, Double>>): ImmutableList<LabelPin>
+internal fun parkRidePinsFor(tiles: List<ParkRideTile>, coordinates: Map<String, Pair<Double, Double>>): ImmutableList<ParkRidePin>
+internal fun pinStopIdsFor(labels: List<StopLabel>, tiles: List<ParkRideTile>): List<String>           // one local lookup for both
+internal fun homePinsFor(nearby, parkRide, labels): HomePins                                            // one pin per place: label beats P beats stop
+internal fun homeCardFor(key: String?, pins: HomePins): HomeCard?                                       // Stop or ParkRide, looked up again, null when the pin left
+internal fun MapUiState.withNearbyStops(stops: ImmutableList<NearbyStopFeature>): MapUiState
+internal fun labelGlyph(label: String): String                                                          // the pin's one character
+internal fun homeNoticesFor(pill: LocationPill, mapOffline: Boolean): List<HomeNotice>                  // location first, then Map offline
+internal fun mapOfflineFor(transport: TransportState): Boolean                                          // only Down says it
+internal fun homeMapPlacementFor(mapsAvailable: Boolean, dualPane: Boolean): HomeMapPlacement          // None, Behind, SidePane
+internal fun homeBottomFor(loading: Boolean, reordering: Boolean, cardOpen: Boolean, holdsStops: Boolean): HomeBottom
+internal fun stackBottomReserve(bottom: HomeBottom, blockHeight: Dp, cardHeight: Dp, cardEdge: Dp): Dp
+internal fun stackMaxHeight(available: Dp, reserve: Dp): Dp
+internal fun shouldAutoCenter(hasUserLocation: Boolean, alreadyCentered: Boolean): Boolean              // the once-only glide
+```
+
+`HomeMapViewModel(sandook, connectivity, flag, ioDispatcher)` holds `HomeMapState(isMapsAvailable, mapOffline, labelPins, parkRidePins)`. The screen
+sends it `HomeMapInputs(labels, tiles)` through `HomeMapEvent.InputsChanged` whenever either changes. `HomeMapScreen` is the maps-on home and takes a
+`HomeMapHost` (the map slot, the notices, what the location pill does, the open card). `HomeMapEntryContent` wires the pins, the saved card key and the
+location state, and `SavedTripsEntry` chooses between it and `SavedTripsScreen` on `HomeMapState.isMapsAvailable`. `SavedTripUiEvent.RemoveParkRideStation`
+removes the car parks the rider added at a station.
+
 Reused unchanged: `ParkRideAvailabilityLoader` (fetch for a set of facilities), `filterRefreshableFacilities` and
 `parkRideApiCooldown` (the cooldown), `pollWhileCardsAreOpen` (the expanded-card poll).
 
@@ -395,6 +422,40 @@ with 0 calls.
 | Directions on a car park | 0 | 0, a hand off to the maps app | 0 | 0 | platform | platform |
 | Card with the app in the background | 0 | 0 | 0 | 0 | none | none |
 
+**Branch 11, the map home (numbers from code, guesses labelled).** **Zero new network calls beyond the map tiles the existing maps already
+load.** The tiles are the shared MapLibre style (`https://tiles.openfreemap.org/styles/liberty`), requested by the library as the camera moves, the
+same instance and the same style Search Stop and the dual pane draw. Their bytes and request count are **not measured, measure on device**. Everything
+else on the map is local. **Nearby stops** are the existing `selectStopsNearby` query: one per camera settle after the 500 ms pan debounce
+(`CAMERA_PAN_DEBOUNCE_MS`) and the 300 ms query debounce (`QUERY_DEBOUNCE_MS`), with the 60 s and 200 m cache (`CACHE_EXPIRY_MS`,
+`MIN_DISTANCE_FOR_RELOAD_KM`), at most 200 rows (`MAX_NEARBY_RESULTS`), within `nearby_stops_radius_km`, default 3.0 km. That radius is now applied to
+the home map, which read the 3.0 constant before and ignored the config (one constructor argument, read once as the ViewModel is made). **Pins** cost one
+`selectStopCoordinatesBatch` for the union of the label stop ids and the saved stations' stop ids, a handful (a guess, not measured, under a millisecond
+for a few rows), on the I/O dispatcher, once per change of the labels or the saved stations, and none when there is no stop to look up. **The Map offline
+chip** reads the app-wide connectivity flow, 0 calls, and says offline only when the OS reports the transport down. **Location** is the existing stream,
+one fix every 5 s while home is in front (`UPDATE_INTERVAL_MS`), started only when the permission is already granted and never asked for unprompted: the
+location pill is the one place a tap asks. The camera glides once, 1.5 s (`AUTO_CENTER_ANIMATION_MS`) to zoom 15, and the once-only guard is saved across a
+rotation. **Time to first content** is from local data only and never waits for tiles: the cards, the chips and the pill draw from state the screen already
+holds, and the map is its own layer that adds nothing they read. The stack sizes itself from what is left and measures nothing new. Before and after on a
+device: **not measured**, the target is no increase. **UX:** loading is the cards' own, the map shows its flat ground until tiles land, offline keeps the
+ground, the pins and the dot plus the chip, and failed tiles are not reported (no signal for them, see A94). **Battery:** a GL surface is alive while home is
+in front, cost **not measured**, compare against Search Stop's. The rider dot's breathing is the existing 2.5 s transition and runs only while the map is
+composed. No timer, no polling and no background work is added: the ViewModel is `WhileSubscribed(5 s)` behind `collectAsStateWithLifecycle`, the location
+lookup is a `LifecycleStartEffect`, and the home entry is not composed behind another screen. **Caching and dedupe:** the nearby cache above, and the pin
+lookup is keyed on its inputs, so an unchanged list asks nothing. **Shared limits:** none touched, no NSW call is added, nothing for a BFF to collapse. A P pin
+tap makes 0 calls of its own: the card draws the station's cached readings the home row already holds.
+
+| Flow | Calls before | Calls after | Bytes before | Bytes after | Time to results before | after |
+|---|---|---|---|---|---|---|
+| Open home, maps flag off | 0 new | 0 new, today's home | 0 | 0 | local | local, unchanged |
+| Open home, maps flag on | 0 | 0 new network, map tiles from the shared instance | 0 | map tiles, not measured | local, not measured | local, the map never gates the cards, not measured on device |
+| Camera settles | not a feature | 1 local nearby query, at most 200 rows | not a feature | at most 200 features decoded, a guess of tens of KB | not a feature | not measured |
+| Labels or saved stations change | not a feature | 1 local coordinate lookup, none with no stop | not a feature | 0 | not a feature | a guess, under a frame |
+| Tap a pin | not a feature | 0, the card opens with its board closed | not a feature | 0 | not a feature | local, one saved string |
+| Tap the location pill | not a feature | 0 network, 1 system permission dialog or 1 open of Settings | not a feature | 0 | not a feature | platform |
+| Connectivity changes | not a feature | 0, one flow read | not a feature | 0 | not a feature | local |
+| Remove from home on a P card | not a feature | 0 network, up to one local delete per car park | not a feature | 0 | not a feature | local |
+| Home in the background | 0 | 0, tracking and the ViewModel stop | 0 | 0 | none | none |
+
 **Branch 7, the Home and Work chips (one row, numbers from code, guesses labelled).** Opening home adds 0 calls, 0 queries and
 no timer: the chips are drawn from `SavedTripsState.stopLabels`, which the ViewModel already observes. A tap on a set chip costs one
 `UserLocationManager.getCurrentLocation()` (one shot, 10 s timeout inside `UserLocationManagerImpl`, never `locationUpdates`, never
@@ -456,7 +517,9 @@ Shared rate limits: none touched, nothing for a BFF to collapse.
 | Park & Ride tile (closed, any number of car parks) | the cached number at once. With none yet the number and time keep their line boxes, drawn clear and hidden from a screen reader, so the tile shows the station name alone at the same height | no row (no saved station) | last reading with the time it was read (A6, A58), never an error and never hidden for being old | the free spots across the station's car parks with "spots" small beside it, the car icon and station name, and the time of the oldest reading |
 | Park & Ride tile (open) | per car park, the name alone until its reading lands | as above | per car park, the last reading with its time | the station name (closes it), then one block per car park in a fixed order at equal weight (A3, A59), each stacked under the last at every width and text size, with its numbers, its time and, when it has a position of its own, a 48 dp round Directions button (A8) |
 | Reorder mode | not applicable, local | the stack with no trip and no station is not enterable | a failed write shows the order the rider chose and leaves the stored order as it was (A77) | no logo, gear, chips or search bar, one dark Done 48 dp tall, 16 dp from the top and right. A grip centred on each trip card's top edge and its delete circle, the Park & Ride row in one outlined block with a wider grip, the pressed card lifted. The whole card is the drag target, and the row's own tiles are shut and still |
-| Home map | flat ground and the rider dot | stops within the radius, or none | "Map offline" chip, flat ground, pins stay | pins, P pins, label pins |
+| Home map | flat ground and the rider dot, the cards draw at once from local state | stops within the radius, or none | "Map offline" chip when the OS reports the transport down, flat ground, pins and the dot stay | stop pins, `P` pins for the saved stations, Home and Work pins, no locate button, decorative to a screen reader |
+| Home top row | the logo, Discover beside Settings, always | not applicable | the notices row holds the location pill and the Map offline chip as whole items, centred, wrapping one under the other at large text | logo at the left, Discover and Settings at the right, 48 dp, 16 dp insets, the stack below it |
+| Home bottom | nothing until the trips have loaded | the chips and the pill, no empty state card | as content | the pill with Ask KRAIL's microphone where the flag and the device allow it, or the To and From block while a stop is held, or a pin's card in their place |
 | Home chips | none until the labels have loaded | not applicable, Home and Work always have a chip | the fallback search when there is no fix, no permission or no stop near | Set Home or Home, Set Work or Work, then + Park & Ride, each 48 dp, wrapping whole or one sideways line over 130% text |
 | Search Stop | map state, no list, no keyboard | recents empty, nearest stops instead | offline chip | list state with recents or results |
 | Stop card | the board is closed on open, so nothing loads. Open, the board holds its floor of height (A81) with the loading dots, and the Lines chip keeps its room | a stop with no departures shows the existing empty message inside the floor | the existing error with Retry inside the floor, the rows kept if a refresh fails | the stop name and a 48 dp close button, the stop's mode icons, the Departure Board in its own light card with the title, the one Lines chip (more than one line only) and the chevron, then the action slot |
@@ -590,6 +653,35 @@ Stop card (branch 10), written before the code:
   reading yet has no total and no time`, `car parks keep their order when the numbers change`, `a car park behind two stop ids is listed
   once`, `the action reads Remove from home on home and Add to home off it`.
 
+Map home (branch 11), written before the code:
+
+- Pure (`HomeMapPinsTest`, `HomeMapChromeRulesTest`): `a label with a stop and a position is a pin with its own emoji`, `a label with no stop has no pin`,
+  `a label whose stop has no position has no pin` (missing, 0.0 and 0.0, off the globe), `a stop that is two labels keeps the first label`, `a station is
+  plotted at its own stop`, `a station with no stop position falls back to a car park with its own`, `a station with no position anywhere has no pin`,
+  `a station behind two stops uses the first stop that has a position`, `a stop that is a label pin is drawn once, as the label`, `a stop a station sits
+  behind gives way to the P`, `a station behind a labelled stop gives way to the label`, `a stop pin opens the stop card`, `a P pin opens the Park and Ride
+  card`, `a label pin opens the stop card of its stop with no modes held`, `a pin that left the map leaves the card closed`, `a stop key never opens a station
+  and a station key never opens a stop`, `the notices are none, the location pill, the Map offline chip or both in that order`, `the map is offline only when the
+  transport is reported down` (Unknown and Up are not), `a wide window keeps the one map pane whatever the flag says`, `a single pane window gets the map behind
+  only when the flag is on`, `the bottom is the pill, the block, an open card or nothing` (reorder wins, a card beats loading), `the stack stops short of what the
+  bottom holds and never takes a negative height`, `the camera glides to the first fix and never again`, `a stream of jittering fixes glides exactly once`.
+- ViewModel (`HomeMapViewModelTest`, `FakeSandook`, `FakeConnectivityObserver`, `FakeFlag`): flag off is no map and no work, flag on says so before anything is
+  drawn, a label becomes a pin at its stop, a saved station a P pin, the pins follow the labels, labels with no stop ask nothing, the map is offline only while the
+  transport is down, an unknown transport is not called offline, nothing is worked out for a screen that is not in front. `MapStopSelectionRadiusTest`: the map
+  looks within the radius it was given and within the default with none. `SavedTripsRemoveParkRideTest`: removing a station removes every car park the rider added
+  there, another station is left, a car park a saved trip holds stays, a station with no rows is not an error.
+- Layout (`HomeMapScreenLayoutTest`, Robolectric, real bounds): the map fills the window behind everything; the logo is left of Settings on one centre line; Discover
+  sits left of Settings and Settings keeps its 16 dp inset; the stack starts below the top row; the location pill is centred under the buttons; both notices share one
+  row, centred as a pair; at 320 dp and 200 percent they are whole items, one under the other, inside the window with the text whole; the Map offline chip does nothing when
+  tapped and the location pill asks; the pill is 48 dp on the cards' edges, 16 dp above the bottom, with the chips 8 dp above it; the pill reads Where are you going and
+  a tap opens Search Stop; no microphone without the flag or on a device that cannot run it; where it is allowed the microphone is 48 dp at the pill's end, the text stops
+  short of it and a tap opens Ask KRAIL and never the pill; at 320 dp and 200 percent the pill is one line 48 dp tall with the microphone whole and the chips are one
+  scrolling line with the first whole; holding a stop shows the block and no pill, on the cards' edges; an open card takes the chips and the pill away and the stack stops
+  above it; loading leaves the bottom empty and the top row showing; a wide window keeps the 480 dp list pane with the map beside it, and a card floats over the map
+  while the chips and the pill stay.
+- Not covered by a test, to look at on a device: the map itself (a host test has no GPU), the pins and their taps, the camera gliding once, TalkBack on the cards, the
+  blur and the map on iOS, rotation with a card open, the logo's contrast over tiles, the pill over a busy map.
+
 State survival and lifecycle:
 
 - Rotate on every changed screen, loaded and loading. Expanded tile, reorder edit and first-run answer survive
@@ -608,7 +700,7 @@ State survival and lifecycle:
 |---|---|---|
 | `SEARCH_STOP_UX.md`, "The landing surface is the list, never the map", pinned by `singlePane_opensOnTheList_evenWhenAMapIsAlreadyInitialised`. The doc also records that a map-first default starts the whole MapLibre stack on every visit and that the flag once flipped by accident | Rule 39 reverses it on purpose, in branch 4. The doc section is rewritten as "Two states" in the same change. The pinned test is replaced by `singlePane_opensOnTheMapState_withTheBarAndNoListAndNoKeyboard`, which uses the same initialised-map fixture and now asserts the opposite. The map starts once through `InitializeMap`, the same event as before, with the same shared instance | doc, test, and a measurement of time to first tiles on the Pixel 6 Pro and the tablet AVD, to be reported before the stack is called done (not measured in this build) |
 | Search Stop label pill row, the curated first-open stops (Town Hall, Central, Parramatta, Wynyard), `StopLabelAssignRow` and its "+" | The recents card replaces that list layout (rule 9). The label row is the first row of the card and scrolls sideways (G4), and the curated stops are replaced by the Intro's suggested stops (G5). `EMPTY_STATE_STOPS`, `shouldShowEmptyStateStops` and `shouldShowPillRow` are deleted and `SearchStopRulesTest` with them, their cases moved to `SearchStopRecentsTest` | the existing Search Stop tests pass or are changed on purpose, with the doc updated |
-| Ask KRAIL on home (`AskKrailScreen`, the mic in the search row, listen on open, blur and dim while it is open, gated by the AI input flag and device availability) | The new home pill keeps it working. The mic shows only when the flag and the device allow it, never as a dead icon. The blur applies to the cards, and the map stays a sibling | to verify in the home map branch, with `DualPaneCompositingGuardTest` |
+| Ask KRAIL on home (`AskKrailScreen`, the mic in the search row, listen on open, blur and dim while it is open, gated by the AI input flag and device availability) | The home pill keeps it working, and so does the block that takes its place while a stop is held. The mic shows only when the flag and the device allow it (`isWayInAvailable`, the gate the search row used), never as a dead icon. The blur applies to the cards, and the map stays a sibling: on the map home the blur sits on the cards only, so the map is never under it, and the scaffold call is in another function from the blur, which the guard's lexical scan accepts with no exception | `HomeMapScreenLayoutTest` (no mic without the flag or the device, the mic opens Ask KRAIL and not the pill), `DualPaneCompositingGuardTest` unchanged |
 | The saved trips reorder callback treats every list key as a trip id | The Park & Ride row is a list item with its own key. The callback moves it as a block and never reads its key as a trip id: it raises `ReorderMove(fromKey, toKey)` and the reducer treats `PARK_RIDE_ROW_KEY` as one more key. Its position is stored as a count of trips before it and clamped when trips are added or deleted. `MoveSavedTripToIndex`, `DeleteSavedTrip` and `MarkReorderTipSeen` are removed, and the old edit mode that wrote on every drop with them | `ReorderSessionTest`, `HomeStackOrderTest`, `SavedTripsReorderTest` |
 | `persistFacilityDetail` stores the stop id as the stop name when a car park is not saved | A2b writes readings for car parks the rider never saved. The station name comes from the catalogue and the stops table, never from a reading row | `station card shows the station name for an unsaved car park` |
 | `SearchStopRow` (the home bottom search row), the Search button that sat beside the fields, the `SEARCH_ROW_*` tags and the Maestro flows that tap them (`02-plan-trip.yaml`, `01-launch-home.yaml`, `03-rotation-sweep.yaml`, `06-permissions-denied.yaml`) | Search becomes the go circle inside the From bar and To is above From. Every tag stays on the same kind of thing: `searchrow.to` and `searchrow.from` are the bars, `searchrow.search` is the 40 dp go button, taj's `RoundIconButton`, and `searchrow.gocircle` is the box around it. The circle is always drawn on home, because the smoke flow waits for it before any stop is chosen. Reverse and Ask KRAIL keep their tags and move under the From bar when width is short, and the click wiring and analytics are unchanged | `ToFromBlockLayoutTest` reads the real bounds and taps. The Maestro flows keep every `searchrow.*` tag they use, and the two that open Search Stop (`02-plan-trip.yaml`, `03-rotation-sweep.yaml`) tap the bar before they wait for the recents, because Search Stop opens on the map state |
@@ -623,7 +715,7 @@ State survival and lifecycle:
 | The multi-car-park tile at 320 dp and 200% text. Drawn in `ParkRideRowPreviews.kt` and pinned by `ParkRideRowLayoutTest` in branch 8 | ksharma-xyz | built in branch 8, to look at on a device |
 | Where the shortcuts for custom labels (beyond Home and Work) live in the new Search Stop. Decided (G4): one row at the top of the recents card, scrolling sideways | ksharma-xyz | decided, built in branch 4 |
 | Whether the curated first-open stops (Town Hall, Central, Parramatta, Wynyard) stay for a new rider with location off and no recents. Decided (G5): the Intro's suggested stops list replaces them, each row carrying its own stop id and name | ksharma-xyz | decided, built in branch 4 |
-| Whether the home pill is the same entry as today's search row, with the mic opening Ask KRAIL unchanged | ksharma-xyz | before the home map branch |
+| Whether the home pill is the same entry as today's search row, with the mic opening Ask KRAIL unchanged. Decided (G6): the same entry, the mic on the home pill only. Built in branch 11, see A92 and A93 | ksharma-xyz | decided, built in branch 11 |
 | Whether the stop card's Lines chip merges into one chip in the board heading (decision 8) | ksharma-xyz | before the stop card branch |
 | Decision 16, every Go here case in the table in section 8 | ksharma-xyz | before branch 11 |
 | What branch 4 supplies to the To and From block: the back arrow and the clear X (the two slots), edit in place with `editing` and one `editor` (the bar being edited is taj's dark text field), no go circle while From has no start, and the placeholders Choose destination and Choose starting point (the block now says these on home too). Built, with the decisions A25 to A38 below | ksharma-xyz | built in branch 4 |
@@ -765,6 +857,26 @@ Branch 10, the floating stop card. The spec was silent on each of these. Every o
 | A89 | On the Park & Ride pin card Directions use each car park's own position only (G3), with the car park's name as the maps app's label. The sheet's Directions button on the station's position is gone. A car park with no reading shows its name alone and keeps the room its numbers and Directions will take, so the card does not change height when they land. A car park whose reading arrives with no position loses its held Directions room, a 48 dp shrink, because the position is only known once the reading is. The sheet's "Parking numbers are not available right now" line is gone | G3, rule 40, rule 22 | 9 of 9 real readings carried a position, so the shrink is rare. A station with every reading failed shows names alone for ever | Default, not yet seen by owner |
 | A90 | Closing the board or the card sends `StopPolling` at once, from the card's own dispose, and does not wait out the view model's grace | `docs/POLLING_LIFECYCLE.md`, "polling stops when the card closes" | A rotation sends `StopPolling` and then `LoadDepartures` again as the card is recreated, which the repository's window absorbs: one call per window, not two | Default, not yet seen by owner |
 
+Branch 11, the map home. The spec was silent on each of these. Every one is `Default, not yet seen by owner`.
+
+| # | Assumption | Evidence | What breaks if it is wrong | Decision |
+|---|---|---|---|---|
+| A91 | The map home is drawn only when the Search Stop maps flag (`search_stop_maps_available`) is on. With it off, `SavedTripsScreen` is drawn exactly as before, including the wide window's read-only map pane. The two screens are separate composables chosen in `SavedTripsEntry`, so today's home is not edited | The brief says a build with the flag off shows today's screens, as Search Stop does. The flag defaults to false in `RemoteConfigDefaults` | Two home screens to keep in step until the flag is retired. The classic one is left alone on purpose | Default, not yet seen by owner |
+| A92 | The home pill is the resting bottom. While the rider holds a start or a destination (after a pick returns, after Select stop on a pin card, after the Home or Work chip fallback or after an Ask KRAIL answer) the To and From block takes its place, floating with no coloured panel, so the go circle, Reverse, the date chip and the Ask KRAIL handoff keep working. Search Stop still returns a pick to home (A25), so the stay-after-pick flow of rules 36 and 39 is **not built** here | G6 says the pill is the same entry as today's search row. Without the block, a pick returned to a home with nowhere to show it and no go | A rider sees the pill give way to two bars after a pick, which is a screen changing, not data arriving. The owner's picture of staying on Search Stop after a pick still needs its own change | Default, not yet seen by owner |
+| A93 | The pill is taj's `TextFieldButton` in its one colour, `KrailTheme.colors.surface`, with Ask KRAIL's own `AiSheetEntryButton` as a sibling over its end, so the pill and the mic are two controls. The pill keeps the search row's tags (`searchrow.root` on the container, `searchrow.to` on the pill) so a flow written for it still reads. `TextFieldButton` has no colours parameter and taj is not changed, so the dark inverted field of rule 10 is a gap | `TextFieldButton` in taj, the To and From bars at rest | The pill is light in light theme where rule 10 asks for dark. One taj parameter would close it | Default, not yet seen by owner |
+| A94 | The Map offline chip shows only when the OS reports the transport down (`TransportState.Down`), read from the app-wide `ConnectivityObserver`, never when it is unknown or up. It is taj's `Button`, disabled, in the status pill's size, because taj has no read-only status pill, so it is a status that does nothing when tapped. The map has no signal for a failed tile, so a rider on a network that is up but not carrying data sees no chip | `docs/NETWORK_RELIABILITY.md`: an offline claim needs the transport down, and the OS flag alone is not a request outcome | A rider behind a captive portal reports down and sees the chip, which is true of the map. A blackholing carrier reports up and sees none | Default, not yet seen by owner |
+| A95 | The notices are one wrapping row of whole items, centred, directly under the top row, and not on the top row's centre line. "Location permission required" is about 29 characters and does not fit between the logo and the buttons on a phone, so rule 20's chip in the centre of the row is read as under it, the way the lead's brief puts it | Measured at 320 dp and 200 percent in `HomeMapScreenLayoutTest`: both items are whole and one under the other | The notice costs 48 dp of height under the top row while it shows | Default, not yet seen by owner |
+| A96 | The `P` pins are the saved stations only, the ones on the stack, not every catalogue station. Rule 30's cached number on the disc is not built, the number is on the card a tap opens. A Home or Work pin is a disc in the app's ink with the label's first letter, since a map font cannot be trusted with an emoji. One pin per place: a label beats a `P`, a `P` beats a plain stop | The picker already shows every station and owns Add. Pins for stations the rider has not saved would need the catalogue and the add path inside home | A rider looks for a station they have not saved and finds it only on the picker's map. The pin layer is the picker's own, so showing every station later is one input | Default, not yet seen by owner |
+| A97 | A pin's card is drawn above the cards, in the place of the chips and the pill on a single pane window, and over the map pane on a wide one. The stack stops short of it, so nothing is laid over content. It closes with its button, a tap on the map or system back. A stop pin's one action is Select stop, which sets the destination as the dual pane's pin sheet did, and a label pin's card shows no mode icons because the local table was not asked for them | Rules 42 and 45, and `docs/TABLET_FOLDABLE_UX.md` | A rider on a phone loses the pill while a card is open and gets it back on close. A label stop outside the nearby radius shows its name and board without mode icons | Default, not yet seen by owner |
+| A98 | Remove from home on a `P` pin's card removes the car parks the rider added at that station and nothing else. A station a saved trip holds stays, as on the picker, and the card closes either way. It raises no analytics event | The picker's toggle, rule 38 and the 500 name limit | A rider taps Remove on a station a trip holds and sees it stay | Default, not yet seen by owner |
+| A99 | The map and its pins are hidden from a screen reader (`clearAndSetSemantics`). A pin is a feature the GL layer draws with no node of its own, so it cannot carry a content description, and the rider dot has no tap and no label today. The stops are reached through the cards and Search Stop. No locate button is drawn (rule 20). This is a **gap against** "each pin has a content description": not buildable on a GL pin | `NearbyStopsLayer` and `ParkRideStationsLayer` are circle layers | A screen reader rider cannot reach a pin from home. They reach the saved stops through the cards and every stop through Search Stop | Default, not yet seen by owner |
+| A100 | The camera glide is keyed on whether there is a fix and guarded by a saved flag, so it runs once and a rotation never glides it back. Search Stop shares the same code, so its glide is saved across a rotation too (it was remembered and re-ran). The map's `nearby_stops_radius_km` is read once as the home ViewModel is made | `docs/MAPLIBRE_IOS_PITFALLS.md` section 5 | A rider who rotates before the first fix glides on the first fix after, as before | Default, not yet seen by owner |
+| A101 | The card stack takes only the height its cards need, up to what is left below the top row and above the bottom, so a short stack leaves the map under it free to touch and the map shows around and between the cards. Pins under a card are not reachable, so nothing the rider must reach is there. The wide window's gutter beside the 560 dp column is still the list's, so a touch there scrolls | The Home structure table | A rider with many trips has the map reachable only in the gaps and the gutters | Default, not yet seen by owner |
+| A102 | The KRAIL wordmark has no backing, so it sits on the map as the title bar draws it, in the rider's colour. "Solid" is read as no glass and no blur. Its contrast over tiles is not verified | Rule 12 | The wordmark can be hard to read over a busy or light map. A backing would be a new component, which needs a yes | Default, not yet seen by owner |
+| A103 | The chips float with no surface behind them (`HomeChipRow(floating = true)`). In phone landscape the chips go and the pill stays, as the search row's collapse always took the chips away. The Discover button shows when the title bar showed it, so on the same flag and with at least one saved trip | A20, rule 2 and `SavedTripsViewModel.updateDiscoverState` | A landscape rider reaches the chips only in portrait | Default, not yet seen by owner |
+| A104 | No new analytics event and no new parameter, so no ledger row. The pill's tap keeps `AnalyticsToButtonClick`, Settings and Discover keep theirs, and a pin tap, the location pill and Remove from home raise none | The 500 name limit | The product cannot count pin taps or Map offline. An existing event would need a parameter first | Default, not yet seen by owner |
+| A105 | The Maestro flows are not edited. They run on the flag's default, off, where every tag they read still exists. With the flag on, the smoke flow's first step taps `searchrow.from`, which is not drawn until a stop is held, so `02-plan-trip.yaml`, `03-rotation-sweep.yaml` and `05-kill-relaunch.yaml` need their first tap to be `searchrow.to` on the pill, and a go tap after both stops are held | `.maestro` read, no device was run | The lanes break the day the flag is turned on in a build they run against | Default, not yet seen by owner |
+
 Source judgement, one row per rule that reads data:
 
 | Decision | Source (data field or parsed text) | Checked against | Reliable |
@@ -846,7 +958,16 @@ raised until the whole stack has passed device QA, then it merges bottom-up. No 
     (`searchstop/map/StopDetailsBottomSheet.kt`) is deleted because nothing else used it. The shared `components/map/StopDetailsBottomSheet` stays,
     for the timetable and the journey map. Left for branch 13: Save as, Go here and Start here, in the action slot. Decisions A79 to A90 in section 9.
 11. `feat/home-map-background`, the map behind the cards, P pins and label pins, the top row with Discover beside
-    Settings, and the home location pill (rules 1, 12, 20, 24, A15).
+    Settings, and the home location pill (rules 1, 12, 20, 24, A15). Built as `homemap/HomeMapPins.kt` and
+    `HomeMapChromeRules.kt` (the pure rules), `HomeMapViewModel.kt` (pins and the offline notice), `HomeMapPane.kt` and
+    `LabelPinsLayer.kt` (the one map: Search Stop's map with extra layers, the picker's `P` layer, the label layer, no locate
+    button), `HomeMapScreen.kt` (the maps-on home), `HomeNoticesRow.kt`, `HomeLocationState.kt`, `HomeSearchPill.kt`
+    (taj's `TextFieldButton` with Ask KRAIL's mic over its end), `HomeMapEntryContent.kt` (the wiring and the pin cards) and
+    `SavedTripsEntry.kt` choosing between it and `SavedTripsScreen` on the maps flag. Shared parts changed with a default that
+    keeps today's behaviour: `SearchStopMap` (pin taps, extra layers, no button, a saved camera guard), `StatusPill` (the
+    location pill's shape), `HomeChipRow` and `SearchStopRow` (`floating`). Decisions A91 to A105 in section 9.
+    Not built here: the `P` disc's cached number, a station that is not saved, a pin's content description, the dark inverted
+    pill and the Search Stop stay-after-pick flow (A92, A93, A96, A99).
 12. `feat/home-first-run`, rules 46 and 47. Shrinks to existing riders once the Intro stack has shipped: the one-time
     suggestion (A10) using `nearestParkRideStation` and the shared flag from the Intro ERD.
 13. `feat/saved-trip-labels-go-here`, the label shown whenever a card's stop is the labelled stop, and the Go here

@@ -171,6 +171,25 @@ SearchStop). `TimeTableRoute` navigation still works via back-stack push.
   A single-pane window of 560 to 839 dp centres a 560 dp column. In the 480 dp left pane the column
   is the whole pane. The list stays the pane's full width so the gutter still scrolls.
 
+### The map home (maps flag on, branch 11)
+
+With the Search Stop maps flag on, `SavedTripsEntry` draws [`HomeMapScreen`](../feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/homemap/HomeMapScreen.kt)
+instead of `SavedTripsScreen`, and with it off nothing changes: today's home, with the read-only pane
+above. There is **one map** whatever the window:
+
+- **A phone, or any single pane window.** The map is full screen and everything floats on it: the top
+  row, the card stack in its one column, the chips and the pill. The map is a sibling of the cards and
+  of the blur Ask KRAIL pulls over them, never a child of either (`docs/MAPLIBRE_IOS_PITFALLS.md`
+  section 1).
+- **A wide window (dual pane).** The map is the right pane `DualPaneScaffold` always drew, the same
+  composable, never a second one. The 480 dp list pane holds the top row, the stack, the chips and the
+  pill, and the logo, the notices and the buttons share the pane's edges. A pin card floats over the
+  map pane, 448 dp wide in the 480 dp pane, so the chips and the pill stay where they are. The right
+  pane's ornaments (the compass) clear the corner, since the top row is in the other pane.
+- **Phone landscape (compact height).** The pill is 48 dp, so it stays as it is and the chips go, as the
+  search row's own collapse always took them away (`showPill`). The "Plan a trip" button is not used
+  with the map home.
+
 ### Compact-height rules (`isCompactHeight`, height < 480 dp)
 
 Phone landscape is the **only** form factor that collapses SearchStopRow to a

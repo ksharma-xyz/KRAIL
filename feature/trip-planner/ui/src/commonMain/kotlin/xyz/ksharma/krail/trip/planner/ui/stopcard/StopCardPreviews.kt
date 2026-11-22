@@ -71,13 +71,8 @@ private fun PreviewStopCardSingleLineStop() =
 
 @PreviewScreen
 @Composable
-private fun PreviewStopCardManyLinesChipOnly() =
+private fun PreviewStopCardManyLines() =
     CardOverMap(MULTI_LINE_STOP, MANY_LINE_BOARD, boardOpen = true)
-
-@PreviewScreen
-@Composable
-private fun PreviewStopCardManyLinesBadgesShown() =
-    CardOverMap(MULTI_LINE_STOP, MANY_LINE_BOARD, boardOpen = true, linesOpen = true)
 
 @PreviewScreen
 @Composable
@@ -104,7 +99,6 @@ private fun CardOverMap(
     stop: NearbyStopFeature,
     departures: DeparturesState,
     boardOpen: Boolean,
-    linesOpen: Boolean = false,
 ) {
     PreviewTheme {
         Box(modifier = Modifier.fillMaxSize().background(KrailTheme.colors.onSurface.copy(alpha = 0.08f))) {
@@ -115,7 +109,6 @@ private fun CardOverMap(
                     onEvent = {},
                     onClose = {},
                     boardOpenAtStart = boardOpen,
-                    linesOpenAtStart = linesOpen,
                     actions = { StopCardAction(text = "Select stop", onClick = {}) },
                 )
             }

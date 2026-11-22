@@ -79,7 +79,6 @@ internal fun StopCard(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
     boardOpenAtStart: Boolean = false,
-    linesOpenAtStart: Boolean = false,
     actions: @Composable () -> Unit = {},
 ) {
     val layout = stopCardLayout(StopCardKind.Stop, modeCount = stop.transportModes.size, carParkCount = 0)
@@ -105,7 +104,6 @@ internal fun StopCard(
                     state = departures,
                     onEvent = onEvent,
                     boardOpenAtStart = boardOpenAtStart,
-                    linesOpenAtStart = linesOpenAtStart,
                 )
             }
             if (layout.showsActionSlot) ActionSlot(actions)

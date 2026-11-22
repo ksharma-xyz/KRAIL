@@ -159,8 +159,6 @@ object TripPlannerTestTags {
         const val MODES = "stopcard.modes"
         const val BOARD_CHEVRON = "stopcard.board.chevron"
         const val BOARD_BODY = "stopcard.board.body"
-        const val LINES_CHIP = "stopcard.board.lines"
-        const val LINE_BADGES = "stopcard.board.badges"
         const val ACTIONS = "stopcard.actions"
         const val PARK_RIDE_TOTAL = "stopcard.parkride.total"
         const val SAVE_AS = "stopcard.saveas"
@@ -169,9 +167,6 @@ object TripPlannerTestTags {
 
         /** One Save as pill, by the label's name, the same whether the stop carries it or not. */
         fun saveAsPill(labelKey: String): String = "stopcard.saveas.$labelKey"
-
-        /** One line badge of the Lines chip's row, by the line's number. */
-        fun lineBadge(lineNumber: String): String = "stopcard.board.badge.$lineNumber"
     }
 
     /** The one-time Park & Ride suggestion card on the map home, kept in its own object so this one stays under its limit. */

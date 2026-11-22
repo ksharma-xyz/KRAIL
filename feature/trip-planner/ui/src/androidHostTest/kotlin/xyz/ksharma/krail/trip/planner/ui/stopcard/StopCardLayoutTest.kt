@@ -15,6 +15,7 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -43,14 +44,13 @@ import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags.StopCard
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import kotlin.math.abs
 import kotlin.test.assertEquals
-import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 /**
  * The floating stop card of `docs/MAP_HOME_UX.md` (Stop card, rules 22 and 45) on real nodes: it
  * floats at the bottom of the pane in the one column and never over the form above it, closes from a
- * 48 dp button, holds its board closed until the chevron is tapped, earns the one Lines chip only
- * with more than one line, keeps its height in every phase and keeps its state across recreation.
+ * 48 dp button, holds its board closed until the chevron is tapped, lists every line on the board
+ * with the board's own filter, keeps its height in every phase and keeps its state across recreation.
  *
  * Each test runs in a window of its own size (density 1, so a dp is a pixel). A board that is
  * loading is not drawn here, because its dots animate forever and never let a host test go idle: the
@@ -165,48 +165,12 @@ class StopCardLayoutTest {
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `a stop with one line has no Lines chip`() {
-        showCard(SINGLE_LINE_STOP, ONE_LINE_BOARD, boardOpen = true)
-        composeRule.onAllNodesWithTag(StopCard.LINES_CHIP).assertCountEquals(0)
-    }
-
-    @Test
-    @Config(qualifiers = PHONE)
-    fun `the Lines chip shows its badges, a badge filters and the same badge clears`() {
+    fun `an open board lists every line under the boards own filter and has no Lines chip`() {
         showCard(MULTI_LINE_STOP, MANY_LINE_BOARD, boardOpen = true)
 
-        val chip = bounds(StopCard.LINES_CHIP)
-        assertTrue(chip.height >= 48.dp - TOLERANCE, "The chip is ${chip.height} tall")
-        composeRule.onNodeWithText("Lines").assertExists()
-        composeRule.onAllNodesWithTag(StopCard.LINE_BADGES).assertCountEquals(0)
-
-        composeRule.onNodeWithTag(StopCard.LINES_CHIP).performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag(StopCard.LINE_BADGES).assertExists()
-
-        events.clear()
-        composeRule.onNodeWithTag(StopCard.lineBadge("T4")).performClick()
-        composeRule.waitForIdle()
-        val on = assertIs<DeparturesUiEvent.LineFilterChanged>(events.last())
-        assertEquals("T4", on.lineNumber)
-        assertTrue(on.selected)
-
-        composeRule.onNodeWithTag(StopCard.lineBadge("T4")).performClick()
-        composeRule.waitForIdle()
-        assertEquals(false, assertIs<DeparturesUiEvent.LineFilterChanged>(events.last()).selected)
-    }
-
-    @Test
-    @Config(qualifiers = "w320dp-h800dp")
-    fun `at 320 dp and 200 percent the chip and chevron wrap whole under the title and stay 48 dp`() {
-        showCard(MULTI_LINE_STOP, MANY_LINE_BOARD, boardOpen = true, fontScale = 2f)
-
-        val chip = bounds(StopCard.LINES_CHIP)
-        val chevron = bounds(StopCard.BOARD_CHEVRON)
-        assertTrue(chip.height >= 48.dp - TOLERANCE, "The chip is ${chip.height} tall")
-        assertNear("chevron width", 48.dp, chevron.width)
-        assertTrue(chip.right <= 288.dp + 16.dp, "The chip ends at ${chip.right}, past the card")
-        assertTrue(chevron.right <= 320.dp, "The chevron ends at ${chevron.right}, past the window")
+        composeRule.onNodeWithContentDescription("Hide line filter").assertExists()
+        composeRule.onAllNodesWithText("Lines").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Anywhere").assertCountEquals(MANY_LINE_BOARD.departures.size)
     }
 
     // endregion
@@ -250,14 +214,11 @@ class StopCardLayoutTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(StopCard.BOARD_CHEVRON).performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(StopCard.LINES_CHIP).performClick()
-        composeRule.waitForIdle()
 
         restorationTester.emulateSavedInstanceStateRestore()
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag(StopCard.BOARD_BODY).assertExists()
-        composeRule.onNodeWithTag(StopCard.LINE_BADGES).assertExists()
     }
 
     @Test

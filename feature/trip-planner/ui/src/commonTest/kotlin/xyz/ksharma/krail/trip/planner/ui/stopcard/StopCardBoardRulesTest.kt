@@ -1,20 +1,17 @@
 package xyz.ksharma.krail.trip.planner.ui.stopcard
 
 import androidx.compose.ui.unit.dp
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import xyz.ksharma.krail.departures.ui.state.DeparturesState
 import xyz.ksharma.krail.departures.ui.state.model.StopDeparture
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * What a stop card's departure board shows in each state, and the Lines chip it earns. Each rule is
- * driven on its own, because a single real board cannot reach a stop with one line, a failed first
- * load or a refresh in flight.
+ * What a stop card's departure board shows in each state. Each rule is driven on its own, because a
+ * single real board cannot reach a failed first load or a refresh in flight.
  */
 class StopCardBoardRulesTest {
 
@@ -94,107 +91,6 @@ class StopCardBoardRulesTest {
         assertTrue(refreshing.refreshing)
         assertFalse(stopCardBoard(content("T1", "T2"), expanded = true).refreshing)
         assertFalse(stopCardBoard(DeparturesState(isLoading = true, silentLoading = true), expanded = true).refreshing)
-    }
-
-    // endregion
-
-    // region the Lines chip
-
-    private class ChipCase(val name: String, val state: DeparturesState, val chip: Boolean, val reserved: Boolean)
-
-    @Test
-    fun `the lines chip shows only for a stop with more than one line and keeps its room while loading`() {
-        val cases = listOf(
-            ChipCase("one line leaving once", content("T1"), chip = false, reserved = false),
-            ChipCase(
-                "one line leaving three times is still one",
-                content("T1", "T1", "T1"),
-                chip = false,
-                reserved = false,
-            ),
-            ChipCase("two lines", content("T1", "T2"), chip = true, reserved = false),
-            ChipCase("many lines", content("T1", "T2", "T4", "333", "M50"), chip = true, reserved = false),
-            ChipCase(
-                "loading holds the chips room and shows none",
-                DeparturesState(isLoading = true),
-                chip = false,
-                reserved = true,
-            ),
-            ChipCase(
-                "failed has no chip and no reserved room",
-                DeparturesState(isLoading = false, isError = true),
-                false,
-                false,
-            ),
-            ChipCase("empty has no chip and no reserved room", DeparturesState(isLoading = false), false, false),
-        )
-        cases.forEach { case ->
-            val board = stopCardBoard(case.state, expanded = true)
-            assertEquals(case.chip, board.showsLinesChip, "chip, ${case.name}")
-            assertEquals(case.reserved, board.reservesLinesChip, "reserved, ${case.name}")
-        }
-    }
-
-    @Test
-    fun `a closed board shows no chip even when rows are held`() {
-        val board = stopCardBoard(content("T1", "T2"), expanded = false)
-        assertFalse(board.showsLinesChip)
-        assertFalse(board.reservesLinesChip)
-        assertEquals(0, board.lineCount)
-    }
-
-    @Test
-    fun `lines are counted by line and not by departure`() {
-        assertEquals(0, distinctLineCount(emptyList()))
-        assertEquals(1, distinctLineCount(listOf(row("T1"), row("T1"))))
-        assertEquals(3, distinctLineCount(listOf(row("T1"), row("T2"), row("T1"), row("333", "Bus"))))
-    }
-
-    @Test
-    fun `the chip appears at two lines and not at one`() {
-        assertFalse(showsLinesChip(0))
-        assertFalse(showsLinesChip(1))
-        assertTrue(showsLinesChip(2))
-        assertTrue(showsLinesChip(40))
-    }
-
-    // endregion
-
-    // region the badges
-
-    @Test
-    fun `badges list each line once in the apps mode order and keep the board's order inside a mode`() {
-        val departures = listOf(
-            row("333", "Bus", "#00B5EF"),
-            row("T2", "Train", "#0098CD"),
-            row("309", "Bus", "#00B5EF"),
-            row("T1", "Train", "#F99D1C"),
-            row("T2", "Train", "#0098CD"),
-            row("L1", "Light Rail", "#E4022D"),
-            row("X1", "Mystery", "#000000"),
-        )
-        assertEquals(
-            listOf("T2", "T1", "333", "309", "L1", "X1"),
-            lineBadges(departures).map { it.lineNumber },
-        )
-    }
-
-    @Test
-    fun `a badge carries its colour and mode`() {
-        val badge = lineBadges(listOf(row("T4", "Train", "#005AA3"))).single()
-        assertEquals(LineBadge("T4", "#005AA3", "Train"), badge)
-    }
-
-    @Test
-    fun `no departures give no badges`() {
-        assertEquals(persistentListOf(), lineBadges(emptyList()))
-    }
-
-    @Test
-    fun `tapping a badge selects it and tapping the selected one clears it`() {
-        assertEquals("T1", lineFilterAfterTap(selected = null, tapped = "T1"))
-        assertEquals("T2", lineFilterAfterTap(selected = "T1", tapped = "T2"))
-        assertNull(lineFilterAfterTap(selected = "T1", tapped = "T1"))
     }
 
     // endregion

@@ -26,7 +26,9 @@ private const val DANCE_BLEND_MS = 250
  * The theme screen: the headline on top, the four badges in the middle and, below, the decision bar that the
  * shell draws. The headline asks for a colour until the rider picks one, and from then on it is the tagline of the
  * theme that is selected, entering again with the same motion each time it changes. The room for it is kept at
- * the longest it can be, so the badges never move when the words do.
+ * the longest it can be, so the badges never move when the words do. The badges are centred on the middle of the
+ * window, at half the screen height, and only moved as far as it takes to keep a gap under the headline and a gap above
+ * the bar (`IntroStepFrame`, [MiddlePlacement.CentredOnWindow]).
  */
 @Composable
 internal fun IntroThemeStepContent(
@@ -49,6 +51,7 @@ internal fun IntroThemeStepContent(
             }
         },
         modifier = modifier,
+        centreOnWindow = true,
     ) {
         IntroThemeBadges(selectedThemeId = selectedThemeId, onPick = { onEvent(IntroUiEvent.PickTheme(it)) })
     }

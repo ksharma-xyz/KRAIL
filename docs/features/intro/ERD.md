@@ -788,6 +788,23 @@ Unit R1, as built, where this document was silent:
   sent once when the Intro is entered and again only when the name changes (unit R2, `shouldTrackScreenView`, and see unit U9 for
   the order now that the theme screen is last).
 
+### Unit V1, as built (the colour screen and the finale)
+
+Three changes to the colour screen and the finale, each its own commit. Everything not named here is as the earlier units left it.
+
+- **The badges sit on the middle of the window.** `IntroStepFrame` has a third placement for its middle zone, `MiddlePlacement.CentredOnWindow`
+  (`centreOnWindow = true`, which only the theme screen passes), next to the old two. The pure function
+  `windowCentredMiddleTop(windowMiddle, middle, headlineBottom, barTop, bottomGap)` in `IntroMiddlePlacement.kt` puts the badge grid so its
+  centre is the vertical middle of the window, `windowMiddleInZone(zone, topInset, bottomInset)`, which counts the system bars and the bar overlay
+  as part of the window, and moves it only as far as it takes to keep it under the headline zone, which already holds its 24 dp gap
+  (`titleToMiddle`), and one 16 dp gap (`middleBottom`) above the bar's slot. When it cannot fit between the two it starts under the headline and
+  the column scrolls, with room at its end for the bar, so the last badge can always be scrolled clear of the bar. It reads only the headline's
+  height, which the screen keeps at the longest headline's, so the grid does not move when the question becomes a tagline. Before, the grid was
+  centred in the room under the headline, which put it at about two thirds of the screen height. A measured fact: the
+  four line question and its emoji take 422 dp at 100 percent text (the headline zone ends at 462 dp), so on a 411 by 915 dp phone the headline
+  zone ends past the middle of the window, and the grid starts a gap under it, with its centre at about 554 dp of 915, 60 percent and not 50, and
+  never overlapping. The grid is on the exact middle of the window only from about 1110 dp of height, which the layout tests show at 411 by
+  1280 dp. Getting nearer 50 percent on a phone means a shorter headline zone, which is a decision for the owner and not made here.
 ## 4. External contracts
 
 | Call | Method and path | Key params | Auth | Response format | Measured wire size | Measured latency |
@@ -1219,6 +1236,12 @@ float operations, a guess at well under a millisecond). **Timing** unchanged, th
 the same frames with different colours, and reduced motion is unchanged. **Caching** the stops are remembered for the theme colour, so they are not
 worked out on a frame. **Battery** unchanged: one gradient rect over the one offscreen layer, as before. **Shared limits** none.
 
+Unit V1, the badges on the middle of the window, the same questions: **API calls** none. **Payload** none. **Timing** unchanged: the placement is
+one more `when` in the frame's existing layout pass, two integer adds and a `max` and `min`, and the system bar insets it reads are the ones the screen
+already applies with `safeDrawingPadding`, so nothing is laid out twice and nothing waits. **UX** the grid is nearer the middle of the screen, and it
+scrolls with the headline in the windows that cannot hold both, as before. **Caching** none. **Battery** none, no animation and no timer. **Shared
+limits** none.
+
 ## 7. States and UX
 
 The reference is an interactive review page (private). The states it shows are restated here.
@@ -1343,6 +1366,9 @@ make a row fit, except the one rule below. A screen with nothing to decide has n
   the owner ruled that the rider just picks a colour, with no option to say no (2026-11-22), so there is no left button and no
   cycle. This is the one screen with a single button, an explicit exception to the two button bar.
 - Nothing is written under the headline or the badges: no caption, no count and no hint.
+- The badges are centred on the vertical middle of the window (unit V1), clamped so they never touch the headline zone or the bar, and they do not
+  move when the headline changes. Where the headline zone reaches past the middle, which it does on a phone at 100 percent text, they start a gap
+  under it.
 - A turn of the screen keeps the selection, applies the theme again and keeps the headline in place.
 - The Intro before this screen runs in the app's current colour, the default on a first run, and each badge tap recolours the whole app live.
 
@@ -1756,6 +1782,15 @@ in `searchstop/` touched:
   an unknown colour does not fail, the old four stops are still there behind the switch, and the lift is exact to the colour's half precision. The
   existing `FinaleWordmarkSpecTest` cases for `finaleGradientColors` are unchanged because its default stops are still the old ones.
 
+- **V1 tests, the badges on the middle of the window.** `IntroMiddlePlacementTest` (pure, a table of the placement function: centred when it fits, the
+  headline's limit, the bar's limit, no room for both, a frame with no bar slot, a window middle moved by the insets, never overlapping the headline
+  and clear of the bar by the gap whenever both can be kept over a sweep of window middles, the headline's height being the only thing read, the
+  window middle from the insets, the flags and their order). `IntroThemeCentreChecks`, run at 411 dp by 915 dp at 100 and 150 percent text
+  (`IntroThemeCentrePhoneTest`, `IntroThemeCentrePhoneLargeTextTest`), at 320 dp by 800 dp at 200 percent (`IntroThemeCentreNarrowTest`) and at 411 dp by
+  1280 dp (`IntroThemeCentreTallTest`, which also holds that the window can hold the grid on its middle): the grid is where the placement puts it, its
+  centre is the window middle to 2 dp when it fits and it starts under the headline's gap when it does not, no nearer the headline than one gap, not
+  moved by any of the four taglines (the picked badge's own 4 dp lift aside), and scrolled to the end one gap above the bar, never behind it, with no
+  two badges overlapping. Nothing was deleted or loosened.
 ## 9. Open gaps and decisions
 
 | Gap or decision | Owner | Needed by |
@@ -1923,6 +1958,16 @@ Each is a default taken to keep moving. None has been seen by the owner. The scr
 | U11-8 | The extra large letter is `headlineLarge` at `FontWeight.Black` (`XLARGE_LETTER_WEIGHT`), still white | The spec said the heaviest the family has. The system family has Black. With the alternative typeface switched on, which has only Regular and SemiBold, Black resolves to the SemiBold it has. The other sizes keep the small title in its own weight | Default, not yet seen by owner |
 | U11-9 | The search field's page padding, the same at the start and the end, is on a plain `Box` around it, the field fills that box, and the column it sits in fills the width | The field's end inset was seen as 0 on a phone. A layout test on the old modifier chain (the padding on the field itself) read 16 dp at both ends in a Robolectric window, so the cause was not reproduced there. Moving the padding off the text field's own modifier chain removes it from the question. `IntroBarOverlayTest` pins 16 dp at both ends at 411 dp and 320 dp, idle, focused and holding a long query. If a phone still shows it, the cause is in the taj text field's own sizing, which this unit does not touch | Default, not yet seen by owner |
 
+
+### Unit V1, decisions where the spec was silent
+
+Each is a default taken to keep moving. None has been seen by the owner.
+
+| # | Decision | Why, and what changes if it is wrong | Decision |
+|---|---|---|---|
+| V1-1 | The grid is clamped under the headline zone with the zone's own 24 dp gap (`titleToMiddle`) and above the bar's slot with a 16 dp gap (`middleBottom`), the two gaps the frame already had, and not two equal gaps | The spec said one spacing step each. Reusing the frame's two keeps every other screen's rhythm. If both should be 24 dp, `middleBottom` is the one number, and it moves the other screens too | Default, not yet seen by owner |
+| V1-2 | The window middle is worked out from `WindowInsets.safeDrawing`, the insets `IntroFlowScreen` already pads by, and not from the position of the frame on screen | A position read after layout would draw a frame in the wrong place and then move. The two give the same number while the screen pads by those insets. If the keyboard were up it would count in the window, but this screen has none | Default, not yet seen by owner |
+| V1-3 | On a phone the grid centre is not 50 percent of the screen height, because the headline zone ends past the middle (about 60 percent at 411 by 915 dp at 100 percent text) | The spec asked for 50 percent clamped so it never overlaps the headline. Both cannot hold. The clamp wins, as the spec said. A shorter headline zone or a smaller question would bring it nearer 50 | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

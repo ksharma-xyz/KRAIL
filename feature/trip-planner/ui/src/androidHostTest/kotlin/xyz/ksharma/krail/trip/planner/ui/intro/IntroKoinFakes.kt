@@ -27,6 +27,7 @@ import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.NswStopsSandook
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
+import xyz.ksharma.krail.trip.planner.ui.intro.finale.IntroFinaleSignal
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
 
@@ -47,4 +48,6 @@ internal fun introKoinFakes(sandook: Sandook = FakeSandook()): Module = module {
     single<NswParkRideSandook> { FakeNswParkRideSandook() }
     single<NswStopsSandook> { FakeNswStopsSandook() }
     single<ParkRideService> { FakeParkRideService() }
+    // The real signal, not a fake: it is in memory, and with no host attached the finish goes straight on.
+    single { IntroFinaleSignal() }
 }

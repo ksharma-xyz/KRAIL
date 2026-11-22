@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
+import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 
@@ -101,3 +102,10 @@ internal const val THEME_HEADLINE_RESERVED_LINES = 3
 
 /** The theme colour as hex, for the app to switch to, or null for an id the Intro does not offer. */
 internal fun themeHexFor(themeId: Int?): String? = themeChoiceFor(themeId)?.style?.hexColorCode
+
+/**
+ * The colour the finale floods the screen with: the theme the rider chose, and the app's default theme when none
+ * was chosen or the id is not one the Intro offers. The first screen makes a choice before anything else, so the default
+ * is only a safe answer and not a path a rider takes.
+ */
+internal fun finaleThemeHex(themeId: Int?): String = themeHexFor(themeId) ?: DEFAULT_THEME_STYLE.hexColorCode

@@ -23,8 +23,10 @@ import xyz.ksharma.krail.core.testing.fakes.FakeNswParkRideSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
+import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.intro.finale.IntroFinaleSignal
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
@@ -33,6 +35,8 @@ import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeParkRideCatalogue
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeUserLocationManager
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 import kotlin.time.TimeSource
 
 /**
@@ -55,6 +59,7 @@ class IntroFlowRouteTest {
     private val restorationTester by lazy { StateRestorationTester(composeRule) }
     private val analytics = FakeAnalytics()
     private var savedTripsOpened = 0
+    private val finale = IntroFinaleSignal()
     private val appliedThemes = mutableListOf<String>()
 
     private val viewModel = IntroFlowViewModel(
@@ -83,6 +88,7 @@ class IntroFlowRouteTest {
                     onNavigateToSavedTrips = { savedTripsOpened++ },
                     onApplyTheme = { appliedThemes += it },
                     userLocationManager = manager,
+                    finale = finale,
                 )
             }
         }
@@ -151,6 +157,29 @@ class IntroFlowRouteTest {
         }
 
         assertEquals(1, savedTripsOpened)
+    }
+
+    @Test
+    fun `with a finale host the finish waits for the finale to ask, then opens Saved Trips once and says so`() {
+        finale.attachHost()
+        show(FakeUserLocationManager())
+        composeRule.onNodeWithText(PARK_RIDE_NO).performClick()
+        composeRule.waitForIdle()
+        repeat(3) {
+            composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
+            composeRule.waitForIdle()
+        }
+
+        assertEquals(0, savedTripsOpened, "Saved Trips was opened before the finale covered the screen")
+        val run = assertNotNull(finale.request.value)
+        assertEquals(DEFAULT_THEME_STYLE.hexColorCode, run.themeHexColorCode, "no theme was chosen on this route")
+        assertTrue(!finale.navigated.value)
+
+        composeRule.runOnIdle { finale.requestNavigate() }
+        composeRule.waitForIdle()
+
+        assertEquals(1, savedTripsOpened)
+        assertTrue(finale.navigated.value, "the finale was not told the Intro had navigated")
     }
 
     @Test

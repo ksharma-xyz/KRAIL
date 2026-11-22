@@ -508,6 +508,29 @@ files are in `intro/finale/`, and everything it decides is a pure function with 
   every touch, and a tap anywhere is its `onTap`, a gesture and not a control. It sets one phrase, `Let's KRAIL`, as a polite live region
   and hides the letters from a screen reader. It is a layer above the app and never wraps it, so nothing is composited offscreen that holds
   the app or a map.
+- **The signal and the host.** `IntroFinaleSignal` is an app level singleton registered in `tripPlannerNavigationModule`, in memory only
+  (an `internal` surface behind a public class, so the app root can inject it and nothing else can reach it). `IntroFinaleHost` is
+  a public composable that `KrailApp` puts around `KrailNavHost`: one box that draws the app and, only while a run is being played, the
+  finale layer as a **sibling above it**, never a layer that holds the app, so a map under it is never composited offscreen (the iOS rule
+  in `docs/MAPLIBRE_IOS_PITFALLS.md`). Idle it is one box and one state read and draws nothing. The run is `playFinale`, a finite loop
+  of `withFrameNanos` that feeds each drawn frame to `finaleStep` and writes the one frame the layer reads, inside
+  `repeatOnLifecycle(STARTED)`, so it ends when the host leaves the composition and is cancelled when the app stops. While the layer is up
+  the app is hidden from a screen reader (`clearAndSetSemantics` on the box that holds it, applied only then) and the layer swallows every
+  touch.
+- **The hand-off.** `onIntroFinished(finale, themeHexColorCode, navigateToSavedTrips)` is still the one place the end of the Intro is
+  handed on from, and is called from the same effect after the same writes in the same order (the trip, both flags and
+  `intro_lets_krail`, then the effect). It starts the finale in the colour of `finaleThemeHex(state.selectedThemeId)` (the chosen theme, and
+  the default theme when there is none). It navigates straight away only when no host is attached or a run is already playing, so a screen
+  with no host (a test, a preview) never waits for a finale that is not there. Otherwise Saved Trips is opened when the finale asks, at full
+  cover: the route collects `IntroFinaleSignal.navigateRequests` while it is started, calls the callback it has **now**, and says so with
+  `onNavigated()`. The signal never holds the Intro's callback, so a turn of the screen cannot leave one for a screen that is gone. The
+  entry injects the signal with `koinInject` at the entry, as `JourneyMapEntry` injects `Analytics`, and passes it to `IntroFlowRoute`; the Intro
+  opened again from Settings takes the same path.
+- **A turn of the screen, or a stopped app, in the middle of the finale.** A run is claimed by the host that plays it
+  (`IntroFinaleSignal.claim`). A host that finds a run it did not start does not play it again: `recoverFinale` asks the Intro to navigate
+  if it has not, waits for it for at most 1 s, and the run ends, so the finale jumps to its end and the layer is gone. Nothing replays and
+  nothing is left over the app. Because the host leaves the composition on a turn of the screen and its coroutine is cancelled on stop, both
+  look the same to the next host. A killed process has no signal and no layer at all, and the Intro was already marked seen.
 - **Previews.** `FinalePreviews.kt` draws one still frame at each moment (entering at 300 ms, the hold at 1050, blended to the theme colour
   at 2000, part way through the flood at 2250, fading at 2850), and the blended frame in Metro, Bus and Ferry as well as Train. Each is
   `@PreviewScreen`, so it is shown in light and dark, at 100 and 200 percent text and on a tablet, and two are on a 320 dp canvas in
@@ -775,6 +798,26 @@ left button, Not now, leaves without saving), (2) there is no Try again and no e
 can be saved while the stops failed, (3) the finish never blocks on the stops, it waits at most 15 s and then proceeds.
 
 ### The finale (unit R4)
+
+```mermaid
+sequenceDiagram
+    participant VM as IntroFlowViewModel
+    participant R as IntroFlowRoute
+    participant S as IntroFinaleSignal
+    participant H as IntroFinaleHost (app root)
+    participant N as Navigator
+    VM->>VM: trip, both flags, intro_lets_krail (as before)
+    VM-->>R: NavigateToSavedTrips
+    R->>S: start(theme colour)
+    S-->>H: run (a host is attached)
+    H->>H: frames: wordmark, glow, blend, flood
+    H->>S: requestNavigate (once, at full cover)
+    S-->>R: navigate request
+    R->>N: clearBackStackAndNavigate(SavedTrips)
+    R->>S: onNavigated
+    H->>H: two drawn frames and 300 ms, then the colour fades
+    H->>S: end
+```
 
 The timeline, in milliseconds from the first frame, with every number a named constant (`FinaleTimeline.kt`) so a table holds it.
 They are starting points to tune on a phone.
@@ -1228,6 +1271,19 @@ in `searchstop/` touched:
   overlapping, and the letters at 200 percent the size of those at 100 percent where an unscaled mark would be twice as large). The
   colour at each pixel is not tested, because a host test cannot take a screenshot of a layer (`captureToImage` times out in the host
   runner), so what the layer draws is held as the plan of numbers and by the snapshots the lead records.
+- **The finale, wired (unit R4).** `IntroFinaleSignalTest` (a run only with a host attached, one run at a time, each with its own number, claimed
+  once, ending leaves nothing, the ask to navigate one shot and a stale ask dropped when the next run starts), `IntroFinaleHostTest`
+  (the host with a frame clock the test drives by hand and the Intro's part played by the test: idle draws nothing, a run covers the app and hides it from
+  a screen reader, the ask to navigate once and only at full cover, the colour held until the Intro says it navigated and then lifted with the
+  app back, a Intro that never answers still revealed, a tap skipping, reduced motion, a turn of the screen before the cover and after the
+  navigation both ending at once without a replay, a second run playing from the start), a test in `IntroFlowRouteTest` and one in
+  `IntroEntryTest` that with a host attached the finish does not open Saved Trips until the finale asks, then opens it once with the back stack
+  cleared and says so, and `finaleThemeHex` in `IntroThemeChoicesTest`.
+- **Existing tests changed in R4, on purpose.** `IntroBurstTest`'s one test of `onIntroFinished` now has three: with no host it goes straight on
+  once, with a host it starts the finale in the theme colour and does not navigate, and a second finish during a finale goes straight on and starts no
+  second. `IntroKoinFakes` registers a real `IntroFinaleSignal` (it has no host, so every existing entry test still finishes straight to Saved
+  Trips, unchanged). `TripPlannerUiSnapshotTest` excludes the two narrow finale previews, as it does the other narrow Intro previews. Nothing was
+  deleted.
 - **Guards added in R1.** `IntroBannedWordsTest` (banned words and characters in every Intro string and string resource,
   with a self check that catches each one), `IntroCopyTest` (every label the bar can show and every headline) and
   `IntroEmojiGuardTest` (any emoji outside the shared list, the pin and the star, and those two outside their one file).

@@ -19,6 +19,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
+import org.koin.mp.KoinPlatform
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
@@ -27,6 +28,7 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.di.viewModelsModule
 import xyz.ksharma.krail.trip.planner.ui.flow.RecordingTripPlannerNavigator
+import xyz.ksharma.krail.trip.planner.ui.intro.finale.IntroFinaleSignal
 import xyz.ksharma.krail.trip.planner.ui.navigation.IntroRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
@@ -133,6 +135,25 @@ class IntroEntryTest {
         }
 
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(listOf<NavKey>(SavedTripsRoute), navigator.cleared)
+    }
+
+    @Test
+    fun `with a finale host the entry opens Saved Trips only when the finale asks, with the back stack cleared`() {
+        val finale = KoinPlatform.getKoin().get<IntroFinaleSignal>()
+        finale.attachHost()
+        launch()
+        answerNo()
+        repeat(3) {
+            composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
+            composeRule.waitForIdle()
+        }
+
+        assertEquals(emptyList<NavKey>(), navigator.cleared)
+
+        composeRule.runOnIdle { finale.requestNavigate() }
         composeRule.waitForIdle()
 
         assertEquals(listOf<NavKey>(SavedTripsRoute), navigator.cleared)

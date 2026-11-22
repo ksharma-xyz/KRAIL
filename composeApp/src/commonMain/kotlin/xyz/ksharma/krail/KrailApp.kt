@@ -14,11 +14,14 @@ import xyz.ksharma.krail.core.appinfo.LocalAppInfo
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.LocalThemeController
 import xyz.ksharma.krail.theme.rememberAppThemeController
+import xyz.ksharma.krail.trip.planner.ui.intro.finale.IntroFinaleHost
+import xyz.ksharma.krail.trip.planner.ui.intro.finale.IntroFinaleSignal
 
 @Composable
 fun KrailApp() {
     val appInfo = rememberAppInfo()
     val themeController = rememberAppThemeController()
+    val introFinale: IntroFinaleSignal = koinInject()
 
     CompositionLocalProvider(
         LocalAppInfo provides appInfo,
@@ -27,7 +30,11 @@ fun KrailApp() {
         SetupCoilImageLoader()
 
         KrailTheme(themeController = themeController) {
-            KrailNavHost(modifier = Modifier.exposeTestTagsToUiAutomation())
+            // The finale after the Intro is a sibling above the nav host, never a layer that holds it, so a map
+            // under it is never composited offscreen. Idle, it is one box and draws nothing.
+            IntroFinaleHost(signal = introFinale) {
+                KrailNavHost(modifier = Modifier.exposeTestTagsToUiAutomation())
+            }
         }
     }
 }

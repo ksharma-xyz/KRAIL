@@ -1,9 +1,12 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.trip.planner.ui.intro.finale.IntroFinaleSignal
 import kotlin.math.abs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class IntroBurstTest {
@@ -123,12 +126,40 @@ class IntroBurstTest {
     // region the hand off
 
     @Test
-    fun `the end of the Intro is handed on through one function, once`() {
+    fun `with no finale host the end of the Intro goes straight to Saved Trips, once, and starts no finale`() {
+        val finale = IntroFinaleSignal()
         var calls = 0
 
-        onIntroFinished { calls++ }
+        onIntroFinished(finale, themeHexColorCode = KrailThemeStyle.Metro.hexColorCode) { calls++ }
 
         assertEquals(1, calls)
+        assertNull(finale.request.value)
+    }
+
+    @Test
+    fun `with a finale host the end of the Intro starts the finale in the theme colour and does not navigate yet`() {
+        val finale = IntroFinaleSignal()
+        finale.attachHost()
+        var calls = 0
+
+        onIntroFinished(finale, themeHexColorCode = KrailThemeStyle.Metro.hexColorCode) { calls++ }
+
+        assertEquals(0, calls)
+        assertEquals(KrailThemeStyle.Metro.hexColorCode, finale.request.value?.themeHexColorCode)
+    }
+
+    @Test
+    fun `a second finish while a finale is playing goes straight to Saved Trips and starts no second finale`() {
+        val finale = IntroFinaleSignal()
+        finale.attachHost()
+        var calls = 0
+        onIntroFinished(finale, themeHexColorCode = KrailThemeStyle.Train.hexColorCode) { calls++ }
+        val first = finale.request.value
+
+        onIntroFinished(finale, themeHexColorCode = KrailThemeStyle.Bus.hexColorCode) { calls++ }
+
+        assertEquals(1, calls)
+        assertEquals(first?.id, finale.request.value?.id)
     }
 
     // endregion

@@ -6,9 +6,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroFlowRoute
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroFlowViewModel
+import xyz.ksharma.krail.trip.planner.ui.intro.finale.IntroFinaleSignal
 import xyz.ksharma.krail.trip.planner.ui.navigation.IntroRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
@@ -25,6 +27,9 @@ import kotlin.random.Random
  * would outlive the Intro. A key made once for each visit and saved with the entry gives the Intro a
  * new view model every time it is opened, such as from Settings, and the same one through a turn of
  * the screen.
+ *
+ * The finale's signal is the app's singleton, injected here at the entry as the other entries inject what they need, and
+ * the Intro starts it when it finishes. The entry only says where Saved Trips is. The finale layer is at the app root.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
@@ -36,9 +41,11 @@ internal fun EntryProviderScope<NavKey>.IntroEntry(
     ) {
         val visit = rememberSaveable { Random.nextLong().toString() }
         val viewModel = koinViewModel<IntroFlowViewModel>(key = "$INTRO_VIEW_MODEL_KEY-$visit")
+        val finale = koinInject<IntroFinaleSignal>()
 
         IntroFlowRoute(
             viewModel = viewModel,
+            finale = finale,
             onNavigateToSavedTrips = {
                 // Clear entire back stack - the rider shouldn't go back to the Intro
                 tripPlannerNavigator.clearBackStackAndNavigate(SavedTripsRoute)

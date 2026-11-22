@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
+import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import kotlin.test.Test
@@ -143,6 +144,14 @@ class IntroThemeChoicesTest {
         val longest = (listOf(null) + choices.map { it.style.id }).maxOf { introThemeHeadline(it).lines.size }
 
         assertTrue(longest <= THEME_HEADLINE_RESERVED_LINES, "$longest lines")
+    }
+
+    @Test
+    fun `the finale floods in the theme the rider chose, and in the default theme when there is none`() {
+        choices.forEach { assertEquals(it.style.hexColorCode, finaleThemeHex(it.style.id), it.name) }
+        assertEquals(DEFAULT_THEME_STYLE.hexColorCode, finaleThemeHex(null))
+        assertEquals(DEFAULT_THEME_STYLE.hexColorCode, finaleThemeHex(KrailThemeStyle.PurpleDrip.id))
+        assertEquals(DEFAULT_THEME_STYLE.hexColorCode, finaleThemeHex(-1))
     }
 
     private class Row(val name: String, val current: Int?, val next: Int)

@@ -22,6 +22,13 @@ import xyz.ksharma.krail.trip.planner.ui.savedtrips.ParkRideTile
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 
 /**
+ * Whether the map home is on: the Search Stop maps flag, the one switch every part of the map home reads, so the
+ * home entry, the pins and the Park & Ride suggestion all agree on whether there is a map home at all.
+ */
+internal fun mapHomeEnabled(flag: Flag): Boolean =
+    flag.getFlagValue(FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key).asBoolean(fallback = false)
+
+/**
  * What the home map needs that the saved trips screen does not already hold: whether there is a map at
  * all, whether it is offline, and the Home, Work and `P` pins with their positions.
  */
@@ -63,8 +70,7 @@ internal class HomeMapViewModel(
     private val ioDispatcher: CoroutineDispatcher,
 ) : ViewModel() {
 
-    private val mapsAvailable: Boolean =
-        flag.getFlagValue(FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key).asBoolean(fallback = false)
+    private val mapsAvailable: Boolean = mapHomeEnabled(flag)
 
     private val inputs = MutableStateFlow(HomeMapInputs())
 

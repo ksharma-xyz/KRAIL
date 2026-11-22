@@ -30,8 +30,11 @@ import xyz.ksharma.krail.trip.planner.ui.intro.IntroParkRideGateway
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroStopsGateway
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.parkride.AddParkRideViewModel
+import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideStationAdder
 import xyz.ksharma.krail.trip.planner.ui.parkride.RealParkRideAvailabilityLoader
 import xyz.ksharma.krail.trip.planner.ui.parkride.RealParkRideCatalogue
+import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionSources
+import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionViewModel
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.InviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.RealInviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
@@ -312,6 +315,30 @@ val viewModelsModule = module {
         HomeMapViewModel(
             sandook = get(),
             connectivity = get(),
+            flag = get(),
+            ioDispatcher = get(named(IODispatcher)),
+        )
+    }
+
+    // The one-time Park & Ride suggestion on the map home. It reads only local data and adds through the picker's own add.
+    viewModel {
+        ParkRideSuggestionViewModel(
+            preferences = get(),
+            sources = ParkRideSuggestionSources(
+                catalogue = RealParkRideCatalogue(
+                    nswParkRideFacilityManager = get(),
+                    stopResultsManager = get(),
+                    sandook = get(),
+                    festivalManager = get(),
+                ),
+                sandook = get(),
+                parkRideSandook = get(),
+            ),
+            adder = ParkRideStationAdder(
+                parkRideSandook = get(),
+                analytics = get(),
+                appReviewManager = get(),
+            ),
             flag = get(),
             ioDispatcher = get(named(IODispatcher)),
         )

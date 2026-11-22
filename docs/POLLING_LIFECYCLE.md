@@ -120,6 +120,7 @@ own, so it is classified here with the state it shares.
 | `DiscoverViewModel.uiState` |
 | `HomeMapViewModel.uiState` |
 | `MapStopSelectionViewModel.mapUiState` |
+| `ParkRideSuggestionViewModel.uiState` |
 | `SavedTripsViewModel.uiState` |
 | `SavedTripsViewModel.whileScreenSubscribed` |
 | `SearchStopViewModel.uiState` |

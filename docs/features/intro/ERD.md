@@ -491,6 +491,27 @@ files are in `intro/finale/`, and everything it decides is a pure function with 
   is to be asked to navigate (once), counts the frames the destination has been drawn, and decides when the colour may lift
   (`isSettled`). The overlay host only feeds it the frame time, the Intro's "navigated" and a tap, so the whole behaviour is
   tested with a simulated clock and no real time.
+- **The wordmark.** `FinaleWordmark` is taj `Text` and nothing else: the tagline token (the app's heaviest display style) times 3, italic
+  through `fontStyle`, so there is no new font and no size written in code. It is two rows, `#LET'S` and `KRAIL`, so a word is never
+  split and never beside a sibling. Each letter is its own `Text`, a unit that rises, grows and fades in through `graphicsLayer`
+  read inside the layer lambda from the frame, so a frame recomposes and lays out nothing. The size is scaled down, never squeezed:
+  `rememberTextMeasurer` measures every letter once for the width it was given, and one scale (`wordmarkFitScale`, the smallest any line
+  needs) is applied to the whole mark, so at 320 dp with text at 200 percent the two lines stay whole and in step. The gradient is the
+  app's four AI gradient stops (`AiGradientTokens.stops`, no new colour) drawn over the letters with `BlendMode.SrcIn` inside an offscreen
+  layer that holds only the wordmark, so it never touches the app behind it. taj `Text` replaces a brush on the style with its own
+  colour, so the brush cannot go on the style. The glow is the text style's own coloured `Shadow`, with its blur and opacity in 12 steps
+  (`glowStep`), so the style changes at most 12 times in the whole finale and not on every frame. There is no `Modifier.blur`. The mark
+  leaves room round the letters for the glow so the offscreen layer never cuts it.
+- **The overlay.** `FinaleOverlay` is one full screen layer that draws a frame: the backdrop (`drawBehind`, from `backdropPlan`, which is a
+  table-tested plan of plain numbers: the ground, then a circle that grows from the middle of the wordmark to the farthest corner, and the
+  whole screen as a rectangle once it has covered it), and the wordmark inside the system bars and the page's side padding. It swallows
+  every touch, and a tap anywhere is its `onTap`, a gesture and not a control. It sets one phrase, `Let's KRAIL`, as a polite live region
+  and hides the letters from a screen reader. It is a layer above the app and never wraps it, so nothing is composited offscreen that holds
+  the app or a map.
+- **Previews.** `FinalePreviews.kt` draws one still frame at each moment (entering at 300 ms, the hold at 1050, blended to the theme colour
+  at 2000, part way through the flood at 2250, fading at 2850), and the blended frame in Metro, Bus and Ferry as well as Train. Each is
+  `@PreviewScreen`, so it is shown in light and dark, at 100 and 200 percent text and on a tablet, and two are on a 320 dp canvas in
+  `narrow/`, the entering frame and the hold. They are stills, so reduced motion has no preview of its own: it is the plain colour.
 - **The wordmark's numbers.** `FinaleWordmarkSpec.kt`: the two lines `#LET'S` and `KRAIL`, the label read once for a screen reader,
   the fit (`fitScale`, `wordmarkFitScale`), the brand gradient moved toward the theme colour (`finaleGradientColors`), the glow in twelve
   steps (`glowStep`, `glowBlurPx`, `glowAlpha`), where the gradient sits as it slides (`gradientRangePx`) and the circle that floods
@@ -1200,6 +1221,13 @@ in `searchstop/` touched:
   for, a tap during the entrance and after the lift, reduced motion, the run's length) and `FinaleWordmarkSpecTest` (the lines, the
   label, the fit at a narrow width and at 200 percent text, the gradient at blend 0, halfway and 1, the glow's steps, the flood
   radius from the middle and from a centre that is not).
+- **The finale, drawn (unit R4).** `FinaleBackdropTest` (the plan the backdrop draws at each moment, the rectangle from the covered
+  moment on, the ground and the colour lifting together, reduced motion), `FinaleOverlayTest` (a screen reader hears the one phrase and
+  none of the letters, a tap anywhere is one skip each time) and `FinaleWordmarkNarrowTest` (320 dp with text at 100 and 200 percent
+  in one screen: two whole lines of 6 and 5 letters, no row as wide as its room, no letter cut by the window, no two letters of a line
+  overlapping, and the letters at 200 percent the size of those at 100 percent where an unscaled mark would be twice as large). The
+  colour at each pixel is not tested, because a host test cannot take a screenshot of a layer (`captureToImage` times out in the host
+  runner), so what the layer draws is held as the plan of numbers and by the snapshots the lead records.
 - **Guards added in R1.** `IntroBannedWordsTest` (banned words and characters in every Intro string and string resource,
   with a self check that catches each one), `IntroCopyTest` (every label the bar can show and every headline) and
   `IntroEmojiGuardTest` (any emoji outside the shared list, the pin and the star, and those two outside their one file).

@@ -56,6 +56,8 @@ class TripPlannerUiSnapshotTest : BaseSnapshotTest() {
         "PreviewIntroDestinationNarrowNoMatch",
         "PreviewIntroOriginNarrowNearby",
         "PreviewIntroConfirmNarrowLongNames",
+        "PreviewFinaleNarrowEntering",
+        "PreviewFinaleNarrowHold",
     )
 
     @Test

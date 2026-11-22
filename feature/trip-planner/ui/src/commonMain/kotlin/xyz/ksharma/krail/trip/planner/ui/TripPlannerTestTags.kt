@@ -41,6 +41,9 @@ object TripPlannerTestTags {
     // The confirm screen's trip tile.
     const val INTRO_CONFIRM_TILE = "intro.confirm.tile"
 
+    // The finale layer over the app after the Intro. It is there for a few seconds and then gone.
+    const val INTRO_FINALE = "intro.finale"
+
     // Saved trips (home)
     const val SAVED_TRIPS_SCREEN = "savedtrips.screen"
     const val SAVED_TRIPS_LIST = "savedtrips.list"

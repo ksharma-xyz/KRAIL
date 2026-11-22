@@ -806,6 +806,41 @@ Three changes to the colour screen and the finale, each its own commit. Everythi
   zone ends past the middle of the window, and the grid starts a gap under it, with its centre at about 554 dp of 915, 60 percent and not 50, and
   never overlapping. The grid is on the exact middle of the window only from about 1110 dp of height, which the layout tests show at 411 by
   1280 dp. Getting nearer 50 percent on a phone means a shorter headline zone, which is a decision for the owner and not made here.
+- **A tap on a badge plays one sequence on one clock.** Before, a tap changed the headline's words, the emoji and the button's colour in one frame.
+  Now it is one choreographed run of about 700 ms, a pure timeline (`IntroThemeChangeTimeline.kt`, with the lines in `IntroThemeChangeLines.kt` and the emoji in `IntroThemeChangeEmoji.kt`, like `finaleFrameAt`: `themeChangeFrameAt(timeMs,
+  reduceMotion)` gives each element's progress, and the per element functions it is made of are what the drawing reads). In milliseconds from the tap:
+
+  | From | To | Element | What it does |
+  |---|---|---|---|
+  | 0 | 90, then back by about 540 | The tapped badge | Presses softly: scale down 8 percent over 90 ms, then a critically damped return, no overshoot (`themePress`). Its dance and drift are untouched and the press multiplies them |
+  | 0 | 520 | The ground | A circle of the new ground colour grows from the middle of the tapped badge to the farthest corner of the window, cosine in and out, drawn behind the content with `drawBehind`, no blur, no allocation (`themeWash`) |
+  | 0 | 600 | The colours | One blend, 0 to 1, cosine in and out (`themeColour`), which the theme colour, the headline's text colour and the ink all read, so nothing is out of step. The button is the taj button reading the blended theme colour |
+  | 0 | 233 | The old headline | Eases up 8 dp and fades out, all its lines together (`themeOutgoing`), while its text colour moves to the new ink on the colour blend |
+  | 0 | 120, then to 620 | The emoji | Shrinks to 0.6 over 120 ms, becomes the new emoji at its smallest, and springs back to exactly 1 with about 5 percent of overshoot (a short underdamped spring, `themeEmojiScale`) |
+  | 233 | 573 | The new tagline | Comes in line by line, 60 ms apart, each line rising 8 dp over 280 ms and fading in on its own opacity (`themeIncomingLine`). It starts when the old one is gone, so the two are never on screen together |
+  | 450 | 700 | The button | On the first pick only, `Yes, this one` shows at 450 ms and fades in over the 250 ms it always takes, so it is last. On a later pick it is already there and stays |
+
+  Every alpha is on one opaque layer: each line is one text with its own opacity, and there is no second copy of any text. The sequence is state
+  in `IntroThemeChange`, held by `IntroThemeBlend` and provided as `LocalIntroThemeChange` to everything under the Intro's shell. It reuses the existing
+  live theme write and the existing `IntroThemeBlend`: the blend now takes the colour from the one clock (`ThemeChangeSpec.colourAt`) instead of a
+  280 ms `animateColorAsState` of its own, and re-provides `LocalThemeColor` with the blended hex each frame, as it did, and exactly the theme's own
+  hex once the run is over. `IntroThemeBlend(selectedThemeId)` takes the theme from the selection and falls back to the app's colour, so it
+  starts on the pick and not a frame after the app has been switched. Nothing plays when it is first composed (a turn of the screen, a resume).
+  The clock is one `Animatable<Float>` of milliseconds, linear, read inside `graphicsLayer` and `drawBehind` lambdas.
+  The wash is drawn by the shell's outer box (`IntroFlowScreen`), because the box that holds the screens is clipped, and covers the window
+  including the system bars. Once a theme is chosen that box's ground stays the theme's tint (`themeSolidBackgroundColor()`, read live, so light and dark
+  still reach it), and `introGroundColour` is the same arithmetic as a pure function so the wash can be made for a theme that is not the app's yet,
+  with a test that holds the two equal to within one 8 bit step of a channel (taj's tint is a colour with an alpha, which keeps 8 bits).
+  **A second tap is carried on, not restarted.** `themeChangeSpecAfter(previous, timeMs, request)` builds the next run so that its state at 0 is the
+  state the previous had at `timeMs`: the colours begin at the blend that had been reached, the circle that was growing is left where it was
+  under the new one (at most four are kept, and one that had covered the window leaves none), the headline that was most to be seen leaves from the
+  opacity and the place it had, the emoji starts at the scale and the glyph it had, the badge pressed before carries on from how far its press had
+  got, and the button stays if it had shown. A table test holds it for every pair and for eleven times of interruption.
+  **Reduced motion** (the existing `isReduceMotionEnabled()`) is a plain 200 ms cross-fade of the text and the colours (the ground is a whole window
+  layer crossing from the old ground to the new): no press, no wash, no pop, no rise, no stagger. It runs at normal animation speed even where the
+  system's animation scale is 0, which is how Android says reduce motion, because a scale of 0 would turn the cross-fade into a snap.
+  Outside the shell (a preview, a screenshot, a test of the screen alone) there is no sequence and the headline changes by the plain fade and rise of
+  the other screens (unit U8), which is unchanged. `THEME_BLEND_MS` and `themeBlendSpec` are gone.
 - **The wordmark takes the website's colours, and is one layer.** `FinaleWordmarkFill` (`FinaleGradient.kt`) has three values and one constant,
   `FINALE_WORDMARK_FILL`, picks one: `Original` (the four AI gradient stops the wordmark first had), `ThemePartner` (the chosen colour and its
   partner, unit U10) and `WebsiteModes`, the **default**. `WebsiteModes` is the website's `.lets-krail-big`: one solid, fully opaque horizontal
@@ -1273,6 +1308,18 @@ wordmark and is unchanged. **Caching** the stops and the shadow style are rememb
 the letters (two, where it was one, a guess at a small cost for the 2.5 s of the finale, to check on a phone), a gradient rect on a frame, no per-frame
 text style and no glow steps, so the text is no longer re-laid out as the glow changes (12 style changes before, none now). **Shared limits** none.
 
+Unit V1, the theme change sequence, the same questions: **API calls** none: nothing here touches the network, and the theme write is the one
+`updateTheme` call per tap it already was. **Payload** none. **Timing** unchanged for first content, nothing blocks. A tap starts the run on the next
+frame (the effect that starts it) and it is over in 700 ms, 200 ms with reduced motion. **UX** the loading, slow, failed and offline states do not
+exist on this screen. A tap is never ignored: a second one carries on from the first. Reduced motion is the 200 ms cross-fade. **Caching** none. **Battery**
+a tap costs 700 ms of frames, once, on a screen the rider is looking at, with no timer, no wake-up and nothing in the background, and it ends on its
+own. The wash is up to two to six opaque fills or circles over the window a frame (a guess at the overdraw, to check on a phone), `drawBehind` and
+`graphicsLayer`, so no composition and no layout per frame for them, and **no allocation per frame in the draw path** (the press, the lines, the emoji and
+the wash read floats; the ground layers are walked with an index loop). The colours do allocate: the blend goes through Compose's `lerp` (a colour
+space change with a few small float arrays) and one hex string a frame, which `animateColorAsState` also did, over 600 ms now and not 280, so about
+twice the frames, and the readers of the theme colour (the taj button, the headline text) recompose on each of them. It is one `Animatable` and no new
+frame loop, and 120 Hz is the same work twice as often (a guess until it is measured on a phone). **Shared limits** none.
+
 ## 7. States and UX
 
 The reference is an interactive review page (private). The states it shows are restated here.
@@ -1400,6 +1447,9 @@ make a row fit, except the one rule below. A screen with nothing to decide has n
 - The badges are centred on the vertical middle of the window (unit V1), clamped so they never touch the headline zone or the bar, and they do not
   move when the headline changes. Where the headline zone reaches past the middle, which it does on a phone at 100 percent text, they start a gap
   under it.
+- A tap on a badge plays the sequence of unit V1 (section 3): the press, the wash from the badge, the colours on one blend, the old headline out, the
+  emoji pop, the tagline in line by line, and on the first pick the button last. A second tap during it carries on from where it is, and the
+  same badge again does nothing. With reduced motion it is a 200 ms cross-fade. The screen is tinted with the theme once one is chosen.
 - A turn of the screen keeps the selection, applies the theme again and keeps the headline in place.
 - The Intro before this screen runs in the app's current colour, the default on a first run, and each badge tap recolours the whole app live.
 
@@ -1829,6 +1879,20 @@ in `searchstop/` touched:
   word's opacity, one static shadow of 16 percent, 14 px blur and 4 px down at 130 px letters, scaling with the letter and never changing, the other two fills as they
   were, the gradient still across the word for the website fill and sliding for the others, and the 250 ms fade in of the whole word). `FinaleWordmarkNarrowTest` and the rest of
   the finale tests are unchanged and pass: the lines are still 6 and 5 letters, nothing is cut at 320 dp at 200 percent and the letters keep their size.
+- **V1 tests, the theme change sequence.** `IntroThemeChangeTimelineTest` (pure, a table: the 700 ms and 200 ms clocks, the press by time with its dip and no
+  overshoot, the wash, the one colour blend, the old headline out over 233 ms with its alpha and rise, the new lines 60 ms apart and none before 233 ms, the emoji's
+  shrink, swap, short spring and exact 1, one cut short while small, the button at 450 ms ending with the sequence, the frame at 0 and at the end, a time before the
+  tap, reduced motion with no press, wash, rise, stagger or pop, and the looks a second tap carries on from). `IntroThemeChangeSpecTest` (pure: a run that follows another starts in
+  the state the other had reached at eleven times of interruption, for the theme colour, the text colour and the ground at 30 points of the window, the circle left
+  under the new one and none when it had covered the window, at most four kept, the headline that is most to be seen, the emoji's scale and glyph, the press of the
+  badge before, the button, settling on exactly the theme's colour, the first wash over the old ground, and reduced motion with no circle and a carried on blend).
+  `IntroThemeChangeComposeTest` (the sequence under `IntroThemeBlend` with a hand stepped clock and real clicks on the badges: settled on the question with nothing
+  playing, a tap plays from the badge and ends settled on the tagline with the button, a second tap in the middle of the first with no jump in the colours, the emoji,
+  the headline or the first badge's press, the same badge again starts nothing, and reduced motion with no circle, no pop, no press and both headlines part way).
+  `IntroThemeGroundTest` holds `introGroundColour` equal, to within one 8 bit step, to taj's `themeSolidBackgroundColor()` for the four themes in the scheme the test runs in (light), and that a tinted ground is between the surface and the theme colour. `IntroThemeBlendTest`
+  (changed on purpose: the blend is on the 600 ms colour window of the one clock and no longer 280 ms; reduced motion is a 200 ms cross-fade and no longer a snap).
+  **Deleted on purpose:** "the blend is the spec that says 280 milliseconds, and an instant change under reduced motion" (the constants and the `snap` spec are
+  gone, replaced by a test of the new windows) and "with reduced motion the colour is the new one at once" (replaced by the cross-fade test).
 ## 9. Open gaps and decisions
 
 | Gap or decision | Owner | Needed by |
@@ -2016,6 +2080,20 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | V1-6 | The shadow is a second set of the same letters under the first, and not a shadow on the first set | The fill is blended in with `SrcIn`, which turns everything in its layer, a shadow included, into the fill colour at the shadow's opacity, a tinted halo, which is what was to go. A second set keeps the shadow black. It is not a different look from one text with a shadow | Default, not yet seen by owner |
 | V1-7 | The word fades in over 250 ms as one layer, and the letters rise by translation only, with no scale | The spec said no opacity on a letter and translation only. The 250 ms matches the backdrop's own fade in. If the word should appear faster, `WORDMARK_FADE_IN_MS` | Default, not yet seen by owner |
 | V1-8 | `FINALE_GRADIENT_FROM_THEME` is gone and `FINALE_WORDMARK_FILL` takes its place, a build time `val`, not a Remote Config flag | The spec asked for three values, which a Boolean cannot hold. No flag default was touched | Default, not yet seen by owner |
+
+### Unit V1, decisions where the spec was silent: the theme change
+
+| # | Decision | Why, and what changes if it is wrong | Decision |
+|---|---|---|---|
+| V1-9 | The ground the wash grows into is the theme colour at taj's light tint over the surface (15 percent in light, 45 percent in dark, `themeSolidBackgroundColor`), and it stays after the run, so the colour screen is tinted once a theme is chosen | The spec said a soft wash ending at the settled theme ground. The raw colour as a whole screen would put the headline and the badge rings on orange or blue. The tint keeps them legible. If the owner wants the raw colour, `introGroundColour` is the one function | Default, not yet seen by owner |
+| V1-10 | The headline's text takes the theme ink (`themeInkColor`, the adapted theme colour) once a theme is chosen, and the surface text before | The spec said the old text colour cross-fades to the new ink. It needed a settled colour to end on. The ink is measured against the app's own grounds and may be a little lower on the tint than on the plain surface, so it is a thing to read on a phone in light and dark | Default, not yet seen by owner |
+| V1-11 | The timings are the table in section 3: press 90 ms down by 8 percent and a critically damped return, wash 520 ms, colours 600 ms, old headline 233 ms and 8 dp, new lines from 233 ms, 60 ms apart, 280 ms each and 8 dp, emoji 120 ms to 0.6 and a spring (24 rad/s, damping 0.55) that is 1 by 620 ms, button at 450 ms | They are starting points to tune on a phone, each a named constant. The wash and the colours end before the sequence does on purpose, so the last 100 ms only has the tagline and the button | Default, not yet seen by owner |
+| V1-12 | The button's colour moves on the same colour window as the text and the ground (600 ms), and only its appearing is last (450 to 700 ms, first pick only) | The spec said the colours move from the same progress value and the button fades in last. Both hold: one blend for colour, and the reveal is when the button is there. On a later pick the button stays and only its colour moves | Default, not yet seen by owner |
+| V1-13 | The tap's place is the middle of the badge, read from its layout coordinates at the click, and the run starts on the frame after the pick, when the selection reaches `IntroThemeBlend` | The click gives no position. The badge's own drift and dance move it a few dp from where it was laid out, which is not seen in a wash that covers the window. One frame later is not seen either, because the headline reads the run and not the selection | Default, not yet seen by owner |
+| V1-14 | An interrupted run leaves its circle where it was under the new one, at most four, instead of finishing it or dropping it | Finishing it would jump, and dropping it would too. A circle that has covered the window leaves nothing under the new one | Default, not yet seen by owner |
+| V1-15 | The headline that leaves after a second tap is whichever of the leaving and the arriving one is more to be seen, from its own opacity and place | Two leaving headlines at once would be two translucent layers. A headline that was barely visible is dropped, which is not seen | Default, not yet seen by owner |
+| V1-16 | Reduced motion runs its 200 ms cross-fade at normal speed even when the system's animation scale is 0 | Android's remove animations sets the scale to 0, which would make the cross-fade a snap, and the spec asked for 200 ms. A rider who wants no change at all would need the plain swap, which is `reduceMotion` with a zero window | Default, not yet seen by owner |
+| V1-17 | The sequence exists only under the Intro's shell (`IntroThemeBlend`); a screen alone, a preview or a screenshot keeps the plain headline change of unit U8 | Previews and screenshots must be one still frame and never a running animation. The old path is small and was already tested | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

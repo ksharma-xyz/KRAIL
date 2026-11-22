@@ -10,6 +10,7 @@ import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -25,7 +26,10 @@ private const val DANCE_BLEND_MS = 250
 /**
  * The theme screen: the headline on top, the four badges in the middle and, below, the decision bar that the
  * shell draws. The headline asks for a colour until the rider picks one, and from then on it is the tagline of the
- * theme that is selected, entering again with the same motion each time it changes. The room for it is kept at
+ * theme that is selected. Inside the Intro's shell a tap on a badge plays one choreographed sequence on one clock
+ * (`IntroThemeChange`, `IntroThemeChangeTimeline.kt`): the badge presses, the new ground washes out from it, the old headline
+ * leaves, the emoji pops as the new one, the new tagline comes in line by line and the button shows last. Outside the shell, in a
+ * preview, the headline changes with the plain fade and rise of the other screens. The room for it is kept at
  * the longest it can be, so the badges never move when the words do. The badges are centred on the middle of the
  * window, at half the screen height, and only moved as far as it takes to keep a gap under the headline and a gap above
  * the bar (`IntroStepFrame`, [MiddlePlacement.CentredOnWindow]).
@@ -37,17 +41,24 @@ internal fun IntroThemeStepContent(
     modifier: Modifier = Modifier,
 ) {
     val headline = introThemeHeadline(selectedThemeId)
+    val change = LocalIntroThemeChange.current
     IntroStepFrame(
         headline = {
             // The room is that of the longest headline at this width and text size, measured as it is drawn, so the
             // badges below never move when a choice changes the words.
             BoxWithConstraints {
-                IntroHeadline(
-                    lines = headline.lines,
-                    emphasisIndex = headline.emphasisIndex,
-                    emoji = introEmojiFor(IntroStep.THEME, selectedThemeId),
-                    minLines = rememberThemeHeadlineLines(maxWidth),
-                )
+                val minLines = rememberThemeHeadlineLines(maxWidth)
+                if (change == null) {
+                    IntroHeadline(
+                        lines = headline.lines,
+                        emphasisIndex = headline.emphasisIndex,
+                        emoji = introEmojiFor(IntroStep.THEME, selectedThemeId),
+                        minLines = minLines,
+                    )
+                } else {
+                    // Inside the Intro's shell the words, the emoji and the colours are all played on the one clock of the sequence.
+                    IntroThemeSequenceHeadline(change = change, minLines = minLines)
+                }
             }
         },
         modifier = modifier,
@@ -74,6 +85,7 @@ internal fun IntroThemeBadges(
     val dim = KrailTheme.dimensions
     val motionRuns = themeMotionRuns(reduceMotion = isReduceMotionEnabled(), inspection = LocalInspectionMode.current)
     val clock = rememberThemeClock(running = motionRuns)
+    val change = LocalIntroThemeChange.current
 
     IntroThemeBadgeGrid(
         gapX = dim.spacingXXXL,
@@ -93,8 +105,13 @@ internal fun IntroThemeBadges(
             IntroThemeBadge(
                 choice = choice,
                 selected = selected,
-                frame = badgeFrameSource(index, selected, motionRuns, clock, danceWeight),
-                onClick = { onPick(choice.style.id) },
+                frame = pressed(badgeFrameSource(index, selected, motionRuns, clock, danceWeight), change, index),
+                // The sequence is told which badge it was and where, before the pick, so the wash can grow from it.
+                onClick = {
+                    change?.noteTap(index)
+                    onPick(choice.style.id)
+                },
+                modifier = Modifier.onGloballyPositioned { coordinates -> change?.attachBadge(index, coordinates) },
             )
         }
     }
@@ -114,6 +131,16 @@ private fun badgeFrameSource(
         return { settled }
     }
     return { badgeFrame(index, clock.floatValue, danceWeight.value) }
+}
+
+// The pose with the badge's press on top, while the change of theme it started plays: its own scale, times the press's.
+private fun pressed(base: () -> BadgeFrame, change: IntroThemeChange?, index: Int): () -> BadgeFrame {
+    if (change == null) return base
+    return {
+        val frame = base()
+        val press = change.pressNow(index)
+        if (press == 1f) frame else frame.copy(scale = frame.scale * press)
+    }
 }
 
 /** The lines of room the theme screen's headline keeps at [width]: the most any of its headlines takes, as drawn. */

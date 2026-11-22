@@ -17,6 +17,8 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
@@ -24,6 +26,7 @@ import xyz.ksharma.krail.core.adaptiveui.DUAL_PANE_LIST_WIDTH
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.themeSolidBackgroundColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroFirstStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
@@ -58,17 +61,33 @@ internal fun IntroFlowScreen(
     // Consumed on every screen after the first, so the rider cannot go back. On the first it is not handled here.
     BackHandler(enabled = state.step != IntroFirstStep) {}
 
+    val change = LocalIntroThemeChange.current
+    // Once a theme is chosen the window's ground is a light tint of it, which the wash grows into when a badge is tapped.
+    val tint = themeSolidBackgroundColor()
+    val settledGround = if (state.selectedThemeId != null) tint else null
+    // On the colour screen the button shows from the point in the sequence that says so, and at once on every other screen.
+    val revealed = state.step != IntroStep.THEME || change?.buttonRevealed ?: true
+
     Box(
         modifier = modifier
             .testTag(TripPlannerTestTags.INTRO_SCREEN)
             .fillMaxSize()
             .background(KrailTheme.colors.surface)
+            .then(
+                if (change == null) {
+                    Modifier
+                } else {
+                    Modifier
+                        .onGloballyPositioned { change.attachRoot(it) }
+                        .drawBehind { change.drawGround(this, settledGround) }
+                },
+            )
             .safeDrawingPadding(),
         contentAlignment = Alignment.TopCenter,
     ) {
         val bar = introBar(state, readiness)
         IntroBarLayer(
-            barShown = bar?.shown == true,
+            barShown = bar?.shown == true && revealed,
             modifier = Modifier.widthIn(max = IntroMaxContentWidth).fillMaxHeight(),
             bar = bar?.let {
                 {
@@ -77,7 +96,7 @@ internal fun IntroFlowScreen(
                         right = it.right,
                         onEvent = send,
                         rightEnabled = it.rightEnabled,
-                        shown = it.shown,
+                        shown = it.shown && revealed,
                         modifier = Modifier.padding(
                             horizontal = dim.pageHorizontalPadding,
                             vertical = dim.spacingL,

@@ -1,49 +1,96 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.snap
-import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
+import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.asThemeInk
+import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.taj.toHex
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 
-/** How long the Intro's theme colour takes to blend from one theme to the next. */
-internal const val THEME_BLEND_MS = 280
+// What the colour of one moment is made from: the theme the screen is on, and the colours of the app it is drawn in, which are read
+// when a run starts and not while it runs, so a change of light and dark in the middle of one never restarts it.
+private class ThemeBlendInputs(
+    val themeId: Int?,
+    val hex: String,
+    val dark: Boolean,
+    val surface: Color,
+    val onSurface: Color,
+    val reduceMotion: Boolean,
+)
+
+private fun ThemeBlendInputs.request(tapped: Int, origin: Offset): ThemeChangeRequest {
+    val colour = hex.hexToComposeColor()
+    val headline = introThemeHeadline(themeId)
+    val chosen = themeId != null
+    return ThemeChangeRequest(
+        reduceMotion = reduceMotion,
+        target = ThemeChangeTarget(themeId, hex, colour),
+        toText = if (chosen) colour.asThemeInk(dark) else onSurface,
+        toGround = if (chosen) introGroundColour(colour, surface, dark) else surface,
+        headline = HeadlineContent(headline.lines, headline.emphasisIndex, introEmojiFor(IntroStep.THEME, themeId)),
+        tapped = tapped,
+        origin = origin,
+    )
+}
 
 /**
- * How the theme colour moves: a [THEME_BLEND_MS] blend, and no blend at all, an instant change, when the rider asked
- * for less motion.
- */
-internal fun themeBlendSpec(reduceMotion: Boolean): AnimationSpec<Color> =
-    if (reduceMotion) snap() else tween(durationMillis = THEME_BLEND_MS)
-
-/**
- * The colour of the theme the rider has chosen, as the Intro's buttons and accents draw it. The app switches theme
- * the moment a badge is tapped, so the colour under [content] would jump from one theme to the next in a frame. Here
- * it is one animated colour, so a tap on a badge blends the primary button, and everything else the Intro draws in
- * the theme colour, over [THEME_BLEND_MS], and from any colour part way through, so tapping from badge to badge never
- * flashes. With reduced motion it is the new colour at once. Once settled it is exactly the theme's own hex, not
- * a rounded copy of it.
+ * The colour of the theme the rider has chosen, as the Intro's buttons and accents draw it, and the one clock the whole of the
+ * colour screen's change of theme runs on ([IntroThemeChange]). The app switches theme the moment a badge is tapped, so the colour
+ * under [content] would jump from one theme to the next in a frame. Here it is one blended colour, so a tap blends the primary button,
+ * the headline's text, the ink and everything else the Intro draws in the theme colour from one progress value, over
+ * [THEME_COLOUR_MS], from any colour part way through, so tapping from badge to badge never flashes. With reduced motion it is a plain
+ * [THEME_CHANGE_REDUCED_MS] cross-fade. Once settled it is exactly the theme's own hex, not a rounded copy of it.
  *
- * It re-provides [LocalThemeColor] and nothing else, and it is a no-op for the colour the first time it is composed.
+ * The theme is [selectedThemeId] when there is one, and the app's own colour before, which is what the screens before the colour
+ * screen run in. The first time it is composed nothing plays. It re-provides [LocalThemeColor] and [LocalIntroThemeChange].
  */
 @Composable
-internal fun IntroThemeBlend(content: @Composable () -> Unit) {
-    val target by LocalThemeColor.current
-    val targetColor = remember(target) { target.hexToComposeColor() }
-    val blended by animateColorAsState(
-        targetValue = targetColor,
-        animationSpec = themeBlendSpec(isReduceMotionEnabled()),
-        label = "intro-theme-colour",
+internal fun IntroThemeBlend(selectedThemeId: Int? = null, content: @Composable () -> Unit) {
+    val appHex by LocalThemeColor.current
+    val hex = themeHexFor(selectedThemeId) ?: appHex
+    val inputs by rememberUpdatedState(
+        ThemeBlendInputs(
+            themeId = selectedThemeId,
+            hex = hex,
+            dark = isAppInDarkMode(),
+            surface = KrailTheme.colors.surface,
+            onSurface = KrailTheme.colors.onSurface,
+            reduceMotion = isReduceMotionEnabled(),
+        ),
     )
-    val shown = remember(blended, target) { mutableStateOf(if (blended == targetColor) target else blended.toHex()) }
-    CompositionLocalProvider(LocalThemeColor provides shown, content = content)
+    val change = remember {
+        val first = inputs.request(tapped = -1, origin = Offset.Unspecified)
+        IntroThemeChange(settledThemeChangeSpec(first, ground = first.toGround, text = first.toText))
+    }
+    val shown = remember { mutableStateOf(hex) }
+
+    LaunchedEffect(hex, selectedThemeId) {
+        val spec = change.spec
+        if (spec.target.themeId == selectedThemeId && spec.target.hex == hex) return@LaunchedEffect
+        val (tapped, origin) = change.takeTap()
+        change.play(inputs.request(tapped, origin))
+    }
+    LaunchedEffect(change) {
+        snapshotFlow { change.colourNow() }.collect { colour ->
+            val spec = change.spec
+            shown.value = if (change.clock.value >= spec.durationMs) spec.target.hex else colour.toHex()
+        }
+    }
+    CompositionLocalProvider(
+        LocalThemeColor provides shown,
+        LocalIntroThemeChange provides change,
+        content = content,
+    )
 }

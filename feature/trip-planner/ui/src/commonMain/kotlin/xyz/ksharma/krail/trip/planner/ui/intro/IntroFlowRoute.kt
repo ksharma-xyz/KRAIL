@@ -73,7 +73,7 @@ internal fun IntroFlowRoute(
     )
 
     // The theme colour blends from one theme to the next, so tapping a badge does not flash the button.
-    IntroThemeBlend {
+    IntroThemeBlend(selectedThemeId = state.selectedThemeId) {
         IntroFlowScreen(
             state = state,
             suggestedStops = viewModel.suggestedStops,

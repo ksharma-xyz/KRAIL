@@ -292,7 +292,7 @@ private fun IntroHeadlineBody(
  * change. It grows with the text up to the ceiling, because the lines do.
  */
 @Composable
-private fun reservedHeadlineHeight(minLines: Int, hasEmoji: Boolean, emojiGap: Dp): Dp {
+internal fun reservedHeadlineHeight(minLines: Int, hasEmoji: Boolean, emojiGap: Dp): Dp {
     if (minLines <= 0) return 0.dp
     val typography = KrailTheme.typography
     val gap = KrailTheme.dimensions.spacingS

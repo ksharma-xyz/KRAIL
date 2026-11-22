@@ -31,8 +31,9 @@ import kotlin.test.assertTrue
 /**
  * The colour the primary button takes from the theme, read for real: it is `ButtonDefaults.buttonColors().containerColor`,
  * the colour the taj button fills with, read from inside [IntroThemeBlend] while the app's theme colour changes under it.
- * After each pick it settles on exactly the theme's own colour, on the way it is a blend and never a jump, from any colour
- * part way through, and with reduced motion it is the new colour at once.
+ * After each pick it settles on exactly the theme's own colour, on the way it is a blend on the one clock of the theme change
+ * sequence ([THEME_COLOUR_MS]) and never a jump, from any colour part way through, and with reduced motion it is a plain
+ * [THEME_CHANGE_REDUCED_MS] cross-fade.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -78,7 +79,7 @@ class IntroThemeBlendTest {
     }
 
     private fun settle() {
-        composeRule.mainClock.advanceTimeBy(THEME_BLEND_MS + SETTLE_EXTRA_MS)
+        composeRule.mainClock.advanceTimeBy(THEME_CHANGE_MS.toLong() + SETTLE_EXTRA_MS)
     }
 
     private fun KrailThemeStyle.colour() = hexColorCode.hexToComposeColor()
@@ -115,7 +116,7 @@ class IntroThemeBlendTest {
     }
 
     @Test
-    fun `a pick blends over about a quarter of a second, with colours between the two and none off the line`() {
+    fun `a pick blends over 600 ms, with colours between the two and none off the line`() {
         show()
         settle()
         val from = KrailThemeStyle.Train.colour()
@@ -123,7 +124,7 @@ class IntroThemeBlendTest {
         seen.clear()
 
         pick(KrailThemeStyle.Metro)
-        composeRule.mainClock.advanceTimeBy(THEME_BLEND_MS / 2L)
+        composeRule.mainClock.advanceTimeBy(THEME_COLOUR_MS.toLong() / 2L)
 
         val middle = seen.last()
         assertNotEquals(from, middle, "still the old colour half way through")
@@ -158,7 +159,7 @@ class IntroThemeBlendTest {
         settle()
         seen.clear()
         pick(KrailThemeStyle.Metro)
-        composeRule.mainClock.advanceTimeBy(THEME_BLEND_MS / 2L)
+        composeRule.mainClock.advanceTimeBy(THEME_COLOUR_MS.toLong() / 2L)
         val partway = seen.last()
 
         pick(KrailThemeStyle.Bus)
@@ -171,7 +172,7 @@ class IntroThemeBlendTest {
     }
 
     @Test
-    fun `with reduced motion the colour is the new one at once, with nothing between`() {
+    fun `with reduced motion the colour is a plain 200 ms cross-fade, straight from the old to the new and not a snap`() {
         Settings.Global.putFloat(
             ApplicationProvider.getApplicationContext<Context>().contentResolver,
             Settings.Global.ANIMATOR_DURATION_SCALE,
@@ -180,23 +181,26 @@ class IntroThemeBlendTest {
         show()
         settle()
         seen.clear()
+        val from = KrailThemeStyle.Train.colour()
+        val to = KrailThemeStyle.Ferry.colour()
 
         pick(KrailThemeStyle.Ferry)
-        composeRule.mainClock.advanceTimeBy(FRAME_MS * 2)
+        composeRule.mainClock.advanceTimeBy(THEME_CHANGE_REDUCED_MS.toLong() / 2L)
+        val middle = seen.last()
 
-        assertEquals(KrailThemeStyle.Ferry.colour(), seen.last())
-        assertTrue(seen.all { it == KrailThemeStyle.Train.colour() || it == KrailThemeStyle.Ferry.colour() }, "$seen")
+        assertNotEquals(from, middle, "still the old colour half way through")
+        assertNotEquals(to, middle, "already the new colour half way through")
+        assertTrue(distance(from, middle) < distance(from, to) && distance(middle, to) < distance(from, to), "$from $middle $to")
+        composeRule.mainClock.advanceTimeBy(THEME_CHANGE_REDUCED_MS.toLong())
+        assertEquals(to, seen.last())
     }
 
     @Test
-    fun `the blend is the spec that says 280 milliseconds, and an instant change under reduced motion`() {
-        assertEquals(280, THEME_BLEND_MS)
-        assertTrue(THEME_BLEND_MS in 250..300)
-        assertEquals(
-            androidx.compose.animation.core.snap<Color>(),
-            themeBlendSpec(reduceMotion = true),
-        )
-        assertNotEquals(themeBlendSpec(reduceMotion = true), themeBlendSpec(reduceMotion = false))
+    fun `the colour window is 600 ms and the cross-fade 200 ms, and the sequence that holds them is 700 ms`() {
+        assertEquals(600f, THEME_COLOUR_MS)
+        assertEquals(200f, THEME_CHANGE_REDUCED_MS)
+        assertEquals(700f, THEME_CHANGE_MS)
+        assertTrue(THEME_COLOUR_MS <= THEME_CHANGE_MS)
     }
 
     private companion object {

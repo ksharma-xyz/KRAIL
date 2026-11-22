@@ -11,18 +11,32 @@
 # no other. Settling here, inside the one file that knows about the Intro, is
 # what makes the check meaningful, and it keeps the six callers identical.
 #
-# The Intro is driven by a single button whose label changes per step ("Next" on
-# the Park & Ride question, then "Skip for now" on the first trip step).
-# `intro.action.primary` is the same node throughout, so looping on the tag
-# walks the whole thing without this flow knowing how many steps there are or
-# what any of them say. Nothing is picked, so the first trip step is skipped.
+# The Intro is five screens with one question each: the theme colour, Park & Ride,
+# where to, where from, and save this trip. Every screen asks yes or no with the same
+# two buttons, and the right one is `intro.action.primary`, the positive answer.
+# Looping on that tag walks the whole thing without this flow knowing how many
+# screens there are or what any of them say. Saying yes everywhere means a cold run
+# adds the Park & Ride station when the phone is near one, and saves a trip only when
+# a pair was picked, which a cold run never does, so the last screens end the Intro
+# with nothing saved.
 #
-# On a cold install the stops are still loading when the first trip step opens.
-# The button then reads "Getting ready" and is disabled for a few seconds, and a
-# tap on it does nothing, so each pass waits for the button to be enabled before
-# it taps. Without that wait the taps are spent on the disabled button and the
-# cap below runs out before the stops are ready. Two passes are enough once the
-# wait is there.
+# The first screen is the one exception. Its primary button, "Yes, this one", is
+# disabled until a theme badge has been tapped, because the rider has to choose a
+# colour before going on. So each pass first taps the Train badge, `intro.theme.train`,
+# but only while that badge is on screen. On every other screen it is not there and
+# nothing is tapped.
+#
+# The badges on the first screen drift and the chosen one dances for as long as the
+# screen is up, so that screen never stops moving. The waits for the animation to end
+# run to their timeouts there and then carry on. That costs a few seconds and is not
+# a failure.
+#
+# On a cold install the stops are still loading when the last screens open. Their
+# primary button is then disabled for a few seconds, and a tap on a disabled button
+# does nothing, so each pass waits for the button to be enabled before it taps. The
+# Park & Ride screen does the same while its station is looked for. Without that wait
+# the taps are spent on a disabled button and the cap below runs out before the app
+# is ready.
 #
 # `times` is a safety net, not the exit condition: `while` is what ends the
 # loop. Without the cap a button that stops responding would hang the run
@@ -54,6 +68,15 @@ appId: ${APP_ID}
       visible:
         id: "intro.action.primary"
     commands:
+      # Only the theme screen has this badge. Choosing a colour is what turns its
+      # primary button on.
+      - runFlow:
+          when:
+            visible:
+              id: "intro.theme.train"
+          commands:
+            - tapOn:
+                id: "intro.theme.train"
       # Optional, so a device that never reports the state costs the timeout
       # once for each pass and then taps as before.
       - extendedWaitUntil:
@@ -64,7 +87,7 @@ appId: ${APP_ID}
           optional: true
       - tapOn:
           id: "intro.action.primary"
-      # The step cross-fades into the next. Tapping through that lands the
-      # second tap on the step that is still fading in.
+      # The screen slides into the next. Tapping through that lands the
+      # second tap on the screen that is still moving in.
       - waitForAnimationToEnd:
           timeout: 5000

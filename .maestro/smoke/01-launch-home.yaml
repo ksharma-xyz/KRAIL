@@ -37,7 +37,7 @@ appId: ${APP_ID}
     timeout: 20000
 
 # Today's home draws the To bar, the From bar and the go circle. The map home (the maps flag on) draws one
-# pill until a stop is held, so the From bar, the go circle and the empty list are only asserted where the
+# pill and never a second bar, so the From bar, the go circle and the empty list are only asserted where the
 # From bar is drawn, and the pill's `searchrow.to` above is what both homes share.
 - runFlow:
     when:

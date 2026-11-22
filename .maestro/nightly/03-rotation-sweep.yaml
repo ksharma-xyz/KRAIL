@@ -70,14 +70,15 @@ onFlowComplete:
     timeout: 60000
 
 # --- Search stop ---
-# The destination first, from `searchrow.to`: it is the To bar on today's home and the pill on the map home,
-# where `searchrow.from` is not drawn until a stop is held. The origin follows from `searchrow.from`.
+# The destination first, from `searchrow.to`: it is the To bar on today's home and the only bar, the pill, on
+# the map home. Both open Search Stop, whose To and From form stays on screen through both picks. The origin
+# follows from `searchrow.from` on that form, and the go circle takes the trip out.
 - tapOn:
     id: "searchrow.to"
 
-# Opens on the map state, so the recents only exist once the bar is tapped. Same steps as
-# 02-plan-trip, because this flow reaches the screen by a different route. There is no map
-# options sheet to dismiss any more, so no order dependency on 02 either.
+# Opens on the map state with the recents card showing, and the list state grows from it once the bar is
+# tapped. Same steps as 02-plan-trip, because this flow reaches the screen by a different route. There is
+# no map options sheet to dismiss any more, so no order dependency on 02 either.
 - extendedWaitUntil:
     visible:
       id: "searchstop.query"
@@ -115,12 +116,10 @@ onFlowComplete:
 - tapOn:
     id: "searchstop.result..*"
     index: 0
-- extendedWaitUntil:
-    visible:
-      id: "searchrow.root"
-    timeout: 15000
 
-# --- Timetable ---
+# --- Origin ---
+# The pick stays on Search Stop with the destination filled in. The From bar is tapped whether or not it
+# filled itself with the nearest stop, so the flow is the same with and without a location fix.
 - extendedWaitUntil:
     visible:
       id: "searchrow.from"
@@ -141,11 +140,13 @@ onFlowComplete:
 - tapOn:
     id: "searchstop.result..*"
     index: 0
+
+# --- Timetable ---
+# Both bars hold a stop, so the go circle shows and takes the trip out of Search Stop.
 - extendedWaitUntil:
     visible:
-      id: "searchrow.root"
+      id: "searchrow.search"
     timeout: 15000
-
 - tapOn:
     id: "searchrow.search"
 - extendedWaitUntil:

@@ -1,5 +1,6 @@
-# The core journey: pick a destination, pick an origin, get a timetable. Valid on today's home and on the
-# map home (the maps flag on), see the Destination step.
+# The core journey: pick a destination, pick an origin, tap the go circle, get a timetable. Valid on today's
+# home and on the map home (the maps flag on): both open Search Stop from `searchrow.to`, and the To and From
+# form there stays on screen through both picks, so the trip leaves only with the go circle.
 #
 # Every selector is a testTag, and results are chosen by index rather than by
 # name, so the flow does not break when NSW renames a stop or reorders results.
@@ -33,15 +34,14 @@ appId: ${APP_ID}
 
 # --- Destination ---
 # The destination comes first because `searchrow.to` is the one entry that exists in both homes: it is the To
-# bar on today's home and the pill on the map home, where nothing but the pill is drawn until a stop is held
-# (so `searchrow.from` is not there yet). Once a stop is chosen both homes show To and From, and the origin
-# below is picked from `searchrow.from`. The trip is the same either way: Central to Town Hall.
+# bar on today's home and the only bar on the map home, the pill. Both open Search Stop. The trip is the same
+# either way: Central to Town Hall.
 - tapOn:
     id: "searchrow.to"
 
-# Stop search opens on the MAP state: the map and the bar, with no keyboard and no list
-# (rule 39 of docs/MAP_HOME_UX.md). Tapping the bar raises the list state, which is where
-# the recents are, so `searchstop.recents` is asserted after that tap and never on arrival.
+# Stop search opens on the MAP state: the map, the bars and the recents card, with no keyboard
+# (rules 9 and 39 of docs/MAP_HOME_UX.md). Tapping the bar raises the list state, where the card
+# grows into the list, so `searchstop.recents` is asserted after that tap, the same as before.
 #
 # `searchstop.recents` is the Recent-mode list itself, so it is present on a fresh device
 # with no recents at all.
@@ -72,22 +72,20 @@ appId: ${APP_ID}
     id: "searchstop.result..*"
     index: 0
 
-- extendedWaitUntil:
-    visible:
-      id: "searchrow.root"
-    timeout: 30000
-
-# --- Origin ---
-# Waited for, because on the map home the From bar only appears once the destination is held.
+# A pick never leaves Search Stop: the destination fills its bar and the screen stays. The From bar is
+# on screen with it, filled with the nearest stop when the device has a fix and empty when it has none.
 - extendedWaitUntil:
     visible:
       id: "searchrow.from"
     timeout: 30000
+
+# --- Origin ---
+# Tapped whether or not it filled itself, so the flow is the same on a device with a fix and one without,
+# and an origin that did fill itself is replaced by the one chosen here, which is what makes it editable.
 - tapOn:
     id: "searchrow.from"
 
-# Same steps on the second entry: this one arrives with a recent stop already saved, which
-# is a different branch of the list from the first-open one above.
+# Same steps for the origin: the bar being edited moved to From, so the query field is there again.
 - extendedWaitUntil:
     visible:
       id: "searchstop.query"
@@ -111,12 +109,12 @@ appId: ${APP_ID}
     id: "searchstop.result..*"
     index: 0
 
+# --- Timetable ---
+# Both bars hold a stop now, so the go circle shows. It is the only way out of Search Stop with a trip.
 - extendedWaitUntil:
     visible:
-      id: "searchrow.root"
+      id: "searchrow.search"
     timeout: 30000
-
-# --- Timetable ---
 - tapOn:
     id: "searchrow.search"
 

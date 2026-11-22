@@ -616,8 +616,9 @@ files are in `intro/finale/`, and everything it decides is a pure function with 
   split and never beside a sibling. Each letter is its own `Text`, a unit that rises, grows and fades in through `graphicsLayer`
   read inside the layer lambda from the frame, so a frame recomposes and lays out nothing. The size is scaled down, never squeezed:
   `rememberTextMeasurer` measures every letter once for the width it was given, and one scale (`wordmarkFitScale`, the smallest any line
-  needs) is applied to the whole mark, so at 320 dp with text at 200 percent the two lines stay whole and in step. The gradient is the
-  app's four AI gradient stops (`AiGradientTokens.stops`, no new colour) drawn over the letters with `BlendMode.SrcIn` inside an offscreen
+  needs) is applied to the whole mark, so at 320 dp with text at 200 percent the two lines stay whole and in step. Since unit U10 the gradient is
+  built from the colour the rider chose and that theme's `KrailThemeStyle.aiGradientPartner` (`FinaleGradient.kt`, below), and not from the
+  app's four AI gradient stops (`AiGradientTokens.stops`), which stay in the code behind one constant. It is drawn over the letters with `BlendMode.SrcIn` inside an offscreen
   layer that holds only the wordmark, so it never touches the app behind it. taj `Text` replaces a brush on the style with its own
   colour, so the brush cannot go on the style. The glow is the text style's own coloured `Shadow`, with its blur and opacity in 12 steps
   (`glowStep`), so the style changes at most 12 times in the whole finale and not on every frame. There is no `Modifier.blur`. The mark
@@ -656,9 +657,21 @@ files are in `intro/finale/`, and everything it decides is a pure function with 
   `@PreviewScreen`, so it is shown in light and dark, at 100 and 200 percent text and on a tablet, and two are on a 320 dp canvas in
   `narrow/`, the entering frame and the hold. They are stills, so reduced motion has no preview of its own: it is the plain colour.
 - **The wordmark's numbers.** `FinaleWordmarkSpec.kt`: the two lines `#LET'S` and `KRAIL`, the label read once for a screen reader,
-  the fit (`fitScale`, `wordmarkFitScale`), the brand gradient moved toward the theme colour (`finaleGradientColors`), the glow in twelve
+  the fit (`fitScale`, `wordmarkFitScale`), the gradient's stops moved toward the theme colour (`finaleGradientColors`), the glow in twelve
   steps (`glowStep`, `glowBlurPx`, `glowAlpha`), where the gradient sits as it slides (`gradientRangePx`) and the circle that floods
   the screen (`floodRadiusPx`).
+- **The wordmark's colours (unit U10).** `FinaleGradient.kt`. `FINALE_GRADIENT_FROM_THEME` (a constant, `true`) chooses between the two gradients so
+  the owner can compare them on a device: true is `themeGradientStops(themeColour)`, false is the app's four AI gradient stops as before.
+  `finaleBrandStops` is the one function that reads it. Nothing else differs between the two: four stops, the slide (`gradientRangePx`), the blend to
+  the theme colour (`finaleGradientColors`), the glow, the timeline and the reduced motion path.
+  - The four stops are the theme colour, the point halfway to its partner round the colour wheel (taken from `AiThemeGradientTokens.stopsFor`, the
+    app's own AI gradient for that theme, not new colour maths), the partner, and the halfway point again, so the colour travels out to the
+    partner and back.
+  - Bright stops only. A stop darker than the theme colour is mixed with white by the least share that makes it as light as the theme colour
+    (`liftToLuma`, with `lumaOf`, the Rec. 709 weights on the colour's own channels, which a mix with white raises in a straight line). So no
+    stop is darker than the colour the rider chose, and because the blend only moves stops towards the theme colour, none is at any moment of it.
+  - Train and Ferry have partners (Purple Drip and Barbie Pink) that are darker than their own colour, so the third stop is a lighter
+    version of the partner. Metro and Bus have a brighter partner (Magic Yellow), used as it is.
 
 Unit U8, design fixes after trying the build on a phone, as built, where this document was silent. Each is a design decision, and
 where it changes something an earlier unit said, the earlier text is edited to match:
@@ -1059,7 +1072,7 @@ They are starting points to tune on a phone.
 
 | From | To | Phase | The wordmark | Glow | Colour | Overlay |
 |---|---|---|---|---|---|---|
-| 0 | 600 | ENTER | Eleven letters spring up one after another, 35 ms apart, 250 ms each, with a small overshoot. The backdrop fades in over the first 250 ms | Rises from 0 to 0.6 | The brand gradient (the app's four AI gradient stops) slides across | 1 |
+| 0 | 600 | ENTER | Eleven letters spring up one after another, 35 ms apart, 250 ms each, with a small overshoot. The backdrop fades in over the first 250 ms | Rises from 0 to 0.6 | The gradient of the chosen theme and its partner (four stops) slides across | 1 |
 | 600 | 1500 | HOLD | In place | Swells to 1 and back to 0.6, once | The gradient keeps sliding | 1 |
 | 1500 | 2000 | BLEND | In place | 0.6 | Every gradient stop moves to the theme colour | 1 |
 | 2000 | 2500 | FLOOD | Fades out as the circle grows over it | 0.6 to 0 | A circle of the theme colour grows from the middle of the wordmark to the farthest corner | 1 |
@@ -1159,7 +1172,7 @@ arithmetic on the timeline is a guess and is labelled one.
 | # | Question | Answer |
 |---|---|---|
 | 1 | **API calls.** | None, on any path. No network, no storage and no analytics event are added. The trip write, both flags and `intro_lets_krail` happen before the finale starts and are unchanged. |
-| 2 | **Payload.** | None. Everything is in code. The brand colours are the app's existing AI gradient stops and the size is the existing tagline token. |
+| 2 | **Payload.** | None. Everything is in code. The gradient is the chosen theme's colour and its existing partner colour (and the point halfway between them, from the app's own AI gradient for the theme), and the size is the existing tagline token. |
 | 3 | **Timing.** | Saved Trips now opens about 2.5 s after the finish instead of at once, when the colour covers the screen, and the rider sees it about 3.5 s after the finish with an instant navigation (2.5 s to the cover, about 0.3 s settling, 0.7 s fading; arithmetic on the timeline). A tap anywhere brings that to about 0.4 s (two drawn frames, then a 300 ms fade). Reduced motion is about 0.5 s (300 ms hold and a 200 ms fade). It never waits longer than 1.5 s after the cover for Saved Trips, so the worst case is about 5 s. The first composition of Saved Trips is the heavy one, and it happens under the solid colour, so its cost is not seen. The finish itself still never blocks (the 15 s rule is unchanged). |
 | 4 | **UX.** | There is no loading, slow, failed or offline state, because nothing is waited for from outside. A slow device draws fewer frames of the same timeline, since the clock is the real one, and the colour is solid when Saved Trips is composed. The layer swallows touches, and a tap anywhere skips it. With reduced motion there is no movement. A turn of the screen, or an app that is stopped, in the middle of the finale ends it at once and still navigates. A killed process has no finale and the next launch shows Saved Trips. |
 | 5 | **Network efficiency.** | Not applicable. |
@@ -1193,6 +1206,11 @@ figure that is not arithmetic on the flow is a guess and is labelled one:
 | 5 | **Caching, dedupe, retries.** | One writer through a conflated channel, so writes are ordered and a stale one is dropped. A write only when the text differs from the last, so typing and selecting write nothing. No retry: a failed write loses one step's progress at worst. |
 | 6 | **Battery.** | **About 6 writes of one small value per Intro run** (the first answer, two stops, the confirm answer, one or more theme picks, and one clear at the finish; a guess at the count, it is one per change of the progress), no timer, no background work and no wake-up of its own. Foreground only. A replay writes one clear and nothing else. |
 | 7 | **Shared limits.** | None. Nothing for a BFF to collapse. |
+
+The wordmark's colours (unit U10), the same questions: **API calls** none. **Payload** none, four colours computed once for a theme (`remember`, a few
+float operations, a guess at well under a millisecond). **Timing** unchanged, the timeline and the glow are not touched. **UX** the same layers and
+the same frames with different colours, and reduced motion is unchanged. **Caching** the stops are remembered for the theme colour, so they are not
+worked out on a frame. **Battery** unchanged: one gradient rect over the one offscreen layer, as before. **Shared limits** none.
 
 ## 7. States and UX
 
@@ -1253,7 +1271,7 @@ Every screen has three zones:
 
 | State | What the rider sees |
 |---|---|
-| Opening | After `Yes, save it` or `Not now` the screen fades to the app's ground and `#LET'S` over `KRAIL` springs up letter by letter in the brand gradient with a soft glow. No bar, no button and no text but the wordmark |
+| Opening | After `Yes, save it` or `Not now` the screen fades to the app's ground and `#LET'S` over `KRAIL` springs up letter by letter in a gradient of the theme they chose and its partner colour, with a soft glow. No bar, no button and no text but the wordmark |
 | Hold | The wordmark sits, the glow swells once |
 | Blend | The gradient and the glow take the colour of the theme the rider chose |
 | Flood | That colour grows from the middle of the wordmark until nothing else shows. Saved Trips opens underneath at full cover |
@@ -1721,6 +1739,12 @@ in `searchstop/` touched:
   the effect and nothing writes after it, a finished Intro is never resumed). `IntroRig` keeps the progress in a store of its own (a parameter), so
   the order held by the finish tests is not about a write that is not part of it. Changed on purpose: `IntroSavedStateTest` no longer says the
   confirm answer is not saved (it is now saved with the screen, with a test of its own and a snapshot from before it reads as none).
+- **U10 tests, the wordmark's gradient.** `FinaleGradientTest`: for every theme there are four stops and the first is the theme colour, **no stop is darker
+  than the theme colour and, for the four themes the Intro offers, none is below a stated luma floor of 0.45** (the darkest offered theme, Metro, is
+  about 0.47), the blend to the theme colour never takes a stop below that at 0, a quarter, a half, three quarters and 1, a partner as light as the theme
+  is used as it is and a darker one is lightened as far as it needs and no further, the halfway point is the app's own AI gradient for the theme,
+  an unknown colour does not fail, the old four stops are still there behind the switch, and the lift is exact to the colour's half precision. The
+  existing `FinaleWordmarkSpecTest` cases for `finaleGradientColors` are unchanged because its default stops are still the old ones.
 
 ## 9. Open gaps and decisions
 
@@ -1868,6 +1892,10 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | U10-7 | An added station comes back as a card with its name, no car parks and no readings, and is not worked out again | The question is behind the rider, and working it out again would make an availability call on a later screen for a card nobody sees. A rider resumed on the Park & Ride screen after an add, which no flow reaches, would see the name and no numbers | Default, not yet seen by owner |
 | U10-8 | The clear is sent after the effect that hands the finish to the finale, and not before | The spec said after the hand-off. The seen flag is written first, so a kill between the two never resumes a finished Intro | Default, not yet seen by owner |
 | U10-9 | Any version other than the current one, older or newer, is ignored and the Intro starts again | There is only version 1. Reading an older shape needs a migration, which nothing needs yet | Default, not yet seen by owner |
+| U10-10 | The wordmark's four stops are the theme colour, the halfway point to its partner, the partner and the halfway point again | The spec kept the four stop structure and gave two colours. Going out to the partner and back keeps the theme colour at the start and gives the partner the middle of the slide. A straight ramp from theme to partner is the alternative, one list in `themeGradientStops` | Default, not yet seen by owner |
+| U10-11 | A stop darker than the chosen colour is mixed with white until it is as light as the chosen colour, by Rec. 709 luma on the colour's own channels | The spec said no stop darker than the chosen colour. Train's partner is Purple Drip and Ferry's is Barbie Pink, both darker than their theme, so they come out lighter and softer than the partner on its own. If that is too pale, the floor is the one number to lower, or the partner can be left as it is for those two | Default, not yet seen by owner |
+| U10-12 | The switch is the constant `FINALE_GRADIENT_FROM_THEME`, `true`, in `FinaleGradient.kt` | The spec asked for one named constant to compare on a device. It is a build time constant and not a Remote Config flag, so no flag default is touched | Default, not yet seen by owner |
+| U10-13 | The glow is left as it is: the theme colour at the existing opacity, in the existing twelve steps | The spec said colours only for the gradient. The four old stops hold no dark colour (the darkest, Metro, is about 0.47), so if the dark areas on a phone are the translucent glow over the dark ground rather than the gradient, this switch will not remove them, and the glow's opacity is the next thing to look at | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

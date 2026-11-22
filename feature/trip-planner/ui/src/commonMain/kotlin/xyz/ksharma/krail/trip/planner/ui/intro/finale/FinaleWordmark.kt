@@ -33,8 +33,8 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 private const val LETTER_START_SCALE = 0.85f
 
 /**
- * `#LET'S KRAIL`, on two lines, huge, in the app's boldest display style and italic, with the brand gradient
- * across it and a glow round the letters. It is taj [Text] and nothing else: no new font and no size written here.
+ * `#LET'S KRAIL`, on two lines, huge, in the app's boldest display style and italic, with a gradient of the chosen
+ * theme and its partner colour across it ([FINALE_GRADIENT_FROM_THEME]) and a glow round the letters. It is taj [Text] and nothing else: no new font and no size written here.
  * The size is the tagline token times [WORDMARK_SCALE], then scaled down, never squeezed, so the widest line fits
  * the width it is given, whatever the screen and the text size.
  *
@@ -57,6 +57,7 @@ internal fun FinaleWordmark(
         val layout = rememberWordmarkLayout(availableWidthPx = constraints.maxWidth.toFloat())
         val glow by remember(frame) { derivedStateOf { glowStep(frame.value.glow) } }
         val letterStyle = rememberGlowStyle(layout.style, glow, themeColour)
+        val brand = remember(themeColour) { finaleBrandStops(themeColour) }
         val pad = with(LocalDensity.current) { layout.padPx.toDp() }
         Column(
             modifier = Modifier
@@ -66,7 +67,7 @@ internal fun FinaleWordmark(
                 }
                 .drawWithContent {
                     drawContent()
-                    drawGradient(frame.value, themeColour, layout.padPx)
+                    drawGradient(frame.value, themeColour, brand, layout.padPx)
                 }
                 .padding(pad),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -105,12 +106,13 @@ private fun WordmarkLine(text: String, firstLetter: Int, style: TextStyle, frame
 private fun DrawScope.drawGradient(
     frame: FinaleFrame,
     themeColour: Color,
+    brand: List<Color>,
     padPx: Float,
 ) {
     val (start, end) = gradientRangePx(size.width - 2f * padPx, gradientTravelAt(frame.wordmarkMs))
     drawRect(
         brush = Brush.horizontalGradient(
-            colors = finaleGradientColors(frame.colourBlend, themeColour),
+            colors = finaleGradientColors(frame.colourBlend, themeColour, brand),
             startX = padPx + start,
             endX = padPx + end,
         ),

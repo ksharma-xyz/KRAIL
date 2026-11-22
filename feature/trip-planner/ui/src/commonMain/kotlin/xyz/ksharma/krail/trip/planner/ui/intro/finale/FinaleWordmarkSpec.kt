@@ -68,9 +68,9 @@ internal fun wordmarkFitScale(lineWidthsPx: List<Float>, availableWidthPx: Float
     lineWidthsPx.fold(1f) { scale, width -> min(scale, fitScale(width, availableWidthPx)) }
 
 /**
- * The brand gradient with every stop moved [blend] of the way to [themeColour], 0 being the brand colours as they
- * are and 1 being the theme colour at every stop, which is a solid colour. The brand colours are the app's own
- * AI gradient stops, not new ones.
+ * The gradient with every stop moved [blend] of the way to [themeColour], 0 being the [brand] colours as they
+ * are and 1 being the theme colour at every stop, which is a solid colour. The wordmark passes the stops
+ * [finaleBrandStops] gives it, and with none given these are the app's own AI gradient stops.
  */
 internal fun finaleGradientColors(
     blend: Float,

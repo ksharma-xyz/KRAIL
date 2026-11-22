@@ -439,15 +439,15 @@ three zone frame, and everything it decides is in pure functions with table test
 - **The badge.** The app's own `TransportModeIcon` for the choice's mode, used unchanged: the circle in the mode's colour, the
   mode's first letter in white (the component fixes the text colour, so the letter is white on every badge, in light and dark), and
   its white ring (`displayBorder = true` on all four, like the website). Nothing is passed to it that picks a colour. It is drawn at
-  the component's largest size, `TransportModeIconSize.Large` (32 dp, growing with the text as the component does, to at most the
-  48 dp of its button). A taj `RoundIconButton` with a transparent fill carries it: that is the 48 dp touch target, the tag and
-  the semantics, and the float and the dance move it through `graphicsLayer`. The selected badge is shown by the dance and, with
+  the component's extra large size, `TransportModeIconSize.XLarge` (64 dp, twice the 32 dp of Large, added in unit U8, growing with
+  the text as the component does: 64 dp at 100 percent text and about 102 dp at 200 percent). A box the size of the icon carries it,
+  with the app's own `klickable` on a circle laid over it: that is the touch target (at least 48 dp each way), and the tag and the
+  semantics are on the box, and the float and the dance move it through `graphicsLayer`. The selected badge is shown by the dance and, with
   no motion, by sitting lifted 4 dp. The hand-built circle, its fill, its ring, its thicker ring, the 64 to 96 dp growth and the
   `getForegroundColor` letter are deleted. For a screen reader a badge is one button named for its theme with its selected state,
   and the letter is hidden from it.
-- **The layout.** A `FlowRow` centred, with `spacingXXXL` (24 dp) between badges both ways, so whole badges wrap and nothing is
-  squeezed: four in a row on a phone, and two and two at 320 dp with text at 200 percent. The middle zone scrolls with the
-  headline when the room runs out.
+- **The layout.** A `Column` centred, one badge to a row, with `spacingXXXL` (24 dp) between rows, so nothing is squeezed: four rows
+  on a phone and at 320 dp with text at 200 percent. The middle zone scrolls with the headline when the room runs out (unit U8).
 - **Motion, with two operator approved continuous exceptions on this screen only.** One clock in seconds
   (`rememberThemeClock`) drives both. Float: every badge that is not selected drifts on an ellipse, at most 6 dp up and down and
   4 dp sideways, on a loop of 8, 10, 12 or 13 seconds with its own phase (`floatOffsetAt`). Dance: the selected badge loops the
@@ -587,6 +587,13 @@ where it changes something an earlier unit said, the earlier text is edited to m
   and with reduced motion it appears at once (`snap`). In a preview or a screenshot the state it starts in is the state it is drawn in. On
   the theme screen it is shown after the first pick. It is not a disabled button: `rightEnabled` is true for it. `introBar` stays null for
   a screen with no bar at all.
+- **Bigger badges, in a column.** `TransportModeIconSize` gains `XLarge` at 64 dp, twice `Large`, with `headlineLarge` as its letter style
+  (the same share of the circle as the small title in the 32 dp one), chosen in a private `letterStyle()` whose `else` branch is the
+  small title every other size keeps, so the existing sizes draw exactly as before. The letter colour is not touched: the component
+  still provides white. The four badges are a centred `Column`, one to a row, 24 dp between rows. A badge is a box the size of the icon, at
+  least 48 dp each way, with the app's `klickable` on a circle over it, because the taj `RoundIconButton` is a fixed 48 dp circle that
+  clips its content. The float, the dance, the tags, the spoken names and the selected state are as they were. The column is taller than the row was, so on a
+  short phone or at 200 percent text the middle zone scrolls with the headline.
 
 Unit R1, as built, where this document was silent:
 
@@ -1111,7 +1118,7 @@ make a row fit, except the one rule below. A screen with nothing to decide has n
 | None chosen | The headline `Pick`, `your ride`, `colour` and the four badges, drifting. Bar: nothing, and its room is kept, so the button is neither visible nor disabled |
 | A theme selected | The whole app in that theme's colour, the headline now that theme's tagline, the selected badge dancing and the others drifting. Bar: the one button `Yes, this one` fades in over 250 ms in the kept room, in that theme's colour. With reduced motion it appears at once |
 | Reduced motion, preview or screenshot | The same, with nothing moving: the selected badge lifted 4 dp |
-| 320 dp at 200 percent text | The four badges, each a 48 dp touch target, wrapping whole if the row is full. The bar is the one button across the window, whole. The middle zone scrolls with the headline |
+| 320 dp at 200 percent text | The four badges in a column, one to a row, each about 102 dp and a full touch target, centred. The bar, once there is a pick, is the one button across the window, whole. The middle zone scrolls with the headline |
 
 - The one button is the only button besides the badges, and each badge is a button. A tap on a badge is the only way to choose:
   the owner ruled that the rider just picks a colour, with no option to say no (2026-11-22), so there is no left button and no
@@ -1439,6 +1446,10 @@ in `searchstop/` touched:
   appears in that room, has no click and no description to find, and a two button bar that is not shown keeps its room),
   `IntroThemeStepTest`, `IntroThemeStepNarrowTest` and `IntroFlowRouteThemeTest` (no button before a pick, then the one button, and the
   badges do not move when it appears). Deleted: "a disabled right button sends nothing when it is tapped", which is the behaviour that was replaced.
+- **Unit U8 tests, the badges.** `TransportModeIconSizeTest` (the four sizes as they were and the extra large one twice the large one, the large
+  letter still the 14 sp white title, every mode's extra large letter white at 28 sp in a 64 dp circle), `IntroThemeBadgeTest` (as before at the
+  new size), `IntroThemeStepTest` (64 dp, one to a row, in order, centred within the drift) and `IntroThemeStepNarrowTest` (320 dp at 200 percent:
+  whole, a full 48 dp, alone in its row and centred, 102 dp at 200 percent, at least 16 dp apart). The old wrap whole test is replaced by the column test.
 
 ## 9. Open gaps and decisions
 
@@ -1465,8 +1476,8 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | R2-4 | One dance leg is 0.65 s and the full swing out and back is 1.3 s | The website alternates, so one leg is 0.65 s. If 0.65 s is the whole swing, halve `DANCE_LEG_SECONDS` | Default, not yet seen by owner |
 | R2-5 | The drift loops are 8, 10, 12 and 13 s, and the amplitudes are under the 6 dp and 4 dp limits | The spec gave the ranges and not the values. Four periods with no common short multiple keep the badges from lining up | Default, not yet seen by owner |
 | R2-6 | A badge eases between drifting and dancing over 250 ms | Without it the chosen badge jumps from its drift to the first pose of the dance | Default, not yet seen by owner |
-| R2-7 | A badge is the component's largest size and grows only as the component does | No invented size and no scaled letter. The cost is a smaller badge than the first draft's 64 dp; a larger size on the component needs the owner's yes | Open, see the report |
-| R2-8 | The badges are 24 dp apart, over the 16 dp the spec asked for | The drift and the dance can bring neighbours 12 dp closer, so 16 dp could touch at the worst moment | Default, not yet seen by owner |
+| R2-7 | A badge is the component's largest size and grows only as the component does. Since unit U8 that size is a new `TransportModeIconSize.XLarge` of 64 dp, with the large headline as its letter style | No invented size outside the component and no scaled letter. The owner approved a larger size on the component for the badges, and said to keep the letter white and the other sizes as they were | Decided by the owner, 2026-11-22 (the 64 dp size and the letter style are mine) |
+| R2-8 | The badges are 24 dp apart, over the 16 dp the spec asked for, and since unit U8 that is the gap between rows of a column | The drift and the dance can bring neighbours about 17 dp closer at the larger size (6 dp of float, 8 dp of rise and 3 dp of growth on the chosen one), so 16 dp could touch at the worst moment | Default, not yet seen by owner |
 | R2-9 | The theme bar is the one button `Yes, this one`, with no left button, no cycle and no compact label | The owner asked for it: "just let the user pick a colour, that's it, no option button to say no". The whole phrase is kept at every text size, and it is the one screen with a single button | Decided by the owner, 2026-11-22 |
 | R2-10 | The headline keeps the room of its longest version, measured as drawn (the emoji and the most lines any of its five versions takes at this width and text size) | Without it the badges move each time the words change. In capitals at 1.7 times the size a tagline takes up to three lines on its own, so a fixed three was replaced by a measurement. The cost is some empty room under a shorter version | Default, not yet seen by owner |
 | R2-12 | The headline is in capitals, at 1.7 times the display style since unit U8 (1.4 before), and stops growing with the text size above 1.05 (1.3 before) | The owner asked for it bigger, bolder and all upper case. At 1.7 CONCRETE fits 320 dp only up to 1.09 with a twelfth to spare, so the ceiling is 1.05. The cost is that a rider at 200 percent text sees the headline at 105 percent, while everything else follows 200 percent | Decided by the owner, 2026-11-22 (size and case); the factor and the ceiling are mine, to tune on the phone |
@@ -1541,6 +1552,8 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | U8-7 | The old headline fades out in 175 ms, half the 350 ms the new one takes | Two full-length fades leave both readable on top of each other for most of the move. The spec gave only about 350 ms for the new one | Default, not yet seen by owner |
 | U8-8 | The hidden single button is composed and measured, not a spacer of a guessed height | The button's height follows the text size, and a spacer would have to copy it. The cost is a transparent, inert button in the tree, hidden from a screen reader with cleared semantics | Default, not yet seen by owner |
 | U8-9 | The button fades in over 250 ms | The spec said fading in and gave no time. It is under the 350 ms of the tagline change so the two do not finish together | Default, not yet seen by owner |
+| U8-10 | The extra large icon is 64 dp, its letter is `headlineLarge` (28 sp), and the column gap is 24 dp | The spec said about 64 dp and a letter style from the existing tokens. 28 sp in 64 dp is the share 14 sp has in 32 dp. 24 dp is the existing gap, which keeps the drift and the dance from touching a neighbour | Default, not yet seen by owner |
+| U8-11 | A badge's click is a `klickable` circle over the icon in a plain box, not `RoundIconButton` | `RoundIconButton` is a fixed 48 dp circle that clips what it holds, so a 64 dp icon would be cut. The spec allowed no other component change | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

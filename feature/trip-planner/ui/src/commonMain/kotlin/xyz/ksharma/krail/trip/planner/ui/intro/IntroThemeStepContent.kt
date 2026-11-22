@@ -4,8 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -59,12 +58,12 @@ internal fun IntroThemeStepContent(
 }
 
 /**
- * The badges, in a row that wraps whole badges onto the next line rather than squeezing them, centred, with
- * room between them for them to drift and dance without touching. Every badge that is not selected drifts and
- * the selected one dances, both from one clock that runs only while the screen is resumed. With reduced motion,
- * in a preview and in a screenshot nothing moves: the selected badge sits lifted 4 dp.
+ * The badges, one to a row in a column, centred, with room between them for them to drift and dance without
+ * touching. Every badge that is not selected drifts and the selected one dances, both from one clock that runs only
+ * while the screen is resumed. With reduced motion, in a preview and in a screenshot nothing moves: the selected badge
+ * sits lifted 4 dp. The column is as tall as four badges and their gaps, and the middle zone scrolls with the headline
+ * when that does not fit, so nothing is squeezed.
  */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun IntroThemeBadges(
     selectedThemeId: Int?,
@@ -75,11 +74,11 @@ internal fun IntroThemeBadges(
     val motionRuns = themeMotionRuns(reduceMotion = isReduceMotionEnabled(), inspection = LocalInspectionMode.current)
     val clock = rememberThemeClock(running = motionRuns)
 
-    FlowRow(
+    Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = dim.pageHorizontalPadding, vertical = dim.spacingXL),
-        horizontalArrangement = Arrangement.spacedBy(dim.spacingXXXL, Alignment.CenterHorizontally),
+            .padding(horizontal = dim.pageHorizontalPadding),
+        horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(dim.spacingXXXL),
     ) {
         introThemeChoices().forEachIndexed { index, choice ->

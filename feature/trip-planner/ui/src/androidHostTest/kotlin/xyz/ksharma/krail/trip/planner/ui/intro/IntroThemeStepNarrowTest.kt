@@ -95,7 +95,7 @@ class IntroThemeStepNarrowTest {
     }
 
     @Test
-    fun `every badge is whole inside the window, a full 48 dp to tap, and wraps whole if the row is full`() {
+    fun `every badge is whole inside the window, a full 48 dp to tap, alone in its row and centred`() {
         show(none)
 
         introThemeChoices().forEach { choice ->
@@ -104,8 +104,19 @@ class IntroThemeStepNarrowTest {
         val bounds = badgeBounds()
         bounds.forEach { assertTrue(it.width >= TOUCH_TARGET - ROUNDING, "a badge is only ${it.width} wide") }
         bounds.forEach { assertTrue(it.height >= TOUCH_TARGET - ROUNDING, "a badge is only ${it.height} high") }
-        val rows = bounds.groupBy { it.top }.values.map { it.size }
-        assertTrue(rows.size in 1..2 && rows.sum() == 4, "the badges are in rows of $rows")
+        assertEquals(4, bounds.map { it.top }.distinct().size, "two badges share a row: $bounds")
+        bounds.forEach {
+            assertEquals(it.left.value, (windowWidth() - it.right).value, ROUNDING.value, "a badge is not centred: $it")
+        }
+        assertEquals(bounds.sortedBy { it.top }, bounds, "the badges are not in order down the screen")
+    }
+
+    @Test
+    fun `at 200 percent a badge is the large icon at its adaptive size, still whole at 320 dp`() {
+        show(none)
+
+        // 64 dp times the text scale of 2.0, held back to 0.8 of that by the icon above 1.5 times.
+        badgeBounds().forEach { assertEquals(64f * 2f * 0.8f, it.width.value, ROUNDING.value, "a badge is $it") }
     }
 
     @Test

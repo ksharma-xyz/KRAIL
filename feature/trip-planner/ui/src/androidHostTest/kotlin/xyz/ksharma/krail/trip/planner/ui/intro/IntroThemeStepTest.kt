@@ -100,6 +100,23 @@ class IntroThemeStepTest {
     }
 
     @Test
+    fun `the badges are twice the size they were, one to a row, in order and centred`() {
+        show(none)
+
+        val bounds = introThemeChoices().map { badge(it).getUnclippedBoundsInRoot() }
+
+        bounds.forEach { assertEquals(64.dp, it.width, "a badge is $it") }
+        assertEquals(bounds.sortedBy { it.top }, bounds, "the badges are not in order down the screen")
+        bounds.zipWithNext().forEach { (above, below) ->
+            assertTrue(below.top >= above.bottom, "two badges share a row: $above $below")
+        }
+        // A badge that is not selected drifts up to 4 dp sideways, so centred is within that.
+        bounds.forEach {
+            assertEquals(it.left.value, (window.width - it.right).value, DRIFT.value * 2, "a badge is not centred: $it")
+        }
+    }
+
+    @Test
     fun `the badges carry the tags the Maestro flow taps`() {
         show(none)
 
@@ -247,5 +264,6 @@ class IntroThemeStepTest {
 
     private companion object {
         val MIN_TOUCH = 48.dp
+        val DRIFT = 4.dp
     }
 }

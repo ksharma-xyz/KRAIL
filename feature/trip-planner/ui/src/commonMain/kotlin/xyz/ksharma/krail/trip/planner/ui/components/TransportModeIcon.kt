@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -39,8 +40,7 @@ fun TransportModeIcon(
 ) {
     CompositionLocalProvider(
         LocalTextColor provides Color.White,
-        // should be same as StopsRow and TransportModeInfo
-        LocalTextStyle provides KrailTheme.typography.titleSmall,
+        LocalTextStyle provides size.letterStyle(),
         // Alpha is intentionally always 100% — the mode icon circle must remain fully opaque
         // even when used inside a parent that sets LocalContentAlpha to 0.5f (e.g. previous
         // departure rows or past journey cards). The icon's coloured circle is its primary
@@ -69,6 +69,17 @@ fun TransportModeIcon(
     }
 }
 
+/**
+ * The style of the letter for [this] size. Every size up to [TransportModeIconSize.Large] is the small title, the same as
+ * StopsRow and TransportModeInfo. The extra large size has a bigger circle, so its letter takes the large headline, which
+ * is the same share of the circle. The colour is not here: the letter is always white, whatever the size.
+ */
+@Composable
+private fun TransportModeIconSize.letterStyle(): TextStyle = when (this) {
+    TransportModeIconSize.XLarge -> KrailTheme.typography.headlineLarge
+    else -> KrailTheme.typography.titleSmall
+}
+
 @Composable
 private fun Modifier.borderIfEnabled(enabled: Boolean, color: Color): Modifier =
     if (enabled) {
@@ -88,9 +99,16 @@ private val ICON_SIZE_XSMALL = 20.dp
 private val ICON_SIZE_SMALL = 22.dp
 private val ICON_SIZE_MEDIUM = 28.dp
 private val ICON_SIZE_LARGE = 32.dp
+private val ICON_SIZE_XLARGE = 64.dp
 
 enum class TransportModeIconSize(val dpSize: Dp) {
-    XSmall(ICON_SIZE_XSMALL), Small(ICON_SIZE_SMALL), Medium(ICON_SIZE_MEDIUM), Large(ICON_SIZE_LARGE)
+    XSmall(ICON_SIZE_XSMALL),
+    Small(ICON_SIZE_SMALL),
+    Medium(ICON_SIZE_MEDIUM),
+    Large(ICON_SIZE_LARGE),
+
+    /** Twice [Large], for a mode shown as the thing to choose, such as the Intro's theme badges. */
+    XLarge(ICON_SIZE_XLARGE),
 }
 
 // region Previews

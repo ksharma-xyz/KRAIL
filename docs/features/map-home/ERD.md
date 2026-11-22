@@ -917,6 +917,23 @@ Branch 11, the map home. The spec was silent on each of these. Every one is `Def
 | A114 | The radius is read once as the ViewModel is made. A value outside 0.5 to 10 is ignored whole and 5.0 applies, not clamped. Two stations the same distance away tie by lower-case name then stop id, so the answer never depends on list order | `resolveNearbyStopsRadiusKm`, which does the same | A change of the Remote Config value shows on the next launch | Default, not yet seen by owner |
 | A115 | Rule 46, the first run with only a "Show stops near you" card, is not built here. This branch is the existing riders' half, as section 10 says. The Intro owns the first run. Rule 47 says the button is "Add", and the card says "Add to home" and "Not now", the words the Park & Ride pin card already uses. `IntroEventsTest` pins the source set, which now has `home_suggestion` | Section 10, branch 12 and the Intro ERD | A new rider whose Intro is skipped has no first-run card. A person reading rule 47 will find "Add to home" | Default, not yet seen by owner |
 
+Branch 13, the diff against today's `SavedTripCard`, done first as section 10 asked. The card is not rebuilt: it already draws what rule 37 asks.
+
+| What | Today's code | Rule 37 and A1 | Result |
+|---|---|---|---|
+| Where a label comes from | `Trip.fromStopDisplay(labels)` and `Trip.toStopDisplay(labels)` resolve `StopDisplay.label` with `findLabelFor(stopId)`: the first set label whose `stopId` is the card's stop id | "A label shows on a card whenever that card's stop is the labelled stop" | Already true, for Home, Work and any custom label, at either end, and live: the home list reads `SavedTripsState.stopLabels`, which the label table feeds |
+| How a labelled end is drawn | The label in bold (`titleMedium`) with the stop name small under it (`bodySmall`). Both ends labelled is the one-line "Home to Work" with no stop names | "A labelled end is the label in bold with its stop small under it" and A1 | Already true. The rule's own words say bold text, so **no pill is added to the card** (A117) |
+| Several labels on one stop | First in the stored order wins. A stop is on one label by construction (`SEARCH_STOP_UX.md`, `LabelStopAssigned` refuses a stop another label holds), so this is the data corruption case only | not stated | Kept. `StopDisplayTest` already pins it |
+| A card drawn before its labels | The labels were observed by their own coroutine, so a card could draw first without its label and grow when the label landed | Rule 22, nothing jumps as data arrives | **The gap.** Fixed by reading the labels with the trips (A116) |
+| Height | One line per unlabelled end, two per labelled end, by content and not by timing | Rule 22 | With A116 a card is the same height from its first frame |
+
+Branch 13 decisions. The spec was silent on each of these. Every one is `Default, not yet seen by owner`.
+
+| # | Assumption | Evidence | What breaks if it is wrong | Decision |
+|---|---|---|---|---|
+| A116 | `observeSavedTrips` reads the stop labels once, before it first marks the trips loaded, in the same coroutine that already reads the Park & Ride row's place for the same reason. The labels' own observer keeps them current after. One local read, no network, no timer | The two observers were independent coroutines on two queries, so the order was luck. `SavedTripsLabelsWithTripsTest` pins the contract (the first state a card can draw from holds its labels). It passes with and without the read under the shared test scheduler, because the fake's labels land first there, so it cannot catch a production ordering. **Device QA is the check** | A cold start on a slow disk draws one frame of cards without labels, as before | Default, not yet seen by owner |
+| A117 | The saved trip card keeps rule 37's bold label with the stop small under it. No Home pill is drawn on it, and `SetLabelPill` is not used on the card. The brief for this branch said "pill"; the rule, A1 and the card shell say bold text, and a pill would be a second look for the same fact | `SavedTripCard.kt`, `docs/MAP_HOME_UX.md` rule 37, A1 | A rider expected a pill on the card. It is one component swap in `StopDisplayRow` if the owner wants it | Default, not yet seen by owner |
+
 Branch 12, the one-time Park & Ride suggestion. All pure, in `parkride/suggestion/ParkRideSuggestionRules.kt` and
 `ParkRideSuggestionRadius.kt`, so each rule is driven at its boundary without a layout, a fix or a database:
 

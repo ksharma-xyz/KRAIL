@@ -483,14 +483,7 @@ class SavedTripsViewModel(
             sandook.observeStopLabels()
                 .distinctUntilChanged()
                 .collect { rows ->
-                    val labels = rows.map { row ->
-                        StopLabel(
-                            emoji = row.emoji,
-                            label = row.label,
-                            stopId = row.stop_id,
-                            stopName = row.stop_name,
-                        )
-                    }.toImmutableList()
+                    val labels = rows.toStopLabels()
                     updateUiState { copy(stopLabels = labels) }
                 }
         }
@@ -515,7 +508,13 @@ class SavedTripsViewModel(
             viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
                 // Read with the trips, before the first list is drawn, so the row never jumps.
                 val rowIndex = preferences.getLong(SandookPreferences.KEY_PARK_RIDE_ROW_INDEX)?.toInt()
-                updateUiState { copy(isSavedTripsLoading = true, parkRideRowIndex = rowIndex) }
+                // The labels are read with the trips for the same reason: a card draws a label whenever its
+                // stop is the labelled stop, so one drawn before the labels landed would grow when they did
+                // (`docs/MAP_HOME_UX.md` rules 22 and 37). The labels' own observer keeps them current after.
+                val labels = sandook.observeStopLabels().first().toStopLabels()
+                updateUiState {
+                    copy(isSavedTripsLoading = true, parkRideRowIndex = rowIndex, stopLabels = labels)
+                }
                 sandook.observeAllTrips()
                     .distinctUntilChanged()
                     .collectLatest { savedTrips ->

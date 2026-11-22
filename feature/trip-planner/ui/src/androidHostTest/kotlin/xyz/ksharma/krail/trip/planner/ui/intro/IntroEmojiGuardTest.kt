@@ -8,10 +8,11 @@ import kotlin.test.assertTrue
 
 /**
  * The Intro draws only emoji the operator approved: the entries of the app's non festival list,
- * [FestivalManager.commonEmojiList], and the pin and the star, which are declared once in
- * `IntroApprovedEmoji.kt`. Nothing is typed into any other Intro source, and nothing festival is asked
- * for, so no screen changes with the date. This reads the Intro sources, the way `IntroNeverReviewsTest`
- * does, and fails on an emoji outside that set wherever it is written, as a character or as an escape.
+ * [FestivalManager.commonEmojiList], the pin and the star, and the five transport emoji (train, metro, bus, ferry
+ * and car), which are declared once in `IntroApprovedEmoji.kt`. Nothing is typed into any other Intro source, and
+ * nothing festival is asked for, so no screen changes with the date. This reads the Intro sources, the way
+ * `IntroNeverReviewsTest` does, and fails on an emoji outside that set wherever it is written, as a character or as
+ * an escape.
  */
 class IntroEmojiGuardTest {
 
@@ -23,7 +24,9 @@ class IntroEmojiGuardTest {
         dir.walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
     }
 
-    private val allowed = FestivalManager.commonEmojiList + INTRO_PIN_EMOJI + INTRO_STAR_EMOJI
+    // Exactly the approved list, the pin, the star and the five transport emoji, with each spelled out here and not
+    // read from the constants, so a change to a constant that is not meant is caught.
+    private val allowed = FestivalManager.commonEmojiList + listOf(PIN, STAR, TRAIN, METRO, BUS, FERRY, CAR)
 
     @Test
     fun `the Intro sources are found, so this guard cannot pass by looking at nothing`() {
@@ -31,7 +34,7 @@ class IntroEmojiGuardTest {
     }
 
     @Test
-    fun `every emoji in an Intro source is on the approved list or is the pin or the star`() {
+    fun `every emoji in an Intro source is on the approved list or is one of the seven declared exceptions`() {
         val offenders = introSources.flatMap { file ->
             emojiRuns(file.readText()).filter { it !in allowed }.map { "${file.name} has ${it.describe()}" }
         }
@@ -40,8 +43,15 @@ class IntroEmojiGuardTest {
     }
 
     @Test
-    fun `the pin and the star are written out in one file only`() {
-        val exceptions = setOf(INTRO_PIN_EMOJI, INTRO_STAR_EMOJI)
+    fun `the allowed set is exactly the approved list and the seven declared exceptions, and the file declares just those`() {
+        assertEquals(IntroDeclaredEmoji.toSet(), setOf(PIN, STAR, TRAIN, METRO, BUS, FERRY, CAR))
+        assertEquals(IntroDeclaredEmoji.size, 7)
+        assertEquals(FestivalManager.commonEmojiList.size + 7, allowed.toSet().size)
+    }
+
+    @Test
+    fun `the declared exceptions are written out in one file only`() {
+        val exceptions = IntroDeclaredEmoji.toSet()
 
         val files = introSources.filter { file -> emojiRuns(file.readText()).any { it in exceptions } }
 
@@ -59,11 +69,25 @@ class IntroEmojiGuardTest {
     }
 
     @Test
-    fun `the pin and the star are the code points the operator approved`() {
+    fun `the pin, the star and the transport emoji are the code points the operator approved`() {
         assertEquals(PIN_CODE_POINT, INTRO_PIN_EMOJI.codePointAt(0))
         assertEquals(INTRO_PIN_EMOJI.length, Character.charCount(PIN_CODE_POINT))
         assertEquals(STAR_CODE_POINT, INTRO_STAR_EMOJI.codePointAt(0))
         assertEquals(INTRO_STAR_EMOJI.length, Character.charCount(STAR_CODE_POINT))
+        assertEquals(listOf(TRAIN_CODE_POINT), INTRO_TRAIN_EMOJI.codePoints().toArray().toList())
+        assertEquals(listOf(METRO_CODE_POINT), INTRO_METRO_EMOJI.codePoints().toArray().toList())
+        assertEquals(listOf(BUS_CODE_POINT), INTRO_BUS_EMOJI.codePoints().toArray().toList())
+        assertEquals(listOf(FERRY_CODE_POINT, VARIATION_SELECTOR_16), INTRO_FERRY_EMOJI.codePoints().toArray().toList())
+        assertEquals(listOf(CAR_CODE_POINT), INTRO_CAR_EMOJI.codePoints().toArray().toList())
+    }
+
+    @Test
+    fun `an emoji that is not approved is an offender, and so is one of the approved ones in the wrong file`() {
+        val helicopter = String(Character.toChars(HELICOPTER_CODE_POINT))
+
+        assertEquals(listOf(helicopter), emojiRuns("val a = \"$helicopter\"").filter { it !in allowed })
+        assertEquals(emptyList(), emojiRuns("val a = \"$CAR\"").filter { it !in allowed })
+        assertEquals(emptyList(), emojiRuns("val a = \"$FERRY\"").filter { it !in allowed })
     }
 
     @Test
@@ -116,7 +140,22 @@ class IntroEmojiGuardTest {
         const val HEX = 16
         const val PIN_CODE_POINT = 0x1F4CD
         const val STAR_CODE_POINT = 0x2B50
+        const val TRAIN_CODE_POINT = 0x1F686
+        const val METRO_CODE_POINT = 0x1F687
+        const val BUS_CODE_POINT = 0x1F68C
+        const val FERRY_CODE_POINT = 0x26F4
+        const val VARIATION_SELECTOR_16 = 0xFE0F
         const val CAR_CODE_POINT = 0x1F697
+        const val HELICOPTER_CODE_POINT = 0x1F681
+
+        // The seven exceptions as escapes of their code points, so this file holds no emoji character of its own.
+        val PIN = String(Character.toChars(PIN_CODE_POINT))
+        val STAR = String(Character.toChars(STAR_CODE_POINT))
+        val TRAIN = String(Character.toChars(TRAIN_CODE_POINT))
+        val METRO = String(Character.toChars(METRO_CODE_POINT))
+        val BUS = String(Character.toChars(BUS_CODE_POINT))
+        val FERRY = String(Character.toChars(FERRY_CODE_POINT)) + String(Character.toChars(VARIATION_SELECTOR_16))
+        val CAR = String(Character.toChars(CAR_CODE_POINT))
         const val ZERO_WIDTH_JOINER = 0x200D
         val ESCAPE = Regex("""\\u([0-9A-Fa-f]{4})""")
 

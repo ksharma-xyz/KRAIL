@@ -1,31 +1,43 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import xyz.ksharma.krail.core.festival.FestivalManager
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 
-// Where the screens that use the list start in it. The Park & Ride screen lands on a transport emoji, and
-// each of those screens is one entry on from the one before it.
+// Where the screens that use the list start in it. The origin screen lands on an entry of the list, and the theme
+// screen, before a choice, on the first one, the scooter, a neutral ride that is no mode.
 private const val EMOJI_OFFSET = 5
+private const val NEUTRAL_RIDE_INDEX = 0
 
 /**
- * The emoji of [step]. The destination screen has the pin and the confirm screen the star, the two
- * operator approved exceptions in [INTRO_PIN_EMOJI] and [INTRO_STAR_EMOJI]. Every other screen has an
- * entry of the app's own non festival list, [FestivalManager.commonEmojiList], the one the loading emoji
- * uses. No emoji is typed into any other Intro code, and no festival emoji is used, so the Intro never
- * changes with the date.
+ * The emoji of [step]. The destination screen has the pin, the confirm screen the star and the Park & Ride screen
+ * a car. The theme screen has the transport emoji of the theme chosen, [selectedThemeId]: the train, the metro, the
+ * bus or the ferry, and with no choice yet, or an id the Intro does not offer, the scooter from the app's own non
+ * festival list, [FestivalManager.commonEmojiList], the one the loading emoji uses, never the alarm clock. Those
+ * seven are the operator approved exceptions in `IntroApprovedEmoji.kt`. The origin screen has an entry of the list.
+ * No emoji is typed into any other Intro code, and no festival emoji is used, so the Intro never changes with the date.
  *
- * It is a pure function of the step and the list. The screens that use the list take the entry at their
- * place in the order, wrapping round the end, so the theme and Park & Ride screens, which sit side by side,
- * never share one while the list has two or more entries, and a list that grows or shrinks still gives a
- * valid entry for every screen. The pin and the star sit between them and the rest, so no two screens in a
- * row ever share an emoji. An empty list gives an empty string, which the headline draws as nothing.
+ * It is a pure function of the step, the choice and the list. The origin screen takes the entry at its place in the
+ * order, wrapping round the end, so a list that grows or shrinks still gives a valid entry, and an empty list gives an
+ * empty string, which the headline draws as nothing. A chosen theme never depends on the list.
  */
 internal fun introEmojiFor(
     step: IntroStep,
+    selectedThemeId: Int? = null,
     emojis: List<String> = FestivalManager.commonEmojiList,
 ): String = when (step) {
+    IntroStep.THEME -> themeEmoji(selectedThemeId) ?: emojis.getOrNull(NEUTRAL_RIDE_INDEX).orEmpty()
+    IntroStep.PARK_RIDE -> INTRO_CAR_EMOJI
     IntroStep.DESTINATION -> INTRO_PIN_EMOJI
+    IntroStep.ORIGIN -> if (emojis.isEmpty()) "" else emojis[(step.ordinal + EMOJI_OFFSET) % emojis.size]
     IntroStep.CONFIRM -> INTRO_STAR_EMOJI
-    IntroStep.THEME, IntroStep.PARK_RIDE, IntroStep.ORIGIN ->
-        if (emojis.isEmpty()) "" else emojis[(step.ordinal + EMOJI_OFFSET) % emojis.size]
+}
+
+/** The transport emoji of the theme with id [themeId], or null for no choice and for a theme the Intro does not offer. */
+internal fun themeEmoji(themeId: Int?): String? = when (themeId) {
+    KrailThemeStyle.Train.id -> INTRO_TRAIN_EMOJI
+    KrailThemeStyle.Metro.id -> INTRO_METRO_EMOJI
+    KrailThemeStyle.Bus.id -> INTRO_BUS_EMOJI
+    KrailThemeStyle.Ferry.id -> INTRO_FERRY_EMOJI
+    else -> null
 }

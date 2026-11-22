@@ -38,7 +38,7 @@ internal fun IntroThemeStepContent(
             IntroHeadline(
                 lines = headline.lines,
                 emphasisIndex = headline.emphasisIndex,
-                emoji = introEmojiFor(IntroStep.THEME),
+                emoji = introEmojiFor(IntroStep.THEME, selectedThemeId),
                 minLines = THEME_HEADLINE_RESERVED_LINES,
             )
         },

@@ -430,7 +430,7 @@ three zone frame, and everything it decides is in pure functions with table test
   exclamation mark and no colon. After a choice it is that theme's `KrailThemeStyle.tagLine`, shown exactly as the app wrote it,
   split by `taglineLines` after its first comma (one line when there is none, and the lines joined with a space are the
   tagline again). It enters again with the kinetic headline motion each time the selection changes, because the headline is
-  keyed on its phrase. The emoji is `introEmojiFor(THEME)`. `IntroHeadline` gained `minLines`: the headline keeps the height of the
+  keyed on its phrase. The emoji is `introEmojiFor(THEME, selectedThemeId)`: the scooter before a choice, then the train, metro, bus or ferry of the chosen badge. `IntroHeadline` gained `minLines`: the headline keeps the height of the
   emoji and that many lines at the rider's text size, so the badges do not move when the words change.
 - **The badge.** The app's own `TransportModeIcon` for the choice's mode, used unchanged: the circle in the mode's colour, the
   mode's first letter in white (the component fixes the text colour, so the letter is white on every badge, in light and dark), and
@@ -563,11 +563,16 @@ Unit R1, as built, where this document was silent:
 - **Frame.** `IntroStepFrame(headline, middle)` is the three zones: the headline on top, the thing to decide in the middle
   (centred in the room under the headline by `introMiddleTop`, and scrolling with the headline when the room runs out), and the
   decision bar pinned below by the shell.
-- **Emoji.** `introEmojiFor(step)` is pure. The destination screen has the pin and the confirm screen the star, the two
-  operator approved exceptions, declared once in `IntroApprovedEmoji.kt`. Every other screen takes an entry of
-  `FestivalManager.commonEmojiList` (the app's non festival loading emoji), read from the list and never typed. No festival
-  emoji is used, so the Intro does not change with the date. `IntroEmojiGuardTest` reads the Intro sources and fails on any
-  other emoji. The confirm screen's star is the star emoji, not the save star icon, and may be swapped for the icon when that
+- **Emoji.** `introEmojiFor(step, selectedThemeId)` is pure and is a table. The destination screen has the pin, the confirm
+  screen the star, the Park & Ride screen a car, and the theme screen the transport emoji of the theme chosen: train, metro, bus
+  or ferry, and before a choice (or for an id the Intro does not offer) the scooter, entry 0 of `FestivalManager.commonEmojiList`,
+  a neutral ride and never the alarm clock. The origin screen keeps its entry of the list. Seven are operator approved exceptions
+  declared once in `IntroApprovedEmoji.kt` (amended 2026-11-22): the pin U+1F4CD, the star U+2B50, and the five transport emoji
+  train U+1F686, metro U+1F687, bus U+1F68C, ferry U+26F4 followed by U+FE0F, and car U+1F697 (code points looked up from the
+  Unicode names TRAIN, METRO, BUS, FERRY, AUTOMOBILE). The list is read from `FestivalManager.commonEmojiList` and never typed. No
+  festival emoji is used, so the Intro does not change with the date. `IntroEmojiGuardTest` reads the Intro sources and fails on any
+  other emoji, and on any of the seven outside their one file. The headline's emoji re-pops with the existing bounce and one
+  wobble each time the choice changes (the headline is keyed on its phrase), and is settled under reduced motion. The confirm screen's star is the star emoji, not the save star icon, and may be swapped for the icon when that
   screen is built. `:feature:trip-planner:ui` already depends on `core:festival`, so no new module edge was needed.
 - **Analytics.** No new event name and no new param. `intro_lets_krail` keeps its params and their meaning. `skipped` is
   completed with the confirm screen, where it will mean the rider answered No there. Until then it still means no complete trip
@@ -1030,8 +1035,9 @@ make a row fit, except the one rule below. A screen with nothing to decide has n
   place. In a preview and after a turn of the screen the headline is also in place.
 - **Screen reader.** The whole headline is one heading whose text is the full phrase, with no pauses between lines, and the
   emoji is hidden from the reader.
-- **Emoji.** Only entries of `FestivalManager.commonEmojiList`, plus the pin on the destination screen and the star on the
-  confirm screen (section 3). Never a festival emoji.
+- **Emoji.** Only entries of `FestivalManager.commonEmojiList`, plus the seven declared exceptions: the pin on the destination
+  screen, the star on the confirm screen, the car on Park & Ride and the train, metro, bus and ferry on the theme screen
+  (section 3). Never a festival emoji, and never the alarm clock.
 
 **Step 0, theme (the first screen)**
 
@@ -1100,7 +1106,7 @@ The shell, as built (`IntroFlowScreen`, stateless, in `intro`):
 
 Step 1, as built (`IntroParkRideStepContent`), where this document was silent:
 
-- The headline is `IntroHeadline` with the lines "Driving", "to the", "station", and an emoji from the shared list above it.
+- The headline is `IntroHeadline` with the lines "Driving", "to the", "station", and a car emoji above it.
   A heading stands alone, so nothing is written under it.
 - The two answers are the decision bar and nothing else on the screen is a button. The theme colour is on the right button
   only.
@@ -1320,7 +1326,7 @@ in `searchstop/` touched:
   deleted.
 - **Guards added in R1.** `IntroBannedWordsTest` (banned words and characters in every Intro string and string resource,
   with a self check that catches each one), `IntroCopyTest` (every label the bar can show and every headline) and
-  `IntroEmojiGuardTest` (any emoji outside the shared list, the pin and the star, and those two outside their one file).
+  `IntroEmojiGuardTest` (any emoji outside the shared list and the seven declared exceptions, and those seven outside their one file).
 - **Guards that already exist and must stay green.** `ThemeColorRoleRule`, `ClockSystemBan`, `CollectAsStateBan`,
   `SnackbarBan`, `PollingLifecycleGuardTest` (the Intro must not poll), `ViewModelStateDurabilityTest`,
   `NavKeySerializationConfigTest`, `verifyTestWiring`.

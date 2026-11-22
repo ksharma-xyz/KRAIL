@@ -145,6 +145,25 @@ class IntroThemeStepTest {
     }
 
     @Test
+    fun `the headline emoji is the neutral scooter before a choice and the chosen mode after, hidden from a screen reader`() {
+        show(none)
+
+        composeRule.onNodeWithText(introEmojiFor(IntroStep.THEME), useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithText(introEmojiFor(IntroStep.THEME)).assertDoesNotExist()
+        listOf(
+            KrailThemeStyle.Train to INTRO_TRAIN_EMOJI,
+            KrailThemeStyle.Metro to INTRO_METRO_EMOJI,
+            KrailThemeStyle.Bus to INTRO_BUS_EMOJI,
+            KrailThemeStyle.Ferry to INTRO_FERRY_EMOJI,
+        ).forEach { (style, emoji) ->
+            show(none.copy(selectedThemeId = style.id))
+
+            composeRule.onNodeWithText(emoji, useUnmergedTree = true).assertExists()
+            composeRule.onNodeWithText(emoji).assertDoesNotExist()
+        }
+    }
+
+    @Test
     fun `the bar is the one button, off until a theme is selected, and there is no way to say no`() {
         show(none)
 

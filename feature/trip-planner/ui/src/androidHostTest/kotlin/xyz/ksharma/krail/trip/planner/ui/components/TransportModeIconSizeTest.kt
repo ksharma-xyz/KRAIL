@@ -164,14 +164,19 @@ class TransportModeIconSizeTest {
             TransportModeIconSize.Large to 32.dp,
         ).forEach { (iconSize, base) ->
             show(iconSize, TransportMode.Bus, scale = 1f)
-            assertEquals(base.value, composeRule.onNodeWithTag("icon").getUnclippedBoundsInRoot().width.value, 0.01f, "$iconSize at 1.0")
+            assertEquals(base.value, composeRule.onNodeWithTag("icon").getUnclippedBoundsInRoot().width.value, PIXEL_ROUNDING, "$iconSize at 1.0")
 
             show(iconSize, TransportMode.Bus, scale = 2f)
-            assertEquals(base.value * 2f * 0.8f, composeRule.onNodeWithTag("icon").getUnclippedBoundsInRoot().width.value, 0.01f, "$iconSize at 2.0")
+            assertEquals(base.value * 2f * 0.8f, composeRule.onNodeWithTag("icon").getUnclippedBoundsInRoot().width.value, PIXEL_ROUNDING, "$iconSize at 2.0")
             val style = letter("B").layoutInput
             assertEquals(2f, style.density.fontScale, "$iconSize letter follows the text size")
             assertEquals(14f, style.style.fontSize.value, 0.01f, "$iconSize letter size")
             assertTrue(style.style.fontWeight != FontWeight.Black, "$iconSize letter weight")
         }
+    }
+
+    private companion object {
+        // A dp is not a whole number of pixels, so a size is within half a dp of what it is meant to be.
+        const val PIXEL_ROUNDING = 0.5f
     }
 }

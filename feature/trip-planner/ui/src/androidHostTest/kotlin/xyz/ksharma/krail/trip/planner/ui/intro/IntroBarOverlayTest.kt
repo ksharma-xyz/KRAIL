@@ -11,16 +11,19 @@ import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasScrollAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
 import org.junit.Rule
 import org.junit.Test
@@ -104,6 +107,13 @@ abstract class IntroBarOverlayTestBase(private val windowWidth: Dp, private val 
 
     private fun scrollToEnd() = scrollBy(END_OF_SCROLL)
 
+    // The bottom of the bar: the lower of its two buttons, as the two stack when they do not fit a row.
+    private fun barBottom(): Dp {
+        val secondary = composeRule.onAllNodes(hasTestTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION))
+        val buttons = listOf(bounds(primary())) + secondary.fetchSemanticsNodes().indices.map { bounds(secondary[it]) }
+        return buttons.maxOf { it.bottom }
+    }
+
     private fun heading() = composeRule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading)).onFirst()
 
     @Test
@@ -134,9 +144,16 @@ abstract class IntroBarOverlayTestBase(private val windowWidth: Dp, private val 
         scrollToEnd()
 
         row(lastEndId).assertIsDisplayed()
-        val gap = window().bottom - bounds(row(lastEndId)).bottom
-        // What is under the last row is the middle zone's own 16 dp and the row's own bottom padding, and no bar.
-        assertTrue(gap <= rhythm.middleBottom + dim.spacingM + ROUNDING, "the last row ends $gap above the bottom of the window")
+        val hiddenGap = window().bottom - bounds(row(lastEndId)).bottom
+        // What is under the last row is the middle zone's own 16 dp and the row's own padding, and no bar.
+        assertTrue(hiddenGap < dim.spacingXXXXL + ROUNDING, "the last row ends $hiddenGap above the bottom of the window")
+
+        // With the bar shown the end of the scroll is exactly the bar's height further down, and no more.
+        show(PreviewDestinationSelected)
+        scrollToEnd()
+        val shownGap = window().bottom - bounds(row(lastEndId)).bottom
+        val bar = bounds(primary()).height + dim.spacingL * 2
+        assertEquals((hiddenGap + bar).value, shownGap.value, ROUNDING.value, "the room at the end is not the bar's $bar")
     }
 
     @Test
@@ -193,6 +210,20 @@ abstract class IntroBarOverlayTestBase(private val windowWidth: Dp, private val 
     }
 
     @Test
+    fun `the field keeps the same inset at both ends when it has the focus and a long search typed in`() {
+        show(PreviewDestinationSuggestions)
+        val field = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_STOP_FIELD)
+
+        field.performClick()
+        field.performTextInput("Chatswood Station, a long search that fills the whole field and runs past it")
+        composeRule.waitForIdle()
+
+        val bounds = bounds(field)
+        assertEquals(dim.pageHorizontalPadding, bounds.left, "the start inset")
+        assertEquals(dim.pageHorizontalPadding, window().width - bounds.right, "the end inset")
+    }
+
+    @Test
     fun `a tap on a row that is under where the bar would be reaches the row while the bar is hidden`() {
         show(PreviewDestinationSuggestions)
         scrollToEnd()
@@ -213,7 +244,17 @@ abstract class IntroBarOverlayTestBase(private val windowWidth: Dp, private val 
 
         show(themeSelected)
         primary().assertIsDisplayed()
-        assertEquals(before, snapshot())
+        val after = snapshot()
+        // The badge that was picked sits lifted by its own 4 dp, as it always has. Nothing else moves.
+        assertEquals(before[0], after[0], "the headline moved")
+        before.zip(after).drop(1).forEachIndexed { i, (was, now) ->
+            val picked = introThemeChoices()[i].style.id == KrailThemeStyle.Train.id
+            if (picked) {
+                assertEquals(was.top.value, now.top.value, 4f + ROUNDING.value, "the picked badge")
+            } else {
+                assertEquals(was, now, "${introThemeChoices()[i].name} moved")
+            }
+        }
 
         scrollToEnd()
         val barTop = bounds(primary()).top - dim.spacingL
@@ -245,7 +286,7 @@ abstract class IntroBarOverlayTestBase(private val windowWidth: Dp, private val 
             assertTrue(title.left >= 0.dp && title.right <= window().width, "${state.step}: the headline is outside the window: $title")
             assertTrue(bar.left >= 0.dp && bar.right <= window().width, "${state.step}: the bar is outside the window: $bar")
             assertTrue(title.bottom <= bar.top, "${state.step}: the headline ends at ${title.bottom}, under the bar at ${bar.top}")
-            assertTrue(window().bottom - bar.bottom <= dim.spacingL + ROUNDING, "${state.step}: the bar is not at the bottom")
+            assertTrue(window().bottom - barBottom() <= dim.spacingL + ROUNDING, "${state.step}: the bar is not at the bottom")
         }
     }
 

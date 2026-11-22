@@ -1,10 +1,12 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -76,7 +78,7 @@ internal fun IntroStopStepContent(
         modifier = modifier,
         centreMiddle = false,
     ) {
-        Column {
+        Column(modifier = Modifier.fillMaxWidth()) {
             IntroStopField(
                 step = state.step,
                 startText = state.query,
@@ -108,6 +110,26 @@ private fun IntroStopField(
     val lastSent = remember { mutableStateOf(startText) }
     val fieldType = if (step == IntroStep.ORIGIN) SearchStopFieldType.FROM else SearchStopFieldType.TO
     val bar = if (step == IntroStep.ORIGIN) ToFromField.From else ToFromField.To
+    // The page padding is on a plain box around the field, the same at the start and the end, and the field fills what is
+    // left of it, so the field's own modifier chain has no say in where its edges are.
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding)
+            .padding(bottom = introRhythm(KrailTheme.dimensions).fieldToList),
+    ) {
+        IntroSearchField(fieldState, lastSent, bar, fieldType, onEvent)
+    }
+}
+
+@Composable
+private fun IntroSearchField(
+    fieldState: TextFieldState,
+    lastSent: MutableState<String>,
+    bar: ToFromField,
+    fieldType: SearchStopFieldType,
+    onEvent: (IntroUiEvent) -> Unit,
+) {
     TextField(
         state = fieldState,
         placeholder = barPlaceholderFor(bar, fieldType, editTripLeg = false),
@@ -125,8 +147,6 @@ private fun IntroStopField(
         },
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding)
-            .padding(bottom = introRhythm(KrailTheme.dimensions).fieldToList)
             .testTag(TripPlannerTestTags.INTRO_STOP_FIELD),
     )
 }

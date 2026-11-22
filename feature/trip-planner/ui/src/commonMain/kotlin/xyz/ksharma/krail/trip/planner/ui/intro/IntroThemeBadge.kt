@@ -29,8 +29,9 @@ private val MinTouchTarget = 48.dp
  * One theme badge. It is the app's own `TransportModeIcon` for the choice's transport mode, used as it is: the
  * circle in the mode's colour, the mode's first letter in white, and the white ring, all drawn by that component.
  * Nothing is passed to it that picks a colour, so the letter is white on every badge, which is the rule for a mode
- * icon everywhere in the app. It is drawn at the component's extra large size, `TransportModeIconSize.XLarge`, twice
- * the size it was, and grows with the text as the component does.
+ * icon everywhere in the app. It is drawn at the component's extra large size, `TransportModeIconSize.XLarge`: a fixed
+ * 64 dp circle that does not grow with the text size, with its letter in the heaviest weight at a size that does not
+ * grow either, and a white ring twice as thick as the other sizes have, all drawn by that component.
  *
  * The icon has no click of its own, so the badge is a box the size of the icon with the app's own click modifier
  * (`klickable`, the ripple every taj button has) on a circle laid over it. The box is at least 48 dp each way, so
@@ -39,7 +40,7 @@ private val MinTouchTarget = 48.dp
  *
  * [frame] says where the badge is. It is read inside `graphicsLayer`, so a frame that changes every tick moves
  * the badge without composing or laying anything out again. The chosen badge shows it with the dance, or with no
- * motion by sitting lifted, and the ring is the component's own fixed one on every badge. For a screen reader the
+ * motion by sitting lifted, and the ring is the component's own on every badge. For a screen reader the
  * badge is one button named for its theme, with whether it is selected, and the letter is hidden from it because
  * the name says the same.
  */

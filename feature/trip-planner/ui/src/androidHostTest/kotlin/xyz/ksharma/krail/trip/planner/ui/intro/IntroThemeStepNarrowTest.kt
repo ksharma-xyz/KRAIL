@@ -127,11 +127,14 @@ class IntroThemeStepNarrowTest {
     }
 
     @Test
-    fun `at 200 percent a badge is the large icon at its adaptive size, still whole at 320 dp`() {
+    fun `at 200 percent a badge is still a plain 64 dp, whole at 320 dp, in the same two columns as on a phone`() {
         show(none)
 
-        // 64 dp times the text scale of 2.0, held back to 0.8 of that by the icon above 1.5 times.
-        badgeBounds().forEach { assertEquals(64f * 2f * 0.8f, it.width.value, ROUNDING.value, "a badge is $it") }
+        // The badge does not follow the text size, so it is the 64 dp it is at 100 percent.
+        badgeBounds().forEach { assertEquals(64f, it.width.value, ROUNDING.value, "a badge is $it") }
+        badgeBounds().forEach { assertEquals(64f, it.height.value, ROUNDING.value, "a badge is $it") }
+        val b = badgeBounds()
+        assertEquals(168f, b.maxOf { it.right }.value - b.minOf { it.left }.value, ROUNDING.value, "the grid is not the phone's: $b")
     }
 
     @Test

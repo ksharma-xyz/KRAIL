@@ -494,8 +494,9 @@ three zone frame, and everything it decides is in pure functions with table test
 - **The badge.** The app's own `TransportModeIcon` for the choice's mode, used unchanged: the circle in the mode's colour, the
   mode's first letter in white (the component fixes the text colour, so the letter is white on every badge, in light and dark), and
   its white ring (`displayBorder = true` on all four, like the website). Nothing is passed to it that picks a colour. It is drawn at
-  the component's extra large size, `TransportModeIconSize.XLarge` (64 dp, twice the 32 dp of Large, added in unit U8, growing with
-  the text as the component does: 64 dp at 100 percent text and about 102 dp at 200 percent). A box the size of the icon carries it,
+  the component's extra large size, `TransportModeIconSize.XLarge` (64 dp, twice the 32 dp of Large, added in unit U8. Since unit U11 it is a fixed
+  64 dp at every text size, where it had followed the text as the other sizes do and was about 102 dp at 200 percent, with the letter
+  at a fixed size in the heaviest weight and the white ring twice as thick, 6 dp inside the circle). A box the size of the icon carries it,
   with the app's own `klickable` on a circle laid over it: that is the touch target (at least 48 dp each way), and the tag and the
   semantics are on the box, and the float and the dance move it through `graphicsLayer`. The selected badge is shown by the dance and, with
   no motion, by sitting lifted 4 dp. The hand-built circle, its fill, its ring, its thicker ring, the 64 to 96 dp growth and the
@@ -584,8 +585,8 @@ that Park & Ride asks "No thanks" and "Yes, show me free spots" is superseded by
   half a badge and sits 16 dp further out (`spacingXL`), and the second row of the left column is moved in by the same 16 dp, so no row
   lines up with the next. 24 dp (`spacingXXXL`) between any two badges across and down, the drift and the dance of a badge reach at most 19 dp
   with a dancer next to a drifter (a table test), so they never touch. The grid is centred across the room. When two badges, the gap and the
-  shift do not fit the width (a badge much larger than at 200 percent on a 320 dp window, where it is 102 dp and still two columns fit
-  in 288 dp), whole badges wrap to a single staggered column, every second one moved in, never two to a row and never squeezed. At
+  shift do not fit the width (a badge much larger than 64 dp, which it is at every text size since unit U11, so at 200 percent on a 320 dp
+  window two columns still fit in 288 dp, as they do on a phone), whole badges wrap to a single staggered column, every second one moved in, never two to a row and never squeezed. At
   64 dp the grid is 168 dp wide and 184 dp tall. The middle zone is the scrolling frame, so when the headline and the grid are taller
   than the room above the bar it scrolls and every badge can be brought whole into view above the bar (a layout test at 320 by 568 dp at
   200 percent scrolls to each). The float, the dance, the tags `intro.theme.*`, the 48 dp targets and the spoken names are unchanged.
@@ -1336,7 +1337,7 @@ make a row fit, except the one rule below. A screen with nothing to decide has n
 | None chosen | The headline `What's your`, `favourite`, `transport mode`, `in Sydney?` and the four badges, drifting. Bar: nothing, and its room is kept, so the button is neither visible nor disabled |
 | A theme selected | The whole app in that theme's colour, the headline now that theme's tagline, the selected badge dancing and the others drifting. Bar: the one button `Yes, this one` fades in over 250 ms in the kept room, in that theme's colour, and it ends the Intro. With reduced motion it appears at once. When the rider said yes to saving the trip and the stops are still loading, the button is off until they are Ready or Failed |
 | Reduced motion, preview or screenshot | The same, with nothing moving: the selected badge lifted 4 dp |
-| 320 dp at 200 percent text | The four badges in the loose grid of two columns, each about 102 dp and a full touch target, centred across the window. The bar, once there is a pick, is the one button across the window, whole. The middle zone scrolls with the headline |
+| 320 dp at 200 percent text | The four badges in the loose grid of two columns, each the same 64 dp as at 100 percent and a full touch target, centred across the window. The bar, once there is a pick, is the one button across the window, whole. The middle zone scrolls with the headline |
 
 - The one button is the only button besides the badges, and each badge is a button. A tap on a badge is the only way to choose:
   the owner ruled that the rider just picks a colour, with no option to say no (2026-11-22), so there is no left button and no
@@ -1682,7 +1683,7 @@ in `searchstop/` touched:
 - **Unit U8 tests, the badges.** `TransportModeIconSizeTest` (the four sizes as they were and the extra large one twice the large one, the large
   letter still the 14 sp white title, every mode's extra large letter white at 28 sp in a 64 dp circle), `IntroThemeBadgeTest` (as before at the
   new size), `IntroThemeStepTest` (64 dp, in the loose grid, centred within the drift; replaced in unit U9) and `IntroThemeStepNarrowTest` (320 dp at 200 percent:
-  whole, a full 48 dp, alone in its row and centred, 102 dp at 200 percent, at least 16 dp apart). The old wrap whole test is replaced by the column test.
+  whole, a full 48 dp, alone in its row and centred, 102 dp at 200 percent until unit U11 and 64 dp since, at least 16 dp apart). The old wrap whole test is replaced by the column test.
 - **Unit U8 tests, the stop screens.** `IntroFlowViewModelStopsTest` (nothing selected on open, a tap selects and nothing else moves, another row
   moves the selection, confirming sets the end or the start and moves on and drops the selection, the button with nothing selected does
   nothing, the nearest station leads the origin list and is not selected, different typed text drops the selection and the same text keeps it, the
@@ -1917,6 +1918,10 @@ Each is a default taken to keep moving. None has been seen by the owner. The scr
 | U11-3 | The bar is measured first, in a `SubcomposeLayout`, and its height reaches each frame as `LocalIntroBarInset`. A frame outside the shell, such as a preview, sees no bar | A height read after layout would draw one frame with the wrong room and then move. The cost is one subcomposition of the bar per pass, which is two taj buttons | Default, not yet seen by owner |
 | U11-4 | If the bar goes while the list is scrolled to its very end, the scroll clamps and the rows slide down by up to the bar's height, once | The room for the bar is only there while it is, and the rider cannot un-pick a stop, so this happens only when typing drops the selection, and the list is replaced by the search at the same moment. Keeping the room with no bar would put a hole under the list | Default, not yet seen by owner |
 | U11-5 | The room above the emoji, `introRhythm.top`, is `spacingXL` (16 dp), down from `spacingXXXL` (24 dp), the same on all five screens | The emoji and headline started too low. 16 dp is one third less, and the nearest step below 24 dp, `spacingXXL` (20 dp), would be a sixth. Every other gap is unchanged, so the headline zone, the bar and the rhythm between the zones stay as they were. If it is still too low, `introRhythm.top` is the one number | Default, not yet seen by owner |
+| U11-6 | The extra large badge is a plain 64 dp at every text size. The circle skips `toAdaptiveDecorativeIconSize()`, which multiplied it by the font scale (and by 0.8 of it above 1.5), and the letter is drawn at font scale 1. Only `XLarge` does this, so the other four sizes still grow with the text | The badge was about 102 dp at 200 percent text and too big. The spec said a fixed size and a letter that never overflows, and a letter that does not scale cannot outgrow a circle that does not scale. The cost is that the letter does not follow a rider's larger text, but it is a single capital on a button with a spoken name. `themeBadgeGrid` is unchanged, because it reads the measured badge, which is now 64 dp at every scale | Default, not yet seen by owner |
+| U11-7 | The extra large ring is twice the medium stroke, 6 dp (`strokeMedium * 2`, in `TransportModeIconSize.ringWidth`), white, drawn inside the circle | The spec said twice as thick as it was, which was `strokeMedium` (3 dp). There is no 6 dp stroke token, so it is the token twice. The ring is inside the 64 dp, so the badge is no bigger. The other sizes keep 3 dp | Default, not yet seen by owner |
+| U11-8 | The extra large letter is `headlineLarge` at `FontWeight.Black` (`XLARGE_LETTER_WEIGHT`), still white | The spec said the heaviest the family has. The system family has Black. With the alternative typeface switched on, which has only Regular and SemiBold, Black resolves to the SemiBold it has. The other sizes keep the small title in its own weight | Default, not yet seen by owner |
+
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

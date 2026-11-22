@@ -39,8 +39,8 @@ class IntroThemeBadgeGridTest {
             Row("exactly fits", 4, 64, 168, listOf(0, 104, 16, 104), listOf(0, 32, 88, 120), 168, 184, 2),
             // One pixel short: a single column, every second badge moved in by the shift.
             Row("one short", 4, 64, 167, listOf(0, 16, 0, 16), listOf(0, 88, 176, 264), 80, 328, 1),
-            // 200 percent text on a 320 dp window: 102 dp badges in 288 dp. Two columns still fit, as 102 + 102 + 40 is 244.
-            Row("320 dp at 200 percent", 4, 102, 288, listOf(0, 142, 16, 142), listOf(0, 51, 126, 177), 244, 279, 2),
+            // 200 percent text on a 320 dp window: the badge is still the fixed 64 dp, in 288 dp, so it is the phone's grid.
+            Row("320 dp at 200 percent", 4, 64, 288, listOf(0, 104, 16, 104), listOf(0, 32, 88, 120), 168, 184, 2),
             // A room that is barely a badge: no room to move in, so the badges are in a straight column.
             Row("a room of one badge", 4, 64, 64, listOf(0, 0, 0, 0), listOf(0, 88, 176, 264), 64, 328, 1),
             // A room a little over a badge: the shift is what is left of the room.
@@ -60,7 +60,7 @@ class IntroThemeBadgeGridTest {
 
     @Test
     fun `the right column is lowered by half a badge and the grid is not symmetrical`() {
-        listOf(48, 64, 102, 128).forEach { badge ->
+        listOf(48, 64).forEach { badge ->
             val grid = grid(count = 4, badge = badge, available = 1000)
 
             assertEquals(badge / 2, grid.ys[1] - grid.ys[0], "the right column is half a badge lower, badge $badge")
@@ -74,7 +74,7 @@ class IntroThemeBadgeGridTest {
     fun `no two badges overlap or sit closer than the gap, for every size, room and number of badges`() {
         val separation = minOf(gap, gap)
 
-        listOf(48, 64, 102, 128).forEach { badge ->
+        listOf(48, 64).forEach { badge ->
             listOf(64, 120, 168, 200, 244, 288, 330, 379, 480, 900).forEach { available ->
                 (1..6).forEach { count ->
                     val grid = grid(count, badge, available)
@@ -96,7 +96,7 @@ class IntroThemeBadgeGridTest {
 
     @Test
     fun `every badge is inside the grid, which is as big as the badges and no bigger, and inside the room when it can be`() {
-        listOf(48, 64, 102, 128).forEach { badge ->
+        listOf(48, 64).forEach { badge ->
             listOf(168, 200, 288, 379, 900).forEach { available ->
                 val grid = grid(count = 4, badge = badge, available = available)
 
@@ -113,7 +113,7 @@ class IntroThemeBadgeGridTest {
 
     @Test
     fun `two columns need two badges, the gap and the shift to fit, and never fewer`() {
-        listOf(48, 64, 102, 128).forEach { badge ->
+        listOf(48, 64).forEach { badge ->
             val needed = 2 * badge + gap + shift
 
             assertEquals(2, grid(4, badge, needed).columns, "size $badge, room $needed")
@@ -123,9 +123,10 @@ class IntroThemeBadgeGridTest {
     }
 
     @Test
-    fun `the drift and the dance of one badge cannot reach the next, at the small size and at 200 percent text`() {
+    fun `the drift and the dance of one badge cannot reach the next, at the fixed 64 dp size`() {
         // The most a badge moves from its place: the drift sideways and up and down, and the dance's rise and its growth.
-        listOf(64f, 102.4f).forEach { badgeDp ->
+        // The badge is a fixed 64 dp at every text size, so that is the one size there is.
+        listOf(64f).forEach { badgeDp ->
             val growth = (DANCE_SCALE_TO - 1f) / 2f * badgeDp
             val dancing = maxOf(DANCE_RISE_TO_DP, FLOAT_MAX_VERTICAL_DP) + growth
             val drifting = FLOAT_MAX_VERTICAL_DP
@@ -135,6 +136,17 @@ class IntroThemeBadgeGridTest {
                 "a dancing badge ($dancing dp) and a drifting one ($drifting dp) can touch across $gap dp, badge $badgeDp",
             )
         }
+    }
+
+    @Test
+    fun `the badge is a fixed 64 dp, so the grid is the same at every text size and wraps on the room alone`() {
+        // The room is in dp here, as the badge is: 288 dp is a 320 dp window at 200 percent text, 379 dp a phone.
+        val atLargeText = grid(count = 4, badge = 64, available = 288)
+        val onAPhone = grid(count = 4, badge = 64, available = 379)
+
+        assertEquals(onAPhone, atLargeText)
+        assertEquals(2, atLargeText.columns)
+        assertEquals(2 * 64 + gap + shift, atLargeText.width)
     }
 
     @Test

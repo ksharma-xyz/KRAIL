@@ -75,7 +75,7 @@ maestro --device emulator-5554 test -e APP_ID=xyz.ksharma.krail.debug .maestro/s
 | Flow | Pins |
 |---|---|
 | `smoke/01-launch-home.yaml` | Cold launch reaches home, the saved-trips list and the search row render, the title bar has its actions. |
-| `smoke/02-plan-trip.yaml` | The core journey: pick an origin, pick a destination, get real journey results back from the API. |
+| `smoke/02-plan-trip.yaml` | The core journey: pick a destination, pick an origin, get real journey results back from the API. Valid with the maps flag on or off. |
 | `nightly/03-rotation-sweep.yaml` | Home, search stop and the timetable each survive rotation, including with results and journey data loaded. |
 | `nightly/04-background-foreground.yaml` | Backgrounding and returning lands the rider on the screen they left, not on home. |
 | `nightly/05-kill-relaunch.yaml` | After a force-stop the app recovers to home and navigation still works. |

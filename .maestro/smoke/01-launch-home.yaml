@@ -20,8 +20,6 @@ appId: ${APP_ID}
       id: "savedtrips.screen"
     timeout: 60000
 
-- assertVisible:
-    id: "savedtrips.list"
 
 # The bottom search row is the app's primary action. If it is missing, the home
 # screen rendered but is useless.
@@ -37,10 +35,21 @@ appId: ${APP_ID}
     visible:
       id: "searchrow.to"
     timeout: 20000
-- extendedWaitUntil:
-    visible:
-      id: "searchrow.search"
-    timeout: 20000
+
+# Today's home draws the To bar, the From bar and the go circle. The map home (the maps flag on) draws one
+# pill until a stop is held, so the From bar, the go circle and the empty list are only asserted where the
+# From bar is drawn, and the pill's `searchrow.to` above is what both homes share.
+- runFlow:
+    when:
+      visible:
+        id: "searchrow.from"
+    commands:
+      - assertVisible:
+          id: "savedtrips.list"
+      - extendedWaitUntil:
+          visible:
+            id: "searchrow.search"
+          timeout: 20000
 
 # Settings is the only always-present title-bar action (Discover is flagged off
 # by default), so it stands in for "the title bar rendered".

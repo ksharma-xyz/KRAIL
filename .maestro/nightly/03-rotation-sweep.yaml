@@ -70,8 +70,10 @@ onFlowComplete:
     timeout: 60000
 
 # --- Search stop ---
+# The destination first, from `searchrow.to`: it is the To bar on today's home and the pill on the map home,
+# where `searchrow.from` is not drawn until a stop is held. The origin follows from `searchrow.from`.
 - tapOn:
-    id: "searchrow.from"
+    id: "searchrow.to"
 
 # Opens on the map state, so the recents only exist once the bar is tapped. Same steps as
 # 02-plan-trip, because this flow reaches the screen by a different route. There is no map
@@ -86,7 +88,7 @@ onFlowComplete:
     visible:
       id: "searchstop.recents"
     timeout: 15000
-- inputText: "Central"
+- inputText: "Town Hall"
 - extendedWaitUntil:
     visible:
       id: "searchstop.result..*"
@@ -119,15 +121,19 @@ onFlowComplete:
     timeout: 15000
 
 # --- Timetable ---
+- extendedWaitUntil:
+    visible:
+      id: "searchrow.from"
+    timeout: 15000
 - tapOn:
-    id: "searchrow.to"
+    id: "searchrow.from"
 - extendedWaitUntil:
     visible:
       id: "searchstop.query"
     timeout: 15000
 - tapOn:
     id: "searchstop.query"
-- inputText: "Town Hall"
+- inputText: "Central"
 - extendedWaitUntil:
     visible:
       id: "searchstop.result..*"

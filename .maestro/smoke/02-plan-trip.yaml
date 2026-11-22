@@ -1,4 +1,5 @@
-# The core journey: pick an origin, pick a destination, get a timetable.
+# The core journey: pick a destination, pick an origin, get a timetable. Valid on today's home and on the
+# map home (the maps flag on), see the Destination step.
 #
 # Every selector is a testTag, and results are chosen by index rather than by
 # name, so the flow does not break when NSW renames a stop or reorders results.
@@ -30,9 +31,13 @@ appId: ${APP_ID}
       id: "savedtrips.screen"
     timeout: 60000
 
-# --- Origin ---
+# --- Destination ---
+# The destination comes first because `searchrow.to` is the one entry that exists in both homes: it is the To
+# bar on today's home and the pill on the map home, where nothing but the pill is drawn until a stop is held
+# (so `searchrow.from` is not there yet). Once a stop is chosen both homes show To and From, and the origin
+# below is picked from `searchrow.from`. The trip is the same either way: Central to Town Hall.
 - tapOn:
-    id: "searchrow.from"
+    id: "searchrow.to"
 
 # Stop search opens on the MAP state: the map and the bar, with no keyboard and no list
 # (rule 39 of docs/MAP_HOME_UX.md). Tapping the bar raises the list state, which is where
@@ -55,7 +60,7 @@ appId: ${APP_ID}
     visible:
       id: "searchstop.recents"
     timeout: 30000
-- inputText: "Central"
+- inputText: "Town Hall"
 
 # Search is a network call, so give it real time rather than a fixed sleep.
 - extendedWaitUntil:
@@ -72,9 +77,14 @@ appId: ${APP_ID}
       id: "searchrow.root"
     timeout: 30000
 
-# --- Destination ---
+# --- Origin ---
+# Waited for, because on the map home the From bar only appears once the destination is held.
+- extendedWaitUntil:
+    visible:
+      id: "searchrow.from"
+    timeout: 30000
 - tapOn:
-    id: "searchrow.to"
+    id: "searchrow.from"
 
 # Same steps on the second entry: this one arrives with a recent stop already saved, which
 # is a different branch of the list from the first-open one above.
@@ -90,7 +100,7 @@ appId: ${APP_ID}
     visible:
       id: "searchstop.recents"
     timeout: 30000
-- inputText: "Town Hall"
+- inputText: "Central"
 
 - extendedWaitUntil:
     visible:

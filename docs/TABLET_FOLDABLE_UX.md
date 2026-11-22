@@ -72,7 +72,7 @@ Files:
   the window, then SearchStop's internal dual-pane halved it again,
   leaving ~25 % each. That is fixed.)
 - Dual-pane per `shouldShowDualPane` (≥ 840 dp wide, not compact height).
-  COMPACT widths keep the existing single-pane list/map toggle.
+  COMPACT widths keep the single pane, which opens as the map state with the list one tap away.
 - **Pane widths** come from the shared
   [`DualPaneScaffold`](../core/adaptive-ui/src/commonMain/kotlin/xyz/ksharma/krail/core/adaptiveui/DualPaneScaffold.kt):
   list pane = a **fixed** `DUAL_PANE_LIST_WIDTH` (480 dp); map pane =
@@ -92,9 +92,10 @@ Files:
   frame in one measure pass, and the map renders blank on iOS with no
   error anywhere. `DUAL_PANE_LIST_WIDTH` being a `Dp` and not a range is
   the fix, pinned by `DualPaneScaffoldTest`.
-- "Select on map" CTA stays hidden in dual-pane (map is always visible).
-  Already enforced via `isMapsAvailable = false` passed to
-  `SearchStopListContent`.
+- There is no "Select on map" button on any layout: single pane opens as the map state and dual-pane shows the
+  map in the right pane. The form (the To and From block with the search field in place), the location pill and the
+  recents card sit in the left pane. The two step back is single pane only. See
+  [`SEARCH_STOP_UX.md`](../feature/trip-planner/ui/SEARCH_STOP_UX.md).
 - Map and list selection stay synchronous (existing `onStopSelect`
   callback wired through `MapDisplay.selectedStop`).
 - Label / save-sheet / edit-mode / conflict behaviour is unchanged —

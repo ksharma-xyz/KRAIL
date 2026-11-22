@@ -217,6 +217,27 @@ fix per tap and nothing between taps (cost of a fix: a guess, not measured). A r
 coroutine and the recreated screen asks once more for the same tap, so a rotation can cost one extra fix. Timing before and after on
 a device: not measured, the target is a result inside the 10 s timeout and a fallback, never a spinner, when there is no fix.
 
+**Branch 4, Search Stop opens on the map (one row, numbers from code, guesses labelled).** Opening Search Stop adds the map tiles and
+nothing else: the existing shared MapLibre instance, drawn once as the screen opens (`InitializeMap`, one event). **Zero new network calls.**
+The recents card, the nearest rows and the suggested rows are local. The nearest rows cost 0 queries: they sort the stops the map already
+loaded for its camera, at most `MAX_NEARBY_RESULTS` (200) of them, by distance from the rider, a few hundred microseconds (a guess, not
+measured). The map's own stops query is unchanged: one local `LIMIT 200` query per camera settle, after the 500 ms pan debounce
+(`CAMERA_PAN_DEBOUNCE_MS`), and a repeat at the same centre inside the cache window reads no database. The suggested rows are one read of
+Remote Config (`intro_suggested_stops`, already fetched by the app) or the bundled list, once when the view model is built. No timer,
+no polling, nothing runs while the screen is behind another. The location pill adds no request: it reads `checkPermissionStatus()` once per
+return to the screen (a local call), and tapping it either asks the system for permission, which is the platform's own dialog and no network, or
+opens Settings. The one location stream (`TrackUserLocation`, every 5 s while the screen is in front, `UPDATE_INTERVAL_MS`) is the existing one.
+Time to first content before and after: before, the list was the first frame; now the first frame is the form and the map, with the list one
+tap away, so the card no longer waits for anything. Time to first map tiles: **not measured, measure on device**. Offline: the map shows the
+flat ground and the rider dot as before, the card and the form still work because they are local. Radio: nothing between taps.
+
+| Flow | Calls before | Calls after | Bytes before | Bytes after | Time to results before | after |
+|---|---|---|---|---|---|---|
+| Open Search Stop | 0 (list first, map opt in) | 0 new, map tiles from the shared instance | 0 | map tiles, not measured | local list, not measured | local form at once, tiles not measured |
+| Tap the bar, see the card | 0 | 0 | 0 | 0 | local | local, not measured |
+| Nearest rows, location known | not a feature | 0 queries, 1 in-memory sort of at most 200 stops | not a feature | 0 | not a feature | a guess, under a frame |
+| Tap the location pill | not a feature | 0 network, 1 system permission dialog or 1 open of Settings | not a feature | 0 | not a feature | platform |
+
 ## 7. States and UX
 
 | Surface | Loading | Empty | Error or offline | Content |
@@ -294,8 +315,8 @@ State survival and lifecycle:
 
 | Existing rule or component | What the stack does to it | How it is held |
 |---|---|---|
-| `SEARCH_STOP_UX.md`, "The landing surface is the list, never the map", pinned by `singlePane_opensOnTheList_evenWhenAMapIsAlreadyInitialised`. The doc also records that a map-first default starts the whole MapLibre stack on every visit and that the flag once flipped by accident | Rule 39 reverses it on purpose. Branch 4 flips the pinned test with the same initialised-map fixture, rewrites that doc section in the same change, and adds a measured before and after of time to first content and map start cost to section 6 | doc, test, and a measurement on the Pixel 6 Pro and the tablet AVD, reported before the branch is called done |
-| Search Stop label pill row, the curated first-open stops (Town Hall, Central, Parramatta, Wynyard), `StopLabelAssignRow` and its "+" | The recents card replaces that list layout (rule 9). Custom labels beyond Home and Work, and the curated stops with location off, are open gaps below | the existing Search Stop tests must pass or be changed on purpose, with the doc updated |
+| `SEARCH_STOP_UX.md`, "The landing surface is the list, never the map", pinned by `singlePane_opensOnTheList_evenWhenAMapIsAlreadyInitialised`. The doc also records that a map-first default starts the whole MapLibre stack on every visit and that the flag once flipped by accident | Rule 39 reverses it on purpose, in branch 4. The doc section is rewritten as "Two states" in the same change. The pinned test is replaced by `singlePane_opensOnTheMapState_withTheBarAndNoListAndNoKeyboard`, which uses the same initialised-map fixture and now asserts the opposite. The map starts once through `InitializeMap`, the same event as before, with the same shared instance | doc, test, and a measurement of time to first tiles on the Pixel 6 Pro and the tablet AVD, to be reported before the stack is called done (not measured in this build) |
+| Search Stop label pill row, the curated first-open stops (Town Hall, Central, Parramatta, Wynyard), `StopLabelAssignRow` and its "+" | The recents card replaces that list layout (rule 9). The label row is the first row of the card and scrolls sideways (G4), and the curated stops are replaced by the Intro's suggested stops (G5). `EMPTY_STATE_STOPS`, `shouldShowEmptyStateStops` and `shouldShowPillRow` are deleted and `SearchStopRulesTest` with them, their cases moved to `SearchStopRecentsTest` | the existing Search Stop tests pass or are changed on purpose, with the doc updated |
 | Ask KRAIL on home (`AskKrailScreen`, the mic in the search row, listen on open, blur and dim while it is open, gated by the AI input flag and device availability) | The new home pill keeps it working. The mic shows only when the flag and the device allow it, never as a dead icon. The blur applies to the cards, and the map stays a sibling | to verify in the home map branch, with `DualPaneCompositingGuardTest` |
 | The saved trips reorder callback treats every list key as a trip id | The Park & Ride row is a list item with its own key. The callback must move it as a block and never read its key as a trip id. Its position is stored as an anchor after a trip and clamped when trips are added or deleted | unit tests on the move and the clamp, before the code |
 | `persistFacilityDetail` stores the stop id as the stop name when a car park is not saved | A2b writes readings for car parks the rider never saved. The station name comes from the catalogue and the stops table, never from a reading row | `station card shows the station name for an unsaved car park` |
@@ -309,12 +330,12 @@ State survival and lifecycle:
 | Gap or decision | Owner | Needed by |
 |---|---|---|
 | The multi-car-park card at 320 dp and 200% text is not drawn yet | ksharma-xyz | before branch 8 |
-| Where the shortcuts for custom labels (beyond Home and Work) live in the new Search Stop. Today they are pills in the label pill row | ksharma-xyz | before branch 4 |
-| Whether the curated first-open stops (Town Hall, Central, Parramatta, Wynyard) stay for a new rider with location off and no recents | ksharma-xyz | before branch 4 |
+| Where the shortcuts for custom labels (beyond Home and Work) live in the new Search Stop. Decided (G4): one row at the top of the recents card, scrolling sideways | ksharma-xyz | decided, built in branch 4 |
+| Whether the curated first-open stops (Town Hall, Central, Parramatta, Wynyard) stay for a new rider with location off and no recents. Decided (G5): the Intro's suggested stops list replaces them, each row carrying its own stop id and name | ksharma-xyz | decided, built in branch 4 |
 | Whether the home pill is the same entry as today's search row, with the mic opening Ask KRAIL unchanged | ksharma-xyz | before the home map branch |
 | Whether the stop card's Lines chip merges into one chip in the board heading (decision 8) | ksharma-xyz | before the stop card branch |
 | Decision 16, every Go here case in the table in section 8 | ksharma-xyz | before branch 11 |
-| What branch 4 still supplies to the To and From block: the back arrow and the clear X (the two slots), edit in place with `editing`, no go circle while From has no start (Search Stop section 5), and the placeholders Choose destination and Choose starting point (the block still says Destination and Starting from) | ksharma-xyz | branch 4 |
+| What branch 4 supplies to the To and From block: the back arrow and the clear X (the two slots), edit in place with `editing` and the `toEditor` and `fromEditor` slots, no go circle while From has no start, and the placeholders Choose destination and Choose starting point (the block now says these on home too). Built, with the decisions A25 to A38 below | ksharma-xyz | built in branch 4 |
 | The width at which the action button goes under the bars. It is a measured default the owner has not seen: "Town Hall Station" is 145 dp at 100 percent text, scaled linearly by the font scale, and the button stays beside the bars while that fits in what is left after its 64 dp column and the bars' 100 dp of end columns. That is beside at 360 dp and 411 dp at 100 percent, and under at 320 dp at any size and at 411 dp from about 150 percent. Android 14 and later grow large text more slowly than linear, so it goes under slightly early, never late | ksharma-xyz | before branch 4 |
 | The go circle on a dark From bar. Rule 33 makes the circle near-black, which cannot be seen on a near-black bar. The block draws it in the bar's own text colour, so it is the other of the two surface colours on either bar | ksharma-xyz | before branch 4 |
 | The Intro redesign has its own ERD, `docs/features/intro/ERD.md`, and is built before this stack. It takes over the first-run choice (A9) and the Park & Ride suggestion for new riders (A10), and supplies `nearestParkRideStation` and the suggestion flag | ksharma-xyz | before branch 12 |
@@ -356,6 +377,25 @@ Branch 7, the Home and Work chips. The spec was silent on each of these. Every o
 | A23 | A chip tap logs no analytics event. There is no new event name and no existing event that fits | The 500 name limit, and `AnalyticsSavedTripCardClick` means a saved card | The product cannot count chip use until an existing event gets a parameter | Default, not yet seen by owner |
 | A24 | A long press opens Manage only on a set chip. An unset chip has nothing to manage, so its long press does nothing. A tap left in flight is kept over a rotation (it is ViewModel state) and dropped when the screen has been away longer than the subscription grace, so coming back later never starts a trip | Rule 41 says a long press opens Manage and the chips "stay once set" | A rider cannot reach Manage from an unset chip, only from Settings or Search Stop | Default, not yet seen by owner |
 
+Branch 4, Search Stop opens on the map. The spec was silent on each of these. Every one is `Default, not yet seen by owner`.
+
+| # | Assumption | Evidence | What breaks if it is wrong | Decision |
+|---|---|---|---|---|
+| A25 | A pick still returns to the caller (a result, then back), as today. The picture in rule 36 and Search Stop section 4 and 5 (the screen stays after a pick, From fills itself, go shows trips) needs a home with no To and From rows, which is the home pill in branch 11 | `02-plan-trip.yaml` taps a result and then waits for `searchrow.root` on home, and `SearchStopRoundTripFlowTest` and the home entry read the result. Staying on Search Stop would end that flow at the wrong screen | The owner's mock shows the stay-after-pick flow now. Branch 11 is where it lands, with the Maestro flows edited in the same change | Default, not yet seen by owner |
+| A26 | From fills itself with the nearest stop within 1 km (the A18 radius), taken from the stops the map already loaded, never a new query. A destination pick sends that start home with it as a second result marked `onlyIfEmpty`, and home takes it only where it has no start | A18, and the result bus is buffered so two results arrive in order | A rider more than 1 km from any stop sees a From that reads Choose starting point, and one whose map has not loaded its stops sees the same until it has | Default, not yet seen by owner |
+| A27 | The go circle shows only when From and To both have a stop (`goVisible`). Search Stop holds no destination while one is being chosen, so it never shows in this branch. It is built and tested so branch 11 turns it on by giving the screen a destination at open | Rule 36 hides it with no start. A go that cannot start a trip would be a dead control | A rider expects go on this screen now. Hidden is safer than a control that does nothing | Default, not yet seen by owner |
+| A28 | Search Stop section 4 says "Choose start" when location is off, and section 5 says From reads Choose starting point. Read as one thing: the From bar's placeholder is "Choose starting point". No "Choose start" button is added | The Language table lists Choose start under Buttons | A button was meant. Easy to add once its place is drawn | Default, not yet seen by owner |
+| A29 | The location pill reads "Location permission required", the old banner's words, so no new copy. Not asked or temporarily denied asks, denied or restricted opens Settings, the way the location button always did | `handleLocationButtonClick` and `TrackUserLocation` | A rider who denied once on Android could be asked again, and is sent to Settings instead, as the old banner did | Default, not yet seen by owner |
+| A30 | The pill is white with a 4 dp shadow so it reads over the map. The form bars have no shadow, as on home | Rule 10 allows a shadow, not an outline | The bars are hard to see on a busy map. Measure on device | Default, not yet seen by owner |
+| A31 | With no recents and a known location the card shows the nearest stops from the map's loaded stops, sorted by distance from the rider, ties to the smaller stop id, at most five. They follow the map's mode filter and nearby radius | The stops query already runs for the map | A rider who panned the map far away sees the nearest of what is loaded there. Acceptable, and no extra query | Default, not yet seen by owner |
+| A32 | A start field reads the Intro's start list and a destination, a label or one leg reads its end list. The rows carry no mode badges, because the list has none | `SuggestedStops.start` and `.end` | A rider choosing a label sees destinations, not starts | Default, not yet seen by owner |
+| A33 | Nearest and suggested rows report as the `empty_state` label surface and as not a recent search. No new analytics value | The 500 name limit and the registered surface values | The funnel counts them with the old curated stops | Default, not yet seen by owner |
+| A34 | The label row leads the card whenever a label has a stop, with or without recents. Unset labels still have no chip here, because the stop's own plus assigns them | The old row waited for a recent stop, which the nearest and suggested rows make wrong | A rider with only unset labels sees no label row | Default, not yet seen by owner |
+| A35 | Back is two steps for every field type. Back from a start field that was switched to in place lands on the field the screen opened on. With the maps flag off the list is the only state and back leaves in one step | Rules 35 and 39 | A rider on a start search expects the destination field to stay in the list state | Default, not yet seen by owner |
+| A36 | The dual pane layout has no two step back and no map state, because both panes are always on screen | `DualPaneScaffold` | none | Default, not yet seen by owner |
+| A37 | The wall that opens under a stop's plus is a `FlowRow` of whole chips, not a sideways list | Rule 4 allows one sideways row on this screen, the label row | none | Default, not yet seen by owner |
+| A38 | The Select on map button is gone, and so is its UI event. The `select_on_map_button_click` name in `AnalyticsEvent.kt` stays because a spent name cannot be reclaimed. The location button stays on the map, and the Options button goes in branch 5 | Rule 39 has no map button | none | Default, not yet seen by owner |
+
 Source judgement, one row per rule that reads data:
 
 | Decision | Source (data field or parsed text) | Checked against | Reliable |
@@ -382,7 +422,11 @@ raised until the whole stack has passed device QA, then it merges bottom-up. No 
    home pill (branch 11) replaces it, the search row's coloured block sits on the column's edges and its fields on
    the cards' edges. The title bar keeps the screen's edges (rule 20) and is not part of the column.
 4. `feat/search-stop-map-first`, the map state, list state and two-step back (rule 39), the recents card (rule 9),
-   and the location status pill under the form (rule 24).
+   and the location status pill under the form (rule 24). Built as one pure reducer (`SearchStopFlow.kt`), the pure card and form rules
+   (`SearchStopRecents.kt`, `SearchStopForm.kt`), the form (`SearchStopFormBars.kt`, which fills the block's `toEditor` and `fromEditor`
+   slots and the back arrow and X slots), the card (`SearchStopListContent.kt` and its row files) and the pill (`SearchStopLocationPill.kt`).
+   Decisions A25 to A38 in section 9. detekt forced no separate extraction: the screen file shrank from 1572 lines because the list
+   sections moved into their own files in the same change.
 5. `feat/search-stop-radius-config`, delete `MapOptionsBottomSheet`, move the mode filter to a chip row on the map
    that scrolls sideways over 130% text (A7), add `nearby_stops_radius_km` (rule 30).
 6. `feat/search-stop-to-from`, To above From, go inside the From bar (rules 35 and 36). Built as `ToFromBlock`

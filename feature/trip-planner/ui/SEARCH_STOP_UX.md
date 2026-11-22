@@ -10,35 +10,41 @@ below are covered by tests. Anything not yet tested is in the
 
 ---
 
-## The landing surface is the list, never the map
+## Two states: the map state and the list state
 
-Opening the screen — from either the From or the To field — lands on the **list**: recents,
-or the curated first-open stops when there are none, with the search field focused and the
-keyboard up. The map is opt-in, reached only from the **"Select on map"** button inside that
-list; the top-bar map pill was removed, so there is no other way in.
+The screen has two states and a two step back (`docs/MAP_HOME_UX.md` rule 39), held in one pure reducer,
+`reduceSearchStopFlow` (`SearchStopFlow.kt`), and saved across rotation with `SearchStopFlowSaver`.
 
-This is one flag, `showMap` in `SearchStopScreen`, and it must start `false`:
+- **Map state** is how it opens, from either field: the map behind, one dark pill, no list and no keyboard.
+  Under the pill, on the map state only, sits the row of mode chips (branch 5).
+- **List state** is what tapping the bar raises: the keyboard on the bar's own field, then the recents card,
+  or the results as the rider types. Gaining focus in the bar is the tap, so the field is the one trigger.
+- **X** clears the text and does nothing else. It never leaves the screen and the recents stay.
+- **Back**, the arrow in the bar, and the iOS swipe are the same step. List state goes to the map state, and
+  the map state goes home. A tap on the map is the first step on its own (`MapTapped`).
+- Tapping the other bar of the To and From block moves editing to it in place and raises the list state.
+  Back from a start field that was switched to lands on the field the screen was opened on, with the
+  destination kept.
+- With no map to open on (the `maps_stop_search` flag is off for this rider) the list is the only state:
+  `effectiveFlow` shows it and the keyboard comes up as it did before the map state existed. Back leaves in
+  one step.
 
-- The `LaunchedEffect(showMap)` beside it **hides the keyboard and drops field focus**
-  whenever the map is up. Landing on the map therefore lands on a screen the rider cannot
-  type into until they tap the field.
-- `MapAutoInitEffect` initialises MapLibre when the map is showing, so a map-first default
-  pays for the whole map stack on every visit to stop search, wanted or not.
-- Only the **single-pane** (phone portrait) layout reads the flag. Tablet, foldable and phone
-  landscape use `SearchStopScreenDualPane`, which always draws the list left and the map
-  right, and never consults it. A phone-portrait regression is therefore invisible on the
-  layouts most likely to be checked.
+Only the single pane layout reads the mode. Tablet, foldable and phone landscape use `SearchStopScreenDualPane`,
+which always draws the list left and the map right through `DualPaneScaffold`, with no keyboard on open.
 
-It was flipped to `true` in `8122380db`, a commit about stop labels that had no reason to
-touch it, and shipped unnoticed: while `mapUiState` is null the list renders either way, and
-every test used a fixture with no map. `singlePane_opensOnTheList_evenWhenAMapIsAlreadyInitialised`
-now pins it with an initialised map, which is the only state that can tell the two apart.
+Two invariants the old doc held still hold, in new words:
 
-The first-run map-options sheet is unaffected and slightly better placed: `showMapOptionsOnOpen`
-is consumed by `MapOptionsFirstTimeShown`, which the map itself fires, so the sheet now appears
-the first time a rider actually opens the map rather than over a map they did not ask for.
+- The map is a SIBLING of the floating column and of any gradient, never a child. On iOS a MapLibre
+  `UIKitView` cannot composite into an offscreen `graphicsLayer` and renders blank. The gradient only draws
+  when there is no map at all.
+- The camera moves to the rider once, keyed on the stable boolean `hasUserLocation` and never on the
+  changing `LatLng`, or GPS jitter cancels the animation. That code is unchanged in `SearchStopMap`.
 
----
+`SearchStopViewModel` now reads the maps flag into the first state, so the first frame already knows whether
+there is a map. Before that a rider with no map saw the list for a frame, and a rider with one saw it flash.
+
+The map starts once, as the screen opens, through the existing `InitializeMap` event, so opening costs the shared
+map instance and no new network call.
 
 ## Labels
 
@@ -56,9 +62,11 @@ the first time a rider actually opens the map rather than over a map they did no
   (`MoveLabelToIndex`, Manage screen's Reorder mode) is preserved within the "has a
   stop" group only — unset labels aren't reorderable (see below).
 
-### Top pill row (`LabelShortcutsRow`) — set labels only, tap-only
-The row shows **only labels that already have a stop attached** (`labels.filter {
-it.isSet }`) as tappable pills, plus a trailing **Manage** button. Unset labels render
+### The label row (`LabelShortcutsRow`), set labels only, tap-only
+The row is the first row of the recents card. It is one row that scrolls sideways, the exception rule 4 gives
+it, so Home, Work and any custom label are whole chips and the first one starts fully visible. It shows **only
+labels that already have a stop attached** (`labels.filter { it.isSet }`) as tappable pills, plus a trailing
+**Manage** button. Unset labels render
 nothing here — there is no "+", no unset pill, no way to start an assignment from this
 row. (This is a deliberate v4 change from the earlier long-press-to-edit /
 tap-unset-pill-to-choose-mode designs — see
@@ -121,47 +129,88 @@ a "Reorder"/"Done" toggle action.
 
 ---
 
-### Pill row visibility (`shouldShowPillRow`)
+### Label row visibility (`shouldShowLabelRow`)
 
-The whole top pill row (+ trailing Manage button) only renders when there's something
-below for the user to act on:
+The label row (set labels and the trailing Manage button) leads the card whenever a label has a stop and
+there is a list to pick from:
 
-| List state | Pill row |
+| List state | Label row |
 |---|---|
-| Recent, no recents yet | hidden |
-| Recent, ≥ 1 recent stop | visible |
+| Recent, a label is set | visible, with or without recents |
+| Recent, no label is set | hidden |
 | Results loading (no results yet) | hidden |
-| Results with ≥ 1 result | visible |
+| Results with at least 1 result and a label is set | visible |
 | NoMatch | hidden |
 | Error | hidden |
 
-Note: since the row only ever shows *set* labels as pills now, "visible" can still mean
-zero label pills + just the Manage button, if every label is currently unset.
+The label row no longer waits for a recent stop: the card can hold nearest or suggested stops instead, and a
+rider with Home set wants Home first either way. If every label is unset there is no label row at all, so
+there is no lone Manage button.
 
 ---
 
-### Empty-state stops (`shouldShowEmptyStateStops`)
+### The recents card (`recentsCardFor`)
 
-On a true first open — Recent mode with **zero** recent stops — the screen would
-otherwise be a near-blank canvas (just the "select on map" button). Instead we render
-a small hardcoded curated list, `EMPTY_STATE_STOPS`: **Town Hall, Central, Parramatta,
-Wynyard** (order intentional), so a brand-new user can reach a major interchange
-without typing.
+One vertical floating card under the form, the same card the results use (`SearchStopListContent`). With
+nothing typed it holds, in this order:
 
-| List state | Empty-state stops |
-|---|---|
-| Recent, no recents yet | **visible** (the 4 curated stops) |
-| Recent, ≥ 1 recent stop | hidden (recents replace them) |
-| Results / NoMatch / Error | hidden |
+1. The label row, when `shouldShowLabelRow` says so.
+2. The rows, from one source:
 
-Rules:
-- **No header.** A brand-new user just sees a few tappable stops; no "Popular"/
-  "Suggested" label (product decision).
-- **Replace, never coexist.** They are a first-open fallback only. The instant the
-  user has any recent stop, recents take over and the curated list disappears.
-- **Same tap path as recents.** Each renders as a `StopLabelAssignRow` too, so tapping
-  the stop name selects it as From/To, and its "+" works the same as any other row.
-  Fires `TrackStopSelected(isRecentSearch = false)` — not a recent, not a search.
+| Rider has | Rows | Heading |
+|---|---|---|
+| any recents | the recents, at most `MAX_RECENT_ROWS` (5) | Recent, with Clear all |
+| no recents, location known | the stops nearest the rider, from the map's loaded stops | Near you |
+| no recents, location not known | the Intro's suggested stops, starts for a start field and ends for everything else | none |
+
+A row is a whole item: the stop name, its mode badges and a plus at the end (`StopLabelAssignRow`). A suggested
+row carries its own stop id and name, read from Remote Config `intro_suggested_stops` (or the bundled
+`DEFAULT_SUGGESTED_STOPS`), so a tap works before the stops table has finished loading. It has no mode badges
+because that list has none. With a location and the nearby stops still loading the card shows nothing and does
+not borrow the suggested stops, so it never swaps one set for another a moment later.
+
+Nearest and suggested rows report as the `empty_state` surface and as not a recent search, the way the curated
+first-open stops always did. `ClearRecentSearchStops` still reports every recent the rider has, not the five shown.
+
+The old hardcoded four (`EMPTY_STATE_STOPS`: Town Hall, Central, Parramatta, Wynyard) and `shouldShowEmptyStateStops`
+are gone, replaced by the Intro's list so the stop ids live in one place.
+
+The wall that opens under a row's plus is a `FlowRow` of whole chips. Nothing on this screen scrolls sideways
+except the label row.
+
+---
+
+### The location pill (`LocationStatusPill`)
+
+While location permission is not granted one pill sits directly under the form, centred, above the card, which
+moves down by one pill and one gap. It is 32 dp tall inside a 48 dp hit area, white, and reads "Location
+permission required", the wording the old banner on this map used. `locationPillFor` decides it:
+
+| Permission | Pill | Tap |
+|---|---|---|
+| not looked up yet, or granted, or a fix in hand | none | none |
+| not asked | shown | asks (`allowPermissionRequest`, which `TrackUserLocation` acts on) |
+| denied or restricted | shown | opens the app's Settings, and sends `LocationPermissionSettingsClicked` |
+
+The status is looked up again on every return to the screen, so coming back from Settings with it granted drops the
+pill at once. This replaces the old "Location Permission Required" badge and the denied banner on the map.
+
+---
+
+### The form (`SearchStopForm`)
+
+The app's To and From block (`ToFromBlock`) with the search field typed into the bar being edited, in place.
+
+- The back arrow stays on the To bar and the origin ring on the From bar in every state.
+- The X sits in the To bar's end column and shows only while the field has text.
+- A bar holding the field has no tap target of its own (the field takes the tap), so it has no merged label.
+- Placeholders: "Choose destination", "Choose starting point", "Choose a stop" for a label, and "Change origin" or
+  "Change destination" for one leg of a trip. The label and the leg edit one bar, with no From bar.
+- From fills itself with the nearest stop within 1 km when location is known (`autoFromStop`, the radius Home and
+  Work use). A destination pick sends that start home with it, and home only takes it where it has no start yet.
+- The go circle is drawn only when `goVisible` says From and To both have a stop. This screen holds no destination
+  while one is being chosen, so it does not show until the home pill (branch 11) gives it one at open.
+- The microphone is never on this screen.
 
 ---
 
@@ -221,7 +270,8 @@ The following existed in earlier iterations (v2/v3):
 ## State management
 
 - All UI orchestration state in `SearchStopScreen` is `rememberSaveable`, with
-  `mapSaver`-style `Saver`s for complex types (`StopLabel?`, `NewLabelTarget?`).
+  `Saver`s for complex types (`SearchStopFlow`, `NewLabelTarget?`). The typed text is the hoisted
+  `TextFieldState`, which saves itself, so the X can clear it and a rotation keeps it.
   Rotation, dark-mode toggle, locale change and process death do not drop in-flight
   sheets / expand state.
 - The DB observer is launched in `init {}` rather than `_uiState.onStart {}` so it runs
@@ -256,6 +306,15 @@ Covered in `SearchStopScreenInteractionTest.kt` (`src/androidHostTest`):
 - ✅ `tappingManageButton_hidesKeyboardBeforeInvokingCallback`
 - ✅ `clearAllButton_firesClearRecentSearchStopsEventWithCount`
 - ✅ `recentHeader_showsRecentAndClearAllLabelsWhenRecentsExist`
+- ✅ `singlePane_opensOnTheMapState_withTheBarAndNoListAndNoKeyboard`
+- ✅ `tappingTheBar_raisesTheListState`
+- ✅ `theArrowIsTwoStepsBack_listToMapToHome`
+- ✅ `theX_showsOnlyWithText_clearsItAndKeepsTheRecents`
+- ✅ `withNoMapToOpenOn_theListIsTheScreen`
+- ✅ `theCardShowsAtMostFiveRecents`
+- ✅ `withNoRecentsAndNoLocation_theSuggestedStopsShowAsRows`
+- ✅ `theLabelRowScrollsAndLeadsTheCard`
+- ✅ `theLocationPillIsOneItemUnderTheForm_onlyWhenPermissionIsNotGranted`
 
 Outstanding (gesture-heavy or sheet-based — held back to keep CI deterministic):
 - `dragging_row_in_ManageStopLabelsScreen_fires_MoveLabelToIndex` — drag gesture racing

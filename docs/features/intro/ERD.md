@@ -434,14 +434,15 @@ fun IntroState.toOutcome(stopsWait: StopsWait, declined: Boolean = false): Intro
   left button, `No, search`) are deleted. `PickStart`, `PickEnd` and `StopPickedFromSearch` belonged to the earlier first trip screen
   and are deleted.
 - **The destination and origin screens, as built.** `IntroStopStepContent` draws both: `IntroHeadline` (destination "Where", "to?" with the pin, origin "Where", "from?" with the emoji `introEmojiFor` gives it, since unit U8), a taj `TextField` with
-  `invertedColors()` (the search-on-the-page treatment Add Park & Ride has), and the stops below it as `IntroStopRow`, which is
+  `invertedColors()` (the search-on-the-page treatment Add Park & Ride has, taj's default colours since unit W1), and the stops below it as `IntroStopRow`, which is
   `StopLabelAssignRow`, the row Search Stop draws, with a new `showLabelAssign` parameter (default on, so Search Stop is unchanged)
   turned off so there is no chevron. The selected row takes the app's activated row treatment (`themeBackgroundColor()` with a
   rounded shape, as `ManageStopLabelRow` does) and is announced as selected. The field's placeholder is Search Stop's own
   (`barPlaceholderFor` with the To or From bar, which the To and From form uses too), its filter is Search Stop's
   (`stopSearchInputFilter`, extracted from the old `SearchTopBar` and now the filter of the form's bars as well) and its
   cap is `SearchQueryAnalyticsRedaction.MAX_QUERY_LENGTH`. `IntroStepFrame` gained `centreMiddle` (default true): the stop screens
-  pass false, so the field and rows start straight under the headline and never move when the list changes length.
+  passed false, so the field and rows started straight under the headline and never moved when the list changed length. Since unit W1 the stop screens
+  have a frame of their own (`IntroStickyStopFrame`, below) and no screen passes false.
 - **The keyboard.** Only the screen can close it, so `IntroKeyboardAction` (a pure table over the event, now `Close` and `None`) says
   what an event does to it: `SelectStop` and `ConfirmStop` hide it and clear the focus, everything else leaves it alone.
   `IntroFlowScreen` sends every event through that table and then to the view model. Nothing opens it: the field takes the focus
@@ -770,7 +771,7 @@ Unit R1, as built, where this document was silent:
   (`reservedPx`, and `shown`). The slot is always kept out of the room the middle is centred in, so the headline and a centred
   middle (Park & Ride, confirm, theme) do not move when the bar appears. The column gets that height as room at its end
   (`scrollEndPx`) only while the bar is shown, so the last row can scroll fully clear of it and, with no bar, scrolls to the
-  bottom. It changes only how far the column scrolls, never where a row on screen is, and the scroll position is not touched.
+  bottom. It changes only how far the column scrolls, never where a row on screen is, and the scroll position is not touched. The destination and origin screens do not use this frame since unit W1: they scroll as one list under a sticky search bar (see "Unit W1, as built").
 - **Emoji.** `introEmojiFor(step, selectedThemeId)` is pure and is a table. The destination screen has the pin, the confirm
   screen the star, the Park & Ride screen a car, and the theme screen the transport emoji of the theme chosen: train, metro, bus
   or ferry, and before a choice (or for an id the Intro does not offer) the scooter, entry 0 of `FestivalManager.commonEmojiList`,
@@ -859,6 +860,33 @@ Three changes to the colour screen and the finale, each its own commit. Everythi
   hidden from a screen reader and a test, because the sweep is blended into the letters with `SrcIn`, which would have coloured a shadow that
   was part of the same layer. The fill's own layer holds only the letters, as before. The wordmark's room for a glow becomes the room for the
   shadow's blur and drop.
+### Unit W1, as built (the sticky search bar)
+
+One change to the destination and origin screens, and the field's colours. Everything not named here is as the earlier units left it: the decision bar overlay
+and its end room (`IntroBarLayer`, `LocalIntroBarInset`), the page padding on both sides of the field, `IntroStopRow` over `StopLabelAssignRow`, the selection,
+the half pick rules, the analytics, and every other screen's frame, including the theme screen's window centred grid and its change sequence.
+
+- **One list, the bar sticks.** `IntroStickyStopFrame(headline, bar, ground, content)` is a `LazyColumn` of keyed items: the emoji and the headline (`intro-headline`),
+  the search bar as a `stickyHeader` (`intro-bar`), the rows `IntroStopStepContent` adds (one item for each stop, keyed by the stop id, or the one `No match found` line), and a
+  last item (`intro-end`) that is only room. When the rider scrolls the emoji and the headline go off the top and the bar stays at the top of the screen, just under the top
+  system inset (the list is inside the shell's `safeDrawingPadding`), and the rows slide under it. The headline is ordinary content here: it keeps the 16 dp above the
+  emoji and the 24 dp under the headline (`introRhythm`), and no height is held for it (the held height is for the theme screen's changing headline, which is unchanged).
+  The frame provides `LocalHeadlineRoom` as `IntroStepFrame` does, so the headline still keeps its widest word whole at 320 dp.
+- **Opaque.** The bar slot has `Modifier.background(ground)` over the full width, and its room under the field (`fieldToList`, 16 dp) is inside it, so a row never shows beside
+  or under the field. `ground` is what the window's ground is: `IntroFlowScreen` passes the settled theme tint (`themeSolidBackgroundColor()`) once the shell draws one, and the
+  surface otherwise (a preview or a screen with no theme change). It is a parameter, not a new composition local.
+- **Focus.** The bar slot reads `onFocusChanged { hasFocus }`. When it gains the focus the list runs `animateScrollToItem` to the bar once, so the headline goes and the
+  rows get the room, unless the bar is already pinned (the list is scrolled past the headline). Typing never scrolls: the effect is keyed on the focus and nothing else.
+  While the bar has the focus the last item is one window's height taller (`BoxWithConstraints.maxHeight`), so the bar can always reach the top, however few rows there are
+  and whether or not the keyboard has taken its room yet, and a search that finds one or two rows cannot bring the headline back and move the bar. The room goes with the focus.
+- **The end.** The last item is the rhythm's `middleBottom` (16 dp) and, only while the decision bar is shown, its height (`scrollEndPx`), as the old column's end was, so the last
+  row clears the bar when it is shown and, with it hidden, reaches the bottom of the window.
+- **The field's colours.** `introStopFieldColors()` is the one place, and returns taj's `TextFieldDefaults.colors()`: the page surface with the page's text, so a white field with
+  dark text in light mode and a dark field with light text in dark mode. It is not `invertedColors()`, which was solid black in light mode. Add Park & Ride, Home and the To and From
+  form keep their own colours.
+- **A lazy list.** A row off the window has no node until the list is scrolled to it, so a test reads a row only after scrolling to it (`performScrollToNode`) or by whether it is drawn.
+  The rows are listed once by stop id (`distinctBy`), because a lazy list refuses a key it has seen and the search could, in principle, return one stop twice.
+
 ## 4. External contracts
 
 | Call | Method and path | Key params | Auth | Response format | Measured wire size | Measured latency |
@@ -1320,6 +1348,14 @@ space change with a few small float arrays) and one hex string a frame, which `a
 twice the frames, and the readers of the theme colour (the taj button, the headline text) recompose on each of them. It is one `Animatable` and no new
 frame loop, and 120 Hz is the same work twice as often (a guess until it is measured on a phone). **Shared limits** none.
 
+Unit W1, the sticky search bar, the same questions: **API calls** none, the search is the same one the view model already makes, at the same debounce. **Payload** none.
+**Timing** unchanged for first content: the list composes only the items on screen (the headline, the bar and the rows in view, a guess of five to seven at a phone's height,
+where the old column composed the headline, the bar and every row, at most 20), so it is the same or less work, and nothing waits. A focus starts one animated scroll of at most a
+headline's height (the list's own default animation, a guess of a few hundred milliseconds). **UX** loading, slow, failed and offline are as before (the suggestions are bundled and a
+failed search leaves them). With the keyboard up the bar is at the top and the rows have the rest of the room, and with large text the bar stays in reach while the rows scroll.
+**Caching** none. **Battery** one animated scroll per focus and nothing else: no timer, no wake-up, no background work, and the sticky header is one more opaque fill drawn over the
+rows (a guess at a cost too small to measure). **Shared limits** none.
+
 ## 7. States and UX
 
 The reference is an interactive review page (private). The states it shows are restated here.
@@ -1346,7 +1382,8 @@ Every screen has three zones:
 | State | What the rider sees |
 |---|---|
 | Opening | The headline `Where are` and `you going?` (destination) or `Where are you` and `leaving from?` (origin), an empty field showing "Choose destination" or "Choose starting point", then five rows with none selected. No button, and its room is kept. The keyboard is not up. |
-| Rider taps the field | The field takes the focus and the keyboard opens. Nothing is chosen. |
+| Rider taps the field | The field takes the focus and the keyboard opens, and the list scrolls once, with an animation, so the field is at the top of the screen and the emoji and the headline are gone (unit W1). Nothing is chosen. Typing does not scroll it again. |
+| Rider scrolls | The emoji and the headline scroll away as part of the list, and the field stays at the top, on the window's ground, with the rows sliding under it. The last row clears the button when it is shown and reaches the bottom when it is not. |
 | Rider taps a row | That row is selected (the activated tint, announced as selected) and the one button `Yes, this one` fades in, in its kept room. The keyboard, if up, goes. The screen stays. |
 | Rider taps another row | The selection moves to it. |
 | Rider taps `Yes, this one` | The selected stop is chosen and the next screen slides in. |
@@ -1879,6 +1916,20 @@ in `searchstop/` touched:
   word's opacity, one static shadow of 16 percent, 14 px blur and 4 px down at 130 px letters, scaling with the letter and never changing, the other two fills as they
   were, the gradient still across the word for the website fill and sliding for the others, and the 250 ms fade in of the whole word). `FinaleWordmarkNarrowTest` and the rest of
   the finale tests are unchanged and pass: the lines are still 6 and 5 letters, nothing is cut at 320 dp at 200 percent and the letters keep their size.
+- **W1 tests, the sticky search bar.** `IntroStickyStopBarTest`, at 411 dp at 100 and 150 percent text and at 320 dp at 200 percent, on real bounds: the bar starts under the
+  headline and, after a large scroll, is at the top of the list with the emoji and headline gone; it stays there through a mix of scrolls, with the same page padding at the
+  start and the end; rows pass under it (a row's top is above the bar's bottom while the row is partly under it) and are never drawn over it (the strip under the field is read
+  off the drawn window, pixel by pixel, and is the window's own ground while a row is behind it, a test that fails when the bar's fill is removed); focusing the bar scrolls it to
+  the top, on a list too short to have scrolled before; typing does not move it, with the same rows or with far fewer; a rider who scrolled back to the headline is not scrolled
+  away again by typing (the scroll is once); and without the focus the list keeps no room at its end. `IntroStopFieldColorsTest`: in light and in dark mode the field's container,
+  text and placeholder are taj's default colours (the surface, the on-surface and the soft label), equal to `TextFieldDefaults.colors()` and not the inverted container, and the
+  text and the placeholder clear 4.5 to 1 (about 20.9 and 4.54 in light mode, 16.0 and 7.9 in dark, by taj's `contrastRatio`).
+  **Changed on purpose:** `IntroBarOverlayTest` (three checks that read a row below the window now ask whether it is drawn first, because a lazy list has no node for a row
+  that is off the window: "with no bar shown the last row scrolls whole to the bottom", "with the bar shown the last row scrolls fully above the bar", and "the bar appearing
+  does not move the rows of a list that is already scrolled", which compares the rows that are drawn); `IntroStopStepNarrowTest` (a row is reached with `performScrollToNode`,
+  which a lazy list needs, where it was `performScrollTo`). The properties they hold are the same: the scrolling zone reaches the bottom of the window, the end room is the bar's
+  height only while it is shown, and no row moves when the bar appears. **Nothing was deleted.** `IntroFlowScreenTest` (the headline starts 16 dp below the top on all five) and
+  `IntroStopStepTest` are unchanged and pass.
 - **V1 tests, the theme change sequence.** `IntroThemeChangeTimelineTest` (pure, a table: the 700 ms and 200 ms clocks, the press by time with its dip and no
   overshoot, the wash, the one colour blend, the old headline out over 233 ms with its alpha and rise, the new lines 60 ms apart and none before 233 ms, the emoji's
   shrink, swap, short spring and exact 1, one cut short while small, the button at 450 ms ending with the sequence, the frame at 0 and at the end, a time before the
@@ -2094,6 +2145,21 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | V1-15 | The headline that leaves after a second tap is whichever of the leaving and the arriving one is more to be seen, from its own opacity and place | Two leaving headlines at once would be two translucent layers. A headline that was barely visible is dropped, which is not seen | Default, not yet seen by owner |
 | V1-16 | Reduced motion runs its 200 ms cross-fade at normal speed even when the system's animation scale is 0 | Android's remove animations sets the scale to 0, which would make the cross-fade a snap, and the spec asked for 200 ms. A rider who wants no change at all would need the plain swap, which is `reduceMotion` with a zero window | Default, not yet seen by owner |
 | V1-17 | The sequence exists only under the Intro's shell (`IntroThemeBlend`); a screen alone, a preview or a screenshot keeps the plain headline change of unit U8 | Previews and screenshots must be one still frame and never a running animation. The old path is small and was already tested | Default, not yet seen by owner |
+
+### Unit W1, decisions where the spec was silent
+
+Each is a default taken to keep moving. None has been seen by the owner.
+
+| # | Decision | Why, and what changes if it is wrong | Decision |
+|---|---|---|---|
+| W1-1 | The pinned bar has no room above it: the field's top is the top system inset | The brief says the bar pins just under the top inset. A pill touching the inset can read as tight. If it does, add top padding to the bar slot in `IntroStickyStopFrame`, inside the opaque fill | Default, not yet seen by owner |
+| W1-2 | The bar's opaque ground is the settled theme tint when the shell draws one, and the surface otherwise, passed down as a parameter | The window is tinted once a theme is chosen, so an opaque surface fill would be a lighter or darker band. A parameter keeps the screen free of a new composition local. A preview has no tint and uses the surface | Default, not yet seen by owner |
+| W1-3 | On focus the list scrolls at once, with no wait for the keyboard, and while the bar has the focus the list keeps one window's height of room at its end | The keyboard takes its room over a few hundred milliseconds and a list of five rows is shorter than a headline plus a window, so a scroll that waited would be cut short, and one that did not would end short of the top. The room means it always ends at the top, and typing a search that finds one row cannot bring the headline back. The cost is blank room under the last row while the field has the focus. If it is unwanted, drop the room and wait for the keyboard instead | Default, not yet seen by owner |
+| W1-4 | When the focus goes, the room goes with it, and the list clamps once | A tap on a row hides the keyboard, which gives the window its room back, and the list is short again. The headline and the field come back to where the list rests, once, as in U11-4. Keeping the room with no focus would put a hole under the list | Default, not yet seen by owner |
+| W1-5 | A bar that is already pinned is not scrolled on focus | A rider who scrolled to a row far down and taps the field would otherwise be taken back up to the first row. The bar is already where the scroll would put it | Default, not yet seen by owner |
+| W1-6 | The field's colours are taj's default, so it is the page's own surface, white in light mode and dark in dark mode, and the placeholder is the soft label | The brief asked for the default. The stop screens sit on the theme tint, so the field reads against it. With no theme chosen (a preview) the ground and the field are the same colour and the field has no edge. The light placeholder is 4.54 to 1, a hair over the 4.5 line | Default, not yet seen by owner |
+| W1-7 | The stop screens no longer use `IntroStepFrame`, and `centreMiddle = false` has no caller | The frame is for a headline over a middle zone with a held height. The stop screens are now one list. The parameter and the `Under` placement are left, with their tests, so the other frames are not touched | Default, not yet seen by owner |
+| W1-8 | The rows are listed once by stop id | A lazy list throws on a key it has seen. The suggestions already never repeat a stop, and the search should not, so this is a guard and changes nothing on screen | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

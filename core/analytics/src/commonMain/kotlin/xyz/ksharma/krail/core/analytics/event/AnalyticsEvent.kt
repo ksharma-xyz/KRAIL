@@ -1516,12 +1516,6 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
     // region SearchStopMap
 
     /**
-     * Fired when the user taps the "Select on map" button in the SearchStop list.
-     * Use to measure how many users discover and use the map entry point.
-     */
-    data object SelectOnMapButtonClickEvent : AnalyticsEvent(name = "select_on_map_button_click")
-
-    /**
      * Fired when the user selects a stop via the map's StopDetailsBottomSheet.
      *
      * Captures the map configuration context at the moment of selection, so you can correlate

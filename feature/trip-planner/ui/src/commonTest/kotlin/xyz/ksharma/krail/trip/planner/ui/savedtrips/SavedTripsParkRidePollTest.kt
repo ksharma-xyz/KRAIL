@@ -11,6 +11,7 @@ import xyz.ksharma.krail.core.testing.coroutines.krailRunTest
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.testing.fakes.FakeInfoTileManager
+import xyz.ksharma.krail.core.testing.fakes.FakeNearbyStopsRepository
 import xyz.ksharma.krail.core.testing.fakes.FakeNswParkRideSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeParkRideFacilityManager
 import xyz.ksharma.krail.core.testing.fakes.FakeParkRideService
@@ -201,6 +202,7 @@ class SavedTripsParkRidePollTest {
             inviteFriendsTileManager = FakeInviteFriendsTileManager(),
             trackingManager = TrackingManager(),
             appReviewManager = FakeAppReviewManager(),
+            nearbyStopsRepository = FakeNearbyStopsRepository(),
         )
     }
 

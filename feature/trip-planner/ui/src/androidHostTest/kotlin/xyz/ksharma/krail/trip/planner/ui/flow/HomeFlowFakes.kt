@@ -95,6 +95,7 @@ internal class HomeFlowFakes {
         inviteFriendsTileManager = FakeInviteFriendsTileManager(),
         trackingManager = TrackingManager(),
         appReviewManager = FakeAppReviewManager(),
+        nearbyStopsRepository = nearbyStopsRepository,
     )
 
     val mapStopSelectionViewModel = MapStopSelectionViewModel(

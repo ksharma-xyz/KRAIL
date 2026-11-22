@@ -35,6 +35,8 @@ import xyz.ksharma.krail.core.appreview.AppReviewManager
 import xyz.ksharma.krail.core.appreview.DelightMoment
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.core.maps.data.repository.NearbyStopsRepository
+import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
@@ -58,6 +60,7 @@ import xyz.ksharma.krail.sandook.db.SavedTrip
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchSessionStore
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.LabelChipTap
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
@@ -88,6 +91,7 @@ class SavedTripsViewModel(
     private val inviteFriendsTileManager: InviteFriendsTileManager,
     private val trackingManager: TrackingManager,
     private val appReviewManager: AppReviewManager,
+    private val nearbyStopsRepository: NearbyStopsRepository,
 ) : ViewModel() {
 
     init {
@@ -155,6 +159,8 @@ class SavedTripsViewModel(
             updateDiscoverState()
             updateInfoTilesUiState()
             updateSelectedStops()
+            // A chip tap left over from before the screen was last away is stale, not a request.
+            updateUiState { copy(labelChipTap = LabelChipTap.Idle) }
             updateInviteFriendsTileSeenState()
             loadReorderTipSeenState()
             maybeRequestReview()
@@ -224,11 +230,81 @@ class SavedTripsViewModel(
             SavedTripUiEvent.StopTracking -> trackingManager.stop()
             is SavedTripUiEvent.MoveSavedTripToIndex -> onMoveSavedTrip(event.tripId, event.targetIndex)
             SavedTripUiEvent.MarkReorderTipSeen -> onMarkReorderTipSeen()
+            is SavedTripUiEvent.LabelChipClick -> onLabelChipClick(event.labelKey)
+            is SavedTripUiEvent.LabelChipLocated -> onLabelChipLocated(event)
+            SavedTripUiEvent.LabelChipTapHandled -> updateUiState { copy(labelChipTap = LabelChipTap.Idle) }
+            is SavedTripUiEvent.LabelStopAssigned -> onLabelStopAssigned(event)
         }
     }
 
     private fun onSavedTripCardClick(event: SavedTripUiEvent.AnalyticsSavedTripCardClick) {
         analytics.trackSavedTripCardClick(event.fromStopId, event.toStopId)
+    }
+
+    /**
+     * A Home or Work chip was tapped. One tap at a time: while one is still being worked out a
+     * second changes nothing, which is also what keeps it to a single location fix.
+     */
+    private fun onLabelChipClick(labelKey: String) {
+        if (_uiState.value.labelChipTap != LabelChipTap.Idle) return
+        val label = homeLabelFor(labelKey, _uiState.value.stopLabels) ?: return
+        updateUiState { copy(labelChipTap = startLabelChipTap(label)) }
+    }
+
+    /**
+     * The one fix a set chip's tap asked for has come back, or there was none. Looks up the stops
+     * near it in the local database, once, and decides. Anything that goes wrong in the lookup is
+     * the same as no stop near, so the tap always ends in a decision and never stays pending.
+     */
+    private fun onLabelChipLocated(event: SavedTripUiEvent.LabelChipLocated) {
+        val tap = _uiState.value.labelChipTap
+        if (tap !is LabelChipTap.Locating || tap.labelKey != event.labelKey) return
+        val destination = homeLabelFor(event.labelKey, _uiState.value.stopLabels)?.toStopItem()
+        if (destination == null) {
+            updateUiState { copy(labelChipTap = LabelChipTap.Idle) }
+            return
+        }
+        val rider = event.latitude?.let { lat -> event.longitude?.let { lon -> LatLng(lat, lon) } }
+        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            val candidates = rider?.let { stopsNear(it) }.orEmpty()
+            updateUiState {
+                copy(labelChipTap = LabelChipTap.Decided(decideLabelTap(destination, rider, candidates)))
+            }
+        }
+    }
+
+    private suspend fun stopsNear(rider: LatLng) = runCatching {
+        nearbyStopsRepository.getStopsNearby(
+            centerLat = rider.latitude,
+            centerLon = rider.longitude,
+            radiusKm = LABEL_TAP_RADIUS_KM,
+            maxResults = LABEL_TAP_CANDIDATES,
+        )
+    }.onFailure { logError("Home chip stops lookup failed", it) }.getOrDefault(emptyList())
+
+    /**
+     * Stop search returned a stop for a label the rider is setting from the home chips. A stop is
+     * on one label only, so a stop another label already holds is left alone. A label with no row
+     * (Work, after it was deleted in Manage) is created by the assignment.
+     */
+    private fun onLabelStopAssigned(event: SavedTripUiEvent.LabelStopAssigned) {
+        val labels = _uiState.value.stopLabels
+        val row = labels.firstOrNull { it.label.equals(event.labelKey, ignoreCase = true) }
+        if (labels.any { it.stopId == event.stopId && it != row }) return
+        val builtIn = homeLabelFor(event.labelKey, labels) ?: return
+        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            if (row != null) {
+                sandook.updateStopLabelStop(row.label, event.stopId, event.stopName)
+            } else {
+                sandook.upsertStopLabel(
+                    label = builtIn.label,
+                    emoji = builtIn.emoji,
+                    stopId = event.stopId,
+                    stopName = event.stopName,
+                    sortOrder = labels.size.toLong(),
+                )
+            }
+        }
     }
 
     /**

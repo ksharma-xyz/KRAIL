@@ -30,6 +30,8 @@ data class SavedTripsState(
     val dateTimeSelectionItem: DateTimeSelectionItem? = null,
     val hasSeenInviteFriendsTile: Boolean = false,
     val stopLabels: ImmutableList<StopLabel> = persistentListOf(),
+    // A Home or Work chip tap in flight. Held here, not in the screen, so a rotation mid tap keeps it.
+    val labelChipTap: LabelChipTap = LabelChipTap.Idle,
     // Default true so the tip is hidden until the preference is loaded from DB.
     val hasSeenReorderTip: Boolean = true,
 )

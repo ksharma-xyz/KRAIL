@@ -197,6 +197,7 @@ val viewModelsModule = module {
             inviteFriendsTileManager = get(),
             trackingManager = get<TrackingManager>(),
             appReviewManager = get(),
+            nearbyStopsRepository = get(),
         )
     }
 

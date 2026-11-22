@@ -96,6 +96,7 @@ internal fun IntroFlowScreen(
                     right = bar.right,
                     onEvent = send,
                     rightEnabled = bar.rightEnabled,
+                    shown = bar.shown,
                     modifier = Modifier.padding(
                         horizontal = dim.pageHorizontalPadding,
                         vertical = dim.spacingL,

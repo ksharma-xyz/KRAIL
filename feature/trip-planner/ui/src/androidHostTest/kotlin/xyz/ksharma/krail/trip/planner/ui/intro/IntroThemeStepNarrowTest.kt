@@ -23,6 +23,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
@@ -127,17 +128,20 @@ class IntroThemeStepNarrowTest {
 
         val headline = composeRule.onNodeWithText(PICK_THEME_HEADING)
         headline.assertInsideWindow("headline")
+        val headlineBottom = headline.getUnclippedBoundsInRoot().bottom
+        assertTrue(badgeBounds().all { it.top >= headlineBottom - ROUNDING })
+        val badgesBottom = badgeBounds().maxOf { it.bottom }
+
+        // The button is not shown until a theme is picked, and then it is in the room that was kept for it.
+        show(none.copy(selectedThemeId = KrailThemeStyle.Train.id))
         val primary = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION)
         primary.assertIsDisplayed().assertInsideWindow("Yes, this one")
-
-        val bar = primary.getUnclippedBoundsInRoot()
-        assertTrue(badgeBounds().all { it.top >= headline.getUnclippedBoundsInRoot().bottom - ROUNDING })
-        assertTrue(badgeBounds().all { badge -> badge.bottom <= bar.top + ROUNDING })
+        assertTrue(badgesBottom <= primary.getUnclippedBoundsInRoot().top + ROUNDING)
     }
 
     @Test
     fun `at 200 percent the bar is the one whole button across the window, and nothing sits beside it`() {
-        show(none)
+        show(none.copy(selectedThemeId = KrailThemeStyle.Train.id))
 
         val primary = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION)
         primary.assertTextEquals(THEME_CONFIRM)

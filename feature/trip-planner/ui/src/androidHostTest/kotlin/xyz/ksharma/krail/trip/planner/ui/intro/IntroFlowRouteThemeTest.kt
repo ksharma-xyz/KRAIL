@@ -2,7 +2,6 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -93,12 +92,12 @@ class IntroFlowRouteThemeTest {
     private fun screenViews() = analytics.getTrackedEvents("view_screen").map { it.properties?.get("name") }
 
     @Test
-    fun `no theme is applied before the rider selects one, and the right button waits`() {
+    fun `no theme is applied before the rider selects one, and the button is not shown`() {
         show()
 
         composeRule.onNodeWithText(PICK_THEME_HEADING).assertIsDisplayed()
         assertEquals(emptyList(), appliedThemes)
-        primary().assertIsNotEnabled()
+        primary().assertDoesNotExist()
     }
 
     @Test

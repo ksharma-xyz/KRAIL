@@ -16,6 +16,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -57,6 +58,7 @@ class IntroDecisionBarTest {
     private val fontScale = mutableStateOf(1f)
     private val rightEnabled = mutableStateOf(true)
     private val single = mutableStateOf(false)
+    private val barShown = mutableStateOf(true)
     private var contentSet = false
 
     private val bar = requireNotNull(introBar(PreviewAskState, PreviewReady))
@@ -64,8 +66,15 @@ class IntroDecisionBarTest {
         introBar(IntroState(step = IntroStep.THEME, selectedThemeId = 1), PreviewReady),
     )
 
-    private fun show(widthDp: Int, scale: Float, enabled: Boolean = true, onlyRight: Boolean = false) {
+    private fun show(
+        widthDp: Int,
+        scale: Float,
+        enabled: Boolean = true,
+        onlyRight: Boolean = false,
+        shown: Boolean = true,
+    ) {
         width.value = widthDp
+        barShown.value = shown
         single.value = onlyRight
         fontScale.value = scale
         rightEnabled.value = enabled
@@ -81,6 +90,7 @@ class IntroDecisionBarTest {
                                 right = if (single.value) themeBar.right else bar.right,
                                 onEvent = { events += it },
                                 rightEnabled = rightEnabled.value,
+                                shown = barShown.value,
                             )
                         }
                     }
@@ -95,6 +105,36 @@ class IntroDecisionBarTest {
     private fun secondary() = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION)
 
     private fun SemanticsNodeInteraction.bounds() = getUnclippedBoundsInRoot()
+
+    @Test
+    fun `a bar that is not shown yet keeps the height of its button, and the button then appears in that room`() {
+        listOf(1f, 2f).forEach { scale ->
+            show(NARROW_WIDTH, scale, onlyRight = true, shown = false)
+            val reserved = composeRule.onRoot().getUnclippedBoundsInRoot().height
+
+            primary().assertDoesNotExist()
+            composeRule.onNodeWithContentDescription(THEME_CONFIRM).assertDoesNotExist()
+            composeRule.onAllNodes(hasClickAction()).assertCountEquals(0)
+            assertTrue(reserved > 0.dp, "no room is kept at $scale")
+
+            show(NARROW_WIDTH, scale, onlyRight = true, shown = true)
+
+            primary().assertIsEnabled()
+            assertEquals(reserved, composeRule.onRoot().getUnclippedBoundsInRoot().height, "the bar grew at $scale")
+        }
+    }
+
+    @Test
+    fun `a two button bar that is not shown keeps its room and has nothing to tap`() {
+        show(PHONE_WIDTH, 1f, shown = true)
+        val room = composeRule.onRoot().getUnclippedBoundsInRoot().height
+
+        show(PHONE_WIDTH, 1f, shown = false)
+
+        primary().assertDoesNotExist()
+        secondary().assertDoesNotExist()
+        assertEquals(room, composeRule.onRoot().getUnclippedBoundsInRoot().height)
+    }
 
     @Test
     fun `at 100 percent the labels are whole and the buttons are one row or stacked with the primary on top`() {

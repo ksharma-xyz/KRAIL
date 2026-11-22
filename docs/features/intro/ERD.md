@@ -193,7 +193,8 @@ internal fun parkRideStartPrefill(station: ParkRideStationPickerItem, stopNameLo
  * Only the right one is ever disabled. The one exception is the THEME screen (owner's ruling, 2026-11-22), whose bar is
  * the primary alone and whose `left` is null: `IntroBarTest` pins that no other step can lose its left button.
  *   THEME:        "Yes, this one" alone, a full width taj button, the same height as the two button bar so nothing moves
- *                 when it turns on. It confirms the theme on show and is disabled until a badge is tapped. There is no
+ *                 when it appears. It confirms the theme on show and is NOT SHOWN (not disabled) until a badge is tapped,
+ *                 when it fades in where the room for it was kept (`IntroBar.shown`). There is no
  *                 no, and no way to cycle: a theme is chosen only by tapping its badge. No compact form, and the same
  *                 words for a screen reader (the visible label is contained in the spoken one, so voice control works).
  *   PARK_RIDE:    asking is "No thanks" and "Yes, show me free spots". A card, or a station still being looked for, is
@@ -207,7 +208,7 @@ internal fun parkRideStartPrefill(station: ParkRideStationPickerItem, stopNameLo
  *                 for the stops data to be Ready or Failed, and a trip already written needs no wait.
  */
 internal fun introBar(state: IntroState, readiness: StopsReadiness): IntroBar?
-internal data class IntroBar(val left: IntroBarAction?, val right: IntroBarAction, val rightEnabled: Boolean = true) // left is null on THEME only
+internal data class IntroBar(val left: IntroBarAction?, val right: IntroBarAction, val rightEnabled: Boolean = true, val shown: Boolean = true) // left is null on the screens that ask for a pick; shown is false until there is a pick, and the room is kept
 /** [label] is the whole phrase and is the screen reader description at every text size. [compactLabel] shows above 130 percent text. */
 internal data class IntroBarAction(val label: String, val event: IntroUiEvent, val compactLabel: String? = null)
 /** The compact label above `L_FONT_SCALE_THRESHOLD` (1.3), the whole label at or below it, and the whole label when there is no compact one. */
@@ -473,7 +474,7 @@ three zone frame, and everything it decides is in pure functions with table test
   `ThemeChoice` is the write and the report that `ThemeSelectionViewModel` and the Intro both use, so the two cannot differ, and
   the Settings screen's behaviour and tests are unchanged. The Intro reaches it through `IntroCompletion`, which already holds
   Sandook, Analytics and the IO dispatcher, because the view model is at the constructor limit.
-- **Confirming.** `Yes, this one` is disabled until a theme is selected. It reports the choice once with the existing
+- **Confirming.** `Yes, this one` is not shown until a theme is selected. It reports the choice once with the existing
   `analytics.trackThemeSelectionEvent(themeId)` (event `theme_selected`, param `themeId` only, no new name and no new param,
   and the ledger has no Pending row for it), and moves on to Park & Ride. Tapping a badge reports nothing. The flow only
   moves forward, so the choice is reported once.
@@ -579,6 +580,13 @@ where it changes something an earlier unit said, the earlier text is edited to m
   kinetic entrance (the saved `entered` flag keeps a turn of the screen from playing it again), and the emoji, which changes with the
   theme, joins the fade and rise and no longer pops again. The spec is a pure function with a table test, and a compose test holds
   that both are on screen part way and only the new one after the change.
+- **The bar that is not there yet.** `IntroBar.shown` is false while a single button has nothing to answer. `IntroDecisionBar` then draws
+  the real button inside `Revealed`: transparent (`graphicsLayer` alpha 0), with the semantics cleared (a screen reader and Maestro find
+  nothing, and `intro.action.primary` is absent), the click off, and still measured, so it keeps exactly the height the button takes at the
+  rider's text size and nothing moves when it appears. When `shown` turns true it fades in over `BAR_REVEAL_MS` (250 ms, `introBarRevealMs`),
+  and with reduced motion it appears at once (`snap`). In a preview or a screenshot the state it starts in is the state it is drawn in. On
+  the theme screen it is shown after the first pick. It is not a disabled button: `rightEnabled` is true for it. `introBar` stays null for
+  a screen with no bar at all.
 
 Unit R1, as built, where this document was silent:
 
@@ -988,6 +996,18 @@ arithmetic on the timeline is a guess and is labelled one.
 Decision rule met: the added calls buy a live car park card and a one tap add for riders who park and ride. They are
 optional, non-blocking, once only and silent on failure.
 
+Unit U8, the design fixes, the seven questions, with numbers where there are any:
+
+| # | Question | Answer |
+|---|---|---|
+| 1 | **API calls.** | None added. Nothing in this unit touches the network: the badges, the bar, the headline and the lists are all local. |
+| 2 | **Payload.** | None on the wire. The two stop screens read the same bundled lists. |
+| 3 | **Timing.** | Time to first content is unchanged and nothing blocks. The bigger headline and badges lay out in the same pass. The headline height is reserved at the density it is drawn in, so the zone is stable. |
+| 4 | **UX.** | Loading and failed stops: as before, no message. Offline is not a state. The single button is not there until there is a pick, and then it fades in over 250 ms in room that was kept, so nothing moves. Reduced motion: the tagline swap and the button appear at once. The screens scroll when the bigger headline or the column of badges does not fit, at 320 dp and 200 percent text. |
+| 5 | **Caching, dedupe, retries.** | Not applicable, no call. |
+| 6 | **Battery.** | The tagline change is one finite 350 ms fade and rise per pick, and the button one 250 ms fade, both alpha and transforms and nothing laid out per frame. The badges are twice the size, so the four layers the clock redraws each frame are bigger (a guess: about four times the pixels each, still four small layers), the cost to check first on a phone with the float and the dance. No timer and no background work. |
+| 7 | **Shared limits.** | None. |
+
 ## 7. States and UX
 
 The reference is an interactive review page (private). The states it shows are restated here.
@@ -1073,8 +1093,9 @@ make a row fit, except the one rule below. A screen with nothing to decide has n
   `movedBack` and `withoutSearch` are deleted: the flow only moves forward. There are no progress dots.
 - **Motion.** Screens change with a spring slide and a fade (`introScreenTransition`): forward goes in from the right and the
   old screen leaves to the left, back is the mirror image, and the old screen always leaves faster than the new one settles.
-  Each headline line enters as its own unit, one after another 70 ms apart, rising with a small spring overshoot while it grows
-  and fades in, and the emoji above pops with a bounce and one wobble, then rests, so nothing loops. All of it is `graphicsLayer`
+  The first time a screen shows its headline each line enters as its own unit, one after another 70 ms apart, rising with a small
+  spring overshoot while it grows and fades in, and the emoji above pops with a bounce and one wobble, then rests, so nothing loops.
+  A headline that changes on screen, the theme screen's, is swapped by one fade and rise (unit U8). All of it is `graphicsLayer`
   transforms. With reduced motion (`isReduceMotionEnabled()`) the screens use a plain short cross-fade and the headline is in
   place. In a preview and after a turn of the screen the headline is also in place.
 - **Screen reader.** The whole headline is one heading whose text is the full phrase, with no pauses between lines, and the
@@ -1087,8 +1108,8 @@ make a row fit, except the one rule below. A screen with nothing to decide has n
 
 | State | The rider sees |
 |---|---|
-| None chosen | The headline `Pick`, `your ride`, `colour` and the four badges, drifting. Bar: the one button `Yes, this one`, full width, disabled |
-| A theme selected | The whole app in that theme's colour, the headline now that theme's tagline, the selected badge dancing and the others drifting. Bar: the one button live, in that theme's colour |
+| None chosen | The headline `Pick`, `your ride`, `colour` and the four badges, drifting. Bar: nothing, and its room is kept, so the button is neither visible nor disabled |
+| A theme selected | The whole app in that theme's colour, the headline now that theme's tagline, the selected badge dancing and the others drifting. Bar: the one button `Yes, this one` fades in over 250 ms in the kept room, in that theme's colour. With reduced motion it appears at once |
 | Reduced motion, preview or screenshot | The same, with nothing moving: the selected badge lifted 4 dp |
 | 320 dp at 200 percent text | The four badges, each a 48 dp touch target, wrapping whole if the row is full. The bar is the one button across the window, whole. The middle zone scrolls with the headline |
 
@@ -1412,6 +1433,12 @@ in `searchstop/` touched:
   320 dp, which fails above 1.09). Deleted on purpose in `IntroHeadlineMotionTest`: the two tests of `leadLineWeight`, which is gone.
 - **Unit U8 tests, tagline change.** `IntroHeadlineMotionTest` (the change spec table, instant under reduced motion; headline equality), and
   `IntroHeadlineLayoutTest` (the old and the new headline overlap part way through the change and only the new one is left after it).
+- **Unit U8 tests, the bar.** `IntroBarTest` (the theme screen is not shown until a theme is selected and is never a disabled button, a bar that is not
+  shown keeps its button, every bar is shown except the unselected theme screen, the 250 ms reveal and its reduced motion value),
+  `IntroDecisionBarTest` (a bar that is not shown keeps the height of its button at 100 and 200 percent text and the button then
+  appears in that room, has no click and no description to find, and a two button bar that is not shown keeps its room),
+  `IntroThemeStepTest`, `IntroThemeStepNarrowTest` and `IntroFlowRouteThemeTest` (no button before a pick, then the one button, and the
+  badges do not move when it appears). Deleted: "a disabled right button sends nothing when it is tapped", which is the behaviour that was replaced.
 
 ## 9. Open gaps and decisions
 
@@ -1512,6 +1539,8 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | U8-5 | The gap under the emoji is `spacingXXL` at 100 percent text and up to twice that at 200 percent | The spec said at least 16 dp and more on larger text. 20 dp is the nearest token above 16 dp. The headline zone is taller as a result, and it scrolls when it does not fit | Default, not yet seen by owner |
 | U8-6 | The emoji of the theme headline changes with the words in the same fade and rise, and no longer pops again with each pick | The spec asked for the tagline to change smoothly with no restart mid-way. A pop on every pick would be the restart. The first pop when the screen opens stays | Default, not yet seen by owner |
 | U8-7 | The old headline fades out in 175 ms, half the 350 ms the new one takes | Two full-length fades leave both readable on top of each other for most of the move. The spec gave only about 350 ms for the new one | Default, not yet seen by owner |
+| U8-8 | The hidden single button is composed and measured, not a spacer of a guessed height | The button's height follows the text size, and a spacer would have to copy it. The cost is a transparent, inert button in the tree, hidden from a screen reader with cleared semantics | Default, not yet seen by owner |
+| U8-9 | The button fades in over 250 ms | The spec said fading in and gave no time. It is under the 350 ms of the tagline change so the two do not finish together | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

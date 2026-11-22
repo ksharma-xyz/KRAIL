@@ -40,14 +40,26 @@ internal data class IntroBarAction(
  * one on the right. The right one is the primary and is the only place the theme colour is drawn.
  * Only the right one is ever disabled.
  *
- * The theme screen is the one exception, by the owner's ruling: it asks for a colour and offers no way to say no,
- * so [left] is null there and the bar is the primary alone. Every other screen has both. `IntroBarTest` pins that.
+ * The screens that ask the rider to pick something, the theme and the two stop screens, are the exception: there is
+ * no answer of no, so [left] is null and the bar is the primary alone. Every other screen has both. `IntroBarTest`
+ * pins that.
+ *
+ * [shown] is false while the bar has nothing to answer yet, which is a single button on a screen where nothing has
+ * been picked. The bar then draws nothing and cannot be reached, and it keeps the room it will take, so the screen
+ * does not move when the button appears. A screen that has no bar at all is the null from [introBar] instead.
  */
 internal data class IntroBar(
     val left: IntroBarAction?,
     val right: IntroBarAction,
     val rightEnabled: Boolean = true,
+    val shown: Boolean = true,
 )
+
+// How long the single button takes to fade in once the rider has picked something.
+internal const val BAR_REVEAL_MS = 250
+
+/** How long the bar takes to appear: [BAR_REVEAL_MS], and none under reduced motion, where it simply appears. */
+internal fun introBarRevealMs(reduceMotion: Boolean): Int = if (reduceMotion) 0 else BAR_REVEAL_MS
 
 /** What the button says at [fontScale]: the compact form above the large text threshold, otherwise the whole phrase. */
 internal fun IntroBarAction.visibleLabel(fontScale: Float): String =
@@ -81,15 +93,16 @@ private fun stopBar(state: IntroState) = IntroBar(
 )
 
 /**
- * The theme screen: the one button on the Intro with nothing beside it. A theme is chosen by tapping its badge,
- * there is no answer of no, and the rider must pick a colour to go on, so the single button is off until a theme
- * is selected. It is a full width taj button the height of the two button bar, so nothing moves when it turns on.
- * Its words are the whole phrase at every text size, and a screen reader hears the same words.
+ * The theme screen: a single button with nothing beside it. A theme is chosen by tapping its badge, there is no
+ * answer of no, and the rider must pick a colour to go on, so the single button is not shown until a theme is
+ * selected, and then it fades in where the room for it was kept. It is a full width taj button the height of the
+ * two button bar, so nothing moves when it appears. Its words are the whole phrase at every text size, and a screen
+ * reader hears the same words.
  */
 private fun themeBar(state: IntroState) = IntroBar(
     left = null,
     right = IntroBarAction(THEME_CONFIRM, IntroUiEvent.ConfirmTheme),
-    rightEnabled = state.selectedThemeId != null,
+    shown = state.selectedThemeId != null,
 )
 
 /**

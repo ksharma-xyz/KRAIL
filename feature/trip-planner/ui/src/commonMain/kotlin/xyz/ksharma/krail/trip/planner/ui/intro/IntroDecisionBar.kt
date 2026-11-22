@@ -1,11 +1,18 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
@@ -16,6 +23,7 @@ import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.OutlinedButton
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -27,8 +35,12 @@ import kotlin.math.max
  * answer on the left in outline and the positive one on the right in the theme colour. The right one
  * carries the `intro.action.primary` tag that the Maestro flow taps.
  *
- * With no [left], which only the theme screen has, the bar is the one positive button at the full width.
+ * With no [left], which the screens that ask for a pick have, the bar is the one positive button at the full width.
  * It is the same taj button, so it is the same height as the two button bar, and nothing is left empty beside it.
+ *
+ * While [shown] is false the bar is not there for the rider: it draws nothing, a screen reader and a tap cannot
+ * reach it, and it is not a disabled button, but it still takes the room its buttons will, so the screen does not
+ * move when it appears. It then fades in over [BAR_REVEAL_MS], or simply appears with reduced motion.
  *
  * The two sit in one row. When two whole buttons cannot fit side by side, as at 320 dp with large text,
  * the bar stacks them with the primary on top, and never squeezes, shrinks or truncates a label. It
@@ -42,23 +54,50 @@ internal fun IntroDecisionBar(
     onEvent: (IntroUiEvent) -> Unit,
     modifier: Modifier = Modifier,
     rightEnabled: Boolean = true,
+    shown: Boolean = true,
 ) {
     val fontScale = LocalDensity.current.fontScale
-    if (left == null) {
-        PrimaryButton(right, onEvent, rightEnabled, fontScale, modifier.fillMaxWidth())
-    } else {
-        IntroBarLayout(gap = KrailTheme.dimensions.spacingL, modifier = modifier) {
-            OutlinedButton(
-                onClick = { onEvent(left.event) },
-                dimensions = ButtonDefaults.largeButtonSize(),
-                modifier = Modifier
-                    .testTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION)
-                    .semantics { contentDescription = left.label },
-            ) {
-                Text(text = left.visibleLabel(fontScale), textAlign = TextAlign.Center)
+    val enabled = rightEnabled && shown
+    Revealed(shown = shown, modifier = modifier) {
+        if (left == null) {
+            PrimaryButton(right, onEvent, enabled, fontScale, Modifier.fillMaxWidth())
+        } else {
+            IntroBarLayout(gap = KrailTheme.dimensions.spacingL) {
+                OutlinedButton(
+                    onClick = { onEvent(left.event) },
+                    enabled = shown,
+                    dimensions = ButtonDefaults.largeButtonSize(),
+                    modifier = Modifier
+                        .testTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION)
+                        .semantics { contentDescription = left.label },
+                ) {
+                    Text(text = left.visibleLabel(fontScale), textAlign = TextAlign.Center)
+                }
+                PrimaryButton(right, onEvent, enabled, fontScale)
             }
-            PrimaryButton(right, onEvent, rightEnabled, fontScale)
         }
+    }
+}
+
+/**
+ * Draws [content] when [shown] and, when not, keeps its room and nothing else: it is transparent, taps do nothing and a
+ * screen reader finds nothing. It fades between the two over [introBarRevealMs] and is never drawn half way in a preview
+ * or a screenshot, where the state it starts in is the state it is drawn in.
+ */
+@Composable
+private fun Revealed(shown: Boolean, modifier: Modifier, content: @Composable () -> Unit) {
+    val reveal = introBarRevealMs(isReduceMotionEnabled())
+    val alpha by animateFloatAsState(
+        targetValue = if (shown) 1f else 0f,
+        animationSpec = if (reveal == 0) snap() else tween(durationMillis = reveal),
+        label = "intro-bar-reveal",
+    )
+    Box(
+        modifier = modifier
+            .graphicsLayer { this.alpha = alpha }
+            .then(if (shown) Modifier else Modifier.clearAndSetSemantics {}),
+    ) {
+        content()
     }
 }
 

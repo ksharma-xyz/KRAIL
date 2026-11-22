@@ -6,7 +6,6 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextEquals
@@ -164,11 +163,13 @@ class IntroThemeStepTest {
     }
 
     @Test
-    fun `the bar is the one button, off until a theme is selected, and there is no way to say no`() {
+    fun `the one button is not on the screen until a theme is selected, and there is no way to say no`() {
         show(none)
 
-        primary().assertTextEquals(THEME_CONFIRM).assertIsNotEnabled()
+        primary().assertDoesNotExist()
         secondary().assertDoesNotExist()
+        composeRule.onNodeWithText(THEME_CONFIRM).assertDoesNotExist()
+        composeRule.onNodeWithContentDescription(THEME_CONFIRM).assertDoesNotExist()
         composeRule.onNodeWithText("No", substring = true).assertDoesNotExist()
 
         show(none.copy(selectedThemeId = KrailThemeStyle.Ferry.id))
@@ -179,7 +180,7 @@ class IntroThemeStepTest {
 
     @Test
     fun `the one button is the width of the bar and the same height as the two button bar, with a screen reader name that matches`() {
-        show(none)
+        show(none.copy(selectedThemeId = KrailThemeStyle.Train.id))
 
         val bounds = primary().getUnclippedBoundsInRoot()
         val pad = window.width - bounds.width
@@ -204,17 +205,16 @@ class IntroThemeStepTest {
     }
 
     @Test
-    fun `a disabled right button sends nothing when it is tapped`() {
+    fun `before a choice there is no button to tap, so only the four badges are clickable`() {
         show(none)
 
-        primary().performClick()
-
+        composeRule.onAllNodes(hasClickAction()).assertCountEquals(introThemeChoices().size)
         assertEquals(emptyList<IntroUiEvent>(), events)
     }
 
     @Test
-    fun `the screen has the four badges and the one button`() {
-        show(none)
+    fun `after a choice the screen has the four badges and the one button`() {
+        show(none.copy(selectedThemeId = KrailThemeStyle.Bus.id))
 
         composeRule.onAllNodes(hasClickAction()).assertCountEquals(introThemeChoices().size + 1)
     }
@@ -225,6 +225,8 @@ class IntroThemeStepTest {
 
         val headline = composeRule.onNodeWithText(PICK_THEME_HEADING).getUnclippedBoundsInRoot()
         val badges = introThemeChoices().map { badge(it).getUnclippedBoundsInRoot() }
+        // The button is not shown yet, so the bar's top is where it will be: the button's top once a theme is picked.
+        show(none.copy(selectedThemeId = KrailThemeStyle.Bus.id))
         val barTop = primary().getUnclippedBoundsInRoot().top
 
         assertTrue(badges.all { it.top >= headline.bottom }, "a badge starts over the headline: $headline $badges")
@@ -232,7 +234,7 @@ class IntroThemeStepTest {
     }
 
     @Test
-    fun `the badges do not move when a choice changes the headline`() {
+    fun `the badges do not move when a choice changes the headline and the button appears`() {
         show(none)
         val before = introThemeChoices().map { badge(it).getUnclippedBoundsInRoot().top }
 

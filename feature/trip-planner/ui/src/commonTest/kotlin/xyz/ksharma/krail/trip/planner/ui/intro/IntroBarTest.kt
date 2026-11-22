@@ -71,10 +71,10 @@ class IntroBarTest {
         rightEnabled = addEnabled,
     )
 
-    private fun theme(enabled: Boolean) = IntroBar(
+    private fun theme(shown: Boolean) = IntroBar(
         left = null,
         right = IntroBarAction("Yes, this one", IntroUiEvent.ConfirmTheme),
-        rightEnabled = enabled,
+        shown = shown,
     )
 
     private fun trip(enabled: Boolean) = IntroBar(
@@ -171,14 +171,43 @@ class IntroBarTest {
     }
 
     @Test
-    fun `the theme screen is one button, and the right one waits for a theme to be selected`() {
+    fun `the theme screen is one button, not shown until a theme is selected, and never disabled`() {
         val none = IntroState(step = IntroStep.THEME)
         val selected = none.copy(selectedThemeId = KrailThemeStyle.Metro.id)
 
         listOf(unknown, loading, ready, failed).forEach { readiness ->
-            assertEquals(theme(enabled = false), introBar(none, readiness), "nothing selected, $readiness")
-            assertEquals(theme(enabled = true), introBar(selected, readiness), "a theme selected, $readiness")
+            assertEquals(theme(shown = false), introBar(none, readiness), "nothing selected, $readiness")
+            assertEquals(theme(shown = true), introBar(selected, readiness), "a theme selected, $readiness")
+            assertTrue(introBar(none, readiness)?.rightEnabled == true, "never a disabled button, $readiness")
         }
+    }
+
+    @Test
+    fun `a bar that is not shown still has its button, so the room for it is kept`() {
+        val none = requireNotNull(introBar(IntroState(step = IntroStep.THEME), ready))
+
+        assertEquals(false, none.shown)
+        assertEquals("Yes, this one", none.right.label)
+        assertNull(none.left)
+    }
+
+    @Test
+    fun `every bar is shown, except the theme screen before a theme is selected`() {
+        val states = parkRideRows.map { it.state } +
+            IntroState(step = IntroStep.CONFIRM) +
+            IntroState(step = IntroStep.THEME, selectedThemeId = KrailThemeStyle.Bus.id)
+
+        states.forEach { state ->
+            val bar = introBar(state, ready)
+            assertTrue(bar == null || bar.shown, "${state.step} $state")
+        }
+    }
+
+    @Test
+    fun `the bar fades in over 250 ms, and appears at once with reduced motion`() {
+        assertEquals(250, BAR_REVEAL_MS)
+        assertEquals(250, introBarRevealMs(reduceMotion = false))
+        assertEquals(0, introBarRevealMs(reduceMotion = true))
     }
 
     @Test
@@ -224,14 +253,14 @@ class IntroBarTest {
     }
 
     @Test
-    fun `which theme is selected does not change the bar, only whether the right button is on`() {
+    fun `which theme is selected does not change the bar, only whether it is shown`() {
         introThemeChoices().forEach { choice ->
             val bar = introBar(IntroState(step = IntroStep.THEME, selectedThemeId = choice.style.id), ready)
 
-            assertEquals(theme(enabled = true), bar, choice.name)
+            assertEquals(theme(shown = true), bar, choice.name)
         }
         // An id the Intro does not offer is still a selection as far as the bar goes: the view model never stores one.
-        assertEquals(theme(enabled = true), introBar(IntroState(step = IntroStep.THEME, selectedThemeId = 99), ready))
+        assertEquals(theme(shown = true), introBar(IntroState(step = IntroStep.THEME, selectedThemeId = 99), ready))
     }
 
     @Test

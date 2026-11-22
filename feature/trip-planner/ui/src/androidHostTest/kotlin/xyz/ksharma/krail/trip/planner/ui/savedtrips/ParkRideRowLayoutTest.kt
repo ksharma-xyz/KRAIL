@@ -252,7 +252,7 @@ class ParkRideRowLayoutTest {
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `Directions is a 48 dp round button only on a car park with a position of its own`() {
+    fun `Directions is a 48 dp button only on a car park with a position of its own`() {
         setRow(stations = listOf(TALLAWONG))
         composeRule.onNodeWithTag(TripPlannerTestTags.parkRideTile(TALLAWONG.stopId)).performClick()
         composeRule.waitForIdle()

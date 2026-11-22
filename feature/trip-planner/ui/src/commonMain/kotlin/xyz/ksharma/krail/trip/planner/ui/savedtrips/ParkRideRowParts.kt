@@ -1,8 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -13,36 +11,27 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import app.krail.taj.resources.ic_location
-import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.park.ride.ui.components.CarIcon
-import xyz.ksharma.krail.taj.LocalContentColor
-import xyz.ksharma.krail.taj.components.RoundIconButton
+import xyz.ksharma.krail.park.ride.ui.components.DirectionsButton
 import xyz.ksharma.krail.taj.components.Text
-import xyz.ksharma.krail.taj.contrast.ContrastAnalyzer.Companion.UI_COMPONENT_CONTRAST_AA
 import xyz.ksharma.krail.taj.modifier.CardShape
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.krailRipple
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeDecorColor
-import xyz.ksharma.krail.taj.themeInkColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
-import app.krail.taj.resources.Res as TajRes
 
 /**
  * A line of a Park & Ride tile that keeps its box when it has nothing to say. With [present] false
@@ -177,7 +166,11 @@ internal fun CarParkBlockContent(
             }
         }
         if (carPark.directionsTo != null) {
-            DirectionsButton(carParkName = carPark.name, facilityId = carPark.facilityId, onClick = onDirectionsClick)
+            DirectionsButton(
+                carParkName = carPark.name,
+                onClick = onDirectionsClick,
+                modifier = Modifier.testTag(TripPlannerTestTags.parkRideDirections(carPark.facilityId)),
+            )
         } else if (waiting) {
             ReservedLine(present = false) { Spacer(modifier = Modifier.size(dim.textFieldHeight)) }
         }
@@ -185,35 +178,6 @@ internal fun CarParkBlockContent(
 }
 
 private const val RESERVED_TIME = "12:00 AM"
-
-/**
- * Directions to one car park: taj's [RoundIconButton], 48 dp, with no fill and a ring in the ink
- * colour for its outline. The ring is a border modifier because taj's round button has no outline
- * of its own, the same closest fit the set label chip uses. It opens the default maps app on the
- * car park's own position, and the screen reader hears which car park it is for.
- */
-@Composable
-private fun DirectionsButton(carParkName: String, facilityId: String, onClick: () -> Unit) {
-    RoundIconButton(
-        onClick = onClick,
-        color = Color.Transparent,
-        onClickLabel = "Directions to $carParkName",
-        modifier = Modifier
-            .testTag(TripPlannerTestTags.parkRideDirections(facilityId))
-            .border(
-                width = KrailTheme.dimensions.strokeThin,
-                color = themeInkColor(UI_COMPONENT_CONTRAST_AA),
-                shape = CircleShape,
-            ),
-    ) {
-        Image(
-            painter = painterResource(TajRes.drawable.ic_location),
-            contentDescription = "Directions to $carParkName",
-            colorFilter = ColorFilter.tint(LocalContentColor.current),
-            modifier = Modifier.size(KrailTheme.dimensions.iconS),
-        )
-    }
-}
 
 /**
  * A closed tile's touch: a tap opens it and a long press begins reorder mode, so it is the card's

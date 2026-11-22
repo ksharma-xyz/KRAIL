@@ -232,7 +232,7 @@ If a design breaks one of these rules, the design changes, not the rule.
 - The row runs off the right screen edge, with the 16 inset at the left and at the end of the scroll, so the next tile is
   cut by the screen edge and there is no mask or gap.
 - Tapping a tile expands it in place to the full row width: the station name, each car park's spots, percent full and time,
-  and a Directions button (48 round, outline) on each car park that has a position of its own. Tapping the name collapses it.
+  and a Directions button on each car park that has a position of its own: a filled diamond (a rounded square turned 45 degrees, like a maps app's directions button) in the theme colour with a white turn right arrow, in a 48 touch target. Tapping the name collapses it.
   One tile is open at a time and the others wait behind it.
 - No heading sits above the trips or the row, and nothing takes the row's place when no station is saved.
 - The rest of the trips follow the row and scroll vertically inside the stack.

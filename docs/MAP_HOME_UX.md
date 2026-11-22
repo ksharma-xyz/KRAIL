@@ -259,8 +259,10 @@ A tapped pin opens a floating stop card, never a bottom sheet.
 
 - Line 1 is the stop name with a 48 close button at the right. A card closes, a field does not.
 - Line 2 is the mode badges, left.
-- Then the Departure Board in its own light card.
-- Padding 16 all round, 8 between the three blocks.
+- Then the Departure Board, straight on the card's one surface: no card, background or padding of its own inside the card, the
+  rows and their dividers only.
+- Padding 16 above and below and 16 from each side, applied once, so the stop name, the board title, the rows and the buttons
+  share one left edge. 8 between the blocks. The Park & Ride pin card is the same shell.
 - The board heading holds the title and the chevron, and the whole row, at least 48 tall, opens and closes the board, not only
   the arrow. The board is closed until the heading is tapped, and only then is it fetched. Open, it lists every departure for every line, and the rider narrows it with the board's own filter, the pill and
   the per mode line groups above the rows. There is no Lines chip.

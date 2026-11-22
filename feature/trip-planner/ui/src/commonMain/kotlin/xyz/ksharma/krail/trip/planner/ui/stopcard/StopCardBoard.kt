@@ -1,7 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.stopcard
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,7 +38,6 @@ import xyz.ksharma.krail.departures.ui.state.DeparturesState
 import xyz.ksharma.krail.departures.ui.state.DeparturesUiEvent
 import xyz.ksharma.krail.taj.components.AnimatedDots
 import xyz.ksharma.krail.taj.components.Text
-import xyz.ksharma.krail.taj.modifier.CardShape
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
@@ -49,8 +47,10 @@ private const val BOARD_TITLE = "Departure Board"
 private const val CHEVRON_OPEN_DEGREES = 180f
 
 /**
- * The Departure Board on a stop card, in its own light card: a heading that holds the title and the
- * chevron, then, once the heading is tapped open, the board's own rows for every line the stop serves.
+ * The Departure Board on a stop card: a heading that holds the title and the chevron, then, once the
+ * heading is tapped open, the board's own rows for every line the stop serves. It draws no card, no
+ * background and no inset of its own, so the heading and the rows sit on the stop card's one surface
+ * with their dividers, and the rows' own 16 dp is the page edge inset.
  *
  * The board is closed until the heading is tapped, and only then is it fetched, so a pin tap costs
  * no call and an open board costs the one the sheet's board cost, through the same
@@ -79,12 +79,7 @@ internal fun StopCardBoardSection(
 
     BoardPollingEffect(stopId = stopId, stopName = stopName, boardOpen = boardOpen, onEvent = onEvent)
 
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(CardShape)
-            .background(KrailTheme.colors.surface, CardShape),
-    ) {
+    Column(modifier = modifier.fillMaxWidth()) {
         BoardHeading(
             board = board,
             boardOpen = boardOpen,
@@ -151,7 +146,7 @@ private fun BoardHeading(
                 stateDescription = if (boardOpen) "Expanded" else "Collapsed"
                 onClick(label = label, action = null)
             }
-            .padding(start = dim.pageHorizontalPadding),
+            .padding(horizontal = dim.pageHorizontalPadding),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
         itemVerticalAlignment = Alignment.CenterVertically,

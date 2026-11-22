@@ -215,6 +215,36 @@ class StopCardLayoutTest {
 
     // endregion
 
+    // region one surface
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `the name, the title and the rows share one left edge, 16 dp in, with no card inside the card`() {
+        showCard(MULTI_LINE_STOP, MANY_LINE_BOARD, boardOpen = true)
+
+        val card = bounds(StopCard.CARD)
+        val name = composeRule.onNodeWithText("Central Station", useUnmergedTree = true).getUnclippedBoundsInRoot()
+        val title = composeRule.onNodeWithText("Departure Board", useUnmergedTree = true).getUnclippedBoundsInRoot()
+        val row = composeRule.onAllNodesWithText("Anywhere")[0].getUnclippedBoundsInRoot()
+        assertNear("stop name inset", 16.dp, name.left - card.left)
+        assertNear("board title inset", 16.dp, title.left - card.left)
+        // One 16 dp inset, not the 32 dp an inner card used to add.
+        assertNear("row text inset", 16.dp, row.left - card.left)
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `the board's rows run the whole width of the card`() {
+        showCard(MULTI_LINE_STOP, MANY_LINE_BOARD, boardOpen = true)
+
+        val card = bounds(StopCard.CARD)
+        val body = bounds(StopCard.BOARD_BODY)
+        assertNear("board left", card.left, body.left)
+        assertNear("board right", card.right, body.right)
+    }
+
+    // endregion
+
     // region one height
 
     @Test

@@ -114,7 +114,7 @@ private fun ParkRideActions(
 @Composable
 private fun StationTotal(tile: ParkRideTile) {
     Column(
-        modifier = Modifier.testTag(TripPlannerTestTags.StopCard.PARK_RIDE_TOTAL).fillMaxWidth(),
+        modifier = Modifier.testTag(TripPlannerTestTags.StopCard.PARK_RIDE_TOTAL).fillMaxWidth().cardInset(),
         verticalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingM),
     ) {
         ReservedLine(present = tile.totalFreeSpots != null) {
@@ -134,7 +134,7 @@ private fun StationTotal(tile: ParkRideTile) {
 @Composable
 private fun CarParks(tile: ParkRideTile, onDirectionsClick: (CarParkBlock) -> Unit) {
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().cardInset(),
         verticalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingXL),
     ) {
         tile.carParks.forEach { carPark ->

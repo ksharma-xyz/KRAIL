@@ -87,14 +87,20 @@ internal fun StopCardPlacement(
 }
 
 /**
- * The shell of a stop card, the saved trip card's own: the theme wash on a solid surface, 16 dp
- * padding and the card corners, one block under another 8 dp apart (`docs/MAP_HOME_UX.md`, the card
+ * The shell of a stop card, the saved trip card's own: the theme wash on a solid surface, 16 dp above
+ * and below and the card corners, one block under another 8 dp apart (`docs/MAP_HOME_UX.md`, the card
  * shell and Stop card). The solid surface is what a floating card needs over a map, where the wash
- * alone would show the map through the text.
+ * alone would show the map through the text. It is the card's only surface: nothing inside it draws a
+ * card, a background or an inner padding of its own, so a block sits straight on it.
  *
  * Line 1 is the [heading] with the 48 dp close button at the right. A card closes, a field does not.
  * Everything under it scrolls inside the room the card has, so the close button never leaves the
  * screen. The whole card is one region for a screen reader, announced by [announcement] as it opens.
+ *
+ * The page edge inset, [KrailDimensions.pageHorizontalPadding], is applied once. The heading line
+ * has it here and every block of [content] has it itself ([cardInset], or the departure rows' own
+ * padding), so a block that runs edge to edge, such as the board's dividers and filter row, can, and
+ * text in every block starts on the same left edge.
  */
 @Composable
 internal fun StopCardFrame(
@@ -117,11 +123,11 @@ internal fun StopCardFrame(
                 paneTitle = announcement
                 isTraversalGroup = true
             }
-            .padding(dim.spacingXL),
+            .padding(vertical = dim.spacingXL),
         verticalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().cardInset(),
             horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
             verticalAlignment = Alignment.Top,
         ) {
@@ -140,6 +146,10 @@ internal fun StopCardFrame(
         )
     }
 }
+
+/** The page edge inset on each side, which a block of a stop card puts on itself so another can run edge to edge. */
+@Composable
+internal fun Modifier.cardInset(): Modifier = padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding)
 
 /**
  * The close button: taj's [RoundIconButton] with no fill, a 48 dp target, and the card's own name

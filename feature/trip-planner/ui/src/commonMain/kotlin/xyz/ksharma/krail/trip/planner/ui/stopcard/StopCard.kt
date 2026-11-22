@@ -64,8 +64,8 @@ internal fun StopCardWithDepartures(
 
 /**
  * The floating card a stop pin opens, `docs/MAP_HOME_UX.md` (Stop card): the stop's name with the
- * close button, its mode badges, the Departure Board in its own light card, then the actions. Padding
- * 16 all round and 8 between the blocks.
+ * close button, its mode badges, the Departure Board, then the actions, all on the card's one surface.
+ * Padding 16 all round and 8 between the blocks.
  *
  * [actions] is the slot at the bottom, for the stop's one pick action today and for Save as, Go here
  * and Start here later, so filling it does not reshape the card. The card is keyed on its stop, so
@@ -121,6 +121,7 @@ private fun ModeBadges(modes: ImmutableList<TransportMode>) {
     FlowRow(
         modifier = Modifier
             .testTag(TripPlannerTestTags.StopCard.MODES)
+            .cardInset()
             .clearAndSetSemantics { contentDescription = modes.joinToString(separator = ", ") { it.name } },
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
         verticalArrangement = Arrangement.spacedBy(dim.spacingM),
@@ -134,7 +135,7 @@ private fun ModeBadges(modes: ImmutableList<TransportMode>) {
 /** The room at the bottom of every card for the actions it hosts. */
 @Composable
 internal fun ActionSlot(actions: @Composable () -> Unit) {
-    Box(modifier = Modifier.testTag(TripPlannerTestTags.StopCard.ACTIONS).fillMaxWidth()) { actions() }
+    Box(modifier = Modifier.testTag(TripPlannerTestTags.StopCard.ACTIONS).fillMaxWidth().cardInset()) { actions() }
 }
 
 /**

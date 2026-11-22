@@ -46,7 +46,8 @@ appId: ${APP_ID}
 - assertVisible:
     id: "searchrow.to"
 
-# Planning a trip by typing must not depend on GPS at all.
+# Planning a trip by typing must not depend on GPS at all. Home opens Search Stop, which holds the To and
+# From form, and a pick never leaves it: the destination fills its bar and the screen stays.
 - tapOn:
     id: "searchrow.to"
 - extendedWaitUntil:
@@ -64,11 +65,24 @@ appId: ${APP_ID}
     id: "searchstop.result..*"
     index: 0
 
-# Back on home, still alive. If the denial had crashed a background coroutine
-# this assertion is where it surfaces.
+# Still on Search Stop, with the denial shown as its own small button under the group card and the
+# form on screen. If the denial had crashed a background coroutine this is where it surfaces.
 - extendedWaitUntil:
     visible:
-      id: "searchrow.root"
+      id: "searchrow.from"
+    timeout: 30000
+- assertVisible:
+    id: "searchrow.to"
+- assertVisible:
+    id: "searchstop.locationpill"
+- assertNotVisible:
+    id: "savedtrips.screen"
+
+# Back leaves for home, still alive.
+- back
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
     timeout: 20000
 - assertVisible:
-    id: "savedtrips.screen"
+    id: "searchrow.root"

@@ -60,6 +60,14 @@ object TripPlannerTestTags {
     // car park, see [parkRideTile], [parkRideCarPark] and [parkRideDirections].
     const val SAVED_TRIPS_PARK_RIDE_ROW = "savedtrips.parkride.row"
 
+    // The map home (docs/MAP_HOME_UX.md rules 1, 12, 20 and 24): the row of notices under the top row, the
+    // Map offline chip in it, the top row and the bottom block. The search pill keeps the search row's own
+    // tags, so a flow written for it still reads.
+    const val HOME_MAP_NOTICES = "homemap.notices"
+    const val HOME_MAP_OFFLINE_CHIP = "homemap.offline"
+    const val HOME_MAP_TOP_ROW = "homemap.top"
+    const val HOME_MAP_BOTTOM = "homemap.bottom"
+
     // Reorder mode (docs/MAP_HOME_UX.md rule 31): the top row that holds Done, and the Park & Ride
     // row's outlined block. The grips and delete circles are per card, see [Reorder].
     const val SAVED_TRIPS_REORDER_TOP_ROW = "savedtrips.reorder.top"

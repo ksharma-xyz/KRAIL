@@ -36,17 +36,38 @@ internal fun LocationStatusPill(
     modifier: Modifier = Modifier,
 ) {
     if (pill == LocationPill.Hidden) return
+    StatusPill(
+        text = LOCATION_PILL_TEXT,
+        tag = TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL,
+        onClick = onClick,
+        modifier = modifier,
+    )
+}
 
+/**
+ * One status pill: taj's [Button] at its medium size, 32 tall, in a 48 hit area. Any status that shares
+ * the form's row, the location one and the Map offline chip on home, is this pill, so they are one
+ * shape and one height ([enabled] false draws a status that is not a control).
+ */
+@Composable
+internal fun StatusPill(
+    text: String,
+    tag: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
     // The Box reserves the 48 so the 8 above and below the pill exist on every device, and the pill
     // asks for the 48 touch target too (the Button has no hit area of its own to widen).
     Box(
         modifier = modifier
             .defaultMinSize(minHeight = PILL_HIT_AREA)
-            .testTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL),
+            .testTag(tag),
         contentAlignment = Alignment.Center,
     ) {
         Button(
             onClick = onClick,
+            enabled = enabled,
             colors = ButtonDefaults.buttonColors(
                 customContainerColor = KrailTheme.colors.surface,
                 customContentColor = KrailTheme.colors.onSurface,
@@ -56,7 +77,7 @@ internal fun LocationStatusPill(
                 .minimumInteractiveComponentSize()
                 .shadow(elevation = PILL_SHADOW, shape = ButtonDefaults.mediumButtonSize().shape),
         ) {
-            Text(text = LOCATION_PILL_TEXT)
+            Text(text = text)
         }
     }
 }

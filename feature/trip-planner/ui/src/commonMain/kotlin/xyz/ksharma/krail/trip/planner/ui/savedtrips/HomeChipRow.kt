@@ -60,13 +60,15 @@ internal fun HomeChipRow(
     onLabelClick: (labelKey: String) -> Unit,
     onParkRideClick: () -> Unit,
     modifier: Modifier = Modifier,
+    // True on the map home: no surface behind the chips, so the map shows around and between them.
+    floating: Boolean = false,
 ) {
     if (chips.isEmpty()) return
     val dim = KrailTheme.dimensions
     val rowModifier = modifier
         .testTag(TripPlannerTestTags.SAVED_TRIPS_CHIP_ROW)
         .fillMaxWidth()
-        .background(KrailTheme.colors.surface)
+        .then(if (floating) Modifier else Modifier.background(KrailTheme.colors.surface))
         .padding(horizontal = dim.pageHorizontalPadding, vertical = dim.spacingM)
     val chipContent: @Composable () -> Unit = {
         chips.forEach { chip ->

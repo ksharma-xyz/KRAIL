@@ -85,6 +85,9 @@ fun SearchStopRow(
     isAiHandoffSettling: Boolean = false,
     dateTimeSelectionText: String? = null,
     onDateTimeSelectionClear: () -> Unit = {},
+    // True on the map home: the bars float over the map with no coloured panel behind them, because a
+    // panel that holds other controls is a docked panel in disguise (`docs/MAP_HOME_UX.md` rules 1 and 2).
+    floating: Boolean = false,
 ) {
     val themeColorHex by LocalThemeColor.current
     val navBarPadding = with(LocalDensity.current) {
@@ -147,6 +150,7 @@ fun SearchStopRow(
                 isAiHandoffSettling = isAiHandoffSettling,
                 dateTimeSelectionText = dateTimeSelectionText,
                 onDateTimeSelectionClear = onDateTimeSelectionClear,
+                floating = floating,
             )
         } else {
             CollapsedPill(
@@ -252,6 +256,7 @@ private fun ExpandedSearchRow(
     isAiHandoffSettling: Boolean = false,
     dateTimeSelectionText: String? = null,
     onDateTimeSelectionClear: () -> Unit = {},
+    floating: Boolean = false,
 ) {
     val dim = KrailTheme.dimensions
 
@@ -266,12 +271,18 @@ private fun ExpandedSearchRow(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    color = themeColorHex.hexToComposeColor(),
-                    shape = RoundedCornerShape(
-                        topStart = SearchRowTopRadius,
-                        topEnd = SearchRowTopRadius,
-                    ),
+                .then(
+                    if (floating) {
+                        Modifier
+                    } else {
+                        Modifier.background(
+                            color = themeColorHex.hexToComposeColor(),
+                            shape = RoundedCornerShape(
+                                topStart = SearchRowTopRadius,
+                                topEnd = SearchRowTopRadius,
+                            ),
+                        )
+                    },
                 ),
         ) {
             if (onCollapseRequest != null) {
@@ -300,8 +311,14 @@ private fun ExpandedSearchRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        top = if (onCollapseRequest != null) 0.dp else SearchRowVerticalPadding + dim.spacingM,
-                        bottom = SearchRowVerticalPadding + navBarPaddingDp,
+                        // Floating, the home column owns the gaps and the navigation bar, so the row
+                        // adds none of its own.
+                        top = if (onCollapseRequest != null || floating) {
+                            0.dp
+                        } else {
+                            SearchRowVerticalPadding + dim.spacingM
+                        },
+                        bottom = if (floating) 0.dp else SearchRowVerticalPadding + navBarPaddingDp,
                         start = dim.pageHorizontalPadding,
                         end = dim.pageHorizontalPadding,
                     ),
@@ -385,7 +402,7 @@ private fun ExpandedSearchRow(
  * nothing.
  */
 @Composable
-private fun AiSheetEntryButton(
+internal fun AiSheetEntryButton(
     onAiEvent: (AiSearchInputEvent) -> Unit,
     spinning: Boolean = false,
 ) {

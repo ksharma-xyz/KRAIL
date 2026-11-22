@@ -125,4 +125,12 @@ enum class FlagKeys(val key: String) {
      * that is not that shape also falls back to the bundled lists, as a whole.
      */
     INTRO_SUGGESTED_STOPS("intro_suggested_stops"),
+
+    /**
+     * How far from the map's centre, in kilometres, Search Stop looks for stops to draw. A number
+     * such as `3.0`; the default is 3.0. A value that is not a number, or is outside 0.5 to 10, is
+     * ignored and the default applies, as a whole, rather than being pulled into range. Nothing in
+     * the app lets a rider change it.
+     */
+    NEARBY_STOPS_RADIUS_KM("nearby_stops_radius_km"),
 }

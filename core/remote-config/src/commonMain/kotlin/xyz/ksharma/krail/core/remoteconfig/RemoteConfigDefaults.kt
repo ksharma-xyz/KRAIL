@@ -222,6 +222,13 @@ object RemoteConfigDefaults {
                 first = FlagKeys.INTRO_SUGGESTED_STOPS.key,
                 second = "",
             ),
+            // Kilometres, a Double. Read through resolveNearbyStopsRadiusKm, which also accepts it
+            // arriving as a whole number or as text and keeps its own copy of this value for a
+            // reading that is not usable (pinned equal by NearbyStopsRadiusTest).
+            Pair(
+                first = FlagKeys.NEARBY_STOPS_RADIUS_KM.key,
+                second = 3.0,
+            ),
         )
     }
 }

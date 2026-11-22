@@ -47,8 +47,10 @@ import xyz.ksharma.krail.trip.planner.ui.searchstop.address.DEFAULT_ADDRESS_SEAR
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.normalizeAddressQuery
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapStateHelper
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.NearbyStopsManager
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.resolveNearbyStopsRadiusKm
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
@@ -193,8 +195,11 @@ class SearchStopViewModel(
             SearchStopUiEvent.InitializeMap -> {
                 if (isMapsAvailable && _uiState.value.mapUiState == null) {
                     log("[NEARBY_STOPS] Initializing map state")
+                    // The radius is Remote Config's, read once as the map starts. Nothing in the app
+                    // changes it any more.
+                    val display = MapDisplay(searchRadiusKm = resolveNearbyStopsRadiusKm(flag))
                     updateUiState {
-                        copy(mapUiState = MapUiState.Ready())
+                        copy(mapUiState = MapUiState.Ready(mapDisplay = display))
                     }
                     // Note: Auto-fetch of user location happens in UI layer
                     // via LaunchedEffect observing permission status

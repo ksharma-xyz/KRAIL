@@ -50,6 +50,18 @@ class RemoteConfigDefaultsTest {
     }
 
     @Test
+    fun theNearbyStopsRadiusDefaultIsThreeKilometresAsADouble() {
+        val default = RemoteConfigDefaults.getDefaults()
+            .single { it.first == FlagKeys.NEARBY_STOPS_RADIUS_KM.key }
+            .second
+
+        // A Double on purpose: an Int here would arrive as the whole number 3 and a Double as the
+        // text "3.0", and the reader accepts both, but the default is the one a rider who has not
+        // fetched yet gets, so it is pinned as what it is.
+        assertEquals(3.0, default)
+    }
+
+    @Test
     fun noDefaultIsForAKeyThatNoLongerExists() {
         val flagKeys = FlagKeys.entries.map { it.key }.toSet()
         val orphans = RemoteConfigDefaults.getDefaults()

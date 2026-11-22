@@ -163,6 +163,11 @@ SearchStop). `TimeTableRoute` navigation still works via back-stack push.
   after the second trip, and scrolls sideways inside it: it runs to the screen's edge on a phone and to the
   column's edge in the wider windows and in the 480 dp pane, with the 16 dp inset at both ends of the scroll.
   An open tile takes the row's width, so it is as wide as a card in every window.
+- **Reorder mode** (rule 31) draws in the same column. The Done button sits 16 dp from the top and the right
+  edge of the pane that holds the list, so in the dual pane it is at the list pane's right edge and never over the
+  map. A touch on the map pane cancels the mode (the pane stays a sibling of the list, so the iOS compositing
+  rule holds). The grips, the outlined Park & Ride block and the delete circles are measured in the column, so they
+  are as wide as the cards in every window.
   A single-pane window of 560 to 839 dp centres a 560 dp column. In the 480 dp left pane the column
   is the whole pane. The list stays the pane's full width so the gutter still scrolls.
 

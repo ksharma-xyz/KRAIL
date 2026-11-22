@@ -232,7 +232,7 @@ If a design breaks one of these rules, the design changes, not the rule.
 - System back, a swipe back and a tap on the map cancel without saving: the order animates back and the chrome returns. No
   dialog, no toast.
 - Backgrounding or killing the app mid-edit does not save either. A rotation keeps the edit.
-- All local. Done is one write, cancel writes nothing. No network and no timers.
+- All local. Done is one save, the trips in one database transaction and the row's place in one preference, and cancel writes nothing. No network and no timers.
 
 ### Stop card
 

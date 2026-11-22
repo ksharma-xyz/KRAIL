@@ -72,7 +72,7 @@ erDiagram
         string source PK
     }
     PARK_RIDE_ROW_POSITION {
-        int indexAmongTrips "NEW, store decided in branch 8"
+        int indexAmongTrips "NEW, one Long in SandookPreferences, built in branch 9"
     }
     SUGGESTION_SHOWN {
         bool shown "NEW, one boolean in SandookPreferences"
@@ -87,7 +87,8 @@ erDiagram
 | `CAR_PARK_READING` | db, existing `NSWParkRideFacilityDetail` | NSW `/v1/carpark` | facility id | replaced on each successful fetch |
 | `SAVED_PARK_RIDE` | db, existing | the rider | stop id, facility id, source | until the rider removes it |
 | `ParkRideFacilityDetail` | ui | mapped from `CAR_PARK_READING` | facility id | one composition. **Adds nullable `latitude` and `longitude`** |
-| `PARK_RIDE_ROW_POSITION` | new, storage not yet chosen | the rider (drag in reorder mode) | one per rider | until changed |
+| `PARK_RIDE_ROW_POSITION` | new, one Long in `SandookPreferences` under `KEY_PARK_RIDE_ROW_INDEX`, the store `KEY_HAS_SEEN_INTRO` uses (branch 9) | the rider (drag in reorder mode), written by Done | one per rider | until changed. Absent until the first drag, which puts the row after the second trip. Read clamped to the trips there are, so it is never wrong after a delete |
+| `REORDER_SESSION` | new, ui state only, `SavedTripsState.reorder`, never stored | the rider's long press, ended by Done, cancel or being away | one at a time | a rotation keeps it, Done and cancel end it, leaving the screen for longer than the 5 s grace drops it unsaved |
 | `SUGGESTION_SHOWN` | new, one boolean in `SandookPreferences` (the store `KEY_HAS_SEEN_INTRO` uses) | the app, set the first time the card is shown | one per install | permanent, the suggestion is shown once |
 | `nearby_stops_radius_km` | Remote Config, new | Remote Config, default 3.0 | key | per config fetch |
 | `park_ride_suggestion_radius_km` | Remote Config, new | Remote Config, default 5.0 to match the Intro (`docs/features/intro/ERD.md`, IA2, approved 2026-11-21). Earlier draft said 10.0 | key | per config fetch |
@@ -167,7 +168,7 @@ internal fun directionsTarget(latitude: Double?, longitude: Double?): LatLng?   
 internal fun parkRideTileWidth(columnWidth: Dp, fontScale: Float): Dp            // min(148 dp x font scale, column less 60 dp)
 internal fun openTilesAfterTap(open: Set<String>, tapped: String): Set<String>   // one open at a time
 internal fun rowIndexFor(tripCount: Int, storedIndex: Int? = null): Int          // trips before the row: 2 by default, clamped
-internal fun <T> List<T>.splitAroundParkRideRow(rowIndex: Int): Pair<List<T>, List<T>>
+internal fun homeStackKeys(tripIds: List<String>, hasRow: Boolean, storedIndex: Int?, session: ReorderSession?): List<String> // the stack's keys in draw order
 internal fun isOffCooldown(lastCallEpochSeconds: Long?, cooldown: Duration, now: Instant): Boolean // the one decision every fetch makes
 internal fun stopsToRefreshOnOpen(savedStopIds: Collection<String>, openStopIds: Set<String>): List<String>
 ```
@@ -181,6 +182,32 @@ no Go here and no Directions of its own: a tile never promises a trip it cannot 
 `readAtEpochSeconds` (the stored `timestamp`, so the oldest reading can be told). The screen draws `ParkRideRow` from the tiles. A tap on a
 tile raises the existing `ParkRideCardClick`, so the ViewModel's refresh set and poll stay in step, and a tap on Directions raises the new
 `ParkRideDirectionsClick`, which calls `PlatformOps.openMapDirections`, the call the Add Park & Ride sheet already makes.
+
+Branch 9, reorder mode. The reducer is pure and lives in the state module (`ReorderSession.kt`), the rest is plain functions with no
+layout, so each rule is a table test and the ViewModel tests use the shared fakes:
+
+```kotlin
+// module: :feature:trip-planner:state, the one thing the screen and the ViewModel agree on
+const val PARK_RIDE_ROW_KEY = "park_ride_row"                       // the row's key among the trips' ids in the one list
+data class ReorderSession(keys, startKeys, removed, lifted) {        // the stack as the rider is arranging it
+    val tripOrder: List<String>; val rowIndex: Int?; val hasChanges: Boolean
+    fun move(fromKey: String, toKey: String): ReorderSession         // the item lands where the target was, a trip or the row
+    fun remove(tripId: String): ReorderSession                       // staged, never the row, never an unknown id
+    fun result(): ReorderResult                                      // tripOrder, removed, rowIndex, what Done writes
+    companion object { fun start(tripIds: List<String>, rowIndex: Int?, lifted: String? = null): ReorderSession }
+}
+// module: :feature:trip-planner:ui, callers: SavedTripsViewModel
+internal fun SavedTripsState.beginReorder(liftedKey: String): ReorderSession?    // null when there is nothing to reorder
+internal fun SavedTripsState.withReorderApplied(result: ReorderResult): SavedTripsState
+internal fun persistReorder(sandook, preferences, analytics, session, before: List<Trip>)   // Done's writes, off the main thread
+// module: :sandook
+fun Sandook.reorderSavedTrips(orderedTripIds: List<String>, removedTripIds: Set<String>)   // one transaction, default body for fakes
+```
+
+New events on `SavedTripUiEvent`: `EnterReorder(liftedKey)`, `ReorderMove(fromKey, toKey)`, `ReorderRemove(tripId)`, `ReorderDone` and
+`ReorderCancel`. They replace `DeleteSavedTrip`, `MoveSavedTripToIndex` and `MarkReorderTipSeen`, and `hasSeenReorderTip` and its
+preference key go with the tip lines. The drag library is the existing `sh.calvin.reorderable` (2.5.1): its move callback raises
+`ReorderMove`, the whole card carries `draggableHandle`, and no dependency is added.
 
 Reused unchanged: `ParkRideAvailabilityLoader` (fetch for a set of facilities), `filterRefreshableFacilities` and
 `parkRideApiCooldown` (the cooldown), `pollWhileCardsAreOpen` (the expanded-card poll).
@@ -281,6 +308,31 @@ the peak window and 6 outside it, a ceiling and not a forecast.
 | A tile stays open, screen in front | the poll, each cooldown | the same poll | the same | the same | not a feature | unchanged |
 | Home in the background | 0 | 0 | 0 | 0 | none | none |
 
+**Branch 9, reorder mode (all local, numbers from code, guesses labelled).** **0 network calls, 0 timers, 0 background work.** Entering the
+mode is a state change in memory: the session is a list of at most one key per saved trip plus the row's, so a dozen strings, built from
+what home already holds (a guess at microseconds, not measured). A drag is one in memory `move` per row crossed, which is the existing
+library's callback and a list copy of those few keys. Nothing is read or written while the mode is open, so **cancel, back, a tap on the map
+and leaving the screen cost 0 writes**. **Done writes once, off the main thread**: the trips in one database transaction
+(`Sandook.reorderSavedTrips`, the deletes and one `UPDATE SavedTrip SET sort_order` per trip, a rider's handful of rows, so about N+D
+statements inside one commit, not measured) and the row's place as one `SandookPreferences` long, and a Done with nothing moved writes
+neither. The old edit mode wrote on every drop, one `UPDATE` per move and one delete per tap, so a long drag is now one commit and not
+many. The row's place is read once with the trips, before the list is first drawn, so the row never jumps: one preference read on a
+store the screen already reads. Payload: 0 bytes. Time to first content: unchanged, the read is on the same coroutine as the trips and
+is a local key. The list is one `LazyColumn` of keys, as before, so a drag recomposes the rows that moved. Loading, slow, failed and
+offline do not apply, there is no network: a failed write leaves the screen showing the order the rider chose and the stored order
+as it was, which the next observation of the table puts right (A77). Caching, dedupe and conditional requests: none needed. Battery:
+no radio wake-up, no wake lock, the lifecycle drops the session when the screen has been away longer than the grace. Shared rate
+limits: none touched, a BFF would collapse nothing here.
+
+| Flow | Calls before | Calls after | Bytes before | Bytes after | Time to results before | after |
+|---|---|---|---|---|---|---|
+| Long press a card, enter reorder mode | 0 | 0 | 0 | 0 | local | local, one state change |
+| Drag a card across the stack | 0 network, 1 write per drop (old edit mode) | 0 network, 0 writes | 0 | 0 | local | local, in memory |
+| Done after moving trips and the row | 0 network, a write per move and a delete per tap | 0 network, 1 transaction and 1 preference write | 0 | 0 | local | local, off the main thread |
+| Done with nothing moved | not a feature | 0 writes | 0 | 0 | local | local |
+| Back, swipe back, tap the map, leave the app | not a feature | 0 writes, the session is dropped | 0 | 0 | local | local |
+| Open home, row place read | 0 | 0 network, 1 preference read | 0 | 0 | local | local, before the first list |
+
 **Branch 7, the Home and Work chips (one row, numbers from code, guesses labelled).** Opening home adds 0 calls, 0 queries and
 no timer: the chips are drawn from `SavedTripsState.stopLabels`, which the ViewModel already observes. A tap on a set chip costs one
 `UserLocationManager.getCurrentLocation()` (one shot, 10 s timeout inside `UserLocationManagerImpl`, never `locationUpdates`, never
@@ -341,6 +393,7 @@ Shared rate limits: none touched, nothing for a BFF to collapse.
 | Home trips | cached rows | no trips, map only, no card | as content | the app's `SavedTripCard`. Both ends labelled stays the one-line "Home to Work" form (A1) |
 | Park & Ride tile (closed, any number of car parks) | the cached number at once. With none yet the number and time keep their line boxes, drawn clear and hidden from a screen reader, so the tile shows the station name alone at the same height | no row (no saved station) | last reading with the time it was read (A6, A58), never an error and never hidden for being old | the free spots across the station's car parks with "spots" small beside it, the car icon and station name, and the time of the oldest reading |
 | Park & Ride tile (open) | per car park, the name alone until its reading lands | as above | per car park, the last reading with its time | the station name (closes it), then one block per car park in a fixed order at equal weight (A3, A59), each stacked under the last at every width and text size, with its numbers, its time and, when it has a position of its own, a 48 dp round Directions button (A8) |
+| Reorder mode | not applicable, local | the stack with no trip and no station is not enterable | a failed write shows the order the rider chose and leaves the stored order as it was (A77) | no logo, gear, chips or search bar, one dark Done 48 dp tall, 16 dp from the top and right. A grip centred on each trip card's top edge and its delete circle, the Park & Ride row in one outlined block with a wider grip, the pressed card lifted. The whole card is the drag target, and the row's own tiles are shut and still |
 | Home map | flat ground and the rider dot | stops within the radius, or none | "Map offline" chip, flat ground, pins stay | pins, P pins, label pins |
 | Home chips | none until the labels have loaded | not applicable, Home and Work always have a chip | the fallback search when there is no fix, no permission or no stop near | Set Home or Home, Set Work or Work, then + Park & Ride, each 48 dp, wrapping whole or one sideways line over 130% text |
 | Search Stop | map state, no list, no keyboard | recents empty, nearest stops instead | offline chip | list state with recents or results |
@@ -408,6 +461,30 @@ Park & Ride row (branch 8), written before the code:
   heading and no Add card. `SavedTripsColumnLayoutTest`: the row and its first tile sit on the column's edges at every window width.
   `SavedTripsParkRideRestoreTest`: an open tile survives recreation and the next tap closes it.
 
+Reorder mode (branch 9), written before the code:
+
+- Pure reducer (`ReorderSessionTest`, state module): `start` with the row after the trips, first, last and clamped, with no row, with
+  no trips; `move` of a trip to a trip, a trip past the row, the row past trips, to itself, an unknown key, with the lift cleared;
+  `remove` stages a trip, twice, an unknown id and never the row; `hasChanges` false until something moved and false again after a
+  move back; `result` carries the order, the removals and the row's place with a removed trip gone from both
+- Pure order (`HomeStackOrderTest`): `rowIndexFor` default, dragged, clamped on delete and on a bad negative; `homeStackKeys` with the
+  row at every place, no row, a session's order with a removed trip gone, a session key no longer on home dropped, cancel as the saved order
+- ViewModel (`SavedTripsReorderTest`, `FakeSandook`, `FakeSandookPreferences`): a long press begins a session with the row after the
+  second trip and the pressed card lifted, the row first with no trips, nothing to reorder with no trip and no station, a second long
+  press does not restart it, the stored place is read with the trips; moves and removals write nothing and cancel writes nothing;
+  Done writes the order and the row's place and shows them at once, writes nothing when nothing moved, deletes a staged removal only
+  on Done, reports the existing events for each trip that moved and for each removed; a rotation keeps the session and being away past
+  the grace drops it unsaved
+- Layout (`ReorderModeLayoutTest`, Robolectric, real bounds, 411 dp and 320 dp at 200%): the logo, gear, chips and search row are gone
+  and come back outside the mode; one Done, 48 dp tall, its right edge 16 dp in and its top 16 dp down at both widths; a grip on
+  every trip card centred on its top edge, 32 dp wide; the Park & Ride block on the cards' edges with a 64 dp grip centred on its
+  top; the delete circle's 48 dp target centred 6 dp in from the card's corner; no delete circle on the row and no touch on a tile;
+  the delete tap stages the trip; a long press on a trip card or a tile begins the mode and a short tap still opens the tile; Done
+  saves; back cancels and does nothing outside the mode; state survives a restore; the last card sits near the window's bottom while
+  reordering and 400 dp clear of it outside
+- Not covered by a test, to look at on a device: the drag itself, the lifted look while dragging, the animation back on cancel, a tap
+  on the map cancelling (the pointer observer is not reachable from a host test), TalkBack
+
 Home and Work chips (branch 7), written before the code:
 
 - `unset labels read Set Home and Set Work, then Park & Ride`, `set labels read Home and Work and the chips stay`, the order is
@@ -445,7 +522,7 @@ State survival and lifecycle:
 | `SEARCH_STOP_UX.md`, "The landing surface is the list, never the map", pinned by `singlePane_opensOnTheList_evenWhenAMapIsAlreadyInitialised`. The doc also records that a map-first default starts the whole MapLibre stack on every visit and that the flag once flipped by accident | Rule 39 reverses it on purpose, in branch 4. The doc section is rewritten as "Two states" in the same change. The pinned test is replaced by `singlePane_opensOnTheMapState_withTheBarAndNoListAndNoKeyboard`, which uses the same initialised-map fixture and now asserts the opposite. The map starts once through `InitializeMap`, the same event as before, with the same shared instance | doc, test, and a measurement of time to first tiles on the Pixel 6 Pro and the tablet AVD, to be reported before the stack is called done (not measured in this build) |
 | Search Stop label pill row, the curated first-open stops (Town Hall, Central, Parramatta, Wynyard), `StopLabelAssignRow` and its "+" | The recents card replaces that list layout (rule 9). The label row is the first row of the card and scrolls sideways (G4), and the curated stops are replaced by the Intro's suggested stops (G5). `EMPTY_STATE_STOPS`, `shouldShowEmptyStateStops` and `shouldShowPillRow` are deleted and `SearchStopRulesTest` with them, their cases moved to `SearchStopRecentsTest` | the existing Search Stop tests pass or are changed on purpose, with the doc updated |
 | Ask KRAIL on home (`AskKrailScreen`, the mic in the search row, listen on open, blur and dim while it is open, gated by the AI input flag and device availability) | The new home pill keeps it working. The mic shows only when the flag and the device allow it, never as a dead icon. The blur applies to the cards, and the map stays a sibling | to verify in the home map branch, with `DualPaneCompositingGuardTest` |
-| The saved trips reorder callback treats every list key as a trip id | The Park & Ride row is a list item with its own key. The callback must move it as a block and never read its key as a trip id. Its position is stored as an anchor after a trip and clamped when trips are added or deleted | unit tests on the move and the clamp, before the code |
+| The saved trips reorder callback treats every list key as a trip id | The Park & Ride row is a list item with its own key. The callback moves it as a block and never reads its key as a trip id: it raises `ReorderMove(fromKey, toKey)` and the reducer treats `PARK_RIDE_ROW_KEY` as one more key. Its position is stored as a count of trips before it and clamped when trips are added or deleted. `MoveSavedTripToIndex`, `DeleteSavedTrip` and `MarkReorderTipSeen` are removed, and the old edit mode that wrote on every drop with them | `ReorderSessionTest`, `HomeStackOrderTest`, `SavedTripsReorderTest` |
 | `persistFacilityDetail` stores the stop id as the stop name when a car park is not saved | A2b writes readings for car parks the rider never saved. The station name comes from the catalogue and the stops table, never from a reading row | `station card shows the station name for an unsaved car park` |
 | `SearchStopRow` (the home bottom search row), the Search button that sat beside the fields, the `SEARCH_ROW_*` tags and the Maestro flows that tap them (`02-plan-trip.yaml`, `01-launch-home.yaml`, `03-rotation-sweep.yaml`, `06-permissions-denied.yaml`) | Search becomes the go circle inside the From bar and To is above From. Every tag stays on the same kind of thing: `searchrow.to` and `searchrow.from` are the bars, `searchrow.search` is the 40 dp go button, taj's `RoundIconButton`, and `searchrow.gocircle` is the box around it. The circle is always drawn on home, because the smoke flow waits for it before any stop is chosen. Reverse and Ask KRAIL keep their tags and move under the From bar when width is short, and the click wiring and analytics are unchanged | `ToFromBlockLayoutTest` reads the real bounds and taps. The Maestro flows keep every `searchrow.*` tag they use, and the two that open Search Stop (`02-plan-trip.yaml`, `03-rotation-sweep.yaml`) tap the bar before they wait for the recents, because Search Stop opens on the map state |
 | Search query telemetry (`SearchQueryTextEgressTest`, `SearchQueryRedactionCallSiteTest`), the address search gate and `searchSessionId` | Text fields move but keep going through the same helpers. No raw text reaches any event | the existing tests pass unchanged |
@@ -566,6 +643,23 @@ Branch 8, the Park & Ride row. The spec was silent on each of these. Every one i
 | A65 | At 320 dp and normal text two 148 dp tiles and their gaps exactly fill the row, so a third tile has no peek. The 60 dp cap keeps a peek at large text, and at 411 dp the third tile peeks by 83 dp | 16 + 148 + 8 + 148 is 320. The brief fixes 148 dp | A rider with three stations on the narrowest phone at normal text has no sign there is a third | Default, not yet seen by owner |
 | A66 | Opening home fetches every car park the catalogue puts at a saved stop id (the saved rows already hold all of them, because adding a station and a saved trip both store every car park), through `fetchAndSaveParkRideFacilityIfNeeded`, one pass at a time, and the pass is cancelled when the screen has been away longer than the grace | A2b, and the shipped path, which the tap already used | A station saved with only some of its car parks would be asked for all of them | Default, not yet seen by owner |
 
+Branch 9, reorder mode. The spec was silent on each of these. Every one is `Default, not yet seen by owner`.
+
+| # | Assumption | Evidence | What breaks if it is wrong | Decision |
+|---|---|---|---|---|
+| A67 | The reorder session is held in the ViewModel's state, not in the screen. A rotation keeps it, and `onStart` drops it when the screen has been away longer than the 5 s grace, so backgrounding mid edit is a cancel and killing the app loses it. Nothing is written until Done | Rule 31 says backgrounding or killing does not save and a rotation keeps the edit. `WhileSubscribed(5 s)` already separates a rotation from being away, and A18 to A24 use the same pattern for the chip tap | A rider who switches app for under 5 s returns to the edit still open, and for longer to the saved order | Default, not yet seen by owner |
+| A68 | A trip removed with the delete circle is staged in the session and deleted by Done. Cancel brings it back. The old edit mode deleted at once | Rule 31 says cancel writes nothing, and a delete is a write | A rider who deletes and then backs out sees the trip again | Default, not yet seen by owner |
+| A69 | Done writes in two stores: the trips in one database transaction and the row's place in one preference. "One write" is read as one save action, not one store | The row's place has no table, and the brief allows a new `SandookPreferences` key | A process killed between the two leaves the new trip order with the old row place, which is a valid home | Default, not yet seen by owner |
+| A70 | The row's place is stored as the number of trips before it (`KEY_PARK_RIDE_ROW_INDEX`) and clamped on read, not as an anchor after a trip id. It is read with the trips, before the first list, so the row never jumps | The brief names the clamp rule `rowIndexFor`. A count needs no cleanup when a trip is deleted | After a trip is deleted above the row, the row slides up by one trip with it, not staying under the same trip | Default, not yet seen by owner |
+| A71 | Done with nothing moved writes nothing and sends no analytics. The existing `SavedTripCardReorderedEvent` is sent on Done for each trip whose place changed, its previous index counted among the trips that stay, and the existing delete event for each trip removed. No event name is added | The 500 name limit. The event fired per drop before, so it now counts a finished arrangement, not each step | The count of reorder events per rider changes meaning and must be read that way. No parameter was added, so no ledger row | Default, not yet seen by owner |
+| A72 | The wiggle on trip cards is dropped. The grip bars and the lifted card tell the rider the mode is on | Rule 31 gives each card a grip and the Done button | A rider who liked the wiggle sees none | Default, not yet seen by owner |
+| A73 | A drag starts at once from any touch on a card in reorder mode (`draggableHandle`), not after a second long press. The long press that began the mode is the only one needed | Rule 31, "the whole card is the drag target" | A rider who meant to scroll the list moves a card. The list scrolls from the gutter and the top row | Default, not yet seen by owner |
+| A74 | A long press on a closed tile begins the mode with the row lifted. The tile uses `combinedClickable` with the app's ripple and no second entry, because taj's `klickable` has no long press, as `SavedTripCard` already does. In reorder mode the row is drawn shut and still, with no touch of its own, so the whole block is one drag target | Rule 31, "long press any card" | The tile's tap and long press are not taj's own modifier | Default, not yet seen by owner |
+| A75 | The 48 dp hit area of `TripDeleteOverlay` is a 48 dp box centred on the 24 dp circle, which overhangs the card's corner by 6 dp, so the box reaches 18 dp past the card on the right and the top. It is the app's own overlay, changed in place | Rule 38 says 48 hit area, and the overlay had none | The box sits over the card above's lower edge when cards are 12 dp apart, and a tap there deletes this card, not that one | Default, not yet seen by owner |
+| A76 | The top row of reorder mode is taj's `Button` in `monochromeButtonColors()` and `chipButtonSize()`, at least 48 dp tall, 16 dp below the status bar and 16 dp from the right. It replaces the whole title bar, so the logo and gear are gone and not hidden. The list's bottom padding drops from 400 dp to 16 dp, which is the height the chips and search row held | Rule 31 and the brief | The title bar and the Done row differ in height, so the stack jumps up by the difference on entering | Default, not yet seen by owner |
+| A77 | A tap on the map cancels, with a pointer observer that sees the touch first and consumes nothing, around the right pane only when a dual pane window shows the map. On a phone there is no map behind the cards, so back is the way out. A failed Done write leaves the screen showing the chosen order until the table is next observed | Rule 31 and rule 38. The map pane stays a sibling of the list so the iOS compositing rule holds | iOS draws the map as a native view, which may not deliver the touch to the observer. To verify on a device | Default, not yet seen by owner |
+| A78 | A station is never removed in reorder mode: the row carries no delete circle and no touch of its own. Its tiles do not scroll or open while the mode is on | Rule 38, "stations do not reorder one by one and carry no delete overlay" | A rider with an open tile who long presses sees it closed in the mode, and open again after | Default, not yet seen by owner |
+
 Source judgement, one row per rule that reads data:
 
 | Decision | Source (data field or parsed text) | Checked against | Reliable |
@@ -632,7 +726,12 @@ raised until the whole stack has passed device QA, then it merges bottom-up. No 
    `SavedTripsViewModel` through the existing cooldown. The Saved Trips and Park & Ride headings, the Add card and its helper line
    are gone. Decisions A57 to A66 in section 9, and the owner's ruling that Directions use a car park's own position only (A8).
    Left to branch 9: the tip lines, reorder mode and the row's drag.
-9. `feat/home-reorder-block`, the row moves as a block, tip lines removed (rules 31, 38, A14).
+9. `feat/home-reorder-block`, the row moves as a block, tip lines removed (rules 31, 38, A14). Built as `ReorderSession.kt` (the pure
+   reducer, in the state module), `HomeStackOrder.kt` (`homeStackKeys` in place of `splitAroundParkRideRow`), `SavedTripsReorder.kt`
+   (begin, apply and persist), `ReorderChrome.kt` (the grip, the Done row, the outlined row block, the lifted look and the first touch
+   observer), `SavedTripsStackItems.kt` (the one list of keys, the row as one reorderable item) and `Sandook.reorderSavedTrips` (one
+   transaction). The row's place is `SandookPreferences.KEY_PARK_RIDE_ROW_INDEX`. The old edit mode, its wiggle, the two tip lines and
+   `KEY_HAS_SEEN_SAVED_TRIP_CARD_REORDER_TIP` are gone. Decisions A67 to A78 in section 9.
 10. `feat/stop-card`, the floating stop card replacing the bottom sheet, with the Park & Ride pin card (A16).
 11. `feat/home-map-background`, the map behind the cards, P pins and label pins, the top row with Discover beside
     Settings, and the home location pill (rules 1, 12, 20, 24, A15).

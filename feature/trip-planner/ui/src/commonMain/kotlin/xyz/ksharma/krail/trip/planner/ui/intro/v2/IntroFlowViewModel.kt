@@ -55,6 +55,9 @@ internal class IntroFlowViewModel(
     private val _state = MutableStateFlow(savedStateHandle.restoreIntroState())
     val state: StateFlow<IntroState> = _state.asStateFlow()
 
+    /** The stops the last button waits on, for the screen to read. The view model adds nothing to it. */
+    val stopsReadiness: StateFlow<StopsReadiness> get() = appDataReadiness.state
+
     /** Read once, so the lists never change under the rider. */
     val suggestedStops: SuggestedStops = flag.introSuggestedStops()
 
@@ -63,6 +66,7 @@ internal class IntroFlowViewModel(
     /** Delivered once to whoever collects, never replayed after rotation. */
     val effects: Flow<IntroEffect> = effectChannel.receiveAsFlow()
 
+    private var lastStepShown: IntroStep? = null
     private var suggestionShownWritten = false
     private var finishJob: Job? = null
     private var finished = false
@@ -95,6 +99,17 @@ internal class IntroFlowViewModel(
             }
             IntroUiEvent.FinishPressed -> finishPressed()
         }
+    }
+
+    /**
+     * The screen shows [step]. Reported as a screen view once each time the step on screen changes,
+     * so a turn of the screen that shows the same step again reports nothing, and going back to step 1
+     * is a new visit. After the process is killed the restored step is reported once more, as a new run.
+     */
+    fun onStepShown(step: IntroStep) {
+        if (step == lastStepShown) return
+        lastStepShown = step
+        completion.trackStepView(step)
     }
 
     private fun next() {

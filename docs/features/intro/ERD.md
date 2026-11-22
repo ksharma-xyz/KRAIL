@@ -276,6 +276,11 @@ nearest station and the one availability call. It never asks for the permission:
   `AppReviewManager.onDelightMoment(PARK_RIDE_ADDED)` (see IA11). The Intro has no review manager to call, and
   `IntroNeverReviewsTest` fails if any Intro source names one.
 - Save trip calls `Sandook.insertOrReplaceTrip` with the two stop ids and names.
+- The screen is `IntroFlowScreen`, stateless, and `IntroFlowRoute` is the thin stateful wrapper around it. The route collects
+  `state`, `stopsReadiness` (the view model passes `AppDataReadiness.state` through, so the last button reads the data layer
+  and nothing polls) and the one shot effects with the lifecycle, calls `IntroFlowScreen`, and owns the platform glue:
+  `IntroLocationEffect` for the location permission and the one fix, and a call to `IntroFlowViewModel.onStepShown(step)` each
+  time the step on screen changes. `onNavigateToSavedTrips` is a parameter, and so is the content of step 2.
 
 ## 4. External contracts
 
@@ -410,6 +415,28 @@ list grows with each:
   stops that are not Ready, come back as No station near. A location still being awaited is not saved, so a process killed
   there asks the question again. Nothing about the rider's position is ever saved.
 
+Decisions the UI branch made where this document was silent:
+
+- **How one result per Yes is guaranteed.** `UserLocationManager.getCurrentLocation()` already checks the permission, asks for it
+  when it is not decided, and takes the one fix (10 s inside the manager), so the screen needs nothing more. The state does not say
+  whether the result for the current Yes has gone, because the card stays Locating after a granted result while the station is
+  found, so the screen keeps one saved flag, `sent`, and a pure rule, `locateStep(awaiting, sent)`. The card awaits a location
+  when it is `Locating` with no station id. Awaiting and not sent: ask, take the fix, send it and set the flag in the same step.
+  Awaiting and sent: do nothing, so a turn of the screen after the result asks for nothing. Not awaiting: clear the flag, so the
+  next Yes sends its own. A turn of the screen before the fix lands finds the flag clear and asks again, because nothing was sent.
+  A No while the fix is awaited cancels the ask and sends nothing for that Yes. A second tap on Yes while the card awaits
+  changes no state, so it starts nothing. A process killed while awaiting saves no Locating card, so nothing is awaited after it.
+- **The card is never left Locating for good.** Every ending is a result: a dismissed dialog, a refusal and the platform's
+  restriction are denied, and every other failure, the manager's 10 s timeout and an exception are unavailable. A wait with
+  no answer at all, the one thing the manager does not bound because it is a rider reading a dialog, is unavailable after
+  120 s (`LOCATE_BOUND_MS`, a guess at a wait nobody doing that reaches).
+- **The fix is never held.** It goes from the manager into `LocationResultReceived` in the same call and is not in a remembered
+  or saved value, the state, or a log. `IntroLocationNeverHeldTest` holds that for the three files that touch it.
+- **Screen views.** `view_screen` is sent from the view model (`onStepShown`), the way every other screen sends it. It is not by
+  route: `RouteAnalyticsScreen` maps routes to names for the window events and is not where `view_screen` is sent, and it is not
+  changed. It is sent once each time the step on screen changes, `Intro` for step 1 and `IntroFirstTrip` for step 2, so a turn of
+  the screen sends nothing and going back to step 1 is a new visit. After a killed process the restored step is sent once more.
+
 Operator decisions of 2026-11-22: (1) exactly one of start or end picked disables the bottom button until both or neither
 are picked, (2) there is no Try again and no error state, a Failed readiness behaves like Ready for the button and a trip
 can be saved while the stops failed, (3) the finish never blocks on the stops, it waits at most 15 s and then proceeds.
@@ -430,6 +457,10 @@ can be saved while the stops failed, (3) the finish never blocks on the stops, i
 |---|---|---|---|---|---|---|
 | First launch to home, rider says No | 0 | 0 | 0 | 0 | seven pages | two steps, last button waits only if stops are not ready |
 | First launch to home, rider says Yes | 0 | 1 to 3 | 0 | under 1 KB | seven pages | two steps plus the card |
+
+| UI branch | Network calls | Location | Timers and polling | Battery | Payload |
+|---|---|---|---|---|---|
+| `IntroFlowScreen`, step 1 and the route | 0 of its own. The one availability call of the Park & Ride step is unchanged. | One fix per Yes, taken by `getCurrentLocation()` (10 s inside the manager, 120 s outside it for the permission dialog, a guess). A turn of the screen before the fix lands may ask again, still one result. | None. Animations only, each once: heading rise 400 ms, cross-fade 120 ms out and 180 ms in, dot width 200 ms. The screen reads `AppDataReadiness.state`, a state flow, and does not poll. | None beyond the fix. Foreground only. | None. The preview and layout tests are test code. |
 
 Decision rule met: the added calls buy a live car park card and a one tap add for riders who park and ride. They are
 optional, non-blocking, once only and silent on failure.
@@ -544,6 +575,11 @@ Step 1, as built (`IntroParkRideStepContent`), where this document was silent:
   unavailable, Added), the tallest card (three car parks) on a 320 dp canvas and on a tablet canvas, and the shell with an empty
   step 2. Each preview is recorded light, dark and light at 200% text, 36 images in all. The 320 dp and tablet previews live in
   `intro/v2/narrow` and `intro/v2/wide`, each recorded by its own snapshot class, and are skipped by the phone class by name.
+- **UI tests, built.** The shell (the button's words and disabled states, the dots reading Step 1 of 2 and Step 2 of 2, the back
+  button, system back on both steps), step 1 (every card state, the answers, the Add row, one card height from the skeleton to the
+  numbers and to Added at 411 dp and at 320 dp with text at 200%, nothing outside the window), the location effect (one result for
+  each Yes through a turn of the screen before and after the fix, a No in flight, a dismissed dialog, a failure), the route with
+  the real view model, the view model's one `view_screen` for each step visit, and the guard that the fix is never held.
 - **Guards that already exist and must stay green.** `ThemeColorRoleRule`, `ClockSystemBan`, `CollectAsStateBan`,
   `SnackbarBan`, `PollingLifecycleGuardTest` (the Intro must not poll), `ViewModelStateDurabilityTest`,
   `NavKeySerializationConfigTest`, `verifyTestWiring`.

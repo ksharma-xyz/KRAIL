@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.navigation
 
 import androidx.navigation3.runtime.NavKey
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.LocationKind
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
  * Navigation events for Trip Planner feature.
@@ -12,10 +13,17 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.LocationKind
 @Suppress("ComplexInterface", "TooManyFunctions")
 interface TripPlannerNavigator {
 
+    /**
+     * Opens Search Stop. [presetFrom] and [presetTo] open the To and From form already holding a stop, so
+     * a caller that knows one end (a pin card, a label chip, an Ask KRAIL answer) hands it over and the
+     * rider only chooses the other and goes.
+     */
     fun navigateToSearchStop(
         fieldType: SearchStopFieldType,
         labelKey: String? = null,
         editTripLeg: Boolean = false,
+        presetFrom: StopItem? = null,
+        presetTo: StopItem? = null,
     )
 
     /**
@@ -50,7 +58,8 @@ interface TripPlannerNavigator {
 }
 
 /**
- * Result when a stop is selected
+ * Result when a stop is selected for one field. Search Stop sends it for a label. The To and From form
+ * sends a [TripChosenResult] instead, so a pick on it never reaches the caller on its own.
  */
 data class StopSelectedResult(
     val fieldType: SearchStopFieldType,
@@ -59,11 +68,16 @@ data class StopSelectedResult(
     val labelKey: String? = null,
     val locationKind: LocationKind = LocationKind.TRANSIT_STOP,
     val addressType: String? = null,
-    /**
-     * True for a start Search Stop filled in by itself (the stop nearest the rider): the receiver
-     * takes it only where there is no start yet, never over one the rider chose.
-     */
-    val onlyIfEmpty: Boolean = false,
+)
+
+/**
+ * Result when the rider pressed the go circle on Search Stop with both stops set. It is the only
+ * result a To and From form sends, so a half pick that is backed out of leaves nothing behind. The
+ * receiver opens the trip results.
+ */
+data class TripChosenResult(
+    val from: StopItem,
+    val to: StopItem,
 )
 
 /**

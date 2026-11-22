@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.flow
 import androidx.navigation3.runtime.NavKey
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
  * The navigation edge of the home entry. A flow test only ever needs to know *that* the entry
@@ -25,13 +26,19 @@ internal class RecordingTripPlannerNavigator : TripPlannerNavigator {
     /** Every timetable the entry asked to open, as "fromStopId>toStopId" pairs. */
     val timeTableRequests = mutableListOf<Pair<String, String>>()
 
+    /** The start and destination each stop-search request opened holding, in the same order. */
+    val searchStopPresets = mutableListOf<Pair<StopItem?, StopItem?>>()
+
     override fun navigateToSearchStop(
         fieldType: SearchStopFieldType,
         labelKey: String?,
         editTripLeg: Boolean,
+        presetFrom: StopItem?,
+        presetTo: StopItem?,
     ) {
         searchStopRequests += fieldType
         searchStopLabelKeys += labelKey
+        searchStopPresets += presetFrom to presetTo
     }
 
     override fun navigateToTimeTable(

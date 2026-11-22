@@ -39,6 +39,18 @@ class SearchStopFormTest {
     }
 
     @Test
+    fun `a bar holding a stop reads that stop until the rider types`() {
+        assertEquals(
+            "Central Station",
+            barPlaceholderFor(ToFromField.To, SearchStopFieldType.TO, editTripLeg = false, current = central),
+        )
+        assertEquals(
+            "Central Station",
+            barPlaceholderFor(ToFromField.From, SearchStopFieldType.TO, editTripLeg = false, current = central),
+        )
+    }
+
+    @Test
     fun `a single bar names what it is for`() {
         assertEquals("Choose a stop", barPlaceholderFor(ToFromField.To, SearchStopFieldType.LABEL, false))
         assertEquals("Change origin", barPlaceholderFor(ToFromField.To, SearchStopFieldType.FROM, true))
@@ -57,32 +69,9 @@ class SearchStopFormTest {
         assertFalse(goVisible(from = null, to = null))
     }
 
-    // endregion
-
-    // region the start sent with a destination
-
     @Test
-    fun `a destination pick sends the auto filled start with it`() {
-        assertEquals(
-            central,
-            startToSendWith(townHall, ToFromField.To, FormShape.ToAndFrom, autoFrom = central),
-        )
-    }
-
-    @Test
-    fun `no start is sent without an auto filled one, or when the start is being picked`() {
-        assertNull(startToSendWith(townHall, ToFromField.To, FormShape.ToAndFrom, autoFrom = null))
-        assertNull(startToSendWith(townHall, ToFromField.From, FormShape.ToAndFrom, autoFrom = central))
-    }
-
-    @Test
-    fun `no start is sent for a label or a single leg`() {
-        assertNull(startToSendWith(townHall, ToFromField.To, FormShape.Single, autoFrom = central))
-    }
-
-    @Test
-    fun `a destination that is the same stop as the auto filled start sends nothing`() {
-        assertNull(startToSendWith(central, ToFromField.To, FormShape.ToAndFrom, autoFrom = central))
+    fun `a trip from a stop to itself shows no go circle`() {
+        assertFalse(goVisible(from = central, to = central))
     }
 
     // endregion
@@ -101,6 +90,14 @@ class SearchStopFormTest {
                 pickFieldFor(FormShape.ToAndFrom, ToFromField.From, opened),
             )
         }
+    }
+
+    @Test
+    fun `with nothing being edited a pick is for the destination`() {
+        assertEquals(
+            SearchStopFieldType.TO,
+            pickFieldFor(FormShape.ToAndFrom, editing = null, fieldType = SearchStopFieldType.FROM),
+        )
     }
 
     @Test

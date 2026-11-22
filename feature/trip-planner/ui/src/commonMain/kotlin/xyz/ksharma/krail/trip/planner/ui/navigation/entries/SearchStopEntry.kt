@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
@@ -13,10 +14,12 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
 import xyz.ksharma.krail.trip.planner.ui.navigation.TimetableStopChangedResult
+import xyz.ksharma.krail.trip.planner.ui.navigation.TripChosenResult
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopScreen
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
  * Renders full-width on every form factor. SearchStopScreen owns its own
@@ -54,10 +57,23 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
         // even in two-pane layouts where screens are in different composition scopes
         val resultEventBus = LocalResultEventBusObj.current
 
+        // A stop the To and From form opens already holding, read once from the route.
+        val presetFrom = remember(key.fromStopJson) { key.fromStopJson?.let(StopItem::fromJsonString) }
+        val presetTo = remember(key.toStopJson) { key.toStopJson?.let(StopItem::fromJsonString) }
+
         SearchStopScreen(
             searchStopState = searchStopState,
             fieldType = key.fieldType,
             editTripLeg = key.editTripLeg,
+            presetFrom = presetFrom,
+            presetTo = presetTo,
+            // The To and From form stays on screen through every pick. Only its go circle leaves, with
+            // both stops, and back leaves with nothing.
+            onTripChosen = { from, to ->
+                resultEventBus.sendResult(result = TripChosenResult(from = from, to = to))
+                tripPlannerNavigator.goBack()
+            },
+            // A single field (a label, or one leg of a trip) leaves at once with its stop.
             onStopPicked = { pick ->
                 val stopItem = pick.stop
                 if (key.editTripLeg) {
@@ -72,8 +88,6 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
                         ),
                     )
                 } else {
-                    // The field is the one the rider was editing, which is the one the route named
-                    // unless they switched to the other bar in place.
                     resultEventBus.sendResult(
                         result = StopSelectedResult(
                             fieldType = pick.field,
@@ -84,18 +98,6 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
                             addressType = stopItem.addressType,
                         ),
                     )
-                    // The start that filled itself in with the stop nearest the rider rides along, and
-                    // is only used where there is no start yet, so a start the rider chose is kept.
-                    pick.autoStart?.let { start ->
-                        resultEventBus.sendResult(
-                            result = StopSelectedResult(
-                                fieldType = SearchStopFieldType.FROM,
-                                stopId = start.stopId,
-                                stopName = start.stopName,
-                                onlyIfEmpty = true,
-                            ),
-                        )
-                    }
                 }
 
                 // Navigate back

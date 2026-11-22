@@ -38,20 +38,26 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
  * - The back arrow stays on the To bar and the origin dot on the From bar in every state.
  * - The X shows only while the field has text, and only clears it. It never leaves the screen, so
  *   the recents stay where they are.
- * - The go circle is drawn only when [goVisible] says the trip can start.
- * - From shows [autoFrom], the stop nearest the rider, when location is known.
+ * - The go circle is drawn as soon as [goVisible] says the trip can start, and it is the only way out
+ *   of the screen with a trip.
+ * - Each bar shows its stop. From shows [fromStop], which is the stop the rider picked or else the one
+ *   nearest them, and it stays editable. A bar edited while it holds a stop reads that stop as its
+ *   placeholder until the rider types.
+ * - [editing] null means both bars hold a stop and neither is being edited, so both are the light bar.
  */
 @Composable
 internal fun SearchStopForm(
     shape: FormShape,
-    editing: ToFromField,
+    editing: ToFromField?,
     toPlaceholder: String,
     fromPlaceholder: String,
-    autoFrom: StopItem?,
+    toStop: StopItem?,
+    fromStop: StopItem?,
     fieldState: TextFieldState,
     focusRequester: FocusRequester,
     onFlowEvent: (SearchStopFlowEvent) -> Unit,
     onBack: () -> Unit,
+    onGoClick: () -> Unit,
     onTextChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -71,11 +77,11 @@ internal fun SearchStopForm(
     }
 
     ToFromBlock(
-        toStopItem = null,
-        fromStopItem = autoFrom,
+        toStopItem = toStop,
+        fromStopItem = fromStop,
         onToClick = { switchEditing(fieldState, editing, ToFromField.To, onFlowEvent) },
         onFromClick = { switchEditing(fieldState, editing, ToFromField.From, onFlowEvent) },
-        onGoClick = {},
+        onGoClick = onGoClick,
         modifier = modifier,
         editing = editing,
         editor = editor,
@@ -84,7 +90,7 @@ internal fun SearchStopForm(
         toTrailing = { if (editing == ToFromField.To) clear() },
         toPlaceholder = toPlaceholder,
         fromPlaceholder = fromPlaceholder,
-        showGo = goVisible(from = autoFrom, to = null),
+        showGo = goVisible(from = fromStop, to = toStop),
         fromTrailing = if (editing == ToFromField.From) clear else null,
     )
 }
@@ -92,7 +98,7 @@ internal fun SearchStopForm(
 /** Moves editing to [target], clearing the text that was a search for the other field. */
 private fun switchEditing(
     fieldState: TextFieldState,
-    current: ToFromField,
+    current: ToFromField?,
     target: ToFromField,
     onFlowEvent: (SearchStopFlowEvent) -> Unit,
 ) {

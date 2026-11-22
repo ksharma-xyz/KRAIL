@@ -141,7 +141,7 @@ If a design breaks one of these rules, the design changes, not the rule.
     badges and rows still wrap or stack whole items.
 35. **The search pill has a back arrow and an X.** Back is a 48 box at the left, like today's search bar. The X shows only
     when the field has content and only clears it, and never dismisses the screen. Back follows rule 39, except from the
-    start field, where it returns to To and From with the destination kept. System back and the iOS swipe do the same. In To
+    start field, where it returns to To and From with the destination kept (on the bar that still needs a stop). System back and the iOS swipe do the same. In To
     and From the X clears the destination and raises the keyboard. The From row has a matching 48 column with a filled origin
     dot so To and From values start at one x.
 36. **To is on top, From is below, and neither row ever moves.** While To is being edited, From shows under it when the
@@ -161,6 +161,10 @@ If a design breaks one of these rules, the design changes, not the rule.
 39. **Search Stop has two states and no map button.** It opens as the map state: the map and one dark pill, no list and no
     keyboard. Tapping the bar is the list state, with the keyboard and the recents. X clears the text and keeps the recents.
     Back, or a tap on the map, returns to the map state, and back again goes home. System back is a two-step exit.
+    **A pick never leaves the screen.** On the To and From form every pick (a recents row, a label shortcut, a result, a stop
+    card action) fills its bar and the screen stays. Editing moves to the other bar while that bar is empty, with the keyboard
+    following it, and to nothing when both hold a stop. Only the go circle leaves, with both stops, and back leaves with nothing,
+    so a half pick is dropped. A label, or one leg of a trip, is a single field and returns at once with its stop.
 40. **A Park & Ride card never promises a trip it cannot start.**
 41. **Home and Work chips stay once set.** Tapping Home plans a trip from the nearest stop to Home with no saved trip
     needed. There is no long press on a chip. The app's own Manage stop labels screen (expand a row: Save changes, Remove,
@@ -278,10 +282,11 @@ A tapped pin opens a floating stop card, never a bottom sheet.
    recents, the curated stops from the Intro's suggested stops list show instead, each carrying its own stop id and name. Each row is a whole item: the name, its mode badges and a plus at the end. With
    location on, a rider with no recents sees the nearest stops instead.
 3. Tapping the bar raises the keyboard. The recents list is replaced by results as the rider types.
-4. Picking a stop fills the bar. From fills itself with the nearest stop when location is known. With location off it asks
-   "Choose start".
-5. The bar reads To with the stop. The From row sits under it with the go circle inside it at the end (rules 26 and 36).
-   Tapping From edits the start. With no start, From reads Choose starting point and there is no go circle.
+4. Picking a stop fills its bar and the screen stays (rule 39). From fills itself with the nearest stop when location is
+   known, and stays editable. With location off it asks "Choose start".
+5. The bar reads To with the stop. The From row sits under it with the go circle inside it at the end (rules 26 and 36), shown
+   as soon as both bars hold a stop. Tapping a bar edits it in place. With no start, From reads Choose starting point and there
+   is no go circle. The go circle is the only way out with a trip.
 6. Tapping a pin opens a floating stop card: departures, Save as, Go here or Start here.
 
 ### Spacing

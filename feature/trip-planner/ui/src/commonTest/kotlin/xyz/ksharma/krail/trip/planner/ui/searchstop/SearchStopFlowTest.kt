@@ -2,9 +2,11 @@ package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -37,6 +39,35 @@ class SearchStopFlowTest {
         assertEquals(ToFromField.To, initialSearchStopFlow(SearchStopFieldType.LABEL, false).editing)
         assertEquals(ToFromField.To, initialSearchStopFlow(SearchStopFieldType.FROM, editTripLeg = true).editing)
         assertEquals(ToFromField.To, initialSearchStopFlow(SearchStopFieldType.TO, editTripLeg = true).editing)
+    }
+
+    @Test
+    fun `a form opened with a stop held edits the bar that is still empty`() {
+        val central = StopItem(stopId = "200060", stopName = "Central Station")
+        val townHall = StopItem(stopId = "200070", stopName = "Town Hall Station")
+
+        val toHeld = initialSearchStopFlow(SearchStopFieldType.TO, false, SearchStopTrip(to = central))
+        assertEquals(ToFromField.From, toHeld.editing, "A held destination leaves the start to choose.")
+        assertEquals(ToFromField.From, toHeld.openedOn)
+
+        val fromOpenedToHeld = initialSearchStopFlow(SearchStopFieldType.FROM, false, SearchStopTrip(to = central))
+        assertEquals(ToFromField.From, fromOpenedToHeld.editing)
+
+        val fromHeld = initialSearchStopFlow(SearchStopFieldType.TO, false, SearchStopTrip(from = central))
+        assertEquals(ToFromField.To, fromHeld.editing)
+
+        val both = initialSearchStopFlow(SearchStopFieldType.TO, false, SearchStopTrip(from = central, to = townHall))
+        assertNull(both.editing, "Both held, nothing to edit.")
+        assertEquals(SearchStopMode.Map, both.mode)
+    }
+
+    @Test
+    fun `a single bar ignores a held stop`() {
+        val central = StopItem(stopId = "200060", stopName = "Central Station")
+
+        val flow = initialSearchStopFlow(SearchStopFieldType.LABEL, false, SearchStopTrip(to = central))
+
+        assertEquals(ToFromField.To, flow.editing)
     }
 
     // endregion
@@ -79,7 +110,7 @@ class SearchStopFlowTest {
 
     @Test
     fun `back from the list state goes to the map state and does not leave`() {
-        val step = opening.after(SearchStopFlowEvent.BarTapped, SearchStopFlowEvent.BackPressed)
+        val step = opening.after(SearchStopFlowEvent.BarTapped, SearchStopFlowEvent.BackPressed())
 
         assertEquals(SearchStopMode.Map, step.flow.mode)
         assertFalse(step.exit, "The first back never leaves the screen.")
@@ -89,8 +120,8 @@ class SearchStopFlowTest {
     fun `back again from the map state goes home`() {
         val step = opening.after(
             SearchStopFlowEvent.BarTapped,
-            SearchStopFlowEvent.BackPressed,
-            SearchStopFlowEvent.BackPressed,
+            SearchStopFlowEvent.BackPressed(),
+            SearchStopFlowEvent.BackPressed(),
         )
 
         assertTrue(step.exit, "The second back leaves.")
@@ -99,14 +130,14 @@ class SearchStopFlowTest {
 
     @Test
     fun `back on a fresh map state leaves at once`() {
-        assertTrue(opening.after(SearchStopFlowEvent.BackPressed).exit)
+        assertTrue(opening.after(SearchStopFlowEvent.BackPressed()).exit)
     }
 
     @Test
     fun `back from a start field the rider switched to returns to the field the screen opened on`() {
         val step = opening.after(
             SearchStopFlowEvent.FieldTapped(ToFromField.From),
-            SearchStopFlowEvent.BackPressed,
+            SearchStopFlowEvent.BackPressed(),
         )
 
         assertEquals(SearchStopMode.Map, step.flow.mode)
@@ -115,9 +146,36 @@ class SearchStopFlowTest {
     }
 
     @Test
+    fun `back from the list state lands on a bar that still needs a stop`() {
+        val listing = opening.after(SearchStopFlowEvent.BarTapped).flow
+
+        // To was picked, so back lands on From even though the screen opened on To.
+        val toPicked = reduceSearchStopFlow(listing, SearchStopFlowEvent.BackPressed(setOf(ToFromField.To)))
+        assertEquals(ToFromField.From, toPicked.flow.editing)
+        assertFalse(toPicked.exit)
+
+        // Both bars hold a stop, so back lands on nothing and the go circle shows.
+        val bothPicked = reduceSearchStopFlow(
+            listing,
+            SearchStopFlowEvent.BackPressed(setOf(ToFromField.To, ToFromField.From)),
+        )
+        assertNull(bothPicked.flow.editing)
+        assertEquals(SearchStopMode.Map, bothPicked.flow.mode)
+        assertFalse(bothPicked.exit)
+    }
+
+    @Test
+    fun `with nothing being edited back leaves at once and a map tap changes nothing`() {
+        val nothing = SearchStopFlow(mode = SearchStopMode.Map, editing = null)
+
+        assertEquals(nothing, nothing.after(SearchStopFlowEvent.MapTapped).flow)
+        assertTrue(nothing.after(SearchStopFlowEvent.BackPressed()).exit)
+    }
+
+    @Test
     fun `back from a start field the screen opened on keeps that field`() {
         val from = initialSearchStopFlow(SearchStopFieldType.FROM, editTripLeg = false)
-        val step = from.after(SearchStopFlowEvent.BarTapped, SearchStopFlowEvent.BackPressed)
+        val step = from.after(SearchStopFlowEvent.BarTapped, SearchStopFlowEvent.BackPressed())
 
         assertEquals(ToFromField.From, step.flow.editing)
         assertFalse(step.exit)
@@ -133,7 +191,14 @@ class SearchStopFlowTest {
 
         assertEquals(SearchStopMode.List, drawn.mode)
         assertEquals(SearchStopMode.Map, opening.mode, "Saved state is untouched so back still leaves in one step.")
-        assertTrue(opening.after(SearchStopFlowEvent.BackPressed).exit)
+        assertTrue(opening.after(SearchStopFlowEvent.BackPressed()).exit)
+    }
+
+    @Test
+    fun `with nothing being edited the state is never forced to the list`() {
+        val nothing = SearchStopFlow(mode = SearchStopMode.Map, editing = null)
+
+        assertEquals(nothing, effectiveFlow(nothing, mapsAvailable = false))
     }
 
     @Test
@@ -152,7 +217,7 @@ class SearchStopFlowTest {
         val saver = SearchStopFlowSaver
         val scope = androidx.compose.runtime.saveable.SaverScope { true }
         val flows = SearchStopMode.entries.flatMap { mode ->
-            ToFromField.entries.flatMap { editing ->
+            (ToFromField.entries + null).flatMap { editing ->
                 ToFromField.entries.map { openedOn -> SearchStopFlow(mode, editing, openedOn) }
             }
         }
@@ -160,7 +225,7 @@ class SearchStopFlowTest {
             val saved = with(saver) { scope.save(flow) }
             assertEquals(flow, saved?.let(saver::restore), "Round trip of $flow")
         }
-        assertEquals(flows.size, 8)
+        assertEquals(flows.size, 12)
     }
 
     @Test

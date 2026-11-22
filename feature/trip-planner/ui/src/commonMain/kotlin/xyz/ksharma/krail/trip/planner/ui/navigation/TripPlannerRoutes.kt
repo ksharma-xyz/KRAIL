@@ -21,12 +21,17 @@ data object SavedTripsRoute : TripPlannerRoute
  * to replace one leg of the current trip ("Change origin" / "Change destination").
  * The selected stop is delivered as a `TimetableStopChangedResult` so the
  * timetable reloads in place instead of updating the SavedTrips fields.
+ * @param fromStopJson A start the To and From form opens already holding (a [StopItem] as JSON), or null.
+ * @param toStopJson A destination the To and From form opens already holding, or null. A pin card on the
+ * home map, a Home or Work chip with no location, and an Ask KRAIL answer open the form this way.
  */
 @Serializable
 data class SearchStopRoute(
     val fieldType: SearchStopFieldType,
     val labelKey: String? = null,
     val editTripLeg: Boolean = false,
+    val fromStopJson: String? = null,
+    val toStopJson: String? = null,
 ) : TripPlannerRoute
 
 @Serializable

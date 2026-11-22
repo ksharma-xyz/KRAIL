@@ -27,14 +27,18 @@ internal fun formShapeFor(fieldType: SearchStopFieldType, editTripLeg: Boolean):
 
 /**
  * The placeholder a bar shows while it is empty. The To and From bars always read the same two
- * phrases. A single bar names what it is for: a label's stop, or the end of the trip being changed.
+ * phrases, except that a bar holding a stop ([current]) reads that stop while it is the one being
+ * edited and nothing is typed, so the rider still sees what they are changing. A single bar names
+ * what it is for: a label's stop, or the end of the trip being changed.
  */
 internal fun barPlaceholderFor(
     field: ToFromField,
     fieldType: SearchStopFieldType,
     editTripLeg: Boolean,
+    current: StopItem? = null,
 ): String = when (formShapeFor(fieldType, editTripLeg)) {
-    FormShape.ToAndFrom -> if (field == ToFromField.From) FROM_PLACEHOLDER else TO_PLACEHOLDER
+    FormShape.ToAndFrom -> current?.stopName
+        ?: if (field == ToFromField.From) FROM_PLACEHOLDER else TO_PLACEHOLDER
     FormShape.Single -> when {
         fieldType == SearchStopFieldType.LABEL -> PLACEHOLDER_LABEL
         fieldType == SearchStopFieldType.FROM -> PLACEHOLDER_CHANGE_ORIGIN
@@ -47,34 +51,21 @@ private const val PLACEHOLDER_CHANGE_ORIGIN = "Change origin"
 private const val PLACEHOLDER_CHANGE_DESTINATION = "Change destination"
 
 /**
- * The go circle shows only when the trip can start: From has a start (rule 36, search section 5)
- * and so does To. With either missing it is not drawn, and the From bar ends where its text does.
+ * The go circle shows as soon as the trip can start: From has a start (rule 36, search section 5) and
+ * so does To, and they are not the same stop. With either missing it is not drawn, and the From bar
+ * ends where its text does.
  */
-internal fun goVisible(from: StopItem?, to: StopItem?): Boolean = from != null && to != null
-
-/**
- * The start to send home alongside a destination the rider just picked, or null for none.
- *
- * Only a destination pick on the To and From form carries one, and only when From filled itself
- * with a stop nearby ([autoFrom]). A trip from a stop to itself is not a trip, so a destination that
- * is the same stop sends nothing.
- */
-internal fun startToSendWith(
-    picked: StopItem,
-    editing: ToFromField,
-    shape: FormShape,
-    autoFrom: StopItem?,
-): StopItem? = autoFrom?.takeIf {
-    shape == FormShape.ToAndFrom && editing == ToFromField.To && it.stopId != picked.stopId
-}
+internal fun goVisible(from: StopItem?, to: StopItem?): Boolean =
+    from != null && to != null && from.stopId != to.stopId
 
 /**
  * Which field of the trip a pick is for. To and From edit the bar the rider is on, whichever field
- * the screen was opened for. A single bar is always the field the route named.
+ * the screen was opened for, and the destination when nothing is being edited. A single bar is always
+ * the field the route named.
  */
 internal fun pickFieldFor(
     shape: FormShape,
-    editing: ToFromField,
+    editing: ToFromField?,
     fieldType: SearchStopFieldType,
 ): SearchStopFieldType = when {
     shape == FormShape.Single -> fieldType

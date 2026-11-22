@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -83,11 +84,13 @@ private const val SEARCH_FIELD_MOTION_SCALE = 1.6f
 
 private const val SEARCH_DEBOUNCE_MS = 250L
 
-/** A stop the rider picked, and where it goes: which field of the trip, and the start sent with it. */
+/**
+ * A stop the rider picked for a single field, and which field it is for. Only a label, or one leg of a
+ * trip being changed, leaves the screen on a pick. On the To and From form a pick stays on the screen.
+ */
 data class StopPick(
     val stop: StopItem,
     val field: SearchStopFieldType,
-    val autoStart: StopItem? = null,
 )
 
 /**
@@ -97,8 +100,12 @@ data class StopPick(
  * the list state, with the keyboard and the recents. Back, or a tap on the map, returns to the map
  * state, and back again goes home. The state lives in [SearchStopFlow], held across rotation.
  *
- * [onStopSelect] is told the stop alone. [onStopPicked] is told the stop, which field of the trip it
- * is for, and the start that filled itself in, and delivers all three to whoever opened the screen.
+ * On the To and From form a pick of any kind (a recents row, a label shortcut, a result, a stop card
+ * action) fills its bar and the screen stays, editing moves to the other bar, and only the go circle
+ * leaves, through [onTripChosen] with both stops. Back leaves with nothing, so a half pick is dropped.
+ * [presetFrom] and [presetTo] open the form with a stop already held. A label or one leg of a trip is a
+ * single field, so its pick leaves at once through [onStopPicked] with the stop and its field.
+ * [onStopSelect] is told the stop alone.
  */
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 @Composable
@@ -110,6 +117,9 @@ fun SearchStopScreen(
     goBack: () -> Unit = {},
     onStopSelect: (StopItem) -> Unit = {},
     onStopPicked: (StopPick) -> Unit = { onStopSelect(it.stop) },
+    onTripChosen: (from: StopItem, to: StopItem) -> Unit = { _, _ -> },
+    presetFrom: StopItem? = null,
+    presetTo: StopItem? = null,
     onEvent: (SearchStopUiEvent) -> Unit = {},
     dualPaneMapUiState: MapUiState? = null,
     onDualPaneMapEvent: (MapStopSelectionEvent) -> Unit = {},
@@ -129,8 +139,11 @@ fun SearchStopScreen(
 
     // Hoisted here so it survives any config change regardless of which pane is active. It opens as
     // the map state; only the single-pane layout reads the mode, dual-pane always shows both.
+    var trip by rememberSaveable(stateSaver = SearchStopTripSaver) {
+        mutableStateOf(SearchStopTrip(from = presetFrom, to = presetTo))
+    }
     var savedFlow by rememberSaveable(stateSaver = SearchStopFlowSaver) {
-        mutableStateOf(initialSearchStopFlow(fieldType, editTripLeg))
+        mutableStateOf(initialSearchStopFlow(fieldType, editTripLeg, SearchStopTrip(presetFrom, presetTo)))
     }
     // With no map to open on (maps are off for this rider) the list is the screen, so there is no
     // map state to start in and back leaves at once.
@@ -148,24 +161,40 @@ fun SearchStopScreen(
 
     val shape = formShapeFor(fieldType, editTripLeg)
     val autoFrom = rememberAutoFrom(shape, searchStopState)
+    // A start that arrives after the screen opened can finish the trip while the From bar waits.
+    LaunchedEffect(autoFrom) { savedFlow = settleLateAutoFrom(savedFlow, trip, autoFrom) }
+    val fromStop = trip.from ?: autoFrom
     val onPick: (StopItem) -> Unit = { stop ->
-        onStopPicked(
-            StopPick(
-                stop = stop,
-                field = pickFieldFor(shape, flow.editing, fieldType),
-                autoStart = startToSendWith(stop, flow.editing, shape, autoFrom),
-            ),
-        )
+        if (shape == FormShape.Single) {
+            onStopPicked(StopPick(stop = stop, field = fieldType))
+        } else {
+            // The pick fills its bar and the screen stays. Editing moves to the other bar, the keyboard
+            // follows it, and the text that searched for this stop is cleared for the next one.
+            val step = reduceTripPick(trip, savedFlow, pickedBarFor(flow.editing), stop, autoFrom)
+            trip = step.trip
+            savedFlow = step.flow
+            fieldState.clearText()
+        }
     }
+    val go = tripToGo(trip, autoFrom)
     val form = SearchStopFormModel(
         shape = shape,
         editing = flow.editing,
-        toPlaceholder = barPlaceholderFor(ToFromField.To, fieldType, editTripLeg),
-        fromPlaceholder = barPlaceholderFor(ToFromField.From, fieldType, editTripLeg),
-        autoFrom = autoFrom,
+        toPlaceholder = barPlaceholderFor(ToFromField.To, fieldType, editTripLeg, trip.to),
+        fromPlaceholder = barPlaceholderFor(ToFromField.From, fieldType, editTripLeg, fromStop),
+        toStop = trip.to,
+        fromStop = fromStop,
         fieldState = fieldState,
         focusRequester = focusRequester,
         onFlowEvent = onFlowEvent,
+        onGoClick = {
+            // The go circle is the only way out with a trip. The keyboard goes first, as the back arrow does.
+            go?.let { (from, to) ->
+                keyboard?.hide()
+                focusRequester.freeFocus()
+                onTripChosen(from, to)
+            }
+        },
         onTextChange = { value ->
             log("value: $value")
             textFieldText = value
@@ -225,7 +254,10 @@ fun SearchStopScreen(
                 rows = rows,
                 location = location,
                 onBack = {
-                    val step = reduceSearchStopFlow(savedFlow, SearchStopFlowEvent.BackPressed)
+                    val step = reduceSearchStopFlow(
+                        savedFlow,
+                        SearchStopFlowEvent.BackPressed(filled = trip.filled(autoFrom)),
+                    )
                     savedFlow = step.flow
                     if (step.exit) backClicked = true
                 },
@@ -260,13 +292,15 @@ fun SearchStopScreen(
 /** Everything the form needs, in one holder so the two layouts take it as one argument. */
 internal data class SearchStopFormModel(
     val shape: FormShape,
-    val editing: ToFromField,
+    val editing: ToFromField?,
     val toPlaceholder: String,
     val fromPlaceholder: String,
-    val autoFrom: StopItem?,
+    val toStop: StopItem?,
+    val fromStop: StopItem?,
     val fieldState: TextFieldState,
     val focusRequester: FocusRequester,
     val onFlowEvent: (SearchStopFlowEvent) -> Unit,
+    val onGoClick: () -> Unit,
     val onTextChange: (String) -> Unit,
 )
 
@@ -277,11 +311,13 @@ private fun FormContent(form: SearchStopFormModel, onBack: () -> Unit, modifier:
         editing = form.editing,
         toPlaceholder = form.toPlaceholder,
         fromPlaceholder = form.fromPlaceholder,
-        autoFrom = form.autoFrom,
+        toStop = form.toStop,
+        fromStop = form.fromStop,
         fieldState = form.fieldState,
         focusRequester = form.focusRequester,
         onFlowEvent = form.onFlowEvent,
         onBack = onBack,
+        onGoClick = form.onGoClick,
         onTextChange = form.onTextChange,
         modifier = modifier,
     )
@@ -587,7 +623,7 @@ private fun SearchStopScreenSinglePane(
                     )
                 }
             }
-            if (flow.mode == SearchStopMode.List) {
+            if (flow.mode == SearchStopMode.List && flow.editing != null) {
                 SearchStopListSection(
                     searchStopState = searchStopState,
                     fieldType = fieldType,

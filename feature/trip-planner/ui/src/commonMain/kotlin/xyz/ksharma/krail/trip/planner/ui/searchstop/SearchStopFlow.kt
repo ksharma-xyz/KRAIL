@@ -16,10 +16,13 @@ internal enum class SearchStopMode { Map, List }
  * Where the rider is on Search Stop: which of the two states, which field the bar edits, and the
  * field the screen was opened on. The last is why back from a start field the rider switched to in
  * place returns to the field they came for, with the destination kept (rule 35).
+ *
+ * [editing] is null once both bars hold a stop: nothing is being edited, there is no keyboard (so the
+ * state is always the map state) and both bars are the light button with the go circle showing.
  */
 internal data class SearchStopFlow(
     val mode: SearchStopMode = SearchStopMode.Map,
-    val editing: ToFromField = ToFromField.To,
+    val editing: ToFromField? = ToFromField.To,
     val openedOn: ToFromField = ToFromField.To,
 )
 
@@ -34,8 +37,11 @@ internal sealed interface SearchStopFlowEvent {
     /** The map was tapped. */
     data object MapTapped : SearchStopFlowEvent
 
-    /** System back, the iOS swipe or the arrow in the bar. */
-    data object BackPressed : SearchStopFlowEvent
+    /**
+     * System back, the iOS swipe or the arrow in the bar. [filled] is the bars holding a stop, so back
+     * from the list state lands on a bar that still needs one.
+     */
+    data class BackPressed(val filled: Set<ToFromField> = emptySet()) : SearchStopFlowEvent
 }
 
 /** The next [flow], and whether the screen leaves instead (back from the map state goes home). */
@@ -57,47 +63,68 @@ internal fun reduceSearchStopFlow(flow: SearchStopFlow, event: SearchStopFlowEve
 
         SearchStopFlowEvent.MapTapped -> SearchStopStep(flow.copy(mode = SearchStopMode.Map))
 
-        SearchStopFlowEvent.BackPressed -> when (flow.mode) {
-            // Back from a start field switched to in place lands on the field the screen was opened on.
+        is SearchStopFlowEvent.BackPressed -> when (flow.mode) {
+            // Back from a start field switched to in place lands on the field the screen was opened on,
+            // or on the other bar when that one already holds a stop, or on nothing when both do.
             SearchStopMode.List -> SearchStopStep(
-                flow.copy(mode = SearchStopMode.Map, editing = flow.openedOn),
+                flow.copy(mode = SearchStopMode.Map, editing = barToEditAfterBack(flow.openedOn, event.filled)),
             )
 
             SearchStopMode.Map -> SearchStopStep(flow, exit = true)
         }
     }
 
+/** The bar back from the list state lands on: [openedOn] if it is empty, else the other if empty, else none. */
+internal fun barToEditAfterBack(openedOn: ToFromField, filled: Set<ToFromField>): ToFromField? =
+    listOf(openedOn, openedOn.other()).firstOrNull { it !in filled }
+
 /**
  * The flow a visit starts in. It always opens as the map state; the field it edits follows the
- * route, and a label or one leg of a trip is a single stop, so it edits the one bar (To).
+ * route, and a label or one leg of a trip is a single stop, so it edits the one bar (To). A To and
+ * From form opened with a stop already held ([preset], from a pin card, a label chip or Ask KRAIL)
+ * edits the bar that is still empty, or nothing when both are held.
  */
-internal fun initialSearchStopFlow(fieldType: SearchStopFieldType, editTripLeg: Boolean): SearchStopFlow {
+internal fun initialSearchStopFlow(
+    fieldType: SearchStopFieldType,
+    editTripLeg: Boolean,
+    preset: SearchStopTrip = SearchStopTrip(),
+): SearchStopFlow {
     val field = if (fieldType == SearchStopFieldType.FROM && !editTripLeg) ToFromField.From else ToFromField.To
-    return SearchStopFlow(mode = SearchStopMode.Map, editing = field, openedOn = field)
+    val shape = formShapeFor(fieldType, editTripLeg)
+    val editing = if (shape == FormShape.ToAndFrom) barToEditAfterBack(field, preset.filled()) else field
+    return SearchStopFlow(mode = SearchStopMode.Map, editing = editing, openedOn = editing ?: field)
 }
 
 /**
  * The flow the screen draws. With no map to open on, [mapsAvailable] false, the list state is the
  * only state there is, so the list shows and the keyboard comes up as it did before the map state
- * existed. The saved flow stays the map state, so back still leaves in one step.
+ * existed. The saved flow stays the map state, so back still leaves in one step. With nothing being
+ * edited there is no list to show, so the state stays as it is.
  */
 internal fun effectiveFlow(flow: SearchStopFlow, mapsAvailable: Boolean): SearchStopFlow =
-    if (mapsAvailable) flow else flow.copy(mode = SearchStopMode.List)
+    if (mapsAvailable || flow.editing == null) flow else flow.copy(mode = SearchStopMode.List)
 
 private const val FLOW_SEPARATOR = "|"
+private const val NOTHING_EDITED = "None"
 
 /**
  * Saves the flow across rotation, theme and font changes as one string of three names, so nothing
  * is held that a recreated Activity cannot read back. A string that does not read back as three
- * known names restores the opening flow.
+ * known names restores the opening flow. Nothing being edited is saved as its own name.
  */
 internal val SearchStopFlowSaver: Saver<SearchStopFlow, String> = Saver(
-    save = { listOf(it.mode.name, it.editing.name, it.openedOn.name).joinToString(FLOW_SEPARATOR) },
+    save = {
+        listOf(it.mode.name, it.editing?.name ?: NOTHING_EDITED, it.openedOn.name).joinToString(FLOW_SEPARATOR)
+    },
     restore = { saved ->
         val names = saved.split(FLOW_SEPARATOR)
         SearchStopFlow(
             mode = SearchStopMode.entries.firstOrNull { it.name == names.getOrNull(0) } ?: SearchStopMode.Map,
-            editing = ToFromField.entries.firstOrNull { it.name == names.getOrNull(1) } ?: ToFromField.To,
+            editing = if (names.getOrNull(1) == NOTHING_EDITED) {
+                null
+            } else {
+                ToFromField.entries.firstOrNull { it.name == names.getOrNull(1) } ?: ToFromField.To
+            },
             openedOn = ToFromField.entries.firstOrNull { it.name == names.getOrNull(2) } ?: ToFromField.To,
         )
     },

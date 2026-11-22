@@ -217,6 +217,20 @@ class IntroStopRowsTest {
     }
 
     @Test
+    fun `picking the destination again on the origin screen clears the end and goes back to the destination screen`() {
+        val chosen = onOrigin.chosenEnd(CENTRAL_STOP).withStopChosen(CENTRAL_STOP)
+
+        assertNull(chosen.endStopId)
+        assertEquals(CENTRAL_STOP.stopId, chosen.startStopId)
+        assertEquals(
+            IntroStep.DESTINATION,
+            chosen.step,
+            "the stop that is missing is asked for, not a trip with one end",
+        )
+        assertFalse(chosen.hasTrip)
+    }
+
+    @Test
     fun `choosing drops what was typed and found`() {
         val typed = onDestination.copy(query = "chat", search = results(CHATSWOOD_STOP))
 

@@ -201,7 +201,12 @@ class IntroFlowViewModelParkRideAddTest {
             val rig = IntroRig(this)
 
             rig.send(*events.toTypedArray())
-            rig.send(IntroUiEvent.DeclineParkRide, IntroUiEvent.FinishPressed)
+            rig.send(
+                IntroUiEvent.DeclineParkRide,
+                IntroUiEvent.ChooseStop(CENTRAL.toIntroStop()),
+                IntroUiEvent.ChooseStop(TALLAWONG.toIntroStop()),
+                IntroUiEvent.FinishPressed,
+            )
 
             val params = rig.outcomeEvent().properties.orEmpty()
             assertEquals(

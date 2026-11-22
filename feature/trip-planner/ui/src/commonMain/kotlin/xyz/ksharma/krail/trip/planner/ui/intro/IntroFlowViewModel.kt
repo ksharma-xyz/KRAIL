@@ -117,11 +117,6 @@ internal class IntroFlowViewModel(
             // The screen has the search field, so it answers this one. It never chooses and never leaves a screen.
             IntroUiEvent.FocusSearch -> Unit
             is IntroUiEvent.QueryChanged -> if (_state.value.step.isStopScreen()) stopsStep.onQueryChanged(event.text)
-            is IntroUiEvent.PickStart -> update { withPick(isStart = true, event.stop.stopId, event.stop.name) }
-            is IntroUiEvent.PickEnd -> update { withPick(isStart = false, event.stop.stopId, event.stop.name) }
-            is IntroUiEvent.StopPickedFromSearch -> update {
-                withPick(event.isStart, event.stopId, event.stopName).copy(usedSearch = true)
-            }
             IntroUiEvent.FinishPressed -> finish(save = true)
             IntroUiEvent.FinishWithoutTrip -> finish(save = false)
         }
@@ -174,10 +169,9 @@ internal class IntroFlowViewModel(
     }
 
     // A press before the stops are ready is not dropped: the finish waits for them, up to
-    // FINISH_WAIT_TIMEOUT_MS, and then goes ahead. A press on a screen that does not ask about a trip
-    // does nothing.
+    // FINISH_WAIT_TIMEOUT_MS, and then goes ahead. A press on any screen but the confirm screen does nothing.
     private fun finish(save: Boolean) {
-        if (!_state.value.step.isTripStep()) return
+        if (!_state.value.step.canFinish()) return
         if (finished || finishJob?.isActive == true) return
         finishJob = viewModelScope.launch { runFinish(save) }
     }
@@ -198,7 +192,7 @@ internal class IntroFlowViewModel(
         // A real clock never reads exactly zero, so no wait is decided here, not by the bucket.
         val waited = if (wasReady) Duration.ZERO else waitStarted.elapsedNow()
 
-        if (!_state.value.step.isTripStep()) return
+        if (!_state.value.step.canFinish()) return
         // A no-op while Loading. From Failed it is one more attempt, from Unknown the launch trigger.
         if (readiness !is StopsReadiness.Ready) appDataReadiness.retry()
 

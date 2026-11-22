@@ -199,8 +199,10 @@ internal fun parkRideStartPrefill(station: ParkRideStationPickerItem, stopNameLo
  *                 both buttons and the right one is disabled, so the bar never changes size or jumps.
  *                 No station near, a denied or missing location and stops that are not usable show no bar, because the
  *                 flow has already moved on.
- *   DESTINATION, ORIGIN, CONFIRM: one temporary bar, "Not now" and "Yes, save it", until those screens have their own.
- *                 The right button waits for the stops data to be Ready or Failed, as the confirm screen will.
+ *   DESTINATION, ORIGIN: "No, search" and "Yes, this one". The left opens the search field and never chooses or moves on.
+ *                 The right takes the highlighted row, and is off only while a typed search found no stop.
+ *   CONFIRM:      "Not now" and "Yes, save it". Not now is the only way out without saving. The right button waits
+ *                 for the stops data to be Ready or Failed, and a trip already written needs no wait.
  */
 internal fun introBar(state: IntroState, readiness: StopsReadiness): IntroBar?
 internal data class IntroBar(val left: IntroBarAction, val right: IntroBarAction, val rightEnabled: Boolean = true)
@@ -273,11 +275,12 @@ sealed interface IntroUiEvent {
     data class LocationResultReceived(val result: LocationResult, val location: LatLng?) : IntroUiEvent
     data object AddParkRideAndContinue : IntroUiEvent  // "Add to home": saves the station and moves on in one event
     data object DeclineParkRide : IntroUiEvent         // "Not now" on the card: moves on, and removes a station already added
-    data class PickStart(val stop: SuggestedStop) : IntroUiEvent
-    data class PickEnd(val stop: SuggestedStop) : IntroUiEvent
-    data class StopPickedFromSearch(val isStart: Boolean, val stopId: String, val stopName: String) : IntroUiEvent
-    data object FinishPressed : IntroUiEvent           // "Yes, save it": saves the trip when there is a complete pair
-    data object FinishWithoutTrip : IntroUiEvent       // "Not now" on the trip screens: ends the Intro with nothing saved
+    data class ChooseStop(val stop: IntroStop) : IntroUiEvent   // a tap on a row: the end on the destination screen, the start on the origin screen
+    data object UseHighlightedStop : IntroUiEvent      // "Yes, this one": the same as a tap on the first listed row
+    data object FocusSearch : IntroUiEvent             // "No, search": the screen focuses the field, the view model ignores it
+    data class QueryChanged(val text: String) : IntroUiEvent // the typed text, searched locally after a pause, never reported or saved
+    data object FinishPressed : IntroUiEvent           // "Yes, save it" on the confirm screen: saves the trip
+    data object FinishWithoutTrip : IntroUiEvent       // "Not now" on the confirm screen: ends the Intro with nothing saved
     data class PickTheme(val themeId: Int) : IntroUiEvent // a badge was tapped: selects the theme, does not move on
     data object ShowAnotherTheme : IntroUiEvent        // "No, show me another": selects the next theme, the first when none
     data object ConfirmTheme : IntroUiEvent            // "Yes, this one": reports the choice once and moves on
@@ -373,7 +376,7 @@ fun IntroState.toOutcome(stopsWait: StopsWait, declined: Boolean = false): Intro
 - **The events.** `ChooseStop(stop)` is a tap on a row, `UseHighlightedStop` is the right button and takes the first listed row,
   `FocusSearch` is the left button and `QueryChanged(text)` is the field. `FocusSearch` is answered by the screen, which has the
   field, and ignored by the view model: it never chooses and never leaves a screen. `PickStart`, `PickEnd` and `StopPickedFromSearch`
-  belong to the earlier first trip screen and go with it.
+  belonged to the earlier first trip screen and are deleted.
 - **The destination and origin screens, as built.** `IntroStopStepContent` draws both: `IntroHeadline` (destination "Where do", "you
   go", "often" with the pin, origin "Where do", "you start" with the emoji `introEmojiFor` gives it), a taj `TextField` with
   `invertedColors()` (the search-on-the-page treatment Add Park & Ride has), and the stops below it as `IntroStopRow`, which is
@@ -391,6 +394,23 @@ fun IntroState.toOutcome(stopsWait: StopsWait, declined: Boolean = false): Intro
   `Search another stop`, their previews) and the old search hand-off (`IntroSearchResult`, `IntroSearchResultEffect`, the
   `onNavigateToSearchStop` parameter of `IntroFlowRoute` and `IntroEntry`) are gone: nothing opens Search Stop from the Intro now, so
   the result bus is not used by it.
+- **The confirm screen, as built.** `IntroConfirmStepContent`: `IntroHeadline` ("Save", "this trip", the key word trip, with the star
+  from `introEmojiFor`) and the real `SavedTripCard` with `editing = true`, so it keeps its shape, theme tint and the two names
+  stacked and has no click and no ripple. It is given only ids and names and never a label, so it has no badges. It sits in the
+  centred middle zone, so the screen is empty space around it. A screen reader reads the tile once, as `From <start> to <end>`
+  (`confirmTileDescription`). A state without both stops shows no tile, which no flow reaches.
+- **The star's celebration.** `IntroHeadline` gained `celebrate` (default off, so no other headline changes). On the confirm
+  screen the star has the pop and one wobble every headline emoji has, and draws a burst behind it with `drawBehind`
+  (`introBurst`, `drawBurst`): twelve circles and squares in the theme colour (`themeDecorColor`, the colour as decoration) that fly
+  out and fade over 800 ms and leave nothing. Every shape, frame and the choice of celebration are pure functions held by table tests
+  (`IntroBurst.kt`). With reduced motion (`isReduceMotionEnabled()`) the star is at rest and fades in over 200 ms with no burst; in a
+  preview, a screenshot, and after a turn of the screen (the played flag is saved) it is simply there. The burst is clipped by the
+  scrolling screen, so the part that flies past the left edge or the top is cut, which is the intent of a burst at the screen's edge.
+- **Finishing, as built.** `IntroStep.canFinish()` is true for the confirm screen alone, so `FinishPressed` and `FinishWithoutTrip`
+  from any other screen do nothing. Yes, save it is the existing path unchanged (the wait of up to 15 s for the stops, the trip
+  write, both flags, `intro_lets_krail`, then the effect). `IntroFlowRoute` hands the effect to one function,
+  `onIntroFinished(navigateToSavedTrips)`, which today calls straight through to Saved Trips and is the one place a finale
+  wraps.
 - **The outcome.** `skipped` in `intro_lets_krail` is true only when the rider answered Not now on the confirm screen, and a saved
   trip is never skipped. It is no longer inferred from the picks. No event name and no param was added, and the other params keep
   their meaning.
@@ -454,9 +474,9 @@ three zone frame, and everything it decides is in pure functions with table test
 - **The wording guard.** `IntroCopyTest` exempts exactly the themes' taglines, which are the app's own copy and carry an
   exclamation mark, and nothing else: a line of the Intro's own with the same fault, or a tagline with a word added, still fails.
 - **What R3 wires.** The chosen theme is `IntroState.selectedThemeId`, saved with the screen, and the app is already in its colour
-  (applied and stored), so the finale reads it with `themeChoiceFor(id)?.style`, and an unset id means the default theme. R3 replaces
-  `tripBar` with the bars of its three screens, replaces `IntroPendingStepBody` for the origin and confirm screens and deletes it,
-  keeps `IntroFlowRoute`'s `onApplyTheme` as it is, and sends no `view_screen` of its own: the two names already cover its screens.
+  (applied and stored), so the finale reads it with `themeChoiceFor(id)?.style`, and an unset id means the default theme. R3 replaced
+  `tripBar` with the bars of its three screens, replaced `IntroPendingStepBody` for the origin and confirm screens and deleted it,
+  kept `IntroFlowRoute`'s `onApplyTheme` as it is, and sends no `view_screen` of its own: the two names already cover its screens.
 
 Unit R1, as built, where this document was silent:
 
@@ -466,9 +486,9 @@ Unit R1, as built, where this document was silent:
   and the screens before `IntroFirstStep` are not in the flow. Back goes to the previous screen that is in the flow, and
   there is no back on the first screen. The step is saved with the rest of the state, so a restore lands on the same screen
   and back still works.
-- **Temporary bodies.** Until the theme, origin and confirm screens exist they show an empty body (`IntroPendingStepBody`,
-  tag `intro.pending.<step>`), and the destination step shows the earlier first trip content, so the app still runs end to
-  end. Each is deleted by the unit that builds the screen.
+- **Temporary bodies, now gone.** Until the theme, origin and confirm screens existed they showed an empty body
+  (`IntroPendingStepBody`, tag `intro.pending.<step>`), and the destination step showed the earlier first trip content. Unit R3
+  built every screen and deleted both.
 - **Headline.** `IntroHeadline(lines, emphasisIndex, emoji)` is the one headline of every screen, in `typography.introTagline`.
   The timeline, the frame of a line, the weight of the lead lines and the emoji wobble are pure functions in
   `IntroHeadlineMotion.kt`, and the slide direction by step order and the transition specs are pure functions in
@@ -531,11 +551,9 @@ sequenceDiagram
     VM-->>UI: card, with Add to home in the decision bar
     UI->>VM: AddParkRideAndContinue
     VM->>DB: insertOrReplaceSavedParkRides(UserAdded)
-    UI->>VM: PickStart, PickEnd
-    UI->>S: Search another stop (SearchStopRoute FROM or TO)
-    S-->>UI: StopSelectedResult on the result bus, once
-    UI->>VM: StopPickedFromSearch(isStart, stopId, stopName)
-    UI->>VM: FinishPressed
+    UI->>VM: ChooseStop (destination, then origin unless a Park & Ride start filled it in)
+    UI->>VM: QueryChanged (local stop search after a pause, nothing reported)
+    UI->>VM: FinishPressed (confirm screen only)
     VM->>R: awaitReady
     VM->>DB: insertOrReplaceTrip, then flags
     VM-->>UI: navigate to SavedTrips
@@ -702,9 +720,19 @@ Decisions unit R3 made for the destination and origin screens, where this docume
 - **Badges.** Rows show the modes the stops table gives (suggested and nearby stops through one batched read, typed results from the
   search), as the Search Stop row does, and none until they are known.
 
+Decisions unit R3 made for the confirm screen, where this document was silent:
+
+- **Not now leaves with nothing saved, and it is the only way to.** A rider who wants no trip still chooses two stops first. The
+  screens before it have no way out, so the cost of a rider who wants none is two taps of the highlighted row. `skipped` is true for
+  Not now and false for a saved trip.
+- **Reduced motion.** The star fades in at rest and there is no burst. A burst has no settled frame that shows anything, because its
+  last frame is empty, so for reduced motion it is the star that is settled.
+- **A pick of the same stop for both ends** is not offered by the lists. If it ever arrives, the pick keeps and the other end is
+  cleared (`withPick`), and the flow goes back to the screen of the stop that is missing instead of on to a trip with one end.
+
 Operator decisions of 2026-11-22: (1) exactly one of start or end picked disables the bottom button until both or neither
-are picked (superseded in unit R1: the temporary right button on the trip screens is enabled whatever is picked, saves a trip
-only for a complete pair, and ends the Intro either way, until the confirm screen decides this), (2) there is no Try again and no error state, a Failed readiness behaves like Ready for the button and a trip
+are picked (superseded in unit R3: both stops are always chosen before the confirm screen, whose right button saves them and whose
+left button, Not now, leaves without saving), (2) there is no Try again and no error state, a Failed readiness behaves like Ready for the button and a trip
 can be saved while the stops failed, (3) the finish never blocks on the stops, it waits at most 15 s and then proceeds.
 
 ## 6. Cost budget (mandatory, never "N/A")
@@ -765,6 +793,18 @@ The typed search and choosing (unit R3), the seven questions, with numbers where
 | 6 | **Battery.** | The keyboard and the field exist only while the destination or origin screen is in front. No timer and no polling: a search is a coroutine that runs once for each pause and ends. The focus is taken only when the rider taps the left button or the field. |
 | 7 | **Shared limits.** | None. |
 
+The confirm screen and the celebration (unit R3), the seven questions:
+
+| # | Question | Answer |
+|---|---|---|
+| 1 | **API calls.** | None added. Yes, save it makes the same writes it made before (the trip, two flags, one analytics event) and no network call. |
+| 2 | **Payload.** | None. The tile is two names already in memory. |
+| 3 | **Timing.** | No data is needed to draw the screen. The burst is twelve small shapes drawn in the draw phase from one animated float, so a frame costs one draw and no recomposition or layout. It runs 800 ms, once. **Not measured on a device**; a guess is a few tenths of a millisecond a frame on a mid-range phone. |
+| 4 | **UX.** | Loading: Yes, save it is off until the stops are Ready or Failed, and the wait is at most 15 s then goes ahead. Slow and failed stops: as before, no message. Offline is not a state. Reduced motion: a 200 ms fade, no burst. |
+| 5 | **Network efficiency.** | Not applicable. |
+| 6 | **Battery.** | One finite animation, started when the screen first shows and ended 800 ms later, with no timer after it. |
+| 7 | **Shared limits.** | None. |
+
 Decision rule met: the added calls buy a live car park card and a one tap add for riders who park and ride. They are
 optional, non-blocking, once only and silent on failure.
 
@@ -802,6 +842,17 @@ Every screen has three zones:
 | Stops loading | As opening. Typing shows the text and nothing is found until the stops are ready. |
 | Stops failed | As opening. Typing shows the text and the suggestions stay. No message. |
 | Coming back with Back | The earlier choice is the first row and highlighted. What was typed is gone. |
+
+**The confirm screen (unit R3).**
+
+| State | What the rider sees |
+|---|---|
+| Opening | The headline "Save this trip" with the star, then the trip as the real saved trip tile in the middle, the two names stacked on the theme tint. The star pops, wobbles once and throws a burst of shapes in the theme colour, 800 ms in all, then rests. Bar: `Not now`, `Yes, save it` |
+| Reduced motion | The star fades in and rests. No burst |
+| Stops loading | `Yes, save it` is off and `Not now` is on |
+| `Yes, save it` | The trip is written and the Intro ends at Saved Trips, as before |
+| `Not now` | Nothing is written and the Intro ends at Saved Trips |
+| Back | The origin screen, or the destination screen when a Park & Ride start filled the origin in, with the earlier choice listed first |
 
 At a large text size or a narrow window nothing is squeezed. The headline, field and rows are in one scrolling column above the pinned
 bar, a stop's name wraps inside its row, and the bar stacks its two whole buttons when they do not fit in a row. The keyboard resizes
@@ -864,7 +915,7 @@ make a row fit, except the one rule below. A screen with nothing to decide has n
 | Denied or no fix | Moves straight on. No bar, no message |
 | Availability failed or offline | The station name and no numbers. Bar: "Not now" and "Add to home" |
 
-**Step 2, First trip**
+**Step 2, First trip (superseded in unit R3 by the destination, origin and confirm screens below)**
 
 | State | The rider sees |
 |---|---|
@@ -874,10 +925,10 @@ make a row fit, except the one rule below. A screen with nothing to decide has n
 | Searching | The app's own stop search, then back with the pick |
 | Stops not ready | The right button, "Yes, save it", is disabled |
 | Stops failed | No error state. The button behaves as when the stops are ready, and a trip is saved from the picks |
-| Only one of start and end picked | Temporary: "Yes, save it" saves nothing and the Intro ends. The confirm screen decides this |
+| Only one of start and end picked | Not reachable since unit R3: any two chosen stops reach the confirm screen |
 
-The step 2 table and the bottom bar below it describe the temporary destination body. The bar there is the temporary
-"Not now" and "Yes, save it" (section 3), tag `intro.action.primary` on the right.
+The step 2 table above is the first rebuild's body, which unit R3 replaced with the destination, origin and confirm screens
+(section 7, below). The bars are in section 3, tag `intro.action.primary` on the right.
 
 - Wording, in rider words: trip, saved trip, car park. No colon, em dash or arrow in any string.
 - Layout rules: items stay whole and wrap to the next line at 320 dp and 200% text, and the screen scrolls. Pills are one
@@ -897,7 +948,7 @@ The shell, as built (`IntroFlowScreen`, stateless, in `intro`):
   scrolling part, so it is always on screen. The theme colour is drawn on the primary button and nowhere else on the screen.
 - System back and the arrow send `Back`. On the first screen no handler is registered, so the platform decides.
 - The screen is an `AnimatedContent` over the step, clipped so a slide never draws past the column.
-- Step 2's content is a slot, `firstTripStep`, which the first trip branch fills. It is given the state, the suggested stops
+- Step 2's content was a slot, `firstTripStep`, which the first trip branch filled (removed in unit R3). It is given the state, the suggested stops
   and the event callback.
 
 Step 1, as built (`IntroParkRideStepContent`), where this document was silent:
@@ -918,8 +969,8 @@ Step 1, as built (`IntroParkRideStepContent`), where this document was silent:
   open card lists every car park by name and holds the lines for any car park that has no reading yet. Its `onClick` may now
   be null, meaning not clickable.
 
-Step 2, as built (`IntroFirstTripStepContent`, with the decision in the pure `introTripSections`), where this document was
-silent:
+Step 2, as the first rebuild built it (`IntroFirstTripStepContent` and `introTripSections`, deleted in unit R3 and kept here
+as a record), where this document was silent:
 
 - The headline is "Save your" and "first trip" with the pin, the same headline as the other screens, until the destination
   screen replaces this body. Under it, each section
@@ -944,7 +995,8 @@ silent:
 - Every row is a whole item that wraps inside its own width and is at least 48 dp tall. The step scrolls. A test holds this at
   320 dp with text at 200%, with a stop name long enough to wrap.
 
-The search hand-off, as built, with nothing in `searchstop/` touched:
+The search hand-off, as the first rebuild built it (deleted in unit R3: nothing opens Search Stop from the Intro now), with nothing
+in `searchstop/` touched:
 
 - Search another stop calls `onNavigateToSearchStop(FROM)` for the start or `(TO)` for the end, which the entry sends to
   `TripPlannerNavigator.navigateToSearchStop`, the same route (`SearchStopRoute`) Saved Trips opens. The search needs no change.
@@ -1069,6 +1121,18 @@ The search hand-off, as built, with nothing in `searchstop/` touched:
   `IntroSearchResultTest` and `IntroSearchResultEffectTest` tested code that no longer exists. In `IntroEntryTest` and
   `IntroFlowRouteTest` the three tests of the old Search another stop hand-off are gone and the finish tests now choose two stops and
   save from the confirm screen. In `IntroFlowScreenTest` and `IntroBarTest` the shared trip bar is now the confirm screen's alone.
+- **The confirm screen, built (unit R3).** `IntroConfirmStepTest` (headline and tile, the tile read as one trip, the tile not a button,
+  the bar's words and events, Yes off while stops load, and the burst drawn in its colour part way through and not at the start or
+  the end), `IntroConfirmStepNarrowTest` (320 dp at 200 percent with short and long names: headline and tile whole, order down the
+  screen, the bar stacked or in one row), `IntroBurstTest` (every shape, every frame, the celebration for all eight ways the screen can
+  be shown, and `onIntroFinished`), and the view model tests for finishing only from the confirm screen.
+- **Moved to the confirm screen in R3.** In `IntroFlowViewModelFinishTest`, `IntroFlowViewModelTest`,
+  `IntroFlowViewModelParkRideStartTest`, `IntroFlowViewModelParkRideAddTest`, `IntroStepFlowTest` and `IntroUiEventTest` the finish
+  now comes from the confirm screen with both stops chosen through `ChooseStop`, and the events `PickStart`, `PickEnd` and
+  `StopPickedFromSearch` are gone. Deleted because the state no longer exists: the finish tests of a yes with nothing picked on the
+  destination screen as a path (kept only as a guard on the confirm screen), "a pair completed while the finish waits is the pair
+  that is saved", and the view model tests of picking a start and an end in one screen, of the search marking `usedSearch` by an
+  event, and of a pick clearing the other end by event (held by `IntroStopRowsTest` and `IntroStopsOpsTest` now).
 - **Existing tests changed in R2.** `IntroBarTest` (the theme row is now a bar), `IntroFlowScreenTest` (the theme screen is no longer
   one with no bar, Park & Ride now has a back button and the theme screen has none), `IntroParkRideStepTest` and
   `IntroParkRideStepNarrowTest` (the back button is not one of the two answers), `IntroStateTest` (the first screen is the theme
@@ -1155,6 +1219,11 @@ Each is a default taken to keep moving. None has been seen by the owner. The lis
 | R3-12 | A tap on any row and the right button both choose and move on in one function | There is no Next. One path means one set of tests | Default, not yet seen by owner |
 | R3-13 | The origin headline is two lines, `Where do` and `you start`, with the heaviest weight on the second, because the key word is inside it | Emphasis is by line, so the line holding the key word is the emphasised one | Default, not yet seen by owner |
 | R3-14 | The field does not take the focus on its own, only from `No, search` or a tap on it | The list is the main thing to read and a keyboard on open would cover half of it | Default, not yet seen by owner |
+| R3-15 | A rider who wants no trip still chooses two stops before Not now | There is no way out of the destination and origin screens in the brief, and Not now is the only way out of the confirm screen without saving | Default, not yet seen by owner |
+| R3-16 | With reduced motion the star fades in over 200 ms at rest, with no burst | A burst's last frame is empty, so there is no settled frame of it to show. A plain fade is the one motion left | Default, not yet seen by owner |
+| R3-17 | The celebration is the headline's own pop and wobble plus an 800 ms burst, and the star is not given an animation of its own | One bounce for every emoji keeps the screens alike. Its length is the burst's, not a measured total of the pop and wobble, which add to a little under a second by their specs | Default, not yet seen by owner |
+| R3-18 | A pick that leaves one end missing, which the lists never offer, goes back to the screen of the missing stop | The confirm screen needs both stops, and a trip with one end is worse than one more screen | Default, not yet seen by owner |
+| R3-19 | The tile is read to a screen reader as `From <start> to <end>`, and the tile is not a button | The two names stacked read as one run of words without it, and a tile that looks like a card on Saved Trips must not look pressable | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 
@@ -1214,11 +1283,11 @@ The rebuild, in three units on the same branch, in focused commits, none pushed:
 - **R2, done.** The theme screen and its bar, the four badges with the float and the dance, the live recolour, the stored and
   saved choice, the one screen view, `IntroFirstStep` as THEME, and the Maestro tap of the first badge. The shared write
   (`ThemeChoice`) and what R3 has to wire are in section 3.
-- **R3, in progress.** The destination, origin and confirm screens and their own bars. Done so far, as focused commits: the stop lists as
-  pure logic, the nearest stations from the one fix, the view model's choosing and typed search, and the destination and origin screens
-  (which delete the earlier first trip body and the old search hand-off). Still to do in the unit: the confirm screen and its bar,
-  deleting the temporary trip bar in `IntroBar.kt`, `IntroPendingStepBody` and `IntroAnswerButton`, the Maestro loop, and the old
-  `PickStart`, `PickEnd` and `StopPickedFromSearch` events. `skipped` in `IntroOutcome` is completed (Not now on the confirm screen). R3 keeps the theme the rider chose in the saved state for the finale, reading `IntroState.selectedThemeId`
+- **R3, built.** The destination, origin and confirm screens and their own bars, as focused commits: the stop lists as pure logic, the
+  nearest stations from the one fix, the view model's choosing and typed search, the destination and origin screens (which delete the
+  earlier first trip body and the old search hand-off), and the confirm screen with the celebration, the confirm-only finish and the
+  deletion of the temporary trip bar, `IntroPendingStepBody` and the old pick events. `skipped` in `IntroOutcome` is completed (Not now on
+  the confirm screen). R3 keeps the theme the rider chose in the saved state for the finale, reading `IntroState.selectedThemeId`
   through `themeChoiceFor`, and the Maestro loop needs no change unless the last screens' bars do.
 
 ## 11. Measurement plan (ROI)

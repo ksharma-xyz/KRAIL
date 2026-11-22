@@ -83,27 +83,27 @@ class IntroFlowViewModelParkRideStartTest {
 
     @Test
     fun `a start the rider already picked is never overridden`() = krailRunTest {
-        listOf(
-            IntroUiEvent.PickStart(CENTRAL),
-            IntroUiEvent.StopPickedFromSearch(isStart = true, stopId = CENTRAL.stopId, stopName = CENTRAL.name),
-        ).forEach { pick ->
-            val rig = IntroRig(this)
-            rig.send(pick)
-            rig.showBellaVista()
+        // The rider went back to this screen after choosing their own start.
+        val rig = IntroRig(
+            this,
+            handle = savedAt(ON_PARK_RIDE.copy(startStopId = CENTRAL.stopId, startName = CENTRAL.name)),
+        )
+        rig.showBellaVista()
 
-            rig.send(IntroUiEvent.AddParkRideAndContinue)
+        rig.send(IntroUiEvent.AddParkRideAndContinue)
 
-            assertTrue(rig.state.addedParkRide, "$pick")
-            assertEquals(CENTRAL.stopId, rig.state.startStopId, "$pick")
-            assertEquals(CENTRAL.name, rig.state.startName, "$pick")
-            assertFalse(rig.state.startFromParkRide, "$pick")
-        }
+        assertTrue(rig.state.addedParkRide)
+        assertEquals(CENTRAL.stopId, rig.state.startStopId)
+        assertEquals(CENTRAL.name, rig.state.startName)
+        assertFalse(rig.state.startFromParkRide)
     }
 
     @Test
     fun `a stop already chosen as the end is not filled in as the start`() = krailRunTest {
-        val rig = IntroRig(this)
-        rig.send(IntroUiEvent.PickEnd(BELLA_VISTA_STOP))
+        val rig = IntroRig(
+            this,
+            handle = savedAt(ON_PARK_RIDE.copy(endStopId = BELLA_VISTA_STOP.stopId, endName = BELLA_VISTA_STOP.name)),
+        )
         rig.showBellaVista()
 
         rig.send(IntroUiEvent.AddParkRideAndContinue)
@@ -156,31 +156,25 @@ class IntroFlowViewModelParkRideStartTest {
         rig.showBellaVista()
         rig.send(IntroUiEvent.AddParkRideAndContinue)
         assertTrue(rig.state.startFromParkRide, "the Intro filled it in first")
-        rig.send(IntroUiEvent.PickStart(CENTRAL))
+        // Choosing the car park's own stop as the destination brings the origin screen back, where the rider picks.
+        rig.send(
+            IntroUiEvent.ChooseStop(BELLA_VISTA_STOP.toIntroStop()),
+            IntroUiEvent.ChooseStop(CENTRAL.toIntroStop()),
+        )
+        assertEquals(IntroStep.CONFIRM, rig.state.step)
 
-        rig.send(IntroUiEvent.Back, IntroUiEvent.DeclineParkRide)
+        rig.send(IntroUiEvent.Back, IntroUiEvent.Back, IntroUiEvent.Back, IntroUiEvent.DeclineParkRide)
 
         assertFalse(rig.state.addedParkRide)
         assertEquals(CENTRAL.stopId, rig.state.startStopId)
     }
 
     @Test
-    fun `a rider who picks the same stop the pre-fill chose owns it, so removal keeps it`() = krailRunTest {
-        val rig = IntroRig(this)
-        rig.showBellaVista()
-        rig.send(IntroUiEvent.AddParkRideAndContinue)
-        rig.send(IntroUiEvent.PickStart(BELLA_VISTA_STOP))
-
-        rig.send(IntroUiEvent.Back, IntroUiEvent.DeclineParkRide)
-
-        assertEquals(BELLA_VISTA_STOP.stopId, rig.state.startStopId)
-        assertFalse(rig.state.startFromParkRide)
-    }
-
-    @Test
     fun `removal keeps a start the rider picked before the add`() = krailRunTest {
-        val rig = IntroRig(this)
-        rig.send(IntroUiEvent.PickStart(CENTRAL))
+        val rig = IntroRig(
+            this,
+            handle = savedAt(ON_PARK_RIDE.copy(startStopId = CENTRAL.stopId, startName = CENTRAL.name)),
+        )
         rig.showBellaVista()
         rig.send(IntroUiEvent.AddParkRideAndContinue)
 
@@ -231,7 +225,9 @@ class IntroFlowViewModelParkRideStartTest {
             rig.showBellaVista()
 
             rig.send(IntroUiEvent.AddParkRideAndContinue)
-            rig.send(IntroUiEvent.PickEnd(CENTRAL))
+            // The origin screen is passed over, because the car park is the start, so one pick reaches the confirm screen.
+            rig.send(IntroUiEvent.ChooseStop(CENTRAL.toIntroStop()))
+            assertEquals(IntroStep.CONFIRM, rig.state.step)
             rig.send(IntroUiEvent.FinishPressed)
 
             val outcome = rig.outcomeEvent().properties.orEmpty()

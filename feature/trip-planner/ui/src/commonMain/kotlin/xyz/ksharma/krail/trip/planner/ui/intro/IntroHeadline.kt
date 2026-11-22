@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.heightIn
@@ -34,6 +35,7 @@ import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.themeDecorColor
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 
 // Each line is a spring with a small overshoot that settles in about 300 ms, so a headline of three lines is
@@ -54,6 +56,10 @@ private val LineRiseDistance = 24.dp
  * of the screen the headline is simply in place. Only transforms are animated, through `graphicsLayer`, so
  * nothing is laid out again on a frame.
  *
+ * [celebrate] is for the confirm screen's star. With it the star also throws a burst of plain shapes in the theme
+ * colour, drawn behind it, which flies out and fades in [BURST_DURATION_MS]. With reduced motion the star fades in at
+ * rest instead and nothing flies, and in a preview, a screenshot or after a turn of the screen it is simply there.
+ *
  * [minLines] is the least number of lines of room to keep, for a screen whose headline changes length: with it
  * the headline takes the height of the emoji and that many lines whatever it says, so nothing below it moves.
  *
@@ -67,6 +73,7 @@ internal fun IntroHeadline(
     emoji: String,
     modifier: Modifier = Modifier,
     minLines: Int = 0,
+    celebrate: Boolean = false,
 ) {
     val phrase = introHeadlinePhrase(lines)
     val reduceMotion = isReduceMotionEnabled()
@@ -74,6 +81,7 @@ internal fun IntroHeadline(
     // Saved, so a turn of the screen does not play it again. Keyed on the phrase, so a new headline does.
     var played by rememberSaveable(phrase) { mutableStateOf(false) }
     val animate = remember(phrase) { !headlineStartsSettled(reduceMotion, inspection, played) }
+    val celebration = rememberCelebration(phrase, celebrate, reduceMotion, inspection)
 
     val progress = remember(phrase) { lines.map { Animatable(if (animate) 0f else 1f) } }
     val emojiScale = remember(phrase) { Animatable(if (animate) 0f else 1f) }
@@ -106,11 +114,14 @@ internal fun IntroHeadline(
             Text(
                 text = emoji,
                 style = KrailTheme.typography.emoji,
-                modifier = Modifier.graphicsLayer {
-                    scaleX = emojiScale.value
-                    scaleY = emojiScale.value
-                    rotationZ = emojiTilt.value
-                },
+                modifier = Modifier
+                    .introBurst(progress = { celebration.burst.value }, color = themeDecorColor())
+                    .graphicsLayer {
+                        scaleX = emojiScale.value
+                        scaleY = emojiScale.value
+                        rotationZ = emojiTilt.value
+                        alpha = celebration.fade.value
+                    },
             )
         }
         val display = KrailTheme.typography.introTagline
@@ -151,6 +162,38 @@ private fun reservedHeadlineHeight(minLines: Int, hasEmoji: Boolean): Dp {
         val emojiHeight = if (hasEmoji) typography.emoji.lineHeight.toDp() + gap else 0.dp
         emojiHeight + (typography.introTagline.lineHeight.toDp() + gap) * minLines - gap
     }
+}
+
+/** The two values the star's celebration animates: the burst's progress and the star's own opacity. */
+internal class Celebration(val burst: Animatable<Float, *>, val fade: Animatable<Float, *>)
+
+/**
+ * Plays the celebration for [mode] once and rests: the burst runs 0 to 1 over [BURST_DURATION_MS], the fade runs 0 to 1
+ * over [CELEBRATION_FADE_MS], and a settled star has neither. It is saved as played, so a turn of the screen does
+ * not play it again.
+ */
+@Composable
+private fun rememberCelebration(
+    phrase: String,
+    celebrate: Boolean,
+    reduceMotion: Boolean,
+    inspection: Boolean,
+): Celebration {
+    var played by rememberSaveable(phrase) { mutableStateOf(false) }
+    val mode = remember(phrase) { celebrationMode(celebrate, reduceMotion, inspection, played) }
+    val celebration = remember(phrase) {
+        Celebration(burst = Animatable(0f), fade = Animatable(if (mode == CelebrationMode.Fade) 0f else 1f))
+    }
+    LaunchedEffect(phrase) {
+        if (mode == CelebrationMode.Settled) return@LaunchedEffect
+        played = true
+        when (mode) {
+            CelebrationMode.Burst -> celebration.burst.animateTo(1f, tween(durationMillis = BURST_DURATION_MS))
+            CelebrationMode.Fade -> celebration.fade.animateTo(1f, tween(durationMillis = CELEBRATION_FADE_MS))
+            CelebrationMode.Settled -> Unit
+        }
+    }
+    return celebration
 }
 
 // The pop and then the one wobble, in that order, and then it rests. Both finish.

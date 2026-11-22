@@ -10,8 +10,6 @@ import kotlin.test.assertSame
 /** The shape the screens and the view model agree on, so renaming or dropping a field is a test failure. */
 class IntroUiEventTest {
 
-    private val stop = SuggestedStop(stopId = "200060", name = "Central Station")
-
     @Test
     fun `each event carries what it was built from`() {
         val fix = LatLng(-33.88, 151.21)
@@ -20,11 +18,6 @@ class IntroUiEventTest {
         assertEquals(LocationResult.GRANTED, IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, fix).result)
         assertEquals(fix, IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, fix).location)
         assertNull(IntroUiEvent.LocationResultReceived(LocationResult.DENIED, null).location)
-        assertEquals(stop, IntroUiEvent.PickStart(stop).stop)
-        assertEquals(stop, IntroUiEvent.PickEnd(stop).stop)
-        IntroUiEvent.StopPickedFromSearch(isStart = false, stopId = "9", stopName = "Nine").let {
-            assertEquals(listOf(false, "9", "Nine"), listOf(it.isStart, it.stopId, it.stopName))
-        }
         assertEquals(CENTRAL_STOP, IntroUiEvent.ChooseStop(CENTRAL_STOP).stop)
         assertEquals("chat", IntroUiEvent.QueryChanged("chat").text)
     }

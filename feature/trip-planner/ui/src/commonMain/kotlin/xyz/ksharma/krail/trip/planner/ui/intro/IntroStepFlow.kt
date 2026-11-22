@@ -66,10 +66,8 @@ private fun IntroState.isSkipped(candidate: IntroStep, first: IntroStep): Boolea
 }
 
 /**
- * The screens that end in a trip decision. Until the destination, origin and confirm screens have their own bars
- * this is the one place that says which screens may finish the Intro.
+ * Whether the Intro can be finished from this screen: the confirm screen alone. Its two answers are the only way
+ * out, so a press that arrives from any other screen, such as one that was already on its way when the rider
+ * went back, finishes nothing.
  */
-internal fun IntroStep.isTripStep(): Boolean = when (this) {
-    IntroStep.THEME, IntroStep.PARK_RIDE -> false
-    IntroStep.DESTINATION, IntroStep.ORIGIN, IntroStep.CONFIRM -> true
-}
+internal fun IntroStep.canFinish(): Boolean = this == IntroStep.CONFIRM

@@ -21,8 +21,8 @@ internal const val THEME_ANOTHER = "No, show me another"
 internal const val THEME_CONFIRM = "Yes, this one"
 internal const val STOP_SEARCH = "No, search"
 internal const val STOP_CHOOSE = "Yes, this one"
-internal const val TRIP_NOT_NOW = "Not now"
-internal const val TRIP_SAVE = "Yes, save it"
+internal const val CONFIRM_NOT_NOW = "Not now"
+internal const val CONFIRM_SAVE = "Yes, save it"
 
 /**
  * One button of the decision bar. [label] is the whole phrase, which a screen reader reads at every
@@ -56,14 +56,14 @@ internal fun IntroBarAction.visibleLabel(fontScale: Float): String =
  * shows no bar. A table over the step, so a new step is a compile error here and not a screen with the
  * wrong bar. [readiness] is the stops data, which only the screens that end in saving a trip wait on.
  *
- * The theme screen has its own bar, see [themeBar], and so have the destination and origin screens, which
- * share [stopBar]. The confirm screen shares one temporary bar until the unit that builds it gives it its own.
+ * Each screen has its own bar: [themeBar], [parkRideBar], [stopBar] for the destination and origin screens, which
+ * share one, and [confirmBar].
  */
 internal fun introBar(state: IntroState, readiness: StopsReadiness): IntroBar? = when (state.step) {
     IntroStep.THEME -> themeBar(state)
     IntroStep.PARK_RIDE -> parkRideBar(state)
     IntroStep.DESTINATION, IntroStep.ORIGIN -> stopBar(state)
-    IntroStep.CONFIRM -> tripBar(state, readiness)
+    IntroStep.CONFIRM -> confirmBar(state, readiness)
 }
 
 /**
@@ -115,17 +115,13 @@ private fun addBar(addEnabled: Boolean) = IntroBar(
 )
 
 /**
- * TEMPORARY, for the confirm screen until it has its own bar. The trip is
- * saved from the picks if there is a complete pair and otherwise nothing is written, and the Intro ends
- * either way. The save waits for the stops data to be Ready or Failed, as the confirm screen will, and
- * a trip already written needs no wait.
- *
- * Outcome analytics are completed with the confirm screen: `skipped` then means the rider answered No
- * here, and today it still means no complete trip was picked (see [IntroState.toOutcome]).
+ * The confirm screen. Not now is the only way to leave without saving, and Yes, save it writes the trip the rider
+ * chose and ends the Intro. The save waits for the stops data to be Ready or Failed, as it always has, so the right
+ * button is off while it is still loading, and a trip already written needs no wait.
  */
-private fun tripBar(state: IntroState, readiness: StopsReadiness) = IntroBar(
-    left = IntroBarAction(TRIP_NOT_NOW, IntroUiEvent.FinishWithoutTrip),
-    right = IntroBarAction(TRIP_SAVE, IntroUiEvent.FinishPressed),
+private fun confirmBar(state: IntroState, readiness: StopsReadiness) = IntroBar(
+    left = IntroBarAction(CONFIRM_NOT_NOW, IntroUiEvent.FinishWithoutTrip),
+    right = IntroBarAction(CONFIRM_SAVE, IntroUiEvent.FinishPressed),
     rightEnabled = state.saved || readiness.isUsable(),
 )
 

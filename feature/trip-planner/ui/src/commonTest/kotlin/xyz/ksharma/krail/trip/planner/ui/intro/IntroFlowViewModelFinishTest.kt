@@ -26,14 +26,14 @@ private const val SAVED_TRIP = "trip:2155384->200060"
 class IntroFlowViewModelFinishTest {
 
     private val tripPicked = IntroState(
-        step = IntroStep.DESTINATION,
+        step = IntroStep.CONFIRM,
         parkRideAnswer = ParkRideAnswer.NO,
         startStopId = TALLAWONG.stopId,
         startName = TALLAWONG.name,
         endStopId = CENTRAL.stopId,
         endName = CENTRAL.name,
     )
-    private val nothingPicked = IntroState(step = IntroStep.DESTINATION, parkRideAnswer = ParkRideAnswer.NO)
+    private val nothingPicked = IntroState(step = IntroStep.CONFIRM, parkRideAnswer = ParkRideAnswer.NO)
 
     private fun KrailTestScope.rigAt(
         state: IntroState,
@@ -61,24 +61,23 @@ class IntroFlowViewModelFinishTest {
     }
 
     @Test
-    fun `not now writes no trip even when a pair is picked, marks both flags once and leaves`() = krailRunTest {
-        listOf(nothingPicked, tripPicked).forEach { picks ->
-            val rig = rigAt(picks)
+    fun `not now writes no trip even though both stops are chosen, marks both flags once and leaves`() = krailRunTest {
+        val rig = rigAt(tripPicked)
 
-            rig.withEffects {
-                rig.send(IntroUiEvent.FinishWithoutTrip)
+        rig.withEffects {
+            rig.send(IntroUiEvent.FinishWithoutTrip)
 
-                assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
-            }
-
-            assertTrue(rig.sandook.selectAllTrips().isEmpty(), "picks $picks")
-            assertEquals(1, rig.log.count(SEEN_INTRO))
-            assertEquals(1, rig.log.count(SUGGESTION_SHOWN))
-            assertFalse(rig.state.saved)
+            assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
         }
+
+        assertTrue(rig.sandook.selectAllTrips().isEmpty())
+        assertEquals(1, rig.log.count(SEEN_INTRO))
+        assertEquals(1, rig.log.count(SUGGESTION_SHOWN))
+        assertFalse(rig.state.saved)
     }
 
-    // Temporary until the confirm screen: the positive answer with no complete pair saves nothing and still ends the Intro.
+    // No flow reaches the confirm screen without both stops, so this is a guard and not a path: the positive answer
+    // with no complete pair saves nothing and still ends the Intro.
     @Test
     fun `a yes with no complete pair saves nothing and still leaves`() = krailRunTest {
         val startOnly = nothingPicked.copy(startStopId = TALLAWONG.stopId, startName = TALLAWONG.name)
@@ -100,21 +99,15 @@ class IntroFlowViewModelFinishTest {
     }
 
     @Test
-    fun `a pair completed while the finish waits is the pair that is saved`() = krailRunTest {
-        val rig = rigAt(nothingPicked, readiness = StopsReadiness.Loading)
-
-        rig.send(IntroUiEvent.FinishPressed, IntroUiEvent.PickStart(TALLAWONG), IntroUiEvent.PickEnd(CENTRAL))
-        rig.readiness.emit(StopsReadiness.Ready(stopCount = 100))
-        rig.send()
-
-        assertEquals(1, rig.log.count(SAVED_TRIP))
-    }
-
-    @Test
     fun `the suggestion flag answered earlier is not written again at the finish`() = krailRunTest {
         val rig = IntroRig(this)
 
-        rig.send(IntroUiEvent.AnswerParkRide(yes = false), IntroUiEvent.FinishPressed)
+        rig.send(
+            IntroUiEvent.AnswerParkRide(yes = false),
+            IntroUiEvent.ChooseStop(CENTRAL.toIntroStop()),
+            IntroUiEvent.ChooseStop(TALLAWONG.toIntroStop()),
+            IntroUiEvent.FinishPressed,
+        )
 
         assertEquals(1, rig.log.count(SUGGESTION_SHOWN))
         assertEquals(1, rig.log.count(SEEN_INTRO))
@@ -158,7 +151,7 @@ class IntroFlowViewModelFinishTest {
 
     @Test
     fun `not now while the stops failed writes no trip and still leaves`() = krailRunTest {
-        val rig = rigAt(nothingPicked, readiness = StopsReadiness.Failed(attempt = 4, reason = "disk"))
+        val rig = rigAt(tripPicked, readiness = StopsReadiness.Failed(attempt = 4, reason = "disk"))
 
         rig.withEffects {
             rig.send(IntroUiEvent.FinishWithoutTrip)
@@ -216,7 +209,7 @@ class IntroFlowViewModelFinishTest {
         rig.send()
 
         assertEquals(listOf("awaitReady"), rig.log.entries)
-        assertEquals(IntroStep.PARK_RIDE, rig.state.step)
+        assertEquals(IntroStep.ORIGIN, rig.state.step)
     }
 
     @Test
@@ -272,7 +265,7 @@ class IntroFlowViewModelFinishTest {
 
     @Test
     fun `a not now with the question never answered reports skipped and no save click`() = krailRunTest {
-        val rig = rigAt(nothingPicked.copy(parkRideAnswer = ParkRideAnswer.ASK))
+        val rig = rigAt(tripPicked.copy(parkRideAnswer = ParkRideAnswer.ASK))
 
         rig.send(IntroUiEvent.FinishWithoutTrip)
 
@@ -324,8 +317,8 @@ class IntroFlowViewModelFinishTest {
         )
         rig.send(
             IntroUiEvent.DeclineParkRide,
-            IntroUiEvent.PickStart(TALLAWONG),
-            IntroUiEvent.StopPickedFromSearch(isStart = false, stopId = CENTRAL.stopId, stopName = CENTRAL.name),
+            IntroUiEvent.ChooseStop(CENTRAL.toIntroStop()),
+            IntroUiEvent.ChooseStop(TALLAWONG.toIntroStop()),
             IntroUiEvent.FinishPressed,
         )
         assertIs<ParkRideCardPhase.Card>(rig.state.parkRideCard, "the station card was found, so its name is in play")
@@ -380,18 +373,21 @@ class IntroFlowViewModelFinishTest {
         }
 
     @Test
-    fun `an answer to the last screens on a screen that is not one of them does nothing`() = krailRunTest {
-        val rig = IntroRig(this)
+    fun `an answer from any screen but the confirm screen does nothing, even with both stops chosen`() = krailRunTest {
+        IntroStep.entries.filter { it != IntroStep.CONFIRM }.forEach { step ->
+            val on = tripPicked.copy(step = step)
+            val rig = rigAt(on)
 
-        rig.send(IntroUiEvent.FinishPressed, IntroUiEvent.FinishWithoutTrip)
+            rig.send(IntroUiEvent.FinishPressed, IntroUiEvent.FinishWithoutTrip)
 
-        assertEquals(ON_PARK_RIDE, rig.state)
-        assertEquals(emptyList(), rig.log.entries)
+            assertEquals(on, rig.state, "$step")
+            assertEquals(emptyList(), rig.log.entries, "$step")
+        }
     }
 
     @Test
     fun `the finish effect is not replayed to a collector that starts later`() = krailRunTest {
-        val rig = rigAt(nothingPicked)
+        val rig = rigAt(tripPicked)
         rig.send(IntroUiEvent.FinishPressed)
 
         rig.viewModel.effects.test {

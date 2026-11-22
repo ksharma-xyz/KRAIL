@@ -50,7 +50,8 @@ internal fun IntroState.highlightedStop(suggested: SuggestedStops): IntroStop? =
  * right button alike: it is the end or the start, the typed text and results are dropped, `usedSearch` is set
  * when [stop] is one of the typed results, and the Intro moves on to the next screen of the flow. The flow is
  * worked out after the pick, so picking the stop a Park & Ride start was filled in with brings the origin screen
- * back. On any other screen it changes nothing.
+ * back, and a pick that left no complete trip goes to the screen of the missing stop. On any other screen it changes
+ * nothing.
  */
 internal fun IntroState.withStopChosen(stop: IntroStop): IntroState {
     if (!step.isStopScreen()) return this
@@ -58,4 +59,14 @@ internal fun IntroState.withStopChosen(stop: IntroStop): IntroState {
     return withPick(isStart = step == IntroStep.ORIGIN, stopId = stop.stopId, stopName = stop.name)
         .copy(usedSearch = usedSearch || fromSearch, query = "", search = IntroSearchPhase.Idle)
         .movedOn()
+        .backToMissingStop()
 }
+
+// The confirm screen needs both stops. A pick that cleared the other end, because it was that very stop, which the lists
+// never offer, goes back to the screen that asks for the stop that is missing instead of on to a trip with one end.
+private fun IntroState.backToMissingStop(): IntroState =
+    if (step != IntroStep.CONFIRM || hasTrip) {
+        this
+    } else {
+        copy(step = if (endStopId == null) IntroStep.DESTINATION else IntroStep.ORIGIN)
+    }

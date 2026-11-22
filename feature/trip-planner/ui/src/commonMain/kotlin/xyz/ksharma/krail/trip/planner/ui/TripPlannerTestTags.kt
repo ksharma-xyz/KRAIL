@@ -38,9 +38,8 @@ object TripPlannerTestTags {
     // The destination and origin screens: the search field, and one row for each stop listed.
     const val INTRO_STOP_FIELD = "intro.stop.field"
 
-    // The confirm screen's trip tile and its star.
+    // The confirm screen's trip tile.
     const val INTRO_CONFIRM_TILE = "intro.confirm.tile"
-    const val INTRO_CONFIRM_STAR = "intro.confirm.star"
 
     // Saved trips (home)
     const val SAVED_TRIPS_SCREEN = "savedtrips.screen"

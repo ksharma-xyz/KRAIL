@@ -88,8 +88,7 @@ internal fun IntroFlowScreen(
                         focusRequester = searchFocus,
                         onEvent = send,
                     )
-                    // Temporary, until the confirm screen is built.
-                    IntroStep.CONFIRM -> IntroPendingStepBody(step)
+                    IntroStep.CONFIRM -> IntroConfirmStepContent(state = state)
                 }
             }
 

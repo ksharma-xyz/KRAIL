@@ -28,7 +28,7 @@ import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
  *   screen after it, and the buttons on this one, take its colour at once. The theme is also stored when it is
  *   selected, so the app starts in it however the Intro ends.
  *
- * [onNavigateToSavedTrips] is where the finish goes.
+ * [onNavigateToSavedTrips] is where the finish goes, through [onIntroFinished].
  */
 @Composable
 internal fun IntroFlowRoute(
@@ -67,6 +67,15 @@ internal fun IntroFlowRoute(
     )
 }
 
+/**
+ * What happens once the Intro has saved or declined the trip, written everything it writes and reported its outcome:
+ * it goes to Saved Trips through [navigateToSavedTrips]. It is the one place the end of the Intro is handed on from,
+ * so whatever is to come after the confirm screen wraps this function and nothing else changes.
+ */
+internal fun onIntroFinished(navigateToSavedTrips: () -> Unit) {
+    navigateToSavedTrips()
+}
+
 @Composable
 private fun IntroEffectsCollector(viewModel: IntroFlowViewModel, onNavigateToSavedTrips: () -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -75,7 +84,7 @@ private fun IntroEffectsCollector(viewModel: IntroFlowViewModel, onNavigateToSav
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.effects.collect { effect ->
                 when (effect) {
-                    IntroEffect.NavigateToSavedTrips -> navigate()
+                    IntroEffect.NavigateToSavedTrips -> onIntroFinished(navigate)
                 }
             }
         }

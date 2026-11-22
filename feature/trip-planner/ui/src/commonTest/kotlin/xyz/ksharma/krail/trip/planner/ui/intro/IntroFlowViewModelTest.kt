@@ -5,6 +5,7 @@ import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 import xyz.ksharma.krail.core.testing.coroutines.krailRunTest
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStop
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
@@ -156,63 +157,14 @@ class IntroFlowViewModelTest {
     }
 
     @Test
-    fun `picking a start and an end sets their ids and names without marking search`() = krailRunTest {
-        val rig = IntroRig(this)
-
-        rig.send(IntroUiEvent.PickStart(TALLAWONG), IntroUiEvent.PickEnd(CENTRAL))
-
-        assertEquals(TALLAWONG.stopId, rig.state.startStopId)
-        assertEquals(TALLAWONG.name, rig.state.startName)
-        assertEquals(CENTRAL.stopId, rig.state.endStopId)
-        assertEquals(CENTRAL.name, rig.state.endName)
-        assertFalse(rig.state.usedSearch)
-    }
-
-    @Test
-    fun `a stop picked from search sets the chosen end and marks search used`() = krailRunTest {
-        val rig = IntroRig(this)
-
-        rig.send(IntroUiEvent.StopPickedFromSearch(isStart = false, stopId = "9", stopName = "Nine"))
-
-        assertEquals("9", rig.state.endStopId)
-        assertEquals("Nine", rig.state.endName)
-        assertEquals(null, rig.state.startStopId)
-        assertEquals(true, rig.state.usedSearch)
-
-        rig.send(IntroUiEvent.StopPickedFromSearch(isStart = true, stopId = "8", stopName = "Eight"))
-
-        assertEquals("8", rig.state.startStopId)
-        assertEquals("Eight", rig.state.startName)
-    }
-
-    @Test
     fun `the same stop on both lists is a valid trip when the other end is different`() = krailRunTest {
-        val rig = IntroRig(this)
+        val rig = IntroRig(this, handle = savedAt(IntroState(step = IntroStep.DESTINATION)))
 
-        rig.send(IntroUiEvent.PickStart(CENTRAL), IntroUiEvent.PickEnd(WYNYARD))
+        rig.send(IntroUiEvent.ChooseStop(CENTRAL.toIntroStop()), IntroUiEvent.ChooseStop(WYNYARD.toIntroStop()))
 
         assertEquals(true, rig.state.hasTrip)
+        assertEquals(IntroStep.CONFIRM, rig.state.step)
     }
-
-    @Test
-    fun `picking the stop already chosen for the other end keeps the new pick and clears the other end`() =
-        krailRunTest {
-            val rig = IntroRig(this)
-            rig.send(IntroUiEvent.PickStart(CENTRAL), IntroUiEvent.PickEnd(WYNYARD))
-
-            rig.send(IntroUiEvent.PickStart(WYNYARD))
-
-            assertEquals(WYNYARD.stopId, rig.state.startStopId)
-            assertEquals(null, rig.state.endStopId)
-            assertEquals(null, rig.state.endName)
-            assertFalse(rig.state.hasTrip)
-
-            rig.send(IntroUiEvent.PickEnd(CENTRAL), IntroUiEvent.PickStart(TALLAWONG))
-            rig.send(IntroUiEvent.StopPickedFromSearch(isStart = false, stopId = TALLAWONG.stopId, stopName = "x"))
-
-            assertEquals(null, rig.state.startStopId)
-            assertEquals(TALLAWONG.stopId, rig.state.endStopId)
-        }
 
     @Test
     fun `the step, the answer and the picks survive a new view model on the same saved state`() =
@@ -220,21 +172,20 @@ class IntroFlowViewModelTest {
             val before = IntroRig(this)
             before.send(
                 IntroUiEvent.AnswerParkRide(yes = false),
-                IntroUiEvent.PickStart(TALLAWONG),
-                IntroUiEvent.StopPickedFromSearch(isStart = false, stopId = "9", stopName = "Nine"),
+                IntroUiEvent.ChooseStop(IntroStop(stopId = "9", name = "Nine")),
+                IntroUiEvent.ChooseStop(TALLAWONG.toIntroStop()),
             )
 
             val after = IntroRig(this, handle = before.handle)
 
             assertEquals(
                 IntroState(
-                    step = IntroStep.DESTINATION,
+                    step = IntroStep.CONFIRM,
                     parkRideAnswer = ParkRideAnswer.NO,
                     startStopId = TALLAWONG.stopId,
                     startName = TALLAWONG.name,
                     endStopId = "9",
                     endName = "Nine",
-                    usedSearch = true,
                 ),
                 after.state,
             )

@@ -141,8 +141,8 @@ class IntroParkRideCardTest {
             PARK_RIDE_NO_COMPACT,
             PARK_RIDE_ADD,
             PARK_RIDE_NOT_NOW,
-            TRIP_SAVE,
-            TRIP_NOT_NOW,
+            CONFIRM_SAVE,
+            CONFIRM_NOT_NOW,
         )
 
         strings.forEach { text ->

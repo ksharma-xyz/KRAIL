@@ -184,15 +184,15 @@ class IntroFlowScreenTest {
     fun `the confirm screen asks Not now and Yes save it, and save waits only for stops that are still loading`() {
         val confirm = tripPair
         show(confirm, StopsReadiness.Loading)
-        secondary().assertTextEquals(TRIP_NOT_NOW).assertIsEnabled()
-        primary().assertTextEquals(TRIP_SAVE).assertIsNotEnabled()
+        secondary().assertTextEquals(CONFIRM_NOT_NOW).assertIsEnabled()
+        primary().assertTextEquals(CONFIRM_SAVE).assertIsNotEnabled()
 
         show(confirm, StopsReadiness.Unknown)
         primary().assertIsNotEnabled()
 
         listOf(ready, StopsReadiness.Failed(attempt = 1, reason = "disk full")).forEach { readiness ->
             show(tripPair, readiness)
-            primary().assertTextEquals(TRIP_SAVE).assertIsEnabled()
+            primary().assertTextEquals(CONFIRM_SAVE).assertIsEnabled()
         }
         show(tripPair.copy(saved = true), StopsReadiness.Loading)
         primary().assertIsEnabled()

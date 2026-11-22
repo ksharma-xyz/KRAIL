@@ -145,16 +145,16 @@ class IntroStepFlowTest {
     }
 
     @Test
-    fun `only the screens that ask about a trip can finish the Intro`() {
+    fun `only the confirm screen can finish the Intro`() {
         assertEquals(
             mapOf(
                 THEME to false,
                 PARK_RIDE to false,
-                DESTINATION to true,
-                ORIGIN to true,
+                DESTINATION to false,
+                ORIGIN to false,
                 CONFIRM to true,
             ),
-            IntroStep.entries.associateWith { it.isTripStep() },
+            IntroStep.entries.associateWith { it.canFinish() },
         )
     }
 

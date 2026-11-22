@@ -67,21 +67,10 @@ internal sealed interface IntroUiEvent {
      */
     data class QueryChanged(val text: String) : IntroUiEvent
 
-    data class PickStart(val stop: SuggestedStop) : IntroUiEvent
-
-    data class PickEnd(val stop: SuggestedStop) : IntroUiEvent
-
-    /** A stop chosen in the app's own stop search, for the start or the end. */
-    data class StopPickedFromSearch(
-        val isStart: Boolean,
-        val stopId: String,
-        val stopName: String,
-    ) : IntroUiEvent
-
-    /** The positive answer on the last screens: save the trip if there is a complete pair, and end the Intro. */
+    /** `Yes, save it` on the confirm screen: save the trip the rider chose, and end the Intro. */
     data object FinishPressed : IntroUiEvent
 
-    /** The negative answer on the last screens: end the Intro and write no trip. */
+    /** `Not now` on the confirm screen: end the Intro and write no trip. The only way out without saving. */
     data object FinishWithoutTrip : IntroUiEvent
 }
 

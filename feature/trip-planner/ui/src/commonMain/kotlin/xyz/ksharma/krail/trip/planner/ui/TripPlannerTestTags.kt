@@ -76,6 +76,15 @@ object TripPlannerTestTags {
     const val SEARCH_STOP_RESULTS_LIST = "searchstop.results"
     const val SEARCH_STOP_RECENTS_LIST = "searchstop.recents"
 
+    /** The X in the search bar. It clears the text and nothing else. */
+    const val SEARCH_STOP_CLEAR = "searchstop.clear"
+
+    /** The one status pill under the form while location permission is not granted. */
+    const val SEARCH_STOP_LOCATION_PILL = "searchstop.locationpill"
+
+    /** The row of labels at the top of the recents card. It scrolls sideways. */
+    const val SEARCH_STOP_LABEL_ROW = "searchstop.labelrow"
+
     /**
      * The confirm button on the first-run map options sheet.
      *

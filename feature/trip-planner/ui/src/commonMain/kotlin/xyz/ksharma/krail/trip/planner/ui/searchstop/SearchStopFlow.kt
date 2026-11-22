@@ -76,6 +76,14 @@ internal fun initialSearchStopFlow(fieldType: SearchStopFieldType, editTripLeg: 
     return SearchStopFlow(mode = SearchStopMode.Map, editing = field, openedOn = field)
 }
 
+/**
+ * The flow the screen draws. With no map to open on, [mapsAvailable] false, the list state is the
+ * only state there is, so the list shows and the keyboard comes up as it did before the map state
+ * existed. The saved flow stays the map state, so back still leaves in one step.
+ */
+internal fun effectiveFlow(flow: SearchStopFlow, mapsAvailable: Boolean): SearchStopFlow =
+    if (mapsAvailable) flow else flow.copy(mode = SearchStopMode.List)
+
 private const val FLOW_SEPARATOR = "|"
 
 /**

@@ -95,6 +95,13 @@ internal fun toFromFieldLabel(role: String, placeholder: String, stopName: Strin
  * The slots are the caller's. The block only keeps the room for them and gives them the bar's
  * content colour, so the back arrow and the X read on whichever fill the bar has.
  *
+ * [toEditor] and [fromEditor] put a text field in the bar being edited, in place of its text, which
+ * is how Search Stop edits a stop where it is shown. A bar holding one has no tap target of its
+ * own, because the field takes the tap. [fromTrailing] stands in the go circle's column and
+ * [showGo] false leaves the column empty, so a From with no start has no go circle.
+ *
+ * [toPlaceholder] and [fromPlaceholder] are what an empty bar reads.
+ *
  * [showFrom] false hides the From bar (the beat after a label pill tap, before it animates in).
  * Because From is under To, showing it never moves To.
  */
@@ -111,6 +118,12 @@ internal fun ToFromBlock(
     isFromHighlighted: Boolean = false,
     toLeading: @Composable () -> Unit = {},
     toTrailing: (@Composable () -> Unit)? = null,
+    toPlaceholder: String = TO_PLACEHOLDER,
+    fromPlaceholder: String = FROM_PLACEHOLDER,
+    showGo: Boolean = true,
+    toEditor: (@Composable () -> Unit)? = null,
+    fromEditor: (@Composable () -> Unit)? = null,
+    fromTrailing: (@Composable () -> Unit)? = null,
 ) {
     val dim = KrailTheme.dimensions
     val fromBarColors = barColors(isEditing = ToFromField.From.hasDarkFill(editing))
@@ -130,15 +143,16 @@ internal fun ToFromBlock(
     Column(modifier = modifier.fillMaxWidth()) {
         ToFromBar(
             tag = TripPlannerTestTags.SEARCH_ROW_TO,
-            text = toStopItem?.stopName ?: TO_PLACEHOLDER,
+            text = toStopItem?.stopName ?: toPlaceholder,
             hasStop = toStopItem != null,
-            label = toFromFieldLabel(TO_ROLE, TO_PLACEHOLDER, toStopItem?.stopName),
+            label = toFromFieldLabel(TO_ROLE, toPlaceholder, toStopItem?.stopName),
             isEditing = ToFromField.To.hasDarkFill(editing),
             slideUp = false,
             animationLabel = "destinationText",
             onClick = onToClick,
             leading = toLeading,
             trailing = toTrailing,
+            editor = toEditor,
         )
 
         // The gap belongs to the From bar so a hidden From leaves no gap under To, and so the
@@ -152,9 +166,9 @@ internal fun ToFromBlock(
         ) {
             ToFromBar(
                 tag = TripPlannerTestTags.SEARCH_ROW_FROM,
-                text = fromStopItem?.stopName ?: FROM_PLACEHOLDER,
+                text = fromStopItem?.stopName ?: fromPlaceholder,
                 hasStop = fromStopItem != null,
-                label = toFromFieldLabel(FROM_ROLE, FROM_PLACEHOLDER, fromStopItem?.stopName),
+                label = toFromFieldLabel(FROM_ROLE, fromPlaceholder, fromStopItem?.stopName),
                 isEditing = ToFromField.From.hasDarkFill(editing),
                 slideUp = true,
                 animationLabel = "startingFromText",
@@ -173,7 +187,13 @@ internal fun ToFromBlock(
                         },
                     ),
                 leading = { OriginRing() },
-                trailing = { GoCircle(arrowColor = fromBarColors.container, onClick = onGoClick) },
+                trailing = fromTrailing
+                    ?: if (showGo) {
+                        { GoCircle(arrowColor = fromBarColors.container, onClick = onGoClick) }
+                    } else {
+                        null
+                    },
+                editor = fromEditor,
             )
         }
     }
@@ -181,8 +201,12 @@ internal fun ToFromBlock(
 
 private const val TO_ROLE = "To"
 private const val FROM_ROLE = "From"
-private const val TO_PLACEHOLDER = "Destination"
-private const val FROM_PLACEHOLDER = "Starting from"
+
+/** What an empty To bar reads. Shared with Search Stop, whose bar reads the same. */
+internal const val TO_PLACEHOLDER = "Choose destination"
+
+/** What an empty From bar reads. */
+internal const val FROM_PLACEHOLDER = "Choose starting point"
 
 /** The two surface colours a bar can have: white and near-black in light, swapped in dark (rule 33). */
 @Immutable
@@ -226,6 +250,7 @@ private fun ToFromBar(
     modifier: Modifier = Modifier,
     leading: @Composable () -> Unit = {},
     trailing: (@Composable () -> Unit)? = null,
+    editor: (@Composable () -> Unit)? = null,
 ) {
     val dim = KrailTheme.dimensions
     val colors = barColors(isEditing)
@@ -242,22 +267,35 @@ private fun ToFromBar(
                 modifier = Modifier
                     .fillMaxSize()
                     .testTag(tag)
-                    .klickable(onClick = onClick)
-                    .semantics(mergeDescendants = true) {
-                        contentDescription = label
-                        selected = isEditing
-                    },
+                    // A bar holding a text field is edited by tapping into the field, and a merged
+                    // label would stand over the field's own semantics, so it has neither.
+                    .then(
+                        if (editor == null) {
+                            Modifier
+                                .klickable(onClick = onClick)
+                                .semantics(mergeDescendants = true) {
+                                    contentDescription = label
+                                    selected = isEditing
+                                }
+                        } else {
+                            Modifier
+                        },
+                    ),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Spacer(modifier = Modifier.width(dim.iconXXXL + dim.spacingXS))
                 Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                    StopFieldText(
-                        text = text,
-                        hasStop = hasStop,
-                        colors = colors.text,
-                        slideUp = slideUp,
-                        label = animationLabel,
-                    )
+                    if (editor != null) {
+                        editor()
+                    } else {
+                        StopFieldText(
+                            text = text,
+                            hasStop = hasStop,
+                            colors = colors.text,
+                            slideUp = slideUp,
+                            label = animationLabel,
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.width(if (trailing != null) dim.iconXXXL else dim.spacingXL))
             }

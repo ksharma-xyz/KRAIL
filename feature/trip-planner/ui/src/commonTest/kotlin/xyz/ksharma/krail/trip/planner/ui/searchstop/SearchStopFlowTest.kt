@@ -125,6 +125,26 @@ class SearchStopFlowTest {
 
     // endregion
 
+    // region maps off
+
+    @Test
+    fun `with no map to open on the list is the state that draws, and the saved state stays the map state`() {
+        val drawn = effectiveFlow(opening, mapsAvailable = false)
+
+        assertEquals(SearchStopMode.List, drawn.mode)
+        assertEquals(SearchStopMode.Map, opening.mode, "Saved state is untouched so back still leaves in one step.")
+        assertTrue(opening.after(SearchStopFlowEvent.BackPressed).exit)
+    }
+
+    @Test
+    fun `with a map the saved state is the state that draws`() {
+        assertEquals(opening, effectiveFlow(opening, mapsAvailable = true))
+        val listing = opening.after(SearchStopFlowEvent.BarTapped).flow
+        assertEquals(listing, effectiveFlow(listing, mapsAvailable = true))
+    }
+
+    // endregion
+
     // region saving
 
     @Test

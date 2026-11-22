@@ -1,8 +1,13 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import xyz.ksharma.aagya.permission.PermissionStatus
+import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.trip.planner.ui.components.FROM_PLACEHOLDER
+import xyz.ksharma.krail.trip.planner.ui.components.TO_PLACEHOLDER
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.LABEL_TAP_RADIUS_KM
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 // The form at the top of Search Stop, rules 35 and 36 of `docs/MAP_HOME_UX.md`, and the location
@@ -29,7 +34,7 @@ internal fun barPlaceholderFor(
     fieldType: SearchStopFieldType,
     editTripLeg: Boolean,
 ): String = when (formShapeFor(fieldType, editTripLeg)) {
-    FormShape.ToAndFrom -> if (field == ToFromField.From) PLACEHOLDER_FROM else PLACEHOLDER_TO
+    FormShape.ToAndFrom -> if (field == ToFromField.From) FROM_PLACEHOLDER else TO_PLACEHOLDER
     FormShape.Single -> when {
         fieldType == SearchStopFieldType.LABEL -> PLACEHOLDER_LABEL
         fieldType == SearchStopFieldType.FROM -> PLACEHOLDER_CHANGE_ORIGIN
@@ -37,11 +42,9 @@ internal fun barPlaceholderFor(
     }
 }
 
-internal const val PLACEHOLDER_TO = "Choose destination"
-internal const val PLACEHOLDER_FROM = "Choose starting point"
-internal const val PLACEHOLDER_LABEL = "Choose a stop"
-internal const val PLACEHOLDER_CHANGE_ORIGIN = "Change origin"
-internal const val PLACEHOLDER_CHANGE_DESTINATION = "Change destination"
+private const val PLACEHOLDER_LABEL = "Choose a stop"
+private const val PLACEHOLDER_CHANGE_ORIGIN = "Change origin"
+private const val PLACEHOLDER_CHANGE_DESTINATION = "Change destination"
 
 /**
  * The go circle shows only when the trip can start: From has a start (rule 36, search section 5)
@@ -64,6 +67,30 @@ internal fun startToSendWith(
 ): StopItem? = autoFrom?.takeIf {
     shape == FormShape.ToAndFrom && editing == ToFromField.To && it.stopId != picked.stopId
 }
+
+/**
+ * Which field of the trip a pick is for. To and From edit the bar the rider is on, whichever field
+ * the screen was opened for. A single bar is always the field the route named.
+ */
+internal fun pickFieldFor(
+    shape: FormShape,
+    editing: ToFromField,
+    fieldType: SearchStopFieldType,
+): SearchStopFieldType = when {
+    shape == FormShape.Single -> fieldType
+    editing == ToFromField.From -> SearchStopFieldType.FROM
+    else -> SearchStopFieldType.TO
+}
+
+/**
+ * The stop that fills the From bar by itself: the nearest of [stops] to [location] within
+ * [LABEL_TAP_RADIUS_KM], the radius Home and Work use to plan from the rider (A18). Null when none
+ * is that near, so a rider far from every stop is asked for a start and never given a long walk.
+ */
+internal fun autoFromStop(location: LatLng, stops: List<NearbyStopFeature>): StopItem? =
+    nearestStopRows(location, stops, limit = 1, radiusKm = LABEL_TAP_RADIUS_KM)
+        .firstOrNull()
+        ?.let { StopItem(stopId = it.stopId, stopName = it.stopName) }
 
 /** What the location pill is and does, rule 24. */
 internal enum class LocationPill {

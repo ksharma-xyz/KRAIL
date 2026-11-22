@@ -294,8 +294,8 @@ class ToFromBlockLayoutTest {
     fun `an empty field is labelled with its own words`() {
         setBlock(to = null, from = null)
 
-        composeRule.onNodeWithTag(TO).assertContentDescriptionEquals("Destination")
-        composeRule.onNodeWithTag(FROM).assertContentDescriptionEquals("Starting from")
+        composeRule.onNodeWithTag(TO).assertContentDescriptionEquals("Choose destination")
+        composeRule.onNodeWithTag(FROM).assertContentDescriptionEquals("Choose starting point")
     }
 
     // endregion
@@ -412,6 +412,31 @@ class ToFromBlockLayoutTest {
 
     // endregion
 
+    // region what Search Stop fills in
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `with no go circle the From bar has no go column and no go tap target`() {
+        setBlock(showGo = false)
+
+        composeRule.onNodeWithTag(GO_CIRCLE).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_SEARCH).assertDoesNotExist()
+        composeRule.onNodeWithTag(FROM).assertExists()
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `an editor stands in for the bar's text and the bar keeps its size`() {
+        setBlock(toEditor = { Box(Modifier.size(1.dp).testTag(EDITOR_PROBE)) })
+
+        composeRule.onNodeWithTag(EDITOR_PROBE).assertExists()
+        composeRule.onNodeWithText(TOWN_HALL.stopName).assertDoesNotExist()
+        val height = boundsOf(TO).height.value
+        assertTrue(abs(height - BAR_HEIGHT_DP) < 0.5f, "A bar holding a field is a bar tall, not $height.")
+    }
+
+    // endregion
+
     // region harness
 
     private fun setBlock(
@@ -420,6 +445,8 @@ class ToFromBlockLayoutTest {
         from: StopItem? = CENTRAL,
         editing: MutableState<ToFromField?> = mutableStateOf(null),
         showFrom: MutableState<Boolean> = mutableStateOf(true),
+        showGo: Boolean = true,
+        toEditor: (@Composable () -> Unit)? = null,
         onTo: () -> Unit = {},
         onFrom: () -> Unit = {},
         onGo: () -> Unit = {},
@@ -435,6 +462,8 @@ class ToFromBlockLayoutTest {
                         onGoClick = onGo,
                         editing = editing.value,
                         showFrom = showFrom.value,
+                        showGo = showGo,
+                        toEditor = toEditor,
                         toLeading = { Box(Modifier.size(48.dp).testTag(TO_LEADING_PROBE)) },
                         toTrailing = { Box(Modifier.size(48.dp).testTag(TO_TRAILING_PROBE)) },
                     )
@@ -533,6 +562,8 @@ class ToFromBlockLayoutTest {
         const val TO = TripPlannerTestTags.SEARCH_ROW_TO
         const val FROM = TripPlannerTestTags.SEARCH_ROW_FROM
         const val GO_CIRCLE = TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE
+        const val EDITOR_PROBE = "toFromBlock.editorProbe"
+        const val BAR_HEIGHT_DP = 48f
         const val TO_LEADING_PROBE = "probe.to.leading"
         const val TO_TRAILING_PROBE = "probe.to.trailing"
         const val PHONE = "w411dp-h891dp"

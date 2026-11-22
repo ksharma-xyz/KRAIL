@@ -6,6 +6,8 @@ import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.CarParkBlock
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.ParkRideTile
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -269,6 +271,40 @@ class HomeMapPinsTest {
     fun `a stop key never opens a station and a station key never opens a stop`() {
         assertNull(homeCardFor(stopCardKey("2155384"), pins))
         assertNull(homeCardFor(parkRideCardKey("200070"), pins))
+    }
+
+    // endregion
+
+    // region the map state and the glyph
+
+    @Test
+    fun `a ready map takes the stops left after the labels and the P`() {
+        val ready = MapUiState.Ready(MapDisplay(nearbyStops = persistentListOf(townHall, wynyard)))
+
+        val replaced = ready.withNearbyStops(persistentListOf(wynyard))
+
+        assertIs<MapUiState.Ready>(replaced)
+        assertEquals(listOf("200080"), replaced.mapDisplay.nearbyStops.map { it.stopId })
+    }
+
+    @Test
+    fun `a map that is not ready has no stops to replace`() {
+        assertEquals(MapUiState.Loading, MapUiState.Loading.withNearbyStops(persistentListOf(townHall)))
+        val failed = MapUiState.Error("No tiles")
+        assertEquals(failed, failed.withNearbyStops(persistentListOf(townHall)))
+    }
+
+    @Test
+    fun `a label pin carries the first letter of its label`() {
+        assertEquals("H", labelGlyph("Home"))
+        assertEquals("W", labelGlyph("Work"))
+        assertEquals("U", labelGlyph("  uni"))
+    }
+
+    @Test
+    fun `a label with no letters still has a character`() {
+        assertEquals("?", labelGlyph(""))
+        assertEquals("?", labelGlyph("   "))
     }
 
     // endregion

@@ -81,6 +81,13 @@ fun SearchStopMap(
     onPermissionStatus: (PermissionStatus) -> Unit = {},
     onRequestPermission: () -> Unit = {},
     onMapTap: () -> Unit = {},
+    // A host that draws the stop card itself, above everything else, takes the pin taps here and the map
+    // opens none of its own. Null keeps the card on the map, as Search Stop draws it.
+    onStopPinTap: ((NearbyStopFeature) -> Unit)? = null,
+    // False where the rider's dot is the locate control and there is no button (`docs/MAP_HOME_UX.md` rule 20).
+    showsLocationButton: Boolean = true,
+    // More pins to draw between the stops and the rider's dot, such as the Park & Ride `P` and the labels.
+    extraLayers: @Composable () -> Unit = {},
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         when (mapUiState) {
@@ -103,6 +110,9 @@ fun SearchStopMap(
                     onPermissionStatus = onPermissionStatus,
                     onRequestPermission = onRequestPermission,
                     onMapTap = onMapTap,
+                    onStopPinTap = onStopPinTap,
+                    showsLocationButton = showsLocationButton,
+                    extraLayers = extraLayers,
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -144,6 +154,9 @@ private fun MapContent(
     onPermissionStatus: (PermissionStatus) -> Unit = {},
     onRequestPermission: () -> Unit = {},
     onMapTap: () -> Unit = {},
+    onStopPinTap: ((NearbyStopFeature) -> Unit)? = null,
+    showsLocationButton: Boolean = true,
+    extraLayers: @Composable () -> Unit = {},
 ) {
     log(
         "[NEARBY_STOPS_UI] MapContent rendered: nearbyStops.size=${mapState.mapDisplay.nearbyStops.size}, " +
@@ -216,10 +229,11 @@ private fun MapContent(
         // stays at the Sydney default seed. Only when a real fix arrives do we move to it.
         val userLocation = mapState.mapDisplay.userLocation
         val hasUserLocation = userLocation != null
-        var hasAutoCentered by remember { mutableStateOf(false) }
+        // Saved, so turning the phone never glides the camera back from where the rider panned it.
+        var hasAutoCentered by rememberSaveable { mutableStateOf(false) }
         LaunchedEffect(hasUserLocation) {
             val target = userLocation
-            if (target != null && !hasAutoCentered) {
+            if (target != null && shouldAutoCenter(hasUserLocation, hasAutoCentered)) {
                 hasAutoCentered = true
                 cameraState.animateTo(
                     CameraPosition(
@@ -256,9 +270,14 @@ private fun MapContent(
                 cameraState = cameraState,
                 ornamentTopPadding = ornamentTopPadding,
                 onStopSelected = { stop ->
-                    selectedStopId = stop.stopId
-                    onEvent(SearchStopUiEvent.NearbyStopClicked(stop))
+                    if (onStopPinTap != null) {
+                        onStopPinTap(stop)
+                    } else {
+                        selectedStopId = stop.stopId
+                        onEvent(SearchStopUiEvent.NearbyStopClicked(stop))
+                    }
                 },
+                extraLayers = extraLayers,
                 // A tap on the map closes an open card and is the whole of that tap. With none open it
                 // is the screen's first step back to the map state.
                 onMapTap = { if (selectedStopId != null) selectedStopId = null else onMapTap() },
@@ -266,27 +285,31 @@ private fun MapContent(
 
             // The location button, bottom end. All location business logic lives here, not inside
             // MapActionButtons.
-            MapActionButtons(
-                isLocationActive = mapState.mapDisplay.userLocation != null,
-                onLocationButtonClick = {
-                    onEvent(
-                        SearchStopUiEvent.LocationButtonClicked(hadLocation = mapState.mapDisplay.userLocation != null),
-                    )
-                    scope.launch {
-                        handleLocationButtonClick(
-                            userLoc = mapState.mapDisplay.userLocation,
-                            cameraState = cameraState,
-                            userLocationManager = userLocationManager,
-                            onPermissionDenied = onPermissionStatus,
-                            onRequestPermission = onRequestPermission,
+            if (showsLocationButton) {
+                MapActionButtons(
+                    isLocationActive = mapState.mapDisplay.userLocation != null,
+                    onLocationButtonClick = {
+                        onEvent(
+                            SearchStopUiEvent.LocationButtonClicked(
+                                hadLocation = mapState.mapDisplay.userLocation != null,
+                            ),
                         )
-                    }
-                },
-                // Rides above an open card, so the card never covers it.
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(bottom = if (selectedStop != null) controlsClearance(cardHeight) else 0.dp),
-            )
+                        scope.launch {
+                            handleLocationButtonClick(
+                                userLoc = mapState.mapDisplay.userLocation,
+                                cameraState = cameraState,
+                                userLocationManager = userLocationManager,
+                                onPermissionDenied = onPermissionStatus,
+                                onRequestPermission = onRequestPermission,
+                            )
+                        }
+                    },
+                    // Rides above an open card, so the card never covers it.
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(bottom = if (selectedStop != null) controlsClearance(cardHeight) else 0.dp),
+                )
+            }
 
             // The floating stop card, over the map and never a sheet.
             selectedStop?.let { stop ->
@@ -358,6 +381,7 @@ private fun MapSurface(
     onStopSelected: (NearbyStopFeature) -> Unit,
     onMapTap: () -> Unit,
     modifier: Modifier = Modifier,
+    extraLayers: @Composable () -> Unit = {},
 ) {
     // LATCH the "has had a real size" flag — never reset it to false. During a rotation the
     // container momentarily reports a 0 axis (the adaptive window flips through 840×0dp);
@@ -413,6 +437,8 @@ private fun MapSurface(
                         },
                     )
                 }
+
+                extraLayers()
 
                 // Render user location as red circle (always on top)
                 UserLocationLayer(

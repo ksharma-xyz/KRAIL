@@ -8,6 +8,7 @@ import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.ParkRideTile
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.directionsTarget
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 
 // Which pins the home map draws and what a tap on each one opens, `docs/MAP_HOME_UX.md` rule 30 and the
@@ -126,6 +127,22 @@ internal fun homePinsFor(
         labels = labels.toImmutableList(),
     )
 }
+
+/**
+ * The map state with its stops replaced by [stops], the ones left after the labels and the `P` took
+ * theirs. Anything that is not ready has no stops to replace and comes back as it was.
+ */
+internal fun MapUiState.withNearbyStops(stops: ImmutableList<NearbyStopFeature>): MapUiState =
+    if (this is MapUiState.Ready) copy(mapDisplay = mapDisplay.copy(nearbyStops = stops)) else this
+
+/**
+ * The one character a label pin carries: the label's first letter, upper case, since a map cannot be
+ * trusted to draw an emoji. A label with no letters at all still gets a character, so a pin is never blank.
+ */
+internal fun labelGlyph(label: String): String =
+    label.trim().firstOrNull()?.uppercase() ?: BLANK_LABEL_GLYPH
+
+private const val BLANK_LABEL_GLYPH = "?"
 
 /** A label pin as the stop it stands for, with the modes the local table was not asked for left empty. */
 internal fun LabelPin.toStopFeature(): NearbyStopFeature = NearbyStopFeature(

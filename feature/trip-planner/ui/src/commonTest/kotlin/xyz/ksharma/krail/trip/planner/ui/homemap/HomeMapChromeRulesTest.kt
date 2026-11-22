@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.homemap
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.connectivity.TransportState
 import xyz.ksharma.krail.trip.planner.ui.searchstop.LocationPill
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.shouldAutoCenter
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

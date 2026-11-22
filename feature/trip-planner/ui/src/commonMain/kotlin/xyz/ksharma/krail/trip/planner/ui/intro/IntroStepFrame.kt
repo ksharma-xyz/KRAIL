@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.Constraints
@@ -63,35 +64,59 @@ internal fun IntroStepFrame(
     val rhythm = introRhythm(dim)
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val zone = maxHeight
-        Layout(
-            content = {
-                Box(
-                    modifier = Modifier.padding(
-                        start = dim.pageHorizontalPadding,
-                        end = dim.pageHorizontalPadding,
-                        top = rhythm.top,
-                        bottom = rhythm.titleToMiddle,
-                    ),
-                ) {
-                    headline()
-                }
-                Box(modifier = Modifier.fillMaxWidth().padding(bottom = rhythm.middleBottom)) { middle() }
-            },
-            modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
-        ) { measurables, constraints ->
-            val loose = Constraints(maxWidth = constraints.maxWidth)
-            val headlinePlaceable = measurables[0].measure(loose)
-            val middlePlaceable = measurables[1].measure(loose)
-            val zonePx = zone.roundToPx()
-            val middleTop = if (centreMiddle) {
-                introMiddleTop(zonePx, headlinePlaceable.height, middlePlaceable.height)
-            } else {
-                headlinePlaceable.height
-            }
-            layout(constraints.maxWidth, max(zonePx, middleTop + middlePlaceable.height)) {
-                headlinePlaceable.place(0, 0)
-                middlePlaceable.place(0, middleTop)
-            }
+        // The headline's room, which it reads to keep its widest word whole in the narrowest windows.
+        val headlineRoom = maxWidth - dim.pageHorizontalPadding * 2
+        CompositionLocalProvider(LocalHeadlineRoom provides headlineRoom) {
+            IntroFrameLayout(
+                zone = zone,
+                centreMiddle = centreMiddle,
+                headline = {
+                    Box(
+                        modifier = Modifier.padding(
+                            start = dim.pageHorizontalPadding,
+                            end = dim.pageHorizontalPadding,
+                            top = rhythm.top,
+                            bottom = rhythm.titleToMiddle,
+                        ),
+                    ) {
+                        headline()
+                    }
+                },
+                middle = {
+                    Box(modifier = Modifier.fillMaxWidth().padding(bottom = rhythm.middleBottom)) { middle() }
+                },
+            )
+        }
+    }
+}
+
+// The two zones in one scrolling column: the headline at the top, and the middle just under it or centred in the room.
+@Composable
+private fun IntroFrameLayout(
+    zone: Dp,
+    centreMiddle: Boolean,
+    headline: @Composable () -> Unit,
+    middle: @Composable () -> Unit,
+) {
+    Layout(
+        content = {
+            headline()
+            middle()
+        },
+        modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+    ) { measurables, constraints ->
+        val loose = Constraints(maxWidth = constraints.maxWidth)
+        val headlinePlaceable = measurables[0].measure(loose)
+        val middlePlaceable = measurables[1].measure(loose)
+        val zonePx = zone.roundToPx()
+        val middleTop = if (centreMiddle) {
+            introMiddleTop(zonePx, headlinePlaceable.height, middlePlaceable.height)
+        } else {
+            headlinePlaceable.height
+        }
+        layout(constraints.maxWidth, max(zonePx, middleTop + middlePlaceable.height)) {
+            headlinePlaceable.place(0, 0)
+            middlePlaceable.place(0, middleTop)
         }
     }
 }

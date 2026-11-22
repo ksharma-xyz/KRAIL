@@ -14,8 +14,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopDisplay
 
-/** The confirm screen's question as short lines, with the key word, trip, last and heaviest. */
-internal val CONFIRM_HEADLINE = listOf("Save", "this trip")
+/** The confirm screen's question, in two lines, a complete plain question. */
+internal val CONFIRM_HEADLINE = listOf("Save this", "trip?")
 
 /** The confirm headline as one phrase, which a screen reader reads as the heading. */
 internal val CONFIRM_HEADING = introHeadlinePhrase(CONFIRM_HEADLINE)

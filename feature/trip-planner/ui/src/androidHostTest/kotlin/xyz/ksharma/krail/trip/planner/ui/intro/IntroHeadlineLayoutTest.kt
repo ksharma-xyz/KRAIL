@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 import android.content.Context
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Modifier
@@ -63,8 +64,11 @@ class IntroHeadlineLayoutTest {
         RuntimeEnvironment.setFontScale(fontScale)
         composeRule.setContent {
             PreviewTheme {
-                Box(modifier = Modifier.width(widthDp.dp)) {
-                    IntroHeadline(lines = lines.value, emphasisIndex = lines.value.lastIndex, emoji = "")
+                // The frame tells a headline its room, so the narrowest windows hold it just under its style.
+                CompositionLocalProvider(LocalHeadlineRoom provides widthDp.dp) {
+                    Box(modifier = Modifier.width(widthDp.dp)) {
+                        IntroHeadline(lines = lines.value, emphasisIndex = lines.value.lastIndex, emoji = "")
+                    }
                 }
             }
         }
@@ -137,11 +141,23 @@ class IntroHeadlineLayoutTest {
     }
 
     @Test
-    fun `with text at 200 percent the headline is drawn at the ceiling, and at 100 percent at the real scale`() {
-        start(NARROW_ROOM_DP, 2.0f)
+    fun `with text at 200 percent the headline is drawn at the ceiling, held lower only in the narrowest room`() {
+        start(PHONE_ROOM_DP, 2.0f)
         show(PICK_THEME_HEADLINE)
 
         assertEquals(HEADLINE_FONT_SCALE_CEILING, drawnLayouts().first().layoutInput.density.fontScale)
+    }
+
+    @Test
+    fun `at 320 dp and 200 percent the headline is held just under its style so the widest word is whole`() {
+        start(NARROW_ROOM_DP, 2.0f)
+        show(PICK_THEME_HEADLINE)
+
+        assertEquals(
+            headlineFontScale(2.0f, NARROW_ROOM_DP.dp),
+            drawnLayouts().first().layoutInput.density.fontScale,
+        )
+        assertTrue(drawnLayouts().first().layoutInput.density.fontScale < 1f)
     }
 
     @Test
@@ -159,7 +175,10 @@ class IntroHeadlineLayoutTest {
 
     // The test environment's text layout does not follow the font scale, so the width at a larger text size is measured
     // by asking for the size itself: the headline's size at that scale, drawn at scale 1.
-    private fun widestWordDp(scale: Float): Float {
+    private fun widestWordDp(scale: Float): Float =
+        everyHeadline.flatten().flatMap { it.split(" ") }.distinct().maxOf { widestWordDp(scale, it) }
+
+    private fun widestWordDp(scale: Float, word: String): Float {
         val density = Density(DENSITY, 1f)
         val measurer = TextMeasurer(
             defaultFontFamilyResolver = createFontFamilyResolver(ApplicationProvider.getApplicationContext<Context>()),
@@ -167,20 +186,17 @@ class IntroHeadlineLayoutTest {
             defaultLayoutDirection = LayoutDirection.Ltr,
         )
         val style = TextStyle(fontSize = (BASE_SP * HEADLINE_SIZE_FACTOR * scale).sp, fontWeight = FontWeight.Black)
-        return everyHeadline.flatten().flatMap { it.split(" ") }.map { introHeadlineDisplay(it) }.distinct()
-            .maxOf { word ->
-                measurer.measure(
-                    text = AnnotatedString(word),
-                    style = style,
-                    softWrap = false,
-                    constraints = Constraints(),
-                ).size.width / DENSITY
-            }
+        return measurer.measure(
+            text = AnnotatedString(introHeadlineDisplay(word)),
+            style = style,
+            softWrap = false,
+            constraints = Constraints(),
+        ).size.width / DENSITY
     }
 
     @Test
     fun `at the ceiling the widest word of any headline fits 320 dp with a twelfth to spare, so a font that is a little wider still does`() {
-        val widest = widestWordDp(headlineFontScale(2.0f))
+        val widest = widestWordDp(headlineFontScale(2.0f, NARROW_ROOM_DP.dp))
 
         assertTrue(widest * FONT_MARGIN <= NARROW_ROOM_DP, "the widest word is $widest dp in $NARROW_ROOM_DP dp")
     }
@@ -191,7 +207,23 @@ class IntroHeadlineLayoutTest {
             widestWordDp(2.0f) > NARROW_ROOM_DP,
             "200 percent fits without a ceiling, so the ceiling is not needed",
         )
-        assertTrue(widestWordDp(HEADLINE_FONT_SCALE_CEILING) < NARROW_ROOM_DP)
+        assertTrue(widestWordDp(HEADLINE_FONT_SCALE_CEILING) < PHONE_ROOM_DP, "the ceiling fits a phone's room")
+    }
+
+    @Test
+    fun `the widest word, TRANSPORT, is wider than the narrowest room at the ceiling, which is why the room holds the scale lower`() {
+        val widestWord = everyHeadline.flatten().flatMap { it.split(" ") }.maxBy { widestWordDp(1f, it) }
+
+        assertEquals("transport", widestWord)
+        assertTrue(widestWordDp(HEADLINE_FONT_SCALE_CEILING) > NARROW_ROOM_DP, "TRANSPORT now fits at the ceiling alone")
+    }
+
+    @Test
+    fun `no word of any headline is wider than the number the room cap is built on`() {
+        assertTrue(
+            widestWordDp(1f) <= WIDEST_HEADLINE_WORD_DP,
+            "a word is ${widestWordDp(1f)} dp wide at 1.0, over WIDEST_HEADLINE_WORD_DP",
+        )
     }
 
     @Test

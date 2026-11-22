@@ -119,12 +119,12 @@ class IntroThemeChoicesTest {
     }
 
     @Test
-    fun `before a choice the headline asks for the colour, and the key word is the last line`() {
+    fun `before a choice the headline is the plain question about the favourite transport mode, in four lines`() {
         val headline = introThemeHeadline(null)
 
-        assertEquals(listOf("Pick", "your ride", "colour"), headline.lines)
-        assertEquals("colour", headline.lines[headline.emphasisIndex])
-        assertEquals("Pick your ride colour", PICK_THEME_HEADING)
+        assertEquals(listOf("What's your", "favourite", "transport mode", "in Sydney?"), headline.lines)
+        assertEquals("in Sydney?", headline.lines[headline.emphasisIndex])
+        assertEquals("What's your favourite transport mode in Sydney?", PICK_THEME_HEADING)
         assertEquals(headline, introThemeHeadline(NOT_A_THEME), "an id that is not offered is no choice")
     }
 

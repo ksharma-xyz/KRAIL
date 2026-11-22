@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.test.Test
@@ -15,18 +16,18 @@ class IntroHeadlineDisplayTest {
     @Test
     fun `every line is drawn in capitals, from the words as they are written`() {
         val table = listOf(
-            Row("Pick", "PICK"),
-            Row("your ride", "YOUR RIDE"),
-            Row("colour", "COLOUR"),
-            Row("Driving", "DRIVING"),
-            Row("to the", "TO THE"),
-            Row("station", "STATION"),
-            Row("Where do", "WHERE DO"),
-            Row("you go", "YOU GO"),
-            Row("often", "OFTEN"),
-            Row("you start", "YOU START"),
-            Row("Save", "SAVE"),
-            Row("this trip", "THIS TRIP"),
+            Row("Do you drive", "DO YOU DRIVE"),
+            Row("to the station?", "TO THE STATION?"),
+            Row("Where are", "WHERE ARE"),
+            Row("you going?", "YOU GOING?"),
+            Row("Where are you", "WHERE ARE YOU"),
+            Row("leaving from?", "LEAVING FROM?"),
+            Row("Save this", "SAVE THIS"),
+            Row("trip?", "TRIP?"),
+            Row("What's your", "WHAT'S YOUR"),
+            Row("favourite", "FAVOURITE"),
+            Row("transport mode", "TRANSPORT MODE"),
+            Row("in Sydney?", "IN SYDNEY?"),
             Row("On the track,", "ON THE TRACK,"),
             Row("no lookin' back!", "NO LOOKIN' BACK!"),
             Row("Hoppin' the concrete jungle!", "HOPPIN' THE CONCRETE JUNGLE!"),
@@ -112,6 +113,32 @@ class IntroHeadlineDisplayTest {
         assertTrue(
             HEADLINE_FONT_SCALE_CEILING > 1f,
             "the ceiling must let the headline grow with a larger text size at all",
+        )
+    }
+
+    @Test
+    fun `in a room too narrow for the widest word the headline is held lower, and in any other room it is the ceiling alone`() {
+        val narrow = 288.dp
+        val heldAt = narrow.value / (WIDEST_HEADLINE_WORD_DP * HEADLINE_WORD_MARGIN)
+        val table = listOf(
+            // system scale, room, drawn
+            Triple(1f, narrow, heldAt),
+            Triple(2f, narrow, heldAt),
+            Triple(0.85f, narrow, 0.85f),
+            Triple(1f, 328.dp, 1f),
+            Triple(2f, 328.dp, HEADLINE_FONT_SCALE_CEILING),
+            Triple(2f, 379.dp, HEADLINE_FONT_SCALE_CEILING),
+            Triple(2f, 480.dp, HEADLINE_FONT_SCALE_CEILING),
+            Triple(2f, Dp.Unspecified, HEADLINE_FONT_SCALE_CEILING),
+        )
+
+        table.forEach { (system, room, drawn) ->
+            assertEquals(drawn, headlineFontScale(system, room), "at $system in $room")
+        }
+        assertTrue(heldAt in 0.9f..1f, "the narrowest room holds the headline just under its style: $heldAt")
+        assertTrue(
+            WIDEST_HEADLINE_WORD_DP * headlineFontScale(2f, narrow) * HEADLINE_WORD_MARGIN <= narrow.value + 0.01f,
+            "the widest word is not whole with a twelfth to spare in the narrowest room",
         )
     }
 }

@@ -69,8 +69,8 @@ internal fun taglineLines(tagLine: String): List<String> {
 /** What the theme screen's headline says: its lines and the one with the key word. */
 internal data class IntroThemeHeadline(val lines: List<String>, val emphasisIndex: Int)
 
-/** Before a choice, the question as a few short lines with the key word last. */
-internal val PICK_THEME_HEADLINE = listOf("Pick", "your ride", "colour")
+/** Before a choice, the question in four lines, a complete plain question. */
+internal val PICK_THEME_HEADLINE = listOf("What's your", "favourite", "transport mode", "in Sydney?")
 
 /** The whole headline as one phrase, which a screen reader reads as the heading. */
 internal val PICK_THEME_HEADING = introHeadlinePhrase(PICK_THEME_HEADLINE)

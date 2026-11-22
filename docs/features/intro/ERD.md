@@ -406,7 +406,7 @@ fun IntroState.toOutcome(stopsWait: StopsWait, declined: Boolean = false): Intro
   `Search another stop`, their previews) and the old search hand-off (`IntroSearchResult`, `IntroSearchResultEffect`, the
   `onNavigateToSearchStop` parameter of `IntroFlowRoute` and `IntroEntry`) are gone: nothing opens Search Stop from the Intro now, so
   the result bus is not used by it.
-- **The confirm screen, as built.** `IntroConfirmStepContent`: `IntroHeadline` ("Save", "this trip", the key word trip, with the star
+- **The confirm screen, as built.** `IntroConfirmStepContent`: `IntroHeadline` ("Save this", "trip?" since unit U9, with the star
   from `introEmojiFor`) and the real `SavedTripCard` with `editing = true`, so it keeps its shape, theme tint and the two names
   stacked and has no click and no ripple. It is given only ids and names and never a label, so it has no badges. It sits in the
   centred middle zone, so the screen is empty space around it. A screen reader reads the tile once, as `From <start> to <end>`
@@ -438,8 +438,8 @@ three zone frame, and everything it decides is in pure functions with table test
   (#F6891F, #009B77, #00B5EF, #5AB031), so the badge and the recolour cannot disagree. The two fun themes stay in Settings, and Light rail and Coach have a colour in the app
   but no theme (no id and no tagline), so they are not offered. There is no cycle: the left button and `nextThemeChoice` are
   gone, and the badges are the only way to choose.
-- **The headline.** Before a choice it is `Pick`, `your ride`, `colour`, with the key word last, no question mark, no
-  exclamation mark and no colon. After a choice it is that theme's `KrailThemeStyle.tagLine`, shown exactly as the app wrote it,
+- **The headline.** Before a choice it is `What's your`, `favourite`, `transport mode`, `in Sydney?` (unit U9, a complete plain question),
+  with no exclamation mark and no colon. After a choice it is that theme's `KrailThemeStyle.tagLine`, shown exactly as the app wrote it,
   split by `taglineLines` after its first comma (one line when there is none, and the lines joined with a space are the
   tagline again). When the selection changes after the first entrance, the old headline fades out while the new one fades in and
   rises 16 dp in one 350 ms move with no overshoot (unit U8, `headlineChangeSpec`), and nothing enters line by line again. The emoji is `introEmojiFor(THEME, selectedThemeId)`: the scooter before a choice, then the train, metro, bus or ferry of the chosen badge. `IntroHeadline` has `minLines`: the headline keeps the height of the
@@ -518,6 +518,21 @@ that Park & Ride asks "No thanks" and "Yes, show me free spots" is superseded by
   hands to the finale. `IntroState.canFinish()` is the theme screen with a theme chosen. `skipped` is true only when the decision is
   DECLINED (and nothing was saved). A finish with no decision recorded, such as after the process was killed on the theme screen, writes
   no trip and is not skipped, because `tripDecision` is not saved with the screen: a later unit decides whether to save it.
+- **The headlines.** Five complete plain questions, all drawn in capitals as before: Park & Ride `Do you drive` / `to the station?`,
+  destination `Where are` / `you going?`, origin `Where are you` / `leaving from?`, confirm `Save this` / `trip?`, and the theme
+  screen before a pick `What's your` / `favourite` / `transport mode` / `in Sydney?` (after a pick the chosen theme's tagline replaces
+  it, as before). The question mark is allowed on the last line of these five and nowhere else, and the apostrophe is allowed. Each
+  line is its own block that wraps by itself, so `transport mode` is `TRANSPORT` over `MODE` in the narrow rooms and one line in a wide
+  one, and the theme headline's reserved height is still measured from the longest of its variants as drawn
+  (`themeHeadlineVariants`, `reservedHeadlineLines`), so nothing under it moves. The five line alternative
+  (`transport` / `mode in` / `Sydney?`) was not used, because it does not change the one thing that matters: the word TRANSPORT.
+  **TRANSPORT is 278 dp wide for each 1.0 of scale on the test font (CONCRETE is 242, FAVOURITE 247), so at the existing ceiling of
+  1.05 it is 292 dp and does not fit the 288 dp room of a 320 dp window, with or without the twelfth to spare.** The ceiling alone
+  cannot fix it without drawing every headline smaller than its style on every phone, so `headlineFontScale(systemScale, room)`
+  also holds the scale at `room / (WIDEST_HEADLINE_WORD_DP * 1.08)` where the room is that narrow: 0.94 in 288 dp, and no effect
+  from about 330 dp (a 360 dp phone) up, where the ceiling alone is used. The room comes from `IntroStepFrame` through
+  `LocalHeadlineRoom`. `IntroHeadlineLayoutTest` reads the real layouts at 288 dp (200 percent), a phone and a wide window, and fails
+  if any word is wider than `WIDEST_HEADLINE_WORD_DP`.
 - **`finishedOn`.** The finish is now on the theme screen, after the trip screens, so `IntroStep.THEME` maps to `first_trip`, the value the
   finish always had. `park_ride` is left for a finish from the Park & Ride screen, which no flow reaches.
 - **Analytics screen names.** `view_screen` keeps the two existing names and the theme screen keeps `Intro`, so no screen name is added.
@@ -635,7 +650,7 @@ where it changes something an earlier unit said, the earlier text is edited to m
   `shown = state.selectedStop != null`. No row is selected on open. `IntroState.selectedStop` (state module, not saved) holds the
   tapped stop, `SelectStop` sets it, `ConfirmStop` chooses it and moves on, and a different typed text drops it. `IntroStopRow` takes
   `selected` (it was `highlighted`) and the first row of the list carries `intro.stop.first`, a tag that does not depend on the stop,
-  for a flow that only needs to select one. The wording guard allows a question mark in exactly the two question headlines.
+  for a flow that only needs to select one. The wording guard allowed a question mark in exactly the two question headlines (unit U9 makes it the five).
   Alternative wordings, for the record and not used: for the destination `Going where?`, `Where are you headed?`, `Where to today?`
   and `Pick a place`; for the origin `Starting where?`, `Where are you now?`, `Where do you start?` and `Pick where you begin`. The
   two chosen are the shortest, which is what fits one word to a line at the big headline size at 320 dp.
@@ -1088,9 +1103,9 @@ the theme screen, and unit R3 the other three.
 
 Every screen has three zones:
 
-- **Top, the headline.** Two to four short lines, left aligned, no question mark except the two stop questions, in `typography.introTagline`, with the key
+- **Top, the headline.** Two to four short lines, left aligned, each a complete plain question ending in one question mark (unit U9), in `typography.introTagline`, with the key
   word on its own line, every line at the heaviest weight, drawn in capitals at 1.7 times the style (see section 3, Headline). The Park & Ride
-  headline is "Driving", "to the", "station", the key word being "station", drawn DRIVING, TO THE, STATION. No colour is used for emphasis, so nothing competes with the theme colour on the primary button. Lines wrap
+  headline is "Do you drive", "to the station?" (unit U9), drawn DO YOU DRIVE, TO THE STATION?. No colour is used for emphasis, so nothing competes with the theme colour on the primary button. Lines wrap
   rather than shrink at a large text size.
 - **Middle, the thing to decide.** Centred in the room under the headline. When the text is large or the screen is short it
   scrolls with the headline, so nothing is clipped or out of reach.
@@ -1100,7 +1115,7 @@ Every screen has three zones:
 
 | State | What the rider sees |
 |---|---|
-| Opening | The headline `Where to?` (destination) or `Where from?` (origin), an empty field showing "Choose destination" or "Choose starting point", then five rows with none selected. No button, and its room is kept. The keyboard is not up. |
+| Opening | The headline `Where are` and `you going?` (destination) or `Where are you` and `leaving from?` (origin), an empty field showing "Choose destination" or "Choose starting point", then five rows with none selected. No button, and its room is kept. The keyboard is not up. |
 | Rider taps the field | The field takes the focus and the keyboard opens. Nothing is chosen. |
 | Rider taps a row | That row is selected (the activated tint, announced as selected) and the one button `Yes, this one` fades in, in its kept room. The keyboard, if up, goes. The screen stays. |
 | Rider taps another row | The selection moves to it. |
@@ -1114,7 +1129,7 @@ Every screen has three zones:
 
 | State | What the rider sees |
 |---|---|
-| Opening | The headline "Save this trip" with the star, then the trip as the real saved trip tile in the middle, the two names stacked on the theme tint. The star pops, wobbles once and throws a burst of shapes in the theme colour, 800 ms in all, then rests. Bar: `Not now`, `Yes, save it` |
+| Opening | The headline "Save this" and "trip?" with the star, then the trip as the real saved trip tile in the middle, the two names stacked on the theme tint. The star pops, wobbles once and throws a burst of shapes in the theme colour, 800 ms in all, then rests. Bar: `Not now`, `Yes, save it` |
 | Reduced motion | The star fades in and rests. No burst |
 | Stops loading | `Yes, save it` is off and `Not now` is on |
 | `Yes, save it` | The trip is written and the Intro ends at Saved Trips, as before |
@@ -1149,8 +1164,8 @@ width (`introBarPlan`, a pure function of the widths, so a table test holds it).
 make a row fit, except the one rule below. A screen with nothing to decide has no bar.
 
 - **Wording.** No button or string in the Intro uses Skip, Skip for now, Later, Maybe later, Next, Continue or Done, and none
-  uses a question mark, an exclamation mark, a colon, an em dash, an arrow or a middle dot, with one exception: the lines of the
-  destination and origin headlines are questions, so `to?` and `from?` have a question mark, and nothing else does
+  uses a question mark, an exclamation mark, a colon, an em dash, an arrow or a middle dot, with one exception: the last lines of the
+  five headlines are questions, so they end in a question mark, and nothing else does (unit U9; the apostrophe is allowed)
   (`IntroBannedWordsTest` and `IntroCopyTest`, unit U8). Every button is an answer to the
   question on the screen. `IntroBannedWordsTest` reads every string literal in the Intro sources and every string resource they
   name, and `IntroCopyTest` checks every label the bar can show.
@@ -1180,7 +1195,7 @@ make a row fit, except the one rule below. A screen with nothing to decide has n
 
 | State | The rider sees |
 |---|---|
-| None chosen | The headline `Pick`, `your ride`, `colour` and the four badges, drifting. Bar: nothing, and its room is kept, so the button is neither visible nor disabled |
+| None chosen | The headline `What's your`, `favourite`, `transport mode`, `in Sydney?` and the four badges, drifting. Bar: nothing, and its room is kept, so the button is neither visible nor disabled |
 | A theme selected | The whole app in that theme's colour, the headline now that theme's tagline, the selected badge dancing and the others drifting. Bar: the one button `Yes, this one` fades in over 250 ms in the kept room, in that theme's colour, and it ends the Intro. With reduced motion it appears at once. When the rider said yes to saving the trip and the stops are still loading, the button is off until they are Ready or Failed |
 | Reduced motion, preview or screenshot | The same, with nothing moving: the selected badge lifted 4 dp |
 | 320 dp at 200 percent text | The four badges in a column, one to a row, each about 102 dp and a full touch target, centred. The bar, once there is a pick, is the one button across the window, whole. The middle zone scrolls with the headline |
@@ -1243,7 +1258,7 @@ The shell, as built (`IntroFlowScreen`, stateless, in `intro`):
 
 Step 1, as built (`IntroParkRideStepContent`), where this document was silent:
 
-- The headline is `IntroHeadline` with the lines "Driving", "to the", "station", and a car emoji above it.
+- The headline is `IntroHeadline` with the lines "Do you drive", "to the station?" (unit U9), and a car emoji above it.
   A heading stands alone, so nothing is written under it.
 - The two answers are the decision bar and nothing else on the screen is a button. The theme colour is on the right button
   only.
@@ -1556,6 +1571,11 @@ in `searchstop/` touched:
   Every test that finished from the confirm screen now finishes by answering, choosing a theme and pressing the theme button
   (`IntroRig.answerAndFinish`). Deleted on purpose: the test that the confirm screen's yes waits for loading stops, and the test that the
   theme screen's button is never disabled, because the wait moved to the theme screen and only applies after a yes to saving.
+- **U9 tests, the headlines.** `IntroCopyTest` and `IntroBannedWordsTest` (a question mark only at the end of the last line of the five headlines, the
+  apostrophe allowed, every other banned glyph and word still caught, a lead line with a question mark caught), `IntroHeadlineDisplayTest` (the new lines
+  in capitals, and `headlineFontScale` in a room: held lower in 288 dp, the ceiling alone from 328 dp up), `IntroHeadlineMotionTest` and
+  `IntroThemeChoicesTest` (the exact lines and phrases), and `IntroHeadlineLayoutTest` (real layouts: the widest word is TRANSPORT, wider than 288 dp at
+  the ceiling alone and whole with a twelfth to spare at the held scale, no word split, cut or wider than `WIDEST_HEADLINE_WORD_DP`).
 - **U9 tests, the Park & Ride buttons.** `IntroBarTest` (Yes and No shown, the phrases spoken, the visible word starts the phrase, every other button says what it
   shows), `IntroDecisionBarTest` (the answers are the one words at every text size and stay in one row at 288 dp and 200 percent, the phrase is the
   description, the stacking rule is held on the card bar) and `IntroParkRideStepNarrowTest`. Deleted on purpose: the tests of the compact label
@@ -1687,6 +1707,8 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | U9-6 | The origin screen's emoji is place 8 of the list, a number of its own | It was the screen's position plus 5, and the new order moves that position. Place 8 keeps the same emoji it had | Default, not yet seen by owner |
 | U9-7 | A Settings replay shows the Intro in the rider's current colour until the last screen, and not the default theme | The spec said default until the last screen, which is true of a first run. Forcing the default on a replay would recolour the whole app for the length of the Intro and back | Default, not yet seen by owner |
 | U9-8 | The Park & Ride answers show `Yes` and `No`, and `IntroBarAction` gets a `spokenLabel`. `compactLabel`, `visibleLabel` and the two compact constants are deleted | A button now shows one word and says a longer phrase at every size, which the old compact rule could not express, and nothing else used the compact form | Default, not yet seen by owner |
+| U9-9 | The five headlines are complete plain questions, and the longest word, TRANSPORT, is kept whole in a 320 dp window by holding the headline scale lower there only (0.94 in 288 dp, none from about 330 dp) | TRANSPORT does not fit 288 dp at the 1.05 ceiling (292 dp). The five line variant does not help, because it is the word that is wide. Lowering the ceiling would shrink every headline on every phone. If a 320 dp window is not worth a smaller headline, the alternative is to let that window scroll sideways, which the Intro never does, or to reword | Default, not yet seen by owner |
+| U9-10 | The headline room is given by the screen frame to its headline through `LocalHeadlineRoom`, and the headline reads it | The room is only known at layout, and the frame already measures it. A headline outside a frame, such as in a preview, has the ceiling alone | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

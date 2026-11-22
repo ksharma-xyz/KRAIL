@@ -5,8 +5,8 @@ import androidx.compose.ui.Modifier
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 
-/** The headline, a line to a thought, with the key word last and heaviest. */
-internal val PARK_RIDE_HEADLINE = listOf("Driving", "to the", "station")
+/** The question, in two lines, a complete plain question. */
+internal val PARK_RIDE_HEADLINE = listOf("Do you drive", "to the station?")
 
 /** The whole headline as one phrase, which a screen reader reads as the heading. */
 internal val PARK_RIDE_HEADING = introHeadlinePhrase(PARK_RIDE_HEADLINE)

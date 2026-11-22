@@ -1,16 +1,17 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -53,21 +54,22 @@ internal const val STOP_NO_MATCH = "No match found"
  * - **No match.** The list is replaced by one line, and nothing is selected.
  * - **Stops not ready.** Nothing differs on screen: the suggestions are bundled with the app, and the field takes
  *   text and finds nothing until the stops are ready, with no message.
- *
- * The middle starts straight under the headline and does not centre, so the field and the rows never move when
- * their own number changes. The whole screen scrolls above the pinned bar, so with the keyboard up or large text
- * every row can still be reached.
+ * - **The ground.** [ground] is the colour of the window behind the screen, which the sticky field is opaque in.
+ * - **The frame.** One list that scrolls as a whole (`IntroStickyStopFrame`): the emoji and the headline, the field, which
+ *   sticks at the top of the screen when the rider scrolls, and the rows, which slide under it. So with the keyboard up or
+ *   large text every row can still be reached, and the field is always in reach.
  */
 @Composable
 internal fun IntroStopStepContent(
     state: IntroState,
     suggestedStops: SuggestedStops,
     onEvent: (IntroUiEvent) -> Unit,
+    ground: Color,
     modifier: Modifier = Modifier,
 ) {
     val headline = introStopHeadline(state.step) ?: return
     val rows = state.stopRows(suggestedStops)
-    IntroStepFrame(
+    IntroStickyStopFrame(
         headline = {
             IntroHeadline(
                 lines = headline.lines,
@@ -75,28 +77,31 @@ internal fun IntroStopStepContent(
                 emoji = introEmojiFor(state.step),
             )
         },
-        modifier = modifier,
-        centreMiddle = false,
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
+        bar = {
             IntroStopField(
                 step = state.step,
                 startText = state.query,
                 onEvent = onEvent,
             )
-            if (state.search == IntroSearchPhase.NoMatch) {
-                IntroStopNoMatch()
-            } else {
-                IntroStopList(
-                    rows = rows,
-                    modes = state.stopModes,
-                    selectedStopId = state.selectedStop?.stopId,
-                    onEvent = onEvent,
-                )
-            }
+        },
+        ground = ground,
+        modifier = modifier,
+    ) {
+        if (state.search == IntroSearchPhase.NoMatch) {
+            item(key = INTRO_STOP_NO_MATCH_KEY) { IntroStopNoMatch() }
+        } else {
+            introStopItems(
+                rows = rows,
+                modes = state.stopModes,
+                selectedStopId = state.selectedStop?.stopId,
+                onEvent = onEvent,
+            )
         }
     }
 }
+
+/** The key of the one line that stands in for the rows when the search finds nothing. */
+private const val INTRO_STOP_NO_MATCH_KEY = "intro-no-match"
 
 @Composable
 private fun IntroStopField(
@@ -151,26 +156,22 @@ private fun IntroSearchField(
     )
 }
 
-@Composable
-private fun IntroStopList(
+// One item for each stop, keyed by the stop. A stop is listed once, because a list refuses a key it has seen.
+private fun LazyListScope.introStopItems(
     rows: List<IntroStop>,
     modes: ImmutableMap<String, ImmutableList<TransportMode>>,
     selectedStopId: String?,
     onEvent: (IntroUiEvent) -> Unit,
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        rows.forEachIndexed { index, stop ->
-            key(stop.stopId) {
-                IntroStopRow(
-                    stop = stop,
-                    modes = modes[stop.stopId].orEmpty(),
-                    selected = stop.stopId == selectedStopId,
-                    onClick = { onEvent(IntroUiEvent.SelectStop(stop)) },
-                    // A tag for whichever stop is first, which a flow that only needs to select one can tap.
-                    modifier = if (index == 0) Modifier.testTag(TripPlannerTestTags.INTRO_STOP_FIRST) else Modifier,
-                )
-            }
-        }
+    itemsIndexed(items = rows.distinctBy { it.stopId }, key = { _, stop -> stop.stopId }) { index, stop ->
+        IntroStopRow(
+            stop = stop,
+            modes = modes[stop.stopId].orEmpty(),
+            selected = stop.stopId == selectedStopId,
+            onClick = { onEvent(IntroUiEvent.SelectStop(stop)) },
+            // A tag for whichever stop is first, which a flow that only needs to select one can tap.
+            modifier = if (index == 0) Modifier.testTag(TripPlannerTestTags.INTRO_STOP_FIRST) else Modifier,
+        )
     }
 }
 

@@ -11,7 +11,9 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.hasScrollToNodeAction
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -84,6 +86,13 @@ class IntroStopStepNarrowTest {
 
     private fun row(stopId: String) = composeRule.onNodeWithTag(TripPlannerTestTags.introStop(stopId))
 
+    // The list is lazy, so a row below the window is not drawn until the list is scrolled to it.
+    private fun scrolledTo(stopId: String): SemanticsNodeInteraction {
+        composeRule.onNode(hasScrollToNodeAction()).performScrollToNode(hasTestTag(TripPlannerTestTags.introStop(stopId)))
+        composeRule.waitForIdle()
+        return row(stopId)
+    }
+
     @Test
     fun `the window is 320 dp wide, so the checks below mean something`() {
         show(PreviewDestinationSuggestions)
@@ -98,7 +107,7 @@ class IntroStopStepNarrowTest {
         composeRule.onNodeWithText(DESTINATION_HEADING).assertInsideWindowWidth("headline")
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_STOP_FIELD).assertInsideWindowWidth("field")
         DEFAULT_SUGGESTED_STOPS.end.forEach { stop ->
-            row(stop.stopId).performScrollTo().assertInsideWindowWidth(stop.name)
+            scrolledTo(stop.stopId).assertInsideWindowWidth(stop.name)
         }
     }
 
@@ -108,7 +117,7 @@ class IntroStopStepNarrowTest {
         val primary = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION)
         val before = primary.getUnclippedBoundsInRoot()
 
-        row(DEFAULT_SUGGESTED_STOPS.end.last().stopId).performScrollTo().assertIsDisplayed()
+        scrolledTo(DEFAULT_SUGGESTED_STOPS.end.last().stopId).assertIsDisplayed()
 
         assertEquals(before, primary.getUnclippedBoundsInRoot(), "the bar moved when the list scrolled")
     }

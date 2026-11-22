@@ -89,6 +89,18 @@ abstract class IntroBarOverlayTestBase(private val windowWidth: Dp, private val 
 
     private fun row(stopId: String) = composeRule.onNodeWithTag(TripPlannerTestTags.introStop(stopId))
 
+    // The list is lazy, so a row below the window is not drawn: it is either not there or it is below this line.
+    private fun rowEnds(stopId: String): Dp? {
+        val nodes = composeRule.onAllNodes(hasTestTag(TripPlannerTestTags.introStop(stopId)))
+        return if (nodes.fetchSemanticsNodes().isEmpty()) null else bounds(nodes[0]).bottom
+    }
+
+    // Each suggested stop that is drawn now, with its bounds, so a row that is off the window is not read.
+    private fun drawnRows(): Map<String, DpRect> = DEFAULT_SUGGESTED_STOPS.end.mapNotNull { stop ->
+        val nodes = composeRule.onAllNodes(hasTestTag(TripPlannerTestTags.introStop(stop.stopId)))
+        if (nodes.fetchSemanticsNodes().isEmpty()) null else stop.stopId to bounds(nodes[0])
+    }.toMap()
+
     private fun primary() = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION)
 
     private fun bounds(node: SemanticsNodeInteraction) = node.getUnclippedBoundsInRoot()
@@ -139,7 +151,7 @@ abstract class IntroBarOverlayTestBase(private val windowWidth: Dp, private val 
     fun `with no bar shown the last row scrolls whole to the bottom of the window and nothing is kept for a bar`() {
         show(PreviewDestinationSuggestions)
         primary().assertDoesNotExist()
-        assertTrue(bounds(row(lastEndId)).bottom > window().bottom, "the list fits, so the scroll is not being tested")
+        assertTrue((rowEnds(lastEndId) ?: Dp.Infinity) > window().bottom, "the list fits, so the scroll is not being tested")
 
         scrollToEnd()
 
@@ -159,7 +171,7 @@ abstract class IntroBarOverlayTestBase(private val windowWidth: Dp, private val 
     @Test
     fun `with the bar shown the last row scrolls fully above the bar`() {
         show(PreviewDestinationSelected)
-        assertTrue(bounds(row(lastEndId)).bottom > bounds(primary()).top, "the list fits above the bar, so the scroll is not being tested")
+        assertTrue((rowEnds(lastEndId) ?: Dp.Infinity) > bounds(primary()).top, "the list fits above the bar, so the scroll is not being tested")
 
         scrollToEnd()
 
@@ -188,15 +200,15 @@ abstract class IntroBarOverlayTestBase(private val windowWidth: Dp, private val 
 
     @Test
     fun `the bar appearing does not move the rows of a list that is already scrolled`() {
-        fun snapshot() = DEFAULT_SUGGESTED_STOPS.end.map { bounds(row(it.stopId)) }
         show(PreviewDestinationSuggestions)
         scrollBy(SCROLLED_PX)
-        val before = snapshot()
+        val before = drawnRows()
+        assertTrue(before.isNotEmpty(), "no row is drawn, so nothing is being compared")
 
         show(PreviewDestinationSelected)
         primary().assertIsDisplayed()
 
-        assertEquals(before, snapshot())
+        assertEquals(before, drawnRows().filterKeys { it in before })
     }
 
     @Test

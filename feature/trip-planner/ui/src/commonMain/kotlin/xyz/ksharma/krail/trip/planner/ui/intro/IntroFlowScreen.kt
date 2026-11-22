@@ -67,6 +67,8 @@ internal fun IntroFlowScreen(
     val settledGround = if (state.selectedThemeId != null) tint else null
     // On the colour screen the button shows from the point in the sequence that says so, and at once on every other screen.
     val revealed = state.step != IntroStep.THEME || change?.buttonRevealed ?: true
+    // The window's ground, which a sticky bar over scrolling rows is opaque in: the tint once it is drawn, else the surface.
+    val pageGround = if (change != null && settledGround != null) settledGround else KrailTheme.colors.surface
 
     Box(
         modifier = modifier
@@ -119,6 +121,7 @@ internal fun IntroFlowScreen(
                         state = state,
                         suggestedStops = suggestedStops,
                         onEvent = send,
+                        ground = pageGround,
                     )
                     IntroStep.CONFIRM -> IntroConfirmStepContent(state = state)
                 }

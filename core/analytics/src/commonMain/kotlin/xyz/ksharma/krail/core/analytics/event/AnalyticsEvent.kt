@@ -1441,6 +1441,9 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
 
             /** Rider toggled the nearest station on the Park & Ride step of the Intro. */
             INTRO("intro"),
+
+            /** Rider added the nearby station the one-time suggestion card on home offered. */
+            HOME_SUGGESTION("home_suggestion"),
         }
     }
     // endregion

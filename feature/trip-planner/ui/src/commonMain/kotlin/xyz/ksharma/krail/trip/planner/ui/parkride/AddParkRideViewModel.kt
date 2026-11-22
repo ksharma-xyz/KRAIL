@@ -22,14 +22,12 @@ import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.core.appreview.AppReviewManager
-import xyz.ksharma.krail.core.appreview.DelightMoment
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.platform.ops.PlatformOps
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.SavedTrips
 import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.UserAdded
-import xyz.ksharma.krail.sandook.db.SavedParkRide
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.toParkRideState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ErrorKind
@@ -61,6 +59,12 @@ class AddParkRideViewModel(
     private val ioDispatcher: CoroutineDispatcher,
     private val appReviewManager: AppReviewManager,
 ) : ViewModel() {
+
+    private val stationAdder = ParkRideStationAdder(
+        parkRideSandook = parkRideSandook,
+        analytics = analytics,
+        appReviewManager = appReviewManager,
+    )
 
     private var observeUserAddedJob: Job? = null
     private var observeSelectedDetailsJob: Job? = null
@@ -205,39 +209,23 @@ class AddParkRideViewModel(
                         source = UserAdded,
                     )
                 }
+                trackRemoved(station)
             } else {
                 log("Adding ${station.mappings.size} user-added mappings for ${station.stationName}")
-                parkRideSandook.insertOrReplaceSavedParkRides(
-                    parkRideInfoList = station.mappings.map { mapping ->
-                        SavedParkRide(
-                            stopId = mapping.stopId,
-                            facilityId = mapping.facilityId,
-                            stopName = station.stopName.ifBlank { station.stationName },
-                            facilityName = mapping.facilityName,
-                            source = UserAdded.value,
-                        )
-                    }.toSet(),
-                    source = UserAdded,
-                )
-                // Adding a facility is a delight moment; it fires once the user returns to
-                // the Saved Trips screen. Removing one is not, so this stays in the add branch.
-                appReviewManager.onDelightMoment(DelightMoment.PARK_RIDE_ADDED)
+                // The shared add: it stores every car park, arms the review moment (a delight moment
+                // that fires once the rider returns to the Saved Trips screen, which removing one is
+                // not) and reports the add. The suggestion card on home goes through the same call.
+                stationAdder.add(station, AnalyticsEvent.ParkRideUserFacilityEvent.Source.ADD_PARK_RIDE_SCREEN)
             }
-
-            trackToggle(station)
         }
     }
 
-    private fun trackToggle(station: ParkRideStationPickerItem) {
+    private fun trackRemoved(station: ParkRideStationPickerItem) {
         analytics.track(
             AnalyticsEvent.ParkRideUserFacilityEvent(
                 facilityId = station.mappings.joinToString { it.facilityId },
                 stopId = station.stationId,
-                action = if (station.isUserAdded) {
-                    AnalyticsEvent.ParkRideUserFacilityEvent.Action.REMOVE
-                } else {
-                    AnalyticsEvent.ParkRideUserFacilityEvent.Action.ADD
-                },
+                action = AnalyticsEvent.ParkRideUserFacilityEvent.Action.REMOVE,
                 source = AnalyticsEvent.ParkRideUserFacilityEvent.Source.ADD_PARK_RIDE_SCREEN,
             ),
         )

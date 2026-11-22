@@ -137,9 +137,22 @@ class IntroEventsTest {
     @Test
     fun `the existing Park and Ride sources keep their values`() {
         assertEquals(
-            setOf("add_park_ride_screen", "saved_trips_screen", "intro"),
+            setOf("add_park_ride_screen", "saved_trips_screen", "intro", "home_suggestion"),
             ParkRideUserFacilityEvent.Source.entries.map { it.value }.toSet(),
         )
+    }
+
+    @Test
+    fun `a Park and Ride added from the home suggestion has the home suggestion source`() {
+        val event = ParkRideUserFacilityEvent(
+            facilityId = "facility-1",
+            stopId = "stop-1",
+            action = ParkRideUserFacilityEvent.Action.ADD,
+            source = ParkRideUserFacilityEvent.Source.HOME_SUGGESTION,
+        )
+
+        assertEquals("park_ride_user_facility", event.name)
+        assertEquals("home_suggestion", event.properties?.get("source"))
     }
 
     @Test

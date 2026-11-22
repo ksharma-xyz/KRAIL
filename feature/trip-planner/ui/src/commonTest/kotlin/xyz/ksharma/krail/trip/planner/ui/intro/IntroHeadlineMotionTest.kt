@@ -1,6 +1,5 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
-import androidx.compose.ui.text.font.FontWeight
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -64,30 +63,6 @@ class IntroHeadlineMotionTest {
             assertEquals(expected.alpha, frame.alpha, 0.0001f, "$name alpha")
             assertEquals(expected.rise, frame.rise, 0.0001f, "$name rise")
             assertEquals(expected.scale, frame.scale, 0.0001f, "$name scale")
-        }
-    }
-
-    @Test
-    fun `the lines that are not the emphasised one take one step down from the heaviest weight`() {
-        val rows = listOf(
-            FontWeight.Black to FontWeight.Bold,
-            FontWeight.ExtraBold to FontWeight.Bold,
-            FontWeight.Bold to FontWeight.Bold,
-            // A style at or below bold is left as it is.
-            FontWeight.SemiBold to FontWeight.SemiBold,
-            FontWeight.Normal to FontWeight.Normal,
-            null to FontWeight.Normal,
-        )
-
-        rows.forEach { (base, expected) -> assertEquals(expected, leadLineWeight(base), "base $base") }
-    }
-
-    @Test
-    fun `a lead line is never heavier than the emphasised one for any weight`() {
-        (100..900 step 100).forEach { weight ->
-            val base = FontWeight(weight)
-
-            assertTrue(leadLineWeight(base).weight <= base.weight, "weight $weight")
         }
     }
 

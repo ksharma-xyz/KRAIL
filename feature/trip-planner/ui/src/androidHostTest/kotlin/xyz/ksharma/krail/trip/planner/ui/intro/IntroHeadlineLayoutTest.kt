@@ -144,11 +144,15 @@ class IntroHeadlineLayoutTest {
     }
 
     @Test
-    fun `the headline is 1_4 times the size the display style was`() {
+    fun `the headline is 1_7 times the size the display style was, at the heaviest weight, on every line`() {
         start(PHONE_ROOM_DP, 1.0f)
         show(PICK_THEME_HEADLINE)
 
-        drawnLayouts().forEach { assertEquals(28f * HEADLINE_SIZE_FACTOR, it.layoutInput.style.fontSize.value, 0.01f) }
+        drawnLayouts().forEach {
+            assertEquals(28f * 1.7f, it.layoutInput.style.fontSize.value, 0.01f)
+            assertEquals(FontWeight.Black, it.layoutInput.style.fontWeight)
+        }
+        assertEquals(PICK_THEME_HEADLINE.size, drawnLayouts().size)
         assertEquals(1.0f, drawnLayouts().first().layoutInput.density.fontScale)
     }
 

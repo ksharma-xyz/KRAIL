@@ -1,6 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -57,14 +59,40 @@ class IntroHeadlineDisplayTest {
     }
 
     @Test
-    fun `the headline is 1_4 times the size of the display style, in size and line height`() {
+    fun `the headline is 1_7 times the size of the display style, in size and line height`() {
         val base = TextStyle(fontSize = 28.sp, lineHeight = 36.sp)
 
         val headline = base.asHeadlineStyle()
 
-        assertEquals(1.4f, HEADLINE_SIZE_FACTOR)
-        assertEquals(39.2f, headline.fontSize.value, 0.001f)
-        assertEquals(50.4f, headline.lineHeight.value, 0.001f)
+        assertEquals(1.7f, HEADLINE_SIZE_FACTOR)
+        assertEquals(47.6f, headline.fontSize.value, 0.001f)
+        assertEquals(61.2f, headline.lineHeight.value, 0.001f)
+    }
+
+    @Test
+    fun `the headline is at the heaviest weight whatever weight the style had`() {
+        listOf(FontWeight.Normal, FontWeight.Bold, FontWeight.Black, null).forEach { weight ->
+            val headline = TextStyle(fontSize = 28.sp, lineHeight = 36.sp, fontWeight = weight).asHeadlineStyle()
+
+            assertEquals(FontWeight.Black, headline.fontWeight, "from $weight")
+        }
+        assertEquals(900, HEADLINE_WEIGHT.weight)
+    }
+
+    @Test
+    fun `the emoji sits 20 dp above the title at 100 percent text and further as the text grows, to twice that`() {
+        val base = 20.dp
+        val table = listOf(
+            0.85f to 20.dp,
+            1f to 20.dp,
+            1.3f to 26.dp,
+            1.5f to 30.dp,
+            2f to 40.dp,
+            3f to 40.dp,
+        )
+
+        table.forEach { (scale, expected) -> assertEquals(expected.value, introEmojiTitleGap(base, scale).value, 0.001f, "at $scale") }
+        assertTrue(introEmojiTitleGap(base, 1f) >= 16.dp, "never under 16 dp")
     }
 
     @Test
@@ -72,7 +100,8 @@ class IntroHeadlineDisplayTest {
         val table = listOf(
             0.85f to 0.85f,
             1f to 1f,
-            1.15f to 1.15f,
+            1.05f to 1.05f,
+            1.15f to HEADLINE_FONT_SCALE_CEILING,
             HEADLINE_FONT_SCALE_CEILING to HEADLINE_FONT_SCALE_CEILING,
             1.5f to HEADLINE_FONT_SCALE_CEILING,
             2f to HEADLINE_FONT_SCALE_CEILING,

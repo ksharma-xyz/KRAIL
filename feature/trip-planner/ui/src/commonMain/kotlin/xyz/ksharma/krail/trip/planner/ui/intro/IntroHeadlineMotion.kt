@@ -1,7 +1,5 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
-import androidx.compose.ui.text.font.FontWeight
-
 // A line starts this much smaller and this far down, and rises and grows into place.
 internal const val LINE_START_SCALE = 0.92f
 internal const val LINE_RISE_FRACTION = 0.5f
@@ -42,17 +40,6 @@ internal fun lineFrame(progress: Float): LineFrame = LineFrame(
     rise = (1f - progress) * LINE_RISE_FRACTION,
     scale = LINE_START_SCALE + (1f - LINE_START_SCALE) * progress,
 )
-
-/**
- * The lines that are not the emphasised one are lighter, so the key word is the heaviest. The emphasised
- * line keeps the weight of the display style, and the others take one step down to [FontWeight.Bold] when
- * the style is heavier than that. A style at or below bold, such as the alternative typeface, is left as
- * it is.
- */
-internal fun leadLineWeight(base: FontWeight?): FontWeight {
-    val weight = base ?: FontWeight.Normal
-    return if (weight.weight > FontWeight.Bold.weight) FontWeight.Bold else weight
-}
 
 /**
  * The emoji's one wobble after it has popped, as time in milliseconds and tilt in degrees. It starts and

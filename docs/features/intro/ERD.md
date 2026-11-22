@@ -561,6 +561,16 @@ where it changes something an earlier unit said, the earlier text is edited to m
   the platform leaves the app as it always did. Deleted with them: the `Back` event and its handling in the view model,
   `stepBefore` and `movedBack` in `IntroStepFlow`, `withoutSearch`, and the tests that only reached a state by going back (listed
   in the commit and in section 8). `stepAfter`, `movedOn` and `stepsInFlow` stay: the flow still moves forward.
+- **The headline, bigger and heavier.** `HEADLINE_SIZE_FACTOR` is 1.7 (47.6 sp on a 61.2 sp line) and every line, the key word and the
+  lead lines alike, is at `HEADLINE_WEIGHT` = `FontWeight.Black`, the heaviest weight the display style's family has: the style is the system
+  font, and the only bundled font, Antonio, has Regular and SemiBold and belongs to the alternative typeface, which the Intro does not use.
+  `leadLineWeight` (the lead lines one step lighter) is deleted, so the key word is marked by landing last (`EMPHASIS_BEAT_MS`) and by
+  being the last line, no longer by weight. `HEADLINE_FONT_SCALE_CEILING` is 1.05, re-derived from the widest word (see section 3,
+  Headline). The room kept for a headline whose words change (`reservedHeadlineHeight`) is now worked out in the density the
+  headline is drawn in, the one held at the ceiling: it was worked out in the system's and kept too much room above the ceiling.
+- **Room under the emoji.** The emoji sits `introEmojiTitleGap` above the first line: `spacingXXL` (20 dp) at 100 percent text and
+  growing with the system font scale to twice that at 200 percent (a pure function, table tested). The lines keep `spacingS` (6 dp)
+  between them. The reserved headline height includes this gap, so nothing below the theme headline moves.
 
 Unit R1, as built, where this document was silent:
 
@@ -574,16 +584,16 @@ Unit R1, as built, where this document was silent:
   built every screen and deleted both.
 - **Headline.** `IntroHeadline(lines, emphasisIndex, emoji)` is the one headline of every screen, in `typography.introTagline`.
   Since 2026-11-22 (owner: too small, and all upper case) every line is drawn ALL UPPER CASE by the pure
-  `introHeadlineDisplay` (`uppercase()`, the invariant rules, applied only when drawing) and at `HEADLINE_SIZE_FACTOR` = 1.4 times
-  the style (28 sp on a 36 sp line becomes 39.2 sp on a 50.4 sp line, `asHeadlineStyle`, no new font and no hard coded size), the key
-  word still the heaviest. The strings in source, the one heading a screen reader reads (the phrase in its written case) and every
+  `introHeadlineDisplay` (`uppercase()`, the invariant rules, applied only when drawing) and at `HEADLINE_SIZE_FACTOR` = 1.7 times
+  the style (28 sp on a 36 sp line becomes 47.6 sp on a 61.2 sp line, `asHeadlineStyle`, no new font and no hard coded size) and at
+  `HEADLINE_WEIGHT`, the heaviest weight (see unit U8). The strings in source, the one heading a screen reader reads (the phrase in its written case) and every
   test and guard that reads the copy keep the case the words are written in. The headline follows the system text size only up to
-  `HEADLINE_FONT_SCALE_CEILING` = 1.3 (`headlineFontScale`, drawn in a density with the font scale held there): the widest word of
-  any headline, CONCRETE, is about 259 dp at 1.3 and about 400 dp at 2.0 in a 288 dp room (a 320 dp window), so above the ceiling a
-  word would be split or cut. The rest of the screen still follows the system scale in full. `IntroHeadlineLayoutTest` reads the
+  `HEADLINE_FONT_SCALE_CEILING` = 1.05 (`headlineFontScale`, drawn in a density with the font scale held there): the widest word of
+  any headline, CONCRETE, is about 243 dp for each 1.0 of scale at 1.7 times the style, so about 255 dp at 1.05 and about 486 dp at
+  2.0 in a 288 dp room (a 320 dp window), so above the ceiling a word would be split or cut. The rest of the screen still follows the system scale in full. `IntroHeadlineLayoutTest` reads the
   real text layouts (no word split, cut or overflowing, in capitals, at 320 dp, a phone and a wide window) and holds the ceiling
   against the measured width with a twelfth to spare.
-  The timeline, the frame of a line, the weight of the lead lines and the emoji wobble are pure functions in
+  The timeline, the frame of a line and the emoji wobble are pure functions in
   `IntroHeadlineMotion.kt`, and the slide direction by step order and the transition specs are pure functions in
   `IntroMotion.kt`, each with a table test.
 - **Frame.** `IntroStepFrame(headline, middle)` is the three zones: the headline on top, the thing to decide in the middle
@@ -983,8 +993,8 @@ destination, origin and confirm screens are temporary bodies (section 3).
 Every screen has three zones:
 
 - **Top, the headline.** Two to four short lines, left aligned, no question mark, in `typography.introTagline`, with the key
-  word on its own line at the heaviest weight, drawn in capitals at 1.4 times the style (see section 3, Headline). The Park & Ride
-  headline is "Driving", "to the", "station", the key word being "station", drawn DRIVING, TO THE, STATION. Emphasis is weight, never colour, so nothing competes with the theme colour on the primary button. Lines wrap
+  word on its own line, every line at the heaviest weight, drawn in capitals at 1.7 times the style (see section 3, Headline). The Park & Ride
+  headline is "Driving", "to the", "station", the key word being "station", drawn DRIVING, TO THE, STATION. No colour is used for emphasis, so nothing competes with the theme colour on the primary button. Lines wrap
   rather than shrink at a large text size.
 - **Middle, the thing to decide.** Centred in the room under the headline. When the text is large or the screen is short it
   scrolls with the headline, so nothing is clipped or out of reach.
@@ -1387,6 +1397,10 @@ in `searchstop/` touched:
   description), `IntroFlowScreenTest` (no back button on any screen, system back consumed after the first screen and left to the
   platform on the first), `IntroThemeStepTest`, `IntroParkRideStepTest` and `IntroParkRideStepNarrowTest` (no back button to
   exclude from the clickable count).
+- **Unit U8 tests, headline.** `IntroHeadlineDisplayTest` (1.7 times the size and line height, the weight forced to Black from any
+  weight, the emoji gap table from 85 to 300 percent text with the 16 dp floor, the follow-the-scale table against the new ceiling),
+  `IntroHeadlineLayoutTest` (the drawn size and weight on every line, and the ceiling against the measured width of the widest word at
+  320 dp, which fails above 1.09). Deleted on purpose in `IntroHeadlineMotionTest`: the two tests of `leadLineWeight`, which is gone.
 
 ## 9. Open gaps and decisions
 
@@ -1416,8 +1430,8 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | R2-7 | A badge is the component's largest size and grows only as the component does | No invented size and no scaled letter. The cost is a smaller badge than the first draft's 64 dp; a larger size on the component needs the owner's yes | Open, see the report |
 | R2-8 | The badges are 24 dp apart, over the 16 dp the spec asked for | The drift and the dance can bring neighbours 12 dp closer, so 16 dp could touch at the worst moment | Default, not yet seen by owner |
 | R2-9 | The theme bar is the one button `Yes, this one`, with no left button, no cycle and no compact label | The owner asked for it: "just let the user pick a colour, that's it, no option button to say no". The whole phrase is kept at every text size, and it is the one screen with a single button | Decided by the owner, 2026-11-22 |
-| R2-10 | The headline keeps the room of its longest version, measured as drawn (the emoji and the most lines any of its five versions takes at this width and text size) | Without it the badges move each time the words change. In capitals at 1.4 times the size a tagline takes up to three lines on its own, so a fixed three was replaced by a measurement. The cost is some empty room under a shorter version | Default, not yet seen by owner |
-| R2-12 | The headline is 1.4 times the display style in capitals, and stops growing with the text size above 1.3 | The owner asked for it bigger and all upper case. 1.4 is inside the 1.3 to 1.5 asked for, and 1.5 leaves CONCRETE no room at 320 dp even at the ceiling. The cost is that a rider at 200 percent text sees the headline at 130 percent, while everything else follows 200 percent | Decided by the owner, 2026-11-22 (size and case); the factor and the ceiling are mine, to tune on the phone |
+| R2-10 | The headline keeps the room of its longest version, measured as drawn (the emoji and the most lines any of its five versions takes at this width and text size) | Without it the badges move each time the words change. In capitals at 1.7 times the size a tagline takes up to three lines on its own, so a fixed three was replaced by a measurement. The cost is some empty room under a shorter version | Default, not yet seen by owner |
+| R2-12 | The headline is in capitals, at 1.7 times the display style since unit U8 (1.4 before), and stops growing with the text size above 1.05 (1.3 before) | The owner asked for it bigger, bolder and all upper case. At 1.7 CONCRETE fits 320 dp only up to 1.09 with a twelfth to spare, so the ceiling is 1.05. The cost is that a rider at 200 percent text sees the headline at 105 percent, while everything else follows 200 percent | Decided by the owner, 2026-11-22 (size and case); the factor and the ceiling are mine, to tune on the phone |
 | R2-11 | A tap on the badge already selected does nothing, and an id the Intro does not offer is ignored | Nothing to store or report again | Default, not yet seen by owner |
 | R2-12 | `theme_selected` is reported once on confirm, and again only when the confirmed theme differs from the last one reported in this Intro. No param is added | The ledger has no Pending row for a source param. Settings and the Intro cannot be told apart in the data | Default, not yet seen by owner |
 | R2-13 | The Intro opened again from Settings shows the theme screen with nothing selected, so a theme has to be chosen again | The spec says the rider must choose a colour to go on. The cost is one extra tap for a rider who keeps their theme | Default, not yet seen by owner |
@@ -1482,6 +1496,9 @@ Each is a default taken to keep moving. None has been seen by the owner.
 |---|---|---|---|
 | U8-1 | System back is consumed on every screen after the first with an empty handler, and the first screen is left to the platform | "Does nothing" on a screen after the first, "leaves the app as usual" on the first. A rider who swipes back by habit is not thrown out of the Intro halfway. If back should leave the app everywhere, delete the handler | Default, not yet seen by owner |
 | U8-2 | `IntroStep` order can still step backward in one corner (`backToMissingStop`, a pick that cleared the other end, which the lists never offer), and the Park & Ride decline that removes an added station stays in the code | The spec deleted back, not these. The decline-after-add path can no longer be reached by a rider, so its tests were deleted. Prune the code if it is not wanted | Default, not yet seen by owner |
+| U8-3 | Every headline line is Black, and the lead lines no longer step down to Bold | "The title much bolder": Bold under a Black key word read as a lighter title. With every line the same weight the key word is the last line and lands last, and no longer the heaviest. If the key word should stand out again, restore a lighter lead line | Default, not yet seen by owner |
+| U8-4 | The ceiling is 1.05, not the 1.09 the arithmetic allows | A twelfth to spare is measured on the test font. The system font on iOS is wider, which is a guess, so there is another 4 percent. Raise to 1.09 if a phone shows room | Default, not yet seen by owner |
+| U8-5 | The gap under the emoji is `spacingXXL` at 100 percent text and up to twice that at 200 percent | The spec said at least 16 dp and more on larger text. 20 dp is the nearest token above 16 dp. The headline zone is taller as a result, and it scrolls when it does not fit | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

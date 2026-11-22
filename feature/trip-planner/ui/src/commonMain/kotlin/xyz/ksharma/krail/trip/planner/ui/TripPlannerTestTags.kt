@@ -28,6 +28,13 @@ object TripPlannerTestTags {
     const val INTRO_PRIMARY_ACTION = "intro.action.primary"
     const val INTRO_SECONDARY_ACTION = "intro.action.secondary"
 
+    // The four theme badges on the first Intro screen. One tag for each, because the flow has to tap a
+    // specific one before the primary button comes on.
+    const val INTRO_THEME_TRAIN = "intro.theme.train"
+    const val INTRO_THEME_METRO = "intro.theme.metro"
+    const val INTRO_THEME_BUS = "intro.theme.bus"
+    const val INTRO_THEME_FERRY = "intro.theme.ferry"
+
     // Saved trips (home)
     const val SAVED_TRIPS_SCREEN = "savedtrips.screen"
     const val SAVED_TRIPS_LIST = "savedtrips.list"

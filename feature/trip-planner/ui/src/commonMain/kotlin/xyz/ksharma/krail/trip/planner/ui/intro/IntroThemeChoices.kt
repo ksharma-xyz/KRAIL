@@ -1,0 +1,103 @@
+package xyz.ksharma.krail.trip.planner.ui.intro
+
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+
+/**
+ * One badge on the theme screen. [letter] is what the badge shows and [name] is what a screen reader
+ * calls it. [tag] is the selector the Maestro flow taps. The colour is never kept here: it is read from
+ * [style], so the badge and the app's own theme can never disagree.
+ */
+internal data class IntroThemeChoice(
+    val style: KrailThemeStyle,
+    val letter: String,
+    val name: String,
+    val tag: String,
+)
+
+// The four transport themes, in the order the website's footer shows the same modes. Light rail and Coach
+// have a colour in the app but no theme (no id and no tagline), and the two fun themes stay in Settings.
+private val TransportThemeChoices = listOf(
+    IntroThemeChoice(
+        style = KrailThemeStyle.Train,
+        letter = "T",
+        name = "Train",
+        tag = TripPlannerTestTags.INTRO_THEME_TRAIN,
+    ),
+    IntroThemeChoice(
+        style = KrailThemeStyle.Metro,
+        letter = "M",
+        name = "Metro",
+        tag = TripPlannerTestTags.INTRO_THEME_METRO,
+    ),
+    IntroThemeChoice(
+        style = KrailThemeStyle.Bus,
+        letter = "B",
+        name = "Bus",
+        tag = TripPlannerTestTags.INTRO_THEME_BUS,
+    ),
+    IntroThemeChoice(
+        style = KrailThemeStyle.Ferry,
+        letter = "F",
+        name = "Ferry",
+        tag = TripPlannerTestTags.INTRO_THEME_FERRY,
+    ),
+)
+
+/** The themes the first Intro screen offers, in the order they are drawn and in the order the left button cycles. */
+internal fun introThemeChoices(): List<IntroThemeChoice> = TransportThemeChoices
+
+/** The choice with theme id [themeId], or null for no id and for a theme the Intro does not offer. */
+internal fun themeChoiceFor(themeId: Int?): IntroThemeChoice? =
+    introThemeChoices().firstOrNull { it.style.id == themeId }
+
+/**
+ * The choice the left button moves to: the one after [currentId] in [choices], wrapping from the last to
+ * the first. With no choice made yet, or an id that is not offered, it is the first, so the first press
+ * both starts the choice and shows a theme.
+ */
+internal fun nextThemeChoice(
+    currentId: Int?,
+    choices: List<IntroThemeChoice> = introThemeChoices(),
+): IntroThemeChoice {
+    val index = choices.indexOfFirst { it.style.id == currentId }
+    return choices[(index + 1) % choices.size]
+}
+
+/**
+ * The lines of a theme's tagline, which is the app's own copy and is shown exactly as it is written. It is
+ * split after the first comma into two short lines, and is one line when there is no comma. Nothing is
+ * added, removed or reworded, so the lines joined with a space are the tagline again.
+ */
+internal fun taglineLines(tagLine: String): List<String> {
+    val comma = tagLine.indexOf(',')
+    if (comma < 0) return listOf(tagLine)
+    return listOf(tagLine.substring(0, comma + 1), tagLine.substring(comma + 1).trim())
+        .filter { it.isNotEmpty() }
+}
+
+/** What the theme screen's headline says: its lines and the one with the key word. */
+internal data class IntroThemeHeadline(val lines: List<String>, val emphasisIndex: Int)
+
+/** Before a choice, the question as a few short lines with the key word last. */
+internal val PICK_THEME_HEADLINE = listOf("Pick", "your ride", "colour")
+
+/** The whole headline as one phrase, which a screen reader reads as the heading. */
+internal val PICK_THEME_HEADING = introHeadlinePhrase(PICK_THEME_HEADLINE)
+
+/**
+ * The headline for the theme chosen, [selectedId]: the question before a choice, and after one that
+ * theme's tagline, in its own lines with the last one heaviest.
+ */
+internal fun introThemeHeadline(selectedId: Int?): IntroThemeHeadline {
+    val choice = themeChoiceFor(selectedId)
+        ?: return IntroThemeHeadline(PICK_THEME_HEADLINE, emphasisIndex = PICK_THEME_HEADLINE.lastIndex)
+    val lines = taglineLines(choice.style.tagLine)
+    return IntroThemeHeadline(lines, emphasisIndex = lines.lastIndex)
+}
+
+/** The longest headline the theme screen can show, so its room stays the same whichever it says. */
+internal const val THEME_HEADLINE_RESERVED_LINES = 3
+
+/** The theme colour as hex, for the app to switch to, or null for an id the Intro does not offer. */
+internal fun themeHexFor(themeId: Int?): String? = themeChoiceFor(themeId)?.style?.hexColorCode

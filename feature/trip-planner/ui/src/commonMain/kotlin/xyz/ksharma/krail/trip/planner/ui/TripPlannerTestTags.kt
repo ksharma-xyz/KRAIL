@@ -88,6 +88,9 @@ object TripPlannerTestTags {
     /** The mode filter row under the pill on Search Stop's map state. */
     const val SEARCH_STOP_MODE_CHIPS = "searchstop.modechips"
 
+    /** The fade at the right edge of that row, drawn only while it has more to scroll to. */
+    const val SEARCH_STOP_MODE_CHIPS_FADE = "searchstop.modechips.fade"
+
     // Timetable
     const val TIME_TABLE_SCREEN = "timetable.screen"
     const val TIME_TABLE_DATE_TIME_SELECTOR = "timetable.action.datetime"

@@ -63,6 +63,7 @@ class SearchStopModeChipsLayoutTest {
             assertTrue(chip.right <= NARROW_WIDTH.dp, "A chip is never pushed past the edge: $chip")
         }
         assertNoChipSqueezed(chips)
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS_FADE).assertDoesNotExist()
     }
 
     @Test
@@ -82,6 +83,7 @@ class SearchStopModeChipsLayoutTest {
         assertEquals(1, chips.map { it.top }.distinct().size, "One line, so no chip wraps under another.")
         assertTrue(chips.first().left >= 0.dp, "The first chip starts fully visible.")
         assertTrue(chips.last().right > NARROW_WIDTH.dp, "The rest is reached by scrolling sideways.")
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS_FADE).assertExists()
         assertNoChipSqueezed(chips)
     }
 

@@ -52,6 +52,4 @@ data class MapDisplay(
     ),
     val userLocation: LatLng? = null, // User's current GPS location (null if unknown)
     val searchRadiusKm: Double = NearbyStopsConfig.DEFAULT_RADIUS_KM,
-    val showDistanceScale: Boolean = false,
-    val showCompass: Boolean = true,
 )

@@ -853,7 +853,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
 
     /**
      * @param transportModes Sorted comma-separated product-class integers of modes in this journey
-     *                       (e.g. "1,5" = Train + Bus). Matches the encoding used by [MapOptionsSavedEvent].
+     *                       (e.g. "1,5" = Train + Bus).
      * @param crowding       What seat data the first service boarded had: [CROWDING_CARS] (a level per
      *                       carriage), [CROWDING_LEVEL] (one level for the whole service) or
      *                       [CROWDING_NONE].
@@ -1522,43 +1522,6 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
     data object SelectOnMapButtonClickEvent : AnalyticsEvent(name = "select_on_map_button_click")
 
     /**
-     * Fired when the user taps "Save" on the MapOptionsBottomSheet.
-     *
-     * This single event is the source of truth for all map-options analysis. One rich snapshot
-     * replaces what would otherwise be 4+ separate events. Use it to answer:
-     *  - "What % of users prefer 5km radius?" → aggregate on [radiusKm]
-     *  - "What transport mode filter combos are most common?" → aggregate on [transportModes]
-     *  - "Do users actually change the radius or just leave it at default?" → filter [radiusChanged]
-     *  - "Do map control toggles matter?" → look at [showDistanceScale] / [showCompass] distributions
-     *
-     * @param radiusKm          The saved search radius: 1.0, 3.0, or 5.0.
-     * @param transportModes    Sorted, comma-separated product-class integers of all *enabled* modes
-     *                          (e.g. "1,2,5,9").
-     * @param showDistanceScale Whether the distance scale overlay is enabled after saving.
-     * @param showCompass       Whether the compass overlay is enabled after saving.
-     * @param radiusChanged     Whether [radiusKm] differs from the value before the sheet opened.
-     * @param modesChanged      Whether any transport mode filter changed from the previous state.
-     */
-    data class MapOptionsSavedEvent(
-        val radiusKm: Double,
-        val transportModes: String,
-        val showDistanceScale: Boolean,
-        val showCompass: Boolean,
-        val radiusChanged: Boolean,
-        val modesChanged: Boolean,
-    ) : AnalyticsEvent(
-        name = "search_stop_map_options_saved",
-        rawProperties = mapOf(
-            "radiusKm" to radiusKm,
-            PROP_TRANSPORT_MODES to transportModes,
-            "showDistanceScale" to showDistanceScale,
-            "showCompass" to showCompass,
-            "radiusChanged" to radiusChanged,
-            "modesChanged" to modesChanged,
-        ),
-    )
-
-    /**
      * Fired when the user selects a stop via the map's StopDetailsBottomSheet.
      *
      * Captures the map configuration context at the moment of selection, so you can correlate
@@ -1573,9 +1536,11 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      * [hadUserLocation] flag instead, which carries no privacy obligations.
      *
      * @param stopId             The ID of the stop the user selected.
-     * @param searchRadiusKm     The active search radius at the moment of selection.
-     * @param enabledModesCount  Number of transport modes currently enabled (not which ones —
-     *                           use [MapOptionsSavedEvent.transportModes] for mode-level detail).
+     * @param searchRadiusKm     The active search radius at the moment of selection. It is the value of
+     *                           Remote Config `nearby_stops_radius_km`, since nothing in the app changes it.
+     * @param enabledModesCount  Number of transport modes currently enabled on the map's mode chips
+     *                           (not which ones). This is the only place the mode filter is reported
+     *                           now that the Options sheet and its save event are gone.
      * @param nearbyStopsCount   Number of stop markers visible on the map at time of selection.
      * @param hadUserLocation    Whether the device location was available (permission granted +
      *                           location resolved). Does NOT include coordinates.
@@ -1620,12 +1585,6 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
             "transportModesCount" to transportModesCount,
         ),
     )
-
-    /**
-     * Fired when the user taps the Options button on the map (SearchStopMap only).
-     * Use to measure how often users discover and open map configuration.
-     */
-    data object MapOptionsOpenedEvent : AnalyticsEvent(name = "search_stop_map_options_opened")
 
     /**
      * Fired when the user taps "Go to Settings" on the location permission denied banner.

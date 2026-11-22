@@ -45,7 +45,6 @@ data class SearchStopState(
     val searchQuery: String = "",
     val searchResults: ImmutableList<SearchResult> = persistentListOf(),
     val recentStops: ImmutableList<StopResult> = persistentListOf(),
-    val showMapOptionsOnOpen: Boolean = false,
     val stopLabels: ImmutableList<StopLabel> = persistentListOf(),
     /**
      * Address/POI hits from the NSW `stop_finder` API (`type_sf=any`, `stop`-typed

@@ -18,7 +18,6 @@ import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
-import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import xyz.ksharma.krail.core.testing.fakes.FakeTripPlanningService
 import xyz.ksharma.krail.core.testing.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
@@ -52,7 +51,6 @@ class SearchStopViewModelTest {
     private val fakeRemoteAddressResultsManager = FakeRemoteAddressResultsManager()
     private val fakeFlag = FakeFlag()
     private val fakeNearbyStopsManager = FakeNearbyStopsManagerForMap()
-    private val fakePreferences = FakeSandookPreferences()
     private val fakeSandook = FakeSandook()
     private val searchSessionStore = RealSearchSessionStore()
 
@@ -68,7 +66,6 @@ class SearchStopViewModelTest {
             flag = fakeFlag,
             nearbyStopsManager = fakeNearbyStopsManager,
             ioDispatcher = testDispatcher,
-            preferences = fakePreferences,
             sandook = fakeSandook,
             searchSessionStore = searchSessionStore,
         )
@@ -87,7 +84,6 @@ class SearchStopViewModelTest {
         flag = fakeFlag,
         nearbyStopsManager = fakeNearbyStopsManager,
         ioDispatcher = testDispatcher,
-        preferences = fakePreferences,
         sandook = fakeSandook,
         searchSessionStore = searchSessionStore,
     )
@@ -393,7 +389,6 @@ class SearchStopViewModelTest {
                 flag = fakeFlag,
                 nearbyStopsManager = fakeNearbyStopsManager,
                 ioDispatcher = testDispatcher,
-                preferences = fakePreferences,
                 sandook = fakeSandook,
                 searchSessionStore = searchSessionStore,
             )
@@ -1126,7 +1121,6 @@ class SearchStopViewModelTest {
         flag = fakeFlag,
         nearbyStopsManager = fakeNearbyStopsManager,
         ioDispatcher = testDispatcher,
-        preferences = fakePreferences,
         sandook = fakeSandook,
         searchSessionStore = searchSessionStore,
         isAddressSearchEnabled = { true },

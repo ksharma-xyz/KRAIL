@@ -543,8 +543,6 @@ private fun SearchStopScreenSinglePane(
                 keyboard = keyboard,
                 focusRequester = form.focusRequester,
                 ornamentTopPadding = headerHeight,
-                autoShowOptionsSheet = searchStopState.showMapOptionsOnOpen,
-                onShowOptionsSheet = { onEvent(SearchStopUiEvent.MapOptionsFirstTimeShown) },
                 onEvent = onEvent,
                 onStopSelect = onStopSelect,
                 allowPermissionRequest = location.allowPermissionRequest,

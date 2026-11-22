@@ -100,36 +100,6 @@ object MapStateHelper {
             ),
         )
     }
-
-    /**
-     * Update the search radius.
-     */
-    fun updateSearchRadius(
-        state: SearchStopState,
-        radiusKm: Double,
-    ): SearchStopState = state.withMapState {
-        copy(mapDisplay = mapDisplay.copy(searchRadiusKm = radiusKm))
-    }
-
-    /**
-     * Toggle distance scale visibility.
-     */
-    fun toggleDistanceScale(
-        state: SearchStopState,
-        enabled: Boolean,
-    ): SearchStopState = state.withMapState {
-        copy(mapDisplay = mapDisplay.copy(showDistanceScale = enabled))
-    }
-
-    /**
-     * Toggle compass visibility.
-     */
-    fun toggleCompass(
-        state: SearchStopState,
-        enabled: Boolean,
-    ): SearchStopState = state.withMapState {
-        copy(mapDisplay = mapDisplay.copy(showCompass = enabled))
-    }
 }
 
 /**

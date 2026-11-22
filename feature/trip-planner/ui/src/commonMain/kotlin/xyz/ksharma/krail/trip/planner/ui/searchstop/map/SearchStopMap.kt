@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -45,10 +44,13 @@ import xyz.ksharma.krail.core.maps.state.NearbyStopsConfig
 import xyz.ksharma.krail.core.maps.state.UserLocationConfig
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.ATTRIBUTION_ALIGNMENT
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.ATTRIBUTION_ENABLED
+import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.COMPASS_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.LOGO_ENABLED
+import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.SCALE_BAR_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider.OPEN_FREE_MAP_LIBERTY
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
+import xyz.ksharma.krail.taj.components.LoadingDotsPill
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -68,8 +70,6 @@ fun SearchStopMap(
     keyboard: SoftwareKeyboardController? = null,
     focusRequester: FocusRequester? = null,
     ornamentTopPadding: Dp = 0.dp,
-    autoShowOptionsSheet: Boolean = false,
-    onShowOptionsSheet: () -> Unit = {},
     onEvent: (SearchStopUiEvent) -> Unit = {},
     onStopSelect: (StopItem) -> Unit = {},
     allowPermissionRequest: Boolean = false,
@@ -80,7 +80,8 @@ fun SearchStopMap(
     Box(modifier = modifier.fillMaxSize()) {
         when (mapUiState) {
             is MapUiState.Loading -> {
-                CircularProgressIndicator(
+                LoadingDotsPill(
+                    isLoading = true,
                     modifier = Modifier.align(Alignment.Center),
                 )
             }
@@ -91,8 +92,6 @@ fun SearchStopMap(
                     keyboard = keyboard,
                     focusRequester = focusRequester,
                     ornamentTopPadding = ornamentTopPadding,
-                    autoShowOptionsSheet = autoShowOptionsSheet,
-                    onShowOptionsSheet = onShowOptionsSheet,
                     onEvent = onEvent,
                     onStopSelect = onStopSelect,
                     allowPermissionRequest = allowPermissionRequest,
@@ -146,8 +145,6 @@ private fun MapContent(
     keyboard: SoftwareKeyboardController? = null,
     focusRequester: FocusRequester? = null,
     ornamentTopPadding: Dp = 0.dp,
-    autoShowOptionsSheet: Boolean = false,
-    onShowOptionsSheet: () -> Unit = {},
     allowPermissionRequest: Boolean = false,
     onPermissionStatus: (PermissionStatus) -> Unit = {},
     onRequestPermission: () -> Unit = {},
@@ -159,14 +156,6 @@ private fun MapContent(
             "selectedModes=${mapState.mapDisplay.selectedTransportModes}",
     )
 
-    var showOptionsBottomSheet by rememberSaveable { mutableStateOf(false) }
-
-    LaunchedEffect(autoShowOptionsSheet) {
-        if (autoShowOptionsSheet && !showOptionsBottomSheet) {
-            showOptionsBottomSheet = true
-            onShowOptionsSheet()
-        }
-    }
     // Which stop's details sheet is open, held as the stop id because that is the part worth
     // saving: the feature itself is map-rendering data the ViewModel still holds after the
     // Activity is recreated, so it can be looked up again rather than serialised. Held in a
@@ -272,13 +261,9 @@ private fun MapContent(
                 onMapTap = onMapTap,
             )
 
-            // Bottom left action buttons (Options and Location).
-            // All location business logic lives here, not inside MapActionButtons.
+            // The location button, bottom end. All location business logic lives here, not inside
+            // MapActionButtons.
             MapActionButtons(
-                onOptionsClick = {
-                    onEvent(SearchStopUiEvent.MapOptionsButtonClicked)
-                    showOptionsBottomSheet = true
-                },
                 isLocationActive = mapState.mapDisplay.userLocation != null,
                 onLocationButtonClick = {
                     onEvent(
@@ -296,18 +281,6 @@ private fun MapContent(
                 },
                 modifier = Modifier.align(Alignment.BottomStart),
             )
-
-            // Options Bottom Sheet
-            if (showOptionsBottomSheet) {
-                MapOptionsBottomSheet(
-                    searchRadiusKm = mapState.mapDisplay.searchRadiusKm,
-                    selectedTransportModes = mapState.mapDisplay.selectedTransportModes,
-                    showDistanceScale = mapState.mapDisplay.showDistanceScale,
-                    showCompass = mapState.mapDisplay.showCompass,
-                    onDismiss = { showOptionsBottomSheet = false },
-                    onEvent = onEvent,
-                )
-            }
 
             // Stop Details Bottom Sheet
             selectedStop?.let { stop ->
@@ -413,9 +386,9 @@ private fun MapSurface(
                         isLogoEnabled = LOGO_ENABLED,
                         isAttributionEnabled = ATTRIBUTION_ENABLED,
                         attributionAlignment = ATTRIBUTION_ALIGNMENT,
-                        isCompassEnabled = mapState.mapDisplay.showCompass,
+                        isCompassEnabled = COMPASS_ENABLED,
                         compassAlignment = Alignment.TopEnd,
-                        isScaleBarEnabled = mapState.mapDisplay.showDistanceScale,
+                        isScaleBarEnabled = SCALE_BAR_ENABLED,
                         scaleBarAlignment = Alignment.TopStart,
                     ),
                 ),
@@ -484,8 +457,6 @@ private fun PreviewSearchStopMapReady() {
                 NswTransportMode.Train.productClass,
                 NswTransportMode.Metro.productClass,
             ),
-            showCompass = true,
-            showDistanceScale = true,
         )
 
         SearchStopMap(

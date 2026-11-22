@@ -328,7 +328,6 @@ val viewModelsModule = module {
             nearbyStopsManager = get(),
             flag = flag,
             ioDispatcher = get(named(IODispatcher)),
-            preferences = get(),
             sandook = get(),
             searchSessionStore = get(),
             isAddressSearchEnabled = isAddressSearchEnabled,

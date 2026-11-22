@@ -100,21 +100,6 @@ class MapStateHelperTest {
     }
 
     @Test
-    fun `GIVEN the map options sheet WHEN radius and chrome change THEN each lands on the display`() {
-        val tuned = MapStateHelper.toggleCompass(
-            MapStateHelper.toggleDistanceScale(
-                MapStateHelper.updateSearchRadius(ready, radiusKm = 5.0),
-                enabled = true,
-            ),
-            enabled = false,
-        )
-
-        assertEquals(5.0, tuned.display().searchRadiusKm)
-        assertTrue(tuned.display().showDistanceScale)
-        assertTrue(!tuned.display().showCompass)
-    }
-
-    @Test
     fun `GIVEN a map that is not ready WHEN any mutator runs THEN the state is returned untouched`() {
         val mutated = listOf(
             MapStateHelper.updateMapCenter(loading, LatLng(latitude = -33.75, longitude = 151.05)),
@@ -122,9 +107,6 @@ class MapStateHelperTest {
             MapStateHelper.updateNearbyStops(loading, stops = emptyList(), isLoading = true),
             MapStateHelper.setLoadingState(loading, isLoading = true),
             MapStateHelper.toggleTransportMode(loading, TransportMode.Ferry),
-            MapStateHelper.updateSearchRadius(loading, radiusKm = 5.0),
-            MapStateHelper.toggleDistanceScale(loading, enabled = true),
-            MapStateHelper.toggleCompass(loading, enabled = false),
         )
 
         assertEquals(List(mutated.size) { loading }, mutated)

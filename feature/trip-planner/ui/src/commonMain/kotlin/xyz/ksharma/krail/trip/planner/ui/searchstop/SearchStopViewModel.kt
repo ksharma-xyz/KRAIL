@@ -37,7 +37,6 @@ import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.coroutines.ext.suspendSafeResult
 import xyz.ksharma.krail.sandook.RecentSearchLocation
 import xyz.ksharma.krail.sandook.Sandook
-import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.trip.planner.ui.components.normaliseLabelName
 import xyz.ksharma.krail.trip.planner.ui.intro.v2.introSuggestedStops
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
@@ -68,7 +67,6 @@ class SearchStopViewModel(
     private val nearbyStopsManager: NearbyStopsManager,
     val flag: Flag,
     private val ioDispatcher: CoroutineDispatcher,
-    private val preferences: SandookPreferences,
     private val sandook: Sandook,
     private val searchSessionStore: SearchSessionStore,
     private val isAddressSearchEnabled: () -> Boolean = { false },
@@ -88,12 +86,6 @@ class SearchStopViewModel(
         .onStart {
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SearchStop)
             checkMapsAvailability()
-            val hasSeenOptions = preferences.getBoolean(
-                SandookPreferences.KEY_HAS_SEEN_MAP_OPTIONS_SHEET,
-            ) == true
-            if (!hasSeenOptions) {
-                updateUiState { copy(showMapOptionsOnOpen = true) }
-            }
         }
         .stateIn(
             viewModelScope,
@@ -223,34 +215,6 @@ class SearchStopViewModel(
                 onNearbyStopClicked(event.stop)
             }
 
-            SearchStopUiEvent.MapOptionsClicked -> {
-                // No-op: Bottom sheet visibility is handled in UI layer
-            }
-
-            SearchStopUiEvent.MapOptionsFirstTimeShown -> {
-                preferences.setBoolean(SandookPreferences.KEY_HAS_SEEN_MAP_OPTIONS_SHEET, true)
-                updateUiState { copy(showMapOptionsOnOpen = false) }
-            }
-
-            is SearchStopUiEvent.SearchRadiusChanged -> {
-                log("[NEARBY_STOPS] SearchRadiusChanged: ${event.radiusKm}km")
-                onSearchRadiusChanged(event.radiusKm)
-            }
-
-            is SearchStopUiEvent.ShowDistanceScaleToggled -> {
-                log("[NEARBY_STOPS] ShowDistanceScaleToggled: ${event.enabled}")
-                onShowDistanceScaleToggled(event.enabled)
-            }
-
-            is SearchStopUiEvent.ShowCompassToggled -> {
-                log("[NEARBY_STOPS] ShowCompassToggled: ${event.enabled}")
-                onShowCompassToggled(event.enabled)
-            }
-
-            SearchStopUiEvent.MapOptionsButtonClicked -> {
-                analytics.track(AnalyticsEvent.MapOptionsOpenedEvent)
-            }
-
             is SearchStopUiEvent.LocationButtonClicked -> {
                 analytics.track(
                     AnalyticsEvent.MapLocationButtonClickEvent(
@@ -264,19 +228,6 @@ class SearchStopViewModel(
                 analytics.track(
                     AnalyticsEvent.LocationPermissionSettingsClickEvent(
                         source = AnalyticsEvent.LocationPermissionSettingsClickEvent.Source.SEARCH_STOP_MAP,
-                    ),
-                )
-            }
-
-            is SearchStopUiEvent.MapOptionsSaved -> {
-                analytics.track(
-                    AnalyticsEvent.MapOptionsSavedEvent(
-                        radiusKm = event.radiusKm,
-                        transportModes = event.transportModes,
-                        showDistanceScale = event.showDistanceScale,
-                        showCompass = event.showCompass,
-                        radiusChanged = event.radiusChanged,
-                        modesChanged = event.modesChanged,
                     ),
                 )
             }
@@ -807,22 +758,6 @@ class SearchStopViewModel(
 
     private fun onUserLocationUpdated(location: LatLng?) {
         updateUiState { MapStateHelper.updateUserLocation(this, location) }
-    }
-
-    private fun onSearchRadiusChanged(radiusKm: Double) {
-        updateUiState { MapStateHelper.updateSearchRadius(this, radiusKm) }
-
-        // Invalidate cache and reload with new radius
-        nearbyStopsManager.invalidateCache()
-        loadNearbyStops()
-    }
-
-    private fun onShowDistanceScaleToggled(enabled: Boolean) {
-        updateUiState { MapStateHelper.toggleDistanceScale(this, enabled) }
-    }
-
-    private fun onShowCompassToggled(enabled: Boolean) {
-        updateUiState { MapStateHelper.toggleCompass(this, enabled) }
     }
 
     // endregion

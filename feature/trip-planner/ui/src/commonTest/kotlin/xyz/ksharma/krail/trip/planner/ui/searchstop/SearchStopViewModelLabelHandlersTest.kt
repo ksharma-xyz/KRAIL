@@ -13,7 +13,6 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
-import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import xyz.ksharma.krail.trip.planner.ui.components.LABEL_NAME_MAX_LENGTH
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.LabelAssignSurface
@@ -63,7 +62,6 @@ class SearchStopViewModelLabelHandlersTest {
     private val fakeRemoteAddressResultsManager = FakeRemoteAddressResultsManager()
     private val fakeFlag = FakeFlag()
     private val fakeNearbyStopsManager = FakeNearbyStopsManagerForMap()
-    private val fakePreferences = FakeSandookPreferences()
     private val fakeSandook = FakeSandook()
     private val searchSessionStore = RealSearchSessionStore()
 
@@ -85,7 +83,6 @@ class SearchStopViewModelLabelHandlersTest {
             flag = fakeFlag,
             nearbyStopsManager = fakeNearbyStopsManager,
             ioDispatcher = testDispatcher,
-            preferences = fakePreferences,
             sandook = fakeSandook,
             searchSessionStore = searchSessionStore,
         )
@@ -554,7 +551,6 @@ class SearchStopViewModelLabelHandlersTest {
             flag = FakeFlag(),
             nearbyStopsManager = FakeNearbyStopsManagerForMap(),
             ioDispatcher = testDispatcher,
-            preferences = FakeSandookPreferences(),
             sandook = freshSandook,
             searchSessionStore = RealSearchSessionStore(),
         )

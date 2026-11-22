@@ -30,17 +30,6 @@ sealed interface SearchStopUiEvent {
 
     data class NearbyStopClicked(val stop: NearbyStopFeature) : SearchStopUiEvent
 
-    data object MapOptionsClicked : SearchStopUiEvent
-
-    data class SearchRadiusChanged(val radiusKm: Double) : SearchStopUiEvent
-
-    data class ShowDistanceScaleToggled(val enabled: Boolean) : SearchStopUiEvent
-
-    data class ShowCompassToggled(val enabled: Boolean) : SearchStopUiEvent
-
-    /** Fired when the user taps the Options button on the SearchStopMap. Analytics-only. */
-    data object MapOptionsButtonClicked : SearchStopUiEvent
-
     /**
      * Fired when the user taps the User Location button on the SearchStopMap. Analytics-only.
      * [hadLocation] is true if location was already active at tap time (re-centering).
@@ -52,22 +41,6 @@ sealed interface SearchStopUiEvent {
      * Analytics-only.
      */
     data object LocationPermissionSettingsClicked : SearchStopUiEvent
-
-    /**
-     * Fired once when the user taps Save in MapOptionsBottomSheet. Analytics-only —
-     * the individual state-change events (SearchRadiusChanged etc.) still fire separately.
-     */
-    data class MapOptionsSaved(
-        val radiusKm: Double,
-        val transportModes: String,
-        val showDistanceScale: Boolean,
-        val showCompass: Boolean,
-        val radiusChanged: Boolean,
-        val modesChanged: Boolean,
-    ) : SearchStopUiEvent
-
-    /** Fired once when the map options sheet auto-pops for the first time. Marks it seen in prefs. */
-    data object MapOptionsFirstTimeShown : SearchStopUiEvent
 
     /** Fired when a stop is selected via the map's StopDetailsBottomSheet. Analytics-only. */
     data class TrackStopSelectedFromMap(

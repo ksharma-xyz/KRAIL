@@ -29,11 +29,18 @@ data class IntroState(
     /** The trip has been written, so the last button now reads Let's KRAIL. */
     val saved: Boolean = false,
     /**
-     * The theme the rider picked on the first screen, as the id of the app's theme, or null before a pick. The
+     * The theme the rider picked on the last screen, as the id of the app's theme, or null before a pick. The
      * right button stays off until there is one. It is kept as the id so the state module needs nothing from
      * the design system, and the Intro's UI turns it back into a theme.
      */
     val selectedThemeId: Int? = null,
+    /**
+     * The answer the rider gave on the confirm screen, or null before one. The confirm screen only records it, and
+     * the finish on the last screen acts on it: the trip is written when it is [TripDecision.SAVED] and both stops are
+     * set. Transient, like [query]: it is not part of what a later unit persists, it carries no stop and no name, and a
+     * missing answer, such as after the process was killed, writes nothing.
+     */
+    val tripDecision: TripDecision? = null,
     /**
      * The nearest train, metro and light rail stations to the rider, nearest first, as ids and names only. They
      * are worked out once from the fix the Park & Ride question already took, and the position is dropped as soon
@@ -96,21 +103,28 @@ sealed interface IntroSearchPhase {
  * place, the UI module's `IntroStepFlow`.
  */
 enum class IntroStep {
-    /** The theme colour. Not built yet, so the flow starts later, see [IntroFirstStep]. */
-    THEME,
     PARK_RIDE,
     DESTINATION,
 
     /** Skipped when a Park & Ride station was added, because that station is already the start. */
     ORIGIN,
     CONFIRM,
+
+    /** The theme colour, the last screen. Its button ends the Intro. */
+    THEME,
 }
 
 /**
- * The screen the Intro opens on, the theme colour. It is one value so a screen can be put before it or
+ * The screen the Intro opens on, Park & Ride. It is one value so a screen can be put before it or
  * taken off the front without changing anything else: the flow, Back and the default state all read it.
  */
-val IntroFirstStep: IntroStep = IntroStep.THEME
+val IntroFirstStep: IntroStep = IntroStep.PARK_RIDE
+
+/**
+ * What the rider answered on the confirm screen. It only records the answer and moves on: the trip is written
+ * (or not) when the Intro finishes, on the theme screen.
+ */
+enum class TripDecision { SAVED, DECLINED }
 
 /** [ASK] is the unanswered question. */
 enum class ParkRideAnswer { ASK, YES, NO }

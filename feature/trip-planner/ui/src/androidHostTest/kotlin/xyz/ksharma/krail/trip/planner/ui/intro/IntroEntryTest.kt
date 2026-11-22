@@ -93,7 +93,7 @@ class IntroEntryTest {
         composeRule.waitForIdle()
     }
 
-    // The theme screen comes first, and its right button only comes on once a theme is selected.
+    // The theme screen comes last, and its right button only comes on once a theme is selected. It ends the Intro.
     private fun chooseTheme() {
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_THEME_METRO).performClick()
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
@@ -107,37 +107,49 @@ class IntroEntryTest {
         composeRule.waitForIdle()
     }
 
+    // The Park & Ride question is first, and its left button is the no.
     private fun answerNo() {
-        chooseTheme()
-        composeRule.onNodeWithText(PARK_RIDE_NO).performClick()
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION).performClick()
+        composeRule.waitForIdle()
+    }
+
+    // The destination and then the origin are picked and confirmed, and the confirm screen answers yes, so only the
+    // theme screen is left.
+    private fun reachTheme() {
+        answerNo()
+        repeat(2) { pickFirstStop() }
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
         composeRule.waitForIdle()
     }
 
     @Test
-    fun `the entry opens on the theme question, with the Park and Ride question not yet shown`() {
+    fun `the entry opens on the Park and Ride question, with the theme question not yet shown`() {
         launch()
 
-        composeRule.onNodeWithText(PICK_THEME_HEADING).assertIsDisplayed()
-        composeRule.onNodeWithText(PARK_RIDE_HEADING).assertDoesNotExist()
+        composeRule.onNodeWithText(PARK_RIDE_HEADING).assertIsDisplayed()
+        composeRule.onNodeWithText(PICK_THEME_HEADING).assertDoesNotExist()
     }
 
     @Test
-    fun `choosing a theme recolours the whole app through the navigator and moves on to Park & Ride`() {
+    fun `the app keeps its colour until the last screen, where choosing a theme recolours it through the navigator`() {
         launch()
+        reachTheme()
 
-        chooseTheme()
+        assertEquals(emptyList<String>(), navigator.themes, "no recolour before the theme screen")
+        composeRule.onNodeWithText(PICK_THEME_HEADING).assertIsDisplayed()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_THEME_METRO).performClick()
+        composeRule.waitForIdle()
 
         assertEquals(listOf(KrailThemeStyle.Metro.hexColorCode), navigator.themes)
-        composeRule.onNodeWithText(PARK_RIDE_HEADING).assertIsDisplayed()
     }
 
     @Test
     fun `finishing goes to Saved Trips with the back stack cleared`() {
         launch()
-        answerNo()
-        // The destination and then the origin are picked and confirmed, and the confirm screen saves.
-        repeat(2) { pickFirstStop() }
+        reachTheme()
 
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_THEME_METRO).performClick()
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
         composeRule.waitForIdle()
 
@@ -149,10 +161,8 @@ class IntroEntryTest {
         val finale = KoinPlatform.getKoin().get<IntroFinaleSignal>()
         finale.attachHost()
         launch()
-        answerNo()
-        repeat(2) { pickFirstStop() }
-        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
-        composeRule.waitForIdle()
+        reachTheme()
+        chooseTheme()
 
         assertEquals(emptyList<NavKey>(), navigator.cleared)
 
@@ -184,7 +194,7 @@ class IntroEntryTest {
         composeRule.runOnIdle { holder?.removeState(VISIT) }
         comeBack()
 
-        composeRule.onNodeWithText(PICK_THEME_HEADING).assertIsDisplayed()
+        composeRule.onNodeWithText(PARK_RIDE_HEADING).assertIsDisplayed()
         composeRule.onNodeWithText(DESTINATION_HEADING).assertDoesNotExist()
     }
 

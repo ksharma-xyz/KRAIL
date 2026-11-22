@@ -21,6 +21,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStop
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
+import xyz.ksharma.krail.trip.planner.ui.state.intro.TripDecision
 import kotlin.time.Duration
 import kotlin.time.TimeSource
 
@@ -101,7 +102,7 @@ internal class IntroFlowViewModel(
     fun onEvent(event: IntroUiEvent) {
         when (event) {
             is IntroUiEvent.PickTheme -> themeStep.pick(event.themeId)
-            IntroUiEvent.ConfirmTheme -> themeStep.confirm()
+            IntroUiEvent.ConfirmTheme -> if (themeStep.confirm()) finish()
             is IntroUiEvent.AnswerParkRide -> answerParkRide(event.yes)
             is IntroUiEvent.LocationResultReceived -> onLocationResult(event.result, event.location)
             IntroUiEvent.AddParkRideAndContinue -> parkRideStep.addAndContinue()
@@ -109,16 +110,15 @@ internal class IntroFlowViewModel(
             is IntroUiEvent.SelectStop -> selectStop(event.stop)
             IntroUiEvent.ConfirmStop -> _state.value.selectedStop?.let(::chooseStop)
             is IntroUiEvent.QueryChanged -> if (_state.value.step.isStopScreen()) stopsStep.onQueryChanged(event.text)
-            IntroUiEvent.FinishPressed -> finish(save = true)
-            IntroUiEvent.FinishWithoutTrip -> finish(save = false)
+            is IntroUiEvent.AnswerSaveTrip -> answerSaveTrip(event.yes)
         }
     }
 
     /**
      * The screen shows [step]. Reported as a screen view once each time the step on screen changes to a
      * different analytics screen, so a turn of the screen that shows the same step again reports nothing and
-     * going from the theme screen to Park & Ride (both the Intro) reports nothing more. After the process is
-     * killed the restored step is reported once more, as a new run.
+     * going between two screens that share a name reports nothing more. After the process is killed the restored
+     * step is reported once more, as a new run.
      */
     fun onStepShown(step: IntroStep) {
         val previous = lastStepShown
@@ -166,12 +166,21 @@ internal class IntroFlowViewModel(
         viewModelScope.launch { ensureSuggestionShown() }
     }
 
+    // Yes, save it and Not now only record the answer and move on to the theme screen. Nothing is written here, and an
+    // answer from any other screen does nothing.
+    private fun answerSaveTrip(yes: Boolean) {
+        if (_state.value.step != IntroStep.CONFIRM) return
+        val decision = if (yes) TripDecision.SAVED else TripDecision.DECLINED
+        update { copy(tripDecision = decision).movedOn() }
+    }
+
     // A press before the stops are ready is not dropped: the finish waits for them, up to
-    // FINISH_WAIT_TIMEOUT_MS, and then goes ahead. A press on any screen but the confirm screen does nothing.
-    private fun finish(save: Boolean) {
-        if (!_state.value.step.canFinish()) return
+    // FINISH_WAIT_TIMEOUT_MS, and then goes ahead. A press on any screen but the theme screen, or with no theme
+    // chosen, does nothing.
+    private fun finish() {
+        if (!_state.value.canFinish()) return
         if (finished || finishJob?.isActive == true) return
-        finishJob = viewModelScope.launch { runFinish(save) }
+        finishJob = viewModelScope.launch { runFinish() }
     }
 
     /**
@@ -179,29 +188,29 @@ internal class IntroFlowViewModel(
      * outcome and only then tells the screen to leave. The wait ends on Ready, on Failed, or after
      * FINISH_WAIT_TIMEOUT_MS, and the finish goes ahead whichever it was. When the stops are not
      * Ready by then the load is asked to carry on in the background, once. A press that no longer has
-     * a screen to finish, because the rider is no longer on the confirm screen, is abandoned. [save] is the
-     * positive answer: the trip is written when there is a complete pair, and with the negative answer
-     * none is.
+     * a screen to finish, because the rider is no longer on the theme screen, is abandoned. The trip is
+     * written when the rider said yes to saving it on the confirm screen and there is a complete pair. With
+     * Not now, or no answer, none is.
      */
-    private suspend fun runFinish(save: Boolean) {
+    private suspend fun runFinish() {
         val wasReady = appDataReadiness.state.value is StopsReadiness.Ready
         val waitStarted = timeSource.markNow()
         val readiness = appDataReadiness.awaitReady(FINISH_WAIT_TIMEOUT_MS)
         // A real clock never reads exactly zero, so no wait is decided here, not by the bucket.
         val waited = if (wasReady) Duration.ZERO else waitStarted.elapsedNow()
 
-        if (!_state.value.step.canFinish()) return
+        if (!_state.value.canFinish()) return
         // A no-op while Loading. From Failed it is one more attempt, from Unknown the launch trigger.
         if (readiness !is StopsReadiness.Ready) appDataReadiness.retry()
 
-        val trip = _state.value.tripToWrite(save)
+        val trip = _state.value.tripToWrite(save = _state.value.tripDecision == TripDecision.SAVED)
         if (trip != null) {
             completion.saveTrip(trip)
             update { copy(saved = true) }
         }
         ensureSuggestionShown()
         completion.writeIntroSeen()
-        completion.track(_state.value.toOutcome(stopsWaitBucket(waited, readiness), declined = !save), savedTrip = trip)
+        completion.track(_state.value.toOutcome(stopsWaitBucket(waited, readiness)), savedTrip = trip)
         finished = true
         effectChannel.send(IntroEffect.NavigateToSavedTrips)
     }

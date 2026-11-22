@@ -7,12 +7,13 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 
 /**
- * The theme screen of the Intro: picking a theme by tapping its badge, and confirming. It runs in [scope],
+ * The theme screen of the Intro, the last: picking a theme by tapping its badge, and confirming. It runs in [scope],
  * the view model's scope, and starts no timer.
  *
  * Picking stores the theme at once, one small local write, so the app starts in it whatever happens next, and
  * the screen switches the whole app to the colour from the state. The write is last one wins: a pick that
- * follows another cancels the write still running. Confirming reports the choice once, and moves on.
+ * follows another cancels the write still running. Confirming reports the choice once and hands the finish to
+ * the view model, which this class does not know about.
  */
 internal class IntroThemeStep(
     private val scope: CoroutineScope,
@@ -35,15 +36,18 @@ internal class IntroThemeStep(
         saveJob = scope.launch { attempt { completion.saveTheme(themeId) } }
     }
 
-    /** `Yes, this one`: reports the choice once and moves to the next screen. Ignored with no theme selected. */
-    fun confirm() {
+    /**
+     * `Yes, this one`: reports the choice once, and says whether there is a choice to finish on. False, and nothing
+     * reported, with no theme selected and on any other screen.
+     */
+    fun confirm(): Boolean {
         val state = read()
         val themeId = state.selectedThemeId
-        if (state.step != IntroStep.THEME || themeId == null) return
+        if (state.step != IntroStep.THEME || themeId == null) return false
         if (reportedThemeId != themeId) {
             reportedThemeId = themeId
             completion.trackTheme(themeId)
         }
-        write { movedOn() }
+        return true
     }
 }

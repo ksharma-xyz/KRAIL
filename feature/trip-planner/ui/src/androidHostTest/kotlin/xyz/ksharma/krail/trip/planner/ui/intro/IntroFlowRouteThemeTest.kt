@@ -53,6 +53,7 @@ class IntroFlowRouteThemeTest {
     private val analytics = FakeAnalytics()
     private val sandook = FakeSandook()
     private val appliedThemes = mutableListOf<String>()
+    private var savedTripsOpened = 0
 
     private val viewModel = IntroFlowViewModel(
         savedStateHandle = savedAt(IntroState(step = IntroStep.THEME)),
@@ -75,7 +76,7 @@ class IntroFlowRouteThemeTest {
             PreviewTheme {
                 IntroFlowRoute(
                     viewModel = viewModel,
-                    onNavigateToSavedTrips = {},
+                    onNavigateToSavedTrips = { savedTripsOpened++ },
                     onApplyTheme = { appliedThemes += it },
                     userLocationManager = FakeUserLocationManager(),
                 )
@@ -141,7 +142,7 @@ class IntroFlowRouteThemeTest {
     }
 
     @Test
-    fun `yes moves to Park and Ride, reports the choice once, and the Intro screen is viewed once`() {
+    fun `yes finishes the Intro, reports the choice once, and the Intro screen is viewed once`() {
         show()
         badge(KrailThemeStyle.Bus).performClick()
         composeRule.waitForIdle()
@@ -149,7 +150,7 @@ class IntroFlowRouteThemeTest {
         primary().performClick()
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithText(PARK_RIDE_HEADING).assertIsDisplayed()
+        assertEquals(1, savedTripsOpened)
         assertEquals(
             listOf<Any?>(KrailThemeStyle.Bus.id.toString()),
             analytics.getTrackedEvents("theme_selected").map { it.properties?.get("themeId") },

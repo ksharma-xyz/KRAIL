@@ -23,7 +23,7 @@ import xyz.ksharma.krail.core.testing.fakes.FakeNswParkRideSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
-import xyz.ksharma.krail.taj.theme.DEFAULT_THEME_STYLE
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.intro.finale.IntroFinaleSignal
@@ -150,33 +150,53 @@ class IntroFlowRouteTest {
         composeRule.waitForIdle()
     }
 
-    @Test
-    fun `the finish effect reaches the navigation callback once`() {
-        show(FakeUserLocationManager())
+    // The destination and the origin each have a row tapped and the button pressed, the confirm screen answers yes, and
+    // the theme screen has a badge tapped and its button pressed, which is the finish.
+    private fun answerNoAndFinishWith(themeTag: String) {
         composeRule.onNodeWithText(PARK_RIDE_NO).performClick()
         composeRule.waitForIdle()
-
-        // The destination and the origin each have a row tapped and the button pressed, and the confirm screen saves.
         repeat(2) { pickFirstStop() }
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
         composeRule.waitForIdle()
+        composeRule.onNodeWithTag(themeTag).performClick()
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
+        composeRule.waitForIdle()
+    }
+
+    @Test
+    fun `the finish effect reaches the navigation callback once, from the theme screen`() {
+        show(FakeUserLocationManager())
+
+        answerNoAndFinishWith(TripPlannerTestTags.INTRO_THEME_METRO)
 
         assertEquals(1, savedTripsOpened)
+        assertEquals(listOf(KrailThemeStyle.Metro.hexColorCode), appliedThemes)
+    }
+
+    @Test
+    fun `the answer on the confirm screen does not finish the Intro, only the theme screen does`() {
+        show(FakeUserLocationManager())
+        composeRule.onNodeWithText(PARK_RIDE_NO).performClick()
+        composeRule.waitForIdle()
+        repeat(2) { pickFirstStop() }
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(0, savedTripsOpened)
+        assertEquals(IntroStep.THEME, viewModel.state.value.step)
+        assertEquals(emptyList<String>(), appliedThemes, "the app keeps its colour until a badge is tapped")
     }
 
     @Test
     fun `with a finale host the finish waits for the finale to ask, then opens Saved Trips once and says so`() {
         finale.attachHost()
         show(FakeUserLocationManager())
-        composeRule.onNodeWithText(PARK_RIDE_NO).performClick()
-        composeRule.waitForIdle()
-        repeat(2) { pickFirstStop() }
-        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
-        composeRule.waitForIdle()
+        answerNoAndFinishWith(TripPlannerTestTags.INTRO_THEME_BUS)
 
         assertEquals(0, savedTripsOpened, "Saved Trips was opened before the finale covered the screen")
         val run = assertNotNull(finale.request.value)
-        assertEquals(DEFAULT_THEME_STYLE.hexColorCode, run.themeHexColorCode, "no theme was chosen on this route")
+        assertEquals(KrailThemeStyle.Bus.hexColorCode, run.themeHexColorCode, "the finale floods with the chosen theme")
         assertTrue(!finale.navigated.value)
 
         composeRule.runOnIdle { finale.requestNavigate() }
@@ -187,7 +207,7 @@ class IntroFlowRouteTest {
     }
 
     @Test
-    fun `each step reports its screen once, and a turn of the screen reports nothing`() {
+    fun `each screen name is reported once as the rider moves through, and a turn of the screen reports nothing`() {
         show(FakeUserLocationManager())
         assertEquals(listOf<Any?>("Intro"), screenViews())
 
@@ -202,5 +222,12 @@ class IntroFlowRouteTest {
         restorationTester.emulateSavedInstanceStateRestore()
         composeRule.waitForIdle()
         assertEquals(listOf<Any?>("Intro", "IntroFirstTrip"), screenViews())
+
+        // The destination, the origin and the confirm screen are one name, and the theme screen is the Intro again.
+        repeat(2) { pickFirstStop() }
+        assertEquals(listOf<Any?>("Intro", "IntroFirstTrip"), screenViews())
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
+        composeRule.waitForIdle()
+        assertEquals(listOf<Any?>("Intro", "IntroFirstTrip", "Intro"), screenViews())
     }
 }

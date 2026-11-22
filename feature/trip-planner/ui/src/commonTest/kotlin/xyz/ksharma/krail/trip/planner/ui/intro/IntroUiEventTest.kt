@@ -27,8 +27,8 @@ class IntroUiEventTest {
         val plain = setOf(
             IntroUiEvent.AddParkRideAndContinue,
             IntroUiEvent.DeclineParkRide,
-            IntroUiEvent.FinishPressed,
-            IntroUiEvent.FinishWithoutTrip,
+            IntroUiEvent.AnswerSaveTrip(yes = true),
+            IntroUiEvent.AnswerSaveTrip(yes = false),
             IntroUiEvent.ConfirmStop,
         )
 

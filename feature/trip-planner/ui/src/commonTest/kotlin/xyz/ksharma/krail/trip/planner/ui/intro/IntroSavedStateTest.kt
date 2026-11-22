@@ -12,6 +12,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardStation
+import xyz.ksharma.krail.trip.planner.ui.state.intro.TripDecision
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -60,7 +61,7 @@ class IntroSavedStateTest {
     }
 
     @Test
-    fun `the stations near the rider, the badges, the typed text, its results and the selected stop are never saved`() {
+    fun `the stations near the rider, the badges, the typed text, its results, the selected stop and the confirm answer are not saved`() {
         val handle = SavedStateHandle()
         val kept = IntroState(
             step = IntroStep.ORIGIN,
@@ -75,6 +76,7 @@ class IntroSavedStateTest {
             query = "redf",
             search = IntroSearchPhase.Results(persistentListOf(IntroStop("201510", "Redfern Station"))),
             selectedStop = IntroStop("200080", "Wynyard Station"),
+            tripDecision = TripDecision.SAVED,
         )
 
         handle.saveIntroState(withTransient)

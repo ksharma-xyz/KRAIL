@@ -33,18 +33,26 @@ class IntroFlowViewModelStepShownTest {
     }
 
     @Test
-    fun `going from the theme screen to Park and Ride reports the Intro once, and back reports nothing more`() =
+    fun `walking the flow reports the Intro, the first trip, then the Intro again at the theme screen, once each`() =
         krailRunTest {
             val rig = IntroRig(this)
 
-            rig.viewModel.onStepShown(IntroStep.THEME)
-            rig.viewModel.onStepShown(IntroStep.PARK_RIDE)
-            rig.viewModel.onStepShown(IntroStep.THEME)
-            rig.viewModel.onStepShown(IntroStep.PARK_RIDE)
-            rig.viewModel.onStepShown(IntroStep.DESTINATION)
+            IntroStep.entries.forEach { step ->
+                rig.viewModel.onStepShown(step)
+                rig.viewModel.onStepShown(step)
+            }
 
-            assertEquals(listOf<Any?>("Intro", "IntroFirstTrip"), rig.screenViews())
+            assertEquals(listOf<Any?>("Intro", "IntroFirstTrip", "Intro"), rig.screenViews())
         }
+
+    @Test
+    fun `the theme screen on its own reports the Intro, as it does after the process was killed`() = krailRunTest {
+        val rig = IntroRig(this)
+
+        repeat(2) { rig.viewModel.onStepShown(IntroStep.THEME) }
+
+        assertEquals(listOf<Any?>("Intro"), rig.screenViews())
+    }
 
     @Test
     fun `the readiness the last button waits on is the one the data layer reports`() = krailRunTest {

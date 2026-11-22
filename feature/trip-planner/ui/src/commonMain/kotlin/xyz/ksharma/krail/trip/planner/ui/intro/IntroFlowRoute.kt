@@ -26,15 +26,16 @@ import xyz.ksharma.krail.trip.planner.ui.intro.finale.IntroFinaleSignal
  *   changes. It is not by route: `RouteAnalyticsScreen` maps routes for the window events and is
  *   not where `view_screen` is sent.
 
- * - The theme the rider selects on the first screen is applied to the whole app through [onApplyTheme], so every
- *   screen after it, and the buttons on this one, take its colour at once. The theme is also stored when it is
- *   selected, so the app starts in it however the Intro ends.
+ * - The theme the rider selects on the last screen is applied to the whole app through [onApplyTheme] on every
+ *   tap, so the buttons on that screen and the app behind the finale take its colour at once. The Intro before it
+ *   runs in the app's current theme, the default on a first run. The theme is also stored when it is selected,
+ *   so the app starts in it however the Intro ends.
  *
  * [onNavigateToSavedTrips] is where the finish goes, through [onIntroFinished]. The finish starts the finale on
  * [finale] and Saved Trips is opened only when the finale asks, at full cover, so the app is composed under a
  * solid colour. This route is the one that navigates, with the callback it has now, and says so to the finale, so a
  * turn of the screen in the middle of it never leaves a callback for a screen that is gone. With no finale host
- * attached, as in a test, the finish goes straight to Saved Trips.
+ * attached, as in a test, the finish goes straight to Saved Trips. The finish is the theme screen's button, the last.
  */
 @Composable
 internal fun IntroFlowRoute(

@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep.CONFIRM
@@ -37,23 +38,24 @@ class IntroStepFlowTest {
         startFromParkRide = true,
     )
 
-    // The order of the screens the rider meets, for each state the flow can be in, and for each first screen.
+    // The order of the screens the rider meets, for each state the flow can be in, and for each first screen. The
+    // theme screen is last and never skipped, so a first screen after it leaves it alone.
     private val orders = listOf(
-        row("nothing answered, no theme", untouched, PARK_RIDE, PARK_RIDE, DESTINATION, ORIGIN, CONFIRM),
-        row("nothing answered, theme", untouched, THEME, THEME, PARK_RIDE, DESTINATION, ORIGIN, CONFIRM),
-        row("answered no", declined, PARK_RIDE, PARK_RIDE, DESTINATION, ORIGIN, CONFIRM),
-        row("a card is showing", cardShown, THEME, THEME, PARK_RIDE, DESTINATION, ORIGIN, CONFIRM),
-        row("no car park near", noStationNear, THEME, THEME, DESTINATION, ORIGIN, CONFIRM),
-        row("no location", noLocation, THEME, THEME, DESTINATION, ORIGIN, CONFIRM),
-        row("a car park is the start", parkRideStart, THEME, THEME, PARK_RIDE, DESTINATION, CONFIRM),
-        row("a car park is the start, no theme", parkRideStart, PARK_RIDE, PARK_RIDE, DESTINATION, CONFIRM),
+        row("nothing answered", untouched, PARK_RIDE, PARK_RIDE, DESTINATION, ORIGIN, CONFIRM, THEME),
+        row("answered no", declined, PARK_RIDE, PARK_RIDE, DESTINATION, ORIGIN, CONFIRM, THEME),
+        row("a card is showing", cardShown, PARK_RIDE, PARK_RIDE, DESTINATION, ORIGIN, CONFIRM, THEME),
+        row("no car park near", noStationNear, PARK_RIDE, DESTINATION, ORIGIN, CONFIRM, THEME),
+        row("no location", noLocation, PARK_RIDE, DESTINATION, ORIGIN, CONFIRM, THEME),
+        row("a car park is the start", parkRideStart, PARK_RIDE, PARK_RIDE, DESTINATION, CONFIRM, THEME),
+        row("opening on the destination screen", untouched, DESTINATION, DESTINATION, ORIGIN, CONFIRM, THEME),
+        row("opening on the theme screen", untouched, THEME, THEME),
     )
 
     @Test
     fun `the screens are shown in the order the table says`() {
         orders.forEach { row ->
             // Standing on the last screen, which is never skipped, so the order shows only what the rules decide.
-            assertEquals(row.order, row.state.copy(step = CONFIRM).stepsInFlow(row.first), row.name)
+            assertEquals(row.order, row.state.copy(step = THEME).stepsInFlow(row.first), row.name)
         }
     }
 
@@ -68,25 +70,26 @@ class IntroStepFlowTest {
     }
 
     @Test
-    fun `the default flow is the five screens in order, opening on the theme screen`() {
-        assertEquals(THEME, IntroState().step)
+    fun `the default flow is the five screens in order, opening on the Park and Ride screen and ending on the theme`() {
+        assertEquals(PARK_RIDE, IntroState().step)
         assertEquals(
-            listOf(THEME, PARK_RIDE, DESTINATION, ORIGIN, CONFIRM),
-            untouched.copy(step = CONFIRM).stepsInFlow(),
+            listOf(PARK_RIDE, DESTINATION, ORIGIN, CONFIRM, THEME),
+            untouched.copy(step = THEME).stepsInFlow(),
         )
-        assertEquals(PARK_RIDE, untouched.copy(step = THEME).stepAfter())
-        assertEquals(PARK_RIDE, untouched.copy(step = THEME).movedOn().step)
+        assertEquals(DESTINATION, untouched.copy(step = PARK_RIDE).stepAfter())
+        assertEquals(DESTINATION, untouched.movedOn().step)
+        assertEquals(THEME, untouched.copy(step = CONFIRM).stepAfter())
     }
 
     @Test
-    fun `from the theme screen the flow passes over a Park and Ride screen with nothing to decide`() {
-        assertEquals(DESTINATION, noStationNear.copy(step = THEME).stepAfter())
-        assertEquals(PARK_RIDE, declined.copy(step = THEME).stepAfter())
+    fun `from the Park and Ride screen the flow passes over nothing but a screen with nothing to decide`() {
+        assertEquals(DESTINATION, noStationNear.copy(step = PARK_RIDE).stepAfter())
+        assertEquals(DESTINATION, declined.copy(step = PARK_RIDE).stepAfter())
     }
 
     @Test
     fun `the last screen has nothing after it`() {
-        assertNull(untouched.copy(step = CONFIRM).stepAfter())
+        assertNull(untouched.copy(step = THEME).stepAfter())
     }
 
     @Test
@@ -114,29 +117,32 @@ class IntroStepFlowTest {
     @Test
     fun `leaving Park and Ride moves to the next screen only while the rider is still on it`() {
         assertEquals(DESTINATION, untouched.leavingParkRide(PARK_RIDE).step)
-        assertEquals(DESTINATION, noStationNear.copy(step = PARK_RIDE).leavingParkRide(THEME).step)
+        assertEquals(DESTINATION, noStationNear.copy(step = PARK_RIDE).leavingParkRide().step)
         // A look that ends after the rider is on another screen never pulls them forward.
-        assertEquals(THEME, untouched.copy(step = THEME).leavingParkRide(THEME).step)
-        assertEquals(DESTINATION, untouched.copy(step = DESTINATION).leavingParkRide(THEME).step)
+        assertEquals(THEME, untouched.copy(step = THEME).leavingParkRide().step)
+        assertEquals(DESTINATION, untouched.copy(step = DESTINATION).leavingParkRide().step)
     }
 
     @Test
     fun `moving on from the last screen stays on it`() {
-        assertEquals(CONFIRM, untouched.copy(step = CONFIRM).movedOn().step)
+        assertEquals(THEME, untouched.copy(step = THEME).movedOn().step)
     }
 
     @Test
-    fun `only the confirm screen can finish the Intro`() {
+    fun `only the theme screen with a theme chosen can finish the Intro`() {
+        val chosen = KrailThemeStyle.Train.id
+
         assertEquals(
             mapOf(
-                THEME to false,
                 PARK_RIDE to false,
                 DESTINATION to false,
                 ORIGIN to false,
-                CONFIRM to true,
+                CONFIRM to false,
+                THEME to true,
             ),
-            IntroStep.entries.associateWith { it.canFinish() },
+            IntroStep.entries.associateWith { untouched.copy(step = it, selectedThemeId = chosen).canFinish() },
         )
+        assertFalse(untouched.copy(step = THEME, selectedThemeId = null).canFinish(), "no theme chosen")
     }
 
     @Test

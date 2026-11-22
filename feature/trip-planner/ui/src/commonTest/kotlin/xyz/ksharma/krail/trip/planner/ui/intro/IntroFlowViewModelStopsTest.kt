@@ -406,8 +406,8 @@ class IntroFlowViewModelStopsTest {
             IntroUiEvent.ConfirmStop,
             IntroUiEvent.SelectStop(TALLAWONG_STOP),
             IntroUiEvent.ConfirmStop,
-            IntroUiEvent.FinishPressed,
         )
+        rig.answerAndFinish(yes = true)
 
         assertTrue(rig.analytics.events.isNotEmpty(), "the finish reported its outcome")
         rig.analytics.events.forEach { event ->
@@ -467,7 +467,7 @@ class IntroFlowViewModelStopsTest {
 
             rig.send(IntroUiEvent.SelectStop(WYNYARD_STOP), IntroUiEvent.ConfirmStop)
             rig.send(IntroUiEvent.SelectStop(TALLAWONG_STOP), IntroUiEvent.ConfirmStop)
-            rig.send(IntroUiEvent.FinishPressed)
+            rig.answerAndFinish(yes = true)
 
             val trip = rig.sandook.selectAllTrips().single()
             assertEquals(
@@ -484,7 +484,7 @@ class IntroFlowViewModelStopsTest {
 
         rig.send(IntroUiEvent.SelectStop(WYNYARD_STOP), IntroUiEvent.ConfirmStop)
         rig.send(IntroUiEvent.SelectStop(TALLAWONG_STOP), IntroUiEvent.ConfirmStop)
-        rig.send(IntroUiEvent.FinishWithoutTrip)
+        rig.answerAndFinish(yes = false)
 
         assertTrue(rig.sandook.selectAllTrips().isEmpty())
         assertEquals(true, rig.outcomeEvent().properties?.get("skipped"))

@@ -42,8 +42,9 @@ erDiagram
     INTRO_STATE ||--|| STOPS_READINESS : "waits on"
     INTRO_STATE ||--|| INTRO_OUTCOME : "reports"
     INTRO_STATE {
-        enum step "THEME, PARK_RIDE, DESTINATION, ORIGIN, CONFIRM"
-        int selectedThemeId "nullable, the theme the rider picked on the first screen"
+        enum step "PARK_RIDE, DESTINATION, ORIGIN, CONFIRM, THEME"
+        int selectedThemeId "nullable, the theme the rider picked on the last screen"
+        enum tripDecision "nullable SAVED or DECLINED, the answer on the confirm screen, transient"
         enum parkRideAnswer "ASK, YES, NO"
         enum locationResult "NOT_ASKED, GRANTED, DENIED, UNAVAILABLE"
         enum parkRideCard "NONE, LOCATING, NO_STATION_NEAR, CARD"
@@ -192,11 +193,15 @@ internal fun parkRideStartPrefill(station: ParkRideStationPickerItem, stopNameLo
  * left (an outlined button) and the primary on the right (filled in the theme colour, test tag `intro.action.primary`).
  * Only the right one is ever disabled. The one exception is the THEME screen (owner's ruling, 2026-11-22), whose bar is
  * the primary alone and whose `left` is null: `IntroBarTest` pins that no other step can lose its left button.
- *   THEME:        "Yes, this one" alone, a full width taj button, the same height as the two button bar so nothing moves
- *                 when it appears. It confirms the theme on show and is NOT SHOWN (not disabled) until a badge is tapped,
- *                 when it fades in where the room for it was kept (`IntroBar.shown`). There is no
- *                 no, and no way to cycle: a theme is chosen only by tapping its badge. No compact form, and the same
- *                 words for a screen reader (the visible label is contained in the spoken one, so voice control works).
+ *   THEME (the last screen, unit U9): "Yes, this one" alone, a full width taj button, the same height as the two button
+ *                 bar so nothing moves when it appears. It confirms the theme on show and ENDS THE INTRO. It is NOT SHOWN
+ *                 (not disabled) until a badge is tapped, when it fades in where the room for it was kept (`IntroBar.shown`).
+ *                 There is no no, and no way to cycle: a theme is chosen only by tapping its badge. No compact form, and the
+ *                 same words for a screen reader (the visible label is contained in the spoken one, so voice control works).
+ *                 The finish waits for the stops data to be Ready or Failed, as it always has, but only when there is a trip
+ *                 to write: the button is off while the stops are Unknown or Loading and the rider answered `Yes, save it`
+ *                 on the confirm screen (`IntroState.tripDecision` is SAVED) and the trip is not already written. With
+ *                 `Not now`, or no answer, nothing is written and the button is never held back.
  *   PARK_RIDE:    asking is "No thanks" and "Yes, show me free spots". A card, or a station still being looked for, is
  *                 "Not now" and "Add to home". While the station is looked for, or its numbers are awaited, the bar keeps
  *                 both buttons and the right one is disabled, so the bar never changes size or jumps.
@@ -205,8 +210,9 @@ internal fun parkRideStartPrefill(station: ParkRideStationPickerItem, stopNameLo
  *   DESTINATION, ORIGIN: "Yes, this one" alone, a full width taj button, like the theme screen. It is NOT SHOWN until the
  *                 rider has tapped a stop (`IntroState.selectedStop`), keeps its room, and then confirms that stop and moves on.
  *                 There is no "No, search": the field opens the keyboard itself when it is tapped.
- *   CONFIRM:      "Not now" and "Yes, save it". Not now is the only way out without saving. The right button waits
- *                 for the stops data to be Ready or Failed, and a trip already written needs no wait.
+ *   CONFIRM:      "Not now" and "Yes, save it". Both only RECORD the answer (`IntroUiEvent.AnswerSaveTrip`, kept as the
+ *                 transient `IntroState.tripDecision`) and move on to the theme screen. Neither waits for anything,
+ *                 and nothing is written here. Not now is the only way to leave without saving.
  */
 internal fun introBar(state: IntroState, readiness: StopsReadiness): IntroBar?
 internal data class IntroBar(val left: IntroBarAction?, val right: IntroBarAction, val rightEnabled: Boolean = true, val shown: Boolean = true) // left is null on the screens that ask for a pick; shown is false until there is a pick, and the room is kept
@@ -268,9 +274,11 @@ data class ParkRideCarPark(
 )
 
 // module: :feature:trip-planner:state, intro/
-enum class IntroStep { THEME, PARK_RIDE, DESTINATION, ORIGIN, CONFIRM }
-/** The first screen of the flow, the theme colour. One constant, so a screen can be put before it or taken off the front. */
-val IntroFirstStep: IntroStep = IntroStep.THEME
+enum class IntroStep { PARK_RIDE, DESTINATION, ORIGIN, CONFIRM, THEME }
+/** The first screen of the flow, Park & Ride. One constant, so a screen can be put before it or taken off the front. */
+val IntroFirstStep: IntroStep = IntroStep.PARK_RIDE
+/** The answer on the confirm screen. Transient: it carries no stop and no name, and it is not saved with the screen (a later unit decides that). */
+enum class TripDecision { SAVED, DECLINED }
 
 // module: :feature:trip-planner:ui, intro/ (internal, because SuggestedStop is).
 sealed interface IntroUiEvent {
@@ -281,10 +289,9 @@ sealed interface IntroUiEvent {
     data class SelectStop(val stop: IntroStop) : IntroUiEvent   // a tap on a row or a typed result: selects it, shows the button, moves nothing on
     data object ConfirmStop : IntroUiEvent             // "Yes, this one": the selected stop is the end on the destination screen, the start on the origin screen, and the Intro moves on
     data class QueryChanged(val text: String) : IntroUiEvent // the typed text, searched locally after a pause, never reported or saved
-    data object FinishPressed : IntroUiEvent           // "Yes, save it" on the confirm screen: saves the trip
-    data object FinishWithoutTrip : IntroUiEvent       // "Not now" on the confirm screen: ends the Intro with nothing saved
+    data class AnswerSaveTrip(val yes: Boolean) : IntroUiEvent // the confirm screen's "Yes, save it" or "Not now": records the answer (TripDecision) and moves on to THEME, writes nothing
     data class PickTheme(val themeId: Int) : IntroUiEvent // a badge was tapped: selects the theme, does not move on
-    data object ConfirmTheme : IntroUiEvent            // "Yes, this one", the only button on THEME: reports the choice once and moves on
+    data object ConfirmTheme : IntroUiEvent            // "Yes, this one", the only button on THEME, the last screen: reports the choice once and FINISHES the Intro
 }
 
 /** One shot, delivered once through a Channel and never replayed after rotation. */
@@ -412,9 +419,10 @@ fun IntroState.toOutcome(stopsWait: StopsWait, declined: Boolean = false): Intro
   (`IntroBurst.kt`). With reduced motion (`isReduceMotionEnabled()`) the star is at rest and fades in over 200 ms with no burst; in a
   preview, a screenshot, and after a turn of the screen (the played flag is saved) it is simply there. The burst is clipped by the
   scrolling screen, so the part that flies past the left edge or the top is cut, which is the intent of a burst at the screen's edge.
-- **Finishing, as built.** `IntroStep.canFinish()` is true for the confirm screen alone, so `FinishPressed` and `FinishWithoutTrip`
-  from any other screen do nothing. Yes, save it is the existing path unchanged (the wait of up to 15 s for the stops, the trip
-  write, both flags, `intro_lets_krail`, then the effect). `IntroFlowRoute` hands the effect to one function,
+- **Finishing, as built (moved to the theme screen in unit U9).** `IntroState.canFinish()` is true on the theme screen with a theme
+  chosen, so a `ConfirmTheme` from any other screen, or with no theme, does nothing. The confirm screen's `AnswerSaveTrip` only
+  records the answer and moves on. The finish is `ConfirmTheme` (the wait of up to 15 s for the stops, the trip write when the answer
+  was yes and both stops are set, both flags, `intro_lets_krail`, then the effect), in the same order as before. `IntroFlowRoute` hands the effect to one function,
   `onIntroFinished(navigateToSavedTrips)`, which unit R3 left calling straight through to Saved Trips as the one place a finale
   wraps, and unit R4 wraps (see "Unit R4, as built").
 - **The outcome.** `skipped` in `intro_lets_krail` is true only when the rider answered Not now on the confirm screen, and a saved
@@ -480,21 +488,45 @@ three zone frame, and everything it decides is in pure functions with table test
   Sandook, Analytics and the IO dispatcher, because the view model is at the constructor limit.
 - **Confirming.** `Yes, this one` is not shown until a theme is selected. It reports the choice once with the existing
   `analytics.trackThemeSelectionEvent(themeId)` (event `theme_selected`, param `themeId` only, no new name and no new param,
-  and the ledger has no Pending row for it), and moves on to Park & Ride. Tapping a badge reports nothing. The flow only
-  moves forward, so the choice is reported once.
-- **The flow.** `IntroFirstStep` is THEME. The flow only moves forward (see "No back anywhere"), and a Park & Ride screen with
-  nothing to decide is passed over. The selected
+  and the ledger has no Pending row for it), and, since unit U9, finishes the Intro (it used to move on to Park & Ride). Tapping
+  a badge reports nothing. The choice is reported once.
+- **The flow.** Since unit U9 `IntroFirstStep` is PARK_RIDE and THEME is the last screen. The flow only moves forward (see "No back
+  anywhere"), and a Park & Ride screen with nothing to decide is passed over. The selected
   theme id is part of the saved state, so it survives rotation and a killed process, and a snapshot saved before it existed reads
   as no theme.
 - **One screen view.** The theme and Park & Ride screens are both `view_screen` `Intro`. `shouldTrackScreenView(previous, next)`
-  sends it on entering the Intro and when the screen name changes, so going from the theme screen to Park & Ride sends
-  nothing more. No event name was added.
+  sends it on entering the Intro and when the screen name changes. No event name was added.
 - **The wording guard.** `IntroCopyTest` exempts exactly the themes' taglines, which are the app's own copy and carry an
   exclamation mark, and nothing else: a line of the Intro's own with the same fault, or a tagline with a word added, still fails.
 - **What R3 wires.** The chosen theme is `IntroState.selectedThemeId`, saved with the screen, and the app is already in its colour
   (applied and stored), so the finale reads it with `themeChoiceFor(id)?.style`, and an unset id means the default theme. R3 replaced
   `tripBar` with the bars of its three screens, replaced `IntroPendingStepBody` for the origin and confirm screens and deleted it,
   kept `IntroFlowRoute`'s `onApplyTheme` as it is, and sends no `view_screen` of its own: the two names already cover its screens.
+
+Unit U9, part 1, as built (a new step order, the finish on the theme screen, the headlines, the buttons and the badges), where
+this document was silent. Earlier text in this section that says the theme screen is first, that the confirm screen finishes, or
+that Park & Ride asks "No thanks" and "Yes, show me free spots" is superseded by this block.
+
+- **The order.** `IntroStep` is PARK_RIDE, DESTINATION, ORIGIN (skipped when a Park & Ride station was added), CONFIRM, THEME, then the
+  finale. `IntroFirstStep` is PARK_RIDE and system back on it leaves the app as before. The Intro runs in the app's colour until the
+  last screen, where each badge tap still recolours the whole app (the same per tap write). A Settings replay is a new view model
+  and so starts at PARK_RIDE with nothing selected. The origin screen's emoji is the entry at place 8 of the list, a number of its
+  own, because it was the screen's position in the order (3 plus 5) and the order changed.
+- **The finish.** `AnswerSaveTrip(yes)` on the confirm screen only records `IntroState.tripDecision` (SAVED or DECLINED, transient, ids
+  and names are never part of it) and moves on to the theme screen. `ConfirmTheme` on the theme screen reports the theme choice once and
+  then runs the finish exactly as it ran before: wait for the stops up to 15 s, write the trip when the decision is SAVED and both stops are
+  set, write the suggestion flag and `KEY_HAS_SEEN_INTRO`, report `intro_lets_krail`, then send the effect that `onIntroFinished`
+  hands to the finale. `IntroState.canFinish()` is the theme screen with a theme chosen. `skipped` is true only when the decision is
+  DECLINED (and nothing was saved). A finish with no decision recorded, such as after the process was killed on the theme screen, writes
+  no trip and is not skipped, because `tripDecision` is not saved with the screen: a later unit decides whether to save it.
+- **`finishedOn`.** The finish is now on the theme screen, after the trip screens, so `IntroStep.THEME` maps to `first_trip`, the value the
+  finish always had. `park_ride` is left for a finish from the Park & Ride screen, which no flow reaches.
+- **Analytics screen names.** `view_screen` keeps the two existing names and the theme screen keeps `Intro`, so no screen name is added.
+  The order of a run is now `Intro` (Park & Ride), `IntroFirstTrip` (destination, origin and confirm, once), `Intro` (theme). A run
+  therefore sends `Intro` twice, once at each end, with `IntroFirstTrip` between. The dedupe is unchanged: one view for each run of
+  screens that share a name, and one more after a killed process. For the analytics side (the owner tells them): a funnel that counted
+  `Intro` once for each run must now count a run by its first `Intro` view, or by the `IntroFirstTrip` view for riders who got past
+  Park & Ride, and the second `Intro` marks arrival on the colour screen.
 
 Unit R4, as built (the finale), where this document was silent. The finale is the last thing the Intro does: after the trip
 is written and both flags are set, the gradient wordmark `#LET'S KRAIL` glows, settles into the rider's theme colour, that colour
@@ -662,8 +694,9 @@ Unit R1, as built, where this document was silent:
   screen is built. `:feature:trip-planner:ui` already depends on `core:festival`, so no new module edge was needed.
 - **Analytics.** No new event name and no new param. `intro_lets_krail` keeps its params and their meaning. `skipped` is
   completed with the confirm screen, where it will mean the rider answered No there. Until then it still means no complete trip
-  was picked. `view_screen` maps the theme and Park & Ride screens to `Intro` and the other three to `IntroFirstTrip`, and it is
-  sent once when the Intro is entered and not again between the first two (unit R2, `shouldTrackScreenView`).
+  was picked. `view_screen` maps the Park & Ride and theme screens to `Intro` and the other three to `IntroFirstTrip`, and it is
+  sent once when the Intro is entered and again only when the name changes (unit R2, `shouldTrackScreenView`, and see unit U9 for
+  the order now that the theme screen is last).
 
 ## 4. External contracts
 
@@ -711,7 +744,8 @@ sequenceDiagram
     VM->>DB: insertOrReplaceSavedParkRides(UserAdded)
     UI->>VM: SelectStop then ConfirmStop (destination, then origin unless a Park & Ride start filled it in)
     UI->>VM: QueryChanged (local stop search after a pause, nothing reported)
-    UI->>VM: FinishPressed (confirm screen only)
+    UI->>VM: AnswerSaveTrip(yes) (confirm screen only: records the answer, moves on to the theme screen, writes nothing)
+    UI->>VM: PickTheme (each badge tap: selects, stores and recolours the app), then ConfirmTheme (theme screen only, a theme chosen)
     VM->>R: awaitReady
     VM->>DB: insertOrReplaceTrip, then flags
     VM-->>UI: navigate to SavedTrips
@@ -733,7 +767,7 @@ Decisions the view model branch made where this document was silent:
   goes ahead whichever it was: the trip if there is one, both flags, tracking, then the effect. When the stops are not Ready
   by then, `retry()` is called once so the load goes on in the background (a no-op from Loading). The tracked wait is
   `failed` for Failed and `over_5s` for a timeout. The wait is none when the stops were already Ready, because a real clock
-  never reads exactly zero. A finish whose screen is no longer the confirm screen is abandoned.
+  never reads exactly zero. A finish whose screen is no longer the theme screen is abandoned.
 - **Once.** The suggestion flag is written at the first of the question being answered or passed, and the finish. A
   second press while a finish runs, or after it has finished, does nothing. A trip already written (`saved`) is not
   written again by Let's KRAIL.
@@ -820,8 +854,8 @@ Decisions the UI branch made where this document was silent:
   or saved value, the state, or a log. `IntroLocationNeverHeldTest` holds that for the three files that touch it.
 - **Screen views.** `view_screen` is sent from the view model (`onStepShown`), the way every other screen sends it. It is not by
   route: `RouteAnalyticsScreen` maps routes to names for the window events and is not where `view_screen` is sent, and it is not
-  changed. It is sent once each time the step on screen changes, `Intro` for the theme and Park & Ride screens and `IntroFirstTrip` for
-  the destination, origin and confirm screens, so a turn of the screen sends nothing. After a killed process the restored step is sent once more.
+  changed. It is sent once each time the step on screen changes to a different name, `Intro` for the Park & Ride and theme screens and
+  `IntroFirstTrip` for the destination, origin and confirm screens, so a turn of the screen sends nothing. After a killed process the restored step is sent once more.
 
 Decisions unit R3 made for the stations near the rider, where this document was silent:
 
@@ -1048,10 +1082,10 @@ The reference is an interactive review page (private). The states it shows are r
 
 **The five screens (rebuild)**
 
-The Intro is five screens in this order, each asking one question: 1 theme, 2 Park & Ride, 3 destination, 4 origin, 5 confirm.
-The origin screen is passed over when a Park & Ride station was added, because it filled in the start. Unit R1 builds the Park &
-Ride screen and the shared parts, and unit R2 builds the theme screen and makes it the first (`IntroFirstStep` is THEME). The
-destination, origin and confirm screens are temporary bodies (section 3).
+The Intro is five screens in this order, each asking one question: 1 Park & Ride, 2 destination, 3 origin, 4 confirm, 5 theme
+(the last, since unit U9, which also moved the finish to it: `IntroFirstStep` is PARK_RIDE). The origin screen is passed over when a
+Park & Ride station was added, because it filled in the start. Unit R1 builds the Park & Ride screen and the shared parts, unit R2
+the theme screen, and unit R3 the other three.
 
 Every screen has three zones:
 
@@ -1141,12 +1175,12 @@ make a row fit, except the one rule below. A screen with nothing to decide has n
   screen, the star on the confirm screen, the car on Park & Ride and the train, metro, bus and ferry on the theme screen
   (section 3). Never a festival emoji, and never the alarm clock.
 
-**Step 0, theme (the first screen)**
+**Step 5, theme (the last screen, first in the order until unit U9)**
 
 | State | The rider sees |
 |---|---|
 | None chosen | The headline `Pick`, `your ride`, `colour` and the four badges, drifting. Bar: nothing, and its room is kept, so the button is neither visible nor disabled |
-| A theme selected | The whole app in that theme's colour, the headline now that theme's tagline, the selected badge dancing and the others drifting. Bar: the one button `Yes, this one` fades in over 250 ms in the kept room, in that theme's colour. With reduced motion it appears at once |
+| A theme selected | The whole app in that theme's colour, the headline now that theme's tagline, the selected badge dancing and the others drifting. Bar: the one button `Yes, this one` fades in over 250 ms in the kept room, in that theme's colour, and it ends the Intro. With reduced motion it appears at once. When the rider said yes to saving the trip and the stops are still loading, the button is off until they are Ready or Failed |
 | Reduced motion, preview or screenshot | The same, with nothing moving: the selected badge lifted 4 dp |
 | 320 dp at 200 percent text | The four badges in a column, one to a row, each about 102 dp and a full touch target, centred. The bar, once there is a pick, is the one button across the window, whole. The middle zone scrolls with the headline |
 
@@ -1155,6 +1189,7 @@ make a row fit, except the one rule below. A screen with nothing to decide has n
   cycle. This is the one screen with a single button, an explicit exception to the two button bar.
 - Nothing is written under the headline or the badges: no caption, no count and no hint.
 - A turn of the screen keeps the selection, applies the theme again and keeps the headline in place.
+- The Intro before this screen runs in the app's current colour, the default on a first run, and each badge tap recolours the whole app live.
 
 **Step 1, Park & Ride**
 
@@ -1502,6 +1537,25 @@ in `searchstop/` touched:
   `IntroFlowScreenTest` (every screen's headline starts at least 24 dp below the top), `IntroStopStepNarrowTest` (320 dp at 200 percent: the field
   is 24 dp under the title, the first row 16 dp under the field, rows do not overlap selected or not) and `IntroThemeStepNarrowTest` (the badges are 24 dp under the headline).
 
+- **Unit U9 part 1 tests, the order and the finish.** Pure tables: `IntroStepFlowTest` (the order for each state and each first screen, the
+  theme screen last and never skipped, `canFinish` for the theme screen with a theme chosen and no other), `IntroScreenViewTest` and
+  `IntroFlowViewModelStepShownTest` (the order of screen names is `Intro`, `IntroFirstTrip`, `Intro`, one view each, and no step maps
+  outside the two existing names), `IntroOutcomeTest` (`skipped` only from a DECLINED decision, `finishedOn` for every step),
+  `IntroBarTest` (the confirm bar never waits, the theme bar waits only for a yes with loading stops and a trip not yet written),
+  `IntroEmojiTest` (the origin entry is place 8, and the theme screen differs from the confirm screen before it) and `IntroStateTest`
+  (the first and last steps, the decision). The view model with the fakes at the edges: `IntroFlowViewModelFinishTest` (the confirm
+  answers only record and write nothing, the finish from the theme screen in the same order as before with the theme reported first, a
+  finish with no answer recorded writes no trip, nothing finishes from another screen or with no theme),
+  `IntroFlowViewModelThemeTest` (the confirm finishes the Intro), `IntroFlowViewModelFirstStepTest` (the default is Park & Ride with
+  nothing selected) and `IntroSavedStateTest` (the decision is not saved). Compose: `IntroFlowScreenTest` (the confirm screen's bar never
+  waits, the theme screen's button waits for loading stops only after a yes, system back leaves the app on Park & Ride only),
+  `IntroFlowRouteTest` (the finish and the finale colour come from the theme screen, a confirm answer does not finish, the screen views),
+  `IntroFlowRouteThemeTest` and `IntroEntryTest` (the entry opens on Park & Ride, the app keeps its colour until the last screen).
+- **Existing tests changed in U9 part 1, on purpose.** `IntroFlowViewModelThemeStartTest` is renamed `IntroFlowViewModelFirstStepTest`.
+  Every test that finished from the confirm screen now finishes by answering, choosing a theme and pressing the theme button
+  (`IntroRig.answerAndFinish`). Deleted on purpose: the test that the confirm screen's yes waits for loading stops, and the test that the
+  theme screen's button is never disabled, because the wait moved to the theme screen and only applies after a yes to saving.
+
 ## 9. Open gaps and decisions
 
 | Gap or decision | Owner | Needed by |
@@ -1614,6 +1668,20 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | U8-18 | The top room is 24 dp, not the 48 dp the back arrow's bar used to give | The arrow and its bar are gone, so the headline would sit under the status bar. 24 dp is the token that matches the gap under it. If the screen looks too high, `introRhythm.top` is the one number | Default, not yet seen by owner |
 | U8-19 | The gaps are 24 dp between the title and the middle and 16 dp between the field and the list, with the rows left as `StopLabelAssignRow` draws them | The spec said clear gaps from existing tokens. The rows are the Search Stop row, and changing their padding would change Search Stop | Default, not yet seen by owner |
 
+### Unit U9, decisions where the spec was silent
+
+Each is a default taken to keep moving. None has been seen by the owner.
+
+| # | Decision | Why, and what changes if it is wrong | Decision |
+|---|---|---|---|
+| U9-1 | The wait for loading stops moved with the finish: the theme screen's button is off while the stops are Unknown or Loading, but only when the rider said yes to saving and the trip is not written. The confirm screen's two buttons never wait | The confirm screen no longer writes, and the old rule held the save back, never Not now. Holding the theme button for a rider who declined would be a new wait. If the button should never be off, drop `rightEnabled` from `themeBar` and let the 15 s finish wait carry it | Default, not yet seen by owner |
+| U9-2 | `tripDecision` is transient and not saved with the screen. A finish with none recorded (the process was killed on the theme screen) writes no trip and is not skipped | The spec called it transient and left saving to a later unit. Saving it is a one field change in `IntroSnapshot`. Until then a rider killed on the last screen gets no trip they said yes to | Default, not yet seen by owner |
+| U9-3 | `finishedOn` is `first_trip` for the theme screen | The finish is after the trip screens, and `first_trip` is the value every finish has always had. Mapping it to `park_ride` would split the funnel at the change | Default, not yet seen by owner |
+| U9-4 | The theme screen keeps the analytics name `Intro`, so a run now sends `Intro`, `IntroFirstTrip`, `Intro` | The spec said keep the existing name. The cost is a second `Intro` view in a run, and the analytics side must read a run by its first view | Default, not yet seen by owner |
+| U9-5 | The confirm answers are one event, `AnswerSaveTrip(yes)`, and `FinishPressed` and `FinishWithoutTrip` are gone | The old names say the Intro finishes there and it no longer does. One event with a flag mirrors `AnswerParkRide(yes)` | Default, not yet seen by owner |
+| U9-6 | The origin screen's emoji is place 8 of the list, a number of its own | It was the screen's position plus 5, and the new order moves that position. Place 8 keeps the same emoji it had | Default, not yet seen by owner |
+| U9-7 | A Settings replay shows the Intro in the rider's current colour until the last screen, and not the default theme | The spec said default until the last screen, which is true of a first run. Forcing the default on a replay would recolour the whole app for the length of the Intro and back | Default, not yet seen by owner |
+
 ### Assumptions for approval (mandatory, no code until signed off)
 
 Evidence that comes from private analytics is shown to the owner in the message that introduces this ERD and is kept outside this repository. This table states the rule, the options and the public facts.
@@ -1681,6 +1749,10 @@ The rebuild, in three units on the same branch, in focused commits, none pushed:
 - **R4, built.** The finale, as focused commits: the timeline and the run as pure functions, the wordmark and the overlay with the previews,
   the signal, the host at the app root and the hand-off that wraps `onIntroFinished`, and the Maestro wait. It reads `IntroState.selectedThemeId`
   through `themeChoiceFor`, adds no analytics event name and no param, changes no taj file, and does not touch Saved Trips, Search Stop or any map.
+- **U9 part 1, built.** A new step order (Park & Ride, destination, origin, confirm, theme), the finish moved from the confirm screen to the
+  theme screen, five complete question headlines, the Park & Ride buttons `Yes` and `No`, a loose staggered grid for the four badges, the
+  analytics screen name check and the Maestro flow for the new order, as focused commits. Resume after the app is killed and the finale
+  gradient are part 2.
 
 ## 11. Measurement plan (ROI)
 
@@ -1715,10 +1787,12 @@ The 500 event-name budget is respected. Nothing here mints a name.
   `completedOnPage` or `completedOnPageNumber` any more. Their definition and the `InteractionPage` enum stay in
   `AnalyticsEvent` until the analytics side has recorded the removal, because released versions still send them. The four
   lists are enums in the event, with the values above, and `IntroOutcomeEventTest` holds them to `IntroOutcome.toParams()`.
-- `view_screen` (existing) gets one new screen name, `IntroFirstTrip`. `Intro` is the theme and Park & Ride screens, and is
-  sent once when the Intro is entered and not again between those two. The pair gives the funnel with no new event, and a rider
-  who reaches the trip screens and never finishes is the drop-off. `theme_selected` (existing) is sent once when the rider presses
-  `Yes, this one`, with `themeId` only, as the Settings screen sends it.
+- `view_screen` (existing) gets one new screen name, `IntroFirstTrip`. `Intro` is the Park & Ride and theme screens. Since unit U9
+  the theme screen is last, so a run sends `Intro` when the Intro is entered, `IntroFirstTrip` once for the destination, origin and
+  confirm screens, and `Intro` again on the theme screen (no new screen name). The analytics side reads a run by its first `Intro`
+  view, and the second `Intro` view marks arrival on the colour screen, where the Intro ends. A rider who reaches the trip screens and
+  never finishes is the drop-off. `theme_selected` (existing) is sent once when the rider presses `Yes, this one` on the theme screen,
+  with `themeId` only, as the Settings screen sends it, and that press is also the finish that sends `intro_lets_krail`.
 - `park_ride_user_facility` (existing) gains `source = intro`. `save_trip_click` (existing) gains `source = intro`. These make
   Intro-created saves countable without a second event and without double counting.
 - Nothing carries a coordinate, a stop name or free text. The "Search another stop" path reuses the app's existing search and

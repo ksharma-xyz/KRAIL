@@ -17,6 +17,7 @@ class IntroStateTest {
 
         assertEquals(IntroFirstStep, state.step)
         assertNull(state.selectedThemeId)
+        assertNull(state.tripDecision, "no answer to the confirm screen yet")
         assertEquals(ParkRideAnswer.ASK, state.parkRideAnswer)
         assertEquals(LocationResult.NOT_ASKED, state.locationResult)
         assertEquals(ParkRideCardPhase.None, state.parkRideCard)
@@ -56,20 +57,26 @@ class IntroStateTest {
     fun `the screens are in the order a rider meets them`() {
         assertEquals(
             listOf(
-                IntroStep.THEME,
                 IntroStep.PARK_RIDE,
                 IntroStep.DESTINATION,
                 IntroStep.ORIGIN,
                 IntroStep.CONFIRM,
+                IntroStep.THEME,
             ),
             IntroStep.entries,
         )
     }
 
     @Test
-    fun `the flow opens on the theme screen, the first of the five`() {
-        assertEquals(IntroStep.THEME, IntroFirstStep)
+    fun `the flow opens on the Park and Ride screen, the first of the five, and ends on the theme screen`() {
+        assertEquals(IntroStep.PARK_RIDE, IntroFirstStep)
         assertEquals(IntroStep.entries.first(), IntroFirstStep)
+        assertEquals(IntroStep.THEME, IntroStep.entries.last())
+    }
+
+    @Test
+    fun `the answer to the confirm screen is saved or declined`() {
+        assertEquals(listOf(TripDecision.SAVED, TripDecision.DECLINED), TripDecision.entries)
     }
 
     @Test

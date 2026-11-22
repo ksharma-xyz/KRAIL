@@ -5,6 +5,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
+import xyz.ksharma.krail.trip.planner.ui.state.intro.TripDecision
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Duration
@@ -16,11 +17,12 @@ class IntroOutcomeTest {
     private val ready = StopsReadiness.Ready(stopCount = 100)
     private val failed = StopsReadiness.Failed(attempt = 1, reason = "disk full")
 
-    // A rider on the confirm screen who has not answered it, so every flag is in its resting position.
-    private val resting = IntroState(step = IntroStep.CONFIRM)
+    // A rider on the theme screen, where the Intro ends, with the confirm screen not answered, so every flag is in its
+    // resting position.
+    private val resting = IntroState(step = IntroStep.THEME)
     private val restingOutcome = IntroOutcome(
         introVersion = 2,
-        finishedOn = IntroStep.CONFIRM,
+        finishedOn = IntroStep.THEME,
         parkRideAnswer = ParkRideAnswer.ASK,
         locationResult = LocationResult.NOT_ASKED,
         addedParkRide = false,
@@ -31,7 +33,7 @@ class IntroOutcomeTest {
     )
 
     @Test
-    fun `a finish that is not an answer to the confirm screen is neither saved nor skipped`() {
+    fun `a finish with no answer to the confirm screen recorded is neither saved nor skipped`() {
         assertEquals(restingOutcome, resting.toOutcome(StopsWait.NONE))
     }
 
@@ -81,16 +83,22 @@ class IntroOutcomeTest {
     fun `Not now on the confirm screen is skipped with nothing saved, whatever was picked`() {
         val picked = resting.copy(startStopId = "1", endStopId = "2")
 
-        assertEquals(restingOutcome.copy(skipped = true), resting.toOutcome(StopsWait.NONE, declined = true))
-        assertEquals(restingOutcome.copy(skipped = true), picked.toOutcome(StopsWait.NONE, declined = true))
-        assertEquals(restingOutcome.copy(skipped = false), picked.toOutcome(StopsWait.NONE, declined = false))
+        val declined = TripDecision.DECLINED
+        assertEquals(restingOutcome.copy(skipped = true), resting.copy(tripDecision = declined).toOutcome(StopsWait.NONE))
+        assertEquals(restingOutcome.copy(skipped = true), picked.copy(tripDecision = declined).toOutcome(StopsWait.NONE))
+        assertEquals(restingOutcome.copy(skipped = false), picked.toOutcome(StopsWait.NONE))
+        assertEquals(
+            restingOutcome.copy(skipped = false),
+            picked.copy(tripDecision = TripDecision.SAVED).toOutcome(StopsWait.NONE),
+            "a yes that has not been written yet is not skipped either",
+        )
     }
 
     @Test
     fun `a trip that was saved is never skipped, even if the answer says Not now`() {
         val saved = resting.copy(startStopId = "1", endStopId = "2", saved = true)
 
-        assertEquals(false, saved.toOutcome(StopsWait.NONE, declined = true).skipped)
+        assertEquals(false, saved.copy(tripDecision = TripDecision.DECLINED).toOutcome(StopsWait.NONE).skipped)
     }
 
     @Test
@@ -149,6 +157,20 @@ class IntroOutcomeTest {
         assertEquals(
             listOf("none", "under_2s", "2_to_5s", "over_5s", "failed"),
             StopsWait.entries.map { restingOutcome.copy(stopsWait = it).toParams()["stopsWait"] },
+        )
+    }
+
+    @Test
+    fun `the finish place is the first trip for every screen but Park and Ride, so a finish on the theme screen is the first trip`() {
+        assertEquals(
+            mapOf(
+                IntroStep.PARK_RIDE to "park_ride",
+                IntroStep.DESTINATION to "first_trip",
+                IntroStep.ORIGIN to "first_trip",
+                IntroStep.CONFIRM to "first_trip",
+                IntroStep.THEME to "first_trip",
+            ),
+            IntroStep.entries.associateWith { restingOutcome.copy(finishedOn = it).toParams()["finishedOn"] },
         )
     }
 

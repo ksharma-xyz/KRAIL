@@ -9,9 +9,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 /**
- * The theme screen through the real view model, with the fakes at the edges: a tap or the left button selects
- * a theme and stores it, nothing is reported until the rider confirms, the confirm moves on, and the choice
- * survives going back and a new view model.
+ * The theme screen, the last, through the real view model, with the fakes at the edges: a tap selects a theme and
+ * stores it, nothing is reported until the rider confirms, the confirm finishes the Intro, and the choice survives
+ * a new view model.
  */
 class IntroFlowViewModelThemeTest {
 
@@ -101,17 +101,22 @@ class IntroFlowViewModelThemeTest {
     }
 
     @Test
-    fun `yes with a theme selected reports it once, with only its id, and moves on to Park and Ride`() = krailRunTest {
+    fun `yes with a theme selected reports it once, with only its id, and finishes the Intro`() = krailRunTest {
         val rig = IntroRig(this, handle = savedAt(onTheme))
         rig.send(IntroUiEvent.PickTheme(train), IntroUiEvent.PickTheme(metro), IntroUiEvent.PickTheme(bus))
         assertEquals(emptyList<Any?>(), rig.reported(), "three taps on badges report nothing")
 
-        rig.send(IntroUiEvent.ConfirmTheme)
+        rig.withEffects {
+            rig.send(IntroUiEvent.ConfirmTheme)
+
+            assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+        }
 
         assertEquals(listOf<Any?>(bus.toString()), rig.reported())
         assertEquals(setOf("themeId"), rig.analytics.getTrackedEvents("theme_selected").single().properties?.keys)
-        assertEquals(IntroStep.PARK_RIDE, rig.state.step)
+        assertEquals(IntroStep.THEME, rig.state.step)
         assertEquals(bus, rig.state.selectedThemeId)
+        assertEquals(1, rig.log.count("pref:KEY_HAS_SEEN_INTRO=true"))
     }
 
     @Test

@@ -205,8 +205,8 @@ class IntroFlowViewModelParkRideAddTest {
                 IntroUiEvent.DeclineParkRide,
                 IntroUiEvent.SelectStop(CENTRAL.toIntroStop()), IntroUiEvent.ConfirmStop,
                 IntroUiEvent.SelectStop(TALLAWONG.toIntroStop()), IntroUiEvent.ConfirmStop,
-                IntroUiEvent.FinishPressed,
             )
+            rig.answerAndFinish(yes = true)
 
             val params = rig.outcomeEvent().properties.orEmpty()
             assertEquals(

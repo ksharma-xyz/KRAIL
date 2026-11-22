@@ -225,14 +225,14 @@ class IntroFlowViewModelParkRideLocateTest {
 
     @Test
     fun `a look that ends after the rider has left the screen never pulls them forward`() = krailRunTest {
-        val rig = IntroRig(this, handle = savedAt(IntroState(step = IntroStep.THEME)))
+        val rig = IntroRig(this, handle = savedAt(IntroState(step = IntroStep.DESTINATION)))
         rig.send(
             IntroUiEvent.AnswerParkRide(yes = true),
             IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, AT_CENTRAL),
         )
 
         assertEquals(ParkRideCardPhase.NoStationNear, rig.state.parkRideCard)
-        assertEquals(IntroStep.THEME, rig.state.step, "the rider is not on the Park & Ride screen, so they stay put")
+        assertEquals(IntroStep.DESTINATION, rig.state.step, "the rider is not on the Park & Ride screen, so they stay put")
     }
 
     @Test

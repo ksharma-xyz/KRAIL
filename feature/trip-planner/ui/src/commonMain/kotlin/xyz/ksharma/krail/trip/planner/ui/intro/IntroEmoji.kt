@@ -5,8 +5,9 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 
 // Where the screens that use the list start in it. The origin screen lands on an entry of the list, and the theme
-// screen, before a choice, on the first one, the scooter, a neutral ride that is no mode.
-private const val EMOJI_OFFSET = 5
+// screen, before a choice, on the first one, the scooter, a neutral ride that is no mode. The origin's place is a
+// number of its own and not the screen's position in the order, so putting a screen before it moves nothing.
+private const val ORIGIN_EMOJI_INDEX = 8
 private const val NEUTRAL_RIDE_INDEX = 0
 
 /**
@@ -17,8 +18,8 @@ private const val NEUTRAL_RIDE_INDEX = 0
  * seven are the operator approved exceptions in `IntroApprovedEmoji.kt`. The origin screen has an entry of the list.
  * No emoji is typed into any other Intro code, and no festival emoji is used, so the Intro never changes with the date.
  *
- * It is a pure function of the step, the choice and the list. The origin screen takes the entry at its place in the
- * order, wrapping round the end, so a list that grows or shrinks still gives a valid entry, and an empty list gives an
+ * It is a pure function of the step, the choice and the list. The origin screen takes the entry at its fixed place,
+ * wrapping round the end, so a list that grows or shrinks still gives a valid entry, and an empty list gives an
  * empty string, which the headline draws as nothing. A chosen theme never depends on the list.
  */
 internal fun introEmojiFor(
@@ -29,7 +30,7 @@ internal fun introEmojiFor(
     IntroStep.THEME -> themeEmoji(selectedThemeId) ?: emojis.getOrNull(NEUTRAL_RIDE_INDEX).orEmpty()
     IntroStep.PARK_RIDE -> INTRO_CAR_EMOJI
     IntroStep.DESTINATION -> INTRO_PIN_EMOJI
-    IntroStep.ORIGIN -> if (emojis.isEmpty()) "" else emojis[(step.ordinal + EMOJI_OFFSET) % emojis.size]
+    IntroStep.ORIGIN -> if (emojis.isEmpty()) "" else emojis[ORIGIN_EMOJI_INDEX % emojis.size]
     IntroStep.CONFIRM -> INTRO_STAR_EMOJI
 }
 

@@ -10,7 +10,6 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -98,14 +97,17 @@ class IntroConfirmStepTest {
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertTextEquals(CONFIRM_SAVE)
             .performClick()
 
-        assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.FinishWithoutTrip, IntroUiEvent.FinishPressed), events)
+        assertEquals<List<IntroUiEvent>>(
+            listOf(IntroUiEvent.AnswerSaveTrip(yes = false), IntroUiEvent.AnswerSaveTrip(yes = true)),
+            events,
+        )
     }
 
     @Test
-    fun `Yes save it waits only for stops that are still loading, and Not now never waits`() {
+    fun `neither answer waits for the stops, because the answer only records it`() {
         show(StopsReadiness.Loading)
 
-        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertIsNotEnabled()
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertIsEnabled()
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION).assertIsEnabled()
     }
 

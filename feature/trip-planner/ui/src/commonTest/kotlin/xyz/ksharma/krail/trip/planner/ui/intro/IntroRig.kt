@@ -22,6 +22,7 @@ import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import xyz.ksharma.krail.core.testing.helpers.CallLog
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.NswStopsSandook
 import xyz.ksharma.krail.sandook.Sandook
@@ -47,7 +48,7 @@ internal val WYNYARD = SuggestedStop(stopId = "200080", name = "Wynyard Station"
 
 /**
  * The Park & Ride question with nothing answered, which the rig opens on unless a test gives it a saved state of
- * its own. The first screen of the flow is the theme screen, and most of these tests are about the screens after it.
+ * its own. It is the first screen of the flow, and most of these tests are about it and the screens after it.
  */
 internal val ON_PARK_RIDE = IntroState(step = IntroStep.PARK_RIDE)
 
@@ -133,6 +134,16 @@ internal class IntroRig(
     fun showTallawong() = send(
         IntroUiEvent.AnswerParkRide(yes = true),
         IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, AT_TALLAWONG),
+    )
+
+    /**
+     * The way out of the Intro from the confirm screen: the answer, which only records it, then a theme and the theme
+     * screen's button, which is the finish.
+     */
+    fun answerAndFinish(yes: Boolean, themeId: Int = KrailThemeStyle.Train.id) = send(
+        IntroUiEvent.AnswerSaveTrip(yes = yes),
+        IntroUiEvent.PickTheme(themeId),
+        IntroUiEvent.ConfirmTheme,
     )
 
     /** Builds the view model if it is not built yet, then lets everything it started at this instant run. */

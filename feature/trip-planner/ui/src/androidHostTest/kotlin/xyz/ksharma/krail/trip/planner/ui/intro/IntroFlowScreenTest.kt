@@ -27,12 +27,14 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.taj.theme.KrailDimensions
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
+import xyz.ksharma.krail.trip.planner.ui.state.intro.TripDecision
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -183,31 +185,46 @@ class IntroFlowScreenTest {
     }
 
     @Test
-    fun `the confirm screen asks Not now and Yes save it, and save waits only for stops that are still loading`() {
-        val confirm = tripPair
-        show(confirm, StopsReadiness.Loading)
-        secondary().assertTextEquals(CONFIRM_NOT_NOW).assertIsEnabled()
-        primary().assertTextEquals(CONFIRM_SAVE).assertIsNotEnabled()
-
-        show(confirm, StopsReadiness.Unknown)
-        primary().assertIsNotEnabled()
-
-        listOf(ready, StopsReadiness.Failed(attempt = 1, reason = "disk full")).forEach { readiness ->
+    fun `the confirm screen asks Not now and Yes save it, and neither waits for the stops data`() {
+        listOf(StopsReadiness.Loading, StopsReadiness.Unknown, ready).forEach { readiness ->
             show(tripPair, readiness)
+
+            secondary().assertTextEquals(CONFIRM_NOT_NOW).assertIsEnabled()
             primary().assertTextEquals(CONFIRM_SAVE).assertIsEnabled()
         }
-        show(tripPair.copy(saved = true), StopsReadiness.Loading)
-        primary().assertIsEnabled()
     }
 
     @Test
-    fun `the trip answers send the finish events`() {
+    fun `the trip answers send the answer events, which only record it`() {
         show(tripPair)
 
         primary().performClick()
         secondary().performClick()
 
-        assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.FinishPressed, IntroUiEvent.FinishWithoutTrip), events)
+        assertEquals<List<IntroUiEvent>>(
+            listOf(IntroUiEvent.AnswerSaveTrip(yes = true), IntroUiEvent.AnswerSaveTrip(yes = false)),
+            events,
+        )
+    }
+
+    @Test
+    fun `the theme screen waits for loading stops only after a yes to saving, and its button finishes the Intro`() {
+        val saving = tripPair.copy(
+            step = IntroStep.THEME,
+            selectedThemeId = KrailThemeStyle.Train.id,
+            tripDecision = TripDecision.SAVED,
+        )
+        show(saving, StopsReadiness.Loading)
+        primary().assertTextEquals(THEME_CONFIRM).assertIsNotEnabled()
+
+        show(saving, ready)
+        primary().assertIsEnabled()
+        show(saving.copy(tripDecision = TripDecision.DECLINED), StopsReadiness.Loading)
+        primary().assertIsEnabled()
+
+        primary().performClick()
+
+        assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.ConfirmTheme), events)
     }
 
     @Test
@@ -243,11 +260,11 @@ class IntroFlowScreenTest {
     @Test
     fun `every screen starts its headline 24 dp below the top and keeps the same gap under it before what it asks`() {
         val headings = mapOf(
-            IntroStep.THEME to PICK_THEME_HEADING,
             IntroStep.PARK_RIDE to PARK_RIDE_HEADING,
             IntroStep.DESTINATION to DESTINATION_HEADING,
             IntroStep.ORIGIN to ORIGIN_HEADING,
             IntroStep.CONFIRM to CONFIRM_HEADING,
+            IntroStep.THEME to PICK_THEME_HEADING,
         )
         val rhythm = introRhythm(KrailDimensions())
 
@@ -269,8 +286,8 @@ class IntroFlowScreenTest {
     }
 
     @Test
-    fun `system back on the theme screen, the first, is left to the platform and leaves the app`() {
-        show(IntroState(step = IntroStep.THEME))
+    fun `system back on the Park and Ride screen, the first, is left to the platform and leaves the app`() {
+        show(IntroState(step = IntroStep.PARK_RIDE))
 
         composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
         composeRule.waitForIdle()
@@ -281,7 +298,7 @@ class IntroFlowScreenTest {
 
     @Test
     fun `system back on every screen after the first is consumed, so nothing is sent and the app stays`() {
-        IntroStep.entries.filter { it != IntroStep.THEME }.forEach { step ->
+        IntroStep.entries.filter { it != IntroStep.PARK_RIDE }.forEach { step ->
             show(IntroState(step = step))
 
             composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }

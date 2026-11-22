@@ -152,7 +152,7 @@ class IntroFlowViewModelParkRideStartTest {
             // The origin screen is passed over, because the car park is the start, so one pick reaches the confirm screen.
             rig.send(IntroUiEvent.SelectStop(CENTRAL.toIntroStop()), IntroUiEvent.ConfirmStop)
             assertEquals(IntroStep.CONFIRM, rig.state.step)
-            rig.send(IntroUiEvent.FinishPressed)
+            rig.answerAndFinish(yes = true)
 
             val outcome = rig.outcomeEvent().properties.orEmpty()
             assertEquals("yes", outcome["parkRideAnswer"])
@@ -174,7 +174,7 @@ class IntroFlowViewModelParkRideStartTest {
             rig.send(IntroUiEvent.AddParkRideAndContinue)
 
             assertEquals(
-                listOf(IntroStep.THEME, IntroStep.PARK_RIDE, IntroStep.DESTINATION, IntroStep.CONFIRM),
+                listOf(IntroStep.PARK_RIDE, IntroStep.DESTINATION, IntroStep.CONFIRM, IntroStep.THEME),
                 rig.state.stepsInFlow(),
             )
         }

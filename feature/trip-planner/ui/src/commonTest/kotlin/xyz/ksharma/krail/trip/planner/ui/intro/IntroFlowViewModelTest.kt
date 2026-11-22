@@ -67,8 +67,8 @@ class IntroFlowViewModelTest {
         val rig = IntroRig(this)
 
         rig.send(
-            IntroUiEvent.FinishPressed,
-            IntroUiEvent.FinishWithoutTrip,
+            IntroUiEvent.AnswerSaveTrip(yes = true),
+            IntroUiEvent.AnswerSaveTrip(yes = false),
             IntroUiEvent.AddParkRideAndContinue,
             IntroUiEvent.DeclineParkRide,
         )

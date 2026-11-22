@@ -24,11 +24,12 @@ internal fun IntroOutcome.toEvent() = IntroLetsKrailClickEvent(
 /**
  * The event has two finish places, the Park & Ride screen and the first trip, and the screens that
  * ask for a trip are all the first trip, so the rebuilt Intro reports the same two values. The theme
- * screen comes before Park & Ride and counts with it.
+ * screen is the last, after the trip screens, so it is where a finished Intro ends and counts with the first trip.
  */
 internal fun IntroStep.toEventValue() = when (this) {
-    IntroStep.THEME, IntroStep.PARK_RIDE -> IntroLetsKrailClickEvent.FinishedOn.PARK_RIDE
-    IntroStep.DESTINATION, IntroStep.ORIGIN, IntroStep.CONFIRM -> IntroLetsKrailClickEvent.FinishedOn.FIRST_TRIP
+    IntroStep.PARK_RIDE -> IntroLetsKrailClickEvent.FinishedOn.PARK_RIDE
+    IntroStep.DESTINATION, IntroStep.ORIGIN, IntroStep.CONFIRM, IntroStep.THEME ->
+        IntroLetsKrailClickEvent.FinishedOn.FIRST_TRIP
 }
 
 // An unanswered question is what tapping Next past it means, so it is reported as skipped.

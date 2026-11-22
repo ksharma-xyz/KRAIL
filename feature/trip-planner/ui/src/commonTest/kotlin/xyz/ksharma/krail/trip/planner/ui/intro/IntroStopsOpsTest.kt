@@ -32,14 +32,14 @@ class IntroStopsOpsTest {
 
     @Test
     fun `stations found while the rider is before the origin screen are kept, on every screen before it`() {
-        listOf(IntroStep.THEME, IntroStep.PARK_RIDE, IntroStep.DESTINATION).forEach { step ->
+        listOf(IntroStep.PARK_RIDE, IntroStep.DESTINATION).forEach { step ->
             assertEquals(2, IntroState(step = step).withNearby(found).nearbyStops.size, "$step")
         }
     }
 
     @Test
     fun `stations found once the rider is on the origin screen or past it change nothing, so the rows never move`() {
-        listOf(IntroStep.ORIGIN, IntroStep.CONFIRM).forEach { step ->
+        listOf(IntroStep.ORIGIN, IntroStep.CONFIRM, IntroStep.THEME).forEach { step ->
             val state = IntroState(step = step)
 
             assertSame(state, state.withNearby(found), "$step")

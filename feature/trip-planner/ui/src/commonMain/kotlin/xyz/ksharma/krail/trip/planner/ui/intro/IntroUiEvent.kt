@@ -13,8 +13,8 @@ internal sealed interface IntroUiEvent {
     data class PickTheme(val themeId: Int) : IntroUiEvent
 
     /**
-     * `Yes, this one`, the only button on the theme screen: the selected theme is the rider's choice, and the Intro moves
-     * on. Ignored with none selected.
+     * `Yes, this one`, the only button on the theme screen, which is the last: the selected theme is the rider's
+     * choice, and the Intro finishes, writing the trip if the rider said yes to saving it. Ignored with none selected.
      */
     data object ConfirmTheme : IntroUiEvent
 
@@ -63,11 +63,12 @@ internal sealed interface IntroUiEvent {
      */
     data class QueryChanged(val text: String) : IntroUiEvent
 
-    /** `Yes, save it` on the confirm screen: save the trip the rider chose, and end the Intro. */
-    data object FinishPressed : IntroUiEvent
-
-    /** `Not now` on the confirm screen: end the Intro and write no trip. The only way out without saving. */
-    data object FinishWithoutTrip : IntroUiEvent
+    /**
+     * The answer on the confirm screen, `Yes, save it` ([yes] true) or `Not now` ([yes] false). It only records the
+     * answer and moves on to the theme screen, which finishes the Intro: nothing is written here. Not now is the
+     * only way to leave without saving.
+     */
+    data class AnswerSaveTrip(val yes: Boolean) : IntroUiEvent
 }
 
 /** One shot instructions for the screen. Each is delivered once and never replayed. */

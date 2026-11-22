@@ -5,11 +5,13 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SaveTripClickEvent
 import xyz.ksharma.krail.core.testing.coroutines.KrailTestScope
 import xyz.ksharma.krail.core.testing.coroutines.krailRunTest
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
+import xyz.ksharma.krail.trip.planner.ui.state.intro.TripDecision
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -22,6 +24,7 @@ import kotlin.time.Duration.Companion.seconds
 private const val SEEN_INTRO = "pref:KEY_HAS_SEEN_INTRO=true"
 private const val SUGGESTION_SHOWN = "pref:KEY_PARK_RIDE_SUGGESTION_SHOWN=true"
 private const val SAVED_TRIP = "trip:2155384->200060"
+private const val THEME_REPORTED = "track:theme_selected"
 
 class IntroFlowViewModelFinishTest {
 
@@ -45,7 +48,7 @@ class IntroFlowViewModelFinishTest {
         val rig = rigAt(tripPicked)
 
         rig.withEffects {
-            rig.send(IntroUiEvent.FinishPressed)
+            rig.answerAndFinish(yes = true)
 
             assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
         }
@@ -65,7 +68,7 @@ class IntroFlowViewModelFinishTest {
         val rig = rigAt(tripPicked)
 
         rig.withEffects {
-            rig.send(IntroUiEvent.FinishWithoutTrip)
+            rig.answerAndFinish(yes = false)
 
             assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
         }
@@ -87,7 +90,7 @@ class IntroFlowViewModelFinishTest {
             val rig = rigAt(picks)
 
             rig.withEffects {
-                rig.send(IntroUiEvent.FinishPressed)
+                rig.answerAndFinish(yes = true)
 
                 assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
             }
@@ -106,8 +109,8 @@ class IntroFlowViewModelFinishTest {
             IntroUiEvent.AnswerParkRide(yes = false),
             IntroUiEvent.SelectStop(CENTRAL.toIntroStop()), IntroUiEvent.ConfirmStop,
             IntroUiEvent.SelectStop(TALLAWONG.toIntroStop()), IntroUiEvent.ConfirmStop,
-            IntroUiEvent.FinishPressed,
         )
+        rig.answerAndFinish(yes = true)
 
         assertEquals(1, rig.log.count(SUGGESTION_SHOWN))
         assertEquals(1, rig.log.count(SEEN_INTRO))
@@ -117,9 +120,9 @@ class IntroFlowViewModelFinishTest {
     fun `finishing before the stops are ready waits and then writes`() = krailRunTest {
         val rig = rigAt(tripPicked, readiness = StopsReadiness.Loading)
 
-        rig.send(IntroUiEvent.FinishPressed)
+        rig.answerAndFinish(yes = true)
 
-        assertEquals(listOf("awaitReady"), rig.log.entries)
+        assertEquals(listOf(THEME_REPORTED, "awaitReady"), rig.log.entries)
         assertTrue(rig.sandook.selectAllTrips().isEmpty())
 
         rig.testTime += 3.seconds
@@ -136,7 +139,7 @@ class IntroFlowViewModelFinishTest {
             val rig = rigAt(tripPicked, readiness = StopsReadiness.Failed(attempt = 4, reason = "disk"))
 
             rig.withEffects {
-                rig.send(IntroUiEvent.FinishPressed)
+                rig.answerAndFinish(yes = true)
 
                 assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
             }
@@ -154,7 +157,7 @@ class IntroFlowViewModelFinishTest {
         val rig = rigAt(tripPicked, readiness = StopsReadiness.Failed(attempt = 4, reason = "disk"))
 
         rig.withEffects {
-            rig.send(IntroUiEvent.FinishWithoutTrip)
+            rig.answerAndFinish(yes = false)
 
             assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
         }
@@ -168,8 +171,8 @@ class IntroFlowViewModelFinishTest {
         krailRunTest {
             val rig = rigAt(tripPicked, readiness = StopsReadiness.Loading)
 
-            rig.send(IntroUiEvent.FinishPressed)
-            assertEquals(listOf("awaitReady"), rig.log.entries)
+            rig.answerAndFinish(yes = true)
+            assertEquals(listOf(THEME_REPORTED, "awaitReady"), rig.log.entries)
             rig.readiness.emit(StopsReadiness.Failed(attempt = 4, reason = "disk"))
             rig.send()
 
@@ -184,8 +187,8 @@ class IntroFlowViewModelFinishTest {
             listOf(StopsReadiness.Loading, StopsReadiness.Unknown).forEach { stillNotReady ->
                 val rig = rigAt(tripPicked, readiness = stillNotReady)
 
-                rig.send(IntroUiEvent.FinishPressed)
-                assertEquals(listOf("awaitReady"), rig.log.entries, "readiness $stillNotReady")
+                rig.answerAndFinish(yes = true)
+                assertEquals(listOf(THEME_REPORTED, "awaitReady"), rig.log.entries, "readiness $stillNotReady")
                 rig.testTime += FINISH_WAIT_TIMEOUT_MS.milliseconds
                 pumpOnce(FINISH_WAIT_TIMEOUT_MS)
 
@@ -201,17 +204,18 @@ class IntroFlowViewModelFinishTest {
     }
 
     @Test
-    fun `the finish happens in order readiness then trip then both flags then tracking then the effect`() =
+    fun `the finish happens in order theme, readiness, trip, both flags, tracking, then the effect`() =
         krailRunTest {
             val rig = rigAt(tripPicked)
 
             rig.withEffects {
-                rig.send(IntroUiEvent.FinishPressed)
+                rig.answerAndFinish(yes = true)
                 awaitItem()
             }
 
             assertEquals(
                 listOf(
+                    THEME_REPORTED,
                     "awaitReady",
                     SAVED_TRIP,
                     SUGGESTION_SHOWN,
@@ -228,7 +232,7 @@ class IntroFlowViewModelFinishTest {
     fun `a saved trip reports the exact outcome and a save click from the intro`() = krailRunTest {
         val rig = rigAt(tripPicked)
 
-        rig.send(IntroUiEvent.FinishPressed)
+        rig.answerAndFinish(yes = true)
 
         assertEquals(
             mapOf(
@@ -255,7 +259,7 @@ class IntroFlowViewModelFinishTest {
     fun `a not now with the question never answered reports skipped and no save click`() = krailRunTest {
         val rig = rigAt(tripPicked.copy(parkRideAnswer = ParkRideAnswer.ASK))
 
-        rig.send(IntroUiEvent.FinishWithoutTrip)
+        rig.answerAndFinish(yes = false)
 
         assertEquals(
             mapOf(
@@ -278,7 +282,7 @@ class IntroFlowViewModelFinishTest {
     fun `a not now with a pair picked reports skipped, saves nothing and sends no save click`() = krailRunTest {
         val rig = rigAt(tripPicked)
 
-        rig.send(IntroUiEvent.FinishWithoutTrip)
+        rig.answerAndFinish(yes = false)
 
         assertEquals(true, rig.outcomeEvent().properties?.get("skipped"))
         assertEquals(false, rig.outcomeEvent().properties?.get("savedTrip"))
@@ -290,7 +294,7 @@ class IntroFlowViewModelFinishTest {
     fun `a yes that saves the trip is never reported as skipped`() = krailRunTest {
         val rig = rigAt(tripPicked)
 
-        rig.send(IntroUiEvent.FinishPressed)
+        rig.answerAndFinish(yes = true)
 
         assertEquals(false, rig.outcomeEvent().properties?.get("skipped"))
         assertEquals(true, rig.outcomeEvent().properties?.get("savedTrip"))
@@ -307,8 +311,8 @@ class IntroFlowViewModelFinishTest {
             IntroUiEvent.DeclineParkRide,
             IntroUiEvent.SelectStop(CENTRAL.toIntroStop()), IntroUiEvent.ConfirmStop,
             IntroUiEvent.SelectStop(TALLAWONG.toIntroStop()), IntroUiEvent.ConfirmStop,
-            IntroUiEvent.FinishPressed,
         )
+        rig.answerAndFinish(yes = true)
         assertIs<ParkRideCardPhase.Card>(rig.state.parkRideCard, "the station card was found, so its name is in play")
 
         val values = listOf("intro_lets_krail", "save_trip_click")
@@ -327,9 +331,10 @@ class IntroFlowViewModelFinishTest {
         val rig = rigAt(tripPicked)
 
         rig.withEffects {
-            rig.send(IntroUiEvent.FinishPressed, IntroUiEvent.FinishPressed)
+            rig.answerAndFinish(yes = true)
+            rig.send(IntroUiEvent.ConfirmTheme)
             awaitItem()
-            rig.send(IntroUiEvent.FinishPressed)
+            rig.send(IntroUiEvent.ConfirmTheme)
             expectNoEvents()
         }
 
@@ -342,7 +347,7 @@ class IntroFlowViewModelFinishTest {
     fun `lets krail after the trip was saved does not write the trip again`() = krailRunTest {
         val rig = rigAt(tripPicked.copy(saved = true))
 
-        rig.send(IntroUiEvent.FinishPressed)
+        rig.answerAndFinish(yes = true)
 
         assertEquals(0, rig.log.count(SAVED_TRIP))
         assertNull(rig.analytics.getTrackedEvent("save_trip_click"))
@@ -355,9 +360,25 @@ class IntroFlowViewModelFinishTest {
         krailRunTest {
             val rig = IntroRig(this, handle = savedAt(tripPicked), timeSource = TickingTimeSource(1.seconds))
 
-            rig.send(IntroUiEvent.FinishPressed)
+            rig.answerAndFinish(yes = true)
 
             assertEquals("none", rig.outcomeEvent().properties?.get("stopsWait"))
+        }
+
+    @Test
+    fun `the confirm screen's answers only record it and move on to the theme screen, writing and reporting nothing`() =
+        krailRunTest {
+            listOf(true to TripDecision.SAVED, false to TripDecision.DECLINED).forEach { (yes, decision) ->
+                val rig = rigAt(tripPicked)
+
+                rig.send(IntroUiEvent.AnswerSaveTrip(yes = yes))
+
+                assertEquals(IntroStep.THEME, rig.state.step, "yes $yes")
+                assertEquals(decision, rig.state.tripDecision, "yes $yes")
+                assertFalse(rig.state.saved, "yes $yes")
+                assertEquals(emptyList(), rig.log.entries, "yes $yes")
+                assertTrue(rig.sandook.selectAllTrips().isEmpty(), "yes $yes")
+            }
         }
 
     @Test
@@ -366,17 +387,58 @@ class IntroFlowViewModelFinishTest {
             val on = tripPicked.copy(step = step)
             val rig = rigAt(on)
 
-            rig.send(IntroUiEvent.FinishPressed, IntroUiEvent.FinishWithoutTrip)
+            rig.send(IntroUiEvent.AnswerSaveTrip(yes = true), IntroUiEvent.AnswerSaveTrip(yes = false))
 
-            assertEquals(on, rig.state, "$step")
+            assertEquals(on.step, rig.state.step, "$step")
+            assertNull(rig.state.tripDecision, "$step")
             assertEquals(emptyList(), rig.log.entries, "$step")
         }
     }
 
     @Test
+    fun `the theme button with no theme selected finishes nothing, and neither does any other screen`() = krailRunTest {
+        IntroStep.entries.forEach { step ->
+            val rig = rigAt(tripPicked.copy(step = step))
+
+            rig.send(IntroUiEvent.ConfirmTheme)
+
+            assertEquals(emptyList(), rig.log.entries, "$step")
+            assertTrue(rig.sandook.selectAllTrips().isEmpty(), "$step")
+        }
+    }
+
+    @Test
+    fun `a finish with no answer recorded, such as after the process was killed, writes no trip and is not skipped`() =
+        krailRunTest {
+            val rig = rigAt(tripPicked.copy(step = IntroStep.THEME, selectedThemeId = KrailThemeStyle.Train.id))
+
+            rig.withEffects {
+                rig.send(IntroUiEvent.ConfirmTheme)
+
+                assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+            }
+
+            assertTrue(rig.sandook.selectAllTrips().isEmpty())
+            assertEquals(false, rig.outcomeEvent().properties?.get("skipped"))
+            assertEquals(false, rig.outcomeEvent().properties?.get("savedTrip"))
+            assertEquals(1, rig.log.count(SEEN_INTRO))
+        }
+
+    @Test
+    fun `the answer is kept while the theme is chosen, and picking a theme finishes nothing by itself`() = krailRunTest {
+        val rig = rigAt(tripPicked)
+
+        rig.send(IntroUiEvent.AnswerSaveTrip(yes = true), IntroUiEvent.PickTheme(KrailThemeStyle.Bus.id))
+
+        assertEquals(TripDecision.SAVED, rig.state.tripDecision)
+        assertTrue(rig.sandook.selectAllTrips().isEmpty())
+        assertEquals(0, rig.log.count(SEEN_INTRO))
+    }
+
+    @Test
     fun `the finish effect is not replayed to a collector that starts later`() = krailRunTest {
         val rig = rigAt(tripPicked)
-        rig.send(IntroUiEvent.FinishPressed)
+        rig.answerAndFinish(yes = true)
 
         rig.viewModel.effects.test {
             assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())

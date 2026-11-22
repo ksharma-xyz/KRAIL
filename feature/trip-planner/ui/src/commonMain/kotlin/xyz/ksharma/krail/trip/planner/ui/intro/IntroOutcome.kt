@@ -5,6 +5,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
+import xyz.ksharma.krail.trip.planner.ui.state.intro.TripDecision
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -32,11 +33,11 @@ internal data class IntroOutcome(
 )
 
 /**
- * [declined] is the rider answering Not now on the confirm screen, and it is the only thing that makes
- * [IntroOutcome.skipped] true: nothing is saved then. A trip that was saved is not skipped, and neither is a finish
- * that was not an answer to the confirm screen, so no combination of picks decides it on its own.
+ * [IntroState.tripDecision] being [TripDecision.DECLINED], the rider answering Not now on the confirm screen, is the
+ * only thing that makes [IntroOutcome.skipped] true: nothing is saved then. A trip that was saved is not skipped, and
+ * neither is a finish with no answer recorded, so no combination of picks decides it on its own.
  */
-internal fun IntroState.toOutcome(stopsWait: StopsWait, declined: Boolean = false): IntroOutcome = IntroOutcome(
+internal fun IntroState.toOutcome(stopsWait: StopsWait): IntroOutcome = IntroOutcome(
     introVersion = INTRO_VERSION,
     finishedOn = step,
     parkRideAnswer = parkRideAnswer,
@@ -44,7 +45,7 @@ internal fun IntroState.toOutcome(stopsWait: StopsWait, declined: Boolean = fals
     addedParkRide = addedParkRide,
     savedTrip = saved,
     usedSearch = usedSearch,
-    skipped = declined && !saved,
+    skipped = tripDecision == TripDecision.DECLINED && !saved,
     stopsWait = stopsWait,
 )
 

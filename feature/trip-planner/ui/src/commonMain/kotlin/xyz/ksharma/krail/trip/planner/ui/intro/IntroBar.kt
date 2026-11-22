@@ -7,6 +7,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAvailabilityState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
+import xyz.ksharma.krail.trip.planner.ui.state.intro.TripDecision
 
 // The words on the decision bar. Every one is an answer, never a way past a question, so none of them
 // is Skip, Later, Next, Continue or Done. IntroBannedWordsTest holds that for every string the Intro draws.
@@ -66,16 +67,16 @@ internal fun IntroBarAction.visibleLabel(fontScale: Float): String =
 /**
  * What the bar of the screen [state] is on says and does, or null when the screen asks nothing and
  * shows no bar. A table over the step, so a new step is a compile error here and not a screen with the
- * wrong bar. [readiness] is the stops data, which only the screens that end in saving a trip wait on.
+ * wrong bar. [readiness] is the stops data, which only the theme screen, where the trip is written, waits on.
  *
  * Each screen has its own bar: [themeBar], [parkRideBar], [stopBar] for the destination and origin screens, which
  * share one, and [confirmBar].
  */
 internal fun introBar(state: IntroState, readiness: StopsReadiness): IntroBar? = when (state.step) {
-    IntroStep.THEME -> themeBar(state)
+    IntroStep.THEME -> themeBar(state, readiness)
     IntroStep.PARK_RIDE -> parkRideBar(state)
     IntroStep.DESTINATION, IntroStep.ORIGIN -> stopBar(state)
-    IntroStep.CONFIRM -> confirmBar(state, readiness)
+    IntroStep.CONFIRM -> confirmBar()
 }
 
 /**
@@ -90,15 +91,20 @@ private fun stopBar(state: IntroState) = IntroBar(
 )
 
 /**
- * The theme screen: a single button with nothing beside it. A theme is chosen by tapping its badge, there is no
- * answer of no, and the rider must pick a colour to go on, so the single button is not shown until a theme is
- * selected, and then it fades in where the room for it was kept. It is a full width taj button the height of the
- * two button bar, so nothing moves when it appears. Its words are the whole phrase at every text size, and a screen
- * reader hears the same words.
+ * The theme screen, the last: a single button with nothing beside it, which ends the Intro. A theme is chosen by
+ * tapping its badge, there is no answer of no, and the rider must pick a colour to go on, so the single button is not
+ * shown until a theme is selected, and then it fades in where the room for it was kept. It is a full width taj button
+ * the height of the two button bar, so nothing moves when it appears. Its words are the whole phrase at every text
+ * size, and a screen reader hears the same words.
+ *
+ * The finish waits for the stops data to be Ready or Failed, as it always has, but only when there is a trip to write,
+ * so the button is off while it is still loading and the rider said yes to saving. A rider who said Not now has nothing
+ * to write and is never held back, and a trip already written needs no wait.
  */
-private fun themeBar(state: IntroState) = IntroBar(
+private fun themeBar(state: IntroState, readiness: StopsReadiness) = IntroBar(
     left = null,
     right = IntroBarAction(THEME_CONFIRM, IntroUiEvent.ConfirmTheme),
+    rightEnabled = state.saved || state.tripDecision != TripDecision.SAVED || readiness.isUsable(),
     shown = state.selectedThemeId != null,
 )
 
@@ -127,17 +133,15 @@ private fun addBar(addEnabled: Boolean) = IntroBar(
 )
 
 /**
- * The confirm screen. Not now is the only way to leave without saving, and Yes, save it writes the trip the rider
- * chose and ends the Intro. The save waits for the stops data to be Ready or Failed, as it always has, so the right
- * button is off while it is still loading, and a trip already written needs no wait.
+ * The confirm screen. Not now is the only way to leave without saving, and Yes, save it keeps the trip the rider chose.
+ * Both only record the answer and move on to the theme screen, where the Intro ends, so neither waits for anything.
  */
-private fun confirmBar(state: IntroState, readiness: StopsReadiness) = IntroBar(
-    left = IntroBarAction(CONFIRM_NOT_NOW, IntroUiEvent.FinishWithoutTrip),
-    right = IntroBarAction(CONFIRM_SAVE, IntroUiEvent.FinishPressed),
-    rightEnabled = state.saved || readiness.isUsable(),
+private fun confirmBar() = IntroBar(
+    left = IntroBarAction(CONFIRM_NOT_NOW, IntroUiEvent.AnswerSaveTrip(yes = false)),
+    right = IntroBarAction(CONFIRM_SAVE, IntroUiEvent.AnswerSaveTrip(yes = true)),
 )
 
-// Only stops that are still loading hold the save back. A failed load is no different from a ready one,
+// Only stops that are still loading hold the finish back. A failed load is no different from a ready one,
 // because the picks carry their own id and name, so a trip never needs the stops table.
 private fun StopsReadiness.isUsable(): Boolean = when (this) {
     StopsReadiness.Unknown, StopsReadiness.Loading -> false

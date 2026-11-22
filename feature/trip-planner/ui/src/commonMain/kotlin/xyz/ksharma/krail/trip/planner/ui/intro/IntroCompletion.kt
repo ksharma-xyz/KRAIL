@@ -75,20 +75,22 @@ internal class IntroCompletion(
 
 /**
  * The funnel reads from two screen names, and a new name needs a ledger row, so the rebuilt Intro
- * keeps them: the theme and Park & Ride screens are the Intro, and the screens that ask for a trip
- * are the first trip. [shouldTrackScreenView] keeps the first two from sending the Intro name twice.
+ * keeps them: the Park & Ride screen, which opens the Intro, and the theme screen, which closes it, are the Intro,
+ * and the screens that ask for a trip are the first trip. The order is therefore Intro, first trip, Intro, and a
+ * run sends the Intro name twice, once at each end, with the first trip between. [shouldTrackScreenView] sends one
+ * view for each run of screens that share a name.
  */
 internal fun IntroStep.toAnalyticsScreen(): AnalyticsScreen = when (this) {
-    IntroStep.THEME, IntroStep.PARK_RIDE -> AnalyticsScreen.Intro
+    IntroStep.PARK_RIDE, IntroStep.THEME -> AnalyticsScreen.Intro
     IntroStep.DESTINATION, IntroStep.ORIGIN, IntroStep.CONFIRM -> AnalyticsScreen.IntroFirstTrip
 }
 
 /**
  * Whether showing [next] is a screen view to report. The first screen the rider sees is, and after that a
- * screen is only when its analytics name differs from the one before: the theme and Park & Ride screens share
- * the Intro name, so going from one to the other is the same screen and sends nothing, and entering the
- * Intro sends the name once. [previous] is null before any screen has been shown, such as after a killed
- * process, which is a new run.
+ * screen is only when its analytics name differs from the one before: the destination, origin and confirm screens
+ * share the first trip name, so going from one to the next is the same screen and sends nothing, and the theme
+ * screen after them is the Intro again, so it sends. [previous] is null before any screen has been shown, such as
+ * after a killed process, which is a new run.
  */
 internal fun shouldTrackScreenView(previous: IntroStep?, next: IntroStep): Boolean =
     previous == null || previous.toAnalyticsScreen() != next.toAnalyticsScreen()

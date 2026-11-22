@@ -46,18 +46,18 @@ internal fun IntroState.parkRideHasNothingToDecide(): Boolean =
 /**
  * Screens before [first] have no content yet. The Park & Ride screen is skipped when it has nothing to
  * decide. The origin screen is skipped when Add to home already filled in the start, because that
- * station is the start.
+ * station is the start. The confirm and theme screens are never skipped.
  */
-private fun IntroState.isSkipped(candidate: IntroStep, first: IntroStep): Boolean = when (candidate) {
-    IntroStep.THEME -> candidate.ordinal < first.ordinal
-    IntroStep.PARK_RIDE -> candidate.ordinal < first.ordinal || parkRideHasNothingToDecide()
-    IntroStep.DESTINATION, IntroStep.CONFIRM -> false
-    IntroStep.ORIGIN -> startFromParkRide
-}
+private fun IntroState.isSkipped(candidate: IntroStep, first: IntroStep): Boolean =
+    candidate.ordinal < first.ordinal || when (candidate) {
+        IntroStep.PARK_RIDE -> parkRideHasNothingToDecide()
+        IntroStep.ORIGIN -> startFromParkRide
+        IntroStep.DESTINATION, IntroStep.CONFIRM, IntroStep.THEME -> false
+    }
 
 /**
- * Whether the Intro can be finished from this screen: the confirm screen alone. Its two answers are the only way
- * out, so a press that arrives from any other screen, such as one that was already on its way when the rider
+ * Whether the Intro can be finished from here: the theme screen, the last one, with a theme chosen. Its button is the
+ * only way out, so a press that arrives from any other screen, such as one that was already on its way when the rider
  * left it, finishes nothing.
  */
-internal fun IntroStep.canFinish(): Boolean = this == IntroStep.CONFIRM
+internal fun IntroState.canFinish(): Boolean = step == IntroStep.THEME && selectedThemeId != null

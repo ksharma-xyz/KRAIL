@@ -21,8 +21,8 @@ class IntroKeyboardActionTest {
         IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, LatLng(-33.88, 151.21)),
         IntroUiEvent.AddParkRideAndContinue,
         IntroUiEvent.DeclineParkRide,
-        IntroUiEvent.FinishPressed,
-        IntroUiEvent.FinishWithoutTrip,
+        IntroUiEvent.AnswerSaveTrip(yes = true),
+        IntroUiEvent.AnswerSaveTrip(yes = false),
     )
 
     @Test

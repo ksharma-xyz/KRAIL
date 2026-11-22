@@ -10,6 +10,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAvailabilityState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardStation
+import xyz.ksharma.krail.trip.planner.ui.state.intro.TripDecision
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -71,16 +72,16 @@ class IntroBarTest {
         rightEnabled = addEnabled,
     )
 
-    private fun theme(shown: Boolean) = IntroBar(
+    private fun theme(shown: Boolean, enabled: Boolean = true) = IntroBar(
         left = null,
         right = IntroBarAction("Yes, this one", IntroUiEvent.ConfirmTheme),
+        rightEnabled = enabled,
         shown = shown,
     )
 
-    private fun trip(enabled: Boolean) = IntroBar(
-        left = IntroBarAction("Not now", IntroUiEvent.FinishWithoutTrip),
-        right = IntroBarAction("Yes, save it", IntroUiEvent.FinishPressed),
-        rightEnabled = enabled,
+    private fun trip() = IntroBar(
+        left = IntroBarAction("Not now", IntroUiEvent.AnswerSaveTrip(yes = false)),
+        right = IntroBarAction("Yes, save it", IntroUiEvent.AnswerSaveTrip(yes = true)),
     )
 
     private class Row(val name: String, val state: IntroState, val readiness: StopsReadiness, val bar: IntroBar?)
@@ -154,34 +155,48 @@ class IntroBarTest {
     }
 
     @Test
-    fun `the confirm screen has a bar that waits only for stops that are still loading`() {
-        val rows = listOf(
-            Triple(unknown, false, false),
-            Triple(loading, false, false),
-            Triple(ready, false, true),
-            Triple(failed, false, true),
-            // A trip already written needs no wait.
-            Triple(unknown, true, true),
-            Triple(loading, true, true),
-        )
+    fun `the confirm screen has two buttons that only record the answer, so neither waits for the stops`() {
+        listOf(unknown, loading, ready, failed).forEach { readiness ->
+            listOf(false, true).forEach { saved ->
+                val state = IntroState(step = IntroStep.CONFIRM, saved = saved)
 
-        rows.forEach { (readiness, saved, enabled) ->
-            val state = IntroState(step = IntroStep.CONFIRM, saved = saved)
-
-            assertEquals(trip(enabled), introBar(state, readiness), "$readiness saved=$saved")
+                assertEquals(trip(), introBar(state, readiness), "$readiness saved=$saved")
+            }
         }
+        assertTrue(trip().rightEnabled)
+        assertEquals("Not now", CONFIRM_NOT_NOW)
+        assertEquals("Yes, save it", CONFIRM_SAVE)
     }
 
     @Test
-    fun `the theme screen is one button, not shown until a theme is selected, and never disabled`() {
+    fun `the theme screen is one button, not shown until a theme is selected, and not held back with nothing to write`() {
         val none = IntroState(step = IntroStep.THEME)
         val selected = none.copy(selectedThemeId = KrailThemeStyle.Metro.id)
+        val declined = selected.copy(tripDecision = TripDecision.DECLINED)
 
         listOf(unknown, loading, ready, failed).forEach { readiness ->
             assertEquals(theme(shown = false), introBar(none, readiness), "nothing selected, $readiness")
             assertEquals(theme(shown = true), introBar(selected, readiness), "a theme selected, $readiness")
-            assertTrue(introBar(none, readiness)?.rightEnabled == true, "never a disabled button, $readiness")
+            assertEquals(theme(shown = true), introBar(declined, readiness), "declined at confirm, $readiness")
         }
+    }
+
+    @Test
+    fun `the theme button waits for stops that are still loading only when the rider said yes to saving the trip`() {
+        val saving = IntroState(
+            step = IntroStep.THEME,
+            selectedThemeId = KrailThemeStyle.Metro.id,
+            tripDecision = TripDecision.SAVED,
+        )
+
+        assertEquals(theme(shown = true, enabled = false), introBar(saving, unknown))
+        assertEquals(theme(shown = true, enabled = false), introBar(saving, loading))
+        assertEquals(theme(shown = true), introBar(saving, ready))
+        assertEquals(theme(shown = true), introBar(saving, failed), "a failed load is no different from a ready one")
+        // A trip already written needs no wait.
+        assertEquals(theme(shown = true), introBar(saving.copy(saved = true), loading))
+        // Not shown yet is still a kept room, and never a disabled looking one: it is hidden, not off.
+        assertEquals(false, introBar(saving.copy(selectedThemeId = null), loading)?.shown)
     }
 
     @Test
@@ -253,7 +268,7 @@ class IntroBarTest {
             bars.any { it.left == null }
         }
 
-        assertEquals(listOf(IntroStep.THEME, IntroStep.DESTINATION, IntroStep.ORIGIN), oneButton)
+        assertEquals(listOf(IntroStep.DESTINATION, IntroStep.ORIGIN, IntroStep.THEME), oneButton)
     }
 
     @Test
@@ -270,11 +285,11 @@ class IntroBarTest {
     @Test
     fun `every screen has a bar or none on purpose, so a new step is a row here`() {
         val covered = mapOf(
-            IntroStep.THEME to true,
             IntroStep.PARK_RIDE to true,
             IntroStep.DESTINATION to true,
             IntroStep.ORIGIN to true,
             IntroStep.CONFIRM to true,
+            IntroStep.THEME to true,
         )
 
         assertEquals(IntroStep.entries.toSet(), covered.keys)

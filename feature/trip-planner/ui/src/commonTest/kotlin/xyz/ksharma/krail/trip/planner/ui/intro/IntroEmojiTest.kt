@@ -110,7 +110,7 @@ class IntroEmojiTest {
         val orders = listOf(
             IntroState().copy(startFromParkRide = false),
             IntroState().copy(startFromParkRide = true),
-        ).map { it.stepsInFlow(first = THEME) }
+        ).map { it.stepsInFlow() }
 
         assertTrue(ORIGIN in orders.first() && ORIGIN !in orders.last())
         orders.forEach { order ->
@@ -121,9 +121,9 @@ class IntroEmojiTest {
     }
 
     @Test
-    fun `the theme screen and the Park and Ride screen differ for every choice, and so does the next one`() {
+    fun `the theme screen differs from the confirm screen before it for every choice, and Park and Ride from the next`() {
         (listOf<Int?>(null) + introThemeChoices().map { it.style.id }).forEach { id ->
-            assertNotEquals(introEmojiFor(THEME, id), introEmojiFor(PARK_RIDE), "theme $id then park and ride")
+            assertNotEquals(introEmojiFor(CONFIRM), introEmojiFor(THEME, id), "confirm then theme $id")
             assertNotEquals(introEmojiFor(PARK_RIDE), introEmojiFor(DESTINATION), "park and ride then destination")
         }
     }
@@ -134,7 +134,8 @@ class IntroEmojiTest {
             val list = List(size) { "e$it" }
 
             assertEquals(list[0], introEmojiFor(THEME, null, list), "size $size theme")
-            assertEquals(list[(ORIGIN.ordinal + 5) % size], introEmojiFor(ORIGIN, null, list), "size $size origin")
+            // The origin's entry is the eighth place, a number of its own, so a screen put before it moves nothing.
+            assertEquals(list[8 % size], introEmojiFor(ORIGIN, null, list), "size $size origin")
         }
     }
 

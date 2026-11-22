@@ -18,7 +18,6 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeAppDataReadiness
-import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.testing.fakes.FakeNswParkRideSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
@@ -60,7 +59,6 @@ class IntroFlowRouteThemeTest {
         savedStateHandle = savedAt(IntroState(step = IntroStep.THEME)),
         appDataReadiness = FakeAppDataReadiness(initial = StopsReadiness.Ready(stopCount = 100)),
         completion = IntroCompletion(sandook, FakeSandookPreferences(), analytics, Dispatchers.Unconfined),
-        flag = FakeFlag(),
         timeSource = TimeSource.Monotonic,
         parkRide = IntroParkRideGateway(
             catalogue = FakeParkRideCatalogue(stations = listOf(BELLA_VISTA_STATION)),
@@ -70,6 +68,7 @@ class IntroFlowRouteThemeTest {
             stopNameLookup = { null },
             analytics = analytics,
         ),
+        stops = fakeStopsGateway(),
     )
 
     private fun show() {

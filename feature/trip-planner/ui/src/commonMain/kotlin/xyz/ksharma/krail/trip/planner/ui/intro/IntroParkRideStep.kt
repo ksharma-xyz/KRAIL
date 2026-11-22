@@ -61,12 +61,13 @@ internal class IntroParkRideStep(
     }
 
     /**
-     * The permission result and, for a granted one, the fix. A result nobody asked for is ignored.
-     * No usable location moves to the trip step with no message and no error. A granted result with
-     * no fix is recorded as unavailable, because there is nothing to find a station from.
+     * The permission result and, for a granted one, the fix. A result nobody asked for is ignored, and the call
+     * says whether the result was taken, so the one fix can also be given to what else reads it. No usable
+     * location moves to the trip step with no message and no error. A granted result with no fix is recorded as
+     * unavailable, because there is nothing to find a station from.
      */
-    fun onLocationResult(result: LocationResult, location: LatLng?) {
-        if (read().parkRideCard !is ParkRideCardPhase.Locating) return
+    fun onLocationResult(result: LocationResult, location: LatLng?): Boolean {
+        if (read().parkRideCard !is ParkRideCardPhase.Locating) return false
         if (result == LocationResult.GRANTED && location != null) {
             write { copy(locationResult = LocationResult.GRANTED) }
             resolve { gateway.nearestStation(location) }
@@ -75,6 +76,7 @@ internal class IntroParkRideStep(
             write { copy(locationResult = recorded, parkRideCard = ParkRideCardPhase.None).leavingParkRide() }
             onLeftQuestion()
         }
+        return true
     }
 
     /**

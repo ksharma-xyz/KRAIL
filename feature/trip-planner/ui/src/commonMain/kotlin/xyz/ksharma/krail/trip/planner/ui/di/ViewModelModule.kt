@@ -26,6 +26,7 @@ import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverViewModel
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroCompletion
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroFlowViewModel
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroParkRideGateway
+import xyz.ksharma.krail.trip.planner.ui.intro.IntroStopsGateway
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.parkride.AddParkRideViewModel
 import xyz.ksharma.krail.trip.planner.ui.parkride.RealParkRideAvailabilityLoader
@@ -143,7 +144,6 @@ val viewModelsModule = module {
                 analytics = get(),
                 ioDispatcher = get(named(IODispatcher)),
             ),
-            flag = get(),
             timeSource = TimeSource.Monotonic,
             parkRide = IntroParkRideGateway(
                 catalogue = RealParkRideCatalogue(
@@ -161,6 +161,13 @@ val viewModelsModule = module {
                 ioDispatcher = get(named(IODispatcher)),
                 stopNameLookup = get<StopResultsManager>()::fetchLocalStopName,
                 analytics = get(),
+            ),
+            stops = IntroStopsGateway(
+                flag = get(),
+                nswStops = get(),
+                sandook = get(),
+                stopResults = get(),
+                ioDispatcher = get(named(IODispatcher)),
             ),
         )
     }

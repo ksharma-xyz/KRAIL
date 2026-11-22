@@ -627,6 +627,31 @@ Decisions the UI branch made where this document was silent:
   the destination, origin and confirm screens, so a turn of the screen sends nothing and going back to an earlier screen is a
   new visit. After a killed process the restored step is sent once more.
 
+Decisions unit R3 made for the stations near the rider, where this document was silent:
+
+- **One fix, two readers.** The Park & Ride question takes the one fix when the rider says Yes and grants location. The view model
+  hands the same fix to the nearest Park & Ride station and to `IntroStopsStep.onFix`, in the same call, and neither keeps it. There
+  is no second location request and no second permission prompt. A result nobody asked for, a second result for the same Yes, a
+  denial, an unavailable fix, a granted result with no fix, and No all ask the stops table nothing, and the origin list is the
+  curated one.
+- **Whether or not a car park is near.** The stations are found for every granted fix. A rider with no Park & Ride station within
+  5 km still gets their nearest stations, because the two answers are independent.
+- **The query.** `IntroStopsGateway.nearbyStations` calls the stops table's own `selectStopsNearby` (the query the nearby stops
+  repository wraps) with a bounding box from `GeoUtils`, train, metro and light rail only (read from `TransportMode.productClass`),
+  3 km, at most 10 rows. It does not go through `NearbyStopsRepository`, because that repository logs the centre it is given in
+  every build, and the fix is never logged. The rows are reduced to the id, the name and the modes before they leave the gateway,
+  so no position of a stop reaches the state either. `IntroLocationNeverHeldTest` holds both (see section 8).
+- **Waiting for the stops.** Like the nearest car park, the step waits up to 10 s for the stops to be Ready and gives up with no
+  error: stops that are Loading at 10 s, or Failed, or a query that throws, give the curated list. Nothing the rider sees waits on
+  it, and the Park & Ride question moves on without it.
+- **Late results.** The stations that arrive after the rider is on the origin screen, or past it, are dropped, so the rows never
+  change under a finger. A rider who gets there first sees the curated list for that visit.
+- **The badges.** The stops table is also asked once for the modes of the curated stops (one batched query for at most ten ids),
+  after the stops are Ready, so a curated row draws the same badges as a nearby row and a search row. It waits on a collector of the
+  readiness, with no timer, and until then those rows are drawn without badges.
+- **What is kept.** `IntroState.nearbyStops` (ids and names) and `stopModes` (id to modes) live in the state and are never saved:
+  after the process is killed they are empty and the curated list shows. Nothing about the position is in either.
+
 Operator decisions of 2026-11-22: (1) exactly one of start or end picked disables the bottom button until both or neither
 are picked (superseded in unit R1: the temporary right button on the trip screens is enabled whatever is picked, saves a trip
 only for a complete pair, and ends the Intro either way, until the confirm screen decides this), (2) there is no Try again and no error state, a Failed readiness behaves like Ready for the button and a trip
@@ -665,6 +690,18 @@ The theme screen (unit R2), the seven questions, with numbers where there are an
 | 5 | **Network efficiency.** | Not applicable, since there is no call. The one row table means a repeat pick of the same theme writes nothing. |
 | 6 | **Battery.** | Two continuous animations, each an operator approved exception on this screen only: the drift of every badge and the dance of the selected one, both from one clock. They are `graphicsLayer` transforms read inside the layer lambda, so a frame redraws four small layers and recomposes and lays out nothing. The clock runs only while the screen is resumed, ends when the screen leaves, and is off with reduced motion and in a preview or screenshot. No timer, no wake-up of the radio, no background work. The screen is up for the seconds a rider takes to choose. The cost of a frame, with a shadow on each moving badge, is a guess until it is measured on a phone: it is the item to check first in the device QA. |
 | 7 | **Shared limits.** | None. No NSW call and nothing for a BFF to collapse. |
+
+The stations near the rider (unit R3), the seven questions, with numbers where there are any:
+
+| # | Question | Answer |
+|---|---|---|
+| 1 | **API calls.** | No network call, on any path. Local queries only. A rider who says Yes and grants location makes one nearby query on the stops table, once per Yes (a second result for the same Yes makes none). Every rider makes one batched `selectStopsByIds` for at most 10 ids, once, when the stops are Ready, for the row badges. Nothing is polled. |
+| 2 | **Payload.** | None on the wire. Decoded, the nearby query returns at most 10 rows and the modes query at most 10, so about 1 KB of strings in memory. The curated lists are bundled with the app (the same `intro_suggested_stops` default as before). |
+| 3 | **Timing.** | Time to first content is unchanged: no screen waits on either query. The nearby query starts when the fix arrives, after the stops are Ready (assumed 3 to 5 seconds on a fresh install, as in section 6 above, and nothing when already Ready), and is a bounding box over an indexed table of about 37,000 rows, which is **a guess of tens of milliseconds on a mid-range phone, not measured**. It has the rider's reading time on the destination screen to finish. At worst the origin list is the curated one. |
+| 4 | **UX.** | There is no loading, slow, failed or offline state to show, because nothing is waited for and nothing needs the network. A late, failed or empty answer is the curated list, with no message and no Try again. The rows never move once the rider is on the origin screen. |
+| 5 | **Network efficiency.** | Not applicable, since there is no call. The curated list is bundled, the stations are worked out once per Yes, and nothing is cached across runs (a stale nearby list would be wrong the next time the rider stands somewhere else). |
+| 6 | **Battery.** | One fix, already taken for Park & Ride. No timer, no polling and no background work: the two jobs run in the view model's scope and end with it, and the wait for the stops is a collector on the readiness state. |
+| 7 | **Shared limits.** | None. No NSW call, nothing for a BFF to collapse. |
 
 Decision rule met: the added calls buy a live car park card and a one tap add for riders who park and ride. They are
 optional, non-blocking, once only and silent on failure.
@@ -918,6 +955,15 @@ The search hand-off, as built, with nothing in `searchstop/` touched:
   stops from the bundled data, with their real ids and names. `IntroOutcomeTest` holds `skipped` as the answer Not now and nothing
   else, `IntroStepFlowTest` the origin skip and Back from the confirm screen, and `IntroStateTest` the new defaults and that a stop
   is an id and a name and nothing else.
+- **Nearby stations, built (unit R3).** `IntroStopsGatewayTest` (the query's arguments: one call, train, metro and light rail from
+  `TransportMode`, the radius and limit, a box that surrounds the fix, an unusable position making no query, an unknown mode left
+  out, the modes of listed stops, the typed search with routes off and stops only, and its limit), `IntroStopsOpsTest` (the pure state
+  changes: stations kept as ids and names before the origin screen and dropped on it and after, modes added not replaced, and the
+  typed text and results rules) and `IntroFlowViewModelNearbyTest` (a granted fix finds the stations and asks once, from the one fix,
+  with or without a car park near, and a No, a denial, no fix, a result nobody asked for and a second result ask nothing, stops that are
+  not ready, ready inside the wait, failed, a failing query, nothing saved, and the badges read when the stops are ready).
+  `IntroLocationNeverHeldTest` now allows stops as ids and names (with modes) in the state and still fails on a coordinate in any field
+  of it, on a stop's position read in the gateway, and on the fix logged or held in any of the five files that touch it.
 - **Existing tests changed in R2.** `IntroBarTest` (the theme row is now a bar), `IntroFlowScreenTest` (the theme screen is no longer
   one with no bar, Park & Ride now has a back button and the theme screen has none), `IntroParkRideStepTest` and
   `IntroParkRideStepNarrowTest` (the back button is not one of the two answers), `IntroStateTest` (the first screen is the theme
@@ -993,7 +1039,11 @@ Each is a default taken to keep moving. None has been seen by the owner. The lis
 | R3-1 | Stops are one station when their names match up to the first comma, and they are collapsed to the stop named as the station, else the nearest stop of it | The data names a stand as `Station, Stand A`, and the parent flag is not reliable (operator ruling). A light rail stop with a different name next to a station is its own row | Default, not yet seen by owner |
 | R3-2 | The same station name counts as the same place for the de duplication and for leaving the other end out, not only the same id | A list that showed `Central Station` twice under two ids, or a trip from one platform of a station to another, would be a worse result than hiding the second | Default, not yet seen by owner |
 | R3-3 | There is no stored highlight: the highlighted row is the first row of the list, and the rider's earlier choice leads the list when they come back | Tapping a row advances, so a highlight the rider could move would never be seen. If the rider should see their old choice among the suggestions in place, the list order has to stay fixed and a highlight has to be stored | Default, not yet seen by owner |
-| R3-4 | `skipped` is true only for Not now on the confirm screen, and false for a saved trip | It is what the spec says. The old meaning, no complete pair, cannot happen now because the confirm screen needs both stops | Default, not yet seen by owner |
+| R3-4 | `skipped` is true only for Not now on the confirm screen, and false for a saved trip | It is the rule set for the confirm screen. The old meaning, no complete pair, cannot happen now because the confirm screen needs both stops | Default, not yet seen by owner |
+| R3-5 | Nearby means train, metro and light rail stops within 3 km, at most 10 rows, then the nearest three stations | No radius was given. 3 km is a guess at a short bus ride in the suburbs. Too small leaves a suburban rider with the curated list, too large leads with a station they would not walk to | Default, not yet seen by owner |
+| R3-6 | The stations that arrive after the rider is on the origin screen are dropped | The rows must not move under a finger. The cost is the curated list for that visit when the stops were slow | Default, not yet seen by owner |
+| R3-7 | The curated stops' badges are read from the stops table once it is Ready, and drawn without badges until then | The curated lists carry only an id and a name. The cost is rows that gain a badge a moment later on a slow first run | Default, not yet seen by owner |
+| R3-8 | The nearby query goes to the stops table directly and not through `NearbyStopsRepository` | That repository logs the centre it is given in every build, and the Intro never logs the fix | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

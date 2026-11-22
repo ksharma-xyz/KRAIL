@@ -12,11 +12,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import xyz.ksharma.krail.core.remoteconfig.flag.Flag
+import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.io.gtfs.readiness.AppDataReadiness
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
+import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
 import kotlin.time.Duration
@@ -41,9 +42,9 @@ internal class IntroFlowViewModel(
     private val savedStateHandle: SavedStateHandle,
     private val appDataReadiness: AppDataReadiness,
     private val completion: IntroCompletion,
-    flag: Flag,
     private val timeSource: TimeSource,
     parkRide: IntroParkRideGateway,
+    stops: IntroStopsGateway,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(savedStateHandle.restoreIntroState())
@@ -53,7 +54,7 @@ internal class IntroFlowViewModel(
     val stopsReadiness: StateFlow<StopsReadiness> get() = appDataReadiness.state
 
     /** Read once, so the lists never change under the rider. */
-    val suggestedStops: SuggestedStops = flag.introSuggestedStops()
+    val suggestedStops: SuggestedStops = stops.suggestedStops
 
     private val effectChannel = Channel<IntroEffect>(Channel.BUFFERED)
 
@@ -81,9 +82,18 @@ internal class IntroFlowViewModel(
         write = ::update,
     )
 
+    // The stations near the rider and the badges of the stops the screens list, worked out in the background.
+    private val stopsStep = IntroStopsStep(
+        scope = viewModelScope,
+        readiness = appDataReadiness,
+        gateway = stops,
+        write = ::update,
+    )
+
     init {
         // After a killed process the saved station id is worked out into a card again.
         parkRideStep.restore()
+        stopsStep.loadModes(suggestedStops)
     }
 
     fun onEvent(event: IntroUiEvent) {
@@ -94,7 +104,7 @@ internal class IntroFlowViewModel(
             IntroUiEvent.ShowAnotherTheme -> themeStep.showAnother()
             IntroUiEvent.ConfirmTheme -> themeStep.confirm()
             is IntroUiEvent.AnswerParkRide -> answerParkRide(event.yes)
-            is IntroUiEvent.LocationResultReceived -> parkRideStep.onLocationResult(event.result, event.location)
+            is IntroUiEvent.LocationResultReceived -> onLocationResult(event.result, event.location)
             IntroUiEvent.AddParkRideAndContinue -> parkRideStep.addAndContinue()
             IntroUiEvent.DeclineParkRide -> parkRideStep.decline()
             is IntroUiEvent.PickStart -> update { withPick(isStart = true, event.stop.stopId, event.stop.name) }
@@ -119,6 +129,13 @@ internal class IntroFlowViewModel(
         if (step == previous) return
         lastStepShown = step
         if (shouldTrackScreenView(previous, step)) completion.trackStepView(step)
+    }
+
+    // The fix the Park & Ride question took is the only one, and the stations near the rider come from it too. It is
+    // handed on in the same call and held by neither.
+    private fun onLocationResult(result: LocationResult, location: LatLng?) {
+        val taken = parkRideStep.onLocationResult(result, location)
+        if (taken && result == LocationResult.GRANTED && location != null) stopsStep.onFix(location)
     }
 
     // Yes starts the location step, and the screen then sends LocationResultReceived. No ends it and moves on.

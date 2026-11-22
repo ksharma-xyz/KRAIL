@@ -22,7 +22,6 @@ import xyz.ksharma.dhruva.location.LocationError
 import xyz.ksharma.krail.core.navigation.ResultEventBus
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeAppDataReadiness
-import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.testing.fakes.FakeNswParkRideSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
@@ -68,7 +67,6 @@ class IntroFlowRouteTest {
         savedStateHandle = savedAt(ON_PARK_RIDE),
         appDataReadiness = FakeAppDataReadiness(initial = StopsReadiness.Ready(stopCount = 100)),
         completion = IntroCompletion(FakeSandook(), FakeSandookPreferences(), analytics, Dispatchers.Unconfined),
-        flag = FakeFlag(),
         timeSource = TimeSource.Monotonic,
         parkRide = IntroParkRideGateway(
             catalogue = FakeParkRideCatalogue(stations = listOf(BELLA_VISTA_STATION)),
@@ -78,6 +76,7 @@ class IntroFlowRouteTest {
             stopNameLookup = { null },
             analytics = analytics,
         ),
+        stops = fakeStopsGateway(),
     )
 
     private val nearBellaVista = Location(latitude = -33.771961, longitude = 150.944024, timestamp = 0L)

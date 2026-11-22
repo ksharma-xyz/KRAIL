@@ -14,6 +14,7 @@ import xyz.ksharma.krail.core.testing.fakes.FakeAppDataReadiness
 import xyz.ksharma.krail.core.testing.fakes.FakeFestivalManager
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.testing.fakes.FakeNswParkRideSandook
+import xyz.ksharma.krail.core.testing.fakes.FakeNswStopsSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeParkRideFacilityManager
 import xyz.ksharma.krail.core.testing.fakes.FakeParkRideService
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
@@ -23,6 +24,7 @@ import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
 import xyz.ksharma.krail.park.ride.network.service.ParkRideService
 import xyz.ksharma.krail.sandook.NswParkRideSandook
+import xyz.ksharma.krail.sandook.NswStopsSandook
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
@@ -43,5 +45,6 @@ internal fun introKoinFakes(sandook: Sandook = FakeSandook()): Module = module {
     single<StopResultsManager> { FakeStopResultsManager() }
     single<FestivalManager> { FakeFestivalManager() }
     single<NswParkRideSandook> { FakeNswParkRideSandook() }
+    single<NswStopsSandook> { FakeNswStopsSandook() }
     single<ParkRideService> { FakeParkRideService() }
 }

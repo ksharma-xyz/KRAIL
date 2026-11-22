@@ -7,19 +7,26 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.onEach
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.IntroLetsKrailClickEvent
+import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.testing.coroutines.KrailTestScope
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeAppDataReadiness
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.testing.fakes.FakeNswParkRideSandook
+import xyz.ksharma.krail.core.testing.fakes.FakeNswStopsSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import xyz.ksharma.krail.core.testing.helpers.CallLog
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.sandook.NswParkRideSandook
+import xyz.ksharma.krail.sandook.NswStopsSandook
+import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideAvailabilityLoader
+import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
@@ -27,6 +34,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRideStationPickerItem
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeParkRideAvailabilityLoader
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeParkRideCatalogue
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
 import kotlin.test.assertIs
 import kotlin.time.Duration
 import kotlin.time.TestTimeSource
@@ -62,6 +70,12 @@ internal class IntroRig(
     val flag = FakeFlag()
     val catalogue = FakeParkRideCatalogue(stations = stations)
 
+    /** What the stops table's nearby query returns, and every call made to it. */
+    val nswStops = FakeNswStopsSandook()
+
+    /** The local stop search the typed query runs. */
+    val stopResults = FakeStopResultsManager()
+
     /** Records each refresh the Park & Ride step asks for. Unused when the rig was given a loader. */
     val loader = FakeParkRideAvailabilityLoader()
 
@@ -78,7 +92,6 @@ internal class IntroRig(
                     savedStateHandle = handle,
                     appDataReadiness = readiness,
                     completion = IntroCompletion(sandook, preferences, analytics, scope.ioDispatcher),
-                    flag = flag,
                     timeSource = timeSource ?: testTime,
                     parkRide = IntroParkRideGateway(
                         catalogue = catalogue,
@@ -87,6 +100,13 @@ internal class IntroRig(
                         ioDispatcher = scope.ioDispatcher,
                         stopNameLookup = stopNames::get,
                         analytics = analytics,
+                    ),
+                    stops = fakeStopsGateway(
+                        ioDispatcher = scope.ioDispatcher,
+                        flag = flag,
+                        nswStops = nswStops,
+                        sandook = sandook,
+                        stopResults = stopResults,
                     ),
                 )
             }
@@ -143,6 +163,21 @@ internal class IntroRig(
     fun outcomeEvent(): IntroLetsKrailClickEvent =
         analytics.getTrackedEvents("intro_lets_krail").single() as IntroLetsKrailClickEvent
 }
+
+/** The stops gateway of the Intro over fakes, which a test that makes its own view model can use as it is. */
+internal fun fakeStopsGateway(
+    ioDispatcher: CoroutineDispatcher = Dispatchers.Unconfined,
+    flag: Flag = FakeFlag(),
+    nswStops: NswStopsSandook = FakeNswStopsSandook(),
+    sandook: Sandook = FakeSandook(),
+    stopResults: StopResultsManager = FakeStopResultsManager(),
+) = IntroStopsGateway(
+    flag = flag,
+    nswStops = nswStops,
+    sandook = sandook,
+    stopResults = stopResults,
+    ioDispatcher = ioDispatcher,
+)
 
 /** The saved state of a view model that had reached [state], as if recreated after process death. */
 internal fun savedAt(state: IntroState): SavedStateHandle =

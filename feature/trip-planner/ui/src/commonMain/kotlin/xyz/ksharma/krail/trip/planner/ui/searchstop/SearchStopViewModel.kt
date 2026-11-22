@@ -805,7 +805,7 @@ class SearchStopViewModel(
         _uiState.update(block)
     }
 
-    private companion object {
+    internal companion object {
         /** How long typing must pause before the local stop list is refreshed. */
         const val SEARCH_DEBOUNCE_MS = 100L
 

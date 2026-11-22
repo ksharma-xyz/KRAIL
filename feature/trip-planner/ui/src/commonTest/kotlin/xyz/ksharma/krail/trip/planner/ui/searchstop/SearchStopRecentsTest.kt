@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
+import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.transport.TransportMode
@@ -175,6 +176,18 @@ class SearchStopRecentsTest {
         assertFalse(shouldShowLabelRow(ListState.Results(isLoading = true), listOf(homeSet)))
         assertFalse(shouldShowLabelRow(ListState.NoMatch, listOf(homeSet)))
         assertFalse(shouldShowLabelRow(ListState.Error, listOf(homeSet)))
+    }
+
+    // endregion
+
+    // region the map state cap
+
+    @Test
+    fun `the card on the map state takes a share of the window and keeps a floor on a short one`() {
+        assertEquals(320.dp, mapStateCardMaxHeight(windowHeight = 800.dp), "40 percent of a tall phone.")
+        assertEquals(256.dp, mapStateCardMaxHeight(windowHeight = 640.dp))
+        assertEquals(MAP_STATE_CARD_FLOOR, mapStateCardMaxHeight(windowHeight = 400.dp), "The floor holds.")
+        assertEquals(MAP_STATE_CARD_FLOOR, mapStateCardMaxHeight(windowHeight = 0.dp), "Unmeasured keeps the floor.")
     }
 
     // endregion

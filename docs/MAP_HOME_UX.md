@@ -48,7 +48,10 @@ If a design breaks one of these rules, the design changes, not the rule.
 8. **Search Stop always opens on the map, with no keyboard.** The rider taps the bar to raise the keyboard.
 9. **Recents float on the map under the search bar on Search Stop,** as a vertical card: one row per stop with its mode
    badges and a plus at the end, the same card the results use. A row of labels (Home, Work, then custom labels) scrolls
-   sideways at the top of the card.
+   sideways at the top of the card. The card is there when Search Stop opens, in the map state with no keyboard, and the
+   order from the top is the bars, the mode chips, then the card. On the map state it takes at most 40 percent of the
+   window (never under 200 dp) and scrolls inside, so the pins around it stay usable. With no recents it holds the
+   nearest stops when a location fix exists, and otherwise the suggested stops.
 10. **The search bar on the map is the app's own dark field.** `TextFieldDefaults.invertedColors()`: dark container, light
     text, 48 dp tall, full pill. No theme-colour ring or border, in every theme.
 
@@ -162,9 +165,11 @@ If a design breaks one of these rules, the design changes, not the rule.
     carry one and do not reorder one by one. The Park & Ride row is one outlined block with a grip that moves up or down as
     a unit. A station is removed on the Add Park & Ride screen with its toggle, or from its P card, which reads "Remove from
     home" when the station is on home and "Add to home" when it is not. Done saves, back or a tap on the map cancels.
-39. **Search Stop has two states and no map button.** It opens as the map state: the map and one dark pill, no list and no
-    keyboard. Tapping the bar is the list state, with the keyboard and the recents. X clears the text and keeps the recents.
-    Back, or a tap on the map, returns to the map state, and back again goes home. System back is a two-step exit.
+39. **Search Stop has two states and no map button.** It opens as the map state: the map, the bars, the mode chips and the
+    recents card of rule 9 floating under them, with no keyboard. Tapping the bar is the list state, with the keyboard, and
+    the same card grows into the list. X clears the text and keeps the recents. Back, or a tap on the map, returns to the map
+    state, and back again goes home. System back is a two-step exit. Rules 9 and 39 are one picture: the card is on the map
+    state, and what the map state does not have is a keyboard or a full height list.
     **A pick never leaves the screen.** On the To and From form every pick (a recents row, a label shortcut, a result, a stop
     card action) fills its bar and the screen stays. Editing moves to the other bar while that bar is empty, with the keyboard
     following it, and to nothing when both hold a stop. Only the go circle leaves, with both stops, and back leaves with nothing,
@@ -281,7 +286,7 @@ A tapped pin opens a floating stop card, never a bottom sheet.
 
 ### Search Stop
 
-1. Bar on top. Map behind. No keyboard.
+1. Bars on top, then the mode chips and the recents card (item 2). Map behind. No keyboard.
 2. Recents are a vertical list in a floating card under the bar, the same card as the results. The label row comes first
    when any label is set (one row that scrolls sideways), then recent stops, at most five rows. With location off and no
    recents, the curated stops from the Intro's suggested stops list show instead, each carrying its own stop id and name. Each row is a whole item: the name, its mode badges and a plus at the end. With

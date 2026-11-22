@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -38,6 +39,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -566,6 +568,9 @@ private fun SearchStopScreenSinglePane(
     val density = LocalDensity.current
     val headerHeight: Dp by remember { derivedStateOf { with(density) { headerHeightPx.toDp() } } }
 
+    // The card on the map state keeps to a share of the window, so the pins around it stay usable.
+    val mapStateCardCap = mapStateCardMaxHeight(windowHeight = LocalWindowInfo.current.containerDpSize.height)
+
     Box(modifier = modifier.fillMaxSize().imePadding()) {
         if (mapState != null) {
             SearchStopMap(
@@ -623,20 +628,26 @@ private fun SearchStopScreenSinglePane(
                     )
                 }
             }
-            if (flow.mode == SearchStopMode.List && flow.editing != null) {
+            // The card is under the bars and the mode chips in both states (rule 9). On the map state it is
+            // capped and scrolls inside, and on the list state it grows into the whole list.
+            if (flow.editing != null) {
                 SearchStopListSection(
                     searchStopState = searchStopState,
                     fieldType = fieldType,
                     rows = rows,
                     pillShown = location.pill != LocationPill.Hidden,
                     onManageClick = onManageClick,
+                    maxHeight = if (flow.mode == SearchStopMode.Map) mapStateCardCap else Dp.Unspecified,
                 )
             }
         }
     }
 }
 
-/** The card under the form, with a gap above it unless the pill's own hit area already makes one. */
+/**
+ * The card under the form, with a gap above it unless the pill's own hit area already makes one. A
+ * [maxHeight] caps it and the card scrolls inside; unspecified leaves it as tall as the room allows.
+ */
 @Composable
 private fun ColumnScope.SearchStopListSection(
     searchStopState: SearchStopState,
@@ -644,6 +655,7 @@ private fun ColumnScope.SearchStopListSection(
     rows: StopRowActions,
     pillShown: Boolean,
     onManageClick: () -> Unit,
+    maxHeight: Dp = Dp.Unspecified,
 ) {
     val userLocation = (searchStopState.mapUiState as? MapUiState.Ready)?.mapDisplay?.userLocation
     val nearbyStops = (searchStopState.mapUiState as? MapUiState.Ready)?.mapDisplay?.nearbyStops
@@ -673,6 +685,7 @@ private fun ColumnScope.SearchStopListSection(
         onManageClick = onManageClick,
         modifier = Modifier
             .weight(1f, fill = false)
+            .heightIn(max = maxHeight)
             .padding(top = if (pillShown) KrailTheme.dimensions.spacingNone else KrailTheme.dimensions.spacingM),
     )
 }

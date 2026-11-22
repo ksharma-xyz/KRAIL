@@ -1,12 +1,14 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -16,7 +18,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.height
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -29,6 +33,7 @@ import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
@@ -141,7 +146,7 @@ class SearchStopScreenInteractionTest {
     }
 
     @Test
-    fun singlePane_opensOnTheMapState_withTheBarAndNoListAndNoKeyboard() {
+    fun singlePane_opensOnTheMapState_withTheBarsTheChipsTheRecentsCardAndNoKeyboard() {
         val shown = mutableListOf<String>()
         val keyboard = object : SoftwareKeyboardController {
             override fun show() {
@@ -152,10 +157,12 @@ class SearchStopScreenInteractionTest {
         }
         setScreen(withMap(), keyboard = keyboard)
 
-        // Rule 39: the map and one dark pill. The rider's recents are one tap away, not on screen.
+        // Rules 9 and 39: the map, the bars, the mode chips and the recents card floating under them, with no
+        // keyboard. The card is the same one the list state grows into.
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).assertIsDisplayed()
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertDoesNotExist()
-        composeRule.onNodeWithText("Central Station").assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertIsDisplayed()
+        composeRule.onNodeWithText("Central Station").assertIsDisplayed()
         assert(shown.isEmpty()) { "the map state raises no keyboard, got $shown" }
     }
 
@@ -187,13 +194,15 @@ class SearchStopScreenInteractionTest {
     }
 
     @Test
-    fun tappingTheBar_raisesTheListState() {
+    fun tappingTheBar_raisesTheListState_andTheCardGrowsIntoIt() {
         setScreen(withMap())
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertIsDisplayed()
 
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
 
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertIsDisplayed()
         composeRule.onNodeWithText("Central Station").assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertDoesNotExist()
     }
 
     @Test
@@ -203,9 +212,11 @@ class SearchStopScreenInteractionTest {
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertIsDisplayed()
 
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertDoesNotExist()
+
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_BACK).performClick()
 
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertIsDisplayed()
         assert(wentBack == 0) { "the first back returns to the map state and does not leave" }
 
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_BACK).performClick()
@@ -291,6 +302,147 @@ class SearchStopScreenInteractionTest {
 
     // endregion
 
+    // region Stay in place after a pick
+
+    private fun setForm(
+        state: SearchStopState,
+        onTripChosen: (StopItem, StopItem) -> Unit = { _, _ -> },
+        onStopSelect: (StopItem) -> Unit = {},
+        goBack: () -> Unit = {},
+    ) {
+        composeRule.setContent {
+            PreviewTheme {
+                CompositionLocalProvider(LocalSoftwareKeyboardController provides quietKeyboard) {
+                    SearchStopScreen(
+                        searchStopState = state,
+                        fieldType = SearchStopFieldType.TO,
+                        onStopSelect = onStopSelect,
+                        onTripChosen = onTripChosen,
+                        goBack = goBack,
+                        onEvent = {},
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun aPickOnTheForm_fillsItsBarAndStays_andGoLeavesWithBothStops() {
+        var chosen: Pair<StopItem, StopItem>? = null
+        var selected = 0
+        setForm(
+            state = SearchStopFixtures.recentWithDefaults(),
+            onTripChosen = { from, to -> chosen = from to to },
+            onStopSelect = { selected++ },
+        )
+
+        // The destination first: the bar fills, the screen stays and the start is now the bar being edited.
+        composeRule.onNodeWithText("Central Station").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_TO).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE).assertDoesNotExist()
+        assert(selected == 0 && chosen == null) { "a pick on the form never leaves the screen" }
+
+        // The start: both bars hold a stop, so nothing is edited, the go circle shows and the list is gone.
+        composeRule.onNodeWithText("Town Hall").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertDoesNotExist()
+        assert(chosen == null) { "the go circle is the only way out with a trip" }
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_SEARCH, useUnmergedTree = true).performClick()
+
+        val trip = checkNotNull(chosen) { "expected the trip to leave with go" }
+        assertEquals("stop_town_hall", trip.first.stopId, "The start is the stop picked second.")
+        assertEquals("stop_central", trip.second.stopId, "The destination is the stop picked first.")
+        assert(selected == 0)
+    }
+
+    @Test
+    fun backBeforeGo_leavesWithNoTrip_soAHalfPickIsDropped() {
+        var chosen: Pair<StopItem, StopItem>? = null
+        var wentBack = 0
+        setForm(
+            state = SearchStopFixtures.recentWithDefaults(),
+            onTripChosen = { from, to -> chosen = from to to },
+            goBack = { wentBack++ },
+        )
+        composeRule.onNodeWithText("Central Station").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_BACK).performClick()
+        composeRule.waitForIdle()
+
+        assert(wentBack == 1) { "back leaves, got $wentBack" }
+        assert(chosen == null) { "a half pick leaves nothing behind" }
+    }
+
+    @Test
+    fun aPickOnTheMapState_staysOnTheMapState_withTheKeyboardStillDown() {
+        val shown = mutableListOf<String>()
+        val keyboard = object : SoftwareKeyboardController {
+            override fun show() {
+                shown += "show"
+            }
+
+            override fun hide() = Unit
+        }
+        setScreen(withMap(), keyboard = keyboard)
+
+        composeRule.onNodeWithText("Central Station").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertIsDisplayed()
+        assert(shown.isEmpty()) { "a pick from the map state raises no keyboard, got $shown" }
+    }
+
+    // endregion
+
+    // region The recents card on the map state
+
+    @Test
+    fun theMapStateCard_isCappedToAShareOfTheWindowAndScrollsInside() {
+        val many = (1..5).map { SearchStopState.StopResult("Stop $it", "id_$it") }
+        val state = withMap(SearchStopFixtures.recentWithHomeSet().copy(recentStops = many.toImmutableList()))
+        setScreen(state)
+
+        val card = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST)
+            .getUnclippedBoundsInRoot()
+        // The Pixel 6 window is 891 dp tall, so the card may take at most 40 percent of it.
+        val cap = mapStateCardMaxHeight(windowHeight = 891.dp)
+
+        assert(card.height <= cap + 1.dp) { "the card $card stays within its cap $cap on the map state" }
+    }
+
+    @Test
+    @Config(qualifiers = "w320dp-h640dp")
+    fun at320dpAndTwoTimesText_theChipsAndTheCardDoNotOverlap_andBothStayInTheWindow() {
+        composeRule.setContent {
+            CompositionLocalProvider(
+                LocalDensity provides Density(LocalDensity.current.density, fontScale = 2f),
+                LocalInspectionMode provides true,
+                LocalSoftwareKeyboardController provides quietKeyboard,
+            ) {
+                PreviewTheme {
+                    SearchStopScreen(
+                        searchStopState = withMap(SearchStopFixtures.recentWithHomeSet()),
+                        onEvent = {},
+                    )
+                }
+            }
+        }
+        composeRule.waitForIdle()
+
+        val chips = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS)
+            .getUnclippedBoundsInRoot()
+        val card = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST)
+            .getUnclippedBoundsInRoot()
+        assert(chips.bottom <= card.top + 1.dp) { "the chips $chips sit above the card $card, never over it" }
+        assert(card.left >= 0.dp && card.right <= 320.dp) { "the card $card stays inside the 320 dp window" }
+    }
+
+    // endregion
+
     // region The location pill
 
     @Test
@@ -350,12 +502,14 @@ class SearchStopScreenInteractionTest {
     // region Direct-action callbacks
 
     @Test
-    fun tappingSetPill_invokesOnStopSelectWithUnderlyingStop() {
+    fun tappingSetPill_forASingleField_invokesOnStopSelectWithUnderlyingStop() {
         var selected: StopItem? = null
         composeRule.setContent {
             PreviewTheme {
                 SearchStopScreen(
                     searchStopState = SearchStopFixtures.recentWithHomeSet(),
+                    // A label is a single field, so its pick leaves at once with the stop.
+                    fieldType = SearchStopFieldType.LABEL,
                     onStopSelect = { selected = it },
                     onEvent = {},
                 )
@@ -367,8 +521,8 @@ class SearchStopScreenInteractionTest {
         // LazyColumn (pillRowSection is added before recentSearchStopsList).
         composeRule.onAllNodesWithText("Home").onFirst().performClick()
 
-        // Tapping the set Home pill is the fast-path for "use this saved stop as
-        // From/To" — onStopSelect should fire with Home's underlying stop.
+        // Tapping the set Home pill is the fast-path for "use this saved stop", so onStopSelect should fire with
+        // Home's underlying stop.
         val result = checkNotNull(selected) { "expected onStopSelect to fire" }
         assert(result.stopId == "stop_central") { "expected stop_central, got ${result.stopId}" }
         assert(result.stopName == "Central Station")

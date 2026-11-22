@@ -1,6 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
-import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroState
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -15,9 +15,9 @@ class IntroLocationNeverHeldTest {
 
     private val glue: List<File> by lazy {
         val dir = generateSequence(File("").absoluteFile) { it.parentFile }
-            .map { File(it, INTRO_V2_PATH) }
+            .map { File(it, INTRO_PATH) }
             .firstOrNull { it.isDirectory }
-            ?: error("Cannot find $INTRO_V2_PATH above ${File("").absolutePath}")
+            ?: error("Cannot find $INTRO_PATH above ${File("").absolutePath}")
         GLUE_FILES.map { File(dir, it) }
     }
 
@@ -58,8 +58,8 @@ class IntroLocationNeverHeldTest {
         .filterNot { it.startsWith("//") || it.startsWith("*") || it.startsWith("/*") }
 
     private companion object {
-        const val INTRO_V2_PATH =
-            "feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/intro/v2"
+        const val INTRO_PATH =
+            "feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/intro"
         val GLUE_FILES = listOf("IntroLocate.kt", "IntroLocationEffect.kt", "IntroFlowRoute.kt")
         val LOGGING = listOf("log(", "logError(", "println(", "print(", "Log.", "Logger", "Napier", "Kermit")
         val HOLDERS = listOf("remember", "mutableStateOf", "Saver", "SavedStateHandle", "MutableStateFlow", "var ")

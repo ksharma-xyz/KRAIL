@@ -1,8 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
-import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroState
-import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroStep
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 
 /**
  * What the bottom button says and does. [GettingReady] and [PickBothStops] are disabled, and

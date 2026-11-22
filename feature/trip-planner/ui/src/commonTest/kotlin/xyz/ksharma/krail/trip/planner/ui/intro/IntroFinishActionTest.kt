@@ -7,8 +7,8 @@ import xyz.ksharma.krail.trip.planner.ui.intro.IntroFinishAction.Next
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroFinishAction.PickBothStops
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroFinishAction.SaveAndStart
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroFinishAction.SkipForNow
-import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroState
-import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroStep
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

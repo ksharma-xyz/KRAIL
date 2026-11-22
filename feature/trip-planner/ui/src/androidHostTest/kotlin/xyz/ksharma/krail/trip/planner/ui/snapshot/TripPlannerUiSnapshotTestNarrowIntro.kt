@@ -23,7 +23,7 @@ import xyz.ksharma.krail.core.snapshot.BaseSnapshotTest
 )
 class TripPlannerUiSnapshotTestNarrowIntro : BaseSnapshotTest() {
 
-    override val packageToScan = "xyz.ksharma.krail.trip.planner.ui.intro.v2.narrow"
+    override val packageToScan = "xyz.ksharma.krail.trip.planner.ui.intro.narrow"
 
     @Test
     fun generateNarrowIntroScreenshots() {

@@ -271,7 +271,7 @@ declarations don't change beyond the SearchStop fix.
 
 ## 6. First-launch experience
 
-File: [`IntroFlowScreen.kt`](../feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/intro/v2/IntroFlowScreen.kt)
+File: [`IntroFlowScreen.kt`](../feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/intro/IntroFlowScreen.kt)
 (two steps, the Park & Ride question and the first trip, gated on `SandookPreferences.KEY_HAS_SEEN_INTRO`).
 
 - The Intro stays single-pane on every form factor, capped to a phone

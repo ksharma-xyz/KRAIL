@@ -14,9 +14,9 @@ class IntroNeverReviewsTest {
 
     private val introSources: List<File> by lazy {
         val dir = generateSequence(File("").absoluteFile) { it.parentFile }
-            .map { File(it, INTRO_V2_PATH) }
+            .map { File(it, INTRO_PATH) }
             .firstOrNull { it.isDirectory }
-            ?: error("Cannot find $INTRO_V2_PATH above ${File("").absolutePath}")
+            ?: error("Cannot find $INTRO_PATH above ${File("").absolutePath}")
         dir.walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
     }
 
@@ -35,8 +35,8 @@ class IntroNeverReviewsTest {
     }
 
     private companion object {
-        const val INTRO_V2_PATH =
-            "feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/intro/v2"
+        const val INTRO_PATH =
+            "feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/intro"
         const val MIN_SOURCES = 6
         val FORBIDDEN = listOf("AppReviewManager", "DelightMoment", "onDelightMoment", "PARK_RIDE_ADDED")
     }

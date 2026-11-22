@@ -23,9 +23,9 @@ import xyz.ksharma.krail.trip.planner.ui.alerts.summary.AlertSummaryViewModel
 import xyz.ksharma.krail.trip.planner.ui.alerts.summary.isAlertSummaryEnabled
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorViewModel
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverViewModel
-import xyz.ksharma.krail.trip.planner.ui.intro.v2.IntroCompletion
-import xyz.ksharma.krail.trip.planner.ui.intro.v2.IntroFlowViewModel
-import xyz.ksharma.krail.trip.planner.ui.intro.v2.IntroParkRideGateway
+import xyz.ksharma.krail.trip.planner.ui.intro.IntroCompletion
+import xyz.ksharma.krail.trip.planner.ui.intro.IntroFlowViewModel
+import xyz.ksharma.krail.trip.planner.ui.intro.IntroParkRideGateway
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.parkride.AddParkRideViewModel
 import xyz.ksharma.krail.trip.planner.ui.parkride.RealParkRideAvailabilityLoader

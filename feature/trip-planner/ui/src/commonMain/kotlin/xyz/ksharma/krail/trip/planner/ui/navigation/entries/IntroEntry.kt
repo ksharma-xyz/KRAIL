@@ -7,8 +7,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import org.koin.compose.viewmodel.koinViewModel
-import xyz.ksharma.krail.trip.planner.ui.intro.v2.IntroFlowRoute
-import xyz.ksharma.krail.trip.planner.ui.intro.v2.IntroFlowViewModel
+import xyz.ksharma.krail.trip.planner.ui.intro.IntroFlowRoute
+import xyz.ksharma.krail.trip.planner.ui.intro.IntroFlowViewModel
 import xyz.ksharma.krail.trip.planner.ui.navigation.IntroRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator

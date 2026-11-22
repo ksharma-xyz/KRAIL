@@ -1,8 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
-import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroStep
-import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.LocationResult
-import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideAnswer
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
+import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
+import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

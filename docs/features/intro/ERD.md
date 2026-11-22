@@ -202,7 +202,7 @@ internal fun stopsWaitBucket(waited: Duration, readiness: StopsReadiness): Stops
 ```
 
 ```kotlin
-// module: :feature:trip-planner:state, intro/ (package intro.v2 until the carousel IntroState is deleted, then moved up)
+// module: :feature:trip-planner:state, intro/
 // Every field has a default, so IntroState() is the first screen. hasTrip is true only when both stop ids are set.
 data class IntroState(
     val step: IntroStep,
@@ -235,7 +235,7 @@ data class ParkRideCarPark(
     val spotsAvailable: Int?, val percentageFull: Int?, val timeText: String?, // null until a reading exists
 )
 
-// module: :feature:trip-planner:ui, intro/v2 (internal, because SuggestedStop is). Moves up with the carousel's deletion.
+// module: :feature:trip-planner:ui, intro/ (internal, because SuggestedStop is).
 sealed interface IntroUiEvent {
     data object Back : IntroUiEvent
     data object Next : IntroUiEvent                    // the question step only
@@ -521,7 +521,7 @@ disabled (one stop picked), Skip for now (nothing picked), Save and start (both 
   600 dp and at dual-pane before the UI branch.
 - Screen reader: the progress dots read "Step 1 of 2". Each row names its stop and role ("Change start stop, now Tallawong").
 
-The shell, as built (`IntroFlowScreen`, stateless, in `intro/v2`):
+The shell, as built (`IntroFlowScreen`, stateless, in `intro`):
 
 - A top bar, the step, and the one bottom button. The bar reserves 48 dp at both ends, so the dots do not move when the back
   chevron appears on step 2. The current dot is longer as well as darker, so colour is never the only signal, and the row
@@ -627,7 +627,7 @@ The search hand-off, as built, with nothing in `searchstop/` touched:
   unavailable, Added) and the tallest card (three car parks) on a 320 dp canvas and on a tablet canvas, and step 2 in four states
   on a phone (Getting ready, start list, pre-filled start with the end list, tile), the last two on a 320 dp canvas and the tile
   on a tablet canvas. Each preview is recorded light, dark and light at 200% text. The 320 dp and tablet previews live in
-  `intro/v2/narrow` and `intro/v2/wide`, each recorded by its own snapshot class, and are skipped by the phone class by name.
+  `intro/narrow` and `intro/wide`, each recorded by its own snapshot class, and are skipped by the phone class by name.
   The step 2 previews are recorded once, at the end of the Intro work.
 - **UI tests, built.** The shell (the button's words and disabled states, the dots reading Step 1 of 2 and Step 2 of 2, the back
   button, system back on both steps), step 1 (every card state, the answers, the Add row, one card height from the skeleton to the

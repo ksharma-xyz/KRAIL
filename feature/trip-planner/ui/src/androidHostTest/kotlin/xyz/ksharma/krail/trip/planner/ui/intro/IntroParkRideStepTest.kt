@@ -1,9 +1,10 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -16,15 +17,15 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
-import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
-import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Step 1 on a phone: the question, the two answers, and every state of the card under them.
+ * The Park & Ride screen on a phone: the headline, every state of the card, and the bar that holds the
+ * answers.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -52,7 +53,7 @@ class IntroParkRideStepTest {
                     IntroFlowScreen(
                         state = shown.value,
                         suggestedStops = DEFAULT_SUGGESTED_STOPS,
-                        readiness = StopsReadiness.Ready(stopCount = 100),
+                        readiness = PreviewReady,
                         onEvent = { events += it },
                     )
                 }
@@ -64,13 +65,20 @@ class IntroParkRideStepTest {
     private fun slotHeight() = composeRule.onNodeWithTag(INTRO_CARD_SLOT_TAG).getUnclippedBoundsInRoot().height
 
     @Test
-    fun `asking shows the question and both answers and no card`() {
+    fun `asking shows the headline and both answers in the bar and no card`() {
         show(PreviewAskState)
 
-        composeRule.onNodeWithText(PARK_RIDE_QUESTION).assertIsDisplayed()
+        composeRule.onNodeWithText(PARK_RIDE_HEADING).assertIsDisplayed()
         composeRule.onNodeWithText(PARK_RIDE_YES).assertIsDisplayed()
         composeRule.onNodeWithText(PARK_RIDE_NO).assertIsDisplayed()
-        composeRule.onNodeWithText(ADD_TO_HOME_TEXT).assertDoesNotExist()
+        composeRule.onNodeWithText(PARK_RIDE_ADD).assertDoesNotExist()
+    }
+
+    @Test
+    fun `the answers are not in the screen, only in the bar, so the screen holds no button of its own`() {
+        show(PreviewAskState)
+
+        composeRule.onAllNodes(hasClickAction()).assertCountEquals(2)
     }
 
     @Test
@@ -92,38 +100,19 @@ class IntroParkRideStepTest {
     }
 
     @Test
-    fun `the answer the rider gave is the one shown as selected`() {
-        show(PreviewLocatingState)
-        composeRule.onNodeWithText(PARK_RIDE_YES).assertIsSelected()
-
-        show(PreviewAskState.copy(parkRideAnswer = ParkRideAnswer.NO))
-        composeRule.onNodeWithText(PARK_RIDE_NO).assertIsSelected()
-    }
-
-    @Test
-    fun `locating shows a card with no names, no numbers and no row`() {
+    fun `locating shows a card with no names and no numbers`() {
         show(PreviewLocatingState)
 
         composeRule.onNodeWithTag(INTRO_CARD_SLOT_TAG).assertIsDisplayed()
-        composeRule.onNodeWithText(ADD_TO_HOME_TEXT).assertDoesNotExist()
         composeRule.onNodeWithText("Bella Vista").assertDoesNotExist()
         composeRule.onNodeWithText("spots available").assertDoesNotExist()
     }
 
     @Test
-    fun `no station near shows one plain line and no card`() {
-        show(PreviewNoStationNearState)
-
-        composeRule.onNodeWithText(NO_STATION_NEAR_TEXT).assertIsDisplayed()
-        composeRule.onNodeWithText(ADD_TO_HOME_TEXT).assertDoesNotExist()
-    }
-
-    @Test
-    fun `a card still loading shows the car park name and the row but no numbers`() {
+    fun `a card still loading shows the car park name but no numbers`() {
         show(PreviewCardLoadingState)
 
         composeRule.onNodeWithText("Bella Vista").assertIsDisplayed()
-        composeRule.onNodeWithText(ADD_TO_HOME_TEXT).assertIsDisplayed()
         composeRule.onNodeWithText("spots available").assertDoesNotExist()
         composeRule.onNodeWithText("full").assertDoesNotExist()
     }
@@ -141,46 +130,56 @@ class IntroParkRideStepTest {
     }
 
     @Test
-    fun `an unavailable card shows the name and Add with no numbers`() {
+    fun `an unavailable card shows the name with no numbers`() {
         show(PreviewCardUnavailableState)
 
         composeRule.onNodeWithText("Bella Vista").assertIsDisplayed()
-        composeRule.onNodeWithText(ADD_TO_HOME_TEXT).assertIsDisplayed()
         composeRule.onNodeWithText("spots available").assertDoesNotExist()
     }
 
     @Test
-    fun `an added card is the same card with the row reading Added to home`() {
+    fun `an added card is the same card, and the bar still reads Not now and Add to home`() {
         show(PreviewAddedState)
 
         composeRule.onNodeWithText("120").assertIsDisplayed()
-        composeRule.onNodeWithText(ADDED_TO_HOME_TEXT).assertIsDisplayed()
-        composeRule.onNodeWithText(ADD_TO_HOME_TEXT).assertDoesNotExist()
+        composeRule.onNodeWithText(PARK_RIDE_ADD).assertIsDisplayed()
+        composeRule.onNodeWithText(PARK_RIDE_NOT_NOW).assertIsDisplayed()
     }
 
     @Test
-    fun `tapping the Add to home row toggles it once`() {
+    fun `the card has no action of its own, so tapping it sends nothing`() {
         show(PreviewCardContentState)
 
-        composeRule.onNodeWithText(ADD_TO_HOME_TEXT).performClick()
+        composeRule.onNodeWithText("Bella Vista").performClick()
 
-        assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.ToggleParkRide), events)
+        assertEquals<List<IntroUiEvent>>(emptyList(), events)
     }
 
     @Test
-    fun `tapping Added to home toggles it back`() {
-        show(PreviewAddedState)
+    fun `the bar keeps its place and size from locating to the card with numbers`() {
+        val bars = listOf(
+            "locating" to PreviewLocatingState,
+            "loading" to PreviewCardLoadingState,
+            "content" to PreviewCardContentState,
+        ).map { (name, state) ->
+            show(state)
+            name to composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).getUnclippedBoundsInRoot()
+        }
 
-        composeRule.onNodeWithText(ADDED_TO_HOME_TEXT).performClick()
-
-        assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.ToggleParkRide), events)
+        val first = bars.first().second
+        bars.forEach { (name, bounds) ->
+            assertTrue(
+                kotlin.math.abs(bounds.top.value - first.top.value) < HEIGHT_TOLERANCE_DP &&
+                    kotlin.math.abs(bounds.height.value - first.height.value) < HEIGHT_TOLERANCE_DP,
+                "the bar moves or changes height at $name: $bars",
+            )
+        }
     }
 
     @Test
     fun `the card keeps one height from the skeleton to the numbers and on to added`() {
         val heights = listOf(
             "locating" to PreviewLocatingState,
-            "no station near" to PreviewNoStationNearState,
             "loading" to PreviewCardLoadingState,
             "content" to PreviewCardContentState,
             "unavailable" to PreviewCardUnavailableState,

@@ -246,13 +246,14 @@ class IntroFirstTripStepTest {
     }
 
     @Test
-    fun `stops still loading shows the suggestions and a disabled Getting ready`() {
+    fun `stops still loading shows the suggestions and a disabled save with no label of its own`() {
         readiness.value = StopsReadiness.Loading
         show(PreviewTripNothingChosen)
 
         DEFAULT_SUGGESTED_STOPS.start.forEach { pick(IntroStopRole.START, it.name).assertIsDisplayed() }
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertIsNotEnabled()
-        composeRule.onNodeWithText("Getting ready").assertIsDisplayed()
+        composeRule.onNodeWithText(TRIP_SAVE).assertIsDisplayed()
+        composeRule.onNodeWithText("Getting ready").assertDoesNotExist()
     }
 
     @Test
@@ -261,7 +262,8 @@ class IntroFirstTripStepTest {
         show(PreviewTripNothingChosen)
 
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertIsEnabled()
-        composeRule.onNodeWithText("Skip for now").assertIsDisplayed()
+        composeRule.onNodeWithText(TRIP_SAVE).assertIsDisplayed()
+        composeRule.onNodeWithText(TRIP_NOT_NOW).assertIsDisplayed()
         DEFAULT_SUGGESTED_STOPS.start.forEach { pick(IntroStopRole.START, it.name).assertIsDisplayed() }
     }
 }

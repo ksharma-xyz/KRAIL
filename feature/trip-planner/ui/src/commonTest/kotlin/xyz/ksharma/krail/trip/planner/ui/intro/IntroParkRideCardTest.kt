@@ -42,32 +42,22 @@ class IntroParkRideCardTest {
     }
 
     @Test
-    fun `no station near gives its own slot`() {
+    fun `no station near draws nothing, because that answer leaves nothing to decide and the screen moves on`() {
         assertEquals(
-            IntroCardSlot.NoStationNear,
+            IntroCardSlot.Empty,
             introCardSlot(IntroState(parkRideCard = ParkRideCardPhase.NoStationNear)),
         )
     }
 
     @Test
-    fun `a card is not added until the rider has added it`() {
-        val slot = introCardSlot(
-            IntroState(parkRideCard = card(bellaVistaReading, availability = ParkRideAvailabilityState.Content)),
-        )
-
-        assertFalse(assertIs<IntroCardSlot.Station>(slot).added)
-    }
-
-    @Test
-    fun `added is the same card with addedParkRide set and not a phase of its own`() {
+    fun `a card is the same card whether or not it was added, because the bar and not the card carries the action`() {
         val phase = card(bellaVistaReading, availability = ParkRideAvailabilityState.Content)
         val plain = assertIs<IntroCardSlot.Station>(introCardSlot(IntroState(parkRideCard = phase)))
         val added = assertIs<IntroCardSlot.Station>(
             introCardSlot(IntroState(parkRideCard = phase, addedParkRide = true)),
         )
 
-        assertEquals(plain.card, added.card)
-        assertEquals(true, added.added)
+        assertEquals(plain, added)
     }
 
     @Test
@@ -132,29 +122,27 @@ class IntroParkRideCardTest {
     }
 
     @Test
-    fun `the row says Add to home until it is added and then Added to home`() {
-        assertEquals("Add to home", addToHomeText(added = false))
-        assertEquals("Added to home", addToHomeText(added = true))
-    }
-
-    @Test
     fun `the words the rider reads are the agreed ones`() {
-        assertEquals("Driving to the station?", PARK_RIDE_QUESTION)
+        assertEquals("Driving to the station", PARK_RIDE_HEADING)
         assertEquals("Yes, show me free spots", PARK_RIDE_YES)
         assertEquals("No thanks", PARK_RIDE_NO)
-        assertEquals("No car parks near you", NO_STATION_NEAR_TEXT)
+        assertEquals("Add to home", PARK_RIDE_ADD)
+        assertEquals("Not now", PARK_RIDE_NOT_NOW)
     }
 
     @Test
-    fun `no rider facing string has a colon, an em dash, an arrow or a middle dot`() {
-        val banned = listOf(':', Char(EM_DASH), Char(RIGHT_ARROW), Char(LEFT_ARROW), Char(MIDDLE_DOT))
+    fun `no rider facing string has a colon, a question mark, an em dash, an arrow or a middle dot`() {
+        val banned = listOf(':', '?', '!', Char(EM_DASH), Char(RIGHT_ARROW), Char(LEFT_ARROW), Char(MIDDLE_DOT))
         val strings = listOf(
-            PARK_RIDE_QUESTION,
+            PARK_RIDE_HEADING,
             PARK_RIDE_YES,
+            PARK_RIDE_YES_COMPACT,
             PARK_RIDE_NO,
-            NO_STATION_NEAR_TEXT,
-            ADD_TO_HOME_TEXT,
-            ADDED_TO_HOME_TEXT,
+            PARK_RIDE_NO_COMPACT,
+            PARK_RIDE_ADD,
+            PARK_RIDE_NOT_NOW,
+            TRIP_SAVE,
+            TRIP_NOT_NOW,
         )
 
         strings.forEach { text ->

@@ -104,7 +104,7 @@ class IntroEntryTest {
     fun `the entry opens on the Park & Ride question`() {
         launch()
 
-        composeRule.onNodeWithText(PARK_RIDE_QUESTION).assertIsDisplayed()
+        composeRule.onNodeWithText(PARK_RIDE_HEADING).assertIsDisplayed()
     }
 
     @Test
@@ -157,7 +157,7 @@ class IntroEntryTest {
         comeBack()
 
         composeRule.onNodeWithText(FIRST_TRIP_HEADING).assertIsDisplayed()
-        composeRule.onNodeWithText(PARK_RIDE_QUESTION).assertDoesNotExist()
+        composeRule.onNodeWithText(PARK_RIDE_HEADING).assertDoesNotExist()
     }
 
     @Test
@@ -170,7 +170,7 @@ class IntroEntryTest {
         composeRule.runOnIdle { holder?.removeState(VISIT) }
         comeBack()
 
-        composeRule.onNodeWithText(PARK_RIDE_QUESTION).assertIsDisplayed()
+        composeRule.onNodeWithText(PARK_RIDE_HEADING).assertIsDisplayed()
         composeRule.onNodeWithText(FIRST_TRIP_HEADING).assertDoesNotExist()
     }
 

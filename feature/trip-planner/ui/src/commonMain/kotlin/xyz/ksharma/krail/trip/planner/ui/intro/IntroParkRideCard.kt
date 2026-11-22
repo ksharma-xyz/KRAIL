@@ -1,17 +1,13 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableSet
-import xyz.ksharma.krail.park.ride.ui.components.ParkRideFacilityRow
-import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
@@ -26,14 +22,13 @@ private const val NO_READING = -1
 // Holds a line open where no text is yet, so the card has the height it will have with text.
 private const val BLANK = "\u00A0"
 
-internal const val NO_STATION_NEAR_TEXT = "No car parks near you"
-internal const val ADD_TO_HOME_TEXT = "Add to home"
-internal const val ADDED_TO_HOME_TEXT = "Added to home"
-
 /** Tags the slot the card states share, so a test can read the height they all keep. */
 internal const val INTRO_CARD_SLOT_TAG = "intro.parkride.slot"
 
-/** What the space below the answers holds. One of these for every [ParkRideCardPhase]. */
+/**
+ * What the middle of the Park & Ride screen holds. One of these for every [ParkRideCardPhase]. The card
+ * has no action of its own: adding the station is the right button of the decision bar.
+ */
 internal sealed interface IntroCardSlot {
     /** Nothing, because the question is not answered or the answer gave no card. */
     data object Empty : IntroCardSlot
@@ -41,22 +36,19 @@ internal sealed interface IntroCardSlot {
     /** A card with no text yet, while the location and the stops are awaited. */
     data object Skeleton : IntroCardSlot
 
-    /** One plain line, in the room the card would have taken. */
-    data object NoStationNear : IntroCardSlot
-
-    /** The nearest station, with the numbers when it has them, and the Add to home row. */
-    data class Station(val card: ParkRideUiState, val added: Boolean) : IntroCardSlot
+    /** The nearest station, with the numbers when it has them. */
+    data class Station(val card: ParkRideUiState) : IntroCardSlot
 }
 
-/** Added is the same card with another row, so it is [IntroState.addedParkRide] and not a phase. */
+/**
+ * No station near is [IntroCardSlot.Empty]: that answer leaves nothing to decide, so the screen is
+ * passed over and says nothing. Added is the same card, because the bar and not the card carries the action.
+ */
 internal fun introCardSlot(state: IntroState): IntroCardSlot = when (val phase = state.parkRideCard) {
-    ParkRideCardPhase.None -> IntroCardSlot.Empty
+    ParkRideCardPhase.None, ParkRideCardPhase.NoStationNear -> IntroCardSlot.Empty
     is ParkRideCardPhase.Locating -> IntroCardSlot.Skeleton
-    ParkRideCardPhase.NoStationNear -> IntroCardSlot.NoStationNear
-    is ParkRideCardPhase.Card -> IntroCardSlot.Station(phase.station.toParkRideUiState(), state.addedParkRide)
+    is ParkRideCardPhase.Card -> IntroCardSlot.Station(phase.station.toParkRideUiState())
 }
-
-internal fun addToHomeText(added: Boolean): String = if (added) ADDED_TO_HOME_TEXT else ADD_TO_HOME_TEXT
 
 /**
  * The station as the shared Park & Ride card draws it. A car park with no reading carries the
@@ -109,62 +101,30 @@ private val SkeletonCard = ParkRideUiState(
 )
 
 /**
- * The room under the answers. Every state that has a card keeps the same lines, a name, the
- * numbers and the row, so the card does not change height when the numbers arrive or fail.
+ * The card in the middle of the screen. Every state that has a card keeps the same lines, a name and the
+ * numbers, so the card does not change height when the numbers arrive or fail.
  */
 @Composable
-internal fun IntroParkRideCardSlot(slot: IntroCardSlot, onToggle: () -> Unit, modifier: Modifier = Modifier) {
+internal fun IntroParkRideCardSlot(slot: IntroCardSlot, modifier: Modifier = Modifier) {
     Box(modifier = modifier.testTag(INTRO_CARD_SLOT_TAG)) {
         when (slot) {
             IntroCardSlot.Empty -> Unit
-            // A card with no text, and no row until there is a station to add.
-            IntroCardSlot.Skeleton -> IntroParkRideCard(SkeletonCard, added = false, standIn = true, showRow = false)
-            IntroCardSlot.NoStationNear -> {
-                // The same card, drawn invisibly, holds the room, so the line takes the card's height.
-                IntroParkRideCard(SkeletonCard, added = false, standIn = true, showCard = false, showRow = false)
-                Text(
-                    text = NO_STATION_NEAR_TEXT,
-                    style = KrailTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding),
-                )
-            }
-            is IntroCardSlot.Station -> IntroParkRideCard(slot.card, slot.added, onToggle = onToggle)
+            IntroCardSlot.Skeleton -> IntroParkRideCard(SkeletonCard, standIn = true)
+            is IntroCardSlot.Station -> IntroParkRideCard(slot.card)
         }
     }
 }
 
-/**
- * The shared card and the shared Add row. A [standIn] is a picture of a card, so it names nothing
- * and does nothing, and what it does not [showCard] or [showRow] still takes its room.
- */
+/** The shared card. A [standIn] is a picture of a card, so it names nothing and does nothing. */
 @Composable
-private fun IntroParkRideCard(
-    card: ParkRideUiState,
-    added: Boolean,
-    modifier: Modifier = Modifier,
-    onToggle: () -> Unit = {},
-    standIn: Boolean = false,
-    showCard: Boolean = true,
-    showRow: Boolean = true,
-) {
-    val dim = KrailTheme.dimensions
-    Column(modifier = if (standIn) modifier.clearAndSetSemantics {} else modifier) {
-        ParkRideCard(
-            parkRideUiState = card,
-            isExpanded = true,
-            keepReadingSpace = true,
-            onClick = onToggle,
-            modifier = Modifier
-                .padding(horizontal = dim.pageHorizontalPadding)
-                .alpha(if (showCard) 1f else 0f),
-        )
-        ParkRideFacilityRow(
-            facilityName = addToHomeText(added),
-            added = added,
-            onClick = onToggle,
-            icon = {},
-            showDivider = false,
-            modifier = Modifier.alpha(if (showRow) 1f else 0f),
-        )
-    }
+private fun IntroParkRideCard(card: ParkRideUiState, modifier: Modifier = Modifier, standIn: Boolean = false) {
+    ParkRideCard(
+        parkRideUiState = card,
+        isExpanded = true,
+        keepReadingSpace = true,
+        onClick = null,
+        modifier = modifier
+            .padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding)
+            .then(if (standIn) Modifier.clearAndSetSemantics {} else Modifier),
+    )
 }

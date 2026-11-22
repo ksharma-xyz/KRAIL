@@ -28,10 +28,8 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.trip.planner.ui.components.SavedTripCard
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopDisplay
-
-// A train sticker, written as the escapes of its two UTF-16 units.
-private const val FIRST_TRIP_EMOJI = "\uD83D\uDE86"
 
 /**
  * Step 2 as the slot [IntroFlowScreen] takes, with [onSearchStop] filled in. One place makes it, so
@@ -74,7 +72,7 @@ internal fun IntroFirstTripStepContent(
         verticalArrangement = Arrangement.spacedBy(dim.spacingXL),
     ) {
         IntroHeading(
-            emoji = FIRST_TRIP_EMOJI,
+            emoji = introEmojiFor(IntroStep.DESTINATION),
             text = FIRST_TRIP_HEADING,
             modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
         )

@@ -7,12 +7,12 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
+import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
 private const val SUGGESTION_FLAG_WRITE = "pref:KEY_PARK_RIDE_SUGGESTION_SHOWN=true"
-private const val SEEN_INTRO_WRITE = "pref:KEY_HAS_SEEN_INTRO=true"
 
 class IntroFlowViewModelTest {
 
@@ -65,7 +65,7 @@ class IntroFlowViewModelTest {
     fun `back returns from the trip step to the question and never goes before it`() = krailRunTest {
         val rig = IntroRig(this)
 
-        rig.send(IntroUiEvent.Next)
+        rig.send(IntroUiEvent.AnswerParkRide(yes = false))
         assertEquals(IntroStep.DESTINATION, rig.state.step)
         rig.send(IntroUiEvent.Back)
         assertEquals(IntroStep.PARK_RIDE, rig.state.step)
@@ -93,20 +93,23 @@ class IntroFlowViewModelTest {
     }
 
     @Test
-    fun `next with the question unanswered moves on, leaves it unanswered and marks the suggestion once`() =
-        krailRunTest {
-            val rig = IntroRig(this)
+    fun `there is no way past the question without answering it`() = krailRunTest {
+        val rig = IntroRig(this)
 
-            rig.send(IntroUiEvent.Next, IntroUiEvent.Next)
+        rig.send(
+            IntroUiEvent.Back,
+            IntroUiEvent.FinishPressed,
+            IntroUiEvent.FinishWithoutTrip,
+            IntroUiEvent.AddParkRideAndContinue,
+            IntroUiEvent.DeclineParkRide,
+        )
 
-            assertEquals(IntroStep.DESTINATION, rig.state.step)
-            assertEquals(ParkRideAnswer.ASK, rig.state.parkRideAnswer)
-            assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE))
-            assertEquals(0, rig.log.count(SEEN_INTRO_WRITE))
-        }
+        assertEquals(IntroState(), rig.state)
+        assertEquals(emptyList(), rig.log.entries)
+    }
 
     @Test
-    fun `answering no and then going back and pressing next marks the suggestion only once`() =
+    fun `answering no and then going back and answering no again marks the suggestion only once`() =
         krailRunTest {
             val rig = IntroRig(this)
 
@@ -115,14 +118,14 @@ class IntroFlowViewModelTest {
             assertEquals(ParkRideAnswer.NO, rig.state.parkRideAnswer)
             assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE))
 
-            rig.send(IntroUiEvent.Back, IntroUiEvent.Next)
+            rig.send(IntroUiEvent.Back, IntroUiEvent.AnswerParkRide(yes = false))
 
             assertEquals(IntroStep.DESTINATION, rig.state.step)
             assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE))
         }
 
     @Test
-    fun `answering yes keeps the question step and writes nothing until a result arrives, and next still moves on`() =
+    fun `answering yes keeps the question step and writes nothing until a result arrives, and not now gives up`() =
         krailRunTest {
             val rig = IntroRig(this)
 
@@ -132,9 +135,10 @@ class IntroFlowViewModelTest {
             assertEquals(IntroStep.PARK_RIDE, rig.state.step)
             assertEquals(0, rig.log.count(SUGGESTION_FLAG_WRITE))
 
-            rig.send(IntroUiEvent.Next)
+            rig.send(IntroUiEvent.DeclineParkRide)
 
             assertEquals(ParkRideAnswer.YES, rig.state.parkRideAnswer)
+            assertEquals(ParkRideCardPhase.None, rig.state.parkRideCard, "the look is given up")
             assertEquals(IntroStep.DESTINATION, rig.state.step)
             assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE))
         }
@@ -143,7 +147,7 @@ class IntroFlowViewModelTest {
     fun `add to home with no card on screen changes nothing`() = krailRunTest {
         val rig = IntroRig(this)
 
-        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.AddParkRideAndContinue)
 
         assertEquals(IntroState(), rig.state)
         assertFalse(rig.state.addedParkRide)

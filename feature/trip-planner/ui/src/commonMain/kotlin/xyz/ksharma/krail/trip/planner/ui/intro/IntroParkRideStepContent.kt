@@ -17,58 +17,33 @@ import xyz.ksharma.krail.taj.components.OutlinedButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
-import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 
-internal const val PARK_RIDE_QUESTION = "Driving to the station?"
-internal const val PARK_RIDE_YES = "Yes, show me free spots"
-internal const val PARK_RIDE_NO = "No thanks"
-private const val PARK_RIDE_EMOJI = "\uD83D\uDE97"
+internal const val PARK_RIDE_HEADING = "Driving to the station"
 
 /**
- * Step 1: the question, the two answers one under the other, and what the answer found. The
- * answers are whole buttons that stack, so nothing is squeezed at a large font or a narrow window,
- * and the card below keeps one height from the moment it is asked for.
+ * The Park & Ride screen: the headline, and under it the card that the answer found. The answers
+ * and the card's own action are the decision bar at the bottom of the screen, so nothing here is a
+ * button, and the card keeps one height from the moment it is asked for.
  */
 @Composable
-internal fun IntroParkRideStepContent(
-    state: IntroState,
-    onEvent: (IntroUiEvent) -> Unit,
-    modifier: Modifier = Modifier,
-) {
+internal fun IntroParkRideStepContent(state: IntroState, modifier: Modifier = Modifier) {
     val dim = KrailTheme.dimensions
     Column(
         modifier = modifier.fillMaxWidth().padding(bottom = dim.spacingXL),
         verticalArrangement = Arrangement.spacedBy(dim.spacingXL),
     ) {
         IntroHeading(
-            emoji = PARK_RIDE_EMOJI,
-            text = PARK_RIDE_QUESTION,
+            emoji = introEmojiFor(IntroStep.PARK_RIDE),
+            text = PARK_RIDE_HEADING,
             modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
         )
-        Column(
-            modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
-            verticalArrangement = Arrangement.spacedBy(dim.spacingL),
-        ) {
-            IntroAnswerButton(
-                text = PARK_RIDE_YES,
-                selected = state.parkRideAnswer == ParkRideAnswer.YES,
-                onClick = { onEvent(IntroUiEvent.AnswerParkRide(yes = true)) },
-            )
-            IntroAnswerButton(
-                text = PARK_RIDE_NO,
-                selected = state.parkRideAnswer == ParkRideAnswer.NO,
-                onClick = { onEvent(IntroUiEvent.AnswerParkRide(yes = false)) },
-            )
-        }
-        IntroParkRideCardSlot(
-            slot = introCardSlot(state),
-            onToggle = { onEvent(IntroUiEvent.ToggleParkRide) },
-        )
+        IntroParkRideCardSlot(slot = introCardSlot(state))
     }
 }
 
 /**
- * An answer is a neutral button, not one in the theme colour, which belongs to the bottom button
+ * A suggestion is a neutral button, not one in the theme colour, which belongs to the bottom bar
  * alone. The chosen one is filled, and every taj button colours its own label. Step 2 uses the same
  * button for its suggestions, with [description] for a screen reader when the words on screen are
  * only a stop name.

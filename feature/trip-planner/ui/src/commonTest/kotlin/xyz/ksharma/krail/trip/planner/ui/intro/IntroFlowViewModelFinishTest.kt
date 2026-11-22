@@ -61,45 +61,53 @@ class IntroFlowViewModelFinishTest {
     }
 
     @Test
-    fun `skip for now writes no trip but still marks both flags once and leaves`() = krailRunTest {
-        val rig = rigAt(nothingPicked)
+    fun `not now writes no trip even when a pair is picked, marks both flags once and leaves`() = krailRunTest {
+        listOf(nothingPicked, tripPicked).forEach { picks ->
+            val rig = rigAt(picks)
 
-        rig.withEffects {
-            rig.send(IntroUiEvent.FinishPressed)
+            rig.withEffects {
+                rig.send(IntroUiEvent.FinishWithoutTrip)
 
-            assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+                assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+            }
+
+            assertTrue(rig.sandook.selectAllTrips().isEmpty(), "picks $picks")
+            assertEquals(1, rig.log.count(SEEN_INTRO))
+            assertEquals(1, rig.log.count(SUGGESTION_SHOWN))
+            assertFalse(rig.state.saved)
         }
-
-        assertTrue(rig.sandook.selectAllTrips().isEmpty())
-        assertEquals(1, rig.log.count(SEEN_INTRO))
-        assertEquals(1, rig.log.count(SUGGESTION_SHOWN))
-        assertFalse(rig.state.saved)
     }
 
+    // Temporary until the confirm screen: the positive answer with no complete pair saves nothing and still ends the Intro.
     @Test
-    fun `a half pick disables the button so pressing it finishes nothing`() = krailRunTest {
+    fun `a yes with no complete pair saves nothing and still leaves`() = krailRunTest {
         val startOnly = nothingPicked.copy(startStopId = TALLAWONG.stopId, startName = TALLAWONG.name)
         val endOnly = nothingPicked.copy(endStopId = CENTRAL.stopId, endName = CENTRAL.name)
 
-        listOf(startOnly, endOnly).forEach { halfPicked ->
-            val rig = rigAt(halfPicked)
+        listOf(nothingPicked, startOnly, endOnly).forEach { picks ->
+            val rig = rigAt(picks)
 
-            rig.send(IntroUiEvent.FinishPressed)
+            rig.withEffects {
+                rig.send(IntroUiEvent.FinishPressed)
 
-            assertEquals(emptyList(), rig.log.entries, "picks $halfPicked")
-            assertEquals(halfPicked, rig.state)
+                assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+            }
+
+            assertTrue(rig.sandook.selectAllTrips().isEmpty(), "picks $picks")
+            assertEquals(1, rig.log.count(SEEN_INTRO), "picks $picks")
+            assertNull(rig.analytics.getTrackedEvent("save_trip_click"), "picks $picks")
         }
     }
 
     @Test
-    fun `a pick made while the finish waits turns the finish into a half pick and abandons it`() = krailRunTest {
+    fun `a pair completed while the finish waits is the pair that is saved`() = krailRunTest {
         val rig = rigAt(nothingPicked, readiness = StopsReadiness.Loading)
 
-        rig.send(IntroUiEvent.FinishPressed, IntroUiEvent.PickStart(TALLAWONG))
+        rig.send(IntroUiEvent.FinishPressed, IntroUiEvent.PickStart(TALLAWONG), IntroUiEvent.PickEnd(CENTRAL))
         rig.readiness.emit(StopsReadiness.Ready(stopCount = 100))
         rig.send()
 
-        assertEquals(listOf("awaitReady"), rig.log.entries)
+        assertEquals(1, rig.log.count(SAVED_TRIP))
     }
 
     @Test
@@ -149,11 +157,11 @@ class IntroFlowViewModelFinishTest {
         }
 
     @Test
-    fun `skipping while the stops failed writes no trip and still leaves`() = krailRunTest {
+    fun `not now while the stops failed writes no trip and still leaves`() = krailRunTest {
         val rig = rigAt(nothingPicked, readiness = StopsReadiness.Failed(attempt = 4, reason = "disk"))
 
         rig.withEffects {
-            rig.send(IntroUiEvent.FinishPressed)
+            rig.send(IntroUiEvent.FinishWithoutTrip)
 
             assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
         }
@@ -263,10 +271,10 @@ class IntroFlowViewModelFinishTest {
     }
 
     @Test
-    fun `a skip with the question never answered reports skipped and no save click`() = krailRunTest {
+    fun `a not now with the question never answered reports skipped and no save click`() = krailRunTest {
         val rig = rigAt(nothingPicked.copy(parkRideAnswer = ParkRideAnswer.ASK))
 
-        rig.send(IntroUiEvent.FinishPressed)
+        rig.send(IntroUiEvent.FinishWithoutTrip)
 
         assertEquals(
             mapOf(
@@ -291,7 +299,9 @@ class IntroFlowViewModelFinishTest {
         rig.send(
             IntroUiEvent.AnswerParkRide(yes = true),
             IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, FOUR_POINT_SIX_KM_FROM_BELLA_VISTA),
-            IntroUiEvent.Next,
+        )
+        rig.send(
+            IntroUiEvent.DeclineParkRide,
             IntroUiEvent.PickStart(TALLAWONG),
             IntroUiEvent.StopPickedFromSearch(isStart = false, stopId = CENTRAL.stopId, stopName = CENTRAL.name),
             IntroUiEvent.FinishPressed,
@@ -348,13 +358,13 @@ class IntroFlowViewModelFinishTest {
         }
 
     @Test
-    fun `finish pressed on the question step is next and writes no trip`() = krailRunTest {
+    fun `an answer to the last screens on a screen that is not one of them does nothing`() = krailRunTest {
         val rig = IntroRig(this)
 
-        rig.send(IntroUiEvent.FinishPressed)
+        rig.send(IntroUiEvent.FinishPressed, IntroUiEvent.FinishWithoutTrip)
 
-        assertEquals(IntroStep.DESTINATION, rig.state.step)
-        assertEquals(listOf(SUGGESTION_SHOWN), rig.log.entries)
+        assertEquals(IntroState(), rig.state)
+        assertEquals(emptyList(), rig.log.entries)
     }
 
     @Test

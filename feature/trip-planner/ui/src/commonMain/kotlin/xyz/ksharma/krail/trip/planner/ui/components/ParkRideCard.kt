@@ -41,22 +41,23 @@ private val ParkRideCardVerticalPadding = 20.dp // no token equivalent
  * below zero) holds the lines its numbers will take, so the card keeps one height whether the
  * numbers are loading, shown or missing. It is off for the home card, which shows Loading until a
  * reading exists.
+ *
+ * A null [onClick] draws a card that is not tappable, for a surface where the card only shows and the
+ * action is somewhere else, such as the Intro, whose bottom bar adds the station.
  */
 @Composable
 fun ParkRideCard(
     parkRideUiState: ParkRideUiState,
     isExpanded: Boolean,
     modifier: Modifier = Modifier,
-    onClick: () -> Unit = {},
+    onClick: (() -> Unit)? = {},
     keepReadingSpace: Boolean = false,
 ) {
     val dim = KrailTheme.dimensions
     Row(
         modifier = modifier.fillMaxWidth()
             .cardBackground()
-            .klickable {
-                onClick()
-            }
+            .then(if (onClick != null) Modifier.klickable { onClick() } else Modifier)
             .animateContentSize()
             .padding(
                 top = ParkRideCardVerticalPadding,

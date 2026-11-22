@@ -35,7 +35,7 @@ class IntroFlowViewModelParkRideStartTest {
         val rig = IntroRig(this)
         rig.showBellaVista()
 
-        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.AddParkRideAndContinue)
 
         assertEquals(BELLA_VISTA_STOP.stopId, rig.state.startStopId)
         assertEquals(BELLA_VISTA_STOP.name, rig.state.startName, "the stop's own name")
@@ -62,7 +62,7 @@ class IntroFlowViewModelParkRideStartTest {
             IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, LatLng(-33.7032, 151.0993)),
         )
 
-        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.AddParkRideAndContinue)
 
         assertEquals("207763", rig.state.startStopId, "207720 is not in the stops table")
         assertEquals("Hornsby Station", rig.state.startName)
@@ -73,7 +73,7 @@ class IntroFlowViewModelParkRideStartTest {
         val rig = IntroRig(this, stopNames = emptyMap())
         rig.showBellaVista()
 
-        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.AddParkRideAndContinue)
 
         assertTrue(rig.state.addedParkRide)
         assertEquals(1, rig.savedRows(UserAdded).size)
@@ -91,7 +91,7 @@ class IntroFlowViewModelParkRideStartTest {
             rig.send(pick)
             rig.showBellaVista()
 
-            rig.send(IntroUiEvent.ToggleParkRide)
+            rig.send(IntroUiEvent.AddParkRideAndContinue)
 
             assertTrue(rig.state.addedParkRide, "$pick")
             assertEquals(CENTRAL.stopId, rig.state.startStopId, "$pick")
@@ -106,7 +106,7 @@ class IntroFlowViewModelParkRideStartTest {
         rig.send(IntroUiEvent.PickEnd(BELLA_VISTA_STOP))
         rig.showBellaVista()
 
-        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.AddParkRideAndContinue)
 
         assertTrue(rig.state.addedParkRide)
         assertNull(rig.state.startStopId, "a trip from a stop to itself is never made for the rider")
@@ -118,7 +118,7 @@ class IntroFlowViewModelParkRideStartTest {
         val rig = IntroRig(this)
         rig.showBellaVista()
 
-        rig.send(IntroUiEvent.Next)
+        rig.send(IntroUiEvent.DeclineParkRide)
 
         assertEquals(IntroStep.DESTINATION, rig.state.step)
         assertNull(rig.state.startStopId)
@@ -127,18 +127,18 @@ class IntroFlowViewModelParkRideStartTest {
     }
 
     @Test
-    fun `toggling again removes the user added rows only and clears the start the intro filled in`() = krailRunTest {
+    fun `coming back and saying not now removes the user added rows only and clears the start the intro filled in`() = krailRunTest {
         val rig = IntroRig(this)
         rig.parkRideSandook.insertOrReplaceSavedParkRides(
             setOf(SavedParkRide("2153478", "31", "Bella Vista Station", "Bella Vista", SavedTrips.value)),
             SavedTrips,
         )
         rig.showBellaVista()
-        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.AddParkRideAndContinue)
         assertEquals(1, rig.savedRows(UserAdded).size)
         assertEquals(BELLA_VISTA_STOP.stopId, rig.state.startStopId)
 
-        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.Back, IntroUiEvent.DeclineParkRide)
 
         assertFalse(rig.state.addedParkRide)
         assertTrue(rig.savedRows(UserAdded).isEmpty())
@@ -154,11 +154,11 @@ class IntroFlowViewModelParkRideStartTest {
     fun `removal keeps a start the rider picked after the pre-fill`() = krailRunTest {
         val rig = IntroRig(this)
         rig.showBellaVista()
-        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.AddParkRideAndContinue)
         assertTrue(rig.state.startFromParkRide, "the Intro filled it in first")
         rig.send(IntroUiEvent.PickStart(CENTRAL))
 
-        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.Back, IntroUiEvent.DeclineParkRide)
 
         assertFalse(rig.state.addedParkRide)
         assertEquals(CENTRAL.stopId, rig.state.startStopId)
@@ -168,10 +168,10 @@ class IntroFlowViewModelParkRideStartTest {
     fun `a rider who picks the same stop the pre-fill chose owns it, so removal keeps it`() = krailRunTest {
         val rig = IntroRig(this)
         rig.showBellaVista()
-        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.AddParkRideAndContinue)
         rig.send(IntroUiEvent.PickStart(BELLA_VISTA_STOP))
 
-        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.Back, IntroUiEvent.DeclineParkRide)
 
         assertEquals(BELLA_VISTA_STOP.stopId, rig.state.startStopId)
         assertFalse(rig.state.startFromParkRide)
@@ -182,9 +182,9 @@ class IntroFlowViewModelParkRideStartTest {
         val rig = IntroRig(this)
         rig.send(IntroUiEvent.PickStart(CENTRAL))
         rig.showBellaVista()
-        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.AddParkRideAndContinue)
 
-        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.Back, IntroUiEvent.DeclineParkRide)
 
         assertEquals(CENTRAL.stopId, rig.state.startStopId)
     }
@@ -193,11 +193,11 @@ class IntroFlowViewModelParkRideStartTest {
     fun `adding again after removing saves the rows and fills in the start again`() = krailRunTest {
         val rig = IntroRig(this)
         rig.showBellaVista()
-        rig.send(IntroUiEvent.ToggleParkRide)
-        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.AddParkRideAndContinue)
+        rig.send(IntroUiEvent.Back, IntroUiEvent.DeclineParkRide)
         assertNull(rig.state.startStopId)
 
-        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.Back, IntroUiEvent.AddParkRideAndContinue)
 
         assertTrue(rig.state.addedParkRide)
         assertEquals(1, rig.savedRows(UserAdded).size)
@@ -209,7 +209,7 @@ class IntroFlowViewModelParkRideStartTest {
         krailRunTest {
             val before = IntroRig(this)
             before.showBellaVista()
-            before.send(IntroUiEvent.ToggleParkRide)
+            before.send(IntroUiEvent.AddParkRideAndContinue)
 
             val after = IntroRig(this, handle = before.handle, parkRideSandook = before.parkRideSandook)
             after.settle()
@@ -218,7 +218,7 @@ class IntroFlowViewModelParkRideStartTest {
             assertTrue(after.state.addedParkRide)
             assertTrue(after.state.startFromParkRide)
 
-            after.send(IntroUiEvent.ToggleParkRide)
+            after.send(IntroUiEvent.Back, IntroUiEvent.DeclineParkRide)
 
             assertTrue(after.savedRows(UserAdded).isEmpty())
             assertNull(after.state.startStopId)
@@ -230,8 +230,8 @@ class IntroFlowViewModelParkRideStartTest {
             val rig = IntroRig(this)
             rig.showBellaVista()
 
-            rig.send(IntroUiEvent.ToggleParkRide)
-            rig.send(IntroUiEvent.Next, IntroUiEvent.PickEnd(CENTRAL))
+            rig.send(IntroUiEvent.AddParkRideAndContinue)
+            rig.send(IntroUiEvent.PickEnd(CENTRAL))
             rig.send(IntroUiEvent.FinishPressed)
 
             val outcome = rig.outcomeEvent().properties.orEmpty()
@@ -243,5 +243,23 @@ class IntroFlowViewModelParkRideStartTest {
             val trip = rig.sandook.selectAllTrips().single()
             assertEquals(listOf("2153478", "200060"), listOf(trip.fromStopId, trip.toStopId))
             assertEquals(1, rig.parkRideEvents().size, "the add is tracked once, and the finish adds nothing")
+        }
+
+    @Test
+    fun `a Park and Ride start is the origin, so the origin screen is passed over, and removing it brings it back`() =
+        krailRunTest {
+            val rig = IntroRig(this)
+            rig.showBellaVista()
+
+            rig.send(IntroUiEvent.AddParkRideAndContinue)
+
+            assertEquals(listOf(IntroStep.PARK_RIDE, IntroStep.DESTINATION, IntroStep.CONFIRM), rig.state.stepsInFlow())
+
+            rig.send(IntroUiEvent.Back, IntroUiEvent.DeclineParkRide)
+
+            assertEquals(
+                listOf(IntroStep.PARK_RIDE, IntroStep.DESTINATION, IntroStep.ORIGIN, IntroStep.CONFIRM),
+                rig.state.stepsInFlow(),
+            )
         }
 }

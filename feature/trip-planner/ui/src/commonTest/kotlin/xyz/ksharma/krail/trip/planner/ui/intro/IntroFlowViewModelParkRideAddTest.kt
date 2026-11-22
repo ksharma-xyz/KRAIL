@@ -13,6 +13,7 @@ import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSourc
 import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.UserAdded
 import xyz.ksharma.krail.sandook.db.SavedParkRide
 import xyz.ksharma.krail.trip.planner.ui.parkride.RealParkRideAvailabilityLoader
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
 import kotlin.test.Test
@@ -46,7 +47,7 @@ class IntroFlowViewModelParkRideAddTest {
         val rig = IntroRig(this)
         rig.showTallawong()
 
-        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.AddParkRideAndContinue)
 
         assertTrue(rig.state.addedParkRide)
         assertEquals(
@@ -65,7 +66,7 @@ class IntroFlowViewModelParkRideAddTest {
         val rig = IntroRig(this)
         rig.showTallawong()
 
-        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.AddParkRideAndContinue)
 
         val event = rig.parkRideEvents().single()
         assertEquals(
@@ -83,7 +84,7 @@ class IntroFlowViewModelParkRideAddTest {
         val rig = IntroRig(this)
         rig.showTallawong()
 
-        rig.send(IntroUiEvent.ToggleParkRide, IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.AddParkRideAndContinue, IntroUiEvent.AddParkRideAndContinue)
 
         assertTrue(rig.state.addedParkRide)
         assertEquals(3, rig.savedRows(UserAdded).size)
@@ -100,7 +101,7 @@ class IntroFlowViewModelParkRideAddTest {
             val before = shared.getByStopIds(listOf("2153478")).single()
             assertEquals("2153478", before.stopName, "the loader files a car park that is not saved under its stop id")
 
-            rig.send(IntroUiEvent.ToggleParkRide)
+            rig.send(IntroUiEvent.AddParkRideAndContinue)
 
             val after = shared.getByStopIds(listOf("2153478")).single()
             assertEquals("Bella Vista Station", after.stopName)
@@ -119,7 +120,7 @@ class IntroFlowViewModelParkRideAddTest {
         }
         rig.showBellaVista()
 
-        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.AddParkRideAndContinue)
 
         assertTrue(rig.state.addedParkRide, "Add never waits on the network")
         assertEquals(1, rig.savedRows(UserAdded).size)
@@ -136,7 +137,7 @@ class IntroFlowViewModelParkRideAddTest {
         val rig = IntroRig(this)
         rig.showBellaVista()
 
-        rig.send(IntroUiEvent.AnswerParkRide(yes = false), IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.AnswerParkRide(yes = false), IntroUiEvent.AddParkRideAndContinue)
 
         assertFalse(rig.state.addedParkRide)
         assertTrue(rig.savedRows(UserAdded).isEmpty())
@@ -148,9 +149,10 @@ class IntroFlowViewModelParkRideAddTest {
         val rig = IntroRig(this, parkRideSandook = SaveFailsParkRideSandook())
         rig.showBellaVista()
 
-        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.AddParkRideAndContinue)
 
         assertFalse(rig.state.addedParkRide, "nothing was saved, so the card is not Added")
+        assertEquals(IntroStep.PARK_RIDE, rig.state.step, "an add that did not happen does not move the rider on")
         assertTrue(rig.savedRows(UserAdded).isEmpty())
         assertTrue(rig.parkRideEvents().isEmpty())
     }
@@ -160,14 +162,14 @@ class IntroFlowViewModelParkRideAddTest {
         val rig = IntroRig(this, stations = listOf(BELLA_VISTA_STATION.copy(stopName = "")))
         rig.showBellaVista()
 
-        rig.send(IntroUiEvent.ToggleParkRide)
+        rig.send(IntroUiEvent.AddParkRideAndContinue)
 
         assertEquals(listOf("Bella Vista"), rig.savedRows(UserAdded).map { it.stopName })
     }
 
     @Test
     fun `the outcome reports the answer and the location result for every path that adds nothing`() = krailRunTest {
-        // Each path ends the Intro with a skip, so only the three Park & Ride params differ.
+        // Each path ends the Intro with the same answer, so only the three Park & Ride params differ.
         val paths = listOf(
             "granted and a station shown, not added" to listOf(
                 IntroUiEvent.AnswerParkRide(yes = true),
@@ -186,7 +188,6 @@ class IntroFlowViewModelParkRideAddTest {
                 IntroUiEvent.LocationResultReceived(LocationResult.UNAVAILABLE, null),
             ),
             "answered no" to listOf(IntroUiEvent.AnswerParkRide(yes = false)),
-            "never answered" to emptyList(),
         )
         val expected = mapOf(
             "granted and a station shown, not added" to Triple("yes", "granted", false),
@@ -194,14 +195,13 @@ class IntroFlowViewModelParkRideAddTest {
             "denied" to Triple("yes", "denied", false),
             "timed out" to Triple("yes", "unavailable", false),
             "answered no" to Triple("no", "not_asked", false),
-            "never answered" to Triple("skipped", "not_asked", false),
         )
 
         paths.forEach { (path, events) ->
             val rig = IntroRig(this)
 
             rig.send(*events.toTypedArray())
-            rig.send(IntroUiEvent.Next, IntroUiEvent.FinishPressed)
+            rig.send(IntroUiEvent.DeclineParkRide, IntroUiEvent.FinishPressed)
 
             val params = rig.outcomeEvent().properties.orEmpty()
             assertEquals(
@@ -210,5 +210,89 @@ class IntroFlowViewModelParkRideAddTest {
                 path,
             )
         }
+    }
+
+    @Test
+    fun `add to home also moves on to the next screen in the same step and marks the suggestion once`() =
+        krailRunTest {
+            val rig = IntroRig(this)
+            rig.showTallawong()
+
+            rig.send(IntroUiEvent.AddParkRideAndContinue)
+
+            assertEquals(IntroStep.DESTINATION, rig.state.step)
+            assertTrue(rig.state.addedParkRide)
+            assertEquals(1, rig.log.count("pref:KEY_PARK_RIDE_SUGGESTION_SHOWN=true"))
+        }
+
+    @Test
+    fun `add pressed again on a card that is already added moves on and adds nothing twice`() = krailRunTest {
+        val rig = IntroRig(this)
+        rig.showTallawong()
+        rig.send(IntroUiEvent.AddParkRideAndContinue)
+        rig.send(IntroUiEvent.Back)
+        assertEquals(IntroStep.PARK_RIDE, rig.state.step)
+
+        rig.send(IntroUiEvent.AddParkRideAndContinue)
+
+        assertEquals(IntroStep.DESTINATION, rig.state.step)
+        assertEquals(3, rig.savedRows(UserAdded).size)
+        assertEquals(1, rig.parkRideEvents().size)
+    }
+
+    @Test
+    fun `not now on the card moves on, adds nothing and leaves the card as it was`() = krailRunTest {
+        val rig = IntroRig(this)
+        rig.showTallawong()
+
+        rig.send(IntroUiEvent.DeclineParkRide)
+
+        assertEquals(IntroStep.DESTINATION, rig.state.step)
+        assertFalse(rig.state.addedParkRide)
+        assertTrue(rig.savedRows(UserAdded).isEmpty())
+        assertTrue(rig.parkRideEvents().isEmpty())
+        assertIs<ParkRideCardPhase.Card>(rig.state.parkRideCard)
+        assertEquals(1, rig.log.count("pref:KEY_PARK_RIDE_SUGGESTION_SHOWN=true"))
+    }
+
+    @Test
+    fun `not now after adding takes the station off home again and tracks the removal`() = krailRunTest {
+        val rig = IntroRig(this)
+        rig.showTallawong()
+        rig.send(IntroUiEvent.AddParkRideAndContinue)
+        rig.send(IntroUiEvent.Back)
+
+        rig.send(IntroUiEvent.DeclineParkRide)
+
+        assertFalse(rig.state.addedParkRide)
+        assertTrue(rig.savedRows(UserAdded).isEmpty())
+        assertEquals(listOf("add", "remove"), rig.parkRideEvents().map { it.properties?.get("action") })
+        assertEquals(IntroStep.DESTINATION, rig.state.step)
+    }
+
+    @Test
+    fun `a removal that fails still lets the rider move on and leaves the station added`() = krailRunTest {
+        val rig = IntroRig(this, parkRideSandook = DeleteFailsParkRideSandook())
+        rig.showBellaVista()
+        rig.send(IntroUiEvent.AddParkRideAndContinue)
+        rig.send(IntroUiEvent.Back)
+
+        rig.send(IntroUiEvent.DeclineParkRide)
+
+        assertEquals(IntroStep.DESTINATION, rig.state.step, "never trapped on a failing write")
+        assertTrue(rig.state.addedParkRide, "the row is still there, so the state says so")
+    }
+}
+
+/** Wraps the shared fake and fails the delete, the one write a rider taking Add back cannot be held up by. */
+private class DeleteFailsParkRideSandook(
+    private val delegate: NswParkRideSandook = FakeNswParkRideSandook(),
+) : NswParkRideSandook by delegate {
+    override suspend fun deleteSavedParkRide(
+        stopId: String,
+        facilityId: String,
+        source: NswParkRideSandook.Companion.SavedParkRideSource,
+    ) {
+        error("disk full")
     }
 }

@@ -226,4 +226,26 @@ class IntroStateOpsTest {
     }
 
     // endregion
+
+    @Test
+    fun `a finish writes the pair only for a yes, only when it is complete and only once`() {
+        val trip = bothPicked.toTripOrNull()
+        val startOnly = IntroState(startStopId = "1", startName = "One")
+        val endOnly = IntroState(endStopId = "2", endName = "Two")
+        val rows = listOf(
+            // state, save, trip written
+            Triple(bothPicked, true, trip),
+            Triple(bothPicked, false, null),
+            Triple(bothPicked.copy(saved = true), true, null),
+            Triple(bothPicked.copy(saved = true), false, null),
+            Triple(startOnly, true, null),
+            Triple(endOnly, true, null),
+            Triple(IntroState(), true, null),
+            Triple(IntroState(), false, null),
+        )
+
+        rows.forEach { (state, save, written) ->
+            assertEquals(written, state.tripToWrite(save), "state=$state save=$save")
+        }
+    }
 }

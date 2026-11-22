@@ -71,8 +71,9 @@ class IntroFlowViewModelParkRideLocateTest {
             )
 
             assertEquals(ParkRideCardPhase.NoStationNear, rig.state.parkRideCard, "$fix")
-            assertEquals(IntroStep.PARK_RIDE, rig.state.step, "the screen shows one plain line and Next")
+            assertEquals(IntroStep.DESTINATION, rig.state.step, "nothing to decide, so the screen is passed over")
             assertEquals(LocationResult.GRANTED, rig.state.locationResult)
+            assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE), "$fix")
         }
     }
 
@@ -112,7 +113,8 @@ class IntroFlowViewModelParkRideLocateTest {
             assertEquals(ParkRideAnswer.YES, rig.state.parkRideAnswer, "$result $location")
             assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE), "$result $location")
 
-            rig.send(IntroUiEvent.Back, IntroUiEvent.Next)
+            rig.send(IntroUiEvent.Back)
+            assertEquals(IntroStep.DESTINATION, rig.state.step, "nothing to go back to when nothing was asked")
             assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE), "written once however often the step is left")
         }
     }
@@ -187,7 +189,7 @@ class IntroFlowViewModelParkRideLocateTest {
     }
 
     @Test
-    fun `stops that never get ready give no station near after ten seconds and nothing blocks meanwhile`() =
+    fun `stops that never get ready give no station near after ten seconds and the screen then moves on`() =
         krailRunTest {
             val rig = IntroRig(this, initialReadiness = StopsReadiness.Loading)
             rig.send(
@@ -196,17 +198,46 @@ class IntroFlowViewModelParkRideLocateTest {
             )
             assertEquals(ParkRideCardPhase.Locating(), rig.state.parkRideCard, "waiting for the stops")
 
-            rig.send(IntroUiEvent.Next)
-            assertEquals(IntroStep.DESTINATION, rig.state.step, "the rider is not held on the wait")
-            assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE))
-
             pumpOnce(PARK_RIDE_STOPS_WAIT_MS - 1)
             assertEquals(ParkRideCardPhase.Locating(), rig.state.parkRideCard, "still inside the wait")
+            assertEquals(IntroStep.PARK_RIDE, rig.state.step)
             pumpOnce(1)
 
             assertEquals(ParkRideCardPhase.NoStationNear, rig.state.parkRideCard)
+            assertEquals(IntroStep.DESTINATION, rig.state.step)
+            assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE))
             assertEquals(10_000L, PARK_RIDE_STOPS_WAIT_MS)
         }
+
+    @Test
+    fun `not now while the stops are awaited gives up the look and the rider is not held on the wait`() =
+        krailRunTest {
+            val rig = IntroRig(this, initialReadiness = StopsReadiness.Loading)
+            rig.send(
+                IntroUiEvent.AnswerParkRide(yes = true),
+                IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, FOUR_POINT_SIX_KM_FROM_BELLA_VISTA),
+            )
+
+            rig.send(IntroUiEvent.DeclineParkRide)
+            rig.readiness.emit(StopsReadiness.Ready(stopCount = 100))
+            pumpOnce(PARK_RIDE_STOPS_WAIT_MS * 2)
+
+            assertEquals(IntroStep.DESTINATION, rig.state.step)
+            assertEquals(ParkRideCardPhase.None, rig.state.parkRideCard, "the cancelled look never settles")
+            assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE))
+        }
+
+    @Test
+    fun `a look that ends after the rider has left the screen never pulls them forward`() = krailRunTest {
+        val rig = IntroRig(this, handle = savedAt(IntroState(step = IntroStep.THEME)))
+        rig.send(
+            IntroUiEvent.AnswerParkRide(yes = true),
+            IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, AT_CENTRAL),
+        )
+
+        assertEquals(ParkRideCardPhase.NoStationNear, rig.state.parkRideCard)
+        assertEquals(IntroStep.THEME, rig.state.step, "the rider is not on the Park & Ride screen, so they stay put")
+    }
 
     @Test
     fun `stops that fail give no station near at once, with no error`() = krailRunTest {
@@ -218,7 +249,7 @@ class IntroFlowViewModelParkRideLocateTest {
         )
 
         assertEquals(ParkRideCardPhase.NoStationNear, rig.state.parkRideCard)
-        assertEquals(IntroStep.PARK_RIDE, rig.state.step)
+        assertEquals(IntroStep.DESTINATION, rig.state.step)
     }
 
     @Test

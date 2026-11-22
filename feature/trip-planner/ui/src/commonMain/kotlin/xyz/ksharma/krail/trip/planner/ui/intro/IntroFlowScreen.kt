@@ -20,8 +20,6 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.platform.testTag
 import xyz.ksharma.krail.core.adaptiveui.DUAL_PANE_LIST_WIDTH
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
-import xyz.ksharma.krail.taj.components.Button
-import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
@@ -38,14 +36,14 @@ internal val EmptyIntroStep: IntroStepContent = { _, _, _ -> }
 private val IntroMaxContentWidth = DUAL_PANE_LIST_WIDTH
 
 /**
- * The Intro: the back button, the screen, and the one bottom button. It holds no state of its own
+ * The Intro: the back button, the screen, and the decision bar. It holds no state of its own
  * beyond scroll, so every decision is [state] and [readiness], and everything the rider does leaves
  * through [onEvent].
  *
  * System back, like the back button, is [IntroUiEvent.Back] whenever there is a screen to go back
  * to, and on the first screen it follows the platform. Content is capped to a phone width and
  * centred, and each screen scrolls, so nothing is ever clipped at a large font or a narrow window.
- * The bottom button stays where it is and the screen scrolls above it.
+ * The decision bar stays where it is and the screen scrolls above it.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -82,7 +80,7 @@ internal fun IntroFlowScreen(
             ) { step ->
                 Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                     when (step) {
-                        IntroStep.PARK_RIDE -> IntroParkRideStepContent(state = state, onEvent = onEvent)
+                        IntroStep.PARK_RIDE -> IntroParkRideStepContent(state = state)
                         IntroStep.DESTINATION -> firstTripStep(state, suggestedStops, onEvent)
                         // Temporary, until the theme, origin and confirm screens are built.
                         IntroStep.THEME, IntroStep.ORIGIN, IntroStep.CONFIRM -> IntroPendingStepBody(step)
@@ -90,33 +88,18 @@ internal fun IntroFlowScreen(
                 }
             }
 
-            IntroPrimaryButton(
-                action = introFinishAction(state, readiness),
-                onClick = { onEvent(IntroUiEvent.FinishPressed) },
-                modifier = Modifier.padding(
-                    horizontal = dim.pageHorizontalPadding,
-                    vertical = dim.spacingL,
-                ),
-            )
+            introBar(state, readiness)?.let { bar ->
+                IntroDecisionBar(
+                    left = bar.left,
+                    right = bar.right,
+                    onEvent = onEvent,
+                    rightEnabled = bar.rightEnabled,
+                    modifier = Modifier.padding(
+                        horizontal = dim.pageHorizontalPadding,
+                        vertical = dim.spacingL,
+                    ),
+                )
+            }
         }
-    }
-}
-
-/**
- * The one place the theme colour is drawn on this screen. A taj button colours its own content, so
- * the label carries no colour of its own.
- */
-@Composable
-private fun IntroPrimaryButton(
-    action: IntroFinishAction,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Button(
-        onClick = onClick,
-        enabled = action.isEnabled(),
-        modifier = modifier.testTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION),
-    ) {
-        Text(text = action.label())
     }
 }

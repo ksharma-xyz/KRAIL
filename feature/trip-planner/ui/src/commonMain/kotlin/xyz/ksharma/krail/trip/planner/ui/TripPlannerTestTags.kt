@@ -26,6 +26,7 @@ object TripPlannerTestTags {
     // carousel and finishes it, hence a single action tag rather than one per page.
     const val INTRO_SCREEN = "intro.screen"
     const val INTRO_PRIMARY_ACTION = "intro.action.primary"
+    const val INTRO_SECONDARY_ACTION = "intro.action.secondary"
 
     // Saved trips (home)
     const val SAVED_TRIPS_SCREEN = "savedtrips.screen"

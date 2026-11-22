@@ -7,10 +7,10 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 internal sealed interface IntroUiEvent {
     data object Back : IntroUiEvent
 
-    /** The question step only. The trip step ends with [FinishPressed]. */
-    data object Next : IntroUiEvent
-
-    /** Yes starts the location step. The screen then asks for the permission and sends [LocationResultReceived]. */
+    /**
+     * The answer to the Park & Ride question. Yes starts the location step, and the screen then asks for the
+     * permission and sends [LocationResultReceived]. No moves on to the next screen.
+     */
     data class AnswerParkRide(val yes: Boolean) : IntroUiEvent
 
     /**
@@ -20,8 +20,17 @@ internal sealed interface IntroUiEvent {
      */
     data class LocationResultReceived(val result: LocationResult, val location: LatLng?) : IntroUiEvent
 
-    /** Add to home, and Added. */
-    data object ToggleParkRide : IntroUiEvent
+    /**
+     * Add to home. Adds the station and moves on to the next screen in one step. A station already added is
+     * left as it is and the rider moves on.
+     */
+    data object AddParkRideAndContinue : IntroUiEvent
+
+    /**
+     * Not now, on the card. Moves on to the next screen with nothing added, and takes a station the rider had
+     * already added off home, because this answer is their latest.
+     */
+    data object DeclineParkRide : IntroUiEvent
 
     data class PickStart(val stop: SuggestedStop) : IntroUiEvent
 
@@ -34,8 +43,11 @@ internal sealed interface IntroUiEvent {
         val stopName: String,
     ) : IntroUiEvent
 
-    /** The bottom button: Next, Try again, Save and start, Skip for now or Let's KRAIL. */
+    /** The positive answer on the last screens: save the trip if there is a complete pair, and end the Intro. */
     data object FinishPressed : IntroUiEvent
+
+    /** The negative answer on the last screens: end the Intro and write no trip. */
+    data object FinishWithoutTrip : IntroUiEvent
 }
 
 /** One shot instructions for the screen. Each is delivered once and never replayed. */

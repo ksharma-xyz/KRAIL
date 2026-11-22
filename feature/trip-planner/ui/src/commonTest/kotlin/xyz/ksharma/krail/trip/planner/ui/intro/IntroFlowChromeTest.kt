@@ -26,22 +26,4 @@ class IntroFlowChromeTest {
         assertNotEquals(ExitTransition.None, fade.initialContentExit)
         assertNull(fade.sizeTransform)
     }
-
-    @Test
-    fun `every action has its words and only the two waiting ones are disabled`() {
-        val expected = mapOf(
-            IntroFinishAction.Next to Pair("Next", true),
-            IntroFinishAction.GettingReady to Pair("Getting ready", false),
-            IntroFinishAction.PickBothStops to Pair("Save and start", false),
-            IntroFinishAction.SaveAndStart to Pair("Save and start", true),
-            IntroFinishAction.SkipForNow to Pair("Skip for now", true),
-            IntroFinishAction.LetsKrail to Pair("Let's KRAIL", true),
-        )
-
-        assertEquals(IntroFinishAction.entries.toSet(), expected.keys, "A new action needs a row here")
-        expected.forEach { (action, wording) ->
-            assertEquals(wording.first, action.label(), "label of $action")
-            assertEquals(wording.second, action.isEnabled(), "enabled of $action")
-        }
-    }
 }

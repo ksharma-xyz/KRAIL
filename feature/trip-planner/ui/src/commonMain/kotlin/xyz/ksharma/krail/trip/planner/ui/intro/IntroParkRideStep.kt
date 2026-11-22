@@ -21,8 +21,10 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRi
 internal const val PARK_RIDE_STOPS_WAIT_MS = 10_000L
 
 /**
- * The Park & Ride step of the Intro: the answer, the one location result, the nearest station and
- * its one availability reading. It runs in [scope], the view model's scope, so all of it is
+ * The Park & Ride screen of the Intro: the answer, the one location result, the nearest station and
+ * its one availability reading, and what the rider does with the card, which is to add the station or to
+ * decline it. Both move the rider on to the next screen, as does every answer that leaves nothing to
+ * decide. It runs in [scope], the view model's scope, so all of it is
  * cancelled when the view model is cleared, and it starts no timer and no repeat.
  *
  * The rider's position arrives in [onLocationResult], is used to find the station inside one
@@ -76,15 +78,44 @@ internal class IntroParkRideStep(
     }
 
     /**
-     * Add to home, or Added again to take it off. Ignored with no card on screen, which also covers a
-     * card that is being worked out again after a killed process, and while an earlier toggle is
-     * still running, so a double tap does one thing.
+     * Add to home: the station is added and the rider moves on, in one step. A station already added is
+     * left as it is, so a rider who comes back to the card and presses Add again moves on and adds
+     * nothing twice. Ignored with no card on screen, which also covers a card that is being worked out
+     * again after a killed process, and while an earlier add or decline is still running, so a double
+     * tap does one thing.
      */
-    fun toggle() {
+    fun addAndContinue() {
         val chosen = station ?: return
         if (toggleJob?.isActive == true) return
-        toggleJob = scope.launch {
-            if (read().addedParkRide) remove(chosen) else add(chosen)
+        if (read().addedParkRide) {
+            write { leavingParkRide() }
+            onLeftQuestion()
+        } else {
+            toggleJob = scope.launch { add(chosen) }
+        }
+    }
+
+    /**
+     * Not now: the rider moves on and nothing is added. A station they had added before coming back is
+     * taken off again, because this answer is the latest one. A look that is still waiting is given up
+     * and the card goes with it, so the rider is never held on a wait they have said no to.
+     */
+    fun decline() {
+        if (toggleJob?.isActive == true) return
+        val phase = read().parkRideCard
+        val chosen = station
+        when {
+            phase is ParkRideCardPhase.Locating -> {
+                cancel()
+                write { copy(parkRideCard = ParkRideCardPhase.None).leavingParkRide() }
+                onLeftQuestion()
+            }
+            phase is ParkRideCardPhase.Card && chosen != null && read().addedParkRide ->
+                toggleJob = scope.launch { remove(chosen) }
+            phase is ParkRideCardPhase.Card -> {
+                write { leavingParkRide() }
+                onLeftQuestion()
+            }
         }
     }
 
@@ -103,7 +134,9 @@ internal class IntroParkRideStep(
                 null
             }
             if (found == null) {
-                write { copy(parkRideCard = ParkRideCardPhase.NoStationNear) }
+                // Nothing for the rider to decide, so the screen is passed over: no line, no bar.
+                write { copy(parkRideCard = ParkRideCardPhase.NoStationNear).leavingParkRide() }
+                onLeftQuestion()
             } else {
                 show(found)
             }
@@ -129,13 +162,16 @@ internal class IntroParkRideStep(
     private suspend fun add(chosen: ParkRideStationPickerItem) {
         attempt { gateway.saveStation(chosen) } ?: return
         val prefill = attempt { gateway.startPrefill(chosen) }
-        write { withAddedParkRide(prefill?.stopId, prefill?.name) }
+        write { withAddedParkRide(prefill?.stopId, prefill?.name).leavingParkRide() }
+        onLeftQuestion()
         job?.join()
         attempt { gateway.correctStopName(chosen) }
     }
 
+    // The rider moves on whether or not the rows could be removed, so a failing write never traps them.
     private suspend fun remove(chosen: ParkRideStationPickerItem) {
-        attempt { gateway.removeStation(chosen) } ?: return
-        write { withoutParkRide() }
+        val removed = attempt { gateway.removeStation(chosen) }
+        write { (if (removed != null) withoutParkRide() else this).leavingParkRide() }
+        onLeftQuestion()
     }
 }

@@ -2,9 +2,14 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -21,7 +26,10 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
+import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
+import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * The shell of the Intro: the bottom button, the back button and system back. The screens are left
@@ -42,6 +50,12 @@ class IntroFlowScreenTest {
     private val events = mutableListOf<IntroUiEvent>()
     private val ready = StopsReadiness.Ready(stopCount = 100)
     private val stepTwo = IntroState(step = IntroStep.DESTINATION)
+    private val tripPair = stepTwo.copy(
+        startStopId = "200060",
+        startName = "Central Station",
+        endStopId = "200080",
+        endName = "Wynyard Station",
+    )
 
     private val shownState = mutableStateOf(IntroState())
     private val shownReadiness = mutableStateOf<StopsReadiness>(ready)
@@ -67,70 +81,123 @@ class IntroFlowScreenTest {
         composeRule.waitForIdle()
     }
 
-    private fun button() = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION)
+    private fun primary() = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION)
+
+    private fun secondary() = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION)
 
     @Test
-    fun `step 1 shows an enabled Next button under the test tag`() {
+    fun `asking shows the two answers, no on the left and yes on the right under the test tags`() {
         show(IntroState())
 
-        button().assertTextEquals("Next").assertIsEnabled()
-    }
-
-    @Test
-    fun `the button is disabled and reads Getting ready while the stops load`() {
-        show(stepTwo, StopsReadiness.Loading)
-
-        button().assertTextEquals("Getting ready").assertIsNotEnabled()
-    }
-
-    @Test
-    fun `the button is disabled and reads Getting ready before the stops have started`() {
-        show(stepTwo, StopsReadiness.Unknown)
-
-        button().assertTextEquals("Getting ready").assertIsNotEnabled()
-    }
-
-    @Test
-    fun `the button reads Save and start but is disabled with only one stop picked`() {
-        show(stepTwo.copy(startStopId = "200060", startName = "Central Station"))
-
-        button().assertTextEquals("Save and start").assertIsNotEnabled()
-    }
-
-    @Test
-    fun `the button is enabled for each action that finishes the Intro`() {
-        val both = stepTwo.copy(
-            startStopId = "200060",
-            startName = "Central Station",
-            endStopId = "200080",
-            endName = "Wynyard Station",
+        secondary().assertTextEquals(PARK_RIDE_NO).assertIsEnabled()
+        primary().assertTextEquals(PARK_RIDE_YES).assertIsEnabled()
+        assertTrue(
+            secondary().getUnclippedBoundsInRoot().left <= primary().getUnclippedBoundsInRoot().left,
+            "the negative answer is first, on the left or above",
         )
-        val finishing = listOf(
-            "Skip for now" to stepTwo,
-            "Save and start" to both,
-            "Let's KRAIL" to both.copy(saved = true),
-        )
+    }
 
-        finishing.forEach { (words, state) ->
+    @Test
+    fun `each answer sends its own event, and only the right one is the primary`() {
+        show(IntroState())
+
+        secondary().performClick()
+        primary().performClick()
+
+        assertEquals<List<IntroUiEvent>>(
+            listOf(IntroUiEvent.AnswerParkRide(yes = false), IntroUiEvent.AnswerParkRide(yes = true)),
+            events,
+        )
+    }
+
+    @Test
+    fun `the card bar says Not now and Add to home, with Add off until the numbers have come`() {
+        show(PreviewCardLoadingState)
+        secondary().assertTextEquals(PARK_RIDE_NOT_NOW).assertIsEnabled()
+        primary().assertTextEquals(PARK_RIDE_ADD).assertIsNotEnabled()
+
+        show(PreviewCardContentState)
+        primary().assertTextEquals(PARK_RIDE_ADD).assertIsEnabled()
+        primary().performClick()
+        secondary().performClick()
+
+        assertEquals<List<IntroUiEvent>>(
+            listOf(IntroUiEvent.AddParkRideAndContinue, IntroUiEvent.DeclineParkRide),
+            events,
+        )
+    }
+
+    @Test
+    fun `while locating the bar is still there, with no being a live answer and add off`() {
+        show(PreviewLocatingState)
+
+        secondary().assertTextEquals(PARK_RIDE_NOT_NOW).assertIsEnabled()
+        primary().assertTextEquals(PARK_RIDE_ADD).assertIsNotEnabled()
+    }
+
+    @Test
+    fun `a Park and Ride screen with nothing to decide, and the theme screen, show no bar`() {
+        listOf(
+            IntroState(parkRideAnswer = ParkRideAnswer.YES, parkRideCard = ParkRideCardPhase.NoStationNear),
+            IntroState(parkRideAnswer = ParkRideAnswer.YES, parkRideCard = ParkRideCardPhase.None),
+            IntroState(step = IntroStep.THEME),
+        ).forEach { state ->
             show(state)
-            button().assertTextEquals(words).assertIsEnabled()
+
+            primary().assertDoesNotExist()
+            secondary().assertDoesNotExist()
         }
     }
 
     @Test
-    fun `failed stops do not hold the button back`() {
-        show(stepTwo, StopsReadiness.Failed(attempt = 1, reason = "disk full"))
+    fun `every screen that asks has exactly two clickable buttons and no third`() {
+        listOf(IntroState(), PreviewLocatingState, PreviewCardContentState, PreviewAddedState).forEach { state ->
+            show(state)
 
-        button().assertTextEquals("Skip for now").assertIsEnabled()
+            composeRule.onAllNodes(hasClickAction()).assertCountEquals(2)
+        }
     }
 
     @Test
-    fun `pressing the enabled button tells the view model to finish`() {
-        show(IntroState())
+    fun `the trip screens ask Not now and Yes save it, and save waits only for stops that are still loading`() {
+        show(stepTwo, StopsReadiness.Loading)
+        secondary().assertTextEquals(TRIP_NOT_NOW).assertIsEnabled()
+        primary().assertTextEquals(TRIP_SAVE).assertIsNotEnabled()
 
-        button().performClick()
+        show(stepTwo, StopsReadiness.Unknown)
+        primary().assertIsNotEnabled()
 
-        assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.FinishPressed), events)
+        listOf(ready, StopsReadiness.Failed(attempt = 1, reason = "disk full")).forEach { readiness ->
+            show(tripPair, readiness)
+            primary().assertTextEquals(TRIP_SAVE).assertIsEnabled()
+        }
+        show(tripPair.copy(saved = true), StopsReadiness.Loading)
+        primary().assertIsEnabled()
+    }
+
+    @Test
+    fun `the trip answers send the finish events`() {
+        show(tripPair)
+
+        primary().performClick()
+        secondary().performClick()
+
+        assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.FinishPressed, IntroUiEvent.FinishWithoutTrip), events)
+    }
+
+    @Test
+    fun `no screen has a button worded as a way past a question`() {
+        val banned = listOf("Skip", "Later", "Next", "Continue", "Done")
+        listOf(IntroState(), PreviewCardContentState, stepTwo, tripPair).forEach { state ->
+            show(state)
+
+            listOf(primary(), secondary()).forEach { button ->
+                val words = button.fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text)
+                    .orEmpty()
+                    .joinToString { it.text }
+                banned.forEach { word -> assertTrue(!words.contains(word, ignoreCase = true), "$words has $word") }
+            }
+        }
     }
 
     @Test

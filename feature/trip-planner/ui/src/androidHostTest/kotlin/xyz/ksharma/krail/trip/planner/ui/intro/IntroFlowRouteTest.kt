@@ -107,7 +107,7 @@ class IntroFlowRouteTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithText("Bella Vista").assertIsDisplayed()
-        composeRule.onNodeWithText(ADD_TO_HOME_TEXT).assertIsDisplayed()
+        composeRule.onNodeWithText(PARK_RIDE_ADD).assertIsDisplayed()
         assertEquals(1, manager.currentLocationCalls)
         assertEquals(LocationResult.GRANTED, viewModel.state.value.locationResult)
         assertIs<ParkRideCardPhase.Card>(viewModel.state.value.parkRideCard)

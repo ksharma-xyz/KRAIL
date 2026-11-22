@@ -4,10 +4,14 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
@@ -23,16 +27,14 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
-import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import kotlin.test.assertTrue
 
 /**
- * Step 1 at 320 dp, the smallest window the app supports, with text at 200 percent. Every item stays
- * whole inside the window and the answers and the card stack, so nothing is clipped, squeezed or
- * pushed sideways.
+ * The Park & Ride screen at 320 dp, the smallest window the app supports, with text at 200 percent.
+ * Every item stays whole inside the window, so nothing is clipped, squeezed or pushed sideways.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -60,7 +62,7 @@ class IntroParkRideStepNarrowTest {
                         IntroFlowScreen(
                             state = shown.value,
                             suggestedStops = DEFAULT_SUGGESTED_STOPS,
-                            readiness = StopsReadiness.Ready(stopCount = 100),
+                            readiness = PreviewReady,
                             onEvent = {},
                         )
                     }
@@ -87,34 +89,50 @@ class IntroParkRideStepNarrowTest {
     }
 
     @Test
-    fun `asking keeps the question, both answers and the button whole`() {
+    fun `asking keeps the headline and both answers whole inside the window`() {
         show(PreviewAskState)
 
-        listOf(PARK_RIDE_QUESTION, PARK_RIDE_YES, PARK_RIDE_NO).forEach { text ->
-            composeRule.onNodeWithText(text).assertIsDisplayed().assertInsideWindow(text)
+        composeRule.onNodeWithText(PARK_RIDE_HEADING).assertIsDisplayed().assertInsideWindow(PARK_RIDE_HEADING)
+        listOf(TripPlannerTestTags.INTRO_PRIMARY_ACTION, TripPlannerTestTags.INTRO_SECONDARY_ACTION).forEach { tag ->
+            composeRule.onNodeWithTag(tag).assertIsDisplayed().assertInsideWindow(tag)
         }
-        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertIsDisplayed()
-            .assertInsideWindow("the bottom button")
     }
 
     @Test
-    fun `the two answers are stacked, one under the other, at the same left edge and width`() {
+    fun `at 200 percent text the answers are the short Yes and No, in one row, and read in full to a screen reader`() {
         show(PreviewAskState)
 
-        val yes = composeRule.onNodeWithText(PARK_RIDE_YES).getUnclippedBoundsInRoot()
-        val no = composeRule.onNodeWithText(PARK_RIDE_NO).getUnclippedBoundsInRoot()
+        val no = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION)
+        val yes = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION)
+        no.assertTextEquals(PARK_RIDE_NO_COMPACT)
+        yes.assertTextEquals(PARK_RIDE_YES_COMPACT)
+        composeRule.onNodeWithContentDescription(PARK_RIDE_YES).assertExists()
+        composeRule.onNodeWithContentDescription(PARK_RIDE_NO).assertExists()
+        val noBounds = no.getUnclippedBoundsInRoot()
+        val yesBounds = yes.getUnclippedBoundsInRoot()
+        assertTrue(noBounds.top == yesBounds.top, "one row, but No is at ${noBounds.top} and Yes at ${yesBounds.top}")
+        assertTrue(noBounds.right <= yesBounds.left, "No ends at ${noBounds.right}, past where Yes starts")
+    }
 
-        assertTrue(no.top >= yes.bottom, "No starts at ${no.top}, above where Yes ends at ${yes.bottom}")
-        assertTrue(no.left == yes.left, "No starts at ${no.left} and Yes at ${yes.left}")
+    @Test
+    fun `the card bar at 200 percent keeps its whole words and never exceeds two buttons`() {
+        show(PreviewTallCardContentState)
+
+        val primary = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION)
+        val secondary = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION)
+        primary.assertTextEquals(PARK_RIDE_ADD).assertInsideWindow("Add to home")
+        secondary.assertTextEquals(PARK_RIDE_NOT_NOW).assertInsideWindow("Not now")
+        composeRule.onAllNodes(hasClickAction()).assertCountEquals(2)
     }
 
     @Test
     fun `the tallest card stays whole inside the window with every car park and the row`() {
         show(PreviewTallCardContentState)
 
-        // Unmerged, so each line of the card is measured on its own and not as the one button they merge into.
-        // The step scrolls, so a line below the fold is scrolled to, which is also the proof it can be reached.
-        listOf("Tallawong P1", "Tallawong P2", "Tallawong P3", ADD_TO_HOME_TEXT).forEach { text ->
+        // Unmerged, so each line of the card is measured on its own and not as the one box they merge into.
+        // The middle of the screen scrolls, so a line below the fold is scrolled to, which is also the proof
+        // it can be reached.
+        listOf("Tallawong P1", "Tallawong P2", "Tallawong P3").forEach { text ->
             composeRule.onNodeWithText(text, useUnmergedTree = true)
                 .performScrollTo()
                 .assertIsDisplayed()
@@ -131,7 +149,6 @@ class IntroParkRideStepNarrowTest {
     fun `the card keeps one height from the skeleton to the numbers at large text too`() {
         val heights = listOf(
             PreviewLocatingState,
-            PreviewNoStationNearState,
             PreviewCardLoadingState,
             PreviewCardContentState,
             PreviewCardUnavailableState,
@@ -151,7 +168,7 @@ class IntroParkRideStepNarrowTest {
     fun `an added card stays inside the window`() {
         show(PreviewTallAddedState)
 
-        composeRule.onNodeWithText(ADDED_TO_HOME_TEXT).assertIsDisplayed().assertInsideWindow(ADDED_TO_HOME_TEXT)
+        composeRule.onNodeWithTag(INTRO_CARD_SLOT_TAG).assertInsideWindow("the added card")
     }
 
     private companion object {

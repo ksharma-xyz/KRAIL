@@ -2,7 +2,6 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.compose.runtime.Composable
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
-import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
@@ -13,7 +12,7 @@ internal fun PreviewIntroStepOne(state: IntroState) {
         IntroFlowScreen(
             state = state,
             suggestedStops = DEFAULT_SUGGESTED_STOPS,
-            readiness = StopsReadiness.Ready(stopCount = 100),
+            readiness = PreviewReady,
             onEvent = {},
         )
     }
@@ -28,11 +27,6 @@ private fun PreviewIntroParkRideAsk() = PreviewIntroStepOne(PreviewAskState)
 @PreviewScreen
 @Composable
 private fun PreviewIntroParkRideLocating() = PreviewIntroStepOne(PreviewLocatingState)
-
-@ScreenshotTest
-@PreviewScreen
-@Composable
-private fun PreviewIntroParkRideNoStationNear() = PreviewIntroStepOne(PreviewNoStationNearState)
 
 @ScreenshotTest
 @PreviewScreen

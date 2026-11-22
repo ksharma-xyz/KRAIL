@@ -31,12 +31,13 @@ class IntroUiEventTest {
     fun `the events without values are distinct and the effect is one value`() {
         val plain = setOf(
             IntroUiEvent.Back,
-            IntroUiEvent.Next,
-            IntroUiEvent.ToggleParkRide,
+            IntroUiEvent.AddParkRideAndContinue,
+            IntroUiEvent.DeclineParkRide,
             IntroUiEvent.FinishPressed,
+            IntroUiEvent.FinishWithoutTrip,
         )
 
-        assertEquals(4, plain.size)
+        assertEquals(5, plain.size)
         assertSame(IntroEffect.NavigateToSavedTrips, IntroEffect.NavigateToSavedTrips)
     }
 }

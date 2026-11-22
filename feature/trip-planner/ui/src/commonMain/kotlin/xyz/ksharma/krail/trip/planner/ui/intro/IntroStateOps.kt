@@ -64,6 +64,13 @@ internal fun IntroState.toTripOrNull(): Trip? {
     return Trip(fromStopId = fromId, fromStopName = fromName, toStopId = toId, toStopName = toName)
 }
 
+/**
+ * The trip a finish writes: the complete pair when the rider answered yes, and only if it has not been
+ * written already. With no answer yes, with no complete pair (nothing picked, or one end only, which
+ * is a half pick that saves nothing), or with the trip already written, it is null.
+ */
+internal fun IntroState.tripToWrite(save: Boolean): Trip? = if (save && !saved) toTripOrNull() else null
+
 /** True while a location result is awaited or a card shows, when a second yes must start nothing. */
 internal fun ParkRideCardPhase.isInProgressOrShown(): Boolean =
     this is ParkRideCardPhase.Locating || this is ParkRideCardPhase.Card

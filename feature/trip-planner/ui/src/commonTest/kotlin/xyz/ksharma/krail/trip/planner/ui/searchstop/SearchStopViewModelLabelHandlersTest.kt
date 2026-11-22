@@ -701,6 +701,25 @@ class SearchStopViewModelLabelHandlersTest {
         }
 
     @Test
+    fun `Given a Save as on the stop card When AssignLabelStop fires Then the surface is map_card`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                val central = StopItem(stopId = "stop_central", stopName = "Central Station")
+                viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Home", central, LabelAssignSurface.MAP_CARD))
+                advanceUntilIdle()
+
+                val event = assertIs<AnalyticsEvent.StopLabelStopAssignedEvent>(
+                    fakeAnalytics.getTrackedEvent("stop_label_stop_assigned"),
+                )
+                assertEquals(AnalyticsEvent.StopLabelSurface.MAP_CARD, event.assignmentSurface)
+                assertEquals("map_card", event.assignmentSurface.value)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
     fun `Given recent-surface new-label assign When AssignLabelStop fires Then event carries surface and mode`() =
         runTest {
             viewModel.uiState.test {

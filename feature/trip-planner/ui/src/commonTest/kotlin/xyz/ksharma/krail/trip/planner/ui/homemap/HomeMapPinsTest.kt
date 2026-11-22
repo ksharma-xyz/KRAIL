@@ -152,6 +152,46 @@ class HomeMapPinsTest {
     }
 
     @Test
+    fun `go here on a single stop station sets that stop`() {
+        val pins = parkRidePinsFor(listOf(tile("2155384", "Tallawong", listOf("2155384"))), coordinates)
+
+        assertEquals("2155384", pins.single().goHereStopId)
+    }
+
+    @Test
+    fun `go here on a multi stop station sets the smallest stop id the table holds, whatever the catalogue order`() {
+        val forward = parkRidePinsFor(listOf(tile("12", "Mona Vale", listOf("200070", "200080"))), coordinates)
+        val reversed = parkRidePinsFor(listOf(tile("12", "Mona Vale", listOf("200080", "200070"))), coordinates)
+
+        assertEquals("200070", forward.single().goHereStopId)
+        assertEquals(forward.single().goHereStopId, reversed.single().goHereStopId)
+    }
+
+    @Test
+    fun `a stop id the table does not hold is never the go here stop`() {
+        val pins = parkRidePinsFor(listOf(tile("12", "Mona Vale", listOf("1", "2750430"))), coordinates)
+
+        assertEquals("2750430", pins.single().goHereStopId)
+    }
+
+    @Test
+    fun `a station with no stop in the table has a pin from its car park but no go here`() {
+        val carPark = LatLng(-33.75, 150.72)
+        val pins = parkRidePinsFor(listOf(tile("1", "Somewhere", listOf("unknown"), carPark)), coordinates)
+
+        assertEquals(carPark, pins.single().position)
+        assertNull(pins.single().goHereStopId, "A trip cannot start from a stop the table does not hold.")
+    }
+
+    @Test
+    fun `a stop the table holds with no usable position still counts as a stop to start from`() {
+        val carPark = LatLng(-33.75, 150.72)
+        val pins = parkRidePinsFor(listOf(tile("0", "Odd", listOf("0"), carPark)), coordinates)
+
+        assertEquals("0", pins.single().goHereStopId)
+    }
+
+    @Test
     fun `a station is one pin however many times it is listed`() {
         val twice = listOf(
             tile("2155384", "Tallawong", listOf("2155384")),

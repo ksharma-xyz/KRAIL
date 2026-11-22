@@ -3,13 +3,6 @@
 package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.StartOffset
-import androidx.compose.animation.core.StartOffsetType
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
@@ -141,16 +134,18 @@ fun SavedTripsScreen(
     // The Home, Work and Park & Ride chips above the search row (docs/MAP_HOME_UX.md rule 41).
     val homeChips = remember(savedTripsState.stopLabels) { homeChipsFor(savedTripsState.stopLabels) }
 
-    // Edit mode for trip cards — long-press enters, Done button exits.
-    var editing by rememberSaveable { mutableStateOf(false) }
+    // Reorder mode (docs/MAP_HOME_UX.md rule 31). The session lives in the ViewModel, so a rotation
+    // keeps it, Done writes it and leaving the screen drops it. A long press on a card is the one way in.
+    val editing = savedTripsState.reorder != null
 
     // Blur, fallback dim and the row's one-shot handoff spin, owned by rememberAskKrailFocus
     // so this function stays under the complexity ceiling and the three concerns stay one
     // mechanism. See AskKrailFocus.kt for the rules.
     val askKrailFocus = rememberAskKrailFocus(aiState)
 
-    // While editing, the system back gesture exits edit mode instead of the app.
-    BackHandler(enabled = editing) { editing = false }
+    // While reordering, the system back and the swipe back cancel it instead of leaving the app. Nothing
+    // is saved and the cards animate back to the order they were in.
+    BackHandler(enabled = editing) { onEvent(SavedTripUiEvent.ReorderCancel) }
 
     // Which Park & Ride cards are open.
     //
@@ -168,13 +163,9 @@ fun SavedTripsScreen(
 
     val lazyListState = rememberLazyListState()
     val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
-        val tripId = from.key as? String ?: return@rememberReorderableLazyListState
-        val toTripId = to.key as? String ?: return@rememberReorderableLazyListState
-        val fromTripIndex = savedTripsState.savedTrips.indexOfFirst { it.tripId == tripId }
-        val toTripIndex = savedTripsState.savedTrips.indexOfFirst { it.tripId == toTripId }
-        if (fromTripIndex != -1 && toTripIndex != -1) {
-            onEvent(SavedTripUiEvent.MoveSavedTripToIndex(tripId = tripId, targetIndex = toTripIndex))
-        }
+        val fromKey = from.key as? String ?: return@rememberReorderableLazyListState
+        val toKey = to.key as? String ?: return@rememberReorderableLazyListState
+        onEvent(SavedTripUiEvent.ReorderMove(fromKey = fromKey, toKey = toKey))
     }
 
     Box(modifier = modifier.testTag(TripPlannerTestTags.SAVED_TRIPS_SCREEN).fillMaxSize()) {
@@ -206,26 +197,29 @@ fun SavedTripsScreen(
                         WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
                     ),
                 ) {
-                    TitleBar(
-                        title = {
-                            // The wordmark is the brand, not a label: nobody reads it to use
-                            // the app, so it carries no contrast obligation and must not be
-                            // adapted. Ink pulled it away from the rider's chosen colour on
-                            // the themes that needed adapting, which made the one element
-                            // that should be exactly their colour the one element that wasn't.
-                            Text(text = "KRAIL", color = themeDecorColor())
-                        },
-                        actions = {
-                            SavedTripsTitleBarActions(
-                                editing = editing,
-                                isDiscoverAvailable = savedTripsState.isDiscoverAvailable,
-                                displayDiscoverBadge = savedTripsState.displayDiscoverBadge,
-                                onDoneClick = { editing = false },
-                                onDiscoverButtonClick = onDiscoverButtonClick,
-                                onSettingsButtonClick = onSettingsButtonClick,
-                            )
-                        },
-                    )
+                    if (editing) {
+                        // The chrome is gone while reordering: no logo, no gear. One dark Done.
+                        ReorderTopRow(onDone = { onEvent(SavedTripUiEvent.ReorderDone) })
+                    } else {
+                        TitleBar(
+                            title = {
+                                // The wordmark is the brand, not a label: nobody reads it to use
+                                // the app, so it carries no contrast obligation and must not be
+                                // adapted. Ink pulled it away from the rider's chosen colour on
+                                // the themes that needed adapting, which made the one element
+                                // that should be exactly their colour the one element that wasn't.
+                                Text(text = "KRAIL", color = themeDecorColor())
+                            },
+                            actions = {
+                                SavedTripsTitleBarActions(
+                                    isDiscoverAvailable = savedTripsState.isDiscoverAvailable,
+                                    displayDiscoverBadge = savedTripsState.displayDiscoverBadge,
+                                    onDiscoverButtonClick = onDiscoverButtonClick,
+                                    onSettingsButtonClick = onSettingsButtonClick,
+                                )
+                            },
+                        )
+                    }
 
                     // One column, at most 560 dp wide and centred (MAP_HOME_UX rule 45). The
                     // list stays the full width of the pane so a swipe in the gutter still
@@ -240,7 +234,13 @@ fun SavedTripsScreen(
                             contentPadding = PaddingValues(
                                 start = gutter,
                                 end = gutter,
-                                bottom = LAZY_COLUMN_BOTTOM_PADDING.dp,
+                                // The search row and the chips are gone while reordering, so the stack
+                                // takes the height they held.
+                                bottom = if (editing) {
+                                    KrailTheme.dimensions.spacingXL
+                                } else {
+                                    LAZY_COLUMN_BOTTOM_PADDING.dp
+                                },
                             ),
                         ) {
                             savedTripsListBody(
@@ -251,9 +251,7 @@ fun SavedTripsScreen(
                                 onTrackingCardClick = onTrackingCardClick,
                                 onStopTracking = onStopTracking,
                                 expandedMap = expandedMap,
-                                editing = editing,
                                 reorderState = reorderState,
-                                onEnterEditing = { editing = true },
                             )
                         }
                     }
@@ -311,7 +309,16 @@ fun SavedTripsScreen(
                 // nested under it; see DualPaneScaffold for the iOS compositing invariant.
                 DualPaneScaffold(
                     listPane = { body() },
-                    rightPane = rightPane,
+                    // A touch on the map pane while reordering cancels it: the rider has turned to the
+                    // map, and a touch there is never a drag of a card. The pane stays a sibling of the
+                    // list and this wrapper is no graphics layer, so the iOS compositing rule holds.
+                    rightPane = {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .onFirstTouch(enabled = editing) { onEvent(SavedTripUiEvent.ReorderCancel) },
+                        ) { rightPane() }
+                    },
                 )
             } else {
                 body()
@@ -385,53 +392,50 @@ internal fun LazyListScope.infoTiles(
     }
 }
 
+/**
+ * The delete circle on a trip card in reorder mode (`docs/MAP_HOME_UX.md` rule 38): a 24 dp circle in
+ * the ink colour with a 12 dp X, at the card's top right corner and overhanging it by 6 dp. Its touch
+ * target is 48 dp, centred on the circle, so the drawn circle stays small and the tap is not.
+ */
 @Composable
 internal fun TripDeleteOverlay(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    tag: String? = null,
 ) {
     val dim = KrailTheme.dimensions
     Box(
         modifier = modifier
-            .offset(x = dim.spacingS, y = -dim.spacingS)
-            .size(dim.spacingXXXL)
-            .clip(CircleShape)
-            .background(KrailTheme.colors.onSurface, CircleShape)
+            // The circle overhangs the corner by 6 dp, so its centre is 6 dp in from the edge and
+            // 6 dp down from the top. The 48 dp box that takes the tap is centred on it.
+            .offset(x = DELETE_TARGET_OFFSET, y = -DELETE_TARGET_OFFSET)
+            .size(DELETE_TARGET)
+            // After the offset, so the tag's bounds are where the target is.
+            .then(if (tag != null) Modifier.testTag(tag) else Modifier)
             .klickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Image(
-            painter = painterResource(TajRes.drawable.ic_close),
-            contentDescription = "Remove saved trip",
-            colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
-            modifier = Modifier.size(dim.spacingL),
-        )
+        Box(
+            modifier = Modifier
+                .size(dim.spacingXXXL)
+                .clip(CircleShape)
+                .background(KrailTheme.colors.onSurface, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(
+                painter = painterResource(TajRes.drawable.ic_close),
+                contentDescription = "Remove saved trip",
+                colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
+                modifier = Modifier.size(dim.spacingL),
+            )
+        }
     }
 }
 
-@Composable
-internal fun rememberWiggleRotation(active: Boolean, seed: Int): Float {
-    val transition = rememberInfiniteTransition(label = "trip-wiggle")
-    val seedAbs = kotlin.math.abs(seed)
-    val angle by transition.animateFloat(
-        initialValue = -WIGGLE_ANGLE_DEGREES,
-        targetValue = WIGGLE_ANGLE_DEGREES,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = WIGGLE_BASE_DURATION_MS +
-                    (seedAbs % WIGGLE_DURATION_VARIANCE_BUCKETS) * WIGGLE_DURATION_VARIANCE_STEP_MS,
-                easing = LinearEasing,
-            ),
-            repeatMode = RepeatMode.Reverse,
-            initialStartOffset = StartOffset(
-                offsetMillis = (seedAbs * WIGGLE_OFFSET_MULTIPLIER) % WIGGLE_OFFSET_MAX_MS,
-                offsetType = StartOffsetType.Delay,
-            ),
-        ),
-        label = "trip-wiggle-rotation",
-    )
-    return if (active) angle else 0f
-}
+private val DELETE_TARGET = 48.dp
+
+// The 48 dp target is centred on the circle: 24 dp from its edge, less the 6 dp the circle overhangs.
+private val DELETE_TARGET_OFFSET = 18.dp
 
 @Composable
 internal fun SavedTripsTitle(
@@ -451,13 +455,6 @@ internal fun SavedTripsTitle(
         }
     }
 }
-
-private const val WIGGLE_ANGLE_DEGREES = 0.75f
-private const val WIGGLE_BASE_DURATION_MS = 350
-private const val WIGGLE_DURATION_VARIANCE_BUCKETS = 4
-private const val WIGGLE_DURATION_VARIANCE_STEP_MS = 70
-private const val WIGGLE_OFFSET_MULTIPLIER = 47
-private const val WIGGLE_OFFSET_MAX_MS = 200
 
 // region Previews
 

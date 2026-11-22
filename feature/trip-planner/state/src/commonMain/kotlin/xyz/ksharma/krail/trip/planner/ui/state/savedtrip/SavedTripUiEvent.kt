@@ -1,11 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.state.savedtrip
 
 import xyz.ksharma.krail.info.tile.state.InfoTileData
-import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 sealed interface SavedTripUiEvent {
-
-    data class DeleteSavedTrip(val trip: Trip) : SavedTripUiEvent
 
     data class AnalyticsSavedTripCardClick(val fromStopId: String, val toStopId: String) :
         SavedTripUiEvent
@@ -56,9 +53,23 @@ sealed interface SavedTripUiEvent {
 
     data object StopTracking : SavedTripUiEvent
 
-    data class MoveSavedTripToIndex(val tripId: String, val targetIndex: Int) : SavedTripUiEvent
+    /**
+     * A long press on a card began reorder mode, with that card lifted: a trip's id, or
+     * [PARK_RIDE_ROW_KEY] for the Park & Ride row. Nothing else begins it.
+     */
+    data class EnterReorder(val liftedKey: String) : SavedTripUiEvent
 
-    data object MarkReorderTipSeen : SavedTripUiEvent
+    /** A card was dragged to where another is. Held in the session and written by nothing yet. */
+    data class ReorderMove(val fromKey: String, val toKey: String) : SavedTripUiEvent
+
+    /** A trip's delete circle was tapped in reorder mode. Staged, and only deleted by [ReorderDone]. */
+    data class ReorderRemove(val tripId: String) : SavedTripUiEvent
+
+    /** Done: the one write of the new order, the trips taken off and the row's place. */
+    data object ReorderDone : SavedTripUiEvent
+
+    /** Back, a swipe back or a tap on the map: the session is dropped and nothing is written. */
+    data object ReorderCancel : SavedTripUiEvent
 
     /** A Home or Work chip was tapped. */
     data class LabelChipClick(val labelKey: String) : SavedTripUiEvent

@@ -1,32 +1,30 @@
 package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import kotlinx.collections.immutable.ImmutableList
+import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.ReorderableLazyListState
 import xyz.ksharma.krail.feature.track.TrackedJourney
 import xyz.ksharma.krail.feature.track.ui.components.TrackingCard
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.PARK_RIDE_ROW_KEY
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
-import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
-import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 /**
  * The parts of the home stack, in the order [savedTripsListBody] lays them out: the tracked trip,
@@ -57,56 +55,92 @@ internal fun LazyListScope.trackingSection(
     }
 }
 
-/** What a saved trip card does, so the trip items stay under the parameter limit. */
+/** What the cards of the stack do, so the stack items stay under the parameter limit. */
 internal class SavedTripActions(
     val onCardClick: (StopItem?, StopItem?) -> Unit,
-    val onEnterEditing: () -> Unit,
     val onEvent: (SavedTripUiEvent) -> Unit,
 )
 
-/** A run of saved trips, each keyed by its own id so the two runs around the row never collide. */
-internal fun LazyListScope.tripItems(
-    trips: List<Trip>,
-    stopLabels: ImmutableList<StopLabel>,
-    editing: Boolean,
-    reorderState: ReorderableLazyListState,
-    actions: SavedTripActions,
-) {
-    items(items = trips, key = { trip -> trip.tripId }) { trip ->
-        SavedTripItem(
-            trip = trip,
-            stopLabels = stopLabels,
-            editing = editing,
-            reorderState = reorderState,
-            onSavedTripCardClick = actions.onCardClick,
-            onEnterEditing = actions.onEnterEditing,
-            onDelete = { actions.onEvent(SavedTripUiEvent.DeleteSavedTrip(trip)) },
-        )
+/** Everything the stack draws from, so [homeStackItems] takes one thing and not ten. */
+internal class HomeStackContext(
+    val state: SavedTripsState,
+    val expandedMap: SnapshotStateMap<String, Boolean>,
+    val reorderState: ReorderableLazyListState,
+    val actions: SavedTripActions,
+)
+
+/**
+ * The trips and the Park & Ride row in one list, in the order [homeStackKeys] gives: two trips, the
+ * row, then the rest (rule 29), or the reorder session's order while one is open. One list means one
+ * key space, so the row is dragged among the trips as a block and a trip is dragged past it.
+ */
+internal fun LazyListScope.homeStackItems(context: HomeStackContext) {
+    val state = context.state
+    val hasRow = state.parkRideUiState.any { it.facilities.isNotEmpty() }
+    val keys = homeStackKeys(
+        tripIds = state.savedTrips.map { it.tripId },
+        hasRow = hasRow,
+        storedIndex = state.parkRideRowIndex,
+        session = state.reorder,
+    )
+    val tripsById = state.savedTrips.associateBy { it.tripId }
+    items(items = keys, key = { it }) { key ->
+        if (key == PARK_RIDE_ROW_KEY) {
+            ParkRideRowEntry(context)
+        } else {
+            tripsById[key]?.let { trip ->
+                SavedTripItem(
+                    trip = trip,
+                    stopLabels = state.stopLabels,
+                    reorder = state.reorder,
+                    reorderState = context.reorderState,
+                    actions = context.actions,
+                )
+            }
+        }
     }
 }
 
 /**
- * The Park & Ride row, one list item, and only when a station is saved: with none there is no row
- * and no card in its place. Opening a tile opens it alone and closes any other, and each open or
- * close raises the same [SavedTripUiEvent.ParkRideCardClick] the card did, so the refresh set and
- * the poll in the ViewModel stay in step with what is open.
+ * The Park & Ride row as one card of the stack. Open it is the row of tiles, and a long press on a
+ * tile begins reorder mode with the row lifted. In reorder mode it is one outlined block with the
+ * wide grip, and the whole block is the drag target. Opening a tile opens it alone and closes any
+ * other, and each open or close raises the same [SavedTripUiEvent.ParkRideCardClick] the card did, so
+ * the refresh set and the poll in the ViewModel stay in step with what is open.
  */
-internal fun LazyListScope.parkRideRowItem(
-    parkRideStates: ImmutableList<ParkRideUiState>,
-    expandedMap: SnapshotStateMap<String, Boolean>,
-    onEvent: (SavedTripUiEvent) -> Unit,
-) {
-    if (parkRideStates.none { it.facilities.isNotEmpty() }) return
-
-    item(key = "park_ride_row") {
-        val tiles = remember(parkRideStates) { parkRideStates.toTiles() }
+@Composable
+private fun LazyItemScope.ParkRideRowEntry(context: HomeStackContext) {
+    val state = context.state
+    val onEvent = context.actions.onEvent
+    val haptic = LocalHapticFeedback.current
+    val tiles = remember(state.parkRideUiState) { state.parkRideUiState.toTiles() }
+    ReorderableItem(context.reorderState, key = PARK_RIDE_ROW_KEY) { isDragging ->
         Column {
-            ParkRideRow(
-                tiles = tiles,
-                openStationId = expandedMap.entries.firstOrNull { it.value }?.key,
-                onTileClick = { tile -> toggleTile(tile.stationId, parkRideStates, expandedMap, onEvent) },
-                onDirectionsClick = { carPark -> onEvent(directionsEvent(carPark)) },
-            )
+            val row: @Composable (Boolean) -> Unit = { interactive ->
+                ParkRideRow(
+                    tiles = tiles,
+                    openStationId = context.expandedMap.entries.firstOrNull { it.value }?.key,
+                    onTileClick = { tile ->
+                        toggleTile(tile.stationId, state.parkRideUiState, context.expandedMap, onEvent)
+                    },
+                    onDirectionsClick = { carPark -> onEvent(directionsEvent(carPark)) },
+                    interactive = interactive,
+                    onTileLongClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onEvent(SavedTripUiEvent.EnterReorder(PARK_RIDE_ROW_KEY))
+                    },
+                )
+            }
+            if (state.reorder != null) {
+                ParkRideReorderBlock(
+                    lifted = isDragging || state.reorder?.lifted == PARK_RIDE_ROW_KEY,
+                    modifier = Modifier.draggableHandle(
+                        onDragStarted = { haptic.performHapticFeedback(HapticFeedbackType.LongPress) },
+                    ),
+                ) { row(false) }
+            } else {
+                row(true)
+            }
             Spacer(modifier = Modifier.height(KrailTheme.dimensions.spacingXL))
         }
     }
@@ -143,56 +177,5 @@ private fun setTileOpen(
     expandedMap[stationId] = isOpen
     parkRideStates.firstOrNull { it.stopId == stationId }?.let { station ->
         onEvent(SavedTripUiEvent.ParkRideCardClick(parkRideState = station, isExpanded = isOpen))
-    }
-}
-
-/**
- * The two tip lines above the trips. They are still here until reorder mode (branch 9) replaces
- * the long press hint, and appear only for a rider who has trips.
- */
-internal fun LazyListScope.reorderTipItems(
-    hasSeenReorderTip: Boolean,
-    editing: Boolean,
-    onEvent: (SavedTripUiEvent) -> Unit,
-) {
-    item(key = "onboarding_reorder_tip") {
-        val dim = KrailTheme.dimensions
-        AnimatedVisibility(
-            visible = !hasSeenReorderTip && !editing,
-            enter = expandVertically(animationSpec = tween(durationMillis = 300)) +
-                fadeIn(animationSpec = tween(durationMillis = 250)),
-            exit = shrinkVertically(animationSpec = tween(durationMillis = 200)) +
-                fadeOut(animationSpec = tween(durationMillis = 150)),
-        ) {
-            LaunchedEffect(Unit) { onEvent(SavedTripUiEvent.MarkReorderTipSeen) }
-            Text(
-                text = "💡 Long press any trip to reorder or remove it.",
-                style = KrailTheme.typography.bodySmall,
-                color = KrailTheme.colors.softLabel,
-                modifier = Modifier
-                    .padding(horizontal = dim.pageHorizontalPadding)
-                    .padding(bottom = dim.spacingM),
-            )
-        }
-    }
-
-    item(key = "reorder_hint") {
-        val dim = KrailTheme.dimensions
-        AnimatedVisibility(
-            visible = editing,
-            enter = expandVertically(animationSpec = tween(durationMillis = 250)) +
-                fadeIn(animationSpec = tween(durationMillis = 200)),
-            exit = shrinkVertically(animationSpec = tween(durationMillis = 200)) +
-                fadeOut(animationSpec = tween(durationMillis = 150)),
-        ) {
-            Text(
-                text = "💡 Long press and drag cards to reorder. Tap Done when finished.",
-                style = KrailTheme.typography.bodySmall,
-                color = KrailTheme.colors.softLabel,
-                modifier = Modifier
-                    .padding(horizontal = dim.pageHorizontalPadding)
-                    .padding(bottom = dim.spacingM),
-            )
-        }
     }
 }

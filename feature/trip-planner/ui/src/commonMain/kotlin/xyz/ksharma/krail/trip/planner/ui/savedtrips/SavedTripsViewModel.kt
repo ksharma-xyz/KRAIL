@@ -26,7 +26,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import xyz.ksharma.krail.core.analytics.Analytics
@@ -63,6 +62,7 @@ import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.LabelChipTap
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ReorderSession
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
@@ -168,10 +168,10 @@ class SavedTripsViewModel(
             updateDiscoverState()
             updateInfoTilesUiState()
             updateSelectedStops()
-            // A chip tap left over from before the screen was last away is stale, not a request.
-            updateUiState { copy(labelChipTap = LabelChipTap.Idle) }
+            // A chip tap, or a reorder, left over from before the screen was last away is stale and
+            // was never saved: the rider backgrounded the app mid edit, and that is a cancel.
+            updateUiState { copy(labelChipTap = LabelChipTap.Idle, reorder = null) }
             updateInviteFriendsTileSeenState()
-            loadReorderTipSeenState()
             maybeRequestReview()
         }
         .onCompletion {
@@ -197,7 +197,6 @@ class SavedTripsViewModel(
 
     fun onEvent(event: SavedTripUiEvent) {
         when (event) {
-            is SavedTripUiEvent.DeleteSavedTrip -> onDeleteSavedTrip(event.trip)
             is SavedTripUiEvent.AnalyticsSavedTripCardClick -> onSavedTripCardClick(event)
             SavedTripUiEvent.ReverseStopClick -> {
                 stopResultsManager.reverseSelectedStops()
@@ -242,8 +241,11 @@ class SavedTripsViewModel(
                 copy(dateTimeSelectionItem = event.dateTimeJson?.let(DateTimeSelectionItem::fromJsonString))
             }
             SavedTripUiEvent.StopTracking -> trackingManager.stop()
-            is SavedTripUiEvent.MoveSavedTripToIndex -> onMoveSavedTrip(event.tripId, event.targetIndex)
-            SavedTripUiEvent.MarkReorderTipSeen -> onMarkReorderTipSeen()
+            is SavedTripUiEvent.EnterReorder -> updateReorder { it ?: beginReorder(event.liftedKey) }
+            is SavedTripUiEvent.ReorderMove -> updateReorder { it?.move(event.fromKey, event.toKey) }
+            is SavedTripUiEvent.ReorderRemove -> updateReorder { it?.remove(event.tripId) }
+            SavedTripUiEvent.ReorderDone -> onReorderDone()
+            SavedTripUiEvent.ReorderCancel -> updateReorder { null }
             is SavedTripUiEvent.LabelChipClick -> onLabelChipClick(event.labelKey)
             is SavedTripUiEvent.LabelChipLocated -> onLabelChipLocated(event)
             SavedTripUiEvent.LabelChipTapHandled -> updateUiState { copy(labelChipTap = LabelChipTap.Idle) }
@@ -492,7 +494,9 @@ class SavedTripsViewModel(
         observeSavedTripsJob?.cancel()
         observeSavedTripsJob =
             viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
-                updateUiState { copy(isSavedTripsLoading = true) }
+                // Read with the trips, before the first list is drawn, so the row never jumps.
+                val rowIndex = preferences.getLong(SandookPreferences.KEY_PARK_RIDE_ROW_INDEX)?.toInt()
+                updateUiState { copy(isSavedTripsLoading = true, parkRideRowIndex = rowIndex) }
                 sandook.observeAllTrips()
                     .distinctUntilChanged()
                     .collectLatest { savedTrips ->
@@ -511,38 +515,21 @@ class SavedTripsViewModel(
             }
     }
 
-    private fun onMoveSavedTrip(tripId: String, targetIndex: Int) {
-        val trips = _uiState.value.savedTrips.toMutableList()
-        val fromIndex = trips.indexOfFirst { it.tripId == tripId }
-        if (fromIndex == -1 || targetIndex !in trips.indices) return
-        if (fromIndex == targetIndex) return
-        val moved = trips.removeAt(fromIndex)
-        trips.add(targetIndex, moved)
-        updateUiState { copy(savedTrips = trips.toImmutableList()) }
-        analytics.track(
-            AnalyticsEvent.SavedTripCardReorderedEvent(
-                fromStopId = moved.fromStopId,
-                toStopId = moved.toStopId,
-                previousIndex = fromIndex,
-                newIndex = targetIndex,
-                totalCount = trips.size,
-            ),
-        )
-        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
-            trips.forEachIndexed { index, trip ->
-                sandook.updateSavedTripSortOrder(tripId = trip.tripId, sortOrder = index.toLong())
-            }
-        }
+    /** Changes the open reorder session, or starts or drops it. Nothing is written until Done. */
+    private fun updateReorder(change: SavedTripsState.(ReorderSession?) -> ReorderSession?) {
+        updateUiState { copy(reorder = change(reorder)) }
     }
 
-    private fun onDeleteSavedTrip(savedTrip: Trip) {
-        log("onDeleteSavedTrip: $savedTrip")
-        viewModelScope.launch(context = ioDispatcher) {
-            sandook.deleteTrip(tripId = savedTrip.tripId)
-            analytics.trackDeleteSavedTrip(
-                fromStopId = savedTrip.fromStopId,
-                toStopId = savedTrip.toStopId,
-            )
+    /**
+     * Done. The finished order is applied to the state at once and written once, off the main thread:
+     * the trips and the ones taken off in one transaction, the row's place in one preference.
+     */
+    private fun onReorderDone() {
+        val state = _uiState.value
+        val session = state.reorder ?: return
+        updateUiState { withReorderApplied(session.result()) }
+        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            persistReorder(sandook, preferences, analytics, session, state.savedTrips)
         }
     }
 
@@ -752,18 +739,6 @@ class SavedTripsViewModel(
                 isDiscoverAvailable = this@SavedTripsViewModel.isDiscoverAvailable && savedTrips.isNotEmpty(),
                 displayDiscoverBadge = !preferences.hasDiscoverBeenClicked(),
             )
-        }
-    }
-
-    private suspend fun loadReorderTipSeenState() {
-        val hasSeen = preferences.getBoolean(SandookPreferences.KEY_HAS_SEEN_SAVED_TRIP_CARD_REORDER_TIP) ?: false
-        if (!hasSeen) updateUiState { copy(hasSeenReorderTip = false) }
-    }
-
-    private fun onMarkReorderTipSeen() {
-        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
-            preferences.setBoolean(SandookPreferences.KEY_HAS_SEEN_SAVED_TRIP_CARD_REORDER_TIP, true)
-            // No UI state update — tip stays visible for the current session, hidden on next launch.
         }
     }
 

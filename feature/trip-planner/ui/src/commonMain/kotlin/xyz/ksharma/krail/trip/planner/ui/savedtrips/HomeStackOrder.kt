@@ -1,5 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.PARK_RIDE_ROW_KEY
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ReorderSession
+
 /**
  * Where the Park & Ride row sits among the saved trips on home, `docs/MAP_HOME_UX.md` rule 29: two
  * trips, then the row, then the rest. With one trip the row follows it, and with none it comes
@@ -19,10 +22,24 @@ internal fun rowIndexFor(tripCount: Int, storedIndex: Int? = null): Int =
     (storedIndex ?: DEFAULT_PARK_RIDE_ROW_AFTER_TRIPS).coerceIn(0, tripCount.coerceAtLeast(0))
 
 /**
- * The trips that come before the Park & Ride row and the trips that come after it, in the order
- * the rider keeps them.
+ * The keys of the home stack in the order they are drawn: the saved trips' ids and, when a station
+ * is saved, [PARK_RIDE_ROW_KEY] where the row sits (rule 29).
+ *
+ * Outside reorder mode that is the stored place clamped by [rowIndexFor]. During a reorder it is the
+ * session's working order, so a drag shows at once and a cancel has nothing to undo: the stack goes
+ * back to the saved order and the list animates the cards home. A trip the session has taken off is
+ * not in its keys, and a key that is no longer on home (a station removed mid edit) is dropped.
  */
-internal fun <T> List<T>.splitAroundParkRideRow(rowIndex: Int): Pair<List<T>, List<T>> {
-    val at = rowIndex.coerceIn(0, size)
-    return take(at) to drop(at)
+internal fun homeStackKeys(
+    tripIds: List<String>,
+    hasRow: Boolean,
+    storedIndex: Int?,
+    session: ReorderSession?,
+): List<String> {
+    if (session != null) {
+        val known = tripIds.toSet()
+        return session.keys.filter { key -> if (key == PARK_RIDE_ROW_KEY) hasRow else key in known }
+    }
+    val rowIndex = if (hasRow) rowIndexFor(tripIds.size, storedIndex) else null
+    return ReorderSession.start(tripIds = tripIds, rowIndex = rowIndex).keys
 }

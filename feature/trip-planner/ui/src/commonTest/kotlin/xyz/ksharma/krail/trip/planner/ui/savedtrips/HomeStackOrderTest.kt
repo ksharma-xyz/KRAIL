@@ -1,12 +1,14 @@
 package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.PARK_RIDE_ROW_KEY
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ReorderSession
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
  * Where the Park & Ride row sits among the saved trips (`docs/MAP_HOME_UX.md` rule 29): after the
  * second trip by default, after the only trip with one, first with none, and wherever the rider
- * dragged it, clamped to the trips there are.
+ * dragged it, clamped to the trips there are. During a reorder the stack is the session's order.
  */
 class HomeStackOrderTest {
 
@@ -44,22 +46,69 @@ class HomeStackOrderTest {
     }
 
     @Test
-    fun `trips split around the row in the order the rider keeps them`() {
+    fun `the stack keys put the row after the stored number of trips`() {
         val trips = listOf("a", "b", "c", "d")
+        val row = PARK_RIDE_ROW_KEY
 
-        assertEquals(emptyList<String>() to trips, trips.splitAroundParkRideRow(0))
-        assertEquals(listOf("a") to listOf("b", "c", "d"), trips.splitAroundParkRideRow(1))
-        assertEquals(listOf("a", "b") to listOf("c", "d"), trips.splitAroundParkRideRow(2))
-        assertEquals(trips to emptyList<String>(), trips.splitAroundParkRideRow(4))
+        assertEquals(
+            listOf("a", "b", row, "c", "d"),
+            homeStackKeys(trips, hasRow = true, storedIndex = null, session = null),
+        )
+        assertEquals(
+            listOf(row, "a", "b", "c", "d"),
+            homeStackKeys(trips, hasRow = true, storedIndex = 0, session = null),
+        )
+        assertEquals(
+            listOf("a", "b", "c", "d", row),
+            homeStackKeys(trips, hasRow = true, storedIndex = 9, session = null),
+        )
+        assertEquals(listOf(row), homeStackKeys(emptyList(), hasRow = true, storedIndex = null, session = null))
+        assertEquals(listOf("a"), homeStackKeys(listOf("a"), hasRow = false, storedIndex = 0, session = null))
+        assertEquals(
+            emptyList<String>(),
+            homeStackKeys(emptyList(), hasRow = false, storedIndex = null, session = null),
+        )
     }
 
     @Test
-    fun `a row index past either end still splits and never throws`() {
-        val trips = listOf("a", "b")
+    fun `during a reorder the stack is the session's order, with a removed trip gone`() {
+        val trips = listOf("a", "b", "c")
+        val session = ReorderSession.start(trips, rowIndex = 1).move("a", "c").remove("b")
 
-        assertEquals(trips to emptyList<String>(), trips.splitAroundParkRideRow(99))
-        assertEquals(emptyList<String>() to trips, trips.splitAroundParkRideRow(-1))
-        assertEquals(emptyList<String>() to emptyList<String>(), emptyList<String>().splitAroundParkRideRow(2))
+        assertEquals(
+            session.keys.toList(),
+            homeStackKeys(trips, hasRow = true, storedIndex = 1, session = session),
+        )
+        // Start [a, row, b, c]. Moving a to where c is gives [row, b, c, a], and taking b off gives [row, c, a].
+        assertEquals(
+            listOf(PARK_RIDE_ROW_KEY, "c", "a"),
+            homeStackKeys(trips, hasRow = true, storedIndex = 1, session = session),
+        )
+    }
+
+    @Test
+    fun `a session key that is no longer on home is dropped and never throws`() {
+        val session = ReorderSession.start(listOf("a", "b"), rowIndex = 1)
+
+        assertEquals(
+            listOf("a", "b"),
+            homeStackKeys(listOf("a", "b"), hasRow = false, storedIndex = null, session = session),
+        )
+        assertEquals(
+            listOf("a", PARK_RIDE_ROW_KEY),
+            homeStackKeys(listOf("a"), hasRow = true, storedIndex = null, session = session),
+        )
+    }
+
+    @Test
+    fun `cancel is the saved order again`() {
+        val trips = listOf("a", "b", "c")
+        val saved = homeStackKeys(trips, hasRow = true, storedIndex = null, session = null)
+        val dragging = ReorderSession.start(trips, rowIndex = 2).move("a", "c")
+
+        // Start [a, b, row, c]. Moving a to where c is gives [b, row, c, a].
+        assertEquals(listOf("b", PARK_RIDE_ROW_KEY, "c", "a"), dragging.keys.toList())
+        assertEquals(listOf("a", "b", PARK_RIDE_ROW_KEY, "c"), saved, "Dropping the session shows the saved order")
     }
 
     @Test

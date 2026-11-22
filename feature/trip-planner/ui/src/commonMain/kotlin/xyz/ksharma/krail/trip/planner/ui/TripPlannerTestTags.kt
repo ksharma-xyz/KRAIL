@@ -60,6 +60,11 @@ object TripPlannerTestTags {
     // car park, see [parkRideTile], [parkRideCarPark] and [parkRideDirections].
     const val SAVED_TRIPS_PARK_RIDE_ROW = "savedtrips.parkride.row"
 
+    // Reorder mode (docs/MAP_HOME_UX.md rule 31): the top row that holds Done, and the Park & Ride
+    // row's outlined block. The grips and delete circles are per card, see [Reorder].
+    const val SAVED_TRIPS_REORDER_TOP_ROW = "savedtrips.reorder.top"
+    const val SAVED_TRIPS_PARK_RIDE_BLOCK = "savedtrips.reorder.parkride.block"
+
     // Search row (the bottom origin/destination bar on the home screen)
     const val SEARCH_ROW = "searchrow.root"
     const val SEARCH_ROW_FROM = "searchrow.from"
@@ -127,6 +132,15 @@ object TripPlannerTestTags {
     /** One car park block of an open tile, and its Directions button when it has a position. */
     fun parkRideCarPark(facilityId: String): String = "savedtrips.parkride.carpark.$facilityId"
     fun parkRideDirections(facilityId: String): String = "savedtrips.parkride.directions.$facilityId"
+
+    /** Reorder mode's per card tags, kept in their own object so this one stays under its limit. */
+    object Reorder {
+        /** The grip on a card, by the card's key: a trip's id or the Park & Ride row's key. */
+        fun grip(key: String): String = "savedtrips.reorder.grip.$key"
+
+        /** The delete circle on a trip card. */
+        fun delete(tripId: String): String = "savedtrips.reorder.delete.$tripId"
+    }
 
     /** One Home or Work chip, keyed by the label's name so it is the same whether the label is set or not. */
     fun homeLabelChip(labelKey: String): String = "savedtrips.chip.label.$labelKey"

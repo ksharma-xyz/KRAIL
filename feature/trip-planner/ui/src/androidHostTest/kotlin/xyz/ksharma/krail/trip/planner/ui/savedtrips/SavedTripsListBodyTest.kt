@@ -146,9 +146,7 @@ class SavedTripsListBodyTest {
                     onTrackingCardClick = {},
                     onStopTracking = {},
                     expandedMap = expandedMap,
-                    editing = false,
                     reorderState = reorderState,
-                    onEnterEditing = {},
                 )
             }
         }
@@ -156,7 +154,6 @@ class SavedTripsListBodyTest {
 
     private fun stateWith(trips: Int, stations: Int) = SavedTripsState(
         isSavedTripsLoading = false,
-        hasSeenReorderTip = true,
         savedTrips = TRIPS.take(trips).let { persistentListOf(*it.toTypedArray()) },
         parkRideUiState = STATIONS.take(stations).let { persistentListOf(*it.toTypedArray()) },
     )

@@ -3,14 +3,21 @@ package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
+import kotlinx.collections.immutable.toImmutableList
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.navigation.ResultEffect
+import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapActions
+import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapEntryContent
+import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapEvent
+import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapInputs
+import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapViewModel
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionPane
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
@@ -22,6 +29,7 @@ import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsScreen
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.currentLatLng
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.onLabelStopSelected
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.toTile
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputViewModel
 import xyz.ksharma.krail.trip.planner.ui.search.ai.isHandoffActionable
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
@@ -43,6 +51,10 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
         val viewModel: SavedTripsViewModel = koinViewModel(key = "SavedTripsNav")
         val mapStopSelectionViewModel: MapStopSelectionViewModel = koinViewModel()
         val mapUiState by mapStopSelectionViewModel.mapUiState.collectAsStateWithLifecycle()
+        // The map home's pins and offline notice. With the maps flag off it does no work and the classic home
+        // below is drawn, so a build without the flag keeps today's screen.
+        val homeMapViewModel: HomeMapViewModel = koinViewModel()
+        val homeMapState by homeMapViewModel.uiState.collectAsStateWithLifecycle()
         val savedTripState by viewModel.uiState.collectAsStateWithLifecycle()
 
         val trackedJourney by viewModel.trackedJourney.collectAsStateWithLifecycle()
@@ -141,13 +153,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             tripPlannerNavigator = tripPlannerNavigator,
         )
 
-        SavedTripsScreen(
-            savedTripsState = savedTripState,
-            trackedJourney = trackedJourney,
-            onTrackingCardClick = { tripPlannerNavigator.navigateToTrackTrip() },
-            onStopTracking = { viewModel.onEvent(SavedTripUiEvent.StopTracking) },
-            onAddParkRideClick = { tripPlannerNavigator.navigateToAddParkRide() },
-            onLabelChipClick = { labelKey -> viewModel.onEvent(SavedTripUiEvent.LabelChipClick(labelKey)) },
+        val actions = HomeMapActions(
             fromButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsFromButtonClick)
                 tripPlannerNavigator.navigateToSearchStop(SearchStopFieldType.FROM)
@@ -181,9 +187,6 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                     dateTimeSelectionJson = savedTripState.dateTimeSelectionItem?.toJsonString(),
                 )
             },
-            aiState = aiSearchInputState,
-            onAiEvent = aiSearchInputViewModel::onEvent,
-            aiVoiceLevel = { aiSearchInputViewModel.voiceLevel.value },
             onSettingsButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsSettingsButtonClick)
                 tripPlannerNavigator.navigateToSettings()
@@ -193,16 +196,63 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                 tripPlannerNavigator.navigateToDiscover()
             },
             onEvent = { event -> viewModel.onEvent(event) },
-            rightPane = {
-                MapStopSelectionPane(
-                    mapUiState = mapUiState,
-                    onEvent = mapStopSelectionViewModel::onEvent,
-                    onStopSelected = { stop ->
-                        viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stop.toJsonString()))
-                    },
-                )
-            },
+            onTrackingCardClick = { tripPlannerNavigator.navigateToTrackTrip() },
+            onStopTracking = { viewModel.onEvent(SavedTripUiEvent.StopTracking) },
+            onAddParkRideClick = { tripPlannerNavigator.navigateToAddParkRide() },
+            onLabelChipClick = { labelKey -> viewModel.onEvent(SavedTripUiEvent.LabelChipClick(labelKey)) },
         )
+
+        if (homeMapState.isMapsAvailable) {
+            // The pins are drawn from the labels and the saved stations this screen already holds.
+            val tiles = remember(savedTripState.parkRideUiState) {
+                savedTripState.parkRideUiState.map { it.toTile() }.toImmutableList()
+            }
+            LaunchedEffect(savedTripState.stopLabels, tiles) {
+                homeMapViewModel.onEvent(
+                    HomeMapEvent.InputsChanged(HomeMapInputs(labels = savedTripState.stopLabels, tiles = tiles)),
+                )
+            }
+            HomeMapEntryContent(
+                savedTripsState = savedTripState,
+                homeMapState = homeMapState,
+                mapUiState = mapUiState,
+                userLocationManager = userLocationManager,
+                onMapEvent = mapStopSelectionViewModel::onEvent,
+                trackedJourney = trackedJourney,
+                aiState = aiSearchInputState,
+                onAiEvent = aiSearchInputViewModel::onEvent,
+                aiVoiceLevel = { aiSearchInputViewModel.voiceLevel.value },
+                actions = actions,
+            )
+        } else {
+            SavedTripsScreen(
+                savedTripsState = savedTripState,
+                trackedJourney = trackedJourney,
+                onTrackingCardClick = actions.onTrackingCardClick,
+                onStopTracking = actions.onStopTracking,
+                onAddParkRideClick = actions.onAddParkRideClick,
+                onLabelChipClick = actions.onLabelChipClick,
+                fromButtonClick = actions.fromButtonClick,
+                toButtonClick = actions.toButtonClick,
+                onSavedTripCardClick = actions.onSavedTripCardClick,
+                onSearchButtonClick = actions.onSearchButtonClick,
+                aiState = aiSearchInputState,
+                onAiEvent = aiSearchInputViewModel::onEvent,
+                aiVoiceLevel = { aiSearchInputViewModel.voiceLevel.value },
+                onSettingsButtonClick = actions.onSettingsButtonClick,
+                onDiscoverButtonClick = actions.onDiscoverButtonClick,
+                onEvent = actions.onEvent,
+                rightPane = {
+                    MapStopSelectionPane(
+                        mapUiState = mapUiState,
+                        onEvent = mapStopSelectionViewModel::onEvent,
+                        onStopSelected = { stop ->
+                            viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stop.toJsonString()))
+                        },
+                    )
+                },
+            )
+        }
     }
 }
 

@@ -4,6 +4,15 @@ Status: Draft (every row of "Assumptions for approval" in section 9 is signed of
 Owner: ksharma-xyz
 Touches: `feature/trip-planner/*`, `feature/park-ride/*`, `core/remote-config`, `core/maps/*`, `taj`
 
+> **SUPERSEDED for the home screen (2026-11-22).** The home is not the map-first home. It is main's Saved Trips
+> screen with two additions, specified in section 11 at the end of this document. Everything in this document that
+> describes the home map (the map behind the cards, the Park & Ride tiles and row, the notices, the floating cards on
+> home, the pill, the one column, reorder mode as redesigned, the suggestion and the home chips) is SUPERSEDED. That
+> code is kept in the repository and is drawn by nothing. What stands: Search Stop (its two states, the To and From
+> form, the stay in place picks, the back stack fix), the nearby radius and mode chips, the stop card, the Intro hand
+> off, and the Park & Ride store the Intro and Add Park & Ride write to. The home entry no longer reads the maps flag
+> to choose a screen, and `maps_stop_search` gates only Search Stop's map state.
+
 ---
 
 ## 1. Problem and scope
@@ -1266,3 +1275,71 @@ raised until the whole stack has passed device QA, then it merges bottom-up. No 
     card, 320 dp at 200% text, rotation, dark mode and TalkBack.
 
 Branches 8, 10 and 11 are likely over 500 lines and will be split when built.
+
+## 11. The classic home with two additions (current)
+
+Status: built, `Default, not yet seen by owner` for every row below.
+
+**What it is.** `SavedTripsScreen.kt` and `SavedTripsScreenSections.kt` are main's files, with two changes only. The
+entry draws this screen and nothing else on the home.
+
+1. **Set Home and Set Work pills**, the first row of the list under the title bar (`HomeLabelPills.kt`, the item added
+   at the top of `savedTripsListBody`). One row of whole taj `Button`s at `smallButtonSize()` in taj's default colours,
+   the existing `LabelChip` content (`ChipLabel`), 16 dp inset at both ends, 48 dp touch targets from the interactive size
+   modifier. They never wrap: at large text the row scrolls sideways, whole pills only, with no fade and no overscroll
+   glow. A tap raises `SavedTripUiEvent.LabelChipClick`, and the entry's `LabelChipTapEffect` and the view model's tap state
+   decide it exactly as they did for the chips: unset opens Search Stop in label mode, set plans from the nearest stop or opens
+   Search Stop holding that stop as the destination.
+2. **One search bar** at the bottom (`HomeSearchPill.kt`, in the saved trips package, moved from the home map package so
+   there is one copy). Taj's read only `TextField` in `TextFieldDefaults.invertedColors()`, 48 dp, a full pill, placeholder
+   "Where are you going?", on the page's 16 dp edges. Taj's plain `MicIcon` sits at its end in a 48 dp slot, only when
+   `aiState.isWayInAvailable`. A tap on the bar opens Search Stop on the destination field (`navigateToSearchStop(TO)`), a
+   tap on the microphone raises `AiSearchInputEvent.OpenInput`. It replaces main's From and To `SearchStopRow` in every posture,
+   so the collapsed "Plan a trip" button of compact height landscape is not used.
+
+**Wiring kept.** `AiSearchInputEvent`, the Ask KRAIL dialog and its blur, `RefreshFeatureFlag` on `ON_START`, the shared
+Saved Trips view model by key, the stay in place Search Stop, `TripSearchTrigger` and the back stack fix, the Intro and the
+Park & Ride store. An Ask KRAIL answer opens Search Stop holding the stops it found (`AskKrailHandoffEffect`), because the
+home has no From and To rows to land them in, and the stops are still written to the shared view model.
+
+**The wide window.** The list pane is 480 dp and the right pane is `MapStopSelectionPane`, as on main. The location
+permission notice is the Search Stop chip (`LocationStatusChip`) at the top left of that map pane
+(`navigation/entries/SavedTripsMapPane.kt`), 16 dp from the left edge and 8 dp below the corner safe top inset. The branch's
+map home put its notices in the bottom group of the list pane, above the pill, so there was no earlier place on the map pane.
+The map asks for the permission only when the chip is tapped.
+
+**Unused, kept.** `homemap/` (the screen, entry content, pins, notices, view model, location state), `HomeChipRow`,
+`HomeStackList.kt`, `SavedTripsStackItems.kt`, `ReorderChrome.kt`, `SavedTripsReorder.kt`, `SavedTripsColumn.kt`,
+`ParkRideRow*`, `ParkRideTile.kt`, `parkride/suggestion/`, `stopcard/ParkRidePinCard*` and `SearchStopRow.kt`. Their tests stay and
+run against the map home screen where they used to run against the classic one.
+
+**Cost budget.**
+
+| Question | Answer |
+|---|---|
+| API calls | None new. The pills and the bar read local state. The rest is as before: the saved car parks are fetched on open, gated by the existing cooldown (A5), and an open card polls as on main |
+| Payload and parse | None. No new data is read |
+| Time to first content | Local only, and it does not wait for a map. The pill row is one more item in the first list and the bar slides in with it. On a phone no map composes at all, so the map's tiles and permission check are not paid |
+| UX in loading, slow, failed, offline | The pills and the bar draw from local data, so they look the same offline. The pills wait for the labels, which are read with the trips, so the row never grows a pill later |
+| Caching, dedupe, retries | None added |
+| Battery | No timer, no radio, no background work. The wide window's chip checks the permission on each start of the screen, locally |
+| Shared limits and BFF | Nothing changes. The app still calls NSW directly |
+
+**Tests.** `SavedTripsHomeLayoutTest` (pills first row and scrolling, both pills fit at 411 dp at 100 and 150 percent, one row
+and sideways scroll at 320 dp at 200 percent, the 48 dp bar and microphone, tap routing, nothing of the map home on a phone),
+`SavedTripsMapPaneTest` (the chip), `HomeBarFlowTest` (the real entry and the recording navigator), and the two flow tests that
+used to read stops off the old From and To rows now read the shared state and the Search Stop handoff.
+
+Silent decisions. The brief was silent on each of these. Every one is `Default, not yet seen by owner`.
+
+| # | Assumption | Evidence | What breaks if it is wrong | Decision |
+|---|---|---|---|---|
+| A162 | The bar is the same one row in every posture, so the collapsed "Plan a trip" button of compact height landscape is not used | One row is 48 dp plus its margin, the old expanded row was about 200 dp, so the room that button saved is no longer short | Nothing is hidden. A rider in landscape sees the bar where they saw the button | Default, not yet seen by owner |
+| A163 | The pills are the first row of the list, above the info tiles, and are hidden while cards are reordered | The brief puts them first under the title bar. Main hides the search row in reorder mode for the same reason, a tap must not leave the mode | The list gives up 48 dp when reorder mode starts, animated like the reorder hint | Default, not yet seen by owner |
+| A164 | The bar sits on a strip of the page surface (8 dp above it, 16 dp and the navigation bar below), and the list keeps 160 dp clear at its end | Cards scrolling under a bare pill showed between the pill and the edge. 48 plus 8 plus 16 plus up to 48 for a three button bar is 120 | A different bottom inset leaves more or less blank under the last card | Default, not yet seen by owner |
+| A165 | An Ask KRAIL answer opens Search Stop with the stops it found, as the map home did, and the answer also writes them to the shared view model as main did | The home has no From and To rows to show an answer in | A rider who expected the old rows sees Search Stop with both stops filled | Default, not yet seen by owner |
+| A166 | The handoff spin of the old mic's ring is dropped, because the plain microphone has no ring | The brief says plain, no gradient, no circle | The beat after the dialog closes has no motion on the bar | Default, not yet seen by owner |
+| A167 | The location chip is at the top left of the wide window's map pane, 16 dp in and 8 dp below the corner safe inset, and the map asks only when it is tapped | The map's own controls are at the right and bottom, and its attribution is at the bottom left | A different corner would sit under another control | Default, not yet seen by owner |
+| A168 | The home pill component is the one bar and the map home inherits its look (inverted colours, plain microphone), since there is no second copy | The brief says reuse or move it, never copy it | The unused map home draws a different bar from the one it was designed with | Default, not yet seen by owner |
+| A169 | `ParkRideCard` keeps two additive parameters the Intro needs (a card with no tap, reading space kept). With their defaults it draws exactly as main's | The Intro draws the same card | If the Intro's card is changed to something else, the parameters can go | Default, not yet seen by owner |
+| A170 | The saved car park refresh on open (A5) stays in the view model for the classic home | It is a view model behaviour, not a screen file, and the cooldown gates it | Main did not fetch on open. A rider sees current numbers on a Park & Ride card without tapping it | Default, not yet seen by owner |

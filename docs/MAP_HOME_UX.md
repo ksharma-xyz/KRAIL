@@ -1,5 +1,44 @@
 # Map-first home: design rules
 
+> **The home part of this document is SUPERSEDED (2026-11-22).** The map home is not used. The home is main's Saved
+> Trips screen again, with two additions, described in "The classic home" below. These stay in force: everything about Search Stop (rules 8, 9, 26, 33 to 36 and 39 and the
+> Search Stop section), the Intro's hand-off, the language and spacing rules, and the cost rules. For the home these are
+> SUPERSEDED, and describe code that is kept in the repository and drawn by nothing: rules 1, 2, 3, 5, 10, 12, 20,
+> 24, 28, 29, 31, 38, 40 to 42 and 45 to 47, and the sections Home structure, The card shell, The home stack and
+> Reorder mode. Rules 6 and 7 hold in part: the home has one search bar with the microphone in it, and Search Stop
+> has no microphone.
+
+## The classic home
+
+What the Saved Trips screen is now. It is main's screen, file for file, plus these two additions. Nothing else on it
+changed: the title bar, the tracking card, the section titles, the saved trip cards, reorder and its tip, the Park &
+Ride cards with the pink `P`, and the Add Park & Ride card with its own line.
+
+| Part | What |
+|---|---|
+| Title bar | KRAIL, Discover and Settings, as on main |
+| Pills | Set Home and Set Work, the first row of the list under the title bar. They scroll away with the list and are hidden while the cards are being reordered |
+| List | Info tiles, Tracking Real Time, Saved Trips, Park & Ride, as on main |
+| Bar | One read only search bar at the bottom, in every posture. A tap opens Search Stop on the destination field. The microphone at its end opens Ask KRAIL and shows only where Ask KRAIL is available |
+| Wide window | The 480 dp list pane on the left and the map pane on the right, as on main. The location permission chip is on the map pane |
+
+**The pills.** One row of whole taj `Button`s at the small size in taj's default colours, each the existing chip content
+(the label's icon and its text), 16 dp in from each edge, each with a 48 dp touch target. The row never wraps. When both do not
+fit (large text) the same row scrolls sideways, whole pills only, and nothing fades on any edge, so the next pill peeks in.
+A set label reads "Home" or "Work" and a tap plans from the nearest stop, or opens Search Stop holding that stop as the
+destination when there is no location fix. An unset label reads "Set Home" or "Set Work" and a tap opens Search Stop to set it.
+Both are the existing `LabelChipTapEffect` and its rules, unchanged.
+
+**The bar.** Taj's `TextField`, read only, in `TextFieldDefaults.invertedColors()`, 48 dp tall, a full pill, with the
+placeholder "Where are you going?", on the page's edges (16 dp) and 16 dp above the navigation bar. The microphone is taj's
+`MicIcon` as it ships, plain, in the bar's content colour, in a 48 dp slot flush with the bar's end. There is no From bar, no go
+circle, no swap button and no collapsed "Plan a trip" button.
+
+**Not on the home.** The map, the Park & Ride tiles, the nearby station suggestion, the notices row, floating stop cards, pins and
+the location notice are not drawn on a phone. The location notice is Search Stop's, and the wide window's map pane
+carries it as the same small button, at the pane's top left corner.
+
+
 ## Objective
 
 A rider opens KRAIL and, without reading anything, reaches what they came for.

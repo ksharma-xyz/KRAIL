@@ -186,3 +186,24 @@ onFlowComplete:
       id: "timetable.journey..*"
     direction: DOWN
     timeout: 45000
+
+# --- Back from the results ---
+# After the rotation round trip on the timetable, back must still land on Search Stop with both bars filled
+# and the go circle shown: the back stack is Saved Trips, Search Stop, Timetable, and it is restored whole
+# when the Activity is recreated. Back again leaves for home.
+- back
+- extendedWaitUntil:
+    visible:
+      id: "searchrow.search"
+    timeout: 20000
+- assertVisible:
+    id: "searchrow.to"
+- assertVisible:
+    id: "searchrow.from"
+- assertNotVisible:
+    id: "savedtrips.screen"
+- back
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
+    timeout: 20000

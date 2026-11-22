@@ -143,3 +143,29 @@ appId: ${APP_ID}
       id: "timetable.journey..*"
     direction: DOWN
     timeout: 90000
+
+# --- Back from the results ---
+# The go circle opens the results on top of Search Stop, so back from the timetable lands on Search Stop with
+# the To and From bars still filled and the go circle still shown, and not on home. Back again leaves for
+# home with nothing. The hardware back key exists on Android only, so iOS (a swipe from the edge that
+# Maestro cannot be asked for portably) skips this part.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+      - extendedWaitUntil:
+          visible:
+            id: "searchrow.search"
+          timeout: 30000
+      - assertVisible:
+          id: "searchrow.to"
+      - assertVisible:
+          id: "searchrow.from"
+      - assertNotVisible:
+          id: "savedtrips.screen"
+      - back
+      - extendedWaitUntil:
+          visible:
+            id: "savedtrips.screen"
+          timeout: 30000

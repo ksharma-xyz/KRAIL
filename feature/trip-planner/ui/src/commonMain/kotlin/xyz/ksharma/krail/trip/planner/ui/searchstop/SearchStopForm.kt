@@ -1,0 +1,89 @@
+package xyz.ksharma.krail.trip.planner.ui.searchstop
+
+import xyz.ksharma.aagya.permission.PermissionStatus
+import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
+import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+
+// The form at the top of Search Stop, rules 35 and 36 of `docs/MAP_HOME_UX.md`, and the location
+// status pill under it, rule 24. Each decision is a pure function so none needs a layout.
+
+/** How many bars the form has. */
+internal enum class FormShape {
+    /** A label, or one leg of a trip: one stop, one bar. */
+    Single,
+
+    /** To above From, the shape of the home block. */
+    ToAndFrom,
+}
+
+internal fun formShapeFor(fieldType: SearchStopFieldType, editTripLeg: Boolean): FormShape =
+    if (fieldType == SearchStopFieldType.LABEL || editTripLeg) FormShape.Single else FormShape.ToAndFrom
+
+/**
+ * The placeholder a bar shows while it is empty. The To and From bars always read the same two
+ * phrases. A single bar names what it is for: a label's stop, or the end of the trip being changed.
+ */
+internal fun barPlaceholderFor(
+    field: ToFromField,
+    fieldType: SearchStopFieldType,
+    editTripLeg: Boolean,
+): String = when (formShapeFor(fieldType, editTripLeg)) {
+    FormShape.ToAndFrom -> if (field == ToFromField.From) PLACEHOLDER_FROM else PLACEHOLDER_TO
+    FormShape.Single -> when {
+        fieldType == SearchStopFieldType.LABEL -> PLACEHOLDER_LABEL
+        fieldType == SearchStopFieldType.FROM -> PLACEHOLDER_CHANGE_ORIGIN
+        else -> PLACEHOLDER_CHANGE_DESTINATION
+    }
+}
+
+internal const val PLACEHOLDER_TO = "Choose destination"
+internal const val PLACEHOLDER_FROM = "Choose starting point"
+internal const val PLACEHOLDER_LABEL = "Choose a stop"
+internal const val PLACEHOLDER_CHANGE_ORIGIN = "Change origin"
+internal const val PLACEHOLDER_CHANGE_DESTINATION = "Change destination"
+
+/**
+ * The go circle shows only when the trip can start: From has a start (rule 36, search section 5)
+ * and so does To. With either missing it is not drawn, and the From bar ends where its text does.
+ */
+internal fun goVisible(from: StopItem?, to: StopItem?): Boolean = from != null && to != null
+
+/**
+ * The start to send home alongside a destination the rider just picked, or null for none.
+ *
+ * Only a destination pick on the To and From form carries one, and only when From filled itself
+ * with a stop nearby ([autoFrom]). A trip from a stop to itself is not a trip, so a destination that
+ * is the same stop sends nothing.
+ */
+internal fun startToSendWith(
+    picked: StopItem,
+    editing: ToFromField,
+    shape: FormShape,
+    autoFrom: StopItem?,
+): StopItem? = autoFrom?.takeIf {
+    shape == FormShape.ToAndFrom && editing == ToFromField.To && it.stopId != picked.stopId
+}
+
+/** What the location pill is and does, rule 24. */
+internal enum class LocationPill {
+    /** Nothing: location is on, or the permission has not been looked up yet, so the pill never flashes in. */
+    Hidden,
+
+    /** The rider has not been asked, so tapping asks. */
+    Ask,
+
+    /** The rider refused, or cannot be asked, so tapping opens Settings. */
+    OpenSettings,
+}
+
+/**
+ * The pill for the permission [status] (null until it has been looked up). A fix in hand means
+ * location is on whatever the last lookup said. A refusal opens Settings, the way the location
+ * button and the old banner did, and anything not yet decided asks.
+ */
+internal fun locationPillFor(status: PermissionStatus?, hasUserLocation: Boolean): LocationPill = when {
+    hasUserLocation || status == null || status is PermissionStatus.Granted -> LocationPill.Hidden
+    status is PermissionStatus.Denied || status is PermissionStatus.Restricted -> LocationPill.OpenSettings
+    else -> LocationPill.Ask
+}

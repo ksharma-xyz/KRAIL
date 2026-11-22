@@ -5,7 +5,6 @@ import org.koin.core.module.Module
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
-import xyz.ksharma.krail.core.testing.fakes.FakeConnectivityObserver
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.testing.fakes.FakeInfoTileManager
 import xyz.ksharma.krail.core.testing.fakes.FakeNswParkRideSandook
@@ -15,11 +14,7 @@ import xyz.ksharma.krail.core.testing.fakes.FakePlatformOps
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import xyz.ksharma.krail.feature.track.TrackingManager
-import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapViewModel
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
-import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideStationAdder
-import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionSources
-import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionViewModel
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputViewModel
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.ChainedStopTextResolver
@@ -34,7 +29,6 @@ import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeAppReviewManager
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeInviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeNearbyStopsManagerForMap
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeNearbyStopsRepository
-import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeParkRideCatalogue
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeSpeechToTextService
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
 
@@ -108,31 +102,6 @@ internal class HomeFlowFakes {
         nearbyStopsManager = FakeNearbyStopsManagerForMap(),
     )
 
-    // Maps flag off in the harness, as in a build with no map, so home is today's screen.
-    val homeMapViewModel = HomeMapViewModel(
-        sandook = sandook,
-        connectivity = FakeConnectivityObserver(),
-        flag = flag,
-        ioDispatcher = Dispatchers.Unconfined,
-    )
-
-    // The Park & Ride suggestion. Off with the maps flag, so it offers nothing here and reads nothing.
-    val parkRideSuggestionViewModel = ParkRideSuggestionViewModel(
-        preferences = FakeSandookPreferences(),
-        sources = ParkRideSuggestionSources(
-            catalogue = FakeParkRideCatalogue(),
-            sandook = sandook,
-            parkRideSandook = FakeNswParkRideSandook(),
-        ),
-        adder = ParkRideStationAdder(
-            parkRideSandook = FakeNswParkRideSandook(),
-            analytics = FakeAnalytics(),
-            appReviewManager = FakeAppReviewManager(),
-        ),
-        flag = flag,
-        ioDispatcher = Dispatchers.Unconfined,
-    )
-
     /**
      * What the entry resolves through `koinViewModel()`. The ViewModels the home
      * entry asks for — everything else it needs is already inside them.
@@ -141,7 +110,5 @@ internal class HomeFlowFakes {
         viewModel<SavedTripsViewModel> { savedTripsViewModel }
         viewModel<AiSearchInputViewModel> { aiSearchInputViewModel }
         viewModel<MapStopSelectionViewModel> { mapStopSelectionViewModel }
-        viewModel<HomeMapViewModel> { homeMapViewModel }
-        viewModel<ParkRideSuggestionViewModel> { parkRideSuggestionViewModel }
     }
 }

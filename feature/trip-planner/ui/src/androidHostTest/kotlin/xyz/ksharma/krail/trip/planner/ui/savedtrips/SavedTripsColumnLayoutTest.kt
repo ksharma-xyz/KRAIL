@@ -17,6 +17,7 @@ import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.core.adaptiveui.DUAL_PANE_LIST_WIDTH
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapScreenForTest
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
@@ -74,7 +75,7 @@ class SavedTripsColumnLayoutTest {
 
     private fun assertOneColumn(window: Dp, column: Dp, pane: Dp = window) {
         composeRule.setContent {
-            PreviewTheme { SavedTripsScreen(savedTripsState = STATE) }
+            PreviewTheme { HomeMapScreenForTest(savedTripsState = STATE) }
         }
         composeRule.waitForIdle()
 
@@ -97,8 +98,9 @@ class SavedTripsColumnLayoutTest {
         )
         assertLeft("first Park & Ride tile $at", boundsOfTag(TripPlannerTestTags.parkRideTile(STATION_ID)), cardLeft)
 
+        // The map home's one search pill is on the cards' own edges, so it starts and ends where they do.
         val searchRow = boundsOfTag(TripPlannerTestTags.SEARCH_ROW)
-        assertEdges("search row block $at", searchRow, columnLeft, columnRight)
+        assertEdges("search pill $at", searchRow, cardLeft, cardRight)
 
         assertLeft("search row To field $at", boundsOfTag(TripPlannerTestTags.SEARCH_ROW_TO), cardLeft)
     }

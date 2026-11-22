@@ -3,7 +3,6 @@ package xyz.ksharma.krail.trip.planner.ui.savedtrips
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
@@ -16,7 +15,6 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
@@ -73,8 +71,7 @@ class SavedTripsParkRideRestoreTest {
         restorationTester.emulateSavedInstanceStateRestore()
         composeRule.waitForIdle()
 
-        // The open tile closes from its station name.
-        composeRule.onNodeWithTag(TripPlannerTestTags.parkRideTileName(STATION_ID)).performClick()
+        composeRule.onNodeWithText(FACILITY_NAME).performClick()
         composeRule.waitForIdle()
 
         assertEquals(
@@ -109,7 +106,6 @@ class SavedTripsParkRideRestoreTest {
 
     private companion object {
         const val STOP_NAME = "Bella Vista"
-        const val STATION_ID = "2153478"
         const val FACILITY_NAME = "Bella Vista Car Park"
 
         val STATE_WITH_ONE_PARK_RIDE = SavedTripsState(

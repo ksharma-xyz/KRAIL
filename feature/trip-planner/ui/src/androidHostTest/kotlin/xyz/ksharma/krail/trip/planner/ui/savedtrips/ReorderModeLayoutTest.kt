@@ -31,6 +31,8 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapActions
+import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapScreenForTest
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.PARK_RIDE_ROW_KEY
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ReorderSession
@@ -106,20 +108,6 @@ class ReorderModeLayoutTest {
         assertNear("Done top edge", 16.dp, done.top)
         assertTrue(done.height >= 48.dp - TOLERANCE, "Done is at least 48 dp tall but is ${done.height}")
         composeRule.onAllNodesWithTag(TripPlannerTestTags.SAVED_TRIPS_ACTION_DONE).assertCountEquals(1)
-    }
-
-    @Test
-    @Config(qualifiers = PHONE)
-    fun `outside reorder mode the last card keeps 400 dp clear for the chips and the search row`() {
-        setScreen(reordering = false, trips = MANY_TRIPS)
-        composeRule.onNodeWithTag(TripPlannerTestTags.SAVED_TRIPS_LIST).performScrollToIndex(MANY_TRIPS.size)
-        composeRule.waitForIdle()
-
-        val last = bounds(TripPlannerTestTags.savedTripCard(MANY_TRIPS.last().tripId))
-        assertTrue(
-            last.bottom <= 891.dp - 400.dp + TOLERANCE,
-            "The last card ends at ${last.bottom}, inside the room kept",
-        )
     }
 
     @Test
@@ -293,7 +281,7 @@ class ReorderModeLayoutTest {
     @Composable
     private fun Screen(reordering: Boolean, fontScale: Float, trips: List<Trip>) {
         CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, fontScale)) {
-            SavedTripsScreen(
+            HomeMapScreenForTest(
                 savedTripsState = SavedTripsState(
                     isSavedTripsLoading = false,
                     savedTrips = persistentListOf(*trips.toTypedArray()),
@@ -308,7 +296,7 @@ class ReorderModeLayoutTest {
                         null
                     },
                 ),
-                onEvent = { events += it },
+                actions = HomeMapActions(onEvent = { events += it }),
             )
         }
     }

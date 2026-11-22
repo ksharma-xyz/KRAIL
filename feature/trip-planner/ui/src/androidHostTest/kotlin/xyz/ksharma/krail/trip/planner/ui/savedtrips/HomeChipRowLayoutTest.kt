@@ -29,6 +29,8 @@ import xyz.ksharma.krail.core.adaptiveui.DUAL_PANE_LIST_WIDTH
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapActions
+import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapScreenForTest
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
@@ -65,7 +67,11 @@ class HomeChipRowLayoutTest {
 
         assertTrue(chips.all { it.bottom <= row.top }, "The chips $chips must be above the search row $row.")
         assertNear("gap between the last line of chips and the search row", 8.dp, row.top - chips.maxOf { it.bottom })
-        assertNear("chip row meets the search row", row.top, bounds(TripPlannerTestTags.SAVED_TRIPS_CHIP_ROW).bottom)
+        assertNear(
+            "chip row sits one 8 dp gap above the search row",
+            row.top - 8.dp,
+            bounds(TripPlannerTestTags.SAVED_TRIPS_CHIP_ROW).bottom,
+        )
     }
 
     @Test
@@ -93,9 +99,10 @@ class HomeChipRowLayoutTest {
         val at = "in a $window window (pane $pane)"
 
         val rowBounds = bounds(TripPlannerTestTags.SAVED_TRIPS_CHIP_ROW)
-        assertNear("chip row left edge $at", columnLeft, rowBounds.left)
-        assertNear("chip row right edge $at", columnLeft + column, rowBounds.right)
-        assertNear("search row left edge $at", columnLeft, bounds(TripPlannerTestTags.SEARCH_ROW).left)
+        // The map home's chip row and search pill sit on the cards' own edges, the page padding inside the column.
+        assertNear("chip row left edge $at", cardLeft, rowBounds.left)
+        assertNear("chip row right edge $at", cardRight, rowBounds.right)
+        assertNear("search pill left edge $at", cardLeft, bounds(TripPlannerTestTags.SEARCH_ROW).left)
 
         val chips = allChips().map(::bounds)
         assertNear("first chip left edge $at", cardLeft, chips.minOf { it.left })
@@ -323,14 +330,13 @@ class HomeChipRowLayoutTest {
         composeRule.setContent {
             WithFontScale(fontScale) {
                 PreviewTheme {
-                    SavedTripsScreen(
+                    HomeMapScreenForTest(
                         savedTripsState = SavedTripsState(
                             isSavedTripsLoading = loading,
                             savedTrips = persistentListOf(TRIP),
                             stopLabels = labels,
                         ),
-                        onLabelChipClick = onChipClick,
-                        onAddParkRideClick = onAddParkRide,
+                        actions = HomeMapActions(onLabelChipClick = onChipClick, onAddParkRideClick = onAddParkRide),
                     )
                 }
             }

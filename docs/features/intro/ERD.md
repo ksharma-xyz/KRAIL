@@ -1517,6 +1517,13 @@ in `searchstop/` touched:
   tree, so none of the Intro's tags is visible, the loop ends, and the wait is what lets the finale finish instead of racing it. The six flows that
   call it already wait for `savedtrips.screen` (60 s) straight after, so they hold unchanged, and `maestro check-syntax` accepts the file and all
   six flows. Nothing was run on a device.
+  Unit U9, the new order: the loop starts on `intro.screen` (the first screen is now Park & Ride, so the Train badge is not there), and each
+  pass answers the screen it finds. Park & Ride, the only screen with a secondary button and no trip tile, is answered with
+  `intro.action.secondary`, No (the tag is unchanged, and No needs no wait, no location and no car park). The destination and origin screens
+  are answered by tapping `intro.stop.first` and then the primary once it is enabled. The confirm screen, found by its tile, is answered with
+  the secondary, Not now, which only records the answer and moves on. The theme screen, now last, is answered with `intro.theme.train` and then
+  the primary, which ends the Intro. A cold run therefore ends with two stops chosen and nothing saved, as before, and the finale wait
+  at the end of the flow is unchanged. `maestro check-syntax` accepts the file. A device case, because nothing is run on a device here.
 - **Coverage.** Every PR passes `scripts/patch_coverage.py` at 80 percent or more. The result goes in the PR's Testing section.
 - **Manual cases** (nothing automated reaches them): a real permission dialog on both platforms, a real fix indoors, airplane
   mode on the Yes path, a fresh install on a slow device.
@@ -1727,6 +1734,7 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | U9-9 | The five headlines are complete plain questions, and the longest word, TRANSPORT, is kept whole in a 320 dp window by holding the headline scale lower there only (0.94 in 288 dp, none from about 330 dp) | TRANSPORT does not fit 288 dp at the 1.05 ceiling (292 dp). The five line variant does not help, because it is the word that is wide. Lowering the ceiling would shrink every headline on every phone. If a 320 dp window is not worth a smaller headline, the alternative is to let that window scroll sideways, which the Intro never does, or to reword | Default, not yet seen by owner |
 | U9-10 | The headline room is given by the screen frame to its headline through `LocalHeadlineRoom`, and the headline reads it | The room is only known at layout, and the frame already measures it. A headline outside a frame, such as in a preview, has the ceiling alone | Default, not yet seen by owner |
 | U9-11 | The badges are two columns in reading order, the right column lowered by half a badge and 16 dp further out, the second left row moved in 16 dp, with 24 dp between any two | The spec gave an example of the stagger and left the numbers. 24 dp is the old gap and clears the drift and dance, and 16 dp is the token for a small offset. If the grid should read tighter or looser, change `spacingXL` and `spacingXXXL` at the one call | Default, not yet seen by owner |
+| U9-12 | The Maestro flow waits for `intro.screen` first, not a badge, and finds the Park & Ride screen as the one with a secondary button and no trip tile | The Train badge is no longer on the first screen. `intro.screen` is drawn at once on every screen and keeps the wait cheap. The Park & Ride screen has no tag of its own and no other screen has a secondary button without the tile. If a screen gains a tag, use it | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

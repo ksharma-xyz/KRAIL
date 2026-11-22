@@ -24,7 +24,7 @@ internal class NswBusRoutesManager(
     private val readRoutesBytes: suspend () -> ByteArray = { Res.readBytes("files/NSW_BUSES_ROUTES.pb") },
 ) : StopsManager {
 
-    // Invoked from both RealAppStart and IntroViewModel; serialise so concurrent first-launch
+    // Invoked from both RealAppStart and AppDataReadiness; serialise so concurrent first-launch
     // callers don't both run the full insert (see NswStopsManager for the same guard).
     private val insertMutex = Mutex()
 

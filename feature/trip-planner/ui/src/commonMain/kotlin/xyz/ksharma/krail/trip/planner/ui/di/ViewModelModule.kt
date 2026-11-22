@@ -17,14 +17,12 @@ import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.feature.debug.settings.store.DebugNetworkConfigStore
 import xyz.ksharma.krail.feature.track.TrackingManager
-import xyz.ksharma.krail.io.gtfs.GtfsQualifiers
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertsViewModel
 import xyz.ksharma.krail.trip.planner.ui.alerts.summary.AlertSummaryViewModel
 import xyz.ksharma.krail.trip.planner.ui.alerts.summary.isAlertSummaryEnabled
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorViewModel
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverViewModel
-import xyz.ksharma.krail.trip.planner.ui.intro.IntroViewModel
 import xyz.ksharma.krail.trip.planner.ui.intro.v2.IntroCompletion
 import xyz.ksharma.krail.trip.planner.ui.intro.v2.IntroFlowViewModel
 import xyz.ksharma.krail.trip.planner.ui.intro.v2.IntroParkRideGateway
@@ -131,16 +129,6 @@ val viewModelsModule = module {
                     sandook.observeStopLabels().first().map { label -> label.label }
                 },
             ),
-        )
-    }
-
-    viewModel {
-        IntroViewModel(
-            analytics = get(),
-            platformOps = get(),
-            preferences = get(),
-            nswStopsManager = get(named(GtfsQualifiers.NSW_STOPS_MANAGER)),
-            nswBusRoutesManager = get(named(GtfsQualifiers.NSW_BUS_ROUTES_MANAGER)),
         )
     }
 

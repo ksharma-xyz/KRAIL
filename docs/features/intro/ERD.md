@@ -95,7 +95,7 @@ erDiagram
 
 | Entity | Layer | Source of truth | Identity key | Lifetime |
 |---|---|---|---|---|
-| `IntroState` | ui | `IntroViewModel` | none, one per Intro | Process, survives rotation (view model plus saved state) |
+| `IntroState` | ui | `IntroFlowViewModel` | none, one per Intro | Process, survives rotation (view model plus saved state) |
 | `SuggestedStop` | domain | Bundled default, optionally Remote Config key `intro_suggested_stops` | `stopId` | Until the list is next refreshed |
 | `ParkRideStationPickerItem` (existing) | domain | `ParkRideCatalogue.stations()` | `stationId` (smallest stop id of the group) | Per call |
 | `ParkRideCardStation` and `ParkRideCarPark` (new) | ui state | `IntroParkRideStep`, from the catalogue item and the stored readings | `stationId`, `facilityId` | The Intro, in memory. Only `stationId` is saved |
@@ -120,7 +120,7 @@ erDiagram
 ## 3. Interfaces
 
 ```kotlin
-// module: :io:gtfs (first PR), callers: IntroViewModel, later SearchStop and the map-first home
+// module: :io:gtfs (first PR), callers: IntroFlowViewModel, later SearchStop and the map-first home
 sealed interface StopsReadiness {
     data object Unknown : StopsReadiness
     data object Loading : StopsReadiness
@@ -252,7 +252,7 @@ sealed interface IntroUiEvent {
 sealed interface IntroEffect { data object NavigateToSavedTrips : IntroEffect }
 ```
 
-`IntroFlowViewModel` (named apart from the carousel `IntroViewModel` until that is deleted) exposes `state: StateFlow<IntroState>`, `suggestedStops: SuggestedStops` (read once from the
+`IntroFlowViewModel` exposes `state: StateFlow<IntroState>`, `suggestedStops: SuggestedStops` (read once from the
 `intro_suggested_stops` flag, empty default so the bundled lists apply) and `effects: Flow<IntroEffect>`. It takes a
 `SavedStateHandle` and saves the step, answer, permission result, picks and flags on every change as one JSON string, so
 they survive rotation and the process being killed. It also saves which station the card was for (the station id, or a
@@ -270,7 +270,7 @@ nearest station and the one availability call. It never asks for the permission:
 
 - Every interface has a fake in `:core:testing`: `FakeAppDataReadiness` (controllable state), the existing location, catalogue,
   sandook and park ride fakes, and a fake clock. No `Clock.System` (the `ClockSystemBan` rule).
-- The Intro never calls the trip planner. `IntroViewModel` keeps `StopsManager` out of its constructor and depends on
+- The Intro never calls the trip planner. `IntroFlowViewModel` keeps `StopsManager` out of its constructor and depends on
   `AppDataReadiness` instead.
 - The Add to home action calls `NswParkRideSandook.insertOrReplaceSavedParkRides` with `UserAdded` and does **not** call
   `AppReviewManager.onDelightMoment(PARK_RIDE_ADDED)` (see IA11). The Intro has no review manager to call, and
@@ -317,7 +317,7 @@ sequenceDiagram
     participant App as RealAppStart
     participant R as AppDataReadiness
     participant UI as Intro UI
-    participant VM as IntroViewModel
+    participant VM as IntroFlowViewModel
     participant L as UserLocationManager
     participant C as ParkRideCatalogue
     participant A as Availability
@@ -733,9 +733,10 @@ The 500 event-name budget is respected. Nothing here mints a name.
   (granted, denied, unavailable, not_asked), `addedParkRide` (bool), `savedTrip` (bool), `usedSearch` (bool), `skipped`
   (bool), `stopsWait` (none, under_2s, 2_to_5s, over_5s, failed). Nine params, well inside the 25 per event.
   In code, `IntroLetsKrailClickEvent` carries all eleven params as optional, and a null one is left out of the event, so
-  the carousel keeps sending its two and the new Intro sends its nine until the last carousel caller is removed. That
-  removal deletes `completedOnPage`, `completedOnPageNumber` and the `InteractionPage` enum. The four lists are enums in the
-  event, with the values above, and `IntroOutcomeEventTest` holds them to `IntroOutcome.toParams()`.
+  the carousel sent its two and the new Intro sends its nine. The last carousel caller is now deleted, so nothing sends
+  `completedOnPage` or `completedOnPageNumber` any more. Their definition and the `InteractionPage` enum stay in
+  `AnalyticsEvent` until the analytics side has recorded the removal, because released versions still send them. The four
+  lists are enums in the event, with the values above, and `IntroOutcomeEventTest` holds them to `IntroOutcome.toParams()`.
 - `view_screen` (existing) gets one new screen name, `IntroFirstTrip`. `Intro` stays as step 1. The pair gives the funnel
   with no new event, and a rider who reaches step 2 and never finishes is the drop-off.
 - `park_ride_user_facility` (existing) gains `source = intro`. `save_trip_click` (existing) gains `source = intro`. These make

@@ -23,7 +23,7 @@ internal class NswStopsManager(
     private val readStopsBytes: suspend () -> ByteArray = { Res.readBytes("files/NSW_STOPS.pb") },
 ) : StopsManager {
 
-    // insertStops() is invoked from both RealAppStart and IntroViewModel and they can run
+    // insertStops() is invoked from both RealAppStart and AppDataReadiness and they can run
     // concurrently on first launch. Without this lock both pass shouldInsertNswStops() (the stored
     // version is only written after the transaction commits) and each runs the full ~37k-row
     // insert, doubling the work and the time the DB write lock is held. Serialising here means the

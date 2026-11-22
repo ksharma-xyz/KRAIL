@@ -118,7 +118,6 @@ own, so it is classified here with the state it shares.
 | `DateTimeSelectorViewModel.uiState` |
 | `DebugSettingsViewModel.state` |
 | `DiscoverViewModel.uiState` |
-| `IntroViewModel.uiState` |
 | `MapStopSelectionViewModel.mapUiState` |
 | `SavedTripsViewModel.uiState` |
 | `SavedTripsViewModel.whileScreenSubscribed` |

@@ -271,11 +271,12 @@ declarations don't change beyond the SearchStop fix.
 
 ## 6. First-launch experience
 
-File: [`IntroScreen.kt`](../feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/intro/IntroScreen.kt)
-(7-page carousel, gated on `SandookPreferences.KEY_HAS_SEEN_INTRO`).
+File: [`IntroFlowScreen.kt`](../feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/intro/v2/IntroFlowScreen.kt)
+(two steps, the Park & Ride question and the first trip, gated on `SandookPreferences.KEY_HAS_SEEN_INTRO`).
 
-- Intro carousel stays single-pane on every form factor. It's a
-  one-shot onboarding flow; multi-pane layouts add noise.
+- The Intro stays single-pane on every form factor, capped to a phone
+  width and centred. It's a one-shot onboarding flow; multi-pane
+  layouts add noise.
 - After onboarding, the first impression on tablet lands on SavedTrips
   with the hero treatment described in §4. No additional seeding
   needed — the empty hero + curated `EMPTY_STATE_STOPS` from

@@ -14,15 +14,15 @@ class IntroRhythmTest {
     fun `the rhythm is made of the dimension tokens and nothing of its own`() {
         val rhythm = introRhythm(dim)
 
-        assertEquals(dim.spacingXXXL, rhythm.top)
+        assertEquals(dim.spacingXL, rhythm.top)
         assertEquals(dim.spacingXXXL, rhythm.titleToMiddle)
         assertEquals(dim.spacingXL, rhythm.middleBottom)
         assertEquals(dim.spacingXL, rhythm.fieldToList)
     }
 
     @Test
-    fun `the numbers are 24 dp above and under the headline, and 16 dp under the middle zone and under the search field`() {
-        assertEquals(IntroRhythm(top = 24.dp, titleToMiddle = 24.dp, middleBottom = 16.dp, fieldToList = 16.dp), introRhythm(dim))
+    fun `the numbers are 16 dp above the headline, 24 dp under it, and 16 dp under the middle zone and under the search field`() {
+        assertEquals(IntroRhythm(top = 16.dp, titleToMiddle = 24.dp, middleBottom = 16.dp, fieldToList = 16.dp), introRhythm(dim))
     }
 
     @Test

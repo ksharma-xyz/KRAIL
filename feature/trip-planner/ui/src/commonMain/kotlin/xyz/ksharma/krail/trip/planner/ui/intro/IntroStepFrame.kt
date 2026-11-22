@@ -26,9 +26,9 @@ import kotlin.math.max
  */
 internal data class IntroRhythm(val top: Dp, val titleToMiddle: Dp, val middleBottom: Dp, val fieldToList: Dp)
 
-/** The rhythm for [dim]: 24 dp above the headline and under it, 16 dp under the middle zone and under a search field. */
+/** The rhythm for [dim]: 16 dp above the headline, 24 dp under it, 16 dp under the middle zone and under a search field. */
 internal fun introRhythm(dim: KrailDimensions): IntroRhythm = IntroRhythm(
-    top = dim.spacingXXXL,
+    top = dim.spacingXL,
     titleToMiddle = dim.spacingXXXL,
     middleBottom = dim.spacingXL,
     fieldToList = dim.spacingXL,

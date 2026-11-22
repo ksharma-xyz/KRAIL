@@ -258,7 +258,7 @@ class IntroFlowScreenTest {
     }
 
     @Test
-    fun `every screen starts its headline 24 dp below the top and keeps the same gap under it before what it asks`() {
+    fun `every screen starts its headline, the emoji first, 16 dp below the top, the same on all five`() {
         val headings = mapOf(
             IntroStep.PARK_RIDE to PARK_RIDE_HEADING,
             IntroStep.DESTINATION to DESTINATION_HEADING,
@@ -272,7 +272,11 @@ class IntroFlowScreenTest {
             show(tripPair.copy(step = step))
 
             val bounds = composeRule.onNodeWithText(heading).getUnclippedBoundsInRoot()
-            assertTrue(bounds.top >= rhythm.top - 1.dp, "$step: the headline starts at ${bounds.top}")
+            assertEquals(16.dp, rhythm.top)
+            assertTrue(
+                bounds.top >= rhythm.top - 1.dp && bounds.top <= rhythm.top + 1.dp,
+                "$step: the emoji starts at ${bounds.top}, not ${rhythm.top} below the top",
+            )
         }
     }
 

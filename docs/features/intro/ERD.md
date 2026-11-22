@@ -724,7 +724,7 @@ where it changes something an earlier unit said, the earlier text is edited to m
   and `Pick a place`; for the origin `Starting where?`, `Where are you now?`, `Where do you start?` and `Pick where you begin`. The
   two chosen are the shortest, which is what fits one word to a line at the big headline size at 320 dp.
 - **One vertical rhythm.** `introRhythm(KrailDimensions)` is `IntroRhythm`, and every Intro screen takes its vertical gaps from it, with no number of
-  its own: `top` 24 dp (`spacingXXXL`) above the headline, below the status bar, which took the place of the 48 dp the back arrow's bar used
+  its own: `top` 16 dp (`spacingXL`) above the headline, below the status bar (24 dp until unit U11), which took the place of the 48 dp the back arrow's bar used
   to give; `titleToMiddle` 24 dp under the headline, before whatever the screen asks (the search field, the badges, the card or the tile);
   `middleBottom` 16 dp (`spacingXL`) under the middle zone, above the bar; and `fieldToList` 16 dp (`spacingXL`) between the search field and
   the first row of a list. The room under the emoji is the headline's own (`introEmojiTitleGap`, 20 dp growing with the text to 40 dp) and
@@ -1695,7 +1695,7 @@ in `searchstop/` touched:
   saved and is null on open). Deleted on purpose: the `defaultDestination` and `defaultStart` tests and the `highlightedStop` assertions, the
   tests of the `No, search` button, the focus it gave the field, and the right button being off for no match.
 - **Unit U8 tests, the rhythm.** `IntroRhythmTest` (the numbers are the tokens, at least 16 dp each, the emoji gap above the line gap at every text size),
-  `IntroFlowScreenTest` (every screen's headline starts at least 24 dp below the top), `IntroStopStepNarrowTest` (320 dp at 200 percent: the field
+  `IntroFlowScreenTest` (every screen's headline, the emoji first, starts 16 dp below the top since unit U11, at least 24 dp before it), `IntroStopStepNarrowTest` (320 dp at 200 percent: the field
   is 24 dp under the title, the first row 16 dp under the field, rows do not overlap selected or not) and `IntroThemeStepNarrowTest` (the badges are 24 dp under the headline).
 
 - **Unit U9 part 1 tests, the order and the finish.** Pure tables: `IntroStepFlowTest` (the order for each state and each first screen, the
@@ -1916,6 +1916,7 @@ Each is a default taken to keep moving. None has been seen by the owner. The scr
 | U11-2 | The bar's slot stays out of the room the middle is centred in, shown or not | The reserved height exists so the headline and the middle do not jump when the button appears. Centring in the whole screen would move the middle of Park & Ride, confirm and theme by half a bar when it appears. Only the end of the scroll depends on `shown` | Default, not yet seen by owner |
 | U11-3 | The bar is measured first, in a `SubcomposeLayout`, and its height reaches each frame as `LocalIntroBarInset`. A frame outside the shell, such as a preview, sees no bar | A height read after layout would draw one frame with the wrong room and then move. The cost is one subcomposition of the bar per pass, which is two taj buttons | Default, not yet seen by owner |
 | U11-4 | If the bar goes while the list is scrolled to its very end, the scroll clamps and the rows slide down by up to the bar's height, once | The room for the bar is only there while it is, and the rider cannot un-pick a stop, so this happens only when typing drops the selection, and the list is replaced by the search at the same moment. Keeping the room with no bar would put a hole under the list | Default, not yet seen by owner |
+| U11-5 | The room above the emoji, `introRhythm.top`, is `spacingXL` (16 dp), down from `spacingXXXL` (24 dp), the same on all five screens | The emoji and headline started too low. 16 dp is one third less, and the nearest step below 24 dp, `spacingXXL` (20 dp), would be a sixth. Every other gap is unchanged, so the headline zone, the bar and the rhythm between the zones stay as they were. If it is still too low, `introRhythm.top` is the one number | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

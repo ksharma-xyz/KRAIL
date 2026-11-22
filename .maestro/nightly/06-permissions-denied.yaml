@@ -86,3 +86,6 @@ appId: ${APP_ID}
     timeout: 20000
 - assertVisible:
     id: "searchrow.root"
+# The denial is shown on Search Stop only, and never as a notice on the phone home.
+- assertNotVisible:
+    id: "searchstop.locationpill"

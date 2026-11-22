@@ -75,7 +75,7 @@ maestro --device emulator-5554 test -e APP_ID=xyz.ksharma.krail.debug .maestro/s
 | Flow | Pins |
 |---|---|
 | `smoke/01-launch-home.yaml` | Cold launch reaches home, the saved-trips list and the search row render, the title bar has its actions. |
-| `smoke/02-plan-trip.yaml` | The core journey: pick a destination, pick an origin, get real journey results back from the API, then (Android) back lands on Search Stop with both bars filled and back again on home. Valid with the maps flag on or off. |
+| `smoke/02-plan-trip.yaml` | The core journey: pick a destination, pick an origin, get real journey results back from the API, then (Android) back lands on Search Stop with both bars filled and back again on home. The home is the classic one: Set Home and Set Work pills, then the list, with one search bar at the bottom. |
 | `nightly/03-rotation-sweep.yaml` | Home, search stop and the timetable each survive rotation, including with results and journey data loaded, and back from the rotated timetable still lands on Search Stop. |
 | `nightly/04-background-foreground.yaml` | Backgrounding and returning lands the rider on the screen they left, not on home. |
 | `nightly/05-kill-relaunch.yaml` | After a force-stop the app recovers to home and navigation still works. |
@@ -114,8 +114,8 @@ These are all fixes for failures this suite actually hit, not style preferences.
   screen. A "Save this trip?" prompt above the results pushes every journey card below the fold
   on a short viewport, so an in-place assert measures device height, not behaviour.
 - **Restore device state in `onFlowComplete`.** A flow that fails mid-rotation leaves the device
-  in landscape, where the search row collapses to a single pill, and every later flow in the run
-  fails looking for fields that are not on screen. One failure becomes three.
+  in landscape, which is a different layout, and every later flow in the run
+  fails looking for nodes that are not on screen. One failure becomes three.
 - **Settle before you look, and never guard on a node the app has not drawn yet.** The intro
   dismissal used to be a caller-side `runFlow` conditioned on `intro.screen`. `launchApp`
   returns once the process is foregrounded, not once Compose has drawn, so on a freshly booted

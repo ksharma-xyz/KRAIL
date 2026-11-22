@@ -13,9 +13,9 @@
 # tests the timing of the rotate call rather than whether the screen came back.
 #
 # `onFlowComplete` restores portrait even when the flow fails. Without it a
-# failure here leaves the device in landscape, where the search row collapses to
-# a single pill, and every later flow in the run fails looking for fields that
-# are not on screen. That is exactly how this file was first written, and the
+# failure here leaves the device in landscape, where the home is a different
+# layout, and every later flow in the run fails looking for nodes that are not
+# on screen. That is exactly how this file was first written, and the
 # two cascading failures it caused are the reason for the hook.
 appId: ${APP_ID}
 # Android only, and excluded from the iOS leg by tag.
@@ -56,11 +56,15 @@ onFlowComplete:
     visible:
       id: "savedtrips.screen"
     timeout: 60000
-# In landscape the search row collapses to a pill, so assert the row's root,
-# which is present in both layouts, rather than the portrait-only fields.
+# The one search bar is the same one row in landscape, so assert its root and the
+# pills, which are the first row of the list.
 - extendedWaitUntil:
     visible:
       id: "searchrow.root"
+    timeout: 20000
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.pills"
     timeout: 20000
 
 - setOrientation: PORTRAIT
@@ -70,9 +74,9 @@ onFlowComplete:
     timeout: 60000
 
 # --- Search stop ---
-# The destination first, from `searchrow.to`: it is the To bar on today's home and the only bar, the pill, on
-# the map home. Both open Search Stop, whose To and From form stays on screen through both picks. The origin
-# follows from `searchrow.from` on that form, and the go circle takes the trip out.
+# The destination first, from `searchrow.to`, the home's one search bar. It opens Search Stop, whose To and From
+# form stays on screen through both picks. The origin follows from `searchrow.from` on that form, and the go
+# circle takes the trip out.
 - tapOn:
     id: "searchrow.to"
 

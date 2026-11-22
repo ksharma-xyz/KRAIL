@@ -45,8 +45,10 @@ appId: ${APP_ID}
 
 # Recovered, and still works: navigation out of home has to function after the
 # restart, not just render.
-- assertVisible:
-    id: "searchrow.root"
+- extendedWaitUntil:
+    visible:
+      id: "searchrow.root"
+    timeout: 20000
 - tapOn:
     id: "searchrow.to"
 - extendedWaitUntil:

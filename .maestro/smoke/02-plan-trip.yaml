@@ -1,6 +1,6 @@
-# The core journey: pick a destination, pick an origin, tap the go circle, get a timetable. Valid on today's
-# home and on the map home (the maps flag on): both open Search Stop from `searchrow.to`, and the To and From
-# form there stays on screen through both picks, so the trip leaves only with the go circle.
+# The core journey: pick a destination, pick an origin, tap the go circle, get a timetable. The home's one
+# search bar opens Search Stop from `searchrow.to`, and the To and From form there stays on screen through both
+# picks, so the trip leaves only with the go circle.
 #
 # Every selector is a testTag, and results are chosen by index rather than by
 # name, so the flow does not break when NSW renames a stop or reorders results.
@@ -33,9 +33,8 @@ appId: ${APP_ID}
     timeout: 60000
 
 # --- Destination ---
-# The destination comes first because `searchrow.to` is the one entry that exists in both homes: it is the To
-# bar on today's home and the only bar on the map home, the pill. Both open Search Stop. The trip is the same
-# either way: Central to Town Hall.
+# The destination comes first because `searchrow.to` is the home's one search bar, and it opens Search Stop on the
+# destination field. The trip is Central to Town Hall.
 - tapOn:
     id: "searchrow.to"
 

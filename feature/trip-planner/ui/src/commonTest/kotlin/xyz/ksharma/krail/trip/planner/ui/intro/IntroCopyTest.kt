@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
@@ -8,6 +9,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAvailabilityState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardStation
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
@@ -44,6 +46,11 @@ class IntroCopyTest {
         }
     }
 
+    // The one exemption: a theme's tagline is the app's own copy, read from the theme, and is shown exactly as it is
+    // written, so its exclamation mark is not the Intro's. It is a tagline or one of the lines it is split into, and
+    // nothing else is exempt.
+    private val taglines = KrailThemeStyle.entries.map { it.tagLine }
+
     private fun barWords(): List<String> = states.flatMap { state ->
         readiness.mapNotNull { introBar(state, it) }.flatMap { bar ->
             listOf(bar.left, bar.right).flatMap { listOfNotNull(it.label, it.compactLabel) }
@@ -71,7 +78,8 @@ class IntroCopyTest {
 
     @Test
     fun `no button and no headline has a question mark, an exclamation mark, a colon, a dash, an arrow or a dot`() {
-        val strings = barWords() + PARK_RIDE_HEADLINE + FIRST_TRIP_HEADLINE + PARK_RIDE_HEADING + BACK_DESCRIPTION
+        val strings = barWords() + PARK_RIDE_HEADLINE + FIRST_TRIP_HEADLINE + PARK_RIDE_HEADING + BACK_DESCRIPTION +
+            PICK_THEME_HEADLINE + PICK_THEME_HEADING
 
         strings.forEach { text ->
             BANNED_GLYPHS.forEach { glyph -> assertTrue(!text.contains(glyph), "\"$text\" has $glyph") }
@@ -80,13 +88,55 @@ class IntroCopyTest {
 
     @Test
     fun `a headline is two to four short lines`() {
-        listOf(PARK_RIDE_HEADLINE, FIRST_TRIP_HEADLINE).forEach { lines ->
+        listOf(PARK_RIDE_HEADLINE, FIRST_TRIP_HEADLINE, PICK_THEME_HEADLINE).forEach { lines ->
             assertTrue(lines.size in 2..4, "$lines")
             assertTrue(lines.all { it.isNotBlank() && it.length <= MAX_LINE_LENGTH }, "$lines")
         }
     }
 
+    private fun isTagline(text: String) = taglines.any { text == it || text in taglineLines(it) }
+
+    private fun wordingProblems(text: String): List<String> {
+        if (isTagline(text)) return emptyList()
+        val words = BANNED_WORDS.filter { Regex("\\b$it\\b", RegexOption.IGNORE_CASE).containsMatchIn(text) }
+        val glyphs = BANNED_GLYPHS.filter { text.contains(it) }
+        return words.map { "has the word $it" } + glyphs.map { "has U+${it.code.toString(HEX)}" }
+    }
+
+    @Test
+    fun `every string of the theme screen follows the wording rules, and only the taglines of the themes are exempt`() {
+        val ours = barWords() + PICK_THEME_HEADLINE + PICK_THEME_HEADING +
+            introThemeChoices().flatMap { listOf(it.name, it.letter) }
+        val shown = introThemeChoices().flatMap { introThemeHeadline(it.style.id).lines }
+
+        (ours + shown).forEach { text ->
+            assertTrue(wordingProblems(text).isEmpty(), "\"$text\" ${wordingProblems(text)}")
+        }
+        assertTrue(
+            ours.none { isTagline(it) },
+            "something of the Intro's own is exempt: ${ours.filter { isTagline(it) }}",
+        )
+        assertEquals(
+            introThemeChoices().flatMap { taglineLines(it.style.tagLine) },
+            shown,
+            "the headline after a choice is the tagline's lines and nothing else",
+        )
+    }
+
+    @Test
+    fun `the exemption is not a hole, because a line of our own with the same faults is still caught`() {
+        listOf("Pick your colour!", "Hop on : now", "Skip the line", "Which one?", "Later, then").forEach { text ->
+            assertTrue(wordingProblems(text).isNotEmpty(), "\"$text\" was not caught")
+        }
+        // A tagline with the faults is exempt only as the app's own, and the same text a hair different is not.
+        val tagLine = KrailThemeStyle.Train.tagLine
+        assertTrue(wordingProblems(tagLine).isEmpty(), "the tagline is exempt")
+        assertTrue(wordingProblems("$tagLine now").isNotEmpty(), "the tagline with a word added is not")
+        assertTrue(wordingProblems(tagLine.replace("track", "line")).isNotEmpty(), "a reworded tagline is not")
+    }
+
     private companion object {
+        const val HEX = 16
         val BANNED_WORDS = listOf("Skip", "Later", "Next", "Continue", "Done")
 
         // Written as code points so none of the banned glyphs is typed into this file.

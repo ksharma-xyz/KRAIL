@@ -11,10 +11,10 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 internal fun introPendingTag(step: IntroStep): String = "intro.pending.${step.name.lowercase()}"
 
 /**
- * TEMPORARY. The body of a screen that is not built yet: the theme screen, built in the next unit of
- * the Intro rebuild, and the origin and confirm screens, built in the one after. It draws nothing and
- * exists so every [IntroStep] has a body and the app compiles and runs. Each screen's own unit
- * replaces its use of this and deletes it when the last one has gone.
+ * TEMPORARY. The body of a screen that is not built yet: the origin and confirm screens, built in the
+ * last unit of the Intro rebuild. It draws nothing and exists so every [IntroStep] has a body and the app
+ * compiles and runs. Each screen's own unit replaces its use of this and deletes it when the last one has
+ * gone.
  */
 @Composable
 internal fun IntroPendingStepBody(step: IntroStep, modifier: Modifier = Modifier) {

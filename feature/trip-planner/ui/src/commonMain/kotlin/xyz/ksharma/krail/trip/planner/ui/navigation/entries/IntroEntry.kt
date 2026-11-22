@@ -44,6 +44,8 @@ internal fun EntryProviderScope<NavKey>.IntroEntry(
                 tripPlannerNavigator.clearBackStackAndNavigate(SavedTripsRoute)
             },
             onNavigateToSearchStop = { fieldType -> tripPlannerNavigator.navigateToSearchStop(fieldType) },
+            // The same call the Settings theme screen makes to recolour the whole app.
+            onApplyTheme = { hexColorCode -> tripPlannerNavigator.updateTheme(hexColorCode) },
         )
     }
 }

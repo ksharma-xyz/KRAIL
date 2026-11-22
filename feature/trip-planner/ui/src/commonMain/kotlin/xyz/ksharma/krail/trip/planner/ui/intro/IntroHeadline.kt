@@ -6,6 +6,7 @@ import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -17,11 +18,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -51,6 +54,9 @@ private val LineRiseDistance = 24.dp
  * of the screen the headline is simply in place. Only transforms are animated, through `graphicsLayer`, so
  * nothing is laid out again on a frame.
  *
+ * [minLines] is the least number of lines of room to keep, for a screen whose headline changes length: with it
+ * the headline takes the height of the emoji and that many lines whatever it says, so nothing below it moves.
+ *
  * For a screen reader the whole headline is one heading whose text is the full phrase, with no pause
  * between lines, and the emoji is hidden from it.
  */
@@ -60,6 +66,7 @@ internal fun IntroHeadline(
     emphasisIndex: Int,
     emoji: String,
     modifier: Modifier = Modifier,
+    minLines: Int = 0,
 ) {
     val phrase = introHeadlinePhrase(lines)
     val reduceMotion = isReduceMotionEnabled()
@@ -86,10 +93,12 @@ internal fun IntroHeadline(
     }
 
     Column(
-        modifier = modifier.clearAndSetSemantics {
-            heading()
-            text = AnnotatedString(phrase)
-        },
+        modifier = modifier
+            .heightIn(min = reservedHeadlineHeight(minLines, hasEmoji = emoji.isNotEmpty()))
+            .clearAndSetSemantics {
+                heading()
+                text = AnnotatedString(phrase)
+            },
         verticalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingS),
         horizontalAlignment = Alignment.Start,
     ) {
@@ -125,6 +134,22 @@ internal fun IntroHeadline(
                 },
             )
         }
+    }
+}
+
+/**
+ * The height of the emoji and [minLines] lines of the display style, with the gaps between them, at the rider's
+ * text size. A headline that can change between a few lines and fewer keeps this much room, so what sits
+ * under it never moves when the words change. It grows with the text, because the lines do.
+ */
+@Composable
+private fun reservedHeadlineHeight(minLines: Int, hasEmoji: Boolean): Dp {
+    if (minLines <= 0) return 0.dp
+    val typography = KrailTheme.typography
+    val gap = KrailTheme.dimensions.spacingS
+    return with(LocalDensity.current) {
+        val emojiHeight = if (hasEmoji) typography.emoji.lineHeight.toDp() + gap else 0.dp
+        emojiHeight + (typography.introTagline.lineHeight.toDp() + gap) * minLines - gap
     }
 }
 

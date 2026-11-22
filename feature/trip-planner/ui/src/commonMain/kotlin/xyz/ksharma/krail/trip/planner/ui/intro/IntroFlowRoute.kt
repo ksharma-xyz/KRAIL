@@ -15,7 +15,7 @@ import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 
 /**
- * The two step Intro with its view model: the screen, and the platform glue the screen needs and
+ * The Intro with its view model: the screen, and the platform glue the screen needs and
  * the view model does not have.
  *
  * - State and readiness are collected with the lifecycle, and the one shot [IntroEffect]s only while
@@ -29,6 +29,10 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
  *   start or the end. The stop the rider picks there comes back as one [IntroUiEvent.StopPickedFromSearch]
  *   through [IntroSearchResultEffect].
  *
+ * - The theme the rider selects on the first screen is applied to the whole app through [onApplyTheme], so every
+ *   screen after it, and the buttons on this one, take its colour at once. The theme is also stored when it is
+ *   selected, so the app starts in it however the Intro ends.
+ *
  * [onNavigateToSavedTrips] is where the finish goes.
  */
 @Composable
@@ -36,6 +40,7 @@ internal fun IntroFlowRoute(
     viewModel: IntroFlowViewModel,
     onNavigateToSavedTrips: () -> Unit,
     onNavigateToSearchStop: (SearchStopFieldType) -> Unit,
+    onApplyTheme: (hexColorCode: String) -> Unit,
     modifier: Modifier = Modifier,
     userLocationManager: UserLocationManager = rememberUserLocationManager(),
 ) {
@@ -50,6 +55,11 @@ internal fun IntroFlowRoute(
     val firstTripStep = remember { introFirstTripStep { isStart -> openSearch(introSearchFieldType(isStart)) } }
 
     LaunchedEffect(viewModel, state.step) { viewModel.onStepShown(state.step) }
+
+    // The whole app takes the colour of the theme that is selected, as the Settings theme screen does, and it
+    // does so again each time the Intro is composed with one selected, such as after a turn of the screen.
+    val applyTheme by rememberUpdatedState(onApplyTheme)
+    LaunchedEffect(state.selectedThemeId) { themeHexFor(state.selectedThemeId)?.let { applyTheme(it) } }
 
     IntroLocationEffect(
         awaiting = state.isAwaitingLocation(),

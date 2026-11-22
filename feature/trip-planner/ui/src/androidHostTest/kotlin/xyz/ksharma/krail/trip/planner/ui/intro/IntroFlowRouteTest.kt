@@ -63,6 +63,7 @@ class IntroFlowRouteTest {
     private val analytics = FakeAnalytics()
     private var savedTripsOpened = 0
     private val searchesOpened = mutableListOf<SearchStopFieldType>()
+    private val appliedThemes = mutableListOf<String>()
 
     private val viewModel = IntroFlowViewModel(
         savedStateHandle = SavedStateHandle(),
@@ -89,6 +90,7 @@ class IntroFlowRouteTest {
                     viewModel = viewModel,
                     onNavigateToSavedTrips = { savedTripsOpened++ },
                     onNavigateToSearchStop = { searchesOpened += it },
+                    onApplyTheme = { appliedThemes += it },
                     userLocationManager = manager,
                 )
             }

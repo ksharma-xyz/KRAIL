@@ -81,13 +81,14 @@ internal fun IntroFlowScreen(
                 label = "intro-step",
             ) { step ->
                 when (step) {
+                    IntroStep.THEME -> IntroThemeStepContent(selectedThemeId = state.selectedThemeId, onEvent = onEvent)
                     IntroStep.PARK_RIDE -> IntroParkRideStepContent(state = state)
                     // Temporary: the first trip screen has its own layout until the destination screen is built.
                     IntroStep.DESTINATION -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                         firstTripStep(state, suggestedStops, onEvent)
                     }
-                    // Temporary, until the theme, origin and confirm screens are built.
-                    IntroStep.THEME, IntroStep.ORIGIN, IntroStep.CONFIRM -> IntroPendingStepBody(step)
+                    // Temporary, until the origin and confirm screens are built.
+                    IntroStep.ORIGIN, IntroStep.CONFIRM -> IntroPendingStepBody(step)
                 }
             }
 

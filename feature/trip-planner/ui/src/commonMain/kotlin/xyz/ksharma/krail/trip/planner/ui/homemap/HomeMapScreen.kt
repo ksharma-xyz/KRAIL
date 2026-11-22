@@ -1,10 +1,12 @@
 package xyz.ksharma.krail.trip.planner.ui.homemap
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -17,11 +19,13 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -41,12 +45,15 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import sh.calvin.reorderable.ReorderableLazyListState
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import xyz.ksharma.krail.core.adaptiveui.DualPaneScaffold
 import xyz.ksharma.krail.core.adaptiveui.rememberAdaptiveLayoutInfo
 import xyz.ksharma.krail.feature.track.TrackedJourney
+import xyz.ksharma.krail.taj.LocalTextStyle
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.components.TextFieldButton
 import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.modifier.cornerSafeTopPadding
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -341,8 +348,17 @@ private fun HomeTopRow(
         TitleBar(
             title = {
                 // The wordmark is the brand, not a label: it carries no contrast obligation and must not be
-                // adapted, so it is the rider's colour exactly.
-                Text(text = "KRAIL", color = themeDecorColor())
+                // adapted, so it is the rider's colour exactly. It sits on the same surface the Discover and
+                // Settings buttons beside it have, in taj's text field button with no click (the way taj draws a
+                // read only field at full strength), as wide as the wordmark and 48 dp tall like them.
+                TextFieldButton(
+                    onClick = null,
+                    modifier = Modifier.width(IntrinsicSize.Max).testTag(TripPlannerTestTags.HOME_MAP_LOGO),
+                ) {
+                    CompositionLocalProvider(LocalTextStyle provides KrailTheme.typography.headlineMedium) {
+                        Text(text = "KRAIL", color = themeDecorColor())
+                    }
+                }
             },
             actions = {
                 SavedTripsTitleBarActions(
@@ -402,10 +418,12 @@ private fun HomeCardStack(
 
 /**
  * The bottom group, in the thumb's reach and on the cards' edges, 16 dp above the navigation bar. From the
- * bottom: the one search pill, the notices row directly above it (the location pill and the Map offline
- * chip, centred, in a wrapping row of whole items), then the chips, then the cards. The group grows upward
- * and the card stack stops short of all of it. There is never a second search row: a pick, a pin card and
- * an Ask KRAIL answer all open Search Stop, which holds the To and From form.
+ * bottom: the one search pill, then above it one flow of whole items, the chips and the notices (the location
+ * status and the Map offline status), then the cards. The chips, the notices and the pill share one left and
+ * one right edge, the page padding, and one gap, [KrailDimensions.spacingM], separates the rows. The flow wraps
+ * whole items when a line is full. The group grows upward and the card stack stops short of all of it. There is
+ * never a second search row: a pick, a pin card and an Ask KRAIL answer all open Search Stop, which holds the To
+ * and From form.
  */
 @Composable
 private fun BoxScope.HomeBottomBlock(
@@ -420,6 +438,8 @@ private fun BoxScope.HomeBottomBlock(
     if (chrome.bottom != HomeBottom.Pill) return
     val density = LocalDensity.current
     val dim = KrailTheme.dimensions
+    val chips = if (chrome.chipsShown) homeChipsFor(savedTripsState.stopLabels) else persistentListOf()
+    val notices = if (noticesShownFor(chrome.bottom)) host.notices else persistentListOf()
     Column(
         modifier = Modifier
             .align(Alignment.BottomCenter)
@@ -428,29 +448,25 @@ private fun BoxScope.HomeBottomBlock(
             // Measured with the navigation bar and the 16 dp under it, so the stack stops short of all of it.
             .onSizeChanged { chrome.bottomHeight(with(density) { it.height.toDp() }) }
             .navigationBarsPadding()
-            .padding(bottom = dim.spacingXL),
+            .padding(bottom = dim.spacingXL)
+            .padding(horizontal = dim.pageHorizontalPadding),
+        verticalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {
-        if (chrome.chipsShown) {
+        if (chips.isNotEmpty() || notices.isNotEmpty()) {
             HomeChipRow(
-                chips = homeChipsFor(savedTripsState.stopLabels),
+                chips = chips,
                 onLabelClick = actions.onLabelChipClick,
                 onParkRideClick = actions.onAddParkRideClick,
                 floating = true,
-            )
-        }
-        if (noticesShownFor(chrome.bottom)) {
-            HomeNoticesRow(
-                notices = host.notices,
-                pill = host.locationPill,
-                onLocationClick = host.onLocationClick,
-            )
+            ) {
+                HomeNotices(notices = notices, pill = host.locationPill, onLocationClick = host.onLocationClick)
+            }
         }
         HomeSearchPill(
             onClick = actions.toButtonClick,
             isAiAvailable = aiState.isWayInAvailable,
             onAiEvent = onAiEvent,
             isAiHandoffSettling = askKrailHandoffSpin,
-            modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
         )
     }
 }

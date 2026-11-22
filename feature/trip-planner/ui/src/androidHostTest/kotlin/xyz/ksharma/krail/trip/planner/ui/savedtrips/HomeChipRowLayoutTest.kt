@@ -14,6 +14,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpRect
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
@@ -25,6 +26,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.core.adaptiveui.DUAL_PANE_LIST_WIDTH
+import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
@@ -36,9 +38,9 @@ import kotlin.test.assertTrue
 
 /**
  * Rule 41 and the chip row of `docs/MAP_HOME_UX.md` on the real home screen: the chips sit above
- * the search row on the cards' edges, each is 48 dp and a whole pill with no chevron, a short row
- * wraps whole chips, over 130 percent text it scrolls sideways with the first chip fully visible, a
- * tap plans and there is no long press.
+ * the search row on the cards' edges, each is taj's small filled button with a 48 dp touch target and no
+ * chevron, and the row wraps whole chips at every width and text size (it never scrolls), a tap plans and
+ * there is no long press.
  *
  * Each test runs in a window of its own width (density 1, so a dp is a pixel) and reads where the
  * real nodes landed.
@@ -59,7 +61,7 @@ class HomeChipRowLayoutTest {
         setScreen()
 
         val row = bounds(TripPlannerTestTags.SEARCH_ROW)
-        val chips = allChips().map(::bounds)
+        val chips = allChips().map(::touchBounds)
 
         assertTrue(chips.all { it.bottom <= row.top }, "The chips $chips must be above the search row $row.")
         assertNear("gap between the last line of chips and the search row", 8.dp, row.top - chips.maxOf { it.bottom })
@@ -108,24 +110,39 @@ class HomeChipRowLayoutTest {
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `every chip is 48 dp tall`() {
+    fun `every chip has a 48 dp touch target and draws smaller than that`() {
         setScreen()
 
-        allChips().forEach { tag -> assertNear("height of $tag", 48.dp, bounds(tag).height) }
+        allChips().forEach { tag ->
+            assertNear("touch height of $tag", 48.dp, touchBounds(tag).height)
+            assertTrue(bounds(tag).height < 48.dp, "taj's small button draws less than 48 dp: ${bounds(tag)}")
+        }
     }
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `a chip is its icon, its text and its padding and nothing else, so it has no chevron`() {
+    fun `a chip is its icon, its text and taj's small padding and nothing else, so it has no chevron`() {
         setScreen()
 
-        // 12 dp either side, a 16 dp icon and the 4 dp gap after it, then the text.
+        // taj's small button padding either side, the 20 dp icon and the 4 dp gap after it, then the text.
+        val side = ButtonDefaults.smallButtonSize().padding.calculateLeftPadding(LayoutDirection.Ltr).value.dp
         val setHome = bounds(TripPlannerTestTags.homeLabelChip("Home"))
-        assertNear("Home chip width", 12.dp + 16.dp + 4.dp + textBounds("Home").width + 12.dp, setHome.width)
+        assertNear("Home chip width", side + 20.dp + 4.dp + textBounds("Home").width + side, setHome.width)
         val setWork = bounds(TripPlannerTestTags.homeLabelChip("Work"))
-        assertNear("Set Work chip width", 12.dp + 16.dp + 4.dp + textBounds("Set Work").width + 12.dp, setWork.width)
+        assertNear("Set Work chip width", side + 20.dp + 4.dp + textBounds("Set Work").width + side, setWork.width)
         val parkRide = bounds(TripPlannerTestTags.SAVED_TRIPS_CHIP_PARK_RIDE)
-        assertNear("Park & Ride chip width", 12.dp + textBounds("+ Park & Ride").width + 12.dp, parkRide.width)
+        assertNear("Park & Ride chip width", side + textBounds("+ Park & Ride").width + side, parkRide.width)
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `a set label, an unset label and Park & Ride are one button style, so the three read alike`() {
+        setScreen()
+
+        val heights = allChips().map { touchBounds(it).height }.toSet()
+        assertEquals(1, heights.size, "All three chips have the same touch target: $heights")
+        val texts = listOf("Home", "Set Work", "+ Park & Ride").map { textBounds(it).height }.toSet()
+        assertEquals(1, texts.size, "All three chips set their text in the same type: $texts")
     }
 
     @Test
@@ -163,31 +180,26 @@ class HomeChipRowLayoutTest {
 
     @Test
     @Config(qualifiers = NARROW)
-    fun `at 320 dp and 200 percent the chips are one line that scrolls with the first chip fully visible`() {
+    fun `at 320 dp and 200 percent the chips wrap whole onto more lines and nothing scrolls`() {
         setScreen(fontScale = 2f)
 
-        val chips = allChips().map(::bounds)
-        val rowLeft = PAGE_PADDING
-        val rowRight = 320.dp - PAGE_PADDING
-
-        assertEquals(1, lineTops().size, "Over 130 percent the chips are one sideways line: $chips")
-        assertNear("first chip left edge", rowLeft, chips.first().left)
-        assertTrue(chips.first().right <= rowRight, "The first chip ${chips.first()} must be fully visible.")
-        assertTrue(chips.last().right > rowRight, "There should be more chips off the edge: $chips")
-        chips.forEach { assertTrue(it.height >= 48.dp, "A chip is never under 48 dp: $it") }
+        assertWholeChips(fontScale = 2f)
+        assertTrue(lineTops().size >= 2, "At 200 percent the row wraps, it never scrolls: ${lineTops()}")
+        allChips().map(::touchBounds).forEach { assertTrue(it.height >= 48.dp, "A chip is never under 48 dp: $it") }
     }
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `on a phone at 200 percent the chips scroll too and none is squeezed`() {
+    fun `on a phone at 200 percent the chips wrap too and none is squeezed`() {
         setScreen(fontScale = 2f)
 
         val chips = allChips().map(::bounds)
-        assertEquals(1, lineTops().size, "Over 130 percent the chips are one sideways line: $chips")
         assertTrue(
-            chips.zipWithNext().all { (a, b) -> a.right <= b.left },
+            chips.zipWithNext().all { (a, b) -> a.right <= b.left || a.bottom <= b.top },
             "Chips must not overlap each other: $chips",
         )
+        val row = bounds(TripPlannerTestTags.SAVED_TRIPS_CHIP_ROW)
+        assertTrue(chips.all { it.right <= row.right + 1.dp }, "Every chip is whole inside the row $row: $chips")
     }
 
     private fun assertWholeChips(fontScale: Float) {
@@ -342,6 +354,12 @@ class HomeChipRowLayoutTest {
 
     private fun bounds(tag: String): DpRect =
         composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+
+    /** The whole touch target of a control, which the 48 dp interactive size gives a button that draws smaller. */
+    private fun touchBounds(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true)
+        .fetchSemanticsNode().touchBoundsInRoot.let { rect ->
+            with(composeRule.density) { DpRect(rect.left.toDp(), rect.top.toDp(), rect.right.toDp(), rect.bottom.toDp()) }
+        }
 
     private fun textBounds(text: String): DpRect =
         composeRule.onNodeWithText(text, useUnmergedTree = true).getUnclippedBoundsInRoot()

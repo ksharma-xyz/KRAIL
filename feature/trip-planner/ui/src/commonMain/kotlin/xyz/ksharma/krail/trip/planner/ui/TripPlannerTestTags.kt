@@ -65,9 +65,9 @@ object TripPlannerTestTags {
     // The map home (docs/MAP_HOME_UX.md rules 1, 12, 20 and 24): the row of notices under the top row, the
     // Map offline chip in it, the top row and the bottom block. The search pill keeps the search row's own
     // tags, so a flow written for it still reads.
-    const val HOME_MAP_NOTICES = "homemap.notices"
     const val HOME_MAP_OFFLINE_CHIP = "homemap.offline"
     const val HOME_MAP_TOP_ROW = "homemap.top"
+    const val HOME_MAP_LOGO = "homemap.logo"
     const val HOME_MAP_BOTTOM = "homemap.bottom"
 
     // Reorder mode (docs/MAP_HOME_UX.md rule 31): the top row that holds Done, and the Park & Ride

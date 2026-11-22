@@ -19,8 +19,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 // The Home, Work and Park & Ride chips (docs/MAP_HOME_UX.md rule 41) in the three states a rider
 // sees, one above the other: both unset, both set, and Home set with Work not. The narrow and wide
 // previews sit in the `timetable.narrow` and `timetable.wide` packages, which their own snapshot
-// tests scan, and draw the same frame. The 320 dp one at 2x font is the frame where the row is one
-// sideways line with a fade at the right edge and the first chip fully visible.
+// tests scan, and draw the same frame. The 320 dp one at 2x font is the frame where the chips wrap
+// onto more lines, each one whole.
 
 private val previewHome = StopLabel(emoji = "🏠", label = "Home")
 private val previewWork = StopLabel(emoji = "💼", label = "Work")
@@ -54,7 +54,7 @@ private fun PreviewChips(home: StopLabel, work: StopLabel) {
     )
 }
 
-/** A phone: the chips wrap whole at 100 percent text and scroll sideways at 2x. */
+/** A phone: the chips are whole items that wrap at every text size. */
 @ScreenshotTest
 @PreviewScreen
 @Composable

@@ -52,7 +52,8 @@ import kotlin.test.assertTrue
  * The map home on the real screen, `docs/MAP_HOME_UX.md` rules 1, 6, 12, 20 and 24, the Home structure table and
  * decision G6: the map behind everything, the top row with the logo at the left and Discover beside Settings at
  * the right and nothing else, the card stack below it, and the bottom group. From the bottom that group is the
- * one search pill with the microphone inside it, the notices row directly above it, then the chips.
+ * one search pill with the microphone inside it, then one flow of whole items above it, the chips and the
+ * notices, all on one left and one right edge.
  *
  * The map is a flat stand-in, because a host test has no GPU. Each test runs in a window of its own width (density
  * 1, so a dp is a pixel) and reads where the real nodes landed.
@@ -100,6 +101,20 @@ class HomeMapScreenLayoutTest {
 
     @Test
     @Config(qualifiers = PHONE)
+    fun `the logo sits on a backing as tall as Settings, on one top, left of it`() {
+        setScreen()
+
+        val logo = bounds(TripPlannerTestTags.HOME_MAP_LOGO)
+        val settings = bounds(TripPlannerTestTags.SAVED_TRIPS_ACTION_SETTINGS)
+        assertNear("the backing is as tall as Settings", settings.height, logo.height)
+        assertNear("the backing and Settings share a top", settings.top, logo.top)
+        assertTrue(logo.right < settings.left, "The logo backing $logo is left of Settings $settings.")
+        assertTrue(textBounds("KRAIL").width <= logo.width, "The wordmark is whole inside its backing.")
+        assertTrue(logo.width < PHONE_WIDTH / 2, "The backing is as wide as the wordmark, not the whole row: $logo")
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
     fun `Discover sits beside Settings, left of it, when it is available`() {
         setScreen(state = state(discover = true))
 
@@ -139,9 +154,9 @@ class HomeMapScreenLayoutTest {
 
         val topRow = bounds(TripPlannerTestTags.HOME_MAP_TOP_ROW)
         val settings = bounds(TripPlannerTestTags.SAVED_TRIPS_ACTION_SETTINGS)
-        val notices = bounds(TripPlannerTestTags.HOME_MAP_NOTICES)
+        val notice = bounds(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
         assertTrue(topRow.bottom - settings.bottom <= 24.dp, "Nothing sits under the buttons in the top row $topRow.")
-        assertTrue(notices.top >= topRow.bottom, "The notices $notices are below the top row $topRow, not in it.")
+        assertTrue(notice.top >= topRow.bottom, "The notice $notice is below the top row $topRow, not in it.")
     }
 
     // endregion
@@ -150,14 +165,41 @@ class HomeMapScreenLayoutTest {
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `the location pill is centred just above the search pill`() {
+    fun `the location notice is left aligned on the chips' and the pill's edge, never centred`() {
         setScreen(notices = persistentListOf(HomeNotice.LocationPermission))
 
-        val status = bounds(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
+        val notice = bounds(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
         val search = bounds(TripPlannerTestTags.SEARCH_ROW_TO)
-        assertNear("the pill is centred on the screen", PHONE_WIDTH / 2, status.left + status.width / 2)
-        assertTrue(status.bottom <= search.top + 1.dp, "The status pill $status is above the search pill $search.")
-        assertTrue(search.top - status.bottom <= 1.dp, "Directly above: the pill's own 8 dp is the gap.")
+        val chip = bounds(TripPlannerTestTags.homeLabelChip("Home"))
+        assertNear("the notice starts on the pill's left edge", search.left, notice.left)
+        assertNear("the notice starts on the chips' left edge", chip.left, notice.left)
+        assertNear("the page padding", 16.dp, notice.left)
+        assertTrue(notice.right < PHONE_WIDTH - 16.dp, "The notice $notice is one item at the left, not a full line.")
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `the notice, the chips and the pill share one left edge and one right edge`() {
+        setScreen(notices = persistentListOf(HomeNotice.LocationPermission, HomeNotice.MapOffline))
+
+        val row = bounds(TripPlannerTestTags.SAVED_TRIPS_CHIP_ROW)
+        val search = bounds(TripPlannerTestTags.SEARCH_ROW_TO)
+        assertNear("the flow and the pill share a left edge", search.left, row.left)
+        assertNear("the flow and the pill share a right edge", search.right, row.right)
+        assertNear("the page padding at the left", 16.dp, row.left)
+        assertNear("the page padding at the right", PHONE_WIDTH - 16.dp, row.right)
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `the rows are one gap apart, the notice sits above the search pill`() {
+        setScreen(notices = persistentListOf(HomeNotice.LocationPermission))
+
+        val notice = bounds(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
+        val search = bounds(TripPlannerTestTags.SEARCH_ROW_TO)
+        val row = bounds(TripPlannerTestTags.SAVED_TRIPS_CHIP_ROW)
+        assertTrue(notice.bottom <= search.top, "The notice $notice is above the pill $search.")
+        assertNear("one 8 dp gap between the flow and the pill", 8.dp, search.top - row.bottom)
     }
 
     @Test
@@ -166,12 +208,13 @@ class HomeMapScreenLayoutTest {
         setScreen(notices = persistentListOf(HomeNotice.LocationPermission, HomeNotice.MapOffline))
 
         val search = bounds(TripPlannerTestTags.SEARCH_ROW_TO)
-        val notices = bounds(TripPlannerTestTags.HOME_MAP_NOTICES)
-        val chips = bounds(TripPlannerTestTags.SAVED_TRIPS_CHIP_ROW)
+        val notice = bounds(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
+        val chip = bounds(TripPlannerTestTags.homeLabelChip("Home"))
+        val row = bounds(TripPlannerTestTags.SAVED_TRIPS_CHIP_ROW)
         val list = bounds(TripPlannerTestTags.SAVED_TRIPS_LIST)
-        assertTrue(notices.bottom <= search.top + 1.dp, "The notices $notices are above the pill $search.")
-        assertTrue(chips.bottom <= notices.top + 1.dp, "The chips $chips are above the notices $notices.")
-        assertTrue(list.bottom <= chips.top + 1.dp, "The cards $list stop above the chips $chips.")
+        assertTrue(notice.bottom <= search.top + 1.dp, "The notices $notice are above the pill $search.")
+        assertTrue(chip.bottom <= notice.top + 1.dp, "The chips $chip are above the notices $notice: the notice wraps.")
+        assertTrue(list.bottom <= row.top + 1.dp, "The cards $list stop above the chips and notices $row.")
     }
 
     @Test
@@ -183,25 +226,26 @@ class HomeMapScreenLayoutTest {
         )
 
         val search = bounds(TripPlannerTestTags.SEARCH_ROW_TO)
-        val notices = bounds(TripPlannerTestTags.HOME_MAP_NOTICES)
-        val chips = bounds(TripPlannerTestTags.SAVED_TRIPS_CHIP_ROW)
+        val notice = bounds(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
+        val offline = bounds(TripPlannerTestTags.HOME_MAP_OFFLINE_CHIP)
+        val row = bounds(TripPlannerTestTags.SAVED_TRIPS_CHIP_ROW)
         val list = bounds(TripPlannerTestTags.SAVED_TRIPS_LIST)
-        assertTrue(notices.bottom <= search.top + 1.dp, "The notices $notices stay above the pill $search.")
-        assertTrue(chips.bottom <= notices.top + 1.dp, "The chips $chips stay above the notices $notices.")
-        assertTrue(list.bottom <= chips.top + 1.dp, "The stack $list shrinks to stop above the chips $chips.")
+        assertTrue(notice.bottom <= search.top + 1.dp, "The notice $notice stays above the pill $search.")
+        assertTrue(offline.bottom <= search.top + 1.dp, "The offline notice $offline stays above the pill $search.")
+        assertTrue(list.bottom <= row.top + 1.dp, "The stack $list shrinks to stop above the group $row.")
         assertTrue(search.bottom <= PHONE_NARROW_HEIGHT - 16.dp + 1.dp, "The pill keeps its 16 dp at the bottom.")
     }
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `with both notices the two share one row, centred as a pair, while there is room`() {
+    fun `with both notices the two share one line, left aligned as a pair, while there is room`() {
         setScreen(notices = persistentListOf(HomeNotice.LocationPermission, HomeNotice.MapOffline))
 
         val pill = bounds(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
         val chip = bounds(TripPlannerTestTags.HOME_MAP_OFFLINE_CHIP)
-        assertNear("one row, so one top", pill.top, chip.top)
+        assertNear("one line, so one top", pill.top, chip.top)
         assertTrue(pill.right <= chip.left, "The pill $pill comes first, then the chip $chip.")
-        assertNear("the pair is centred", PHONE_WIDTH / 2, (pill.left + chip.right) / 2)
+        assertNear("the pair starts on the page edge", 16.dp, pill.left)
     }
 
     @Test
@@ -223,7 +267,7 @@ class HomeMapScreenLayoutTest {
             pillText.left >= pill.left - 1.dp && pillText.right <= pill.right + 1.dp,
             "The pill text $pillText is whole inside the pill $pill.",
         )
-        assertNear("the chip is centred", NARROW_WIDTH / 2, chip.left + chip.width / 2)
+        assertNear("the chip is left aligned on the page edge", 16.dp, chip.left)
     }
 
     @Test
@@ -256,10 +300,11 @@ class HomeMapScreenLayoutTest {
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `no notice draws no row at all`() {
+    fun `no notice draws nothing`() {
         setScreen(notices = persistentListOf())
 
-        composeRule.onNodeWithTag(TripPlannerTestTags.HOME_MAP_NOTICES).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.HOME_MAP_OFFLINE_CHIP).assertDoesNotExist()
     }
 
     // endregion
@@ -285,8 +330,8 @@ class HomeMapScreenLayoutTest {
         setScreen()
 
         val pill = bounds(TripPlannerTestTags.SEARCH_ROW_TO)
-        val chip = bounds(TripPlannerTestTags.homeLabelChip("Home"))
-        assertNear("gap between the chips and the pill", 8.dp, pill.top - chip.bottom)
+        val chip = touchBounds(TripPlannerTestTags.homeLabelChip("Home"))
+        assertNear("gap between the chips' touch targets and the pill", 8.dp, pill.top - chip.bottom)
     }
 
     @Test
@@ -348,13 +393,19 @@ class HomeMapScreenLayoutTest {
 
     @Test
     @Config(qualifiers = NARROW)
-    fun `at 320 dp and 200 percent text the chips scroll in one line with the first whole`() {
+    fun `at 320 dp and 200 percent text the chips wrap whole onto more lines and nothing scrolls`() {
         setScreen(fontScale = 2f)
 
         val row = bounds(TripPlannerTestTags.SAVED_TRIPS_CHIP_ROW)
-        val first = bounds(TripPlannerTestTags.homeLabelChip("Home"))
-        assertTrue(first.left >= row.left, "The first chip $first is whole inside the row $row.")
-        assertTrue(first.right <= row.right, "The first chip $first is whole inside the row $row.")
+        val chips = listOf(
+            bounds(TripPlannerTestTags.homeLabelChip("Home")),
+            bounds(TripPlannerTestTags.homeLabelChip("Work")),
+            bounds(TripPlannerTestTags.SAVED_TRIPS_CHIP_PARK_RIDE),
+        )
+        chips.forEach { chip ->
+            assertTrue(chip.left >= row.left - 1.dp && chip.right <= row.right + 1.dp, "$chip is whole inside the row $row.")
+        }
+        assertTrue(chips.map { it.top }.toSet().size >= 2, "The chips wrap onto more than one line: $chips")
     }
 
     // endregion
@@ -496,6 +547,12 @@ class HomeMapScreenLayoutTest {
 
     private fun bounds(tag: String): DpRect =
         composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+
+    /** The whole touch target of a control, which the 48 dp interactive size gives a button that draws smaller. */
+    private fun touchBounds(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true)
+        .fetchSemanticsNode().touchBoundsInRoot.let { rect ->
+            with(composeRule.density) { DpRect(rect.left.toDp(), rect.top.toDp(), rect.right.toDp(), rect.bottom.toDp()) }
+        }
 
     private fun textBounds(text: String): DpRect =
         composeRule.onNodeWithText(text, useUnmergedTree = true).getUnclippedBoundsInRoot()

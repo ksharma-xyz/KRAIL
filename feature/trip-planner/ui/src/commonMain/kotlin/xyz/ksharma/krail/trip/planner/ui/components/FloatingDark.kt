@@ -1,8 +1,13 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
+import androidx.compose.material3.ButtonColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import xyz.ksharma.krail.taj.LocalContentColor
+import xyz.ksharma.krail.taj.LocalTextColor
+import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.TextFieldColors
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.ThemeController
@@ -33,6 +38,42 @@ internal object FloatingDark {
     val content: Color
         @Composable get() = KrailTheme.colors.onStopLabelSurface
 
+    /** What is drawn on [container] a step quieter than [content]: a time, a placeholder. */
+    val softContent: Color
+        @Composable get() = content.copy(alpha = PLACEHOLDER_ALPHA)
+
+    /**
+     * taj's filled [xyz.ksharma.krail.taj.components.Button] in the one dark: the fixed container with the fixed
+     * light content, passed through the button's own `colors` parameter and nothing else.
+     */
+    @Composable
+    fun buttonColors(): ButtonColors = ButtonDefaults.buttonColors(
+        customContainerColor = container,
+        customContentColor = content,
+    )
+
+    /**
+     * taj's [xyz.ksharma.krail.taj.components.OutlinedButton] on a fixed dark card: no fill, the fixed light
+     * content for the text and the outline.
+     */
+    @Composable
+    fun outlinedButtonColors(): ButtonColors = ButtonDefaults.buttonColors(
+        customContainerColor = Color.Transparent,
+        customContentColor = content,
+    )
+
+    /**
+     * A field that is its own pill on the map: the fixed dark fill, light text and caret, and a placeholder a
+     * step quieter than a typed word. The same colours whether the field has focus or not.
+     */
+    @Composable
+    fun fieldColors(): TextFieldColors = TextFieldColors(
+        containerColor = container,
+        contentColor = content,
+        placeholderColor = softContent,
+        cursorColor = content,
+    )
+
     /**
      * A bar that is a row on the card's own surface: no fill of its own, light text and caret, and a
      * placeholder a step quieter than a typed stop. The same colours whether the bar has focus or not.
@@ -47,8 +88,22 @@ internal object FloatingDark {
 }
 
 /**
- * Everything inside reads the dark scheme whatever the app mode is. Held to the floating cards and
- * buttons only; nothing else on the screen is inside it.
+ * The fixed light for the text and icons of a card that floats on the map: taj's own text and icon colour
+ * locals, so every taj text without a colour of its own reads [FloatingDark.content] in both app modes.
+ */
+@Composable
+internal fun FloatingContent(content: @Composable () -> Unit) {
+    CompositionLocalProvider(
+        LocalTextColor provides FloatingDark.content,
+        LocalContentColor provides FloatingDark.content,
+        content = content,
+    )
+}
+
+/**
+ * Everything inside reads the dark scheme whatever the app mode is. Held to the places that reuse a
+ * component which reads mode adaptive tokens inside and takes no colours (the departure board's rows and the
+ * label pills); nothing else on the screen is inside it.
  */
 @Composable
 internal fun FloatingDarkTheme(content: @Composable () -> Unit) {

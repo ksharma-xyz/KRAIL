@@ -230,7 +230,7 @@ internal fun BoxScope.SavedTripsBottomSearchRow(
         Column {
             // Above the row and inside its column, so the chips share the cards' edges. Only while
             // the row is open: phone landscape collapses it to one button because height is short.
-            if (isExpanded) {
+            if (isExpanded && homeChips.isNotEmpty()) {
                 HomeChipRow(
                     chips = homeChips,
                     onLabelClick = onLabelChipClick,

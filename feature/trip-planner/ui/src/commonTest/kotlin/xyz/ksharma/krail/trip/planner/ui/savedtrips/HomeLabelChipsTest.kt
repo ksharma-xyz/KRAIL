@@ -19,24 +19,6 @@ import kotlin.test.assertNull
  */
 class HomeLabelChipsTest {
 
-    // region the scroll boundary
-
-    @Test
-    fun `the chip row wraps up to and including 130 percent text`() {
-        listOf(0.85f, 1f, 1.15f, 1.3f).forEach { scale ->
-            assertEquals(ChipRowMode.Wrap, chipRowModeFor(scale), "At $scale the chips wrap whole.")
-        }
-    }
-
-    @Test
-    fun `the chip row scrolls sideways over 130 percent text`() {
-        listOf(1.31f, 1.5f, 2f, 3f).forEach { scale ->
-            assertEquals(ChipRowMode.Scroll, chipRowModeFor(scale), "At $scale the chips scroll.")
-        }
-    }
-
-    // endregion
-
     // region the chips
 
     @Test

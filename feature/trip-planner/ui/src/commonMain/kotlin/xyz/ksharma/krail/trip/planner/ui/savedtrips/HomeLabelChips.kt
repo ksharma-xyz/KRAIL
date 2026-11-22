@@ -15,30 +15,11 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 // that decides something lives here as a pure function, so each rule is driven at its boundary
 // without a layout, a location fix or a database.
 
-/** Text above this scale is "over 130 percent", where the chip row scrolls instead of wrapping. */
-internal const val CHIP_ROW_SCROLL_ABOVE_FONT_SCALE = 1.3f
-
 /** How far from the rider a stop can be and still count as the nearest one, the same as Ask KRAIL's origin. */
 internal const val LABEL_TAP_RADIUS_KM = 1.0
 
 /** Rows asked of the stops query. A handful, so the nearest is chosen here with a tie rule, not by the query alone. */
 internal const val LABEL_TAP_CANDIDATES = 5
-
-/** How the chip row lays out its chips. */
-internal enum class ChipRowMode {
-    /** Whole chips wrap onto the next line. */
-    Wrap,
-
-    /** One line that scrolls sideways, because stacked chips would take too much height. */
-    Scroll,
-}
-
-/**
- * Wrap whole chips, except over 130 percent text, where stacked chips take too much height and the
- * one sideways row the rule allows is used. Exactly 130 percent still wraps.
- */
-internal fun chipRowModeFor(fontScale: Float): ChipRowMode =
-    if (fontScale > CHIP_ROW_SCROLL_ABOVE_FONT_SCALE) ChipRowMode.Scroll else ChipRowMode.Wrap
 
 /** One chip in the row. */
 internal sealed interface HomeChip {

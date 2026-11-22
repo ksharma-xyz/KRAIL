@@ -8,41 +8,51 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_settings
 import org.jetbrains.compose.resources.painterResource
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.ReorderableLazyListState
 import xyz.ksharma.krail.feature.track.TrackedJourney
+import xyz.ksharma.krail.park.ride.ui.components.AddParkRideCard
 import xyz.ksharma.krail.taj.LocalContentColor
+import xyz.ksharma.krail.taj.components.Button
+import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.RoundIconButton
+import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.CityCodeText
+import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
 import xyz.ksharma.krail.trip.planner.ui.components.SavedTripCard
-import xyz.ksharma.krail.trip.planner.ui.components.SearchStopRow
-import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionSlot
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
-import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ReorderSession
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
@@ -52,9 +62,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 /**
- * Full LazyColumn body for [SavedTripsScreen], `docs/MAP_HOME_UX.md` rule 29: info tiles, the
- * tracked trip, then the stack: two trips, the one Park & Ride row, then the rest of the trips. With
- * one trip the row follows it, with none it comes first, and with no saved station there is no row.
+ * Full LazyColumn body for [SavedTripsScreen]. The Set Home and Set Work pills, info tiles, then the Saved
+ * Trips section only when there is something saved, then Park & Ride which always renders.
  */
 internal fun LazyListScope.savedTripsListBody(
     savedTripsState: SavedTripsState,
@@ -64,21 +73,44 @@ internal fun LazyListScope.savedTripsListBody(
     onTrackingCardClick: () -> Unit,
     onStopTracking: () -> Unit,
     expandedMap: SnapshotStateMap<String, Boolean>,
+    editing: Boolean,
     reorderState: ReorderableLazyListState,
-    suggestion: ParkRideSuggestionSlot? = null,
+    onEnterEditing: () -> Unit,
+    onAddParkRideClick: () -> Unit,
 ) {
     if (savedTripsState.isSavedTripsLoading) return
 
+    labelPillsItem(
+        stopLabels = savedTripsState.stopLabels,
+        visible = !editing,
+        onLabelClick = { labelKey -> onEvent(SavedTripUiEvent.LabelChipClick(labelKey)) },
+    )
     savedTripsInfoTiles(savedTripsState, onEvent)
-    trackingSection(trackedJourney, onTrackingCardClick, onStopTracking)
-    homeStackItems(
-        HomeStackContext(
-            state = savedTripsState,
-            expandedMap = expandedMap,
+
+    // Nothing saved means no Saved Trips section at all — not a heading over an empty space.
+    // The bottom search row is already the "plan a trip" affordance, so an empty section only
+    // pushed Park & Ride down behind a header that explained nothing.
+    if (savedTripsState.savedTrips.isNotEmpty()) {
+        savedTripsContent(
+            savedTripsState = savedTripsState,
+            trackedJourney = trackedJourney,
+            onEvent = onEvent,
+            onSavedTripCardClick = onSavedTripCardClick,
+            onTrackingCardClick = onTrackingCardClick,
+            onStopTracking = onStopTracking,
+            editing = editing,
             reorderState = reorderState,
-            actions = SavedTripActions(onCardClick = onSavedTripCardClick, onEvent = onEvent),
-            suggestion = suggestion,
-        ),
+            onEnterEditing = onEnterEditing,
+        )
+    }
+
+    // Outside the saved-trips branch on purpose: Park & Ride has to be reachable by a rider
+    // who has saved nothing, which is exactly the case the old empty branch skipped it in.
+    parkRideSection(
+        savedTripsState = savedTripsState,
+        expandedMap = expandedMap,
+        onEvent = onEvent,
+        onAddParkRideClick = onAddParkRideClick,
     )
 }
 
@@ -97,31 +129,112 @@ private fun LazyListScope.savedTripsInfoTiles(
 }
 
 /**
- * One saved trip card. In reorder mode it carries a grip centred on its top edge and the delete
- * circle, the whole card is the drag target, and the card the long press lifted is drawn lifted.
- * Outside it a long press on the card is the one way in: it begins the mode with this card lifted.
+ * The home screen's Park & Ride section.
+ *
+ * Always rendered, including for a rider with nothing saved: with no cards the section is
+ * just the "+ Add" card, so Park & Ride is discoverable without first saving a trip. The
+ * cards themselves are the existing [ParkRideCard] unchanged — whether a card came from a
+ * saved trip or an explicit add is internal, used only for de-duplication and removal, and is
+ * deliberately not surfaced on the card.
+ *
+ * Expansion still drives polling exactly as before: tapping a card raises
+ * [SavedTripUiEvent.ParkRideCardClick], and nothing here fetches on its own.
  */
+internal fun LazyListScope.parkRideSection(
+    savedTripsState: SavedTripsState,
+    expandedMap: SnapshotStateMap<String, Boolean>,
+    onEvent: (SavedTripUiEvent) -> Unit,
+    onAddParkRideClick: () -> Unit,
+) {
+    stickyHeader(key = "park_ride_title") {
+        SavedTripsTitle {
+            Text(text = "Park & Ride")
+        }
+    }
+
+    items(
+        items = savedTripsState.parkRideUiState,
+        key = { parkRide -> parkRide.stopId },
+    ) { parkRide ->
+        val dim = KrailTheme.dimensions
+        val isExpanded = expandedMap[parkRide.stopId] ?: false
+
+        ParkRideCard(
+            isExpanded = isExpanded,
+            modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
+            onClick = {
+                val newExpanded = !isExpanded
+                expandedMap[parkRide.stopId] = newExpanded
+                onEvent(
+                    SavedTripUiEvent.ParkRideCardClick(
+                        parkRideState = parkRide,
+                        isExpanded = newExpanded,
+                    ),
+                )
+            },
+            parkRideUiState = parkRide,
+        )
+
+        Spacer(modifier = Modifier.height(dim.spacingXL))
+    }
+
+    item(key = "park_ride_add_card") {
+        val dim = KrailTheme.dimensions
+        val hasCards = savedTripsState.parkRideUiState.isNotEmpty()
+
+        Column(modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding)) {
+            AddParkRideCard(
+                label = if (hasCards) "Add another" else "Add Park & Ride",
+                onClick = onAddParkRideClick,
+            )
+
+            // Only worth saying while the section has nothing in it. Once cards exist the
+            // rider has already found the feature and the line is just noise under it.
+            if (!hasCards) {
+                Text(
+                    text = "Save a trip and its station's parking shows here automatically.",
+                    style = KrailTheme.typography.bodySmall,
+                    color = KrailTheme.colors.softLabel,
+                    modifier = Modifier.padding(top = dim.spacingM),
+                )
+            }
+
+            Spacer(modifier = Modifier.height(dim.spacingXL))
+        }
+    }
+}
+
 @Composable
 internal fun LazyItemScope.SavedTripItem(
     trip: Trip,
     stopLabels: ImmutableList<StopLabel>,
-    reorder: ReorderSession?,
+    editing: Boolean,
     reorderState: ReorderableLazyListState,
-    actions: SavedTripActions,
+    onSavedTripCardClick: (StopItem?, StopItem?) -> Unit,
+    onEnterEditing: () -> Unit,
+    onDelete: () -> Unit,
 ) {
     val dim = KrailTheme.dimensions
     val haptic = LocalHapticFeedback.current
-    val editing = reorder != null
 
     ReorderableItem(reorderState, key = trip.tripId) { isDragging ->
+        val rotation = rememberWiggleRotation(
+            active = editing && !isDragging,
+            seed = trip.tripId.hashCode(),
+        )
+
         Column(modifier = Modifier.padding(top = if (editing) dim.spacingS else dim.spacingNone)) {
-            Box(modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding)) {
+            Box(
+                modifier = Modifier
+                    .graphicsLayer { rotationZ = rotation }
+                    .padding(horizontal = dim.pageHorizontalPadding),
+            ) {
                 SavedTripCard(
                     fromDisplay = trip.fromStopDisplay(stopLabels),
                     toDisplay = trip.toStopDisplay(stopLabels),
                     onCardClick = {
                         if (!editing) {
-                            actions.onCardClick(
+                            onSavedTripCardClick(
                                 StopItem(stopId = trip.fromStopId, stopName = trip.fromStopName),
                                 StopItem(stopId = trip.toStopId, stopName = trip.toStopName),
                             )
@@ -131,29 +244,24 @@ internal fun LazyItemScope.SavedTripItem(
                     onLongClick = if (!editing) {
                         {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            actions.onEvent(SavedTripUiEvent.EnterReorder(liftedKey = trip.tripId))
+                            onEnterEditing()
                         }
                     } else {
                         null
                     },
                     modifier = Modifier
                         .testTag(TripPlannerTestTags.savedTripCard(trip.tripId))
-                        .liftedLook(isDragging || reorder?.lifted == trip.tripId)
-                        .draggableHandle(
+                        .longPressDraggableHandle(
                             enabled = editing,
-                            onDragStarted = { haptic.performHapticFeedback(HapticFeedbackType.LongPress) },
+                            onDragStarted = {
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            },
                         ),
                 )
 
                 if (editing) {
-                    ReorderGrip(
-                        key = trip.tripId,
-                        wide = false,
-                        modifier = Modifier.align(Alignment.TopCenter),
-                    )
                     TripDeleteOverlay(
-                        onClick = { actions.onEvent(SavedTripUiEvent.ReorderRemove(tripId = trip.tripId)) },
-                        tag = TripPlannerTestTags.Reorder.delete(trip.tripId),
+                        onClick = onDelete,
                         modifier = Modifier.align(Alignment.TopEnd),
                     )
                 }
@@ -166,59 +274,63 @@ internal fun LazyItemScope.SavedTripItem(
 
 @Composable
 internal fun SavedTripsTitleBarActions(
+    editing: Boolean,
     isDiscoverAvailable: Boolean,
     displayDiscoverBadge: Boolean,
+    onDoneClick: () -> Unit,
     onDiscoverButtonClick: () -> Unit,
     onSettingsButtonClick: () -> Unit,
 ) {
     val dim = KrailTheme.dimensions
-    if (isDiscoverAvailable) {
-        RoundIconButton(
-            showBadge = displayDiscoverBadge,
-            onClick = onDiscoverButtonClick,
-            modifier = Modifier.testTag(TripPlannerTestTags.SAVED_TRIPS_ACTION_DISCOVER),
+    if (editing) {
+        Button(
+            onClick = onDoneClick,
+            colors = ButtonDefaults.monochromeButtonColors(),
+            dimensions = ButtonDefaults.chipButtonSize(),
+            modifier = Modifier
+                .testTag(TripPlannerTestTags.SAVED_TRIPS_ACTION_DONE)
+                .padding(horizontal = dim.spacingM),
         ) {
-            CityCodeText("SYD")
+            Text(text = "Done")
         }
-    }
+    } else {
+        if (isDiscoverAvailable) {
+            RoundIconButton(
+                showBadge = displayDiscoverBadge,
+                onClick = onDiscoverButtonClick,
+                modifier = Modifier.testTag(TripPlannerTestTags.SAVED_TRIPS_ACTION_DISCOVER),
+            ) {
+                CityCodeText("SYD")
+            }
+        }
 
-    RoundIconButton(
-        onClick = onSettingsButtonClick,
-        modifier = Modifier.testTag(TripPlannerTestTags.SAVED_TRIPS_ACTION_SETTINGS),
-    ) {
-        Image(
-            painter = painterResource(Res.drawable.ic_settings),
-            contentDescription = "Settings",
-            colorFilter = ColorFilter.tint(LocalContentColor.current),
-            modifier = Modifier.size(dim.spacingXXXL),
-        )
+        RoundIconButton(
+            onClick = onSettingsButtonClick,
+            modifier = Modifier.testTag(TripPlannerTestTags.SAVED_TRIPS_ACTION_SETTINGS),
+        ) {
+            Image(
+                painter = painterResource(Res.drawable.ic_settings),
+                contentDescription = "Settings",
+                colorFilter = ColorFilter.tint(LocalContentColor.current),
+                modifier = Modifier.size(dim.spacingXXXL),
+            )
+        }
     }
 }
 
+/**
+ * The one search bar pinned to the bottom of the screen, on the page's own edges and above the navigation bar. It
+ * slides up and fades in once the saved trips have loaded, and is gone while the cards are being reordered.
+ */
 @Composable
 internal fun BoxScope.SavedTripsBottomSearchRow(
     visible: Boolean,
-    fromStopItem: StopItem?,
-    toStopItem: StopItem?,
-    isExpanded: Boolean,
-    isFromHighlighted: Boolean,
-    showPill: Boolean,
-    onExpandRequest: () -> Unit,
-    onCollapseRequest: () -> Unit,
-    fromButtonClick: () -> Unit,
-    toButtonClick: () -> Unit,
-    onSearchButtonClick: () -> Unit,
+    onSearchBarClick: () -> Unit,
     modifier: Modifier = Modifier,
-    onReverseButtonClick: () -> Unit = {},
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
     isAiSearchAvailable: Boolean = false,
-    isAiHandoffSettling: Boolean = false,
-    dateTimeSelectionText: String? = null,
-    onDateTimeSelectionClear: () -> Unit = {},
-    homeChips: ImmutableList<HomeChip> = persistentListOf(),
-    onLabelChipClick: (labelKey: String) -> Unit = {},
-    onParkRideChipClick: () -> Unit = {},
 ) {
+    val dim = KrailTheme.dimensions
     AnimatedVisibility(
         visible = visible,
         enter = slideInVertically(
@@ -227,33 +339,16 @@ internal fun BoxScope.SavedTripsBottomSearchRow(
         ) + fadeIn(animationSpec = tween(durationMillis = 200)),
         modifier = modifier,
     ) {
-        Column {
-            // Above the row and inside its column, so the chips share the cards' edges. Only while
-            // the row is open: phone landscape collapses it to one button because height is short.
-            if (isExpanded && homeChips.isNotEmpty()) {
-                HomeChipRow(
-                    chips = homeChips,
-                    onLabelClick = onLabelChipClick,
-                    onParkRideClick = onParkRideChipClick,
-                )
-            }
-            SearchStopRow(
-                fromStopItem = fromStopItem,
-                toStopItem = toStopItem,
-                isExpanded = isExpanded,
-                isFromHighlighted = isFromHighlighted,
-                onExpandRequest = onExpandRequest,
-                onCollapseRequest = if (showPill) onCollapseRequest else null,
-                fromButtonClick = fromButtonClick,
-                toButtonClick = toButtonClick,
-                onSearchButtonClick = onSearchButtonClick,
-                onReverseButtonClick = onReverseButtonClick,
-                onAiEvent = onAiEvent,
-                isAiSearchAvailable = isAiSearchAvailable,
-                isAiHandoffSettling = isAiHandoffSettling,
-                dateTimeSelectionText = dateTimeSelectionText,
-                onDateTimeSelectionClear = onDateTimeSelectionClear,
-            )
-        }
+        HomeSearchPill(
+            onClick = onSearchBarClick,
+            isAiAvailable = isAiSearchAvailable,
+            onAiEvent = onAiEvent,
+            modifier = Modifier
+                .background(color = KrailTheme.colors.surface)
+                .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal))
+                .navigationBarsPadding()
+                .padding(top = dim.spacingM, bottom = dim.spacingXL)
+                .padding(horizontal = dim.pageHorizontalPadding),
+        )
     }
 }

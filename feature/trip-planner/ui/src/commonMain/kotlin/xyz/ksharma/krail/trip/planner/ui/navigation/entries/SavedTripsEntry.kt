@@ -3,45 +3,31 @@ package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
-import kotlinx.collections.immutable.toImmutableList
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.navigation.ResultEffect
 import xyz.ksharma.krail.trip.planner.ui.homemap.AskKrailHandoffEffect
-import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapActions
-import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapEntryContent
-import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapEvent
-import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapInputs
-import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapViewModel
-import xyz.ksharma.krail.trip.planner.ui.homemap.homeStopCardOptions
-import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionPane
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
-import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionEvent
-import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionViewModel
-import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.rememberParkRideSuggestionSlot
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.LabelChipTapEffect
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsScreen
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.currentLatLng
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.onLabelStopSelected
-import xyz.ksharma.krail.trip.planner.ui.savedtrips.toTile
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputViewModel
 import xyz.ksharma.krail.trip.planner.ui.search.ai.isHandoffActionable
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
@@ -60,13 +46,6 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
         val viewModel: SavedTripsViewModel = koinViewModel(key = SAVED_TRIPS_VIEW_MODEL_KEY)
         val mapStopSelectionViewModel: MapStopSelectionViewModel = koinViewModel()
         val mapUiState by mapStopSelectionViewModel.mapUiState.collectAsStateWithLifecycle()
-        // The map home's pins and offline notice. With the maps flag off it does no work and the classic home
-        // below is drawn, so a build without the flag keeps today's screen.
-        val homeMapViewModel: HomeMapViewModel = koinViewModel()
-        val homeMapState by homeMapViewModel.uiState.collectAsStateWithLifecycle()
-        // The one-time Park & Ride suggestion. It does no work unless the map home is on, and it reads local data only.
-        val suggestionViewModel: ParkRideSuggestionViewModel = koinViewModel()
-        val suggestionState by suggestionViewModel.uiState.collectAsStateWithLifecycle()
         val savedTripState by viewModel.uiState.collectAsStateWithLifecycle()
 
         val trackedJourney by viewModel.trackedJourney.collectAsStateWithLifecycle()
@@ -167,28 +146,26 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             tripPlannerNavigator = tripPlannerNavigator,
         )
 
-        // The classic home's own two bars, which the map home no longer draws.
-        val classicFromButtonClick = {
-            viewModel.onEvent(SavedTripUiEvent.AnalyticsFromButtonClick)
-            tripPlannerNavigator.navigateToSearchStop(SearchStopFieldType.FROM)
-        }
-        val classicSearchButtonClick = {
-            triggerTripSearch(
-                fromStop = savedTripState.fromStop,
-                toStop = savedTripState.toStop,
-                onEvent = viewModel::onEvent,
-                tripPlannerNavigator = tripPlannerNavigator,
-                dateTimeSelectionJson = savedTripState.dateTimeSelectionItem?.toJsonString(),
+        // An Ask KRAIL answer has no bars to land in, because the home has one search bar. Search Stop opens holding
+        // whatever stops it found, and the rider chooses the rest and goes.
+        AskKrailHandoffEffect(aiState = aiSearchInputState) { from, to ->
+            tripPlannerNavigator.navigateToSearchStop(
+                fieldType = if (to == null) SearchStopFieldType.TO else SearchStopFieldType.FROM,
+                presetFrom = from,
+                presetTo = to,
             )
         }
 
-        val actions = HomeMapActions(
+        SavedTripsScreen(
+            savedTripsState = savedTripState,
+            trackedJourney = trackedJourney,
+            onTrackingCardClick = { tripPlannerNavigator.navigateToTrackTrip() },
+            onStopTracking = { viewModel.onEvent(SavedTripUiEvent.StopTracking) },
+            onAddParkRideClick = { tripPlannerNavigator.navigateToAddParkRide() },
+            // The one search bar opens Search Stop on the destination field.
             toButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsToButtonClick)
                 tripPlannerNavigator.navigateToSearchStop(SearchStopFieldType.TO)
-            },
-            onGoTo = { stop ->
-                tripPlannerNavigator.navigateToSearchStop(SearchStopFieldType.TO, presetTo = stop)
             },
             onSavedTripCardClick = { fromStop, toStop ->
                 if (fromStop?.stopId != null && toStop?.stopId != null) {
@@ -206,6 +183,9 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                     )
                 }
             },
+            aiState = aiSearchInputState,
+            onAiEvent = aiSearchInputViewModel::onEvent,
+            aiVoiceLevel = { aiSearchInputViewModel.voiceLevel.value },
             onSettingsButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsSettingsButtonClick)
                 tripPlannerNavigator.navigateToSettings()
@@ -215,82 +195,18 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                 tripPlannerNavigator.navigateToDiscover()
             },
             onEvent = { event -> viewModel.onEvent(event) },
-            onTrackingCardClick = { tripPlannerNavigator.navigateToTrackTrip() },
-            onStopTracking = { viewModel.onEvent(SavedTripUiEvent.StopTracking) },
-            onAddParkRideClick = { tripPlannerNavigator.navigateToAddParkRide() },
-            onLabelChipClick = { labelKey -> viewModel.onEvent(SavedTripUiEvent.LabelChipClick(labelKey)) },
+            rightPane = {
+                SavedTripsMapPane(
+                    mapUiState = mapUiState,
+                    userLocationManager = userLocationManager,
+                    onMapEvent = mapStopSelectionViewModel::onEvent,
+                    onStopSelected = { stop ->
+                        viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stop.toJsonString()))
+                    },
+                    labels = savedTripState.stopLabels,
+                    onEvent = viewModel::onEvent,
+                )
+            },
         )
-
-        if (homeMapState.isMapsAvailable) {
-            // The pins are drawn from the labels and the saved stations this screen already holds.
-            val tiles = remember(savedTripState.parkRideUiState) {
-                savedTripState.parkRideUiState.map { it.toTile() }.toImmutableList()
-            }
-            LaunchedEffect(savedTripState.stopLabels, tiles) {
-                homeMapViewModel.onEvent(
-                    HomeMapEvent.InputsChanged(HomeMapInputs(labels = savedTripState.stopLabels, tiles = tiles)),
-                )
-            }
-            // The suggestion is measured from Home, or from the position the map already tracks before Home is set.
-            val position = (mapUiState as? MapUiState.Ready)?.mapDisplay?.userLocation
-            LaunchedEffect(position) {
-                suggestionViewModel.onEvent(ParkRideSuggestionEvent.LocationChanged(position))
-            }
-            val suggestion = rememberParkRideSuggestionSlot(suggestionViewModel, suggestionState)
-            // An Ask KRAIL answer has no bar to land in on this home, so Search Stop opens holding whatever
-            // stops it found and the rider chooses the rest and goes.
-            AskKrailHandoffEffect(aiState = aiSearchInputState) { from, to ->
-                tripPlannerNavigator.navigateToSearchStop(
-                    fieldType = if (to == null) SearchStopFieldType.TO else SearchStopFieldType.FROM,
-                    presetFrom = from,
-                    presetTo = to,
-                )
-            }
-            HomeMapEntryContent(
-                savedTripsState = savedTripState,
-                homeMapState = homeMapState,
-                mapUiState = mapUiState,
-                userLocationManager = userLocationManager,
-                onMapEvent = mapStopSelectionViewModel::onEvent,
-                trackedJourney = trackedJourney,
-                aiState = aiSearchInputState,
-                onAiEvent = aiSearchInputViewModel::onEvent,
-                aiVoiceLevel = { aiSearchInputViewModel.voiceLevel.value },
-                actions = actions,
-                suggestion = suggestion,
-            )
-        } else {
-            SavedTripsScreen(
-                savedTripsState = savedTripState,
-                trackedJourney = trackedJourney,
-                onTrackingCardClick = actions.onTrackingCardClick,
-                onStopTracking = actions.onStopTracking,
-                onAddParkRideClick = actions.onAddParkRideClick,
-                onLabelChipClick = actions.onLabelChipClick,
-                fromButtonClick = classicFromButtonClick,
-                toButtonClick = actions.toButtonClick,
-                onSavedTripCardClick = actions.onSavedTripCardClick,
-                onSearchButtonClick = classicSearchButtonClick,
-                aiState = aiSearchInputState,
-                onAiEvent = aiSearchInputViewModel::onEvent,
-                aiVoiceLevel = { aiSearchInputViewModel.voiceLevel.value },
-                onSettingsButtonClick = actions.onSettingsButtonClick,
-                onDiscoverButtonClick = actions.onDiscoverButtonClick,
-                onEvent = actions.onEvent,
-                rightPane = {
-                    MapStopSelectionPane(
-                        mapUiState = mapUiState,
-                        onEvent = mapStopSelectionViewModel::onEvent,
-                        onStopSelected = { stop ->
-                            viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stop.toJsonString()))
-                        },
-                        stopCardOptions = homeStopCardOptions(
-                            labels = savedTripState.stopLabels,
-                            onEvent = viewModel::onEvent,
-                        ),
-                    )
-                },
-            )
-        }
     }
 }

@@ -64,14 +64,15 @@ import xyz.ksharma.krail.trip.planner.ui.components.ai.rememberAiGreeting
 import xyz.ksharma.krail.trip.planner.ui.navigation.savers.parkRideExpansionSaver
 import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionSlot
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.HomeChipRow
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.HomeSearchPill
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.ReorderTopRow
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsTitleBarActions
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.columnGutterFor
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.homeChipsFor
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.homeStackListBody
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.onFirstTouch
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.rememberAskKrailFocus
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.savedTripsColumn
-import xyz.ksharma.krail.trip.planner.ui.savedtrips.savedTripsListBody
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
 import xyz.ksharma.krail.trip.planner.ui.search.ai.isWayInAvailable
@@ -188,7 +189,6 @@ internal fun HomeMapScreen(
                     actions = actions,
                     aiState = aiState,
                     onAiEvent = onAiEvent,
-                    askKrailHandoffSpin = askKrailFocus.handoffSpin,
                     blurRadius = askKrailFocus.blurRadius,
                 )
             }
@@ -288,7 +288,6 @@ private fun BoxScope.HomeCardsLayer(
     actions: HomeMapActions,
     aiState: AiSearchInputUiState,
     onAiEvent: (AiSearchInputEvent) -> Unit,
-    askKrailHandoffSpin: Boolean,
     blurRadius: Dp,
 ) {
     val editing = savedTripsState.reorder != null
@@ -323,7 +322,6 @@ private fun BoxScope.HomeCardsLayer(
             actions = actions,
             aiState = aiState,
             onAiEvent = onAiEvent,
-            askKrailHandoffSpin = askKrailHandoffSpin,
         )
     }
 }
@@ -362,8 +360,11 @@ private fun HomeTopRow(
             },
             actions = {
                 SavedTripsTitleBarActions(
+                    // Reorder mode swaps this whole bar for its own top row, so the title bar never shows Done.
+                    editing = false,
                     isDiscoverAvailable = savedTripsState.isDiscoverAvailable,
                     displayDiscoverBadge = savedTripsState.displayDiscoverBadge,
+                    onDoneClick = {},
                     onDiscoverButtonClick = actions.onDiscoverButtonClick,
                     onSettingsButtonClick = actions.onSettingsButtonClick,
                 )
@@ -401,7 +402,7 @@ private fun HomeCardStack(
                 bottom = dim.spacingXL,
             ),
         ) {
-            savedTripsListBody(
+            homeStackListBody(
                 savedTripsState = savedTripsState,
                 trackedJourney = trackedJourney,
                 onEvent = actions.onEvent,
@@ -433,7 +434,6 @@ private fun BoxScope.HomeBottomBlock(
     actions: HomeMapActions,
     aiState: AiSearchInputUiState,
     onAiEvent: (AiSearchInputEvent) -> Unit,
-    askKrailHandoffSpin: Boolean,
 ) {
     if (chrome.bottom != HomeBottom.Pill) return
     val density = LocalDensity.current
@@ -466,7 +466,6 @@ private fun BoxScope.HomeBottomBlock(
             onClick = actions.toButtonClick,
             isAiAvailable = aiState.isWayInAvailable,
             onAiEvent = onAiEvent,
-            isAiHandoffSettling = askKrailHandoffSpin,
         )
     }
 }

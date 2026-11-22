@@ -3,17 +3,28 @@
 package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.StartOffset
+import androidx.compose.animation.core.StartOffsetType
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,6 +45,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -54,11 +66,13 @@ import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_close
 import kotlinx.collections.immutable.ImmutableList
 import org.jetbrains.compose.resources.painterResource
+import sh.calvin.reorderable.ReorderableLazyListState
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import xyz.ksharma.krail.core.adaptiveui.DualPaneScaffold
 import xyz.ksharma.krail.core.adaptiveui.rememberAdaptiveLayoutInfo
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.feature.track.TrackedJourney
+import xyz.ksharma.krail.feature.track.ui.components.TrackingCard
 import xyz.ksharma.krail.info.tile.state.InfoTileData
 import xyz.ksharma.krail.info.tiles.ui.InfoTile
 import xyz.ksharma.krail.taj.LocalTextStyle
@@ -80,8 +94,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import app.krail.taj.resources.Res as TajRes
 
-// Clear of the bottom search row and the chip row above it, so the last card scrolls fully into view.
-private const val LAZY_COLUMN_BOTTOM_PADDING = 400
+// Clear of the bottom search bar and the navigation bar, so the last card scrolls fully into view.
+private const val LAZY_COLUMN_BOTTOM_PADDING = 160
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -89,10 +103,9 @@ fun SavedTripsScreen(
     savedTripsState: SavedTripsState,
     modifier: Modifier = Modifier,
     trackedJourney: TrackedJourney? = null,
-    fromButtonClick: () -> Unit = {},
+    // The search bar was tapped: Search Stop opens on the destination field.
     toButtonClick: () -> Unit = {},
     onSavedTripCardClick: (StopItem?, StopItem?) -> Unit = { _, _ -> },
-    onSearchButtonClick: () -> Unit = {},
     aiState: AiSearchInputUiState = AiSearchInputUiState(),
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
     // Read while drawing, not collected: it changes many times a second while a rider speaks.
@@ -103,49 +116,27 @@ fun SavedTripsScreen(
     onTrackingCardClick: () -> Unit = {},
     onStopTracking: () -> Unit = {},
     onAddParkRideClick: () -> Unit = {},
-    onLabelChipClick: (labelKey: String) -> Unit = {},
     // Slot for the dual-pane right side. SavedTrips knows nothing about its content —
     // entry passes a MapStopSelectionPane (or anything else). Empty slot = blank pane.
     rightPane: @Composable BoxScope.() -> Unit = {},
 ) {
-    // Adaptive search-row presentation:
-    //   - Phone portrait, tablet, foldable-unfolded: SearchStopRow is ALWAYS expanded —
-    //     these form factors have the vertical room, so the full search affordance stays
-    //     front-and-centre.
-    //   - Phone landscape (compact height): vertical space is scarce, so the row collapses
-    //     to a "Plan a trip" button. Tapping it expands the full SearchStopRow; the
-    //     collapse handle returns to the button.
+    // The bottom search bar is one row in every posture, so there is no collapsed form to switch to.
     // See docs/TABLET_FOLDABLE_UX.md §4.
     val adaptiveLayoutInfo = rememberAdaptiveLayoutInfo()
     val dualPane = adaptiveLayoutInfo.shouldShowDualPane
     val isPhoneLandscape = adaptiveLayoutInfo.isPhoneLandscape
     val isTablet = adaptiveLayoutInfo.isTablet
 
-    // Collapse to the button only in phone-landscape; everything else stays expanded.
-    val showPill = isPhoneLandscape
-
-    // Search row expand / from-highlight state — rememberSaveable survives rotation.
-    var isSearchExpanded by rememberSaveable { mutableStateOf(false) }
-    var isFromHighlighted by rememberSaveable { mutableStateOf(false) }
-
-    // When the pill condition isn't met, always show the expanded row.
-    val effectiveIsExpanded = if (showPill) isSearchExpanded else true
-
-    // The Home, Work and Park & Ride chips above the search row (docs/MAP_HOME_UX.md rule 41).
-    val homeChips = remember(savedTripsState.stopLabels) { homeChipsFor(savedTripsState.stopLabels) }
-
-    // Reorder mode (docs/MAP_HOME_UX.md rule 31). The session lives in the ViewModel, so a rotation
-    // keeps it, Done writes it and leaving the screen drops it. A long press on a card is the one way in.
-    val editing = savedTripsState.reorder != null
+    // Edit mode for trip cards — long-press enters, Done button exits.
+    var editing by rememberSaveable { mutableStateOf(false) }
 
     // Blur, fallback dim and the row's one-shot handoff spin, owned by rememberAskKrailFocus
     // so this function stays under the complexity ceiling and the three concerns stay one
     // mechanism. See AskKrailFocus.kt for the rules.
     val askKrailFocus = rememberAskKrailFocus(aiState)
 
-    // While reordering, the system back and the swipe back cancel it instead of leaving the app. Nothing
-    // is saved and the cards animate back to the order they were in.
-    BackHandler(enabled = editing) { onEvent(SavedTripUiEvent.ReorderCancel) }
+    // While editing, the system back gesture exits edit mode instead of the app.
+    BackHandler(enabled = editing) { editing = false }
 
     // Which Park & Ride cards are open.
     //
@@ -163,9 +154,13 @@ fun SavedTripsScreen(
 
     val lazyListState = rememberLazyListState()
     val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
-        val fromKey = from.key as? String ?: return@rememberReorderableLazyListState
-        val toKey = to.key as? String ?: return@rememberReorderableLazyListState
-        onEvent(SavedTripUiEvent.ReorderMove(fromKey = fromKey, toKey = toKey))
+        val tripId = from.key as? String ?: return@rememberReorderableLazyListState
+        val toTripId = to.key as? String ?: return@rememberReorderableLazyListState
+        val fromTripIndex = savedTripsState.savedTrips.indexOfFirst { it.tripId == tripId }
+        val toTripIndex = savedTripsState.savedTrips.indexOfFirst { it.tripId == toTripId }
+        if (fromTripIndex != -1 && toTripIndex != -1) {
+            onEvent(SavedTripUiEvent.MoveSavedTripToIndex(tripId = tripId, targetIndex = toTripIndex))
+        }
     }
 
     Box(modifier = modifier.testTag(TripPlannerTestTags.SAVED_TRIPS_SCREEN).fillMaxSize()) {
@@ -197,106 +192,56 @@ fun SavedTripsScreen(
                         WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
                     ),
                 ) {
-                    if (editing) {
-                        // The chrome is gone while reordering: no logo, no gear. One dark Done.
-                        ReorderTopRow(onDone = { onEvent(SavedTripUiEvent.ReorderDone) })
-                    } else {
-                        TitleBar(
-                            title = {
-                                // The wordmark is the brand, not a label: nobody reads it to use
-                                // the app, so it carries no contrast obligation and must not be
-                                // adapted. Ink pulled it away from the rider's chosen colour on
-                                // the themes that needed adapting, which made the one element
-                                // that should be exactly their colour the one element that wasn't.
-                                Text(text = "KRAIL", color = themeDecorColor())
-                            },
-                            actions = {
-                                SavedTripsTitleBarActions(
-                                    isDiscoverAvailable = savedTripsState.isDiscoverAvailable,
-                                    displayDiscoverBadge = savedTripsState.displayDiscoverBadge,
-                                    onDiscoverButtonClick = onDiscoverButtonClick,
-                                    onSettingsButtonClick = onSettingsButtonClick,
-                                )
-                            },
-                        )
-                    }
-
-                    // One column, at most 560 dp wide and centred (MAP_HOME_UX rule 45). The
-                    // list stays the full width of the pane so a swipe in the gutter still
-                    // scrolls it; the gutter is content padding, so the trips, the headings and
-                    // Park & Ride all sit on the same two edges. The search row below takes the
-                    // same edges from savedTripsColumn().
-                    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                        val gutter = columnGutterFor(maxWidth)
-                        LazyColumn(
-                            state = lazyListState,
-                            modifier = Modifier.testTag(TripPlannerTestTags.SAVED_TRIPS_LIST),
-                            contentPadding = PaddingValues(
-                                start = gutter,
-                                end = gutter,
-                                // The search row and the chips are gone while reordering, so the stack
-                                // takes the height they held.
-                                bottom = if (editing) {
-                                    KrailTheme.dimensions.spacingXL
-                                } else {
-                                    LAZY_COLUMN_BOTTOM_PADDING.dp
-                                },
-                            ),
-                        ) {
-                            savedTripsListBody(
-                                savedTripsState = savedTripsState,
-                                trackedJourney = trackedJourney,
-                                onEvent = onEvent,
-                                onSavedTripCardClick = onSavedTripCardClick,
-                                onTrackingCardClick = onTrackingCardClick,
-                                onStopTracking = onStopTracking,
-                                expandedMap = expandedMap,
-                                reorderState = reorderState,
+                    TitleBar(
+                        title = {
+                            // The wordmark is the brand, not a label: nobody reads it to use
+                            // the app, so it carries no contrast obligation and must not be
+                            // adapted. Ink pulled it away from the rider's chosen colour on
+                            // the themes that needed adapting, which made the one element
+                            // that should be exactly their colour the one element that wasn't.
+                            Text(text = "KRAIL", color = themeDecorColor())
+                        },
+                        actions = {
+                            SavedTripsTitleBarActions(
+                                editing = editing,
+                                isDiscoverAvailable = savedTripsState.isDiscoverAvailable,
+                                displayDiscoverBadge = savedTripsState.displayDiscoverBadge,
+                                onDoneClick = { editing = false },
+                                onDiscoverButtonClick = onDiscoverButtonClick,
+                                onSettingsButtonClick = onSettingsButtonClick,
                             )
-                        }
+                        },
+                    )
+
+                    LazyColumn(
+                        state = lazyListState,
+                        modifier = Modifier.testTag(TripPlannerTestTags.SAVED_TRIPS_LIST),
+                        contentPadding = PaddingValues(bottom = LAZY_COLUMN_BOTTOM_PADDING.dp),
+                    ) {
+                        savedTripsListBody(
+                            savedTripsState = savedTripsState,
+                            trackedJourney = trackedJourney,
+                            onEvent = onEvent,
+                            onSavedTripCardClick = onSavedTripCardClick,
+                            onTrackingCardClick = onTrackingCardClick,
+                            onStopTracking = onStopTracking,
+                            expandedMap = expandedMap,
+                            editing = editing,
+                            reorderState = reorderState,
+                            onEnterEditing = { editing = true },
+                            onAddParkRideClick = onAddParkRideClick,
+                        )
                     }
                 }
 
-                // Hold the bottom row off-screen until the saved-trips load has emitted at
-                // least once. Without this gate, the row renders against an empty
-                // savedTrips list (pill condition false → expanded), then flips to the
-                // pill once the DB lands — a visible flash of the wrong UI.
-                //
-                // Reveal is a plain slide-up + fade for both the collapsed pill and the
-                // expanded search row. The pill's "alive" pulse lives inside CollapsedPill
-                // itself — keeping the row-level reveal calm avoids stacking two bouncy
-                // animations (parent scale + child pulse) on top of each other.
+                // Hold the bottom bar off-screen until the saved-trips load has emitted at
+                // least once, so it slides in with the list and not ahead of it.
                 SavedTripsBottomSearchRow(
                     visible = !savedTripsState.isSavedTripsLoading && !editing,
-                    fromStopItem = savedTripsState.fromStop,
-                    toStopItem = savedTripsState.toStop,
-                    isExpanded = effectiveIsExpanded,
-                    isFromHighlighted = isFromHighlighted,
-                    showPill = showPill,
-                    onExpandRequest = {
-                        isSearchExpanded = true
-                        isFromHighlighted = false
-                    },
-                    onCollapseRequest = {
-                        isSearchExpanded = false
-                        isFromHighlighted = false
-                    },
-                    fromButtonClick = {
-                        isFromHighlighted = false
-                        fromButtonClick()
-                    },
-                    toButtonClick = toButtonClick,
-                    onSearchButtonClick = { onSearchButtonClick() },
-                    onReverseButtonClick = { onEvent(SavedTripUiEvent.ReverseStopClick) },
+                    onSearchBarClick = toButtonClick,
                     onAiEvent = onAiEvent,
                     isAiSearchAvailable = aiState.isWayInAvailable,
-                    isAiHandoffSettling = askKrailFocus.handoffSpin,
-                    dateTimeSelectionText = savedTripsState.dateTimeSelectionItem?.toDateTimeText(),
-                    onDateTimeSelectionClear = { onEvent(SavedTripUiEvent.DateTimeSelectionChanged(null)) },
-                    homeChips = homeChips,
-                    onLabelChipClick = onLabelChipClick,
-                    onParkRideChipClick = onAddParkRideClick,
-                    modifier = Modifier.align(Alignment.BottomCenter).savedTripsColumn(),
+                    modifier = Modifier.align(Alignment.BottomCenter),
                 )
             }
             log(
@@ -309,16 +254,7 @@ fun SavedTripsScreen(
                 // nested under it; see DualPaneScaffold for the iOS compositing invariant.
                 DualPaneScaffold(
                     listPane = { body() },
-                    // A touch on the map pane while reordering cancels it: the rider has turned to the
-                    // map, and a touch there is never a drag of a card. The pane stays a sibling of the
-                    // list and this wrapper is no graphics layer, so the iOS compositing rule holds.
-                    rightPane = {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .onFirstTouch(enabled = editing) { onEvent(SavedTripUiEvent.ReorderCancel) },
-                        ) { rightPane() }
-                    },
+                    rightPane = rightPane,
                 )
             } else {
                 body()
@@ -392,50 +328,145 @@ internal fun LazyListScope.infoTiles(
     }
 }
 
-/**
- * The delete circle on a trip card in reorder mode (`docs/MAP_HOME_UX.md` rule 38): a 24 dp circle in
- * the ink colour with a 12 dp X, at the card's top right corner and overhanging it by 6 dp. Its touch
- * target is 48 dp, centred on the circle, so the drawn circle stays small and the tap is not.
- */
+internal fun LazyListScope.savedTripsContent(
+    savedTripsState: SavedTripsState,
+    trackedJourney: TrackedJourney?,
+    onEvent: (SavedTripUiEvent) -> Unit,
+    onSavedTripCardClick: (StopItem?, StopItem?) -> Unit = { _, _ -> },
+    onTrackingCardClick: () -> Unit = {},
+    onStopTracking: () -> Unit = {},
+    editing: Boolean,
+    reorderState: ReorderableLazyListState,
+    onEnterEditing: () -> Unit,
+) {
+    if (trackedJourney != null) {
+        stickyHeader(key = "tracking_title") {
+            SavedTripsTitle {
+                Text(text = "Tracking Real Time")
+            }
+        }
+
+        item(key = "tracking_card") {
+            TrackingCard(
+                tracked = trackedJourney,
+                onCardClick = onTrackingCardClick,
+                onStopTracking = onStopTracking,
+                modifier = Modifier.padding(horizontal = KrailTheme.dimensions.spacingXL),
+            )
+            Spacer(modifier = Modifier.height(KrailTheme.dimensions.spacingXL))
+        }
+    }
+
+    stickyHeader(key = "saved_trips_title") {
+        SavedTripsTitle {
+            Text(text = "Saved Trips")
+        }
+    }
+
+    item(key = "onboarding_reorder_tip") {
+        val dim = KrailTheme.dimensions
+        AnimatedVisibility(
+            visible = !savedTripsState.hasSeenReorderTip && !editing,
+            enter = expandVertically(animationSpec = tween(durationMillis = 300)) +
+                fadeIn(animationSpec = tween(durationMillis = 250)),
+            exit = shrinkVertically(animationSpec = tween(durationMillis = 200)) +
+                fadeOut(animationSpec = tween(durationMillis = 150)),
+        ) {
+            LaunchedEffect(Unit) { onEvent(SavedTripUiEvent.MarkReorderTipSeen) }
+            Text(
+                text = "💡 Long press any trip to reorder or remove it.",
+                style = KrailTheme.typography.bodySmall,
+                color = KrailTheme.colors.softLabel,
+                modifier = Modifier
+                    .padding(horizontal = dim.pageHorizontalPadding)
+                    .padding(bottom = dim.spacingM),
+            )
+        }
+    }
+
+    item(key = "reorder_hint") {
+        val dim = KrailTheme.dimensions
+        AnimatedVisibility(
+            visible = editing,
+            enter = expandVertically(animationSpec = tween(durationMillis = 250)) +
+                fadeIn(animationSpec = tween(durationMillis = 200)),
+            exit = shrinkVertically(animationSpec = tween(durationMillis = 200)) +
+                fadeOut(animationSpec = tween(durationMillis = 150)),
+        ) {
+            Text(
+                text = "💡 Long press and drag cards to reorder. Tap Done when finished.",
+                style = KrailTheme.typography.bodySmall,
+                color = KrailTheme.colors.softLabel,
+                modifier = Modifier
+                    .padding(horizontal = dim.pageHorizontalPadding)
+                    .padding(bottom = dim.spacingM),
+            )
+        }
+    }
+
+    items(
+        items = savedTripsState.savedTrips,
+        key = { trip -> trip.tripId },
+    ) { trip ->
+        SavedTripItem(
+            trip = trip,
+            stopLabels = savedTripsState.stopLabels,
+            editing = editing,
+            reorderState = reorderState,
+            onSavedTripCardClick = onSavedTripCardClick,
+            onEnterEditing = onEnterEditing,
+            onDelete = { onEvent(SavedTripUiEvent.DeleteSavedTrip(trip)) },
+        )
+    }
+}
+
 @Composable
 internal fun TripDeleteOverlay(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    tag: String? = null,
 ) {
     val dim = KrailTheme.dimensions
     Box(
         modifier = modifier
-            // The circle overhangs the corner by 6 dp, so its centre is 6 dp in from the edge and
-            // 6 dp down from the top. The 48 dp box that takes the tap is centred on it.
-            .offset(x = DELETE_TARGET_OFFSET, y = -DELETE_TARGET_OFFSET)
-            .size(DELETE_TARGET)
-            // After the offset, so the tag's bounds are where the target is.
-            .then(if (tag != null) Modifier.testTag(tag) else Modifier)
+            .offset(x = dim.spacingS, y = -dim.spacingS)
+            .size(dim.spacingXXXL)
+            .clip(CircleShape)
+            .background(KrailTheme.colors.onSurface, CircleShape)
             .klickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Box(
-            modifier = Modifier
-                .size(dim.spacingXXXL)
-                .clip(CircleShape)
-                .background(KrailTheme.colors.onSurface, CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Image(
-                painter = painterResource(TajRes.drawable.ic_close),
-                contentDescription = "Remove saved trip",
-                colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
-                modifier = Modifier.size(dim.spacingL),
-            )
-        }
+        Image(
+            painter = painterResource(TajRes.drawable.ic_close),
+            contentDescription = "Remove saved trip",
+            colorFilter = ColorFilter.tint(KrailTheme.colors.surface),
+            modifier = Modifier.size(dim.spacingL),
+        )
     }
 }
 
-private val DELETE_TARGET = 48.dp
-
-// The 48 dp target is centred on the circle: 24 dp from its edge, less the 6 dp the circle overhangs.
-private val DELETE_TARGET_OFFSET = 18.dp
+@Composable
+internal fun rememberWiggleRotation(active: Boolean, seed: Int): Float {
+    val transition = rememberInfiniteTransition(label = "trip-wiggle")
+    val seedAbs = kotlin.math.abs(seed)
+    val angle by transition.animateFloat(
+        initialValue = -WIGGLE_ANGLE_DEGREES,
+        targetValue = WIGGLE_ANGLE_DEGREES,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = WIGGLE_BASE_DURATION_MS +
+                    (seedAbs % WIGGLE_DURATION_VARIANCE_BUCKETS) * WIGGLE_DURATION_VARIANCE_STEP_MS,
+                easing = LinearEasing,
+            ),
+            repeatMode = RepeatMode.Reverse,
+            initialStartOffset = StartOffset(
+                offsetMillis = (seedAbs * WIGGLE_OFFSET_MULTIPLIER) % WIGGLE_OFFSET_MAX_MS,
+                offsetType = StartOffsetType.Delay,
+            ),
+        ),
+        label = "trip-wiggle-rotation",
+    )
+    return if (active) angle else 0f
+}
 
 @Composable
 internal fun SavedTripsTitle(
@@ -455,6 +486,17 @@ internal fun SavedTripsTitle(
         }
     }
 }
+
+private const val WIGGLE_ANGLE_DEGREES = 0.75f
+private const val WIGGLE_BASE_DURATION_MS = 350
+private const val WIGGLE_DURATION_VARIANCE_BUCKETS = 4
+private const val WIGGLE_DURATION_VARIANCE_STEP_MS = 70
+private const val WIGGLE_OFFSET_MULTIPLIER = 47
+private const val WIGGLE_OFFSET_MAX_MS = 200
+
+// Left-pane width cap when SavedTrips is rendered in dual-pane (shouldShowDualPane).
+// Keeps the saved-trips list at phone-width proportions; map fills the rest.
+// See docs/TABLET_FOLDABLE_UX.md §4.
 
 // region Previews
 

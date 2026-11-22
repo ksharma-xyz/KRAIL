@@ -58,6 +58,9 @@ object TripPlannerTestTags {
     const val SAVED_TRIPS_CHIP_ROW = "savedtrips.chips"
     const val SAVED_TRIPS_CHIP_PARK_RIDE = "savedtrips.chip.parkride"
 
+    // The classic home's Set Home and Set Work pills, the first row of the list. Each pill carries [homeLabelChip].
+    const val SAVED_TRIPS_LABEL_PILLS = "savedtrips.pills"
+
     // The Park & Ride row of tiles on home. The tiles and their car parks are per station and per
     // car park, see [parkRideTile], [parkRideCarPark] and [parkRideDirections].
     const val SAVED_TRIPS_PARK_RIDE_ROW = "savedtrips.parkride.row"

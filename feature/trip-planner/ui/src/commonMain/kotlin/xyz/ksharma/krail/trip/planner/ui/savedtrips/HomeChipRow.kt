@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -88,9 +89,18 @@ internal fun HomeChipRow(
     }
 }
 
-/** Home or Work, set or not: the one filled taj [Button]. An unset label reads "Set Work" and is the same chip. */
+/**
+ * Home or Work, set or not: the one filled taj [Button]. An unset label reads "Set Work" and is the same chip.
+ * The map home's chips are in the one fixed dark ([FloatingDark.buttonColors]), and the classic home's pills pass
+ * taj's own default [colors].
+ */
 @Composable
-private fun LabelChip(label: StopLabel, text: String, onClick: () -> Unit) {
+internal fun LabelChip(
+    label: StopLabel,
+    text: String,
+    onClick: () -> Unit,
+    colors: ButtonColors = FloatingDark.buttonColors(),
+) {
     val icon = stopLabelIcon(label.label) ?: Res.drawable.ic_location_on
     Button(
         onClick = onClick,
@@ -98,7 +108,7 @@ private fun LabelChip(label: StopLabel, text: String, onClick: () -> Unit) {
             tag = TripPlannerTestTags.homeLabelChip(label.label),
             onClickLabel = if (label.isSet) "Plan a trip to ${label.label}" else null,
         ),
-        colors = FloatingDark.buttonColors(),
+        colors = colors,
         dimensions = ButtonDefaults.smallButtonSize(),
     ) { ChipLabel(icon = icon, text = text) }
 }

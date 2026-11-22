@@ -29,7 +29,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
- * The parts of the home stack, in the order [savedTripsListBody] lays them out: the tracked trip,
+ * The parts of the home stack, in the order [homeStackListBody] lays them out: the tracked trip,
  * the saved trips before the Park & Ride row, the row, then the rest of the trips
  * (`docs/MAP_HOME_UX.md` rule 29). There are no headings: the stack is cards.
  */
@@ -98,7 +98,7 @@ internal fun LazyListScope.homeStackItems(context: HomeStackContext) {
             PARK_RIDE_ROW_KEY -> ParkRideRowEntry(context)
             PARK_RIDE_SUGGESTION_KEY -> context.suggestion?.let { ParkRideSuggestionItem(it) }
             else -> tripsById[key]?.let { trip ->
-                SavedTripItem(
+                ReorderableTripItem(
                     trip = trip,
                     stopLabels = state.stopLabels,
                     reorder = state.reorder,

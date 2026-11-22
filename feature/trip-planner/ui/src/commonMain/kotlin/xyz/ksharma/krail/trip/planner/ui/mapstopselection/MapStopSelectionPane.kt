@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.mapstopselection
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.modifier.cornerSafeTopPadding
 import xyz.ksharma.krail.taj.preview.PreviewComponent
@@ -24,6 +25,8 @@ import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardOptions
  * - [onStopSelected] fires when the user confirms a stop pick from the floating stop card a pin opens.
  *   Defaults to a no-op — callers that don't need stop-picking can omit it (read-only map).
  * - [stopCardOptions] is what the card offers besides the board: Save as, and Go here or Start here.
+ * - [allowPermissionRequest] and [onPermissionStatus] are the host's say over the location permission: the map
+ *   never raises the system dialog until the host allows it, and reports what the permission turned out to be.
  *
  * See docs/TABLET_FOLDABLE_UX.md §4.
  */
@@ -34,6 +37,8 @@ fun MapStopSelectionPane(
     modifier: Modifier = Modifier,
     onStopSelected: (StopItem) -> Unit = {},
     stopCardOptions: StopCardOptions = StopCardOptions(),
+    allowPermissionRequest: Boolean = false,
+    onPermissionStatus: (PermissionStatus) -> Unit = {},
 ) {
     // Corner-safe rather than the status bar's height: on iPhone Duo's inner display the
     // status bar sits on the side, the top inset is zero, and the location pill touched the top.
@@ -54,6 +59,8 @@ fun MapStopSelectionPane(
         },
         onStopSelect = onStopSelected,
         stopCardOptions = stopCardOptions,
+        allowPermissionRequest = allowPermissionRequest,
+        onPermissionStatus = onPermissionStatus,
     )
 }
 

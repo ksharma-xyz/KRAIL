@@ -28,11 +28,11 @@ class IntroBarTest {
     private val failed = StopsReadiness.Failed(attempt = 1, reason = "disk full")
 
     private val ask = IntroBar(
-        left = IntroBarAction("No thanks", IntroUiEvent.AnswerParkRide(yes = false), compactLabel = "No"),
+        left = IntroBarAction("No", IntroUiEvent.AnswerParkRide(yes = false), spokenLabel = "No thanks"),
         right = IntroBarAction(
-            "Yes, show me free spots",
+            "Yes",
             IntroUiEvent.AnswerParkRide(yes = true),
-            compactLabel = "Yes",
+            spokenLabel = "Yes, show me free spots",
         ),
     )
 
@@ -94,15 +94,15 @@ class IntroBarTest {
     }
 
     @Test
-    fun `the answers are the exact words, with a short form only for yes and no at large text`() {
-        assertEquals("No thanks", PARK_RIDE_NO)
-        assertEquals("No", PARK_RIDE_NO_COMPACT)
-        assertEquals("Yes, show me free spots", PARK_RIDE_YES)
-        assertEquals("Yes", PARK_RIDE_YES_COMPACT)
+    fun `the answers are the exact words, Yes and No shown and the longer phrases spoken, and every other button says what it shows`() {
+        assertEquals("No", PARK_RIDE_NO)
+        assertEquals("No thanks", PARK_RIDE_NO_SPOKEN)
+        assertEquals("Yes", PARK_RIDE_YES)
+        assertEquals("Yes, show me free spots", PARK_RIDE_YES_SPOKEN)
         assertEquals("Not now", PARK_RIDE_NOT_NOW)
         assertEquals("Add to home", PARK_RIDE_ADD)
-        assertNull(decide(true).negative.compactLabel)
-        assertNull(decide(true).right.compactLabel)
+        assertEquals(PARK_RIDE_NOT_NOW, decide(true).negative.spokenLabel)
+        assertEquals(PARK_RIDE_ADD, decide(true).right.spokenLabel)
     }
 
     @Test
@@ -146,11 +146,9 @@ class IntroBarTest {
 
         assertEquals("Yes, this one", STOP_CHOOSE)
         assertNull(bar.left, "there is no No, search")
-        assertNull(bar.right.compactLabel)
+        assertEquals("Yes, this one", bar.right.label)
+        assertEquals(bar.right.label, bar.right.spokenLabel, "it says what it shows")
         assertTrue(bar.rightEnabled)
-        listOf(1.0f, 1.31f, 2.0f).forEach { scale ->
-            assertEquals("Yes, this one", bar.right.visibleLabel(scale), "right at $scale")
-        }
         assertEquals(IntroUiEvent.ConfirmStop, bar.right.event)
     }
 
@@ -236,10 +234,7 @@ class IntroBarTest {
         assertNull(bar.left, "the theme screen has no way to say no")
         assertEquals("Yes, this one", bar.right.label)
         assertEquals(IntroUiEvent.ConfirmTheme, bar.right.event)
-        assertNull(bar.right.compactLabel)
-        listOf(1.0f, 1.31f, 2.0f).forEach { scale ->
-            assertEquals("Yes, this one", bar.right.visibleLabel(scale), "right at $scale")
-        }
+        assertEquals(bar.right.label, bar.right.spokenLabel, "it says what it shows")
     }
 
     @Test
@@ -299,38 +294,20 @@ class IntroBarTest {
     }
 
     @Test
-    fun `the label is the whole phrase at or below 130 percent and the short form above it`() {
-        val yes = ask.right
-        val no = ask.negative
-        val rows = listOf(
-            // font scale, yes, no
-            Triple(1.0f, "Yes, show me free spots", "No thanks"),
-            Triple(1.15f, "Yes, show me free spots", "No thanks"),
-            Triple(1.3f, "Yes, show me free spots", "No thanks"),
-            Triple(1.31f, "Yes", "No"),
-            Triple(1.5f, "Yes", "No"),
-            Triple(2.0f, "Yes", "No"),
-        )
-
-        rows.forEach { (scale, yesLabel, noLabel) ->
-            assertEquals(yesLabel, yes.visibleLabel(scale), "yes at $scale")
-            assertEquals(noLabel, no.visibleLabel(scale), "no at $scale")
-        }
+    fun `the Park and Ride answers show one word and say the longer phrase, and the word starts the phrase`() {
+        assertEquals("Yes", ask.right.label)
+        assertEquals("Yes, show me free spots", ask.right.spokenLabel)
+        assertEquals("No", ask.negative.label)
+        assertEquals("No thanks", ask.negative.spokenLabel)
+        assertTrue(ask.right.spokenLabel.startsWith(ask.right.label))
+        assertTrue(ask.negative.spokenLabel.startsWith(ask.negative.label))
     }
 
     @Test
-    fun `a button with no short form shows its whole label at every size`() {
-        val add = decide(true).right
-
-        listOf(1.0f, 1.3f, 1.31f, 2.0f).forEach { scale ->
-            assertEquals("Add to home", add.visibleLabel(scale), "at $scale")
-            assertEquals("Not now", decide(true).negative.visibleLabel(scale), "at $scale")
-        }
-    }
-
-    @Test
-    fun `the whole phrase is kept as the label whatever is shown, for a screen reader`() {
-        assertEquals("Yes, show me free spots", ask.right.label)
-        assertEquals("No thanks", ask.negative.label)
+    fun `a button with no longer phrase says what it shows, at every text size, since there is no compact form any more`() {
+        assertEquals("Add to home", decide(true).right.spokenLabel)
+        assertEquals("Not now", decide(true).negative.spokenLabel)
+        assertEquals("Yes, save it", trip().right.spokenLabel)
+        assertEquals("Not now", trip().negative.spokenLabel)
     }
 }

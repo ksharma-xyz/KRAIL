@@ -196,13 +196,14 @@ internal fun parkRideStartPrefill(station: ParkRideStationPickerItem, stopNameLo
  *   THEME (the last screen, unit U9): "Yes, this one" alone, a full width taj button, the same height as the two button
  *                 bar so nothing moves when it appears. It confirms the theme on show and ENDS THE INTRO. It is NOT SHOWN
  *                 (not disabled) until a badge is tapped, when it fades in where the room for it was kept (`IntroBar.shown`).
- *                 There is no no, and no way to cycle: a theme is chosen only by tapping its badge. No compact form, and the
+ *                 There is no no, and no way to cycle: a theme is chosen only by tapping its badge. The whole phrase at every text size, and the
  *                 same words for a screen reader (the visible label is contained in the spoken one, so voice control works).
  *                 The finish waits for the stops data to be Ready or Failed, as it always has, but only when there is a trip
  *                 to write: the button is off while the stops are Unknown or Loading and the rider answered `Yes, save it`
  *                 on the confirm screen (`IntroState.tripDecision` is SAVED) and the trip is not already written. With
  *                 `Not now`, or no answer, nothing is written and the button is never held back.
- *   PARK_RIDE:    asking is "No thanks" and "Yes, show me free spots". A card, or a station still being looked for, is
+ *   PARK_RIDE:    asking is "No" and "Yes" at every text size, said as "No thanks" and "Yes, show me free spots" to a screen
+ *                 reader. A card, or a station still being looked for, is
  *                 "Not now" and "Add to home". While the station is looked for, or its numbers are awaited, the bar keeps
  *                 both buttons and the right one is disabled, so the bar never changes size or jumps.
  *                 No station near, a denied or missing location and stops that are not usable show no bar, because the
@@ -216,10 +217,8 @@ internal fun parkRideStartPrefill(station: ParkRideStationPickerItem, stopNameLo
  */
 internal fun introBar(state: IntroState, readiness: StopsReadiness): IntroBar?
 internal data class IntroBar(val left: IntroBarAction?, val right: IntroBarAction, val rightEnabled: Boolean = true, val shown: Boolean = true) // left is null on the screens that ask for a pick; shown is false until there is a pick, and the room is kept
-/** [label] is the whole phrase and is the screen reader description at every text size. [compactLabel] shows above 130 percent text. */
-internal data class IntroBarAction(val label: String, val event: IntroUiEvent, val compactLabel: String? = null)
-/** The compact label above `L_FONT_SCALE_THRESHOLD` (1.3), the whole label at or below it, and the whole label when there is no compact one. */
-internal fun IntroBarAction.visibleLabel(fontScale: Float): String
+/** [label] is what shows, at every text size. [spokenLabel] is the screen reader description and what voice control matches, [label] unless the button shows a shorter word than it says. */
+internal data class IntroBarAction(val label: String, val event: IntroUiEvent, val spokenLabel: String = label)
 
 /**
  * How the two buttons sit, from the width each needs for its whole label on one line. One row when the longer label fits
@@ -1155,9 +1154,11 @@ make a row fit, except the one rule below. A screen with nothing to decide has n
   (`IntroBannedWordsTest` and `IntroCopyTest`, unit U8). Every button is an answer to the
   question on the screen. `IntroBannedWordsTest` reads every string literal in the Intro sources and every string resource they
   name, and `IntroCopyTest` checks every label the bar can show.
-- **Large text.** Above 130 percent text (`L_FONT_SCALE_THRESHOLD`) "Yes, show me free spots" shows as "Yes" and "No thanks" as
-  "No", so the two stay in one row at 320 dp and 200 percent. It is a pure function of the font scale (`visibleLabel`) with a
-  table test, and the content description keeps the whole phrase at every size. No other string is shortened.
+- **The answers (unit U9).** The Park & Ride answers show "Yes" and "No" at every text size, and their content descriptions (`spokenLabel`)
+  are "Yes, show me free spots" and "No thanks". The visible word is the start of the spoken phrase, so voice control that says the word
+  finds the button. The earlier rule that swapped in a compact label above 130 percent text, `compactLabel` and `visibleLabel`, is
+  deleted because nothing else used it. The two button rule and the stacking rule stay, and the card bar ("Not now", "Add to home") is
+  unchanged. No other string is shortened.
 - **No back anywhere (unit U8).** No screen has a back arrow, and the top bar that held it is gone. System back and the back
   swipe are consumed on every screen after the first (`BackHandler(enabled = step != IntroFirstStep) {}`), so they do nothing,
   and on the first screen they follow the platform and leave the app. The `Back` event, its handling, `stepBefore`,
@@ -1195,7 +1196,7 @@ make a row fit, except the one rule below. A screen with nothing to decide has n
 
 | State | The rider sees |
 |---|---|
-| Ask | The headline and no card. Bar: "No thanks" on the left, "Yes, show me free spots" on the right |
+| Ask | The headline and no card. Bar: "No" on the left, "Yes" on the right, said as "No thanks" and "Yes, show me free spots" to a screen reader |
 | Asking location | The system permission dialog |
 | Locating, or waiting for stops | A skeleton card in the final card's space. Bar: "Not now" and "Add to home", the right one disabled |
 | Card, numbers loading | The car park names and no numbers. The same bar, the right one still disabled |
@@ -1305,7 +1306,7 @@ in `searchstop/` touched:
   - `nearestParkRideStation` against the real default catalogue. Named cases from section 9 (a CBD station, an outer Metro
     station with a car park at the platform, a regional centre, a station with a missing coordinate).
   - `parseSuggestedStops`: valid, empty, malformed, duplicate ids, a start equal to an end.
-  - `introBar`: one row per step and state, so a new state cannot be missed, with `introBarPlan`, `visibleLabel`, `introEmojiFor`,
+  - `introBar`: one row per step and state, so a new state cannot be missed, with `introBarPlan`, `introEmojiFor`,
     the step flow functions, the slide direction, the transition specs and the headline timeline as table tests.
   - `toOutcome`: every flag and bucket.
 - **View model**, with fakes at the edges and `krailRunTest`.
@@ -1555,6 +1556,10 @@ in `searchstop/` touched:
   Every test that finished from the confirm screen now finishes by answering, choosing a theme and pressing the theme button
   (`IntroRig.answerAndFinish`). Deleted on purpose: the test that the confirm screen's yes waits for loading stops, and the test that the
   theme screen's button is never disabled, because the wait moved to the theme screen and only applies after a yes to saving.
+- **U9 tests, the Park & Ride buttons.** `IntroBarTest` (Yes and No shown, the phrases spoken, the visible word starts the phrase, every other button says what it
+  shows), `IntroDecisionBarTest` (the answers are the one words at every text size and stay in one row at 288 dp and 200 percent, the phrase is the
+  description, the stacking rule is held on the card bar) and `IntroParkRideStepNarrowTest`. Deleted on purpose: the tests of the compact label
+  (`visibleLabel` at each font scale, the 130 percent boundary, and the whole phrase shown at or below it), because that rule is gone.
 
 ## 9. Open gaps and decisions
 
@@ -1681,6 +1686,7 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | U9-5 | The confirm answers are one event, `AnswerSaveTrip(yes)`, and `FinishPressed` and `FinishWithoutTrip` are gone | The old names say the Intro finishes there and it no longer does. One event with a flag mirrors `AnswerParkRide(yes)` | Default, not yet seen by owner |
 | U9-6 | The origin screen's emoji is place 8 of the list, a number of its own | It was the screen's position plus 5, and the new order moves that position. Place 8 keeps the same emoji it had | Default, not yet seen by owner |
 | U9-7 | A Settings replay shows the Intro in the rider's current colour until the last screen, and not the default theme | The spec said default until the last screen, which is true of a first run. Forcing the default on a replay would recolour the whole app for the length of the Intro and back | Default, not yet seen by owner |
+| U9-8 | The Park & Ride answers show `Yes` and `No`, and `IntroBarAction` gets a `spokenLabel`. `compactLabel`, `visibleLabel` and the two compact constants are deleted | A button now shows one word and says a longer phrase at every size, which the old compact rule could not express, and nothing else used the compact form | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

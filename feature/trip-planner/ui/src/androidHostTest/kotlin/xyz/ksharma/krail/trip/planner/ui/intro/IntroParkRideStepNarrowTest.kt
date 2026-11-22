@@ -116,15 +116,15 @@ class IntroParkRideStepNarrowTest {
     }
 
     @Test
-    fun `at 200 percent text the answers are the short Yes and No, in one row, and read in full to a screen reader`() {
+    fun `at 200 percent text the answers are Yes and No, in one row, and read in full to a screen reader`() {
         show(PreviewAskState)
 
         val no = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION)
         val yes = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION)
-        no.assertTextEquals(PARK_RIDE_NO_COMPACT)
-        yes.assertTextEquals(PARK_RIDE_YES_COMPACT)
-        composeRule.onNodeWithContentDescription(PARK_RIDE_YES).assertExists()
-        composeRule.onNodeWithContentDescription(PARK_RIDE_NO).assertExists()
+        no.assertTextEquals(PARK_RIDE_NO)
+        yes.assertTextEquals(PARK_RIDE_YES)
+        composeRule.onNodeWithContentDescription(PARK_RIDE_YES_SPOKEN).assertExists()
+        composeRule.onNodeWithContentDescription(PARK_RIDE_NO_SPOKEN).assertExists()
         val noBounds = no.getUnclippedBoundsInRoot()
         val yesBounds = yes.getUnclippedBoundsInRoot()
         assertTrue(noBounds.top == yesBounds.top, "one row, but No is at ${noBounds.top} and Yes at ${yesBounds.top}")

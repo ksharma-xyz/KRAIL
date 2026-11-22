@@ -10,7 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -44,8 +43,8 @@ import kotlin.math.max
  *
  * The two sit in one row. When two whole buttons cannot fit side by side, as at 320 dp with large text,
  * the bar stacks them with the primary on top, and never squeezes, shrinks or truncates a label. It
- * never holds more than two buttons. Above the large text threshold the labels that have a compact form
- * show it, and every button keeps its whole phrase as its description for a screen reader.
+ * never holds more than two buttons. A button that shows a shorter word than it says, such as the Park & Ride
+ * answers, keeps the longer phrase as its description for a screen reader, at every text size.
  */
 @Composable
 internal fun IntroDecisionBar(
@@ -56,11 +55,10 @@ internal fun IntroDecisionBar(
     rightEnabled: Boolean = true,
     shown: Boolean = true,
 ) {
-    val fontScale = LocalDensity.current.fontScale
     val enabled = rightEnabled && shown
     Revealed(shown = shown, modifier = modifier) {
         if (left == null) {
-            PrimaryButton(right, onEvent, enabled, fontScale, Modifier.fillMaxWidth())
+            PrimaryButton(right, onEvent, enabled, Modifier.fillMaxWidth())
         } else {
             IntroBarLayout(gap = KrailTheme.dimensions.spacingL) {
                 OutlinedButton(
@@ -69,11 +67,11 @@ internal fun IntroDecisionBar(
                     dimensions = ButtonDefaults.largeButtonSize(),
                     modifier = Modifier
                         .testTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION)
-                        .semantics { contentDescription = left.label },
+                        .semantics { contentDescription = left.spokenLabel },
                 ) {
-                    Text(text = left.visibleLabel(fontScale), textAlign = TextAlign.Center)
+                    Text(text = left.label, textAlign = TextAlign.Center)
                 }
-                PrimaryButton(right, onEvent, enabled, fontScale)
+                PrimaryButton(right, onEvent, enabled)
             }
         }
     }
@@ -107,7 +105,6 @@ private fun PrimaryButton(
     action: IntroBarAction,
     onEvent: (IntroUiEvent) -> Unit,
     enabled: Boolean,
-    fontScale: Float,
     modifier: Modifier = Modifier,
 ) {
     Button(
@@ -115,9 +112,9 @@ private fun PrimaryButton(
         enabled = enabled,
         modifier = modifier
             .testTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION)
-            .semantics { contentDescription = action.label },
+            .semantics { contentDescription = action.spokenLabel },
     ) {
-        Text(text = action.visibleLabel(fontScale), textAlign = TextAlign.Center)
+        Text(text = action.label, textAlign = TextAlign.Center)
     }
 }
 

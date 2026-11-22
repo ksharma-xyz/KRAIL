@@ -1,7 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
-import xyz.ksharma.krail.taj.L_FONT_SCALE_THRESHOLD
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
@@ -11,10 +10,12 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.TripDecision
 
 // The words on the decision bar. Every one is an answer, never a way past a question, so none of them
 // is Skip, Later, Next, Continue or Done. IntroBannedWordsTest holds that for every string the Intro draws.
-internal const val PARK_RIDE_NO = "No thanks"
-internal const val PARK_RIDE_NO_COMPACT = "No"
-internal const val PARK_RIDE_YES = "Yes, show me free spots"
-internal const val PARK_RIDE_YES_COMPACT = "Yes"
+// The Park & Ride answers show one word at every text size, and a screen reader reads the longer phrase. Each visible
+// word is the start of its spoken phrase, so voice control that says the word finds the button.
+internal const val PARK_RIDE_NO = "No"
+internal const val PARK_RIDE_NO_SPOKEN = "No thanks"
+internal const val PARK_RIDE_YES = "Yes"
+internal const val PARK_RIDE_YES_SPOKEN = "Yes, show me free spots"
 internal const val PARK_RIDE_NOT_NOW = "Not now"
 internal const val PARK_RIDE_ADD = "Add to home"
 internal const val THEME_CONFIRM = "Yes, this one"
@@ -23,15 +24,13 @@ internal const val CONFIRM_NOT_NOW = "Not now"
 internal const val CONFIRM_SAVE = "Yes, save it"
 
 /**
- * One button of the decision bar. [label] is the whole phrase, which a screen reader reads at every
- * text size. [compactLabel] is what shows instead above [L_FONT_SCALE_THRESHOLD], the one place the
- * Intro shortens its words: a whole phrase does not fit beside another at a large text size, and the
- * answer is still the same. A label with no compact form shows whole at every size.
+ * One button of the decision bar. [label] is what shows, at every text size. [spokenLabel] is what a screen reader
+ * reads and voice control matches, which is [label] unless the button shows a shorter word than it says.
  */
 internal data class IntroBarAction(
     val label: String,
     val event: IntroUiEvent,
-    val compactLabel: String? = null,
+    val spokenLabel: String = label,
 )
 
 /**
@@ -59,10 +58,6 @@ internal const val BAR_REVEAL_MS = 250
 
 /** How long the bar takes to appear: [BAR_REVEAL_MS], and none under reduced motion, where it simply appears. */
 internal fun introBarRevealMs(reduceMotion: Boolean): Int = if (reduceMotion) 0 else BAR_REVEAL_MS
-
-/** What the button says at [fontScale]: the compact form above the large text threshold, otherwise the whole phrase. */
-internal fun IntroBarAction.visibleLabel(fontScale: Float): String =
-    if (fontScale > L_FONT_SCALE_THRESHOLD) compactLabel ?: label else label
 
 /**
  * What the bar of the screen [state] is on says and does, or null when the screen asks nothing and
@@ -122,8 +117,8 @@ private fun parkRideBar(state: IntroState): IntroBar? = when (val card = state.p
 }
 
 private fun askBar() = IntroBar(
-    left = IntroBarAction(PARK_RIDE_NO, IntroUiEvent.AnswerParkRide(yes = false), PARK_RIDE_NO_COMPACT),
-    right = IntroBarAction(PARK_RIDE_YES, IntroUiEvent.AnswerParkRide(yes = true), PARK_RIDE_YES_COMPACT),
+    left = IntroBarAction(PARK_RIDE_NO, IntroUiEvent.AnswerParkRide(yes = false), PARK_RIDE_NO_SPOKEN),
+    right = IntroBarAction(PARK_RIDE_YES, IntroUiEvent.AnswerParkRide(yes = true), PARK_RIDE_YES_SPOKEN),
 )
 
 private fun addBar(addEnabled: Boolean) = IntroBar(

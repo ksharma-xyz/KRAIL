@@ -39,7 +39,7 @@ import kotlin.test.assertTrue
 /**
  * The decision bar on its own, at the widths and text sizes that decide its layout: always two taj buttons,
  * one row when two whole buttons fit and otherwise one above the other with the primary on top, never
- * squeezed, and the short Yes and No above 130 percent text with the whole phrase kept for a screen reader.
+ * squeezed, and the Park & Ride answers Yes and No at every text size with the longer phrase kept for a screen reader.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -58,10 +58,12 @@ class IntroDecisionBarTest {
     private val fontScale = mutableStateOf(1f)
     private val rightEnabled = mutableStateOf(true)
     private val single = mutableStateOf(false)
+    private val useCardBar = mutableStateOf(false)
     private val barShown = mutableStateOf(true)
     private var contentSet = false
 
-    private val bar = requireNotNull(introBar(PreviewAskState, PreviewReady))
+    private val askBar = requireNotNull(introBar(PreviewAskState, PreviewReady))
+    private val cardBar = requireNotNull(introBar(PreviewCardContentState, PreviewReady))
     private val themeBar = requireNotNull(
         introBar(IntroState(step = IntroStep.THEME, selectedThemeId = 1), PreviewReady),
     )
@@ -72,7 +74,9 @@ class IntroDecisionBarTest {
         enabled: Boolean = true,
         onlyRight: Boolean = false,
         shown: Boolean = true,
+        card: Boolean = false,
     ) {
+        useCardBar.value = card
         width.value = widthDp
         barShown.value = shown
         single.value = onlyRight
@@ -85,6 +89,7 @@ class IntroDecisionBarTest {
                 CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = fontScale.value)) {
                     PreviewTheme {
                         Box(modifier = Modifier.width(width.value.dp)) {
+                            val bar = if (useCardBar.value) cardBar else askBar
                             IntroDecisionBar(
                                 left = bar.left.takeUnless { single.value },
                                 right = if (single.value) themeBar.right else bar.right,
@@ -137,7 +142,7 @@ class IntroDecisionBarTest {
     }
 
     @Test
-    fun `at 100 percent the labels are whole and the buttons are one row or stacked with the primary on top`() {
+    fun `at 100 percent the answers are Yes and No, in one row or stacked with the primary on top`() {
         show(PHONE_WIDTH, 1f)
 
         primary().assertTextEquals(PARK_RIDE_YES)
@@ -151,55 +156,47 @@ class IntroDecisionBarTest {
 
     @Test
     fun `when two whole buttons cannot fit the bar stacks with the primary on top at the same left and width`() {
-        show(NARROW_WIDTH, LARGE_BUT_NOT_SHORTENED)
+        show(NARROW_WIDTH, 2f, card = true)
 
-        primary().assertTextEquals(PARK_RIDE_YES)
-        secondary().assertTextEquals(PARK_RIDE_NO)
-        val yes = primary().bounds()
-        val no = secondary().bounds()
+        primary().assertTextEquals(PARK_RIDE_ADD)
+        secondary().assertTextEquals(PARK_RIDE_NOT_NOW)
+        val add = primary().bounds()
+        val notNow = secondary().bounds()
         assertTrue(
-            yes.bottom <= no.top,
-            "Yes ends at ${yes.bottom} and No starts at ${no.top}, so they are not stacked",
+            add.bottom <= notNow.top,
+            "Add to home ends at ${add.bottom} and Not now starts at ${notNow.top}, so they are not stacked",
         )
-        assertEquals(yes.left, no.left)
-        assertEquals(yes.width, no.width)
-        assertEquals(NARROW_WIDTH.dp, yes.width, "stacked buttons use the whole width")
+        assertEquals(add.left, notNow.left)
+        assertEquals(add.width, notNow.width)
+        assertEquals(NARROW_WIDTH.dp, add.width, "stacked buttons use the whole width")
         composeRule.onAllNodes(hasClickAction()).assertCountEquals(2)
     }
 
     @Test
-    fun `above 130 percent the short Yes and No sit in one row and a screen reader still gets the whole phrases`() {
-        show(NARROW_WIDTH, 2f)
-
-        primary().assertTextEquals(PARK_RIDE_YES_COMPACT)
-        secondary().assertTextEquals(PARK_RIDE_NO_COMPACT)
-        composeRule.onNodeWithContentDescription(PARK_RIDE_YES).assertExists()
-        composeRule.onNodeWithContentDescription(PARK_RIDE_NO).assertExists()
-        val yes = primary().bounds()
-        val no = secondary().bounds()
-        assertEquals(no.top, yes.top)
-        assertTrue(no.right <= yes.left, "No ends at ${no.right}, past where Yes starts at ${yes.left}")
-        assertTrue(yes.right <= NARROW_WIDTH.dp, "Yes ends at ${yes.right}, outside the ${NARROW_WIDTH}dp bar")
-    }
-
-    @Test
-    fun `the whole phrase is the description at every text size, so the screen reader never hears the short form`() {
+    fun `at every text size the answers are the one words Yes and No, and the narrowest window at 200 percent keeps one row`() {
         listOf(1f, 1.3f, 1.31f, 2f).forEach { scale ->
-            show(PHONE_WIDTH, scale)
+            show(NARROW_WIDTH, scale)
 
-            composeRule.onNodeWithContentDescription(PARK_RIDE_YES).assertExists()
-            composeRule.onNodeWithContentDescription(PARK_RIDE_NO).assertExists()
+            primary().assertTextEquals(PARK_RIDE_YES)
+            secondary().assertTextEquals(PARK_RIDE_NO)
+            val yes = primary().bounds()
+            val no = secondary().bounds()
+            assertEquals(no.top, yes.top, "one row at $scale")
+            assertTrue(no.right <= yes.left, "No ends at ${no.right}, past where Yes starts at ${yes.left}, at $scale")
+            assertTrue(yes.right <= NARROW_WIDTH.dp, "Yes ends at ${yes.right}, outside the ${NARROW_WIDTH}dp bar")
         }
     }
 
     @Test
-    fun `130 percent still shows the whole words and just above it shows the short ones`() {
-        show(PHONE_WIDTH, 1.3f)
-        primary().assertTextEquals(PARK_RIDE_YES)
+    fun `the longer phrase is the description at every text size, so a screen reader hears it and voice control still finds the word`() {
+        listOf(1f, 1.3f, 1.31f, 2f).forEach { scale ->
+            show(PHONE_WIDTH, scale)
 
-        show(PHONE_WIDTH, 1.31f)
-        primary().assertTextEquals(PARK_RIDE_YES_COMPACT)
-        secondary().assertTextEquals(PARK_RIDE_NO_COMPACT)
+            composeRule.onNodeWithContentDescription(PARK_RIDE_YES_SPOKEN).assertExists()
+            composeRule.onNodeWithContentDescription(PARK_RIDE_NO_SPOKEN).assertExists()
+            assertTrue(PARK_RIDE_YES_SPOKEN.startsWith(PARK_RIDE_YES), "the word shown is the start of the phrase said")
+            assertTrue(PARK_RIDE_NO_SPOKEN.startsWith(PARK_RIDE_NO), "the word shown is the start of the phrase said")
+        }
     }
 
     @Test
@@ -262,7 +259,6 @@ class IntroDecisionBarTest {
         const val PHONE_WIDTH = 379
         const val WIDE_WIDTH = 480
         const val NARROW_WIDTH = 288
-        const val LARGE_BUT_NOT_SHORTENED = 1.3f
         val ROUNDING = 1.dp
         val ONE_LINE_BUTTON_MAX = 64.dp
     }

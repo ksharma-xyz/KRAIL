@@ -34,7 +34,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroStep
 /** The content of one step, given everything the screen knows and the way to tell the view model. */
 internal typealias IntroStepContent = @Composable (IntroState, SuggestedStops, (IntroUiEvent) -> Unit) -> Unit
 
-/** The slot the trip step has until its own branch fills it: nothing at all. */
+/** A step with nothing in it. The shell tests use it, and the app gives step 2 [introFirstTripStep]. */
 internal val EmptyIntroStep: IntroStepContent = { _, _, _ -> }
 
 // The same width as a phone, so the Intro reads the same on a tablet and only gains margin.

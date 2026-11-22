@@ -11,6 +11,7 @@ import androidx.lifecycle.SavedStateHandle
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,6 +20,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.dhruva.location.Location
 import xyz.ksharma.dhruva.location.LocationError
+import xyz.ksharma.krail.core.navigation.ResultEventBus
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeAppDataReadiness
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
@@ -28,6 +30,8 @@ import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
+import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.v2.ParkRideCardPhase
@@ -58,6 +62,7 @@ class IntroFlowRouteTest {
     private val restorationTester by lazy { StateRestorationTester(composeRule) }
     private val analytics = FakeAnalytics()
     private var savedTripsOpened = 0
+    private val searchesOpened = mutableListOf<SearchStopFieldType>()
 
     private val viewModel = IntroFlowViewModel(
         savedStateHandle = SavedStateHandle(),
@@ -83,6 +88,7 @@ class IntroFlowRouteTest {
                 IntroFlowRoute(
                     viewModel = viewModel,
                     onNavigateToSavedTrips = { savedTripsOpened++ },
+                    onNavigateToSearchStop = { searchesOpened += it },
                     userLocationManager = manager,
                 )
             }
@@ -167,5 +173,66 @@ class IntroFlowRouteTest {
         restorationTester.emulateSavedInstanceStateRestore()
         composeRule.waitForIdle()
         assertEquals(listOf<Any?>("Intro", "IntroFirstTrip"), screenViews())
+    }
+
+    @After
+    fun leaveTheBusClean() {
+        ResultEventBus.getInstance().removeResult<StopSelectedResult>()
+    }
+
+    private fun sendPick(fieldType: SearchStopFieldType, id: String, name: String) {
+        ResultEventBus.getInstance()
+            .sendResult(result = StopSelectedResult(fieldType = fieldType, stopId = id, stopName = name))
+        composeRule.waitForIdle()
+    }
+
+    @Test
+    fun `Search another stop opens the search for the start, then for the end`() {
+        show(FakeUserLocationManager())
+        composeRule.onNodeWithText(PARK_RIDE_NO).performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithContentDescription(searchStopDescription(IntroStopRole.START)).performClick()
+        assertEquals(listOf(SearchStopFieldType.FROM), searchesOpened)
+
+        sendPick(SearchStopFieldType.FROM, id = "215020", name = "Parramatta Station")
+        composeRule.onNodeWithContentDescription(searchStopDescription(IntroStopRole.END)).performClick()
+        assertEquals(listOf(SearchStopFieldType.FROM, SearchStopFieldType.TO), searchesOpened)
+    }
+
+    @Test
+    fun `stops picked in the search become the trip on step 2, and the search counts as used`() {
+        show(FakeUserLocationManager())
+        composeRule.onNodeWithText(PARK_RIDE_NO).performClick()
+        composeRule.waitForIdle()
+
+        sendPick(SearchStopFieldType.FROM, id = "215020", name = "Parramatta Station")
+        sendPick(SearchStopFieldType.TO, id = "200080", name = "Wynyard Station")
+
+        val state = viewModel.state.value
+        assertEquals("215020", state.startStopId)
+        assertEquals("Parramatta Station", state.startName)
+        assertEquals("200080", state.endStopId)
+        assertEquals("Wynyard Station", state.endName)
+        assertEquals(true, state.usedSearch)
+        composeRule.onNodeWithContentDescription(
+            changeTripDescription("Parramatta Station", "Wynyard Station"),
+        ).assertIsDisplayed()
+    }
+
+    @Test
+    fun `a stop picked in the search survives a turn of the screen and is not applied twice`() {
+        show(FakeUserLocationManager())
+        composeRule.onNodeWithText(PARK_RIDE_NO).performClick()
+        composeRule.waitForIdle()
+        sendPick(SearchStopFieldType.FROM, id = "215020", name = "Parramatta Station")
+
+        restorationTester.emulateSavedInstanceStateRestore()
+        composeRule.waitForIdle()
+
+        assertEquals("215020", viewModel.state.value.startStopId)
+        composeRule.onNodeWithContentDescription(
+            changeStopDescription(IntroStopRole.START, "Parramatta Station"),
+        ).assertIsDisplayed()
     }
 }

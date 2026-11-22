@@ -565,6 +565,20 @@ silent:
 - Every row is a whole item that wraps inside its own width and is at least 48 dp tall. The step scrolls. A test holds this at
   320 dp with text at 200%, with a stop name long enough to wrap.
 
+The search hand-off, as built, with nothing in `searchstop/` touched:
+
+- Search another stop calls `onNavigateToSearchStop(FROM)` for the start or `(TO)` for the end, which the entry sends to
+  `TripPlannerNavigator.navigateToSearchStop`, the same route (`SearchStopRoute`) Saved Trips opens. The search needs no change.
+- The pick comes back as `StopSelectedResult` on the shared `ResultEventBus`, received by `IntroSearchResultEffect` with
+  `ResultEffect`, and mapped by the pure `toIntroEvent` to one `IntroUiEvent.StopPickedFromSearch`. The channel holds a result
+  sent while the Intro is not composed, which is the whole time the search is on screen, so the Intro receives it once when it
+  is back. A turn of the screen does not receive it again. A pick for a stop label is ignored.
+- Assumptions, to check on a device. The search sends `StopSelectedResult` for a trip end whichever screen opened it, and does
+  not use the dedicated `TimetableStopChangedResult` channel unless `editTripLeg` is set, which the Intro never sets. On a
+  phone Saved Trips is not composed while the Intro is, so nothing else collects the same channel. An address pick (the search
+  can offer one when that flag is on) is kept as a stop, by id and name, because the saved trip stores only those two and the
+  analytics event carries neither.
+
 ## 8. Test plan
 
 - **Pure logic, fixtures first.**
@@ -628,7 +642,7 @@ silent:
 | Measure the stops insert and the location fix on a mid-range phone and a fresh install | ksharma-xyz | Before the UI branch is called done |
 | ~~Verify the Intro availability read seeds the Saved Trips card cooldown~~ Done, see section 6 row 5 | ksharma-xyz | Before the view model branch |
 | Draw step 2 at 600 dp and at dual-pane, and step 1 at 320 dp and 200% | ksharma-xyz | Before the UI branch |
-| Reuse audit: which existing stop search component "Search another stop" opens, and how it returns a pick | ksharma-xyz | Before the UI branch |
+| ~~Reuse audit: which existing stop search component "Search another stop" opens, and how it returns a pick~~ Done, see section 7, the search hand-off | ksharma-xyz | Before the UI branch |
 | Delete the old `IntroContent*` files, previews and screenshots in the UI branch | ksharma-xyz | UI branch |
 | Add the ledger rows and ping the analytics side before the release that carries the new params | ksharma-xyz | Before the release is published |
 | Read `docs/STORE_DATA_DECLARATIONS.md` again at the UI branch. Location stays on the device here, so nothing should change, but its "revisit when" test applies | ksharma-xyz | UI branch |

@@ -6,7 +6,6 @@ import androidx.compose.runtime.saveable.SaveableStateHolder
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -23,7 +22,6 @@ import org.koin.core.context.stopKoin
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
-import xyz.ksharma.krail.core.navigation.ResultEventBus
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
@@ -31,8 +29,6 @@ import xyz.ksharma.krail.trip.planner.ui.di.viewModelsModule
 import xyz.ksharma.krail.trip.planner.ui.flow.RecordingTripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.navigation.IntroRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
-import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
-import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.navigation.entries.IntroEntry
 import kotlin.test.assertEquals
@@ -68,9 +64,8 @@ class IntroEntryTest {
     }
 
     @After
-    fun stopKoinAndCleanTheBus() {
+    fun stopKoinAfterwards() {
         stopKoin()
-        ResultEventBus.getInstance().removeResult<StopSelectedResult>()
     }
 
     private fun launch() {
@@ -131,6 +126,11 @@ class IntroEntryTest {
     fun `finishing goes to Saved Trips with the back stack cleared`() {
         launch()
         answerNo()
+        // The destination and then the origin are chosen with the right button, and the confirm screen saves.
+        repeat(2) {
+            composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
+            composeRule.waitForIdle()
+        }
 
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
         composeRule.waitForIdle()
@@ -139,44 +139,14 @@ class IntroEntryTest {
     }
 
     @Test
-    fun `Search another stop opens the stop search for the start`() {
-        launch()
-        answerNo()
-
-        composeRule.onNodeWithContentDescription(searchStopDescription(IntroStopRole.START)).performClick()
-
-        assertEquals(listOf(SearchStopFieldType.FROM), navigator.recorded.searchStopRequests)
-    }
-
-    @Test
-    fun `a stop picked while the search was on screen is the start when the entry is back`() {
-        launch()
-        answerNo()
-        leave()
-
-        ResultEventBus.getInstance().sendResult(
-            result = StopSelectedResult(
-                fieldType = SearchStopFieldType.FROM,
-                stopId = "215020",
-                stopName = "Parramatta Station",
-            ),
-        )
-        comeBack()
-
-        composeRule.onNodeWithContentDescription(
-            changeStopDescription(IntroStopRole.START, "Parramatta Station"),
-        ).assertIsDisplayed()
-    }
-
-    @Test
-    fun `leaving for the search and coming back keeps the Intro on step 2`() {
+    fun `leaving and coming back keeps the Intro on the destination screen`() {
         launch()
         answerNo()
 
         leave()
         comeBack()
 
-        composeRule.onNodeWithText(FIRST_TRIP_HEADING).assertIsDisplayed()
+        composeRule.onNodeWithText(DESTINATION_HEADING).assertIsDisplayed()
         composeRule.onNodeWithText(PARK_RIDE_HEADING).assertDoesNotExist()
     }
 
@@ -184,14 +154,14 @@ class IntroEntryTest {
     fun `a new visit to the Intro starts on the first question again`() {
         launch()
         answerNo()
-        composeRule.onNodeWithText(FIRST_TRIP_HEADING).assertIsDisplayed()
+        composeRule.onNodeWithText(DESTINATION_HEADING).assertIsDisplayed()
 
         leave()
         composeRule.runOnIdle { holder?.removeState(VISIT) }
         comeBack()
 
         composeRule.onNodeWithText(PICK_THEME_HEADING).assertIsDisplayed()
-        composeRule.onNodeWithText(FIRST_TRIP_HEADING).assertDoesNotExist()
+        composeRule.onNodeWithText(DESTINATION_HEADING).assertDoesNotExist()
     }
 
     private companion object {

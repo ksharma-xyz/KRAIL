@@ -118,9 +118,7 @@ fun SearchTopBar(
             // rider could never see reported, and one that accepts less makes that branch
             // unreachable. They have to be the same value.
             maxLength = SearchQueryAnalyticsRedaction.MAX_QUERY_LENGTH,
-            filter = { input ->
-                input.filter { it.isLetterOrDigit() || it.isWhitespace() || it == ',' }
-            },
+            filter = ::stopSearchInputFilter,
             leadingIcon = {
                 NavActionButton(
                     icon = Icons.AutoMirrored.Filled.ArrowBack,

@@ -35,6 +35,13 @@ object TripPlannerTestTags {
     const val INTRO_THEME_BUS = "intro.theme.bus"
     const val INTRO_THEME_FERRY = "intro.theme.ferry"
 
+    // The destination and origin screens: the search field, and one row for each stop listed.
+    const val INTRO_STOP_FIELD = "intro.stop.field"
+
+    // The confirm screen's trip tile and its star.
+    const val INTRO_CONFIRM_TILE = "intro.confirm.tile"
+    const val INTRO_CONFIRM_STAR = "intro.confirm.star"
+
     // Saved trips (home)
     const val SAVED_TRIPS_SCREEN = "savedtrips.screen"
     const val SAVED_TRIPS_LIST = "savedtrips.list"
@@ -90,6 +97,9 @@ object TripPlannerTestTags {
 
     /** One search result row, keyed by the stop it would select. */
     fun searchStopResult(stopId: String): String = "searchstop.result.$stopId"
+
+    /** One row of the Intro's destination or origin list, keyed by the stop it would choose. */
+    fun introStop(stopId: String): String = "intro.stop.$stopId"
 
     /** One journey result card. */
     fun timeTableJourneyCard(journeyId: String): String = "timetable.journey.$journeyId"

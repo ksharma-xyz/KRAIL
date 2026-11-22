@@ -62,6 +62,7 @@ class IntroCopyTest {
         val words = barWords()
 
         assertTrue("Yes, show me free spots" in words && "Add to home" in words && "Not now" in words, "$words")
+        assertTrue("No, search" in words && "Yes, this one" in words, "the stop screens' bar was not found: $words")
     }
 
     @Test
@@ -78,8 +79,9 @@ class IntroCopyTest {
 
     @Test
     fun `no button and no headline has a question mark, an exclamation mark, a colon, a dash, an arrow or a dot`() {
-        val strings = barWords() + PARK_RIDE_HEADLINE + FIRST_TRIP_HEADLINE + PARK_RIDE_HEADING + BACK_DESCRIPTION +
-            PICK_THEME_HEADLINE + PICK_THEME_HEADING
+        val strings = barWords() + PARK_RIDE_HEADLINE + DESTINATION_HEADLINE + ORIGIN_HEADLINE + PARK_RIDE_HEADING +
+            DESTINATION_HEADING + ORIGIN_HEADING + STOP_NO_MATCH + BACK_DESCRIPTION + PICK_THEME_HEADLINE +
+            PICK_THEME_HEADING
 
         strings.forEach { text ->
             BANNED_GLYPHS.forEach { glyph -> assertTrue(!text.contains(glyph), "\"$text\" has $glyph") }
@@ -88,7 +90,7 @@ class IntroCopyTest {
 
     @Test
     fun `a headline is two to four short lines`() {
-        listOf(PARK_RIDE_HEADLINE, FIRST_TRIP_HEADLINE, PICK_THEME_HEADLINE).forEach { lines ->
+        listOf(PARK_RIDE_HEADLINE, DESTINATION_HEADLINE, ORIGIN_HEADLINE, PICK_THEME_HEADLINE).forEach { lines ->
             assertTrue(lines.size in 2..4, "$lines")
             assertTrue(lines.all { it.isNotBlank() && it.length <= MAX_LINE_LENGTH }, "$lines")
         }

@@ -53,6 +53,13 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
  * Pills never show a tick — solid means "set here", outline means "not set". A stop
  * can only ever be assigned to ONE label (the same 1:1 invariant as today),
  * automatically satisfied here since the wall excludes labels that are already set.
+ *
+ * [showLabelAssign] is on for Search Stop. A list that only picks a stop, such as the Intro's, turns it
+ * off: the row is then the name and the mode icons, with no chevron and nothing to expand, and the
+ * label arguments are unused.
+ *
+ * [tapAreaModifier] is applied to the tappable part of the row, after its click, so a test tag or a
+ * semantic such as selected lands on the one node that has the click and the row's text.
  */
 @Composable
 internal fun StopLabelAssignRow(
@@ -66,6 +73,8 @@ internal fun StopLabelAssignRow(
     onNewLabelClick: () -> Unit,
     modifier: Modifier = Modifier,
     onRowClick: (() -> Unit)? = null,
+    showLabelAssign: Boolean = true,
+    tapAreaModifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
 
@@ -82,6 +91,7 @@ internal fun StopLabelAssignRow(
                 modifier = Modifier
                     .weight(1f)
                     .then(if (onRowClick != null) Modifier.klickable(onClick = onRowClick) else Modifier)
+                    .then(tapAreaModifier)
                     // Vertical padding lives INSIDE the klickable chain (after it, not
                     // on the outer Column) so the ripple/touch target covers the row's
                     // full visual height — previously the padding sat outside the
@@ -109,12 +119,12 @@ internal fun StopLabelAssignRow(
                     }
                 }
             }
-            if (assignedLabel == null) {
+            if (assignedLabel == null && showLabelAssign) {
                 AssignToLabelIcon(expanded = expanded, onClick = onExpandToggle)
             }
         }
 
-        if (expanded && assignedLabel == null) {
+        if (expanded && assignedLabel == null && showLabelAssign) {
             val unsetLabels = remember(stopLabels) { stopLabels.filterNot { it.isSet } }
 
             LazyRow(

@@ -17,14 +17,14 @@ import kotlin.random.Random
 /**
  * Intro Entry - Detail Screen in List-Detail pattern.
  *
- * The Intro's two steps, its view model and the platform glue are [IntroFlowRoute]. This only gives
- * it the two places it can go: Saved Trips, with the back stack cleared so the rider cannot go back
- * to the Intro, and the app's own stop search, which comes back through the result bus.
+ * The Intro's screens, its view model and the platform glue are [IntroFlowRoute]. This only gives it
+ * the places it can go: Saved Trips, with the back stack cleared so the rider cannot go back to the
+ * Intro, and the app's theme.
  *
  * The entries have no view model store of their own, so a view model made here is the Activity's and
  * would outlive the Intro. A key made once for each visit and saved with the entry gives the Intro a
  * new view model every time it is opened, such as from Settings, and the same one through a turn of
- * the screen and through the search being on screen.
+ * the screen.
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
@@ -43,7 +43,6 @@ internal fun EntryProviderScope<NavKey>.IntroEntry(
                 // Clear entire back stack - the rider shouldn't go back to the Intro
                 tripPlannerNavigator.clearBackStackAndNavigate(SavedTripsRoute)
             },
-            onNavigateToSearchStop = { fieldType -> tripPlannerNavigator.navigateToSearchStop(fieldType) },
             // The same call the Settings theme screen makes to recolour the whole app.
             onApplyTheme = { hexColorCode -> tripPlannerNavigator.updateTheme(hexColorCode) },
         )

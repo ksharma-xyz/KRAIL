@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.taj.L_FONT_SCALE_THRESHOLD
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroSearchPhase
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
@@ -18,6 +19,8 @@ internal const val PARK_RIDE_NOT_NOW = "Not now"
 internal const val PARK_RIDE_ADD = "Add to home"
 internal const val THEME_ANOTHER = "No, show me another"
 internal const val THEME_CONFIRM = "Yes, this one"
+internal const val STOP_SEARCH = "No, search"
+internal const val STOP_CHOOSE = "Yes, this one"
 internal const val TRIP_NOT_NOW = "Not now"
 internal const val TRIP_SAVE = "Yes, save it"
 
@@ -53,14 +56,27 @@ internal fun IntroBarAction.visibleLabel(fontScale: Float): String =
  * shows no bar. A table over the step, so a new step is a compile error here and not a screen with the
  * wrong bar. [readiness] is the stops data, which only the screens that end in saving a trip wait on.
  *
- * The theme screen has its own bar, see [themeBar]. The destination, origin and confirm screens share one
- * temporary bar until the unit that builds each of them gives it its own.
+ * The theme screen has its own bar, see [themeBar], and so have the destination and origin screens, which
+ * share [stopBar]. The confirm screen shares one temporary bar until the unit that builds it gives it its own.
  */
 internal fun introBar(state: IntroState, readiness: StopsReadiness): IntroBar? = when (state.step) {
     IntroStep.THEME -> themeBar(state)
     IntroStep.PARK_RIDE -> parkRideBar(state)
-    IntroStep.DESTINATION, IntroStep.ORIGIN, IntroStep.CONFIRM -> tripBar(state, readiness)
+    IntroStep.DESTINATION, IntroStep.ORIGIN -> stopBar(state)
+    IntroStep.CONFIRM -> tripBar(state, readiness)
 }
+
+/**
+ * The destination and origin screens. The left button opens the search field and never chooses or moves on, so
+ * it is always on, and the right button takes the highlighted row, which is the first one listed. When the typed
+ * search found no stop nothing is highlighted, so the right button is off until the rider types something that
+ * matches or clears the field.
+ */
+private fun stopBar(state: IntroState) = IntroBar(
+    left = IntroBarAction(STOP_SEARCH, IntroUiEvent.FocusSearch),
+    right = IntroBarAction(STOP_CHOOSE, IntroUiEvent.UseHighlightedStop),
+    rightEnabled = state.search != IntroSearchPhase.NoMatch,
+)
 
 /**
  * The theme screen. The left button moves to the next theme, so it is always available and the first press
@@ -99,7 +115,7 @@ private fun addBar(addEnabled: Boolean) = IntroBar(
 )
 
 /**
- * TEMPORARY, for the destination, origin and confirm screens until each has its own bar. The trip is
+ * TEMPORARY, for the confirm screen until it has its own bar. The trip is
  * saved from the picks if there is a complete pair and otherwise nothing is written, and the Intro ends
  * either way. The save waits for the stops data to be Ready or Failed, as the confirm screen will, and
  * a trip already written needs no wait.

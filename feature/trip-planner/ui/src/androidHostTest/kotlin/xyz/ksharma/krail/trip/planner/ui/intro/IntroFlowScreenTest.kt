@@ -51,7 +51,8 @@ class IntroFlowScreenTest {
     private val events = mutableListOf<IntroUiEvent>()
     private val ready = StopsReadiness.Ready(stopCount = 100)
     private val stepTwo = IntroState(step = IntroStep.DESTINATION)
-    private val tripPair = stepTwo.copy(
+    private val tripPair = IntroState(
+        step = IntroStep.CONFIRM,
         startStopId = "200060",
         startName = "Central Station",
         endStopId = "200080",
@@ -161,12 +162,32 @@ class IntroFlowScreenTest {
     }
 
     @Test
-    fun `the trip screens ask Not now and Yes save it, and save waits only for stops that are still loading`() {
-        show(stepTwo, StopsReadiness.Loading)
+    fun `the destination and origin screens ask No search and Yes this one, each sending its own event`() {
+        listOf(IntroStep.DESTINATION, IntroStep.ORIGIN).forEach { step ->
+            events.clear()
+            show(IntroState(step = step), StopsReadiness.Loading)
+
+            secondary().assertTextEquals(STOP_SEARCH).assertIsEnabled()
+            primary().assertTextEquals(STOP_CHOOSE).assertIsEnabled()
+            secondary().performClick()
+            primary().performClick()
+
+            assertEquals<List<IntroUiEvent>>(
+                listOf(IntroUiEvent.FocusSearch, IntroUiEvent.UseHighlightedStop),
+                events,
+                "$step",
+            )
+        }
+    }
+
+    @Test
+    fun `the confirm screen asks Not now and Yes save it, and save waits only for stops that are still loading`() {
+        val confirm = tripPair
+        show(confirm, StopsReadiness.Loading)
         secondary().assertTextEquals(TRIP_NOT_NOW).assertIsEnabled()
         primary().assertTextEquals(TRIP_SAVE).assertIsNotEnabled()
 
-        show(stepTwo, StopsReadiness.Unknown)
+        show(confirm, StopsReadiness.Unknown)
         primary().assertIsNotEnabled()
 
         listOf(ready, StopsReadiness.Failed(attempt = 1, reason = "disk full")).forEach { readiness ->

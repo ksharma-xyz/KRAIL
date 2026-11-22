@@ -10,14 +10,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import xyz.ksharma.krail.core.adaptiveui.DUAL_PANE_LIST_WIDTH
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
@@ -26,12 +30,6 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
-
-/** The content of one step, given everything the screen knows and the way to tell the view model. */
-internal typealias IntroStepContent = @Composable (IntroState, SuggestedStops, (IntroUiEvent) -> Unit) -> Unit
-
-/** A step with nothing in it. The shell tests use it, and the app gives step 2 [introFirstTripStep]. */
-internal val EmptyIntroStep: IntroStepContent = { _, _, _ -> }
 
 // The same width as a phone, so the Intro reads the same on a tablet and only gains margin.
 private val IntroMaxContentWidth = DUAL_PANE_LIST_WIDTH
@@ -54,13 +52,14 @@ internal fun IntroFlowScreen(
     readiness: StopsReadiness,
     onEvent: (IntroUiEvent) -> Unit,
     modifier: Modifier = Modifier,
-    firstTripStep: IntroStepContent = EmptyIntroStep,
 ) {
     val dim = KrailTheme.dimensions
     val reduceMotion = isReduceMotionEnabled()
+    val searchFocus = remember { FocusRequester() }
+    val send = rememberIntroSender(searchFocus, onEvent)
 
     val canGoBack = state.stepBefore() != null
-    BackHandler(enabled = canGoBack) { onEvent(IntroUiEvent.Back) }
+    BackHandler(enabled = canGoBack) { send(IntroUiEvent.Back) }
 
     Box(
         modifier = modifier
@@ -71,7 +70,7 @@ internal fun IntroFlowScreen(
         contentAlignment = Alignment.TopCenter,
     ) {
         Column(modifier = Modifier.widthIn(max = IntroMaxContentWidth).fillMaxHeight()) {
-            IntroTopBar(showBack = canGoBack, onBack = { onEvent(IntroUiEvent.Back) })
+            IntroTopBar(showBack = canGoBack, onBack = { send(IntroUiEvent.Back) })
 
             AnimatedContent(
                 targetState = state.step,
@@ -81,14 +80,16 @@ internal fun IntroFlowScreen(
                 label = "intro-step",
             ) { step ->
                 when (step) {
-                    IntroStep.THEME -> IntroThemeStepContent(selectedThemeId = state.selectedThemeId, onEvent = onEvent)
+                    IntroStep.THEME -> IntroThemeStepContent(selectedThemeId = state.selectedThemeId, onEvent = send)
                     IntroStep.PARK_RIDE -> IntroParkRideStepContent(state = state)
-                    // Temporary: the first trip screen has its own layout until the destination screen is built.
-                    IntroStep.DESTINATION -> Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-                        firstTripStep(state, suggestedStops, onEvent)
-                    }
-                    // Temporary, until the origin and confirm screens are built.
-                    IntroStep.ORIGIN, IntroStep.CONFIRM -> IntroPendingStepBody(step)
+                    IntroStep.DESTINATION, IntroStep.ORIGIN -> IntroStopStepContent(
+                        state = state,
+                        suggestedStops = suggestedStops,
+                        focusRequester = searchFocus,
+                        onEvent = send,
+                    )
+                    // Temporary, until the confirm screen is built.
+                    IntroStep.CONFIRM -> IntroPendingStepBody(step)
                 }
             }
 
@@ -96,7 +97,7 @@ internal fun IntroFlowScreen(
                 IntroDecisionBar(
                     left = bar.left,
                     right = bar.right,
-                    onEvent = onEvent,
+                    onEvent = send,
                     rightEnabled = bar.rightEnabled,
                     modifier = Modifier.padding(
                         horizontal = dim.pageHorizontalPadding,
@@ -104,6 +105,39 @@ internal fun IntroFlowScreen(
                     ),
                 )
             }
+        }
+    }
+}
+
+/**
+ * The way the screen sends an event: to [onEvent], after doing what only the screen can for the keyboard. No search
+ * focuses [searchFocus] and shows the keyboard, and a choice or Back hides it and lets go of the focus, so it never
+ * stays up over the next screen.
+ */
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+private fun rememberIntroSender(
+    searchFocus: FocusRequester,
+    onEvent: (IntroUiEvent) -> Unit,
+): (IntroUiEvent) -> Unit {
+    val keyboard = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    val latest by rememberUpdatedState(onEvent)
+    return remember(searchFocus, keyboard, focusManager) {
+        {
+                event ->
+            when (event.keyboardAction()) {
+                IntroKeyboardAction.Open -> {
+                    searchFocus.requestFocus()
+                    keyboard?.show()
+                }
+                IntroKeyboardAction.Close -> {
+                    keyboard?.hide()
+                    focusManager.clearFocus()
+                }
+                IntroKeyboardAction.None -> Unit
+            }
+            latest(event)
         }
     }
 }

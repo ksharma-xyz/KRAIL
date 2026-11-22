@@ -28,11 +28,16 @@ internal fun introMiddleTop(zone: Int, headline: Int, middle: Int): Int =
  * does not hold. Both zones sit in one scrolling column, so when the text is large or the screen is short the
  * headline and the middle scroll together and nothing is clipped or out of reach. With room to spare the
  * headline stays at the top and the middle is centred.
+ *
+ * A screen whose middle changes height while the rider uses it, such as a list that is searched, passes
+ * [centreMiddle] false: the middle then starts straight under the headline, so it never moves when its own
+ * height does.
  */
 @Composable
 internal fun IntroStepFrame(
     headline: @Composable () -> Unit,
     modifier: Modifier = Modifier,
+    centreMiddle: Boolean = true,
     middle: @Composable () -> Unit,
 ) {
     val dim = KrailTheme.dimensions
@@ -51,7 +56,11 @@ internal fun IntroStepFrame(
             val headlinePlaceable = measurables[0].measure(loose)
             val middlePlaceable = measurables[1].measure(loose)
             val zonePx = zone.roundToPx()
-            val middleTop = introMiddleTop(zonePx, headlinePlaceable.height, middlePlaceable.height)
+            val middleTop = if (centreMiddle) {
+                introMiddleTop(zonePx, headlinePlaceable.height, middlePlaceable.height)
+            } else {
+                headlinePlaceable.height
+            }
             layout(constraints.maxWidth, max(zonePx, middleTop + middlePlaceable.height)) {
                 headlinePlaceable.place(0, 0)
                 middlePlaceable.place(0, middleTop)

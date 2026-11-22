@@ -318,7 +318,7 @@ internal data class NewLabelTarget(
  * true the search replaces one leg of the trip shown in the timetable, so the copy
  * switches to "Change origin" / "Change destination".
  */
-private fun searchFieldPlaceholder(
+internal fun searchFieldPlaceholder(
     fieldType: SearchStopFieldType,
     editTripLeg: Boolean,
 ): String = when (fieldType) {

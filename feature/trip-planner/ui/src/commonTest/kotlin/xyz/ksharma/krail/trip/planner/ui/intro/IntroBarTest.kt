@@ -1,7 +1,9 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
+import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroSearchPhase
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
@@ -107,8 +109,47 @@ class IntroBarTest {
         bars.forEach { bar -> assertNotEquals(bar.left.event, bar.right.event) }
     }
 
+    private fun stops(enabled: Boolean) = IntroBar(
+        left = IntroBarAction("No, search", IntroUiEvent.FocusSearch),
+        right = IntroBarAction("Yes, this one", IntroUiEvent.UseHighlightedStop),
+        rightEnabled = enabled,
+    )
+
     @Test
-    fun `the trip screens share one bar that waits only for stops that are still loading`() {
+    fun `the destination and origin screens ask No search and Yes this one, and the stops data never matters`() {
+        val typedNothing = listOf(IntroSearchPhase.Idle, IntroSearchPhase.Results(persistentListOf(CENTRAL_STOP)))
+
+        listOf(IntroStep.DESTINATION, IntroStep.ORIGIN).forEach { step ->
+            listOf(unknown, loading, ready, failed).forEach { readiness ->
+                typedNothing.forEach { phase ->
+                    val state = IntroState(step = step, search = phase)
+
+                    assertEquals(stops(enabled = true), introBar(state, readiness), "$step $readiness $phase")
+                }
+                // Nothing is highlighted when the search found nothing, so the right button has nothing to take.
+                val noMatch = IntroState(step = step, search = IntroSearchPhase.NoMatch)
+                assertEquals(stops(enabled = false), introBar(noMatch, readiness), "$step $readiness no match")
+            }
+        }
+    }
+
+    @Test
+    fun `the stop bar's words are exact, whole at every text size, and the left button never moves on`() {
+        val bar = requireNotNull(introBar(IntroState(step = IntroStep.DESTINATION), ready))
+
+        assertEquals("No, search", STOP_SEARCH)
+        assertEquals("Yes, this one", STOP_CHOOSE)
+        assertNull(bar.left.compactLabel)
+        assertNull(bar.right.compactLabel)
+        listOf(1.0f, 1.31f, 2.0f).forEach { scale ->
+            assertEquals("No, search", bar.left.visibleLabel(scale), "left at $scale")
+            assertEquals("Yes, this one", bar.right.visibleLabel(scale), "right at $scale")
+        }
+        assertEquals(IntroUiEvent.FocusSearch, bar.left.event)
+    }
+
+    @Test
+    fun `the confirm screen has a bar that waits only for stops that are still loading`() {
         val rows = listOf(
             Triple(unknown, false, false),
             Triple(loading, false, false),
@@ -119,12 +160,10 @@ class IntroBarTest {
             Triple(loading, true, true),
         )
 
-        listOf(IntroStep.DESTINATION, IntroStep.ORIGIN, IntroStep.CONFIRM).forEach { step ->
-            rows.forEach { (readiness, saved, enabled) ->
-                val state = IntroState(step = step, saved = saved)
+        rows.forEach { (readiness, saved, enabled) ->
+            val state = IntroState(step = IntroStep.CONFIRM, saved = saved)
 
-                assertEquals(trip(enabled), introBar(state, readiness), "$step $readiness saved=$saved")
-            }
+            assertEquals(trip(enabled), introBar(state, readiness), "$readiness saved=$saved")
         }
     }
 

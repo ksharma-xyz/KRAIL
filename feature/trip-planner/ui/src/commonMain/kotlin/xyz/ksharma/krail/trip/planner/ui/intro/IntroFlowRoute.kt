@@ -3,7 +3,6 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.Lifecycle
@@ -12,7 +11,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import xyz.ksharma.krail.core.maps.data.location.UserLocationManager
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
-import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 
 /**
  * The Intro with its view model: the screen, and the platform glue the screen needs and
@@ -25,10 +23,7 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
  * - The `view_screen` event is the view model's, asked for once each time the step on screen
  *   changes. It is not by route: `RouteAnalyticsScreen` maps routes for the window events and is
  *   not where `view_screen` is sent.
- * - Search another stop is [onNavigateToSearchStop], which opens the app's own stop search for the
- *   start or the end. The stop the rider picks there comes back as one [IntroUiEvent.StopPickedFromSearch]
- *   through [IntroSearchResultEffect].
- *
+
  * - The theme the rider selects on the first screen is applied to the whole app through [onApplyTheme], so every
  *   screen after it, and the buttons on this one, take its colour at once. The theme is also stored when it is
  *   selected, so the app starts in it however the Intro ends.
@@ -39,7 +34,6 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 internal fun IntroFlowRoute(
     viewModel: IntroFlowViewModel,
     onNavigateToSavedTrips: () -> Unit,
-    onNavigateToSearchStop: (SearchStopFieldType) -> Unit,
     onApplyTheme: (hexColorCode: String) -> Unit,
     modifier: Modifier = Modifier,
     userLocationManager: UserLocationManager = rememberUserLocationManager(),
@@ -48,11 +42,6 @@ internal fun IntroFlowRoute(
     val readiness by viewModel.stopsReadiness.collectAsStateWithLifecycle()
 
     IntroEffectsCollector(viewModel = viewModel, onNavigateToSavedTrips = onNavigateToSavedTrips)
-    IntroSearchResultEffect(onEvent = viewModel::onEvent)
-
-    // Made once, so the step is not a new lambda on every recomposition. It calls the latest callback.
-    val openSearch by rememberUpdatedState(onNavigateToSearchStop)
-    val firstTripStep = remember { introFirstTripStep { isStart -> openSearch(introSearchFieldType(isStart)) } }
 
     LaunchedEffect(viewModel, state.step) { viewModel.onStepShown(state.step) }
 
@@ -75,7 +64,6 @@ internal fun IntroFlowRoute(
         readiness = readiness,
         onEvent = viewModel::onEvent,
         modifier = modifier,
-        firstTripStep = firstTripStep,
     )
 }
 

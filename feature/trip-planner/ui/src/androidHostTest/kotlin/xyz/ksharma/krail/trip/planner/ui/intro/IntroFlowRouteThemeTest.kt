@@ -77,7 +77,6 @@ class IntroFlowRouteThemeTest {
                 IntroFlowRoute(
                     viewModel = viewModel,
                     onNavigateToSavedTrips = {},
-                    onNavigateToSearchStop = {},
                     onApplyTheme = { appliedThemes += it },
                     userLocationManager = FakeUserLocationManager(),
                 )

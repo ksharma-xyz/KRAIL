@@ -11,6 +11,20 @@ import androidx.compose.ui.unit.Dp
 /** The field the rider is editing, which takes the dark fill. Null is neither, as on home. */
 internal enum class ToFromField { To, From }
 
+/** How a `ToFromBlock` draws its two bars. */
+internal sealed interface ToFromBlockStyle {
+
+    /** The home's own look: the idle bar is taj's text field button and the bar being edited is the dark text field. */
+    data object Classic : ToFromBlockStyle
+
+    /**
+     * Search Stop's map state. The bars are two rows on the one fixed dark card the caller draws: both are the
+     * same taj text field with no fill of its own, a thin divider sits between them with [rowGap] above and
+     * below it, and which bar has focus changes the caret and the keyboard and nothing else.
+     */
+    data class FloatingRows(val rowGap: Dp) : ToFromBlockStyle
+}
+
 /**
  * Whether this field is the dark bar while [editing] is being edited: only the one edited. The
  * bar being edited is the dark text field and the other is the light button, so the dark fill

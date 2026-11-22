@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.components.TextField
 import xyz.ksharma.krail.taj.components.TextFieldButton
+import xyz.ksharma.krail.taj.components.TextFieldColors
 import xyz.ksharma.krail.taj.components.TextFieldDefaults
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
@@ -73,6 +74,11 @@ internal fun toFromBarInsets(): ToFromBarInsets {
  *
  * [showFrom] false hides the From bar (the beat after a label pill tap, before it animates in).
  * Because From is under To, showing it never moves To.
+ *
+ * [style] is the block's look. [ToFromBlockStyle.Classic] is everything above, the home's own. Search Stop's
+ * map state passes [ToFromBlockStyle.FloatingRows]: the two bars are rows of taj's [TextField] on the one
+ * fixed dark card the caller draws, with a thin divider between them, and neither bar swaps fill when focus
+ * moves (see `ToFromFloatingRows`).
  */
 @Composable
 internal fun ToFromBlock(
@@ -92,9 +98,48 @@ internal fun ToFromBlock(
     fromPlaceholder: String = FROM_PLACEHOLDER,
     showGo: Boolean = true,
     fromTrailing: (@Composable () -> Unit)? = null,
+    style: ToFromBlockStyle = ToFromBlockStyle.Classic,
 ) {
     val dim = KrailTheme.dimensions
     val insets = toFromBarInsets()
+    if (style is ToFromBlockStyle.FloatingRows) {
+        ToFromFloatingRows(
+            rows = FloatingRowsContent(
+                to = BarContent(
+                    tag = TripPlannerTestTags.SEARCH_ROW_TO,
+                    text = toStopItem?.stopName ?: toPlaceholder,
+                    hasStop = toStopItem != null,
+                    label = toFromFieldLabel(TO_ROLE, toPlaceholder, toStopItem?.stopName),
+                    placeholder = toPlaceholder,
+                    slideUp = false,
+                    animationLabel = "destinationText",
+                    onClick = onToClick,
+                ),
+                from = BarContent(
+                    tag = TripPlannerTestTags.SEARCH_ROW_FROM,
+                    text = fromStopItem?.stopName ?: fromPlaceholder,
+                    hasStop = fromStopItem != null,
+                    label = toFromFieldLabel(FROM_ROLE, fromPlaceholder, fromStopItem?.stopName),
+                    placeholder = fromPlaceholder,
+                    slideUp = true,
+                    animationLabel = "startingFromText",
+                    onClick = onFromClick,
+                ),
+                editing = editing,
+                editor = editor,
+                showFrom = showFrom,
+                toLeading = toLeading,
+                toTrailing = toTrailing,
+                fromTrailing = fromTrailing,
+                showGo = showGo,
+                onGoClick = onGoClick,
+            ),
+            insets = insets,
+            rowGap = style.rowGap,
+            modifier = modifier,
+        )
+        return
+    }
     val fromInk = barInk(dark = ToFromField.From.hasDarkFill(editing) && editor != null)
 
     // Pulsing border alpha for the highlighted From bar
@@ -194,7 +239,7 @@ internal const val FROM_PLACEHOLDER = "Choose starting point"
 
 /** What a bar says: its test tag, its text and how it animates, its accessible label and what a tap does. */
 @Immutable
-private data class BarContent(
+internal data class BarContent(
     val tag: String,
     val text: String,
     val hasStop: Boolean,
@@ -236,7 +281,7 @@ private fun ToFromBar(
     CompositionLocalProvider(LocalContentColor provides barInk(dark).content) {
         Box(modifier = modifier.fillMaxWidth()) {
             if (editor != null && dark) {
-                EditingBar(bar, editor, insets, leading, trailing)
+                EditingBar(bar, editor, insets, TextFieldDefaults.invertedColors(), leading, trailing)
             } else {
                 IdleBar(bar, selected = isEditing, insets, leading, trailing)
             }
@@ -296,16 +341,17 @@ private fun IdleBar(
 }
 
 /**
- * The bar being edited: taj's [TextField] in its inverted colours, with the slots as its leading
- * and trailing controls. Its own insets are zero so the controls take the whole 48 dp, and it
+ * The bar being edited: taj's [TextField] in [colors] (the inverted colours on home, the floating ones on
+ * Search Stop), with the slots as its leading and trailing controls. Its own insets are zero so the controls take the whole 48 dp, and it
  * keeps 16 dp at the end when there is no trailing control, as the button does. A field takes the
  * tap itself, so the bar has no tap target of its own and says it is selected.
  */
 @Composable
-private fun EditingBar(
+internal fun EditingBar(
     bar: BarContent,
     editor: ToFromEditor,
     insets: ToFromBarInsets,
+    colors: TextFieldColors,
     leading: @Composable () -> Unit,
     trailing: (@Composable () -> Unit)?,
 ) {
@@ -321,7 +367,7 @@ private fun EditingBar(
             modifier = Modifier.fillMaxWidth().then(editor.modifier),
             maxLength = editor.maxLength,
             filter = editor.filter,
-            colors = TextFieldDefaults.invertedColors(),
+            colors = colors,
             leadingIcon = { BarSlot(insets.column, leading) },
             trailingIcon = trailing?.let { slot -> { BarSlot(insets.column, slot) } },
             contentPadding = PaddingValues(end = if (trailing == null) KrailTheme.dimensions.spacingXL else 0.dp),

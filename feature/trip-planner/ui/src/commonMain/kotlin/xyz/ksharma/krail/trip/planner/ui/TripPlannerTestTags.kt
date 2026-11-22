@@ -85,6 +85,9 @@ object TripPlannerTestTags {
     /** The row of labels at the top of the recents card. It scrolls sideways. */
     const val SEARCH_STOP_LABEL_ROW = "searchstop.labelrow"
 
+    /** The mode filter row under the pill on Search Stop's map state. */
+    const val SEARCH_STOP_MODE_CHIPS = "searchstop.modechips"
+
     /**
      * The confirm button on the first-run map options sheet.
      *
@@ -118,6 +121,9 @@ object TripPlannerTestTags {
 
     /** One Home or Work chip, keyed by the label's name so it is the same whether the label is set or not. */
     fun homeLabelChip(labelKey: String): String = "savedtrips.chip.label.$labelKey"
+
+    /** One chip of that row, by the mode's product class. */
+    fun searchStopModeChip(productClass: Int) = "searchstop.modechip.$productClass"
 
     /** One search result row, keyed by the stop it would select. */
     fun searchStopResult(stopId: String): String = "searchstop.result.$stopId"

@@ -24,12 +24,14 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import kotlin.test.assertEquals
 
 /**
  * Compose UI tests for [SearchStopScreen]. These are deliberately scoped to behaviors
@@ -153,6 +155,33 @@ class SearchStopScreenInteractionTest {
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertDoesNotExist()
         composeRule.onNodeWithText("Central Station").assertDoesNotExist()
         assert(shown.isEmpty()) { "the map state raises no keyboard, got $shown" }
+    }
+
+    @Test
+    fun theModeChipsSitInTheMapStateOnly_andATapTogglesThatMode() {
+        val events = mutableListOf<SearchStopUiEvent>()
+        setScreen(withMap(), onEvent = { events += it })
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertIsDisplayed()
+        composeRule.onNodeWithTag(
+            TripPlannerTestTags.searchStopModeChip(TransportMode.Ferry.productClass),
+        ).performClick()
+        assertEquals(
+            listOf<SearchStopUiEvent>(SearchStopUiEvent.TransportModeFilterToggled(TransportMode.Ferry)),
+            events.filterIsInstance<SearchStopUiEvent.TransportModeFilterToggled>(),
+        )
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertDoesNotExist()
+    }
+
+    @Test
+    fun withNoMap_thereIsNoModeFilterBecauseThereIsNothingToFilter() {
+        setScreen(SearchStopFixtures.recentWithDefaults())
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertDoesNotExist()
     }
 
     @Test

@@ -577,6 +577,21 @@ private fun SearchStopScreenSinglePane(
                     onClick = location.onClick,
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                 )
+                // The mode filter belongs to the map state only, directly under the pill. The pill's own
+                // 8 dp above and below are the gap, so with no pill the chips bring their own.
+                if (flow.mode == SearchStopMode.Map && mapState is MapUiState.Ready) {
+                    SearchStopModeChips(
+                        selectedModes = mapState.mapDisplay.selectedTransportModes,
+                        onToggle = { onEvent(SearchStopUiEvent.TransportModeFilterToggled(it)) },
+                        modifier = Modifier.padding(
+                            top = if (location.pill != LocationPill.Hidden) {
+                                KrailTheme.dimensions.spacingNone
+                            } else {
+                                KrailTheme.dimensions.spacingM
+                            },
+                        ),
+                    )
+                }
             }
             if (flow.mode == SearchStopMode.List) {
                 SearchStopListSection(

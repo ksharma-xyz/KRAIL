@@ -1,12 +1,9 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.material.icons.Icons
@@ -15,24 +12,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.components.CloseIcon
+import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.TextField
 import xyz.ksharma.krail.taj.components.TextFieldColors
 import xyz.ksharma.krail.taj.components.TextFieldDefaults
-import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromBlock
@@ -149,43 +143,54 @@ private fun SearchStopFieldEditor(
     ) { value -> onTextChange(value.toString()) }
 }
 
-/** The back arrow in the To bar's start column: 48 across, the bar's own colour, the tag the arrow always had. */
+/**
+ * The back arrow in the To bar's start column: taj's [RoundIconButton] with no fill, so it is the app's
+ * own round button at 48, drawn in the bar's colour and not the button's own, which reads the wrong
+ * way round on the dark bar. The tag is the one the arrow always had.
+ */
 @Composable
 private fun BackArrowButton(onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .testTag(TripPlannerTestTags.SEARCH_STOP_BACK)
-            .clip(CircleShape)
-            .klickable(onClick = onClick)
-            .semantics(mergeDescendants = true) { contentDescription = "Back" },
-        contentAlignment = Alignment.Center,
-    ) {
-        Image(
-            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(LocalContentColor.current),
-            modifier = Modifier.size(KrailTheme.dimensions.iconM),
-        )
-    }
+    BarIconButton(
+        icon = Icons.AutoMirrored.Filled.ArrowBack,
+        contentDescription = "Back",
+        tag = TripPlannerTestTags.SEARCH_STOP_BACK,
+        onClick = onClick,
+    )
 }
 
 /** The X in the end column: it clears the field and does nothing else. */
 @Composable
 private fun ClearTextButton(onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .testTag(TripPlannerTestTags.SEARCH_STOP_CLEAR)
-            .clip(CircleShape)
-            .klickable(onClick = onClick)
-            .semantics(mergeDescendants = true) { contentDescription = "Clear" },
-        contentAlignment = Alignment.Center,
+    BarIconButton(
+        icon = CloseIcon,
+        contentDescription = "Clear",
+        tag = TripPlannerTestTags.SEARCH_STOP_CLEAR,
+        onClick = onClick,
+    )
+}
+
+/**
+ * One icon button inside a bar. [RoundIconButton] swaps in its own content colour, so the bar's is
+ * read first and the icon is tinted with it, which keeps the arrow and the X legible on the white
+ * bar and on the dark one in both themes.
+ */
+@Composable
+private fun BarIconButton(
+    icon: ImageVector,
+    contentDescription: String,
+    tag: String,
+    onClick: () -> Unit,
+) {
+    val barContent = LocalContentColor.current
+    RoundIconButton(
+        onClick = onClick,
+        color = Color.Transparent,
+        modifier = Modifier.testTag(tag),
     ) {
         Image(
-            imageVector = CloseIcon,
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(LocalContentColor.current),
+            imageVector = icon,
+            contentDescription = contentDescription,
+            colorFilter = ColorFilter.tint(barContent),
             modifier = Modifier.size(KrailTheme.dimensions.iconM),
         )
     }

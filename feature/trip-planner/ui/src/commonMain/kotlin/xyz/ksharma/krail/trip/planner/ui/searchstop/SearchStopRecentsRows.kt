@@ -6,17 +6,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
-import xyz.ksharma.krail.taj.modifier.klickable
+import xyz.ksharma.krail.taj.components.TextButton
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.AddressSearchListItem
@@ -86,15 +84,9 @@ private fun RecentsHeader(title: String, onClearAll: (() -> Unit)?, modifier: Mo
         )
 
         if (onClearAll != null) {
-            Text(
-                text = "Clear all",
-                style = KrailTheme.typography.bodyMedium,
-                color = KrailTheme.colors.label,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(dim.radiusFull))
-                    .klickable(onClick = onClearAll)
-                    .padding(horizontal = dim.spacingS, vertical = dim.spacingXS),
-            )
+            TextButton(onClick = onClearAll) {
+                Text(text = "Clear all")
+            }
         }
     }
 }

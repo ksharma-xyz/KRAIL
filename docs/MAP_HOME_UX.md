@@ -42,7 +42,8 @@ If a design breaks one of these rules, the design changes, not the rule.
 
 ### Search
 
-6. **One pill search bar.** On home and on Search Stop. Never two fields stacked.
+6. **One pill search bar.** On home and on Search Stop. Never two fields stacked. Home is always the one pill, whatever
+   stops a pin card, a chip or Ask KRAIL has handed on: those open Search Stop, which holds the To and From form.
 7. **The microphone is on the home pill only.** Never on Search Stop.
 8. **Search Stop always opens on the map, with no keyboard.** The rider taps the bar to raise the keyboard.
 9. **Recents float on the map under the search bar on Search Stop,** as a vertical card: one row per stop with its mode
@@ -200,7 +201,7 @@ If a design breaks one of these rules, the design changes, not the rule.
 | Top | KRAIL logo (left), Discover and Settings (right), the notices under them: the location pill and the Map offline chip, centred | One centre line, 16 insets, solid, floating. The card stack never rises into it. |
 | Card stack | Two trips, the Park & Ride row, the rest of the trips | Scrolls vertically inside its own height. The Park & Ride row scrolls sideways. |
 | Chips | Set Home, Set Work, + Park & Ride | One wrapping row above the pill, 48 tall. Home and Work chips stay once set. The Park & Ride chip stays, so Add is always one tap. From about 650 wide they share the pill's row and the pill takes the rest. At text over 130% the row scrolls sideways. |
-| Pill | Dark search bar, mic at the end | Bottom, in the thumb's reach. Shares the column's edges (rule 45). |
+| Pill | Dark search bar, mic at the end | Bottom, in the thumb's reach. Shares the column's edges (rule 45). The only search bar home ever shows: no To and From block, no go circle, no swap button. |
 
 ### The card shell
 

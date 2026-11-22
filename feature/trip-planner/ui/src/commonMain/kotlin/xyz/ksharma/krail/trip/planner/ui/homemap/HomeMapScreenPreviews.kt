@@ -101,7 +101,7 @@ private fun HomeMapNoticesPreview() {
     }
 }
 
-/** A rider holding a destination: the To and From block floats in the pill's place, with no panel behind it. */
+/** A rider holding a destination in state: home still shows only the one pill, and no second bar. */
 @PreviewScreen
 @Composable
 private fun HomeMapHoldingStopPreview() {

@@ -59,11 +59,8 @@ internal fun homeMapPlacementFor(mapsAvailable: Boolean, dualPane: Boolean): Hom
 
 /** What sits at the bottom of home. */
 internal enum class HomeBottom {
-    /** The chips and the search pill. */
+    /** The chips and the one search pill. Home never shows a second bar. */
     Pill,
-
-    /** The chips and the To and From block, once the rider holds a start or a destination. */
-    Block,
 
     /** A pin's floating card, which takes the room the chips and the pill held. */
     Card,
@@ -74,20 +71,18 @@ internal enum class HomeBottom {
 
 /**
  * What the bottom of home shows. Reorder mode wins over everything, a card open on the map takes the
- * place of the chips and the pill so nothing is ever laid over content (rule 42), and the pill gives way to
- * the To and From block only while the rider holds a stop, so a pick or an Ask KRAIL answer lands somewhere
- * they can read it and press go.
+ * place of the chips and the pill so nothing is ever laid over content (rule 42), and
+ * otherwise the pill is always the one search bar, whatever stops the rider holds elsewhere. A pick, a
+ * pin card or an Ask KRAIL answer opens Search Stop, which holds the To and From form.
  */
 internal fun homeBottomFor(
     loading: Boolean,
     reordering: Boolean,
     cardOpen: Boolean,
-    holdsStops: Boolean,
 ): HomeBottom = when {
     reordering -> HomeBottom.Hidden
     cardOpen -> HomeBottom.Card
     loading -> HomeBottom.Hidden
-    holdsStops -> HomeBottom.Block
     else -> HomeBottom.Pill
 }
 
@@ -98,7 +93,7 @@ internal fun homeBottomFor(
  */
 internal fun stackBottomReserve(bottom: HomeBottom, blockHeight: Dp, cardHeight: Dp, cardEdge: Dp): Dp =
     when (bottom) {
-        HomeBottom.Pill, HomeBottom.Block -> blockHeight
+        HomeBottom.Pill -> blockHeight
         HomeBottom.Card -> cardHeight + cardEdge
         HomeBottom.Hidden -> 0.dp
     }

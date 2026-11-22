@@ -85,6 +85,7 @@ internal fun HomeMapEntryContent(
             card = homeCardFor(cardKey, pins),
             state = savedTripsState,
             onEvent = actions.onEvent,
+            onGoTo = actions.onGoTo,
             onClose = closeCard,
         ),
         onCardClose = closeCard,
@@ -105,10 +106,11 @@ internal fun HomeMapEntryContent(
 
 /** What a tap on the home screen does, given by the entry that owns the navigation and the ViewModel. */
 internal data class HomeMapActions(
-    val fromButtonClick: () -> Unit = {},
     val toButtonClick: () -> Unit = {},
+    // A pin card's Go here: Search Stop opens holding this stop as the destination, so the rider chooses a
+    // start (or takes the nearest) and goes. Home holds no stop of its own.
+    val onGoTo: (StopItem) -> Unit = {},
     val onSavedTripCardClick: (StopItem?, StopItem?) -> Unit = { _, _ -> },
-    val onSearchButtonClick: () -> Unit = {},
     val onSettingsButtonClick: () -> Unit = {},
     val onDiscoverButtonClick: () -> Unit = {},
     val onEvent: (SavedTripUiEvent) -> Unit = {},
@@ -122,7 +124,7 @@ internal data class HomeMapActions(
  * The floating card for [card], or null with none open.
  *
  * A stop pin or a label pin opens the stop card with its board closed, so looking at pins fetches nothing. It offers
- * Save as and Go here, which sets the destination as the pin's sheet always did on a wide window. A `P` pin opens
+ * Save as and Go here, which opens Search Stop holding the stop as the destination. A `P` pin opens
  * the Park & Ride card of the station on the stack, with Go here when the station has a stop in the stops table,
  * Directions to each car park's own position and Remove from home.
  */
@@ -130,17 +132,19 @@ private fun homeCardContent(
     card: HomeCard?,
     state: SavedTripsState,
     onEvent: (SavedTripUiEvent) -> Unit,
+    onGoTo: (StopItem) -> Unit,
     onClose: () -> Unit,
 ): (@Composable BoxScope.(HomeCardPlacement) -> Unit)? = when (card) {
     null -> null
-    is HomeCard.Stop -> stopCardContent(card, state, onEvent, onClose)
-    is HomeCard.ParkRide -> parkRideCardContent(card, state, onEvent, onClose)
+    is HomeCard.Stop -> stopCardContent(card, state, onEvent, onGoTo, onClose)
+    is HomeCard.ParkRide -> parkRideCardContent(card, state, onEvent, onGoTo, onClose)
 }
 
 private fun stopCardContent(
     card: HomeCard.Stop,
     state: SavedTripsState,
     onEvent: (SavedTripUiEvent) -> Unit,
+    onGoTo: (StopItem) -> Unit,
     onClose: () -> Unit,
 ): @Composable BoxScope.(HomeCardPlacement) -> Unit = { placement ->
     StopCardPlacement(topReserve = placement.topReserve, onHeight = placement.onHeight) {
@@ -153,7 +157,7 @@ private fun stopCardContent(
                     stop = destination,
                     options = homeStopCardOptions(labels = state.stopLabels, onEvent = onEvent),
                     onPick = {
-                        onEvent(SavedTripUiEvent.ToStopChanged(destination.toJsonString()))
+                        onGoTo(destination)
                         onClose()
                     },
                 )
@@ -166,6 +170,7 @@ private fun parkRideCardContent(
     card: HomeCard.ParkRide,
     state: SavedTripsState,
     onEvent: (SavedTripUiEvent) -> Unit,
+    onGoTo: (StopItem) -> Unit,
     onClose: () -> Unit,
 ): (@Composable BoxScope.(HomeCardPlacement) -> Unit)? {
     val saved = state.parkRideUiState.firstOrNull { it.stopId == card.pin.stationId } ?: return null
@@ -197,7 +202,7 @@ private fun parkRideCardContent(
                     role = PickRole.Destination,
                 ),
                 onPick = { stop ->
-                    onEvent(SavedTripUiEvent.ToStopChanged(stop.toJsonString()))
+                    onGoTo(stop)
                     onClose()
                 },
             )

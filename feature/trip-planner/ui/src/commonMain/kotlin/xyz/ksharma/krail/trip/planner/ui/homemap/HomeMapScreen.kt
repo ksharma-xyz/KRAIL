@@ -52,7 +52,6 @@ import xyz.ksharma.krail.taj.modifier.cornerSafeTopPadding
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeDecorColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
-import xyz.ksharma.krail.trip.planner.ui.components.SearchStopRow
 import xyz.ksharma.krail.trip.planner.ui.components.ai.AskKrailScreen
 import xyz.ksharma.krail.trip.planner.ui.components.ai.rememberAiGreeting
 import xyz.ksharma.krail.trip.planner.ui.navigation.savers.parkRideExpansionSaver
@@ -98,9 +97,10 @@ internal class HomeMapHost(
 )
 
 /**
- * The home screen with the map behind it, `docs/MAP_HOME_UX.md` rules 1, 12, 20 and 24 and the Home structure
+ * The home screen with the map behind it, `docs/MAP_HOME_UX.md` rules 1, 6, 12, 20 and 24 and the Home structure
  * table. The map is the screen and everything else floats on it: the top row, the card stack, the chips and the
- * pill. There is no bottom sheet, no docked panel and no scrim.
+ * one search pill. There is no bottom sheet, no docked panel and no scrim, and no second bar:
+ * the pill is the only search field home ever shows.
  *
  * **The map is a sibling.** On iOS a MapLibre `UIKitView` cannot composite into an offscreen layer, so the map
  * is never a child of anything with a gradient or a blur. The blur Ask KRAIL pulls over the screen sits on the
@@ -110,8 +110,8 @@ internal class HomeMapHost(
  * **Time to content never waits for the map.** The cards, the chips and the pill draw from local state. The map
  * is its own layer and adds nothing the cards read.
  *
- * Reorder mode, the park ride row, the label chips, Ask KRAIL and the To and From block behave as on the
- * classic home. This is only chosen when the maps flag is on, so a build without it keeps the classic home.
+ * Reorder mode, the park ride row, the label chips and Ask KRAIL behave as on the classic home. This is only
+ * chosen when the maps flag is on, so a build without it keeps the classic home.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -150,7 +150,6 @@ internal fun HomeMapScreen(
         loading = savedTripsState.isSavedTripsLoading,
         reordering = editing,
         cardOpen = cardCoversList,
-        holdsStops = savedTripsState.fromStop != null || savedTripsState.toStop != null,
     )
     val reserve = stackBottomReserve(
         bottom = bottom,
@@ -408,8 +407,8 @@ private fun HomeCardStack(
 
 /**
  * The chips and the pill at the bottom, in the thumb's reach and on the cards' edges, 16 dp above the
- * navigation bar. The pill is the resting state. While the rider holds a stop, after a pick or an Ask KRAIL
- * answer, the To and From block takes its place so they can read the stops and press go.
+ * navigation bar. There is never a second search row: a pick, a pin card and an Ask KRAIL answer all open
+ * Search Stop, which holds the To and From form.
  */
 @Composable
 private fun BoxScope.HomeBottomBlock(
@@ -420,7 +419,7 @@ private fun BoxScope.HomeBottomBlock(
     onAiEvent: (AiSearchInputEvent) -> Unit,
     askKrailHandoffSpin: Boolean,
 ) {
-    if (chrome.bottom != HomeBottom.Pill && chrome.bottom != HomeBottom.Block) return
+    if (chrome.bottom != HomeBottom.Pill) return
     val density = LocalDensity.current
     val dim = KrailTheme.dimensions
     Column(
@@ -441,30 +440,12 @@ private fun BoxScope.HomeBottomBlock(
                 floating = true,
             )
         }
-        if (chrome.bottom == HomeBottom.Pill) {
-            HomeSearchPill(
-                onClick = actions.toButtonClick,
-                isAiAvailable = aiState.isWayInAvailable,
-                onAiEvent = onAiEvent,
-                isAiHandoffSettling = askKrailHandoffSpin,
-                modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
-            )
-        } else {
-            SearchStopRow(
-                fromStopItem = savedTripsState.fromStop,
-                toStopItem = savedTripsState.toStop,
-                isExpanded = true,
-                fromButtonClick = actions.fromButtonClick,
-                toButtonClick = actions.toButtonClick,
-                onSearchButtonClick = actions.onSearchButtonClick,
-                onReverseButtonClick = { actions.onEvent(SavedTripUiEvent.ReverseStopClick) },
-                onAiEvent = onAiEvent,
-                isAiSearchAvailable = aiState.isWayInAvailable,
-                isAiHandoffSettling = askKrailHandoffSpin,
-                dateTimeSelectionText = savedTripsState.dateTimeSelectionItem?.toDateTimeText(),
-                onDateTimeSelectionClear = { actions.onEvent(SavedTripUiEvent.DateTimeSelectionChanged(null)) },
-                floating = true,
-            )
-        }
+        HomeSearchPill(
+            onClick = actions.toButtonClick,
+            isAiAvailable = aiState.isWayInAvailable,
+            onAiEvent = onAiEvent,
+            isAiHandoffSettling = askKrailHandoffSpin,
+            modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding),
+        )
     }
 }

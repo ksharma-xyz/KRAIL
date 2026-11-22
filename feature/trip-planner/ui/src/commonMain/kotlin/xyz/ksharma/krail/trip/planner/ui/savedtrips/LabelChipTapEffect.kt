@@ -39,7 +39,7 @@ internal fun LabelChipTapEffect(
                 onEvent(SavedTripUiEvent.LabelChipLocated(tap.labelKey, fix?.latitude, fix?.longitude))
             }
             is LabelChipTap.Decided -> {
-                act(tap.outcome, onEvent, tripPlannerNavigator)
+                act(tap.outcome, tripPlannerNavigator)
                 onEvent(SavedTripUiEvent.LabelChipTapHandled)
             }
         }
@@ -47,12 +47,13 @@ internal fun LabelChipTapEffect(
 }
 
 /**
- * Opens what [outcome] says: the trip results, the search with the labelled stop as the destination,
- * or the stop search to set the label. Planning opens the results the way a saved trip card does.
+ * Opens what [outcome] says: the trip results, the To and From search holding the labelled stop as the
+ * destination, or the stop search to set the label. Planning opens the results the way a saved trip card
+ * does. The home holds no stop of its own, so with no fix to plan from the labelled stop goes to Search
+ * Stop, where the rider chooses the start and taps go.
  */
 private fun act(
     outcome: LabelTapOutcome,
-    onEvent: (SavedTripUiEvent) -> Unit,
     tripPlannerNavigator: TripPlannerNavigator,
 ) {
     when (outcome) {
@@ -62,10 +63,10 @@ private fun act(
             toStopId = outcome.to.stopId,
             toStopName = outcome.to.stopName,
         )
-        is LabelTapOutcome.Search -> {
-            onEvent(SavedTripUiEvent.ToStopChanged(outcome.to.toJsonString()))
-            tripPlannerNavigator.navigateToSearchStop(SearchStopFieldType.FROM)
-        }
+        is LabelTapOutcome.Search -> tripPlannerNavigator.navigateToSearchStop(
+            fieldType = SearchStopFieldType.FROM,
+            presetTo = outcome.to,
+        )
         is LabelTapOutcome.Assign -> tripPlannerNavigator.navigateToSearchStop(
             fieldType = SearchStopFieldType.LABEL,
             labelKey = outcome.labelKey,

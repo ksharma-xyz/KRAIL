@@ -87,17 +87,16 @@ class LabelChipTapEffectTest {
     }
 
     @Test
-    fun `a search puts the labelled stop in To and opens the From search`() {
+    fun `a search opens the To and From search holding the labelled stop as the destination`() {
         setEffect(LabelChipTap.Decided(LabelTapOutcome.Search(to = TOWN_HALL)))
 
         assertEquals(
-            listOf<SavedTripUiEvent>(
-                SavedTripUiEvent.ToStopChanged(TOWN_HALL.toJsonString()),
-                SavedTripUiEvent.LabelChipTapHandled,
-            ),
+            listOf<SavedTripUiEvent>(SavedTripUiEvent.LabelChipTapHandled),
             events,
+            "Home holds no stop, so the destination is not written to it.",
         )
         assertEquals(listOf(SearchStopFieldType.FROM), navigator.searchStopRequests)
+        assertEquals(listOf<Pair<StopItem?, StopItem?>>(null to TOWN_HALL), navigator.searchStopPresets)
         assertTrue(navigator.timeTableRequests.isEmpty(), "The fallback never opens trip results.")
     }
 

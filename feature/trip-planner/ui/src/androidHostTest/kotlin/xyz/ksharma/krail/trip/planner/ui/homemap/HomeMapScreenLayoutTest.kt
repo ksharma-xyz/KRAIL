@@ -49,9 +49,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * The map home on the real screen, `docs/MAP_HOME_UX.md` rules 1, 12, 20 and 24, the Home structure table and
+ * The map home on the real screen, `docs/MAP_HOME_UX.md` rules 1, 6, 12, 20 and 24, the Home structure table and
  * decision G6: the map behind everything, the top row with the logo at the left and Discover beside Settings at
- * the right, the notices centred under it, the card stack below it, and the chips and the search pill at the
+ * the right, the notices centred under it, the card stack below it, and the chips and the one search pill at the
  * bottom with the microphone inside the pill.
  *
  * The map is a flat stand-in, because a host test has no GPU. Each test runs in a window of its own width (density
@@ -315,23 +315,21 @@ class HomeMapScreenLayoutTest {
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `a rider holding a stop sees the To and From block in place of the pill`() {
-        setScreen(state = state(toStop = StopItem(stopId = "200080", stopName = "Wynyard Station")))
+    fun `a rider holding a stop still sees the one pill and never a second bar`() {
+        setScreen(
+            state = state(
+                toStop = StopItem(stopId = "200080", stopName = "Wynyard Station"),
+                fromStop = StopItem(stopId = "200060", stopName = "Central Station"),
+            ),
+        )
 
-        composeRule.onNodeWithText("Where are you going?").assertDoesNotExist()
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_TO, useUnmergedTree = true).assertExists()
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_FROM, useUnmergedTree = true).assertExists()
-    }
-
-    @Test
-    @Config(qualifiers = PHONE)
-    fun `the block floats with no coloured panel, so it is on the cards' edges`() {
-        setScreen(state = state(toStop = StopItem(stopId = "200080", stopName = "Wynyard Station")))
-
-        val to = bounds(TripPlannerTestTags.SEARCH_ROW_TO)
-        val card = bounds(TripPlannerTestTags.savedTripCard(TRIP.tripId))
-        assertNear("the To bar starts on the card's left edge", card.left, to.left)
-        assertTrue(to.bottom <= PHONE_HEIGHT - 16.dp, "The block ends 16 dp above the bottom: $to.")
+        composeRule.onNodeWithText("Where are you going?", useUnmergedTree = true).assertExists()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_FROM, useUnmergedTree = true).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE, useUnmergedTree = true)
+            .assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_REVERSE, useUnmergedTree = true)
+            .assertDoesNotExist()
+        composeRule.onNodeWithText("Wynyard Station", useUnmergedTree = true).assertDoesNotExist()
     }
 
     @Test
@@ -392,12 +390,14 @@ class HomeMapScreenLayoutTest {
         loading: Boolean = false,
         discover: Boolean = false,
         toStop: StopItem? = null,
+        fromStop: StopItem? = null,
     ) = SavedTripsState(
         isSavedTripsLoading = loading,
         isDiscoverAvailable = discover,
         savedTrips = persistentListOf(TRIP),
         stopLabels = LABELS,
         toStop = toStop,
+        fromStop = fromStop,
     )
 
     private fun setScreen(

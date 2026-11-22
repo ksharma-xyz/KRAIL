@@ -13,6 +13,7 @@ import org.koin.core.parameter.parametersOf
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.navigation.ResultEffect
+import xyz.ksharma.krail.trip.planner.ui.homemap.AskKrailHandoffEffect
 import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapActions
 import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapEntryContent
 import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapEvent
@@ -174,14 +175,28 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             tripPlannerNavigator = tripPlannerNavigator,
         )
 
+        // The classic home's own two bars, which the map home no longer draws.
+        val classicFromButtonClick = {
+            viewModel.onEvent(SavedTripUiEvent.AnalyticsFromButtonClick)
+            tripPlannerNavigator.navigateToSearchStop(SearchStopFieldType.FROM)
+        }
+        val classicSearchButtonClick = {
+            triggerTripSearch(
+                fromStop = savedTripState.fromStop,
+                toStop = savedTripState.toStop,
+                viewModel = viewModel,
+                tripPlannerNavigator = tripPlannerNavigator,
+                dateTimeSelectionJson = savedTripState.dateTimeSelectionItem?.toJsonString(),
+            )
+        }
+
         val actions = HomeMapActions(
-            fromButtonClick = {
-                viewModel.onEvent(SavedTripUiEvent.AnalyticsFromButtonClick)
-                tripPlannerNavigator.navigateToSearchStop(SearchStopFieldType.FROM)
-            },
             toButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsToButtonClick)
                 tripPlannerNavigator.navigateToSearchStop(SearchStopFieldType.TO)
+            },
+            onGoTo = { stop ->
+                tripPlannerNavigator.navigateToSearchStop(SearchStopFieldType.TO, presetTo = stop)
             },
             onSavedTripCardClick = { fromStop, toStop ->
                 if (fromStop?.stopId != null && toStop?.stopId != null) {
@@ -198,15 +213,6 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                         toStopName = toStop.stopName,
                     )
                 }
-            },
-            onSearchButtonClick = {
-                triggerTripSearch(
-                    fromStop = savedTripState.fromStop,
-                    toStop = savedTripState.toStop,
-                    viewModel = viewModel,
-                    tripPlannerNavigator = tripPlannerNavigator,
-                    dateTimeSelectionJson = savedTripState.dateTimeSelectionItem?.toJsonString(),
-                )
             },
             onSettingsButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsSettingsButtonClick)
@@ -239,6 +245,15 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                 suggestionViewModel.onEvent(ParkRideSuggestionEvent.LocationChanged(position))
             }
             val suggestion = rememberParkRideSuggestionSlot(suggestionViewModel, suggestionState)
+            // An Ask KRAIL answer has no bar to land in on this home, so Search Stop opens holding whatever
+            // stops it found and the rider chooses the rest and goes.
+            AskKrailHandoffEffect(aiState = aiSearchInputState) { from, to ->
+                tripPlannerNavigator.navigateToSearchStop(
+                    fieldType = if (to == null) SearchStopFieldType.TO else SearchStopFieldType.FROM,
+                    presetFrom = from,
+                    presetTo = to,
+                )
+            }
             HomeMapEntryContent(
                 savedTripsState = savedTripState,
                 homeMapState = homeMapState,
@@ -260,10 +275,10 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                 onStopTracking = actions.onStopTracking,
                 onAddParkRideClick = actions.onAddParkRideClick,
                 onLabelChipClick = actions.onLabelChipClick,
-                fromButtonClick = actions.fromButtonClick,
+                fromButtonClick = classicFromButtonClick,
                 toButtonClick = actions.toButtonClick,
                 onSavedTripCardClick = actions.onSavedTripCardClick,
-                onSearchButtonClick = actions.onSearchButtonClick,
+                onSearchButtonClick = classicSearchButtonClick,
                 aiState = aiSearchInputState,
                 onAiEvent = aiSearchInputViewModel::onEvent,
                 aiVoiceLevel = { aiSearchInputViewModel.voiceLevel.value },

@@ -74,23 +74,17 @@ class HomeMapChromeRulesTest {
         loading: Boolean = false,
         reordering: Boolean = false,
         cardOpen: Boolean = false,
-        holdsStops: Boolean = false,
-    ) = homeBottomFor(loading = loading, reordering = reordering, cardOpen = cardOpen, holdsStops = holdsStops)
+    ) = homeBottomFor(loading = loading, reordering = reordering, cardOpen = cardOpen)
 
     @Test
-    fun `the pill is the resting bottom`() {
+    fun `the pill is the resting bottom and the only search bar`() {
         assertEquals(HomeBottom.Pill, bottom())
-    }
-
-    @Test
-    fun `the block takes the pill's place while the rider holds a stop`() {
-        assertEquals(HomeBottom.Block, bottom(holdsStops = true))
+        assertEquals(listOf(HomeBottom.Pill, HomeBottom.Card, HomeBottom.Hidden), HomeBottom.entries)
     }
 
     @Test
     fun `an open card takes the place of the chips and the pill`() {
         assertEquals(HomeBottom.Card, bottom(cardOpen = true))
-        assertEquals(HomeBottom.Card, bottom(cardOpen = true, holdsStops = true))
     }
 
     @Test
@@ -100,7 +94,7 @@ class HomeMapChromeRulesTest {
 
     @Test
     fun `reorder mode takes the whole bottom away, even from an open card`() {
-        assertEquals(HomeBottom.Hidden, bottom(reordering = true, holdsStops = true))
+        assertEquals(HomeBottom.Hidden, bottom(reordering = true))
         assertEquals(HomeBottom.Hidden, bottom(reordering = true, cardOpen = true))
     }
 
@@ -110,7 +104,6 @@ class HomeMapChromeRulesTest {
     @Test
     fun `the stack stops short of what the bottom holds`() {
         assertEquals(120.dp, reserve(HomeBottom.Pill))
-        assertEquals(120.dp, reserve(HomeBottom.Block))
         assertEquals(316.dp, reserve(HomeBottom.Card))
         assertEquals(0.dp, reserve(HomeBottom.Hidden))
     }

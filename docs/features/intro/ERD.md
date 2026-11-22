@@ -280,7 +280,19 @@ nearest station and the one availability call. It never asks for the permission:
   `state`, `stopsReadiness` (the view model passes `AppDataReadiness.state` through, so the last button reads the data layer
   and nothing polls) and the one shot effects with the lifecycle, calls `IntroFlowScreen`, and owns the platform glue:
   `IntroLocationEffect` for the location permission and the one fix, and a call to `IntroFlowViewModel.onStepShown(step)` each
-  time the step on screen changes. `onNavigateToSavedTrips` is a parameter, and so is the content of step 2.
+  time the step on screen changes. `onNavigateToSavedTrips` and `onNavigateToSearchStop` are parameters. The route builds step 2
+  (`introFirstTripStep`) itself and receives the pick back with `IntroSearchResultEffect`.
+- `IntroEntry` shows `IntroFlowRoute` with `koinViewModel<IntroFlowViewModel>(key = ...)`. The registration is
+  `viewModel { params -> IntroFlowViewModel(savedStateHandle = params.get(), ...) }`. Koin 4.2.0 answers `params.get()` for a
+  `SavedStateHandle` by calling `createSavedStateHandle` on the view model's creation extras, in common code, so Android and
+  iOS take the same path. The Intro's owner on Android is the Activity, which supplies those extras, and on iOS it is Compose
+  Multiplatform's default owner, which sets the same two keys. `IntroFlowKoinTest` creates the real registration, with fakes at
+  its edges, on an Android host and holds that the handle is real and that what the view model saves lands in it. The iOS path is
+  not run, because no simulator is used in this work, so it is a device case.
+- The navigation entries carry no view model store, so a view model made in an entry belongs to the Activity and would outlive
+  the Intro. The entry keys it on a value made once for each visit and saved with the entry, which gives Settings, which can open
+  the Intro again, a new view model each time, and gives a turn of the screen and the search on screen the same one.
+  `IntroEntryTest` holds all three.
 
 ## 4. External contracts
 

@@ -71,13 +71,16 @@ internal fun IntroFlowRoute(
         },
     )
 
-    IntroFlowScreen(
-        state = state,
-        suggestedStops = viewModel.suggestedStops,
-        readiness = readiness,
-        onEvent = viewModel::onEvent,
-        modifier = modifier,
-    )
+    // The theme colour blends from one theme to the next, so tapping a badge does not flash the button.
+    IntroThemeBlend {
+        IntroFlowScreen(
+            state = state,
+            suggestedStops = viewModel.suggestedStops,
+            readiness = readiness,
+            onEvent = viewModel::onEvent,
+            modifier = modifier,
+        )
+    }
 }
 
 /**

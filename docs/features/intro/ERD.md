@@ -458,7 +458,12 @@ three zone frame, and everything it decides is in pure functions with table test
   state, and `IntroFlowRoute` applies it to the whole app through `onApplyTheme`, which the entry wires to the same
   `TripPlannerNavigator.updateTheme` the Settings theme screen calls, so the Intro's buttons and every screen after it take the
   colour through the normal `KrailTheme`. It applies again each time the Intro is composed with a theme selected, such as after
-  a turn of the screen.
+  a turn of the screen. The colour does not jump: `IntroThemeBlend`
+  wraps the Intro in `IntroFlowRoute` and re-provides `LocalThemeColor` as one `animateColorAsState` over 280 ms (`THEME_BLEND_MS`),
+  so the single `Yes, this one` button, and anything else the Intro draws in the theme colour, blends to the tapped theme, carries on
+  from where it is when the next badge is tapped, and settles on exactly the theme's own hex. With reduced motion it is the new
+  colour at once (`snap`). The taj theme transition animates light and dark only, so this is the one animated colour and no new
+  component. Measured on the Pixel 6 Pro before it, the colour changed in a single frame.
 - **Storing it.** A pick also stores the theme with one small local write (`ThemeChoice.save`, a clear and an insert in the
   one row table, on the IO dispatcher, the last pick wins). It is per pick and not on confirm because the app reloads its theme
   from that table whenever it is recreated, so a theme held only until confirm would turn back to the default on a rotation.

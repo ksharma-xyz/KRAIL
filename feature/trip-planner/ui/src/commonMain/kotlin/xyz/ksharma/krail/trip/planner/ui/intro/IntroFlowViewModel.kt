@@ -174,7 +174,7 @@ internal class IntroFlowViewModel(
         }
         ensureSuggestionShown()
         completion.writeIntroSeen()
-        completion.track(_state.value.toOutcome(stopsWaitBucket(waited, readiness)), savedTrip = trip)
+        completion.track(_state.value.toOutcome(stopsWaitBucket(waited, readiness), declined = !save), savedTrip = trip)
         finished = true
         effectChannel.send(IntroEffect.NavigateToSavedTrips)
     }

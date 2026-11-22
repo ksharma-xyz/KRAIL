@@ -294,6 +294,28 @@ class IntroFlowViewModelFinishTest {
     }
 
     @Test
+    fun `a not now with a pair picked reports skipped, saves nothing and sends no save click`() = krailRunTest {
+        val rig = rigAt(tripPicked)
+
+        rig.send(IntroUiEvent.FinishWithoutTrip)
+
+        assertEquals(true, rig.outcomeEvent().properties?.get("skipped"))
+        assertEquals(false, rig.outcomeEvent().properties?.get("savedTrip"))
+        assertTrue(rig.sandook.selectAllTrips().isEmpty())
+        assertNull(rig.analytics.getTrackedEvent("save_trip_click"))
+    }
+
+    @Test
+    fun `a yes that saves the trip is never reported as skipped`() = krailRunTest {
+        val rig = rigAt(tripPicked)
+
+        rig.send(IntroUiEvent.FinishPressed)
+
+        assertEquals(false, rig.outcomeEvent().properties?.get("skipped"))
+        assertEquals(true, rig.outcomeEvent().properties?.get("savedTrip"))
+    }
+
+    @Test
     fun `no tracked property carries a stop name, a station name or a coordinate`() = krailRunTest {
         val rig = IntroRig(this)
         rig.send(

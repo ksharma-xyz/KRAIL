@@ -329,6 +329,51 @@ nearest station and the one availability call. It never asks for the permission:
   the Intro again, a new view model each time, and gives a turn of the screen and the search on screen the same one.
   `IntroEntryTest` holds all three.
 
+Unit R3, the stop lists as pure functions (the destination, origin and confirm screens use them), where this document was
+silent. Every rule here is a function of its inputs with a table test, in `IntroStopNames.kt`, `IntroStopLists.kt` and
+`IntroStopRows.kt`:
+
+```kotlin
+// module: :feature:trip-planner:state. Ids and names only: a stop never carries a position.
+data class IntroStop(val stopId: String, val name: String)
+sealed interface IntroSearchPhase { data object Idle; data class Results(val stops: ImmutableList<IntroStop>); data object NoMatch }
+// IntroState gained four fields, none of them saved: nearbyStops, stopModes (id to modes, for the row badges), query, search.
+
+// module: :feature:trip-planner:ui, intro/, internal and pure
+fun fromSuggestions(nearby: List<IntroStop>, curatedStarts: List<SuggestedStop>, size: Int = 5): List<IntroStop>
+fun destinationSuggestions(curatedEnds: List<SuggestedStop>, size: Int = 5): List<IntroStop>
+fun defaultDestination(list: List<IntroStop>): IntroStop?
+fun defaultStart(nearby: List<IntroStop>, curatedStarts: List<SuggestedStop>, parkRideStart: IntroStop?): IntroStop?
+fun IntroState.stopRows(suggested: SuggestedStops): List<IntroStop>      // what the screen lists
+fun IntroState.highlightedStop(suggested: SuggestedStops): IntroStop?    // the first of those
+fun IntroState.withStopChosen(stop: IntroStop): IntroState               // the pick, and on to the next screen
+fun IntroState.toOutcome(stopsWait: StopsWait, declined: Boolean = false): IntroOutcome
+```
+
+- **The origin list.** `fromSuggestions` takes the stops near the rider, nearest first, collapses them by station name (a stop's
+  name up to its first comma, so `Chatswood Station, Stand A` and `Chatswood Station` are one station, and never by the stops
+  table's parent flag, which is an operator ruling), keeps the nearest three, and fills to five from the curated starts. A station
+  that is nearby and curated shows once, at its nearby place, de duplicated by id and by name. With no fix it is the curated list
+  alone, and with fewer than three nearby it is made up from the curated list. The row of a collapsed station is the stop named
+  exactly as the station, else the nearest stop of it, and it keeps its own id and name.
+- **The destination list** is the curated ends alone: where a rider goes is not where they stand, so a fix never changes it.
+- **The highlighted row** is the first row of what the screen lists, and there is no separate highlight state. It is the nearest
+  station when there is a fix and the first curated stop when there is none. With a Park & Ride station added the origin screen
+  is passed over and that station is the start (`defaultStart`). Coming back to a screen, the rider's earlier choice leads the
+  list, so it is the highlighted row even when it was found by search and is not a suggestion, and the fifth suggestion makes way.
+  With results from a typed search the first result is highlighted, and with no match nothing is.
+- **Never the same place twice.** The stop chosen for the other end is left out of the list, by id and by station name, so a trip
+  never starts and ends at one place. Picking the Park & Ride station as the destination clears the start it filled in, and the
+  origin screen comes back.
+- **Choosing.** A tap on a row and the right button both end in `withStopChosen`: it sets the end on the destination screen and
+  the start on the origin screen, drops the typed text and results, sets `usedSearch` when the stop is one of the typed results,
+  and moves on in the flow as it stands after the pick. With a Park & Ride start the flow goes from the destination to the confirm
+  screen and Back from the confirm screen returns to the destination (`IntroStepFlow`, table tests). Any two chosen stops reach the
+  confirm screen with a complete trip, which a test holds for every pair of the real curated lists.
+- **The outcome.** `skipped` in `intro_lets_krail` is true only when the rider answered Not now on the confirm screen, and a saved
+  trip is never skipped. It is no longer inferred from the picks. No event name and no param was added, and the other params keep
+  their meaning.
+
 Unit R2, as built (the theme screen), where this document was silent. The theme screen is `IntroThemeStepContent` in the
 three zone frame, and everything it decides is in pure functions with table tests:
 
@@ -862,6 +907,17 @@ The search hand-off, as built, with nothing in `searchstop/` touched:
   functions above. Previews, compile only here: none chosen and each of the four themes chosen, and none, Metro and Bus at 320 dp,
   each drawn light and dark at 100 and 200 percent text by `PreviewScreen`, and recorded when the goldens next are. Every one is the settled frame, which is also the reduced motion frame, so
   there is no separate reduced motion preview.
+- **Stop lists, built (unit R3, pure).** `IntroStopNamesTest` (the station of a stop over real names, the same place by id or by
+  station name both ways, collapsing a station with stands wherever the stop named as the station arrives, a station with no such
+  stop keeping its nearest, order kept, leaving a stop out), `IntroStopListsTest` (no fix, three nearby, fewer than three, more
+  than three, a station both nearby and curated, the same name under another id, stands collapsed before the fill, the size, the
+  destination list, `defaultDestination` and `defaultStart` with and without a fix and a car park) and `IntroStopRowsTest` (the rows
+  of each screen, the other end left out by id and by station name, an earlier choice leading even from search, typed results,
+  no match, choosing on each screen, the Park & Ride skip of the origin screen, picking the car park station as the destination,
+  `usedSearch` only for a typed result, and every pair of the real curated lists reaching the confirm screen). The stops are real
+  stops from the bundled data, with their real ids and names. `IntroOutcomeTest` holds `skipped` as the answer Not now and nothing
+  else, `IntroStepFlowTest` the origin skip and Back from the confirm screen, and `IntroStateTest` the new defaults and that a stop
+  is an id and a name and nothing else.
 - **Existing tests changed in R2.** `IntroBarTest` (the theme row is now a bar), `IntroFlowScreenTest` (the theme screen is no longer
   one with no bar, Park & Ride now has a back button and the theme screen has none), `IntroParkRideStepTest` and
   `IntroParkRideStepNarrowTest` (the back button is not one of the two answers), `IntroStateTest` (the first screen is the theme
@@ -927,6 +983,17 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | R2-14 | A failed theme write is logged and ignored | The colour holds for this run, and the next start uses the stored theme. An error message would be noise for a one row write | Default, not yet seen by owner |
 | R2-15 | Light rail and Coach are not offered, so the screen has four badges and not the website's six | They have a colour in the app and no theme: no id, tagline, gradient partner or analytics value. Adding them is a design and data change of its own | Open question for the owner |
 | R2-16 | The previews and snapshots show the settled frame, which is also the reduced motion frame | A running animation under inspection would make a golden unstable. So there is no separate reduced motion preview | Default, not yet seen by owner |
+
+### Unit R3, decisions where the spec was silent
+
+Each is a default taken to keep moving. None has been seen by the owner. The list grows with the unit.
+
+| # | Decision | Why, and what changes if it is wrong | Decision |
+|---|---|---|---|
+| R3-1 | Stops are one station when their names match up to the first comma, and they are collapsed to the stop named as the station, else the nearest stop of it | The data names a stand as `Station, Stand A`, and the parent flag is not reliable (operator ruling). A light rail stop with a different name next to a station is its own row | Default, not yet seen by owner |
+| R3-2 | The same station name counts as the same place for the de duplication and for leaving the other end out, not only the same id | A list that showed `Central Station` twice under two ids, or a trip from one platform of a station to another, would be a worse result than hiding the second | Default, not yet seen by owner |
+| R3-3 | There is no stored highlight: the highlighted row is the first row of the list, and the rider's earlier choice leads the list when they come back | Tapping a row advances, so a highlight the rider could move would never be seen. If the rider should see their old choice among the suggestions in place, the list order has to stay fixed and a highlight has to be stored | Default, not yet seen by owner |
+| R3-4 | `skipped` is true only for Not now on the confirm screen, and false for a saved trip | It is what the spec says. The old meaning, no complete pair, cannot happen now because the confirm screen needs both stops | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

@@ -26,6 +26,29 @@ class IntroStateTest {
         assertFalse(state.addedParkRide)
         assertFalse(state.usedSearch)
         assertFalse(state.saved)
+        assertTrue(state.nearbyStops.isEmpty(), "no stations until a fix has found some")
+        assertTrue(state.stopModes.isEmpty())
+        assertEquals("", state.query)
+        assertEquals(IntroSearchPhase.Idle, state.search)
+    }
+
+    @Test
+    fun `a stop is an id and a name, and nothing that could be a position`() {
+        val fields = IntroStop::class.java.declaredFields.filterNot { it.isSynthetic || it.name.startsWith("$") }
+
+        assertEquals(setOf("stopId", "name"), fields.map { it.name }.toSet())
+        assertTrue(fields.all { it.type == String::class.java }, "fields: ${fields.map { it.type.simpleName }}")
+    }
+
+    @Test
+    fun `a search phase is idle, found or found nothing, and a found phase keeps its stops in order`() {
+        val central = IntroStop("200060", "Central Station")
+        val redfern = IntroStop("201510", "Redfern Station")
+        val found = IntroSearchPhase.Results(persistentListOf(central, redfern))
+
+        assertEquals(listOf(central, redfern), found.stops)
+        assertNotEquals<IntroSearchPhase>(IntroSearchPhase.Idle, IntroSearchPhase.NoMatch)
+        assertIs<IntroSearchPhase.Results>(found)
     }
 
     @Test

@@ -16,22 +16,22 @@ class IntroOutcomeTest {
     private val ready = StopsReadiness.Ready(stopCount = 100)
     private val failed = StopsReadiness.Failed(attempt = 1, reason = "disk full")
 
-    // A rider who got to step 2 and picked nothing, so every flag is in its resting position.
-    private val resting = IntroState(step = IntroStep.DESTINATION)
+    // A rider on the confirm screen who has not answered it, so every flag is in its resting position.
+    private val resting = IntroState(step = IntroStep.CONFIRM)
     private val restingOutcome = IntroOutcome(
         introVersion = 2,
-        finishedOn = IntroStep.DESTINATION,
+        finishedOn = IntroStep.CONFIRM,
         parkRideAnswer = ParkRideAnswer.ASK,
         locationResult = LocationResult.NOT_ASKED,
         addedParkRide = false,
         savedTrip = false,
         usedSearch = false,
-        skipped = true,
+        skipped = false,
         stopsWait = StopsWait.NONE,
     )
 
     @Test
-    fun `a rider who picked nothing has skipped and saved nothing`() {
+    fun `a finish that is not an answer to the confirm screen is neither saved nor skipped`() {
         assertEquals(restingOutcome, resting.toOutcome(StopsWait.NONE))
     }
 
@@ -78,15 +78,19 @@ class IntroOutcomeTest {
     }
 
     @Test
-    fun `a half pick is a skip, and a pair that was not written is neither`() {
-        assertEquals(
-            restingOutcome,
-            resting.copy(startStopId = "1").toOutcome(StopsWait.NONE),
-        )
-        assertEquals(
-            restingOutcome.copy(skipped = false),
-            resting.copy(startStopId = "1", endStopId = "2").toOutcome(StopsWait.NONE),
-        )
+    fun `Not now on the confirm screen is skipped with nothing saved, whatever was picked`() {
+        val picked = resting.copy(startStopId = "1", endStopId = "2")
+
+        assertEquals(restingOutcome.copy(skipped = true), resting.toOutcome(StopsWait.NONE, declined = true))
+        assertEquals(restingOutcome.copy(skipped = true), picked.toOutcome(StopsWait.NONE, declined = true))
+        assertEquals(restingOutcome.copy(skipped = false), picked.toOutcome(StopsWait.NONE, declined = false))
+    }
+
+    @Test
+    fun `a trip that was saved is never skipped, even if the answer says Not now`() {
+        val saved = resting.copy(startStopId = "1", endStopId = "2", saved = true)
+
+        assertEquals(false, saved.toOutcome(StopsWait.NONE, declined = true).skipped)
     }
 
     @Test
@@ -100,7 +104,7 @@ class IntroOutcomeTest {
     fun `the parameters carry the names and values the registry expects`() {
         val outcome = IntroOutcome(
             introVersion = 2,
-            finishedOn = IntroStep.DESTINATION,
+            finishedOn = IntroStep.CONFIRM,
             parkRideAnswer = ParkRideAnswer.YES,
             locationResult = LocationResult.GRANTED,
             addedParkRide = true,

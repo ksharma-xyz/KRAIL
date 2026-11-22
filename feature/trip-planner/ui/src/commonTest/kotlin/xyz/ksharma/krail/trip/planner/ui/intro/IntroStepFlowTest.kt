@@ -157,6 +157,36 @@ class IntroStepFlowTest {
             IntroStep.entries.associateWith { it.isTripStep() },
         )
     }
+
+    @Test
+    fun `when a car park is the start the origin screen is passed over, forward and back`() {
+        val onDestination = parkRideStart.copy(step = DESTINATION)
+        val onConfirm = parkRideStart.copy(step = CONFIRM)
+
+        assertEquals(CONFIRM, onDestination.stepAfter(), "forward from the destination")
+        assertEquals(CONFIRM, onDestination.movedOn().step)
+        assertEquals(DESTINATION, onConfirm.stepBefore(), "back from the confirm screen")
+        assertEquals(DESTINATION, onConfirm.movedBack().step)
+    }
+
+    @Test
+    fun `without a car park start the origin screen sits between the destination and the confirm screen`() {
+        val onDestination = declined.copy(step = DESTINATION)
+        val onConfirm = declined.copy(step = CONFIRM)
+
+        assertEquals(ORIGIN, onDestination.stepAfter())
+        assertEquals(ORIGIN, onConfirm.stepBefore())
+    }
+
+    @Test
+    fun `a destination that is the car park station puts the origin screen back, because the start is cleared`() {
+        val onDestination = parkRideStart.copy(step = DESTINATION)
+
+        val picked = onDestination.withPick(isStart = false, stopId = "1", stopName = "Bella Vista")
+
+        assertFalse(picked.startFromParkRide)
+        assertEquals(ORIGIN, picked.stepAfter())
+    }
 }
 
 private class Row(

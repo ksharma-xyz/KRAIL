@@ -56,7 +56,7 @@ internal fun IntroState.parkRideHasNothingToDecide(): Boolean =
 /**
  * Screens before [first] have no content yet. The Park & Ride screen is skipped when it has nothing to
  * decide. The origin screen is skipped when Add to home already filled in the start, because that
- * station is the start. R3 builds the origin screen and keeps this rule.
+ * station is the start, and Back from the confirm screen then returns to the destination screen.
  */
 private fun IntroState.isSkipped(candidate: IntroStep, first: IntroStep): Boolean = when (candidate) {
     IntroStep.THEME -> candidate.ordinal < first.ordinal
@@ -66,8 +66,8 @@ private fun IntroState.isSkipped(candidate: IntroStep, first: IntroStep): Boolea
 }
 
 /**
- * The screens that end in a trip decision. Until R3 builds the destination, origin and confirm
- * screens this is the one place that says which screens may finish the Intro.
+ * The screens that end in a trip decision. Until the destination, origin and confirm screens have their own bars
+ * this is the one place that says which screens may finish the Intro.
  */
 internal fun IntroStep.isTripStep(): Boolean = when (this) {
     IntroStep.THEME, IntroStep.PARK_RIDE -> false

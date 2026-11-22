@@ -14,6 +14,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardOptions
 
 /**
  * Edge-to-edge map pane showing nearby stops. Reusable by any screen.
@@ -22,6 +23,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
  * - [onEvent] forwards map interactions (center change, user location) back to the caller.
  * - [onStopSelected] fires when the user confirms a stop pick from the floating stop card a pin opens.
  *   Defaults to a no-op — callers that don't need stop-picking can omit it (read-only map).
+ * - [stopCardOptions] is what the card offers besides the board: Save as, and Go here or Start here.
  *
  * See docs/TABLET_FOLDABLE_UX.md §4.
  */
@@ -31,6 +33,7 @@ fun MapStopSelectionPane(
     onEvent: (MapStopSelectionEvent) -> Unit,
     modifier: Modifier = Modifier,
     onStopSelected: (StopItem) -> Unit = {},
+    stopCardOptions: StopCardOptions = StopCardOptions(),
 ) {
     // Corner-safe rather than the status bar's height: on iPhone Duo's inner display the
     // status bar sits on the side, the top inset is zero, and the location pill touched the top.
@@ -50,6 +53,7 @@ fun MapStopSelectionPane(
             }
         },
         onStopSelect = onStopSelected,
+        stopCardOptions = stopCardOptions,
     )
 }
 

@@ -14,6 +14,7 @@ internal fun LabelAssignSurface.toAnalyticsSurface(): AnalyticsEvent.StopLabelSu
         LabelAssignSurface.RECENT -> AnalyticsEvent.StopLabelSurface.RECENT
         LabelAssignSurface.EMPTY_STATE -> AnalyticsEvent.StopLabelSurface.EMPTY_STATE
         LabelAssignSurface.ADDRESS_RESULT -> AnalyticsEvent.StopLabelSurface.ADDRESS_RESULT
+        LabelAssignSurface.MAP_CARD -> AnalyticsEvent.StopLabelSurface.MAP_CARD
     }
 
 /** Bounded label classification - raw label names never reach analytics. */

@@ -107,11 +107,14 @@ sealed interface SearchStopUiEvent {
  * The row kind hosting a label assign/create action. UI-boundary enum; the ViewModel
  * maps it to the registered analytics values (`search_result` etc.). ADDRESS_RESULT
  * is reserved for when address rows gain a label assign affordance - nothing sends
- * it yet.
+ * it yet. MAP_CARD is the stop card's Save as.
  */
 enum class LabelAssignSurface {
     SEARCH_RESULT,
     RECENT,
     EMPTY_STATE,
     ADDRESS_RESULT,
+
+    /** The Save as pills on the floating stop card a map pin opens. */
+    MAP_CARD,
 }

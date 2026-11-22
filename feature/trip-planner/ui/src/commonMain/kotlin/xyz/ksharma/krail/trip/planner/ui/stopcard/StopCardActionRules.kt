@@ -104,20 +104,11 @@ internal fun goHereStopId(stopIds: Collection<String>, inStopsTable: Set<String>
 internal data class PickAction(val text: String, val stop: StopItem)
 
 /**
- * What the Park & Ride pin card offers: Go here (Start here in a start search) when the station has a
- * stop to start from, and always Add to home or Remove from home. The stop is named as the station,
- * which is what the rider tapped, with the id the trip planner needs.
+ * Go here on the Park & Ride pin card (Start here in a start search), or null when the station has no stop
+ * to start from. The card always offers Add to home or Remove from home besides. The stop is named as the
+ * station, which is what the rider tapped, with the id the trip planner needs.
  */
-internal data class ParkRidePinActions(val pick: PickAction?, val homeText: String)
-
-internal fun parkRidePinActionsFor(
-    stationName: String,
-    goHereStopId: String?,
-    role: PickRole,
-    isOnHome: Boolean,
-): ParkRidePinActions = ParkRidePinActions(
-    pick = goHereStopId?.takeIf(::offersPick)?.let {
+internal fun parkRidePickActionFor(stationName: String, goHereStopId: String?, role: PickRole): PickAction? =
+    goHereStopId?.takeIf(::offersPick)?.let {
         PickAction(text = pickActionText(role), stop = StopItem(stopId = it, stopName = stationName))
-    },
-    homeText = parkRidePinActionLabel(isOnHome),
-)
+    }

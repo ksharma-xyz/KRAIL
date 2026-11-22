@@ -175,42 +175,31 @@ class StopCardActionRulesTest {
 
     // endregion
 
-    // region the Park & Ride pin card's actions
+    // region the Park & Ride pin card's action
 
     @Test
     fun `a station with a stop reads Go here when choosing a destination and sets the station`() {
-        val actions = parkRidePinActionsFor("Tallawong Station", "2155384", PickRole.Destination, isOnHome = true)
+        val action = parkRidePickActionFor("Tallawong Station", "2155384", PickRole.Destination)
 
         assertEquals(
             PickAction(text = "Go here", stop = StopItem(stopId = "2155384", stopName = "Tallawong Station")),
-            actions.pick,
+            action,
         )
     }
 
     @Test
     fun `the same card in a start search reads Start here`() {
-        val actions = parkRidePinActionsFor("Tallawong Station", "2155384", PickRole.Start, isOnHome = true)
-
-        assertEquals("Start here", actions.pick?.text)
+        assertEquals("Start here", parkRidePickActionFor("Tallawong Station", "2155384", PickRole.Start)?.text)
     }
 
     @Test
-    fun `a station with no stop offers no go here and still offers its home action`() {
-        val actions = parkRidePinActionsFor("Tallawong Station", null, PickRole.Destination, isOnHome = false)
-
-        assertNull(actions.pick)
-        assertEquals("Add to home", actions.homeText)
+    fun `a station with no stop offers no go here`() {
+        assertNull(parkRidePickActionFor("Tallawong Station", null, PickRole.Destination))
     }
 
     @Test
     fun `a blank stop id offers no go here`() {
-        assertNull(parkRidePinActionsFor("Tallawong Station", "", PickRole.Destination, isOnHome = true).pick)
-    }
-
-    @Test
-    fun `the home action follows whether the station is on home`() {
-        assertEquals("Remove from home", parkRidePinActionsFor("S", "1", PickRole.Destination, true).homeText)
-        assertEquals("Add to home", parkRidePinActionsFor("S", "1", PickRole.Destination, false).homeText)
+        assertNull(parkRidePickActionFor("Tallawong Station", "", PickRole.Destination))
     }
 
     // endregion

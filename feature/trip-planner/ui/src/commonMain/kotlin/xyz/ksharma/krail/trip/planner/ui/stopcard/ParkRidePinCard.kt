@@ -16,6 +16,7 @@ import xyz.ksharma.krail.trip.planner.ui.savedtrips.ParkRideTile
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.ReservedLine
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SpotsLine
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.StationLine
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 private const val NO_NUMBER_YET = 0
 private const val NO_TIME_YET = "12:00 AM"
@@ -32,8 +33,10 @@ private const val NO_TIME_YET = "12:00 AM"
  * and the total and the time keep their line boxes while they wait, so the card is the same height
  * whether its numbers are loading, loaded or failed (rule 22).
  *
- * The action reads "Add to home" or "Remove from home" and is the slot Go here fills later. There is
- * no Go here in this branch.
+ * The actions are Go here (Start here in a start search) when the station has a stop in the local stops
+ * table, and always "Add to home" or "Remove from home". A station with no stop has no Go here, so the
+ * card never promises a trip it cannot start (rule 40). [pickAction] is decided by
+ * [parkRidePickActionFor], and the Add Park & Ride picker, which is not choosing a trip, gives none.
  */
 @Composable
 internal fun ParkRidePinCard(
@@ -43,6 +46,8 @@ internal fun ParkRidePinCard(
     onDirectionsClick: (CarParkBlock) -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
+    pickAction: PickAction? = null,
+    onPick: (StopItem) -> Unit = {},
 ) {
     val layout = stopCardLayout(StopCardKind.ParkRide, modeCount = 0, carParkCount = tile.carParks.size)
     key(stopCardStateKey(StopCardKind.ParkRide, tile.stationId)) {
@@ -56,8 +61,51 @@ internal fun ParkRidePinCard(
             if (layout.showsTotal) StationTotal(tile = tile)
             CarParks(tile = tile, onDirectionsClick = onDirectionsClick)
             if (layout.showsActionSlot) {
-                ActionSlot { StopCardAction(text = parkRidePinActionLabel(isOnHome), onClick = onToggleHome) }
+                ActionSlot {
+                    ParkRideActions(
+                        homeText = parkRidePinActionLabel(isOnHome),
+                        onToggleHome = onToggleHome,
+                        pickAction = pickAction,
+                        onPick = onPick,
+                    )
+                }
             }
+        }
+    }
+}
+
+/**
+ * Go here above Add to home or Remove from home, one whole button under another at every width. With
+ * Go here the primary is Go here and Add to home is the outlined one; alone, Add to home is the primary.
+ */
+@Composable
+private fun ParkRideActions(
+    homeText: String,
+    onToggleHome: () -> Unit,
+    pickAction: PickAction?,
+    onPick: (StopItem) -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingM),
+    ) {
+        if (pickAction == null) {
+            StopCardAction(
+                text = homeText,
+                onClick = onToggleHome,
+                modifier = Modifier.testTag(TripPlannerTestTags.StopCard.HOME_ACTION),
+            )
+        } else {
+            StopCardSecondaryAction(
+                text = homeText,
+                onClick = onToggleHome,
+                modifier = Modifier.testTag(TripPlannerTestTags.StopCard.HOME_ACTION),
+            )
+            StopCardAction(
+                text = pickAction.text,
+                onClick = { onPick(pickAction.stop) },
+                modifier = Modifier.testTag(TripPlannerTestTags.StopCard.PICK),
+            )
         }
     }
 }

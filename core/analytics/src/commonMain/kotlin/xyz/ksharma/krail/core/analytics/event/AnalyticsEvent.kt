@@ -360,6 +360,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         RECENT("recent"),
         EMPTY_STATE("empty_state"),
         ADDRESS_RESULT("address_result"),
+        MAP_CARD("map_card"),
     }
 
     /** How many labels the user has, bucketed - splits casual (1-2) from power users. */

@@ -18,6 +18,7 @@ import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapEntryContent
 import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapEvent
 import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapInputs
 import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapViewModel
+import xyz.ksharma.krail.trip.planner.ui.homemap.homeStopCardOptions
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionPane
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
@@ -263,6 +264,10 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                         onStopSelected = { stop ->
                             viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stop.toJsonString()))
                         },
+                        stopCardOptions = homeStopCardOptions(
+                            labels = savedTripState.stopLabels,
+                            onEvent = viewModel::onEvent,
+                        ),
                     )
                 },
             )

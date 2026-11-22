@@ -10,6 +10,7 @@ import xyz.ksharma.krail.trip.planner.ui.savedtrips.directionsTarget
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
+import xyz.ksharma.krail.trip.planner.ui.stopcard.goHereStopId
 
 // Which pins the home map draws and what a tap on each one opens, `docs/MAP_HOME_UX.md` rule 30 and the
 // Home structure table. Every rule is a plain function so a table test drives it at its boundary with no
@@ -31,6 +32,8 @@ internal data class LabelPin(
  * @property stationId the key the home tile is saved under, so a pin and its tile are one station.
  * @property stopIds every stop id the station's car parks sit behind, so the plain stop pin at the
  * same place can give way to the `P`.
+ * @property goHereStopId the stop Go here sets, the smallest of [stopIds] the local stops table holds, or
+ * null when it holds none of them: a station with no stop of its own has no Go here.
  */
 @Stable
 internal data class ParkRidePin(
@@ -38,6 +41,7 @@ internal data class ParkRidePin(
     val stationName: String,
     val stopIds: ImmutableList<String>,
     val position: LatLng,
+    val goHereStopId: String? = null,
 )
 
 /** Everything the home map draws besides the rider's own dot. */
@@ -96,6 +100,7 @@ internal fun parkRidePinsFor(
                 stationName = tile.stationName,
                 stopIds = tile.stopIds,
                 position = it,
+                goHereStopId = goHereStopId(tile.stopIds, coordinates.keys),
             )
         }
     }

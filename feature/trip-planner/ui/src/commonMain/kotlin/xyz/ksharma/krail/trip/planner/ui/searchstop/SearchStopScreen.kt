@@ -73,6 +73,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardOptions
+import xyz.ksharma.krail.trip.planner.ui.stopcard.pickRoleFor
 
 // Less travel than the AI input surface uses. There the field is the screen and can move as
 // much as it likes; here it sits behind a list of stop names that a rider is reading, and the
@@ -169,6 +171,7 @@ fun SearchStopScreen(
             textFieldText = value
         },
     )
+    val onLabelPillClick = labels.onLabelPillClick(onEvent)
     val rows = StopRowActions(
         keyboard = keyboard,
         focusRequester = focusRequester,
@@ -176,9 +179,15 @@ fun SearchStopScreen(
         expandedStopKey = labels.expandedStopKey,
         onToggleExpandStop = labels.onToggleExpandStop,
         onStopSelect = onPick,
-        onLabelPillClick = labels.onLabelPillClick(onEvent),
+        onLabelPillClick = onLabelPillClick,
         onNewLabelClick = labels.onNewLabelClick,
         onEvent = onEvent,
+        // The card's Save as is the assign path the rows use, and its action is the field being filled in.
+        stopCardOptions = StopCardOptions(
+            pickRole = pickRoleFor(pickFieldFor(shape, flow.editing, fieldType)),
+            labels = searchStopState.stopLabels,
+            onSaveAs = { label, stop -> onLabelPillClick(stop, label, LabelAssignSurface.MAP_CARD) },
+        ),
     )
     // Same "close keyboard before navigating" order as the back button: otherwise the keyboard stays
     // up mid-navigation and dismisses itself awkwardly once ManageStopLabelsScreen is on screen.
@@ -549,6 +558,7 @@ private fun SearchStopScreenSinglePane(
                 onPermissionStatus = location.onPermissionStatus,
                 onRequestPermission = location.onRequestPermission,
                 onMapTap = onMapTap,
+                stopCardOptions = rows.stopCardOptions,
             )
         } else {
             // No map to show (maps are off for this rider): the gradient stands in. It has no map
@@ -735,6 +745,7 @@ private fun SearchStopScreenDualPane(
                     mapUiState = mapState,
                     onEvent = onDualPaneMapEvent,
                     onStopSelected = onStopSelect,
+                    stopCardOptions = rows.stopCardOptions,
                 )
             }
         },

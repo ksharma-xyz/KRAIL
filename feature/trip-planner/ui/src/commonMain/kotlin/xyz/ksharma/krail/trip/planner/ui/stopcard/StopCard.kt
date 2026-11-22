@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -139,12 +140,17 @@ internal fun ActionSlot(actions: @Composable () -> Unit) {
 }
 
 /**
- * One action of the slot: taj's [Button] at its large size, a verb or a place and nothing else. The
- * words are the caller's, so the slot reads "Select stop" on a stop and "Add to home" on a station.
+ * One action of the slot: taj's [Button] at its large size, a verb or a place and nothing else, at least as
+ * tall as the search bar, 48 dp, which is the touch target (rule 21). The words are the caller's, so the
+ * slot reads Go here on a stop and Add to home on a station.
  */
 @Composable
 internal fun StopCardAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Button(onClick = onClick, modifier = modifier, dimensions = ButtonDefaults.largeButtonSize()) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.heightIn(min = KrailTheme.dimensions.textFieldHeight),
+        dimensions = ButtonDefaults.largeButtonSize(),
+    ) {
         Text(text = text)
     }
 }

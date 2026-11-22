@@ -8,6 +8,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.LabelAssignSurface
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardOptions
 
 /**
  * What a row in the list needs to react to a tap. One holder so the lazy sections below take a
@@ -23,6 +24,8 @@ internal data class StopRowActions(
     val onLabelPillClick: (StopItem, StopLabel, LabelAssignSurface) -> Unit,
     val onNewLabelClick: (StopItem, List<TransportMode>, LabelAssignSurface) -> Unit,
     val onEvent: (SearchStopUiEvent) -> Unit,
+    // What the floating stop card on the map offers: Save as, and Go here or Start here.
+    val stopCardOptions: StopCardOptions = StopCardOptions(),
 )
 
 /** Picks [stopItem]: puts the keyboard away, hands the stop on and reports the choice. */

@@ -61,7 +61,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
-import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardAction
+import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardOptions
+import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardPickActions
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardPlacement
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardWithDepartures
 import xyz.ksharma.krail.trip.planner.ui.stopcard.controlsClearance
@@ -88,6 +89,8 @@ fun SearchStopMap(
     showsLocationButton: Boolean = true,
     // More pins to draw between the stops and the rider's dot, such as the Park & Ride `P` and the labels.
     extraLayers: @Composable () -> Unit = {},
+    // What the floating stop card offers besides the stop's board: Save as, and Go here or Start here.
+    stopCardOptions: StopCardOptions = StopCardOptions(),
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         when (mapUiState) {
@@ -113,6 +116,7 @@ fun SearchStopMap(
                     onStopPinTap = onStopPinTap,
                     showsLocationButton = showsLocationButton,
                     extraLayers = extraLayers,
+                    stopCardOptions = stopCardOptions,
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -157,6 +161,7 @@ private fun MapContent(
     onStopPinTap: ((NearbyStopFeature) -> Unit)? = null,
     showsLocationButton: Boolean = true,
     extraLayers: @Composable () -> Unit = {},
+    stopCardOptions: StopCardOptions = StopCardOptions(),
 ) {
     log(
         "[NEARBY_STOPS_UI] MapContent rendered: nearbyStops.size=${mapState.mapDisplay.nearbyStops.size}, " +
@@ -317,12 +322,12 @@ private fun MapContent(
                     StopCardWithDepartures(
                         stop = stop,
                         onClose = { selectedStopId = null },
-                        // The slot Save as, Go here and Start here fill later. Today it holds the one
-                        // action the sheet had.
+                        // Save as, then Go here or Start here by the field being filled in.
                         actions = {
-                            StopCardAction(
-                                text = "Select stop",
-                                onClick = {
+                            StopCardPickActions(
+                                stop = StopItem(stopId = stop.stopId, stopName = stop.stopName),
+                                options = stopCardOptions,
+                                onPick = {
                                     // Dismiss keyboard and clear focus - IMPORTANT: Order matters!
                                     keyboard?.hide()
                                     focusRequester?.freeFocus()

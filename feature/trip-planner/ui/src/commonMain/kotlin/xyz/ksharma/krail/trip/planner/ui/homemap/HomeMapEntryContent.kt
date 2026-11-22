@@ -22,9 +22,11 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.stopcard.ParkRidePinCard
-import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardAction
+import xyz.ksharma.krail.trip.planner.ui.stopcard.PickRole
+import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardPickActions
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardPlacement
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardWithDepartures
+import xyz.ksharma.krail.trip.planner.ui.stopcard.parkRidePickActionFor
 
 /**
  * The map home, wired. Everything the home screen asks of the world comes in as state and callbacks, and the
@@ -119,10 +121,10 @@ internal data class HomeMapActions(
 /**
  * The floating card for [card], or null with none open.
  *
- * A stop pin or a label pin opens the stop card with its board closed, so looking at pins fetches nothing. Its
- * one action hands the stop over as the destination, as the pin's sheet always did on a wide window, and Go here,
- * Start here and Save as are the label branch's to add to the same slot. A `P` pin opens the Park & Ride card of
- * the station on the stack, with Directions to each car park's own position and Remove from home.
+ * A stop pin or a label pin opens the stop card with its board closed, so looking at pins fetches nothing. It offers
+ * Save as and Go here, which sets the destination as the pin's sheet always did on a wide window. A `P` pin opens
+ * the Park & Ride card of the station on the stack, with Go here when the station has a stop in the stops table,
+ * Directions to each car park's own position and Remove from home.
  */
 private fun homeCardContent(
     card: HomeCard?,
@@ -131,12 +133,13 @@ private fun homeCardContent(
     onClose: () -> Unit,
 ): (@Composable BoxScope.(HomeCardPlacement) -> Unit)? = when (card) {
     null -> null
-    is HomeCard.Stop -> stopCardContent(card, onEvent, onClose)
+    is HomeCard.Stop -> stopCardContent(card, state, onEvent, onClose)
     is HomeCard.ParkRide -> parkRideCardContent(card, state, onEvent, onClose)
 }
 
 private fun stopCardContent(
     card: HomeCard.Stop,
+    state: SavedTripsState,
     onEvent: (SavedTripUiEvent) -> Unit,
     onClose: () -> Unit,
 ): @Composable BoxScope.(HomeCardPlacement) -> Unit = { placement ->
@@ -145,10 +148,11 @@ private fun stopCardContent(
             stop = card.stop,
             onClose = onClose,
             actions = {
-                StopCardAction(
-                    text = SELECT_STOP_TEXT,
-                    onClick = {
-                        val destination = StopItem(stopId = card.stop.stopId, stopName = card.stop.stopName)
+                val destination = StopItem(stopId = card.stop.stopId, stopName = card.stop.stopName)
+                StopCardPickActions(
+                    stop = destination,
+                    options = homeStopCardOptions(labels = state.stopLabels, onEvent = onEvent),
+                    onPick = {
                         onEvent(SavedTripUiEvent.ToStopChanged(destination.toJsonString()))
                         onClose()
                     },
@@ -187,9 +191,16 @@ private fun parkRideCardContent(
                     }
                 },
                 onClose = onClose,
+                pickAction = parkRidePickActionFor(
+                    stationName = card.pin.stationName,
+                    goHereStopId = card.pin.goHereStopId,
+                    role = PickRole.Destination,
+                ),
+                onPick = { stop ->
+                    onEvent(SavedTripUiEvent.ToStopChanged(stop.toJsonString()))
+                    onClose()
+                },
             )
         }
     }
 }
-
-private const val SELECT_STOP_TEXT = "Select stop"

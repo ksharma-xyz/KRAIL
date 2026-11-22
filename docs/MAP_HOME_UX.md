@@ -242,10 +242,16 @@ A tapped pin opens a floating stop card, never a bottom sheet.
 - Line 2 is the mode badges, left.
 - Then the Departure Board in its own light card.
 - Padding 16 all round, 8 between the three blocks.
-- The board heading holds the title, one Lines chip (only when the stop has more than one line) and the chevron.
-- Buttons at the bottom: Save as pills, then Go here or Start here.
-- A Park & Ride pin shows the station's numbers and a Directions button instead of the board. Directions use the car park's
-  own coordinates. A car park without them has no Directions button.
+- The board heading holds the title, one Lines chip (only when the stop has more than one line) and the chevron. The board
+  is closed until the chevron is tapped, and only then is it fetched. The chip opens a row of the stop's line badges, and a
+  badge filters the board to its line.
+- Buttons at the bottom: Save as pills, then Go here or Start here. The card keeps the room for them, and until the label
+  branch fills it the slot holds the stop's one pick action, Select stop.
+- A Park & Ride pin shows the station's numbers instead of the board: the total and its time when the station has several car
+  parks, then every car park stacked at equal weight, each with its own Directions button, then Add to home or Remove from
+  home. Directions use the car park's own coordinates. A car park without them has no Directions button.
+- The card floats at the bottom of the map in the one column of rule 45, on a solid surface under the card wash, and closes
+  with its close button, a tap on the map or system back.
 
 ### Search bar
 

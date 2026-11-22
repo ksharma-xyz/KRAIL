@@ -212,22 +212,27 @@ Files:
   `getForegroundColor` so it stays legible on every theme in light and dark —
   the same contrast guard as `ParkRideAddToggle`, covered by
   `ThemeContrastTest`.
-- Marker tap opens the shared `StopDetailsBottomSheet` — the same sheet
-  SearchStop's map uses — with the primary action adding or removing the
-  station. Selecting from a map feels identical across both screens.
+- Marker tap opens the floating Park & Ride card (`stopcard/ParkRidePinCard.kt`), over the
+  map and never a bottom sheet: the station name with a close button, every car park stacked
+  with its numbers and its own Directions, and the action Add to home or Remove from home. It
+  is the stop card's shell, so selecting from a map feels identical across both screens. It
+  floats at the bottom of the map pane in the one column of rule 45 (at most 560 dp, 16 dp in
+  from each side, so 448 dp in the 480 dp pane), the location button rides above it, a tap on
+  the map or system back closes it, and the pane keeps its sibling place beside the list so the
+  iOS compositing rule still holds.
 - Marker hit target is a transparent 24 dp circle layered above the 14 dp
   visual, matching `NearbyStopsLayer`.
 
-### Known limitation: the detail sheet is dual-pane only
+### Known limitation: the detail card is dual-pane only
 
-The station detail sheet, and with it live availability and the **Directions**
+The station detail card, and with it live availability and the **Directions**
 action, is reachable only by tapping a map pin. Since the map exists only in
 dual-pane, a phone in portrait has no path to either: its Park & Ride surfaces
 are the home card (tap expands) and the picker rows (tap adds or removes),
-neither of which opens a sheet.
+neither of which opens a card.
 
 This is deliberate for now, not an oversight. Revisit by giving the picker row a
-way to open the sheet (row body opens details, trailing control keeps the quick
+way to open the card (row body opens details, trailing control keeps the quick
 add/remove) if directions turn out to matter on phones.
 
 ---

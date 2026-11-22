@@ -126,7 +126,7 @@ private fun IntroStopField(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding)
-            .padding(bottom = KrailTheme.dimensions.spacingM)
+            .padding(bottom = introRhythm(KrailTheme.dimensions).fieldToList)
             .testTag(TripPlannerTestTags.INTRO_STOP_FIELD),
     )
 }

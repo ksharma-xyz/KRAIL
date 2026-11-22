@@ -23,6 +23,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import xyz.ksharma.krail.taj.theme.KrailDimensions
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
@@ -140,7 +141,10 @@ class IntroThemeStepNarrowTest {
         val headline = composeRule.onNodeWithText(PICK_THEME_HEADING)
         headline.assertInsideWindow("headline")
         val headlineBottom = headline.getUnclippedBoundsInRoot().bottom
-        assertTrue(badgeBounds().all { it.top >= headlineBottom - ROUNDING })
+        assertTrue(
+            badgeBounds().all { it.top >= headlineBottom + introRhythm(KrailDimensions()).titleToMiddle - ROUNDING },
+            "a badge is closer than the gap under the headline: $headlineBottom ${badgeBounds()}",
+        )
         val badgesBottom = badgeBounds().maxOf { it.bottom }
 
         // The button is not shown until a theme is picked, and then it is in the room that was kept for it.

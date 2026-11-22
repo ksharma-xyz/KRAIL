@@ -15,7 +15,9 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import org.junit.Rule
 import org.junit.Test
@@ -24,6 +26,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
+import xyz.ksharma.krail.taj.theme.KrailDimensions
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
@@ -234,6 +237,25 @@ class IntroFlowScreenTest {
 
             composeRule.onNodeWithContentDescription("Step 1 of 2").assertDoesNotExist()
             composeRule.onNodeWithContentDescription("Step 2 of 2").assertDoesNotExist()
+        }
+    }
+
+    @Test
+    fun `every screen starts its headline 24 dp below the top and keeps the same gap under it before what it asks`() {
+        val headings = mapOf(
+            IntroStep.THEME to PICK_THEME_HEADING,
+            IntroStep.PARK_RIDE to PARK_RIDE_HEADING,
+            IntroStep.DESTINATION to DESTINATION_HEADING,
+            IntroStep.ORIGIN to ORIGIN_HEADING,
+            IntroStep.CONFIRM to CONFIRM_HEADING,
+        )
+        val rhythm = introRhythm(KrailDimensions())
+
+        headings.forEach { (step, heading) ->
+            show(tripPair.copy(step = step))
+
+            val bounds = composeRule.onNodeWithText(heading).getUnclippedBoundsInRoot()
+            assertTrue(bounds.top >= rhythm.top - 1.dp, "$step: the headline starts at ${bounds.top}")
         }
     }
 

@@ -11,8 +11,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
+import xyz.ksharma.krail.taj.theme.KrailDimensions
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import kotlin.math.max
+
+/**
+ * The vertical rhythm every Intro screen shares, all from the dimension tokens so no screen has a number of its own.
+ * [top] is the room above the headline, below the status bar. [titleToMiddle] is between the headline and what the screen
+ * asks. [middleBottom] is below the middle zone, above the bar. [fieldToList] is between the search field and the first row
+ * of a list. The room between the emoji and the title grows with the text and is the headline's own (`introEmojiTitleGap`),
+ * and the room between two lines of the headline is `spacingS`.
+ */
+internal data class IntroRhythm(val top: Dp, val titleToMiddle: Dp, val middleBottom: Dp, val fieldToList: Dp)
+
+/** The rhythm for [dim]: 24 dp above the headline and under it, 16 dp under the middle zone and under a search field. */
+internal fun introRhythm(dim: KrailDimensions): IntroRhythm = IntroRhythm(
+    top = dim.spacingXXXL,
+    titleToMiddle = dim.spacingXXXL,
+    middleBottom = dim.spacingXL,
+    fieldToList = dim.spacingXL,
+)
 
 /**
  * Where the middle zone starts, in pixels from the top. It sits just under the headline, and when there is
@@ -41,14 +60,22 @@ internal fun IntroStepFrame(
     middle: @Composable () -> Unit,
 ) {
     val dim = KrailTheme.dimensions
+    val rhythm = introRhythm(dim)
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val zone = maxHeight
         Layout(
             content = {
-                Box(modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding, vertical = dim.spacingM)) {
+                Box(
+                    modifier = Modifier.padding(
+                        start = dim.pageHorizontalPadding,
+                        end = dim.pageHorizontalPadding,
+                        top = rhythm.top,
+                        bottom = rhythm.titleToMiddle,
+                    ),
+                ) {
                     headline()
                 }
-                Box(modifier = Modifier.fillMaxWidth().padding(bottom = dim.spacingXL)) { middle() }
+                Box(modifier = Modifier.fillMaxWidth().padding(bottom = rhythm.middleBottom)) { middle() }
             },
             modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
         ) { measurables, constraints ->

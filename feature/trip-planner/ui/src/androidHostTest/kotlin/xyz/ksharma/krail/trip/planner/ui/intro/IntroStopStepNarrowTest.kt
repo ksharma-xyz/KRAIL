@@ -22,6 +22,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import xyz.ksharma.krail.taj.theme.KrailDimensions
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
@@ -136,6 +137,30 @@ class IntroStopStepNarrowTest {
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION).assertDoesNotExist()
         val p = primary.getUnclippedBoundsInRoot()
         assertTrue(p.width > composeRule.onRoot().getUnclippedBoundsInRoot().width / 2, "not across the window: $p")
+    }
+
+    @Test
+    fun `the field is clear of the title and the first row is clear of the field, at 200 percent on 320 dp`() {
+        show(PreviewDestinationSuggestions)
+        val rhythm = introRhythm(KrailDimensions())
+
+        val title = composeRule.onNodeWithText(DESTINATION_HEADING).getUnclippedBoundsInRoot()
+        val field = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_STOP_FIELD).getUnclippedBoundsInRoot()
+        val first = row(DEFAULT_SUGGESTED_STOPS.end.first().stopId).getUnclippedBoundsInRoot()
+
+        assertTrue(field.top - title.bottom >= rhythm.titleToMiddle - ROUNDING, "the field is ${field.top - title.bottom} under the title")
+        assertTrue(first.top - field.bottom >= rhythm.fieldToList - ROUNDING, "the first row is ${first.top - field.bottom} under the field")
+    }
+
+    @Test
+    fun `the rows keep a clear gap between their names, selected or not`() {
+        show(PreviewDestinationSelected)
+
+        val rows = DEFAULT_SUGGESTED_STOPS.end.take(3).map { row(it.stopId).getUnclippedBoundsInRoot() }
+
+        rows.zipWithNext().forEach { (above, below) ->
+            assertTrue(below.top >= above.bottom - ROUNDING, "two rows overlap: $above $below")
+        }
     }
 
     @Test

@@ -608,6 +608,18 @@ where it changes something an earlier unit said, the earlier text is edited to m
   Alternative wordings, for the record and not used: for the destination `Going where?`, `Where are you headed?`, `Where to today?`
   and `Pick a place`; for the origin `Starting where?`, `Where are you now?`, `Where do you start?` and `Pick where you begin`. The
   two chosen are the shortest, which is what fits one word to a line at the big headline size at 320 dp.
+- **One vertical rhythm.** `introRhythm(KrailDimensions)` is `IntroRhythm`, and every Intro screen takes its vertical gaps from it, with no number of
+  its own: `top` 24 dp (`spacingXXXL`) above the headline, below the status bar, which took the place of the 48 dp the back arrow's bar used
+  to give; `titleToMiddle` 24 dp under the headline, before whatever the screen asks (the search field, the badges, the card or the tile);
+  `middleBottom` 16 dp (`spacingXL`) under the middle zone, above the bar; and `fieldToList` 16 dp (`spacingXL`) between the search field and
+  the first row of a list. The room under the emoji is the headline's own (`introEmojiTitleGap`, 20 dp growing with the text to 40 dp) and
+  the room between two lines of a headline is `spacingS` (6 dp). The rows keep what `StopLabelAssignRow` gives them, 8 dp above, 8 dp
+  below and 8 dp under the tint, so two names are 24 dp apart and the selected tint never meets the field or the next row. `IntroStepFrame`
+  applies the first, second and third, and the stop screens' field the fourth. The screens scroll above the pinned bar, which is outside the
+  scrolling part and sits on the keyboard's top edge through `safeDrawingPadding`, so with the keyboard up the middle zone is what scrolls.
+  Checked in tests at 320 dp and 200 percent text (the field is 24 dp under the title and the first row 16 dp under the field, the badges
+  are 24 dp under the title). The keyboard itself is not driven in a test, so the bar staying above it is the shell's existing behaviour and
+  is a device case.
 
 Unit R1, as built, where this document was silent:
 
@@ -633,7 +645,7 @@ Unit R1, as built, where this document was silent:
   The timeline, the frame of a line and the emoji wobble are pure functions in
   `IntroHeadlineMotion.kt`, and the slide direction by step order and the transition specs are pure functions in
   `IntroMotion.kt`, each with a table test.
-- **Frame.** `IntroStepFrame(headline, middle)` is the three zones: the headline on top, the thing to decide in the middle
+- **Frame.** (Unit U8 gave it one vertical rhythm, `IntroRhythm`, see below.) `IntroStepFrame(headline, middle)` is the three zones: the headline on top, the thing to decide in the middle
   (centred in the room under the headline by `introMiddleTop`, and scrolling with the headline when the room runs out), and the
   decision bar pinned below by the shell.
 - **Emoji.** `introEmojiFor(step, selectedThemeId)` is pure and is a table. The destination screen has the pin, the confirm
@@ -1479,6 +1491,9 @@ in `searchstop/` touched:
   tag of the first row, 320 dp at 200 percent with the one whole button), `IntroSavedStateTest` and `IntroStateTest` (the selected stop is not
   saved and is null on open). Deleted on purpose: the `defaultDestination` and `defaultStart` tests and the `highlightedStop` assertions, the
   tests of the `No, search` button, the focus it gave the field, and the right button being off for no match.
+- **Unit U8 tests, the rhythm.** `IntroRhythmTest` (the numbers are the tokens, at least 16 dp each, the emoji gap above the line gap at every text size),
+  `IntroFlowScreenTest` (every screen's headline starts at least 24 dp below the top), `IntroStopStepNarrowTest` (320 dp at 200 percent: the field
+  is 24 dp under the title, the first row 16 dp under the field, rows do not overlap selected or not) and `IntroThemeStepNarrowTest` (the badges are 24 dp under the headline).
 
 ## 9. Open gaps and decisions
 
@@ -1589,6 +1604,8 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | U8-15 | The headlines split as `Where` / `to?` and `Where` / `from?` | The spec said split as it fits. At the headline size one word to a line is the only split that fits 320 dp at the font scale ceiling | Default, not yet seen by owner |
 | U8-16 | A tap on a row or a result, and the button, hide the keyboard | The button sits above the keyboard, but the list is easier to see and the selection reads clearly with it down. The field brings it back when tapped | Default, not yet seen by owner |
 | U8-17 | The first row has the tag `intro.stop.first` on the row's container, not on its tap area | A node holds one tag and the tap area already has the stop's own tag, which the tests use. A tap in the middle of the container reaches the row | Default, not yet seen by owner |
+| U8-18 | The top room is 24 dp, not the 48 dp the back arrow's bar used to give | The arrow and its bar are gone, so the headline would sit under the status bar. 24 dp is the token that matches the gap under it. If the screen looks too high, `introRhythm.top` is the one number | Default, not yet seen by owner |
+| U8-19 | The gaps are 24 dp between the title and the middle and 16 dp between the field and the list, with the rows left as `StopLabelAssignRow` draws them | The spec said clear gaps from existing tokens. The rows are the Search Stop row, and changing their padding would change Search Stop | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

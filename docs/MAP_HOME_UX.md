@@ -51,27 +51,35 @@ If a design breaks one of these rules, the design changes, not the rule.
    expands, so a plain recent row or a suggested stop has none. A row of labels (Home, Work, then custom labels) scrolls
    sideways at the top of the card, then the heading with Clear all as taj's small text button, the recents, the nearest
    stops or the suggested stops. The card is there when Search Stop opens, in the map state with no keyboard, and the order
-   from the top is the group card (the bars, then the location chip when it shows), then this card. It is a fixed dark card
-   with fixed light content in both app modes, with the group card's corner and padding, and one 8 gap under the group card.
+   from the top is the group card (the bars and nothing else), then the location chip when it shows, then this card. It is a fixed dark card
+   with fixed light content in both app modes, with the group card's corner and padding, and one 8 gap under the group card (or under the location chip, when it shows).
    On the map state it takes at most 40 percent of the window (never under 200 dp) and scrolls inside, and it gives height
    to the mode controls at the bottom before anything is squeezed, so the pins around it stay usable. With no recents it
    holds the nearest stops when a location fix exists, and otherwise the suggested stops. The mode filter is not in the
    group card: it is a small button at the bottom left of the map state, and the chips open as a card at the bottom of the
    map only when asked for (rule 39).
 10. **Everything that floats on the map is a fixed dark container with fixed light content, in light and dark app modes.**
-    The map is always light, so the group card, the bars in it, the status chip, the recents card, the mode button and the
-    mode block never follow the app mode. The dark and the light are taj's `stopLabelSurface` and `onStopLabelSurface`, the
-    pair that is the same in both modes, and a card's own components read the dark scheme through `FloatingDarkTheme`, taj's
-    `KrailTheme` fixed to dark. The bars are taj's `TextField`, 48 tall, with no fill of their own, no theme-colour ring and
-    no border, so a bar is a row on the card and never a card inside it. (`TextFieldDefaults.invertedColors()` is not used on
-    Search Stop: its container is `onSurface`, which is cream in dark mode.) The home's own search pill keeps its look.
+    The map is always light, so the group card, the bars in it, the location status button, the notices, the chips, the home
+    search pill, the stop card, the Park & Ride cards, the recents card, the mode button and the mode block never follow the
+    app mode. The dark and the light are taj's `stopLabelSurface` and `onStopLabelSurface`, the pair that is the same in both
+    modes. A fixed dark card is opaque: the translucent theme wash is unreadable over the light map, so it is not used on a
+    floating card (the saved trip card keeps its own tint). **taj components are used as they ship**, with their own sizes
+    and defaults and only the parameters they expose: the fixed colours go through a component's own `colors` parameter or
+    taj's text colour locals, never a restyle, a custom shape or shadow, a size outside `ButtonDefaults`, or a wrapper that
+    redraws a taj look. taj has no card, chip or pill, so a container is an existing in-app card shell. `FloatingDarkTheme`,
+    taj's `KrailTheme` fixed to dark, is kept only where a reused component reads mode adaptive tokens inside and takes no
+    colours (the departure board's rows, the label pills, the stop rows and the mode chips). The bars are taj's `TextField`,
+    48 tall, with no fill of their own, no theme-colour ring and no border, so a bar is a row on the card and never a card
+    inside it. (`TextFieldDefaults.invertedColors()` is not used: its container is `onSurface`, which is cream in dark mode.)
+    The home search pill is the same taj `TextField`, read only, with the fixed dark fill.
 
 ### Components
 
 11. **Copy the real component.** Open the composable and its tokens before drawing a card, row, field or button:
     `SavedTripCard`, `ParkRideCard`, `TextField`, `SearchTopBar`. Never invent one.
 12. **The KRAIL logo floats top left and Settings top right,** solid, the same on iOS and Android, no glass. Discover sits beside
-    Settings, to its left, when it is available.
+    Settings, to its left, when it is available. The logo has a backing on the same surface as the Settings and Discover
+    buttons (`KrailTheme.colors.surface`), taj's text field button with no click, as wide as the wordmark and 48 tall like them.
 
 ### Space
 
@@ -98,11 +106,14 @@ If a design breaks one of these rules, the design changes, not the rule.
 ### Geometry and stability
 
 20. **One geometry.** The logo and Settings share one horizontal centre line, with equal 16 insets left and right, and the
-    top row holds nothing else: the notices row (the location pill and the Map offline chip) is in the bottom group, directly
-    above the search pill (rule 24). Heights may differ; centres do not. Every size, gap and inset is
+    top row holds nothing else: the notices (the location button and the Map offline button) are in the bottom group, in the
+    chips' own flow above the search pill (rule 24). Heights may differ; centres do not. Every size, gap and inset is
     a multiple of 4. There is no locate button: the blue location dot on the map does that job, keeps its tap and has a
     screen-reader label.
-21. **Chips and the search pill are the same height, 48,** which is also the touch target.
+21. **The search pill is 48 tall, and every chip and notice has a 48 touch target.** The pill is taj's text field at its own
+    height. A chip is taj's small button and a notice taj's extra small button, and the 48 comes from the interactive size
+    modifier, not from drawing. The notices, the chips and the pill share one left and one right edge (the page padding)
+    and one 8 gap between the rows.
 22. **Nothing jumps as data arrives.** A card has the same height whether its numbers are loading, loaded or failed, and
     cards in one row have the same height. At large text a card may grow, and then it grows the same way in every state.
     Placeholders use the same line box as the content they stand in for.
@@ -110,26 +121,25 @@ If a design breaks one of these rules, the design changes, not the rule.
 
 ### Exceptions to rule 4
 
-- At text over 130% only, the row of chips (Set Home, Set Work, Park & Ride) may scroll sideways with a fade at the right
-  edge, because stacked chips take too much height. The first chip is always fully visible.
 - The Park & Ride row on home is one horizontal row of cards, because stations are short cards and a row keeps them in a
   fixed place instead of pushing them down a long list of trips. The next card always peeks, the map's P pins are another
   way to reach any station, and a station expands in place.
 - The label row at the top of the Search Stop recents card (Home, Work and any custom label) is one row that scrolls sideways.
-- The Search Stop mode chips are not an exception: they wrap whole at every text size, with no sideways scroll and no fade.
+- The home chips and the Search Stop mode chips are not exceptions: they wrap whole at every text size, with no sideways scroll and no fade.
 - Nothing else is allowed to scroll sideways.
 
 ### Forms, cards and behaviour
 
-24. **Location needs one pill.** When location permission is not granted, one small status chip sits in its own row at the
-    bottom of the group card on Search Stop (under the From row, never between the bars), left aligned, taj's small outlined
-    button in the card's fixed dark. It is alone on its row, so at large text its words wrap inside it. The recents or the
-    results move down by one chip row. Tapping it asks for permission, or opens Settings if refused.
-    On home the same status is the white pill, and it sits directly above the search pill, centred, in the bottom group: from the bottom the search pill, then this
-    row, then the chips, then the cards. The group grows upward and the cards give way to it, and an open card or reorder mode
-    takes the whole group. "Map offline" is the same pill. If both apply they are two whole items in one wrapping row, side by
-    side when there is room and one under the other when there is not. The pill is solid with a shadow, so it reads over the
-    always light map.
+24. **Location needs one small button.** When location permission is not granted, one small status button, taj's filled
+    `Button` at its extra small size (normal weight text) in the fixed dark, with a 48 touch target, sits directly under the
+    group card on Search Stop, at the card's left edge and one 8 gap below it. It is not inside the card, which holds only
+    the To and From rows. At large text its words wrap inside it. The recents or the results sit one 8 gap under it, and under
+    the group card when it is not shown. Tapping it asks for permission, or opens Settings if refused.
+    On home the same status is the same button, and it is one of the whole items in the chips' own wrapping row, left aligned
+    on the chips' edge: from the bottom the search pill, then that row, then the cards. "Map offline" is the same button, a
+    status that does nothing when tapped. When the line is full a notice goes onto the next line with the chips, and nothing
+    is squeezed, clipped or hidden. The group grows upward and the cards give way to it, and an open card or reorder mode
+    takes the whole group.
 25. Replaced by rule 36.
 26. **The go circle has one state.** It is a plain arrow. The next screen owns loading, success and error, so this screen
     never shows a trips error. The chips have no chevron: they are not dropdowns.
@@ -154,8 +164,8 @@ If a design breaks one of these rules, the design changes, not the rule.
 32. **Every pill is a pill.** The corner radius is half the height at any size or font scale. Geometry, symmetry and type
     are checked by measurement, never by eye.
 33. **Two surface colours in any group of floating controls, and one on Search Stop.** On home, in the To and From block, they
-    are near-black and white: the field being edited, the go circle and Done are near-black, the other field and the status
-    pill are white. Orange is not used there. On Search Stop the group card is one fixed dark surface (rule 10), the bars
+    are near-black and white: the field being edited, the go circle and Done are near-black, the other field is white. Orange
+    is not used there. On Search Stop the group card is one fixed dark surface (rule 10), the bars
     are rows on it with no fill, and the go circle is the light content colour with a dark arrow, so the card shows one
     background and one content colour in light and dark. The count of distinct backgrounds is checked in light and dark.
 34. **A text field is one line, 48 tall, and ends in an ellipsis.** This covers the home pill, the search pill, the To value
@@ -202,8 +212,9 @@ If a design breaks one of these rules, the design changes, not the rule.
 41. **Home and Work chips stay once set.** Tapping Home plans a trip from the nearest stop to Home with no saved trip
     needed. There is no long press on a chip. The app's own Manage stop labels screen (expand a row: Save changes, Remove,
     Delete) opens from the Manage button on the label row in Search Stop. There is no floating menu. The chips sit above
-    the pill, in the same column as the cards. Each chip is taj's chip sized button: a set label is the filled one and an
-    unset label and Park & Ride are the outlined one.
+    the pill, in the same column as the cards. Each chip is taj's filled button at its small size in the fixed dark, and a set
+    label, an unset label and Park & Ride are the same chip. The chips are whole items that wrap at every width and text
+    size, never a row that scrolls, and the notices (rule 24) are whole items in the same flow.
 42. **Nothing is ever laid over content.** No toast, snackbar, banner or floating menu. The result of an action is shown by
     the screen changing. Where a message is needed, it takes a place in the layout and everything else moves to make room.
 43. **Icons and behaviours are the app's own.** Find the app's version of a control before drawing it. A new icon, menu or
@@ -232,14 +243,14 @@ If a design breaks one of these rules, the design changes, not the rule.
 | Map | Full screen, pins for nearby stops, the rider dot | Draws behind everything. Pins under the card stack are not tappable, so nothing the rider must reach sits there. |
 | Top | KRAIL logo (left), Discover and Settings (right), nothing else | One centre line, 16 insets, solid, floating. The card stack never rises into it. |
 | Card stack | Two trips, the Park & Ride row, the rest of the trips | Scrolls vertically inside its own height. The Park & Ride row scrolls sideways. |
-| Chips | Set Home, Set Work, + Park & Ride | One wrapping row above the pill, 48 tall. Home and Work chips stay once set. The Park & Ride chip stays, so Add is always one tap. From about 650 wide they share the pill's row and the pill takes the rest. At text over 130% the row scrolls sideways. |
-| Notices | The location pill and the Map offline chip, only while one applies | Centred, one wrapping row of whole items, directly above the pill (rule 24). |
-| Pill | Dark search bar, mic at the end | Bottom, in the thumb's reach. Shares the column's edges (rule 45). The only search bar home ever shows: no To and From block, no go circle, no swap button. |
+| Chips | Set Home, Set Work, + Park & Ride | One wrapping flow of whole items above the pill, taj's small filled button in the fixed dark with a 48 touch target. Home and Work chips stay once set. The Park & Ride chip stays, so Add is always one tap. From about 650 wide they share the pill's row and the pill takes the rest. It never scrolls. |
+| Notices | The location button and the Map offline button, only while one applies | Taj's extra small filled button in the fixed dark, whole items in the chips' own flow, left aligned on the chips' edge (rule 24). |
+| Pill | Taj's text field, read only, in the fixed dark, mic at the end | Bottom, in the thumb's reach. Shares the column's edges (rule 45). The only search bar home ever shows: no To and From block, no go circle, no swap button. |
 
 ### The card shell
 
 - Saved trips and Park & Ride share one shell, copied from `SavedTripCard` and `ParkRideCard`.
-- Background: the theme colour wash (`themeBackgroundColor()`), 15% light and 45% dark.
+- Background: a saved trip card is the theme colour wash (`themeBackgroundColor()`), 15% light and 45% dark. A card that floats on the map (the Park & Ride tiles and cards, the stop card, the suggestion card) is the fixed dark, opaque, with fixed light content (rule 10), because a translucent wash is unreadable over the light map.
 - Padding 16, corner radius 16, 8 between cards in the stack.
 - A card is a whole tap target. Minimum height 48.
 - Saved trip: two stop names stacked, 12 apart. A labelled end follows rule 37.
@@ -256,7 +267,7 @@ If a design breaks one of these rules, the design changes, not the rule.
 - The row runs off the right screen edge, with the 16 inset at the left and at the end of the scroll, so the next tile is
   cut by the screen edge and there is no mask or gap.
 - Tapping a tile expands it in place to the full row width: the station name, each car park's spots, percent full and time,
-  and a Directions button on each car park that has a position of its own: a filled diamond (a rounded square turned 45 degrees, like a maps app's directions button) in the theme colour with a white turn right arrow, in a 48 touch target. Tapping the name collapses it.
+  and a Directions button on each car park that has a position of its own: taj's round icon button in the theme colour with a white turn right arrow, 48 across, which is the touch target. Tapping the name collapses it.
   One tile is open at a time and the others wait behind it.
 - No heading sits above the trips or the row, and nothing takes the row's place when no station is saved.
 - The rest of the trips follow the row and scroll vertically inside the stack.
@@ -300,7 +311,7 @@ A tapped pin opens a floating stop card, never a bottom sheet.
   home. Directions use the car park's own coordinates. A car park without them has no Directions button.
   Go here sits under Add to home, the primary action, when the station has a stop in the stops table, the smallest stop id the table holds, and a station
   with no stop has no Go here, so the card never promises a trip it cannot start (rule 40).
-- The card floats at the bottom of the map in the one column of rule 45, on a solid surface under the card wash, and closes
+- The card floats at the bottom of the map in the one column of rule 45, on the fixed dark, opaque, with fixed light content (rule 10), and closes
   with its close button, a tap on the map or system back.
 
 ### Search bar
@@ -314,8 +325,9 @@ A tapped pin opens a floating stop card, never a bottom sheet.
 
 ### Search Stop
 
-1. One group card on top holding the To and From bars as two rows with a thin divider between them, then the location status
-   chip in its own row when it shows. The recents card (item 2) is a separate card under it. At the bottom left, a small mode
+1. One group card on top holding only the To and From bars as two rows with a thin divider between them. Under it, while the
+   location is not allowed, the location status button, left aligned on the card's edge and one 8 gap below it. The recents card
+   (item 2) is a separate card under that. At the bottom left, a small mode
    button, and the mode block above it when it is open. Map behind. No keyboard.
 2. Recents are a vertical list in a floating card under the group card, the same card as the results, compact rows in the
    list's own row type. The label row comes first when any label is set (one row that scrolls sideways), then the heading
@@ -337,14 +349,14 @@ A tapped pin opens a floating stop card, never a bottom sheet.
 |---|---|
 | Scale | 4, 8, 12, 16 (24 only between sections) |
 | Edge inset, all sides | 16 (top and bottom measured from the safe area) |
-| Gap between floating elements | 8 (pill to status pill to From row to list, card to card, chips to pill, stack to chips). On Search Stop: between the rows inside the group card and around its divider, group card to list card, mode block to its button, and the mode controls to the map's bottom row |
+| Gap between floating elements | 8 (the chips and notices flow to the pill, card to card, stack to the chips and notices). On Search Stop: between the rows inside the group card and around its divider, group card to the location button, the button to the list card, group card to list card when there is no button, mode block to its button, and the mode controls to the map's bottom row |
 | Search Stop edge | 16 from the system top inset to the group card and from the card to the screen's sides |
 | Card padding | 16 on all four sides, equal top and bottom. Every Search Stop card (group, list, mode block) takes the card's own radius token (16) and padding token (16) |
 | Search Stop mode controls | the button is 48 across, 16 in from the left, one 48 control row and one 8 gap above the system bottom inset plus 16, so it clears the attribution icon at the left and the location button at the right |
 | List row | 14 above and below its content, 16 left, a 44 hit area for the plus |
-| Search pill, chips, go circle, Done | 48 tall or wide (the go circle inside the From bar is 40, rule 36) |
+| Search pill, go circle, Done | 48 tall or wide (the go circle inside the From bar is 40, rule 36). A chip or a notice has a 48 touch target |
 | Corner radius of any pill, chip or circle | Half its height, always. A field is one line, so a pill never grows into a rounded rectangle |
-| Status pill | 32 tall with a 48 hit area on home. On Search Stop the status is taj's small outlined button in the group card, in a 48 hit area |
+| Status button | taj's extra small filled button with a 48 touch target, on home and on Search Stop. On Search Stop it is under the group card, not in it |
 
 ### Motion
 

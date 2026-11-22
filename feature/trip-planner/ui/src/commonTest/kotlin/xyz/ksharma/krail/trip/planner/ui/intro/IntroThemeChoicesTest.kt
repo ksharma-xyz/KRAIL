@@ -140,10 +140,25 @@ class IntroThemeChoicesTest {
     }
 
     @Test
-    fun `the headline fits in the room the screen keeps for it`() {
-        val longest = (listOf(null) + choices.map { it.style.id }).maxOf { introThemeHeadline(it).lines.size }
+    fun `the headline variants are the question and each theme's tagline lines, and the room is the longest as drawn`() {
+        val variants = themeHeadlineVariants()
 
-        assertTrue(longest <= THEME_HEADLINE_RESERVED_LINES, "$longest lines")
+        assertEquals(1 + choices.size, variants.size)
+        assertEquals(PICK_THEME_HEADLINE, variants.first())
+        assertEquals(choices.map { taglineLines(it.style.tagLine) }, variants.drop(1))
+
+        // Each line wraps by itself, so a variant takes the sum of its lines. The lines are measured in capitals.
+        val seen = mutableListOf<String>()
+        val room = reservedHeadlineLines(variants) { drawn ->
+            seen += drawn
+            if (drawn.length > TEN) 2 else 1
+        }
+
+        assertTrue(seen.all { it == it.uppercase() }, "a line was measured in lower case: $seen")
+        val expected = variants.maxOf { lines -> lines.sumOf { if (it.length > TEN) 2 else 1 } }
+        assertEquals(expected, room)
+        assertEquals(1, reservedHeadlineLines(emptyList()) { 1 })
+        assertEquals(1, reservedHeadlineLines(listOf(emptyList())) { 1 })
     }
 
     @Test
@@ -157,5 +172,6 @@ class IntroThemeChoicesTest {
     private companion object {
         const val NOT_A_THEME = 12_345
         const val HEX_RGB_LENGTH = 6
+        const val TEN = 10
     }
 }

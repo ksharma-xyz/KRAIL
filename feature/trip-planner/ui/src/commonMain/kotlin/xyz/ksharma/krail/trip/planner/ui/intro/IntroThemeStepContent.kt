@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,9 +11,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.State
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
@@ -35,12 +41,16 @@ internal fun IntroThemeStepContent(
     val headline = introThemeHeadline(selectedThemeId)
     IntroStepFrame(
         headline = {
-            IntroHeadline(
-                lines = headline.lines,
-                emphasisIndex = headline.emphasisIndex,
-                emoji = introEmojiFor(IntroStep.THEME, selectedThemeId),
-                minLines = THEME_HEADLINE_RESERVED_LINES,
-            )
+            // The room is that of the longest headline at this width and text size, measured as it is drawn, so the
+            // badges below never move when a choice changes the words.
+            BoxWithConstraints {
+                IntroHeadline(
+                    lines = headline.lines,
+                    emphasisIndex = headline.emphasisIndex,
+                    emoji = introEmojiFor(IntroStep.THEME, selectedThemeId),
+                    minLines = rememberThemeHeadlineLines(maxWidth),
+                )
+            }
         },
         modifier = modifier,
     ) {
@@ -103,4 +113,24 @@ private fun badgeFrameSource(
         return { settled }
     }
     return { badgeFrame(index, clock.floatValue, danceWeight.value) }
+}
+
+/** The lines of room the theme screen's headline keeps at [width]: the most any of its headlines takes, as drawn. */
+@Composable
+private fun rememberThemeHeadlineLines(width: Dp): Int {
+    val density = headlineDensity()
+    val measurer = rememberTextMeasurer()
+    // The widest weight, because a lead line is lighter and never wider than the emphasised one.
+    val style = KrailTheme.typography.introTagline.asHeadlineStyle()
+    return remember(width, density, style) {
+        val maxWidth = with(density) { width.roundToPx() }
+        reservedHeadlineLines(themeHeadlineVariants()) { text ->
+            measurer.measure(
+                text = AnnotatedString(text),
+                style = style,
+                constraints = Constraints(maxWidth = maxWidth),
+                density = density,
+            ).lineCount
+        }
+    }
 }

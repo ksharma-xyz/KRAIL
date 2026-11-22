@@ -103,9 +103,11 @@ class IntroParkRideStepNarrowTest {
     fun `at 200 percent every line of the headline is whole, left aligned and one under the next`() {
         show(PreviewAskState)
 
+        // The lines are drawn in capitals, so each is found by what is drawn, not by how it is written.
         val lines = PARK_RIDE_HEADLINE.map { line ->
-            composeRule.onNodeWithText(line, useUnmergedTree = true).assertInsideWindow(line)
-            composeRule.onNodeWithText(line, useUnmergedTree = true).getUnclippedBoundsInRoot()
+            val drawn = introHeadlineDisplay(line)
+            composeRule.onNodeWithText(drawn, useUnmergedTree = true).assertInsideWindow(drawn)
+            composeRule.onNodeWithText(drawn, useUnmergedTree = true).getUnclippedBoundsInRoot()
         }
         lines.zipWithNext().forEach { (above, below) ->
             assertTrue(above.bottom <= below.top + ROUNDING, "a line starts at ${below.top}, over the one above")

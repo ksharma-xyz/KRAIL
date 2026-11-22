@@ -430,8 +430,11 @@ three zone frame, and everything it decides is in pure functions with table test
   exclamation mark and no colon. After a choice it is that theme's `KrailThemeStyle.tagLine`, shown exactly as the app wrote it,
   split by `taglineLines` after its first comma (one line when there is none, and the lines joined with a space are the
   tagline again). It enters again with the kinetic headline motion each time the selection changes, because the headline is
-  keyed on its phrase. The emoji is `introEmojiFor(THEME, selectedThemeId)`: the scooter before a choice, then the train, metro, bus or ferry of the chosen badge. `IntroHeadline` gained `minLines`: the headline keeps the height of the
-  emoji and that many lines at the rider's text size, so the badges do not move when the words change.
+  keyed on its phrase. The emoji is `introEmojiFor(THEME, selectedThemeId)`: the scooter before a choice, then the train, metro, bus or ferry of the chosen badge. `IntroHeadline` has `minLines`: the headline keeps the height of the
+  emoji and that many lines at the rider's text size, so the badges do not move when the words change. The theme screen no longer
+  holds a fixed three: it measures every version it can show (the question and the four taglines, in capitals, as drawn, at the
+  width and text size it has) with a `TextMeasurer` and keeps the room of the longest (`reservedHeadlineLines`,
+  `themeHeadlineVariants`), because at the larger capitals a tagline takes up to three lines on its own.
 - **The badge.** The app's own `TransportModeIcon` for the choice's mode, used unchanged: the circle in the mode's colour, the
   mode's first letter in white (the component fixes the text colour, so the letter is white on every badge, in light and dark), and
   its white ring (`displayBorder = true` on all four, like the website). Nothing is passed to it that picks a colour. It is drawn at
@@ -562,6 +565,16 @@ Unit R1, as built, where this document was silent:
   (`IntroPendingStepBody`, tag `intro.pending.<step>`), and the destination step showed the earlier first trip content. Unit R3
   built every screen and deleted both.
 - **Headline.** `IntroHeadline(lines, emphasisIndex, emoji)` is the one headline of every screen, in `typography.introTagline`.
+  Since 2026-11-22 (owner: too small, and all upper case) every line is drawn ALL UPPER CASE by the pure
+  `introHeadlineDisplay` (`uppercase()`, the invariant rules, applied only when drawing) and at `HEADLINE_SIZE_FACTOR` = 1.4 times
+  the style (28 sp on a 36 sp line becomes 39.2 sp on a 50.4 sp line, `asHeadlineStyle`, no new font and no hard coded size), the key
+  word still the heaviest. The strings in source, the one heading a screen reader reads (the phrase in its written case) and every
+  test and guard that reads the copy keep the case the words are written in. The headline follows the system text size only up to
+  `HEADLINE_FONT_SCALE_CEILING` = 1.3 (`headlineFontScale`, drawn in a density with the font scale held there): the widest word of
+  any headline, CONCRETE, is about 259 dp at 1.3 and about 400 dp at 2.0 in a 288 dp room (a 320 dp window), so above the ceiling a
+  word would be split or cut. The rest of the screen still follows the system scale in full. `IntroHeadlineLayoutTest` reads the
+  real text layouts (no word split, cut or overflowing, in capitals, at 320 dp, a phone and a wide window) and holds the ceiling
+  against the measured width with a twelfth to spare.
   The timeline, the frame of a line, the weight of the lead lines and the emoji wobble are pure functions in
   `IntroHeadlineMotion.kt`, and the slide direction by step order and the transition specs are pure functions in
   `IntroMotion.kt`, each with a table test.
@@ -963,8 +976,8 @@ destination, origin and confirm screens are temporary bodies (section 3).
 Every screen has three zones:
 
 - **Top, the headline.** Two to four short lines, left aligned, no question mark, in `typography.introTagline`, with the key
-  word on its own line at the heaviest weight. The Park & Ride headline is "Driving", "to the", "station", the key word being
-  "station". Emphasis is weight, never colour, so nothing competes with the theme colour on the primary button. Lines wrap
+  word on its own line at the heaviest weight, drawn in capitals at 1.4 times the style (see section 3, Headline). The Park & Ride
+  headline is "Driving", "to the", "station", the key word being "station", drawn DRIVING, TO THE, STATION. Emphasis is weight, never colour, so nothing competes with the theme colour on the primary button. Lines wrap
   rather than shrink at a large text size.
 - **Middle, the thing to decide.** Centred in the room under the headline. When the text is large or the screen is short it
   scrolls with the headline, so nothing is clipped or out of reach.
@@ -1384,7 +1397,8 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | R2-7 | A badge is the component's largest size and grows only as the component does | No invented size and no scaled letter. The cost is a smaller badge than the first draft's 64 dp; a larger size on the component needs the owner's yes | Open, see the report |
 | R2-8 | The badges are 24 dp apart, over the 16 dp the spec asked for | The drift and the dance can bring neighbours 12 dp closer, so 16 dp could touch at the worst moment | Default, not yet seen by owner |
 | R2-9 | The theme bar is the one button `Yes, this one`, with no left button, no cycle and no compact label | The owner asked for it: "just let the user pick a colour, that's it, no option button to say no". The whole phrase is kept at every text size, and it is the one screen with a single button | Decided by the owner, 2026-11-22 |
-| R2-10 | The headline keeps the room of its longest version (the emoji and three lines) | Without it the badges move each time the words change. The cost is some empty room under a two line tagline | Default, not yet seen by owner |
+| R2-10 | The headline keeps the room of its longest version, measured as drawn (the emoji and the most lines any of its five versions takes at this width and text size) | Without it the badges move each time the words change. In capitals at 1.4 times the size a tagline takes up to three lines on its own, so a fixed three was replaced by a measurement. The cost is some empty room under a shorter version | Default, not yet seen by owner |
+| R2-12 | The headline is 1.4 times the display style in capitals, and stops growing with the text size above 1.3 | The owner asked for it bigger and all upper case. 1.4 is inside the 1.3 to 1.5 asked for, and 1.5 leaves CONCRETE no room at 320 dp even at the ceiling. The cost is that a rider at 200 percent text sees the headline at 130 percent, while everything else follows 200 percent | Decided by the owner, 2026-11-22 (size and case); the factor and the ceiling are mine, to tune on the phone |
 | R2-11 | A tap on the badge already selected does nothing, and an id the Intro does not offer is ignored | Nothing to store or report again | Default, not yet seen by owner |
 | R2-12 | `theme_selected` is reported once on confirm, and again only when the confirmed theme differs from the last one reported in this Intro. No param is added | The ledger has no Pending row for a source param. Settings and the Intro cannot be told apart in the data | Default, not yet seen by owner |
 | R2-13 | The Intro opened again from Settings shows the theme screen with nothing selected, so a theme has to be chosen again | The spec says the rider must choose a colour to go on. The cost is one extra tap for a rider who keeps their theme | Default, not yet seen by owner |

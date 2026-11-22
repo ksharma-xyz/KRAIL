@@ -86,8 +86,20 @@ internal fun introThemeHeadline(selectedId: Int?): IntroThemeHeadline {
     return IntroThemeHeadline(lines, emphasisIndex = lines.lastIndex)
 }
 
-/** The longest headline the theme screen can show, so its room stays the same whichever it says. */
-internal const val THEME_HEADLINE_RESERVED_LINES = 3
+/**
+ * Every headline the theme screen can show, each as its lines: the question before a choice and the tagline of each
+ * theme. The room the screen keeps for its headline is that of the longest of these, so it is the same whichever shows.
+ */
+internal fun themeHeadlineVariants(): List<List<String>> =
+    listOf(PICK_THEME_HEADLINE) + introThemeChoices().map { taglineLines(it.style.tagLine) }
+
+/**
+ * How many lines of room the longest of [variants] needs once drawn: each line of a headline is its own block that wraps
+ * by itself, so a variant takes the sum of what its lines take, as [linesOf] measures each as drawn (in capitals), and the
+ * room is the most any variant takes. At least one, so there is always a line of room.
+ */
+internal fun reservedHeadlineLines(variants: List<List<String>>, linesOf: (String) -> Int): Int =
+    maxOf(1, variants.maxOfOrNull { lines -> lines.sumOf { linesOf(introHeadlineDisplay(it)) } } ?: 1)
 
 /** The theme colour as hex, for the app to switch to, or null for an id the Intro does not offer. */
 internal fun themeHexFor(themeId: Int?): String? = themeChoiceFor(themeId)?.style?.hexColorCode

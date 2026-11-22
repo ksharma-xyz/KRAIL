@@ -74,6 +74,13 @@ internal class IntroFlowViewModel(
         onLeftQuestion = ::markSuggestionShown,
     )
 
+    private val themeStep = IntroThemeStep(
+        scope = viewModelScope,
+        completion = completion,
+        read = { _state.value },
+        write = ::update,
+    )
+
     init {
         // After a killed process the saved station id is worked out into a card again.
         parkRideStep.restore()
@@ -83,6 +90,9 @@ internal class IntroFlowViewModel(
         when (event) {
             // Back goes one screen back, and does nothing on the first.
             IntroUiEvent.Back -> update { movedBack() }
+            is IntroUiEvent.PickTheme -> themeStep.pick(event.themeId)
+            IntroUiEvent.ShowAnotherTheme -> themeStep.showAnother()
+            IntroUiEvent.ConfirmTheme -> themeStep.confirm()
             is IntroUiEvent.AnswerParkRide -> answerParkRide(event.yes)
             is IntroUiEvent.LocationResultReceived -> parkRideStep.onLocationResult(event.result, event.location)
             IntroUiEvent.AddParkRideAndContinue -> parkRideStep.addAndContinue()
@@ -98,14 +108,17 @@ internal class IntroFlowViewModel(
     }
 
     /**
-     * The screen shows [step]. Reported as a screen view once each time the step on screen changes,
-     * so a turn of the screen that shows the same step again reports nothing, and going back to an
-     * earlier screen is a new visit. After the process is killed the restored step is reported once more, as a new run.
+     * The screen shows [step]. Reported as a screen view once each time the step on screen changes to a
+     * different analytics screen, so a turn of the screen that shows the same step again reports nothing,
+     * going from the theme screen to Park & Ride (both the Intro) reports nothing more, and going back to
+     * an earlier screen with a different name is a new visit. After the process is killed the restored step
+     * is reported once more, as a new run.
      */
     fun onStepShown(step: IntroStep) {
-        if (step == lastStepShown) return
+        val previous = lastStepShown
+        if (step == previous) return
         lastStepShown = step
-        completion.trackStepView(step)
+        if (shouldTrackScreenView(previous, step)) completion.trackStepView(step)
     }
 
     // Yes starts the location step, and the screen then sends LocationResultReceived. No ends it and moves on.

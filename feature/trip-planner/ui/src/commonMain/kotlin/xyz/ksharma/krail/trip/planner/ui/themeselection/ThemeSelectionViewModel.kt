@@ -38,6 +38,8 @@ class ThemeSelectionViewModel(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(ANR_TIMEOUT), ThemeSelectionState())
 
+    private val themeChoice = ThemeChoice(sandook, analytics)
+
     private var transportSelectionJob: Job? = null
 
     fun onEvent(event: ThemeSelectionEvent) {
@@ -62,12 +64,11 @@ class ThemeSelectionViewModel(
         transportSelectionJob = viewModelScope.launchWithExceptionHandler<ThemeSelectionViewModel>(
             dispatcher = ioDispatcher,
         ) {
-            sandook.clearTheme() // Only one entry should exist at a time
-            sandook.insertOrReplaceTheme(productClass.toLong())
+            themeChoice.save(productClass)
             updateUiState {
                 copy(themeSelected = true)
             }
-            analytics.trackThemeSelectionEvent(themeId = productClass)
+            themeChoice.track(productClass)
         }
     }
 

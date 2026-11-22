@@ -136,11 +136,10 @@ class IntroFlowScreenTest {
     }
 
     @Test
-    fun `a Park and Ride screen with nothing to decide, and the theme screen, show no bar`() {
+    fun `a Park and Ride screen with nothing to decide shows no bar`() {
         listOf(
             IntroState(parkRideAnswer = ParkRideAnswer.YES, parkRideCard = ParkRideCardPhase.NoStationNear),
             IntroState(parkRideAnswer = ParkRideAnswer.YES, parkRideCard = ParkRideCardPhase.None),
-            IntroState(step = IntroStep.THEME),
         ).forEach { state ->
             show(state)
 

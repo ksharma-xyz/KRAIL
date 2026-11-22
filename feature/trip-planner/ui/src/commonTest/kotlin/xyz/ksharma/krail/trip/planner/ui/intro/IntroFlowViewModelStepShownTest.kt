@@ -33,6 +33,20 @@ class IntroFlowViewModelStepShownTest {
     }
 
     @Test
+    fun `going from the theme screen to Park and Ride reports the Intro once, and back reports nothing more`() =
+        krailRunTest {
+            val rig = IntroRig(this)
+
+            rig.viewModel.onStepShown(IntroStep.THEME)
+            rig.viewModel.onStepShown(IntroStep.PARK_RIDE)
+            rig.viewModel.onStepShown(IntroStep.THEME)
+            rig.viewModel.onStepShown(IntroStep.PARK_RIDE)
+            rig.viewModel.onStepShown(IntroStep.DESTINATION)
+
+            assertEquals(listOf<Any?>("Intro", "IntroFirstTrip"), rig.screenViews())
+        }
+
+    @Test
     fun `the readiness the last button waits on is the one the data layer reports`() = krailRunTest {
         val rig = IntroRig(this, initialReadiness = StopsReadiness.Loading)
         assertEquals(StopsReadiness.Loading, rig.viewModel.stopsReadiness.value)

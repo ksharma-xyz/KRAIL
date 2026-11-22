@@ -12,10 +12,10 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
 internal const val INTRO_SAVED_STATE_KEY = "intro_state"
 
 /**
- * What the Intro keeps across the process being killed: the step, the answer, the permission result,
- * the picks and the flags, and which station the card was for. The rider's position is never kept,
- * and neither are the card's car parks or their live spots: the Park & Ride step works the card out
- * again from the station id, which costs no call while the readings are inside the cooldown. A
+ * What the Intro keeps across the process being killed: the step, the theme the rider picked, the answer,
+ * the permission result, the picks and the flags, and which station the card was for. The rider's position
+ * is never kept, and neither are the card's car parks or their live spots: the Park & Ride step works the
+ * card out again from the station id, which costs no call while the readings are inside the cooldown. A
  * location still being awaited is not kept either, so that rider is asked again.
  */
 @Serializable
@@ -33,6 +33,7 @@ private data class IntroSnapshot(
     val startFromParkRide: Boolean = false,
     val cardStationId: String? = null,
     val noStationNear: Boolean = false,
+    val selectedThemeId: Int? = null,
 )
 
 internal fun SavedStateHandle.saveIntroState(state: IntroState) {
@@ -50,6 +51,7 @@ private fun IntroState.toSnapshot() = IntroSnapshot(
     step, parkRideAnswer, locationResult, startStopId, startName, endStopId, endName,
     addedParkRide, usedSearch, saved,
     startFromParkRide = startFromParkRide,
+    selectedThemeId = selectedThemeId,
     cardStationId = when (val card = parkRideCard) {
         is ParkRideCardPhase.Card -> card.station.stationId
         is ParkRideCardPhase.Locating -> card.stationId
@@ -70,6 +72,7 @@ private fun IntroSnapshot.toState() = IntroState(
     usedSearch = usedSearch,
     saved = saved,
     startFromParkRide = startFromParkRide,
+    selectedThemeId = selectedThemeId,
     parkRideCard = when {
         // Shown as the skeleton until the Park & Ride step has worked the station out again.
         cardStationId != null -> ParkRideCardPhase.Locating(cardStationId)

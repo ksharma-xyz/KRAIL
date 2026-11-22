@@ -10,6 +10,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardStation
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 
 class IntroSavedStateTest {
 
@@ -26,6 +27,7 @@ class IntroSavedStateTest {
         addedParkRide = true,
         usedSearch = true,
         saved = true,
+        selectedThemeId = 5,
     )
 
     @Test
@@ -35,6 +37,21 @@ class IntroSavedStateTest {
         handle.saveIntroState(everyFieldSet)
 
         assertEquals(everyFieldSet, handle.restoreIntroState())
+    }
+
+    @Test
+    fun `the selected theme is saved with the screen, and a snapshot from before it existed has none`() {
+        val handle = SavedStateHandle()
+        handle.saveIntroState(IntroState(step = IntroStep.THEME, selectedThemeId = 9))
+        assertEquals(9, handle.restoreIntroState().selectedThemeId)
+        assertEquals(IntroStep.THEME, handle.restoreIntroState().step)
+
+        val older = SavedStateHandle()
+        older[INTRO_SAVED_STATE_KEY] = """{"step":"DESTINATION","parkRideAnswer":"NO","locationResult":"NOT_ASKED",""" +
+            """"startStopId":null,"startName":null,"endStopId":null,"endName":null,""" +
+            """"addedParkRide":false,"usedSearch":false,"saved":false}"""
+        assertEquals(IntroStep.DESTINATION, older.restoreIntroState().step)
+        assertNull(older.restoreIntroState().selectedThemeId)
     }
 
     @Test

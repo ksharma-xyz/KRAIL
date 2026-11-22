@@ -8,6 +8,18 @@ internal sealed interface IntroUiEvent {
     data object Back : IntroUiEvent
 
     /**
+     * A badge on the theme screen was tapped. It selects the theme and does not move on. An id the Intro does not
+     * offer, or the theme already selected, changes nothing.
+     */
+    data class PickTheme(val themeId: Int) : IntroUiEvent
+
+    /** `No, show me another`: selects the next theme in the cycle, the first when none is selected yet. */
+    data object ShowAnotherTheme : IntroUiEvent
+
+    /** `Yes, this one`: the selected theme is the rider's choice, and the Intro moves on. Ignored with none selected. */
+    data object ConfirmTheme : IntroUiEvent
+
+    /**
      * The answer to the Park & Ride question. Yes starts the location step, and the screen then asks for the
      * permission and sends [LocationResultReceived]. No moves on to the next screen.
      */

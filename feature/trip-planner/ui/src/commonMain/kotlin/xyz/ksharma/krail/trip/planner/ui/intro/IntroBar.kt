@@ -16,6 +16,8 @@ internal const val PARK_RIDE_YES = "Yes, show me free spots"
 internal const val PARK_RIDE_YES_COMPACT = "Yes"
 internal const val PARK_RIDE_NOT_NOW = "Not now"
 internal const val PARK_RIDE_ADD = "Add to home"
+internal const val THEME_ANOTHER = "No, show me another"
+internal const val THEME_CONFIRM = "Yes, this one"
 internal const val TRIP_NOT_NOW = "Not now"
 internal const val TRIP_SAVE = "Yes, save it"
 
@@ -51,14 +53,26 @@ internal fun IntroBarAction.visibleLabel(fontScale: Float): String =
  * shows no bar. A table over the step, so a new step is a compile error here and not a screen with the
  * wrong bar. [readiness] is the stops data, which only the screens that end in saving a trip wait on.
  *
- * The theme screen has no bar yet. The destination, origin and confirm screens share one temporary
- * bar until the unit that builds each of them gives it its own.
+ * The theme screen has its own bar, see [themeBar]. The destination, origin and confirm screens share one
+ * temporary bar until the unit that builds each of them gives it its own.
  */
 internal fun introBar(state: IntroState, readiness: StopsReadiness): IntroBar? = when (state.step) {
-    IntroStep.THEME -> null
+    IntroStep.THEME -> themeBar(state)
     IntroStep.PARK_RIDE -> parkRideBar(state)
     IntroStep.DESTINATION, IntroStep.ORIGIN, IntroStep.CONFIRM -> tripBar(state, readiness)
 }
+
+/**
+ * The theme screen. The left button moves to the next theme, so it is always available and the first press
+ * both starts the choice and shows a theme, and the right button confirms the theme on show. The rider must
+ * pick a colour to go on, so the right one is off until a theme is selected. Neither has a compact form: at a
+ * large text size, or a narrow window, the bar stacks the two whole buttons instead.
+ */
+private fun themeBar(state: IntroState) = IntroBar(
+    left = IntroBarAction(THEME_ANOTHER, IntroUiEvent.ShowAnotherTheme),
+    right = IntroBarAction(THEME_CONFIRM, IntroUiEvent.ConfirmTheme),
+    rightEnabled = state.selectedThemeId != null,
+)
 
 /**
  * Asking, then deciding on the card. Locating and a card still waiting for its numbers keep the same

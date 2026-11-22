@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
@@ -65,6 +66,12 @@ class IntroBarTest {
         rightEnabled = addEnabled,
     )
 
+    private fun theme(enabled: Boolean) = IntroBar(
+        left = IntroBarAction("No, show me another", IntroUiEvent.ShowAnotherTheme),
+        right = IntroBarAction("Yes, this one", IntroUiEvent.ConfirmTheme),
+        rightEnabled = enabled,
+    )
+
     private fun trip(enabled: Boolean) = IntroBar(
         left = IntroBarAction("Not now", IntroUiEvent.FinishWithoutTrip),
         right = IntroBarAction("Yes, save it", IntroUiEvent.FinishPressed),
@@ -122,14 +129,47 @@ class IntroBarTest {
     }
 
     @Test
-    fun `the theme screen has no bar until it is built`() {
-        assertNull(introBar(IntroState(step = IntroStep.THEME), ready))
+    fun `the theme screen asks for another theme on the left, and the right one waits for a theme to be selected`() {
+        val none = IntroState(step = IntroStep.THEME)
+        val selected = none.copy(selectedThemeId = KrailThemeStyle.Metro.id)
+
+        listOf(unknown, loading, ready, failed).forEach { readiness ->
+            assertEquals(theme(enabled = false), introBar(none, readiness), "nothing selected, $readiness")
+            assertEquals(theme(enabled = true), introBar(selected, readiness), "a theme selected, $readiness")
+        }
+    }
+
+    @Test
+    fun `the theme bar keeps both buttons, in the exact words, with no short form`() {
+        val bar = requireNotNull(introBar(IntroState(step = IntroStep.THEME), ready))
+
+        assertEquals("No, show me another", bar.left.label)
+        assertEquals("Yes, this one", bar.right.label)
+        assertEquals(IntroUiEvent.ShowAnotherTheme, bar.left.event)
+        assertEquals(IntroUiEvent.ConfirmTheme, bar.right.event)
+        assertNull(bar.left.compactLabel)
+        assertNull(bar.right.compactLabel)
+        listOf(1.0f, 1.31f, 2.0f).forEach { scale ->
+            assertEquals("No, show me another", bar.left.visibleLabel(scale), "left at $scale")
+            assertEquals("Yes, this one", bar.right.visibleLabel(scale), "right at $scale")
+        }
+    }
+
+    @Test
+    fun `which theme is selected does not change the bar, only whether the right button is on`() {
+        introThemeChoices().forEach { choice ->
+            val bar = introBar(IntroState(step = IntroStep.THEME, selectedThemeId = choice.style.id), ready)
+
+            assertEquals(theme(enabled = true), bar, choice.name)
+        }
+        // An id the Intro does not offer is still a selection as far as the bar goes: the view model never stores one.
+        assertEquals(theme(enabled = true), introBar(IntroState(step = IntroStep.THEME, selectedThemeId = 99), ready))
     }
 
     @Test
     fun `every screen has a bar or none on purpose, so a new step is a row here`() {
         val covered = mapOf(
-            IntroStep.THEME to false,
+            IntroStep.THEME to true,
             IntroStep.PARK_RIDE to true,
             IntroStep.DESTINATION to true,
             IntroStep.ORIGIN to true,
@@ -138,9 +178,7 @@ class IntroBarTest {
 
         assertEquals(IntroStep.entries.toSet(), covered.keys)
         covered.forEach { (step, hasBar) ->
-            val state = if (step == IntroStep.PARK_RIDE) IntroState() else IntroState(step = step)
-
-            assertEquals(hasBar, introBar(state, ready) != null, "$step")
+            assertEquals(hasBar, introBar(IntroState(step = step), ready) != null, "$step")
         }
     }
 

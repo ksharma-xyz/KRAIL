@@ -73,21 +73,19 @@ onFlowComplete:
 - tapOn:
     id: "searchrow.from"
 
-# The list, not the map — same invariant 02-plan-trip pins, asserted here too because
-# this flow reaches the screen by a different route. It used to depend on 02 having
-# dismissed the first-run map options sheet earlier in the same run; now that the map
-# is opt-in that sheet cannot appear here at all, and the order dependency is gone.
-- extendedWaitUntil:
-    visible:
-      id: "searchstop.recents"
-    timeout: 15000
-
+# Opens on the map state, so the recents only exist once the bar is tapped. Same steps as
+# 02-plan-trip, because this flow reaches the screen by a different route. There is no map
+# options sheet to dismiss any more, so no order dependency on 02 either.
 - extendedWaitUntil:
     visible:
       id: "searchstop.query"
     timeout: 15000
 - tapOn:
     id: "searchstop.query"
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.recents"
+    timeout: 15000
 - inputText: "Central"
 - extendedWaitUntil:
     visible:

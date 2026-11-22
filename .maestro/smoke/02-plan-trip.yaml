@@ -34,22 +34,15 @@ appId: ${APP_ID}
 - tapOn:
     id: "searchrow.from"
 
-# Stop search lands on the LIST, never the map. Asserted rather than assumed: the
-# flag behind it (`showMap` in SearchStopScreen) was once flipped to map-first in an
-# unrelated commit and shipped, because while the map is uninitialised the list
-# renders either way and nothing here noticed. See SEARCH_STOP_UX.md.
+# Stop search opens on the MAP state: the map and the bar, with no keyboard and no list
+# (rule 39 of docs/MAP_HOME_UX.md). Tapping the bar raises the list state, which is where
+# the recents are, so `searchstop.recents` is asserted after that tap and never on arrival.
 #
-# `searchstop.recents` is the Recent-mode list itself, so it is present on a fresh
-# device with no recents at all — it still holds the "Select on map" row.
+# `searchstop.recents` is the Recent-mode list itself, so it is present on a fresh device
+# with no recents at all.
 #
-# This also replaces the dismiss-map-options.yaml call that used to sit here. That
-# sheet is opened by the map, and the map is now opt-in, so it cannot appear on the
-# way in any more. The shared flow stays for any flow that does open the map.
-- extendedWaitUntil:
-    visible:
-      id: "searchstop.recents"
-    timeout: 30000
-
+# There is no map options sheet to dismiss on the way in any more: it was deleted with the
+# map options. The shared dismiss-map-options.yaml has no callers.
 - extendedWaitUntil:
     visible:
       id: "searchstop.query"
@@ -57,6 +50,11 @@ appId: ${APP_ID}
 
 - tapOn:
     id: "searchstop.query"
+
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.recents"
+    timeout: 30000
 - inputText: "Central"
 
 # Search is a network call, so give it real time rather than a fixed sleep.
@@ -78,13 +76,8 @@ appId: ${APP_ID}
 - tapOn:
     id: "searchrow.to"
 
-# Same assertion on the second entry: this one arrives with a recent stop already
-# saved, which is a different branch of the list from the first-open one above.
-- extendedWaitUntil:
-    visible:
-      id: "searchstop.recents"
-    timeout: 30000
-
+# Same steps on the second entry: this one arrives with a recent stop already saved, which
+# is a different branch of the list from the first-open one above.
 - extendedWaitUntil:
     visible:
       id: "searchstop.query"
@@ -92,6 +85,11 @@ appId: ${APP_ID}
 
 - tapOn:
     id: "searchstop.query"
+
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.recents"
+    timeout: 30000
 - inputText: "Town Hall"
 
 - extendedWaitUntil:

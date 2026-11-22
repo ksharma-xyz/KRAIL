@@ -106,10 +106,8 @@ internal class IntroFlowViewModel(
             is IntroUiEvent.LocationResultReceived -> onLocationResult(event.result, event.location)
             IntroUiEvent.AddParkRideAndContinue -> parkRideStep.addAndContinue()
             IntroUiEvent.DeclineParkRide -> parkRideStep.decline()
-            is IntroUiEvent.ChooseStop -> chooseStop(event.stop)
-            IntroUiEvent.UseHighlightedStop -> _state.value.highlightedStop(suggestedStops)?.let(::chooseStop)
-            // The screen has the search field, so it answers this one. It never chooses and never leaves a screen.
-            IntroUiEvent.FocusSearch -> Unit
+            is IntroUiEvent.SelectStop -> selectStop(event.stop)
+            IntroUiEvent.ConfirmStop -> _state.value.selectedStop?.let(::chooseStop)
             is IntroUiEvent.QueryChanged -> if (_state.value.step.isStopScreen()) stopsStep.onQueryChanged(event.text)
             IntroUiEvent.FinishPressed -> finish(save = true)
             IntroUiEvent.FinishWithoutTrip -> finish(save = false)
@@ -129,8 +127,15 @@ internal class IntroFlowViewModel(
         if (shouldTrackScreenView(previous, step)) completion.trackStepView(step)
     }
 
-    // A tap on a row and the right button both end here: the stop is the end or the start, whichever screen it is,
-    // what was typed is dropped, and the Intro moves on in the flow as it stands after the pick.
+    // A tap on a row selects the stop and nothing more: it is highlighted, the button appears, and a tap on another row
+    // moves the selection. The Intro stays where it is.
+    private fun selectStop(stop: IntroStop) {
+        if (!_state.value.step.isStopScreen()) return
+        update { withStopSelected(stop) }
+    }
+
+    // The right button ends here: the selected stop is the end or the start, whichever screen it is, what was typed is
+    // dropped, and the Intro moves on in the flow as it stands after the pick.
     private fun chooseStop(stop: IntroStop) {
         if (!_state.value.step.isStopScreen()) return
         stopsStep.cancelSearch()

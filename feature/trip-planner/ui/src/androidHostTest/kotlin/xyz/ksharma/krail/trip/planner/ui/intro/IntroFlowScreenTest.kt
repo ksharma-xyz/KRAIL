@@ -10,6 +10,7 @@ import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -160,21 +161,21 @@ class IntroFlowScreenTest {
     }
 
     @Test
-    fun `the destination and origin screens ask No search and Yes this one, each sending its own event`() {
+    fun `the destination and origin screens have no button until a stop is selected, then the one button sends the confirm`() {
         listOf(IntroStep.DESTINATION, IntroStep.ORIGIN).forEach { step ->
             events.clear()
             show(IntroState(step = step), StopsReadiness.Loading)
 
-            secondary().assertTextEquals(STOP_SEARCH).assertIsEnabled()
+            primary().assertDoesNotExist()
+            secondary().assertDoesNotExist()
+
+            show(IntroState(step = step, selectedStop = CENTRAL_STOP), StopsReadiness.Loading)
+
             primary().assertTextEquals(STOP_CHOOSE).assertIsEnabled()
-            secondary().performClick()
+            secondary().assertDoesNotExist()
             primary().performClick()
 
-            assertEquals<List<IntroUiEvent>>(
-                listOf(IntroUiEvent.FocusSearch, IntroUiEvent.UseHighlightedStop),
-                events,
-                "$step",
-            )
+            assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.ConfirmStop), events, "$step")
         }
     }
 
@@ -209,13 +210,18 @@ class IntroFlowScreenTest {
     @Test
     fun `no screen has a button worded as a way past a question`() {
         val banned = listOf("Skip", "Later", "Next", "Continue", "Done")
-        listOf(ON_PARK_RIDE, PreviewCardContentState, stepTwo, tripPair).forEach { state ->
+        val selectedStop = stepTwo.copy(selectedStop = CENTRAL_STOP)
+        listOf(ON_PARK_RIDE, PreviewCardContentState, selectedStop, tripPair).forEach { state ->
             show(state)
 
-            listOf(primary(), secondary()).forEach { button ->
-                val words = button.fetchSemanticsNode().config.getOrNull(SemanticsProperties.Text)
-                    .orEmpty()
-                    .joinToString { it.text }
+            // A screen with one button has no secondary one, so only the buttons that are there are read.
+            val buttons = listOf(
+                TripPlannerTestTags.INTRO_PRIMARY_ACTION,
+                TripPlannerTestTags.INTRO_SECONDARY_ACTION,
+            ).flatMap { composeRule.onAllNodes(hasTestTag(it)).fetchSemanticsNodes() }
+            assertTrue(buttons.isNotEmpty(), "no button was found on $state")
+            buttons.forEach { button ->
+                val words = button.config.getOrNull(SemanticsProperties.Text).orEmpty().joinToString { it.text }
                 banned.forEach { word -> assertTrue(!words.contains(word, ignoreCase = true), "$words has $word") }
             }
         }

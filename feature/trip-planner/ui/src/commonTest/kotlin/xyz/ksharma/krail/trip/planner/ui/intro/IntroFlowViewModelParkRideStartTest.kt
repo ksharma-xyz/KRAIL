@@ -150,7 +150,7 @@ class IntroFlowViewModelParkRideStartTest {
 
             rig.send(IntroUiEvent.AddParkRideAndContinue)
             // The origin screen is passed over, because the car park is the start, so one pick reaches the confirm screen.
-            rig.send(IntroUiEvent.ChooseStop(CENTRAL.toIntroStop()))
+            rig.send(IntroUiEvent.SelectStop(CENTRAL.toIntroStop()), IntroUiEvent.ConfirmStop)
             assertEquals(IntroStep.CONFIRM, rig.state.step)
             rig.send(IntroUiEvent.FinishPressed)
 

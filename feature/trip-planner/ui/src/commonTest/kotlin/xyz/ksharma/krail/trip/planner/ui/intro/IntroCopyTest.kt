@@ -16,7 +16,8 @@ import kotlin.test.assertTrue
  * The words the rider reads from the decision bar and the headlines, for every screen and state the model
  * can produce. `IntroBannedWordsTest` reads the Intro sources for every other string. A button is always an
  * answer, never a way past a question, and no string uses a question mark, an exclamation mark, a colon, an
- * em dash, an arrow or a middle dot.
+ * em dash, an arrow or a middle dot. The one exception is the destination and origin headlines, which are
+ * questions and so end in a question mark, and nothing else does.
  */
 class IntroCopyTest {
 
@@ -62,7 +63,8 @@ class IntroCopyTest {
         val words = barWords()
 
         assertTrue("Yes, show me free spots" in words && "Add to home" in words && "Not now" in words, "$words")
-        assertTrue("No, search" in words && "Yes, this one" in words, "the stop screens' bar was not found: $words")
+        assertTrue("Yes, this one" in words, "the stop screens' bar was not found: $words")
+        assertTrue("No, search" !in words, "the left button of the stop screens is gone: $words")
     }
 
     @Test
@@ -78,14 +80,38 @@ class IntroCopyTest {
     }
 
     @Test
-    fun `no button and no headline has a question mark, an exclamation mark, a colon, a dash, an arrow or a dot`() {
-        val strings = barWords() + PARK_RIDE_HEADLINE + DESTINATION_HEADLINE + ORIGIN_HEADLINE + PARK_RIDE_HEADING +
-            DESTINATION_HEADING + ORIGIN_HEADING + STOP_NO_MATCH + PICK_THEME_HEADLINE +
-            PICK_THEME_HEADING
+    fun `no button and no headline has a question mark, an exclamation mark, a colon, a dash, an arrow or a dot, except the two questions`() {
+        val strings = barWords() + PARK_RIDE_HEADLINE + PARK_RIDE_HEADING + STOP_NO_MATCH + PICK_THEME_HEADLINE +
+            PICK_THEME_HEADING + CONFIRM_HEADLINE + CONFIRM_HEADING
 
         strings.forEach { text ->
             BANNED_GLYPHS.forEach { glyph -> assertTrue(!text.contains(glyph), "\"$text\" has $glyph") }
         }
+    }
+
+    @Test
+    fun `the destination and origin headlines are questions, with one question mark at the end and no other banned glyph`() {
+        val questions = DESTINATION_HEADLINE + ORIGIN_HEADLINE + DESTINATION_HEADING + ORIGIN_HEADING
+
+        assertEquals(listOf("Where", "to?"), DESTINATION_HEADLINE)
+        assertEquals(listOf("Where", "from?"), ORIGIN_HEADLINE)
+        assertEquals("Where to?", DESTINATION_HEADING)
+        assertEquals("Where from?", ORIGIN_HEADING)
+        listOf(DESTINATION_HEADLINE, ORIGIN_HEADLINE).forEach { lines ->
+            assertEquals(1, lines.joinToString(" ").count { it == QUESTION_MARK }, "$lines")
+            assertTrue(lines.last().endsWith(QUESTION_MARK), "$lines")
+        }
+        questions.forEach { text ->
+            (BANNED_GLYPHS - QUESTION_MARK).forEach { glyph -> assertTrue(!text.contains(glyph), "\"$text\" has $glyph") }
+        }
+    }
+
+    @Test
+    fun `a question mark anywhere else is still caught, in a button or in another headline`() {
+        val elsewhere = barWords() + PARK_RIDE_HEADLINE + PICK_THEME_HEADLINE + CONFIRM_HEADLINE + STOP_NO_MATCH
+
+        assertTrue(elsewhere.none { it.contains(QUESTION_MARK) })
+        assertTrue(wordingProblems("Which one?").isNotEmpty())
     }
 
     @Test
@@ -144,5 +170,6 @@ class IntroCopyTest {
         // Written as code points so none of the banned glyphs is typed into this file.
         val BANNED_GLYPHS = listOf(0x3F, 0x21, 0x3A, 0x2014, 0x2190, 0x2192, 0x21D2, 0x00B7).map { Char(it) }
         const val MAX_LINE_LENGTH = 16
+        val QUESTION_MARK = Char(0x3F)
     }
 }

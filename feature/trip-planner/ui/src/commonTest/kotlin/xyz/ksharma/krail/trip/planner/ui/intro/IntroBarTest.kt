@@ -18,7 +18,7 @@ import kotlin.test.assertTrue
 
 class IntroBarTest {
 
-    // Every screen but the theme screen has a left button, so reading it is an assertion that there is one.
+    // The Park & Ride and confirm screens have a left button, so reading it is an assertion that there is one.
     private val IntroBar.negative: IntroBarAction get() = requireNotNull(left) { "no left button on $this" }
 
     private val unknown = StopsReadiness.Unknown
@@ -112,43 +112,45 @@ class IntroBarTest {
         bars.forEach { bar -> assertNotEquals(bar.negative.event, bar.right.event) }
     }
 
-    private fun stops(enabled: Boolean) = IntroBar(
-        left = IntroBarAction("No, search", IntroUiEvent.FocusSearch),
-        right = IntroBarAction("Yes, this one", IntroUiEvent.UseHighlightedStop),
-        rightEnabled = enabled,
+    private fun stops(shown: Boolean) = IntroBar(
+        left = null,
+        right = IntroBarAction("Yes, this one", IntroUiEvent.ConfirmStop),
+        shown = shown,
     )
 
     @Test
-    fun `the destination and origin screens ask No search and Yes this one, and the stops data never matters`() {
-        val typedNothing = listOf(IntroSearchPhase.Idle, IntroSearchPhase.Results(persistentListOf(CENTRAL_STOP)))
+    fun `the destination and origin screens are one button, not shown until a stop is selected, whatever the search or the stops data`() {
+        val phases = listOf(
+            IntroSearchPhase.Idle,
+            IntroSearchPhase.Results(persistentListOf(CENTRAL_STOP)),
+            IntroSearchPhase.NoMatch,
+        )
 
         listOf(IntroStep.DESTINATION, IntroStep.ORIGIN).forEach { step ->
             listOf(unknown, loading, ready, failed).forEach { readiness ->
-                typedNothing.forEach { phase ->
-                    val state = IntroState(step = step, search = phase)
+                phases.forEach { phase ->
+                    val none = IntroState(step = step, search = phase)
+                    val selected = none.copy(selectedStop = CENTRAL_STOP)
 
-                    assertEquals(stops(enabled = true), introBar(state, readiness), "$step $readiness $phase")
+                    assertEquals(stops(shown = false), introBar(none, readiness), "$step $readiness $phase")
+                    assertEquals(stops(shown = true), introBar(selected, readiness), "$step $readiness $phase")
                 }
-                // Nothing is highlighted when the search found nothing, so the right button has nothing to take.
-                val noMatch = IntroState(step = step, search = IntroSearchPhase.NoMatch)
-                assertEquals(stops(enabled = false), introBar(noMatch, readiness), "$step $readiness no match")
             }
         }
     }
 
     @Test
-    fun `the stop bar's words are exact, whole at every text size, and the left button never moves on`() {
+    fun `the stop bar's words are exact, whole at every text size, with nothing to its left and never a disabled button`() {
         val bar = requireNotNull(introBar(IntroState(step = IntroStep.DESTINATION), ready))
 
-        assertEquals("No, search", STOP_SEARCH)
         assertEquals("Yes, this one", STOP_CHOOSE)
-        assertNull(bar.negative.compactLabel)
+        assertNull(bar.left, "there is no No, search")
         assertNull(bar.right.compactLabel)
+        assertTrue(bar.rightEnabled)
         listOf(1.0f, 1.31f, 2.0f).forEach { scale ->
-            assertEquals("No, search", bar.negative.visibleLabel(scale), "left at $scale")
             assertEquals("Yes, this one", bar.right.visibleLabel(scale), "right at $scale")
         }
-        assertEquals(IntroUiEvent.FocusSearch, bar.negative.event)
+        assertEquals(IntroUiEvent.ConfirmStop, bar.right.event)
     }
 
     @Test
@@ -192,10 +194,12 @@ class IntroBarTest {
     }
 
     @Test
-    fun `every bar is shown, except the theme screen before a theme is selected`() {
+    fun `every bar is shown, except the theme and stop screens before anything is picked`() {
         val states = parkRideRows.map { it.state } +
             IntroState(step = IntroStep.CONFIRM) +
-            IntroState(step = IntroStep.THEME, selectedThemeId = KrailThemeStyle.Bus.id)
+            IntroState(step = IntroStep.THEME, selectedThemeId = KrailThemeStyle.Bus.id) +
+            IntroState(step = IntroStep.DESTINATION, selectedStop = CENTRAL_STOP) +
+            IntroState(step = IntroStep.ORIGIN, selectedStop = CENTRAL_STOP)
 
         states.forEach { state ->
             val bar = introBar(state, ready)
@@ -224,7 +228,7 @@ class IntroBarTest {
     }
 
     @Test
-    fun `the theme screen is the only screen with one button, so no other step can lose its left one`() {
+    fun `only the screens that ask for a pick have one button, so no other step can lose its left one`() {
         val oneButton = IntroStep.entries.filter { step ->
             val states = listOf(
                 IntroState(step = step),
@@ -249,7 +253,7 @@ class IntroBarTest {
             bars.any { it.left == null }
         }
 
-        assertEquals(listOf(IntroStep.THEME), oneButton)
+        assertEquals(listOf(IntroStep.THEME, IntroStep.DESTINATION, IntroStep.ORIGIN), oneButton)
     }
 
     @Test

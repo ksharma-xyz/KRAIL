@@ -2,7 +2,6 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.taj.L_FONT_SCALE_THRESHOLD
-import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroSearchPhase
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
@@ -18,7 +17,6 @@ internal const val PARK_RIDE_YES_COMPACT = "Yes"
 internal const val PARK_RIDE_NOT_NOW = "Not now"
 internal const val PARK_RIDE_ADD = "Add to home"
 internal const val THEME_CONFIRM = "Yes, this one"
-internal const val STOP_SEARCH = "No, search"
 internal const val STOP_CHOOSE = "Yes, this one"
 internal const val CONFIRM_NOT_NOW = "Not now"
 internal const val CONFIRM_SAVE = "Yes, save it"
@@ -81,15 +79,14 @@ internal fun introBar(state: IntroState, readiness: StopsReadiness): IntroBar? =
 }
 
 /**
- * The destination and origin screens. The left button opens the search field and never chooses or moves on, so
- * it is always on, and the right button takes the highlighted row, which is the first one listed. When the typed
- * search found no stop nothing is highlighted, so the right button is off until the rider types something that
- * matches or clears the field.
+ * The destination and origin screens: one button, like the theme screen. Nothing is selected when the screen opens, so
+ * the button is not shown until the rider has tapped a stop, and it then confirms that stop and moves on. It keeps the
+ * room it will take, so the list does not move when it appears, and it is never a disabled button.
  */
 private fun stopBar(state: IntroState) = IntroBar(
-    left = IntroBarAction(STOP_SEARCH, IntroUiEvent.FocusSearch),
-    right = IntroBarAction(STOP_CHOOSE, IntroUiEvent.UseHighlightedStop),
-    rightEnabled = state.search != IntroSearchPhase.NoMatch,
+    left = null,
+    right = IntroBarAction(STOP_CHOOSE, IntroUiEvent.ConfirmStop),
+    shown = state.selectedStop != null,
 )
 
 /**

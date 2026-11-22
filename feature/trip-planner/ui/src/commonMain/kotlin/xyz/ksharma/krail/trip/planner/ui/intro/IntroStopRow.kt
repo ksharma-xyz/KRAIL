@@ -21,16 +21,17 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStop
  * the name in the same type, the mode icons under it, the same padding and the same tap feedback, so the Intro and
  * Search Stop show the same list. It is not outlined and has no look of its own.
  *
- * The row has no label chevron, because nothing is labelled here. The highlighted row takes the app's activated row
+ * The row has no label chevron, because nothing is labelled here. The selected row takes the app's activated row
  * treatment, the flat theme tint with rounded corners that `ManageStopLabelRow` uses for the row that is open, and
  * is announced as selected, so the state is shape and tint and also something a screen reader says, never colour
- * alone. A tap on the row is a choice, and it moves on.
+ * alone. No row is selected when the list opens. A tap on the row selects it and does not move on, and a tap on
+ * another row moves the selection.
  */
 @Composable
 internal fun IntroStopRow(
     stop: IntroStop,
     modes: List<TransportMode>,
-    highlighted: Boolean,
+    selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -47,14 +48,14 @@ internal fun IntroStopRow(
         onNewLabelClick = {},
         showLabelAssign = false,
         onRowClick = onClick,
-        // The highlight is the flat theme tint edge to edge with rounded corners, as ManageStopLabelRow's open row has.
+        // The selection is the flat theme tint edge to edge with rounded corners, as ManageStopLabelRow's open row has.
         // The row has room above its name and none below, so the bottom is given the same room inside the tint.
         modifier = modifier
-            .then(if (highlighted) Modifier.background(themeBackgroundColor(), shape) else Modifier)
+            .then(if (selected) Modifier.background(themeBackgroundColor(), shape) else Modifier)
             .padding(bottom = KrailTheme.dimensions.spacingM),
         // On the node that has the click and the name, so a screen reader reads one button that says it is selected.
         tapAreaModifier = Modifier
             .testTag(TripPlannerTestTags.introStop(stop.stopId))
-            .semantics { selected = highlighted },
+            .semantics { this.selected = selected },
     )
 }

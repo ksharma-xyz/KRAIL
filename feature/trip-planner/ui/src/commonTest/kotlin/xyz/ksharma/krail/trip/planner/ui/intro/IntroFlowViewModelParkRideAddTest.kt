@@ -203,8 +203,8 @@ class IntroFlowViewModelParkRideAddTest {
             rig.send(*events.toTypedArray())
             rig.send(
                 IntroUiEvent.DeclineParkRide,
-                IntroUiEvent.ChooseStop(CENTRAL.toIntroStop()),
-                IntroUiEvent.ChooseStop(TALLAWONG.toIntroStop()),
+                IntroUiEvent.SelectStop(CENTRAL.toIntroStop()), IntroUiEvent.ConfirmStop,
+                IntroUiEvent.SelectStop(TALLAWONG.toIntroStop()), IntroUiEvent.ConfirmStop,
                 IntroUiEvent.FinishPressed,
             )
 

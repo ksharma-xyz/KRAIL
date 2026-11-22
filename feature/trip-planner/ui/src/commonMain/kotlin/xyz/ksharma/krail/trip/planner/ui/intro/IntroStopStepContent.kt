@@ -9,8 +9,6 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -43,13 +41,14 @@ internal const val STOP_NO_MATCH = "No match found"
  * headline, a search field, and the stops below it as the rows Search Stop draws.
  *
  * - **The list.** What [IntroState.stopRows] says: the suggestions until the rider types, then the stops the local
- *   search finds, best first. The first row is the highlighted one, the stop the right button takes. A tap on any
- *   row chooses it and moves on.
- * - **The field.** A taj [TextField] that takes the keyboard when the rider asks for it with the left button and
- *   not before, so the screen opens with the list in view. What is typed is the view model's to search and goes
+ *   search finds, best first. No row is selected when the screen opens, so nothing reads as already chosen. A tap on
+ *   a row selects it, which shows the single button in the bar, and a tap on another row moves the selection. The
+ *   button confirms the stop and moves on.
+ * - **The field.** A taj [TextField] that takes the keyboard when the rider taps it, so the screen opens with the list
+ *   in view. What is typed is the view model's to search and goes
  *   nowhere else. It starts from the view model's text and not from a saved copy, so a turn of the screen keeps it
  *   and a restart of the app does not.
- * - **No match.** The list is replaced by one line, and nothing is highlighted.
+ * - **No match.** The list is replaced by one line, and nothing is selected.
  * - **Stops not ready.** Nothing differs on screen: the suggestions are bundled with the app, and the field takes
  *   text and finds nothing until the stops are ready, with no message.
  *
@@ -61,7 +60,6 @@ internal const val STOP_NO_MATCH = "No match found"
 internal fun IntroStopStepContent(
     state: IntroState,
     suggestedStops: SuggestedStops,
-    focusRequester: FocusRequester,
     onEvent: (IntroUiEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -82,13 +80,17 @@ internal fun IntroStopStepContent(
             IntroStopField(
                 step = state.step,
                 startText = state.query,
-                focusRequester = focusRequester,
                 onEvent = onEvent,
             )
             if (state.search == IntroSearchPhase.NoMatch) {
                 IntroStopNoMatch()
             } else {
-                IntroStopList(rows = rows, modes = state.stopModes, onEvent = onEvent)
+                IntroStopList(
+                    rows = rows,
+                    modes = state.stopModes,
+                    selectedStopId = state.selectedStop?.stopId,
+                    onEvent = onEvent,
+                )
             }
         }
     }
@@ -98,7 +100,6 @@ internal fun IntroStopStepContent(
 private fun IntroStopField(
     step: IntroStep,
     startText: String,
-    focusRequester: FocusRequester,
     onEvent: (IntroUiEvent) -> Unit,
 ) {
     // Not saved: the view model has the text through a turn of the screen, and nothing has it after a restart.
@@ -126,7 +127,6 @@ private fun IntroStopField(
             .fillMaxWidth()
             .padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding)
             .padding(bottom = KrailTheme.dimensions.spacingM)
-            .focusRequester(focusRequester)
             .testTag(TripPlannerTestTags.INTRO_STOP_FIELD),
     )
 }
@@ -135,6 +135,7 @@ private fun IntroStopField(
 private fun IntroStopList(
     rows: List<IntroStop>,
     modes: ImmutableMap<String, ImmutableList<TransportMode>>,
+    selectedStopId: String?,
     onEvent: (IntroUiEvent) -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -143,8 +144,10 @@ private fun IntroStopList(
                 IntroStopRow(
                     stop = stop,
                     modes = modes[stop.stopId].orEmpty(),
-                    highlighted = index == 0,
-                    onClick = { onEvent(IntroUiEvent.ChooseStop(stop)) },
+                    selected = stop.stopId == selectedStopId,
+                    onClick = { onEvent(IntroUiEvent.SelectStop(stop)) },
+                    // A tag for whichever stop is first, which a flow that only needs to select one can tap.
+                    modifier = if (index == 0) Modifier.testTag(TripPlannerTestTags.INTRO_STOP_FIRST) else Modifier,
                 )
             }
         }

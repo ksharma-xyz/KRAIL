@@ -18,7 +18,7 @@ class IntroUiEventTest {
         assertEquals(LocationResult.GRANTED, IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, fix).result)
         assertEquals(fix, IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, fix).location)
         assertNull(IntroUiEvent.LocationResultReceived(LocationResult.DENIED, null).location)
-        assertEquals(CENTRAL_STOP, IntroUiEvent.ChooseStop(CENTRAL_STOP).stop)
+        assertEquals(CENTRAL_STOP, IntroUiEvent.SelectStop(CENTRAL_STOP).stop)
         assertEquals("chat", IntroUiEvent.QueryChanged("chat").text)
     }
 
@@ -29,11 +29,10 @@ class IntroUiEventTest {
             IntroUiEvent.DeclineParkRide,
             IntroUiEvent.FinishPressed,
             IntroUiEvent.FinishWithoutTrip,
-            IntroUiEvent.UseHighlightedStop,
-            IntroUiEvent.FocusSearch,
+            IntroUiEvent.ConfirmStop,
         )
 
-        assertEquals(6, plain.size)
+        assertEquals(5, plain.size)
         assertSame(IntroEffect.NavigateToSavedTrips, IntroEffect.NavigateToSavedTrips)
     }
 }

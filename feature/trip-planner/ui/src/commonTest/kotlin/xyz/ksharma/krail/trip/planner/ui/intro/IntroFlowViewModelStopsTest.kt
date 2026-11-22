@@ -42,23 +42,60 @@ class IntroFlowViewModelStopsTest {
     // region choosing
 
     @Test
-    fun `tapping a row on the destination screen sets the end and moves to the origin screen`() = krailRunTest {
-        val rig = IntroRig(this, handle = savedAt(onDestination))
+    fun `nothing is selected when a stop screen opens, and the first row is not a default`() = krailRunTest {
+        listOf(onDestination, onDestination.copy(step = IntroStep.ORIGIN)).forEach { on ->
+            val rig = IntroRig(this, handle = savedAt(on))
 
-        rig.send(IntroUiEvent.ChooseStop(WYNYARD_STOP))
-
-        assertEquals(WYNYARD_STOP.stopId, rig.state.endStopId)
-        assertEquals(WYNYARD_STOP.name, rig.state.endName)
-        assertNull(rig.state.startStopId)
-        assertEquals(IntroStep.ORIGIN, rig.state.step)
+            assertNull(rig.state.selectedStop, "${on.step}")
+            assertTrue(rig.state.stopRows(rig.viewModel.suggestedStops).isNotEmpty())
+        }
     }
 
     @Test
-    fun `tapping a row on the origin screen sets the start and moves to the confirm screen with a trip`() =
+    fun `tapping a row selects the stop and nothing else, so the screen stays and the trip is unchanged`() =
         krailRunTest {
             val rig = IntroRig(this, handle = savedAt(onDestination))
 
-            rig.send(IntroUiEvent.ChooseStop(WYNYARD_STOP), IntroUiEvent.ChooseStop(TALLAWONG_STOP))
+            rig.send(IntroUiEvent.SelectStop(WYNYARD_STOP))
+
+            assertEquals(WYNYARD_STOP, rig.state.selectedStop)
+            assertEquals(IntroStep.DESTINATION, rig.state.step)
+            assertNull(rig.state.endStopId)
+            assertNull(rig.state.startStopId)
+        }
+
+    @Test
+    fun `tapping another row moves the selection, and tapping the selected row again keeps it`() = krailRunTest {
+        val rig = IntroRig(this, handle = savedAt(onDestination))
+
+        rig.send(IntroUiEvent.SelectStop(WYNYARD_STOP), IntroUiEvent.SelectStop(CENTRAL_STOP))
+        assertEquals(CENTRAL_STOP, rig.state.selectedStop)
+
+        rig.send(IntroUiEvent.SelectStop(CENTRAL_STOP))
+        assertEquals(CENTRAL_STOP, rig.state.selectedStop)
+    }
+
+    @Test
+    fun `confirming the selected stop on the destination screen sets the end and moves to the origin screen`() =
+        krailRunTest {
+            val rig = IntroRig(this, handle = savedAt(onDestination))
+
+            rig.send(IntroUiEvent.SelectStop(WYNYARD_STOP), IntroUiEvent.ConfirmStop)
+
+            assertEquals(WYNYARD_STOP.stopId, rig.state.endStopId)
+            assertEquals(WYNYARD_STOP.name, rig.state.endName)
+            assertNull(rig.state.startStopId)
+            assertEquals(IntroStep.ORIGIN, rig.state.step)
+            assertNull(rig.state.selectedStop, "the selection does not follow the rider to the next screen")
+        }
+
+    @Test
+    fun `confirming the selected stop on the origin screen sets the start and moves to the confirm screen with a trip`() =
+        krailRunTest {
+            val rig = IntroRig(this, handle = savedAt(onDestination))
+
+            rig.send(IntroUiEvent.SelectStop(WYNYARD_STOP), IntroUiEvent.ConfirmStop)
+            rig.send(IntroUiEvent.SelectStop(TALLAWONG_STOP), IntroUiEvent.ConfirmStop)
 
             assertEquals(TALLAWONG_STOP.stopId, rig.state.startStopId)
             assertEquals(IntroStep.CONFIRM, rig.state.step)
@@ -66,44 +103,19 @@ class IntroFlowViewModelStopsTest {
         }
 
     @Test
-    fun `the right button takes the first row of the destination list, the first curated end`() = krailRunTest {
-        val rig = IntroRig(this, handle = savedAt(onDestination))
+    fun `the right button with nothing selected does nothing, because there is no default row to take`() =
+        krailRunTest {
+            listOf(onDestination, onDestination.copy(step = IntroStep.ORIGIN)).forEach { on ->
+                val rig = IntroRig(this, handle = savedAt(on))
 
-        rig.send(IntroUiEvent.UseHighlightedStop)
+                rig.send(IntroUiEvent.ConfirmStop)
 
-        assertEquals(CENTRAL_STOP.stopId, rig.state.endStopId)
-        assertEquals(IntroStep.ORIGIN, rig.state.step)
-    }
-
-    @Test
-    fun `the right button on the origin screen takes the first curated start when there is no fix`() = krailRunTest {
-        val rig = IntroRig(this, handle = savedAt(onDestination))
-
-        rig.send(IntroUiEvent.ChooseStop(WYNYARD_STOP), IntroUiEvent.UseHighlightedStop)
-
-        assertEquals(TALLAWONG_STOP.stopId, rig.state.startStopId)
-        assertEquals(IntroStep.CONFIRM, rig.state.step)
-    }
+                assertEquals(on, rig.state, "${on.step}")
+            }
+        }
 
     @Test
-    fun `the right button on the origin screen takes the nearest station when there is a fix`() = krailRunTest {
-        val rig = IntroRig(this)
-        rig.nswStops.nearbyRows = listOf(REDFERN_STOP, MUSEUM_STOP).map(::nearbyRow)
-        rig.send(
-            IntroUiEvent.AnswerParkRide(yes = true),
-            IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, AT_CENTRAL),
-        )
-        // The rider takes their time on the destination screen, so the stations are found by then.
-        rig.send(IntroUiEvent.ChooseStop(WYNYARD_STOP))
-        assertEquals(IntroStep.ORIGIN, rig.state.step)
-
-        rig.send(IntroUiEvent.UseHighlightedStop)
-
-        assertEquals(REDFERN_STOP.stopId, rig.state.startStopId, "the nearest station, not the first curated one")
-    }
-
-    @Test
-    fun `a destination that is also the nearest station is left out of the origin list and the next is taken`() =
+    fun `the nearest station leads the origin list but is not selected, and is the start only once the rider selects it`() =
         krailRunTest {
             val rig = IntroRig(this)
             rig.nswStops.nearbyRows = listOf(REDFERN_STOP, MUSEUM_STOP).map(::nearbyRow)
@@ -111,31 +123,46 @@ class IntroFlowViewModelStopsTest {
                 IntroUiEvent.AnswerParkRide(yes = true),
                 IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, AT_CENTRAL),
             )
-            rig.send(IntroUiEvent.ChooseStop(REDFERN_STOP), IntroUiEvent.UseHighlightedStop)
+            // The rider takes their time on the destination screen, so the stations are found by then.
+            rig.send(IntroUiEvent.SelectStop(WYNYARD_STOP), IntroUiEvent.ConfirmStop)
+            assertEquals(IntroStep.ORIGIN, rig.state.step)
 
-            assertEquals(MUSEUM_STOP.stopId, rig.state.startStopId)
-            assertEquals(REDFERN_STOP.stopId, rig.state.endStopId)
+            assertEquals(REDFERN_STOP, rig.state.stopRows(rig.viewModel.suggestedStops).first(), "it leads")
+            assertNull(rig.state.selectedStop, "and is not selected")
+            rig.send(IntroUiEvent.ConfirmStop)
+            assertEquals(IntroStep.ORIGIN, rig.state.step, "so the button does nothing")
+
+            rig.send(IntroUiEvent.SelectStop(REDFERN_STOP), IntroUiEvent.ConfirmStop)
+
+            assertEquals(REDFERN_STOP.stopId, rig.state.startStopId)
         }
 
     @Test
-    fun `no search never chooses and never leaves the screen`() = krailRunTest {
-        val rig = IntroRig(this, handle = savedAt(onDestination))
-        val before = rig.state
+    fun `a destination that is also the nearest station is left out of the origin list`() = krailRunTest {
+        val rig = IntroRig(this)
+        rig.nswStops.nearbyRows = listOf(REDFERN_STOP, MUSEUM_STOP).map(::nearbyRow)
+        rig.send(
+            IntroUiEvent.AnswerParkRide(yes = true),
+            IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, AT_CENTRAL),
+        )
+        rig.send(IntroUiEvent.SelectStop(REDFERN_STOP), IntroUiEvent.ConfirmStop)
 
-        rig.send(IntroUiEvent.FocusSearch)
+        val rows = rig.state.stopRows(rig.viewModel.suggestedStops)
 
-        assertEquals(before, rig.state)
+        assertEquals(MUSEUM_STOP, rows.first(), "the next nearest leads")
+        assertFalse(REDFERN_STOP in rows)
+        assertEquals(REDFERN_STOP.stopId, rig.state.endStopId)
     }
 
     @Test
-    fun `a choice on a screen that does not list stops does nothing`() = krailRunTest {
+    fun `a selection or a confirm on a screen that does not list stops does nothing`() = krailRunTest {
         listOf(IntroStep.THEME, IntroStep.PARK_RIDE, IntroStep.CONFIRM).forEach { step ->
             val on = IntroState(step = step)
             val rig = IntroRig(this, handle = savedAt(on))
 
             rig.send(
-                IntroUiEvent.ChooseStop(CENTRAL_STOP),
-                IntroUiEvent.UseHighlightedStop,
+                IntroUiEvent.SelectStop(CENTRAL_STOP),
+                IntroUiEvent.ConfirmStop,
                 IntroUiEvent.QueryChanged("a"),
             )
 
@@ -155,7 +182,7 @@ class IntroFlowViewModelStopsTest {
             )
             val rig = IntroRig(this, handle = savedAt(parkRideStart))
 
-            rig.send(IntroUiEvent.ChooseStop(CENTRAL_STOP))
+            rig.send(IntroUiEvent.SelectStop(CENTRAL_STOP), IntroUiEvent.ConfirmStop)
             assertEquals(IntroStep.CONFIRM, rig.state.step, "the origin screen is passed over")
             assertEquals(CENTRAL_STOP.stopId, rig.state.endStopId)
         }
@@ -199,7 +226,7 @@ class IntroFlowViewModelStopsTest {
     }
 
     @Test
-    fun `the results show the first result as the highlighted one and the stop's badges`() = krailRunTest {
+    fun `the results replace the list with the stop's badges, and none of them is selected`() = krailRunTest {
         val rig = IntroRig(this, handle = savedAt(onDestination))
         rig.stopResults.answer = listOf(
             result(CHATSWOOD_STOP, TransportMode.Train, TransportMode.Metro),
@@ -209,7 +236,8 @@ class IntroFlowViewModelStopsTest {
         rig.send(IntroUiEvent.QueryChanged("ch"))
         pumpOnce(INTRO_SEARCH_DEBOUNCE_MS)
 
-        assertEquals(CHATSWOOD_STOP, rig.state.highlightedStop(rig.viewModel.suggestedStops))
+        assertEquals(CHATSWOOD_STOP, rig.state.stopRows(rig.viewModel.suggestedStops).first())
+        assertNull(rig.state.selectedStop, "a typed result is not selected until it is tapped")
         assertEquals<List<TransportMode>?>(
             listOf(TransportMode.Train, TransportMode.Metro),
             rig.state.stopModes[CHATSWOOD_STOP.stopId],
@@ -217,16 +245,16 @@ class IntroFlowViewModelStopsTest {
     }
 
     @Test
-    fun `a search that finds nothing is no match, and the right button has nothing to take`() = krailRunTest {
+    fun `a search that finds nothing is no match, and the right button has nothing to confirm`() = krailRunTest {
         val rig = IntroRig(this, handle = savedAt(onDestination))
         rig.stopResults.answer = emptyList()
 
         rig.send(IntroUiEvent.QueryChanged("zzzz"))
         pumpOnce(INTRO_SEARCH_DEBOUNCE_MS)
-        rig.send(IntroUiEvent.UseHighlightedStop)
+        rig.send(IntroUiEvent.ConfirmStop)
 
         assertEquals(IntroSearchPhase.NoMatch, rig.state.search)
-        assertEquals(IntroStep.DESTINATION, rig.state.step, "nothing was highlighted, so nothing was chosen")
+        assertEquals(IntroStep.DESTINATION, rig.state.step, "nothing was selected, so nothing was chosen")
         assertNull(rig.state.endStopId)
     }
 
@@ -243,6 +271,37 @@ class IntroFlowViewModelStopsTest {
             assertEquals(IntroSearchPhase.Idle, rig.state.search)
             assertTrue(rig.stopResults.searches.isEmpty(), "the cleared text was never searched")
         }
+
+    @Test
+    fun `typing different text drops the selection, because the list under it is a new one, and the same text keeps it`() =
+        krailRunTest {
+            val rig = IntroRig(this, handle = savedAt(onDestination))
+            rig.stopResults.answer = listOf(result(CHATSWOOD_STOP))
+            rig.send(IntroUiEvent.SelectStop(CENTRAL_STOP))
+
+            rig.send(IntroUiEvent.QueryChanged("chat"))
+            assertNull(rig.state.selectedStop, "the first letter dropped it")
+
+            pumpOnce(INTRO_SEARCH_DEBOUNCE_MS)
+            rig.send(IntroUiEvent.SelectStop(CHATSWOOD_STOP))
+            rig.send(IntroUiEvent.QueryChanged("chat"))
+            assertEquals(CHATSWOOD_STOP, rig.state.selectedStop, "the same text is not a change")
+
+            rig.send(IntroUiEvent.QueryChanged(""))
+            assertNull(rig.state.selectedStop, "clearing the field drops it")
+        }
+
+    @Test
+    fun `the selection is not saved, so a restored screen opens with nothing selected`() = krailRunTest {
+        val rig = IntroRig(this, handle = savedAt(onDestination))
+        rig.send(IntroUiEvent.SelectStop(WYNYARD_STOP))
+
+        val restored = IntroRig(this, handle = rig.handle)
+        restored.settle()
+
+        assertEquals(IntroStep.DESTINATION, restored.state.step)
+        assertNull(restored.state.selectedStop)
+    }
 
     @Test
     fun `the same text again changes and searches nothing more`() = krailRunTest {
@@ -306,11 +365,11 @@ class IntroFlowViewModelStopsTest {
     }
 
     @Test
-    fun `choosing while a search is waiting cancels it, so it cannot change the next screen`() = krailRunTest {
+    fun `confirming while a search is waiting cancels it, so it cannot change the next screen`() = krailRunTest {
         val rig = IntroRig(this, handle = savedAt(onDestination))
         rig.stopResults.answer = listOf(result(CHATSWOOD_STOP))
 
-        rig.send(IntroUiEvent.QueryChanged("chat"), IntroUiEvent.ChooseStop(CENTRAL_STOP))
+        rig.send(IntroUiEvent.QueryChanged("chat"), IntroUiEvent.SelectStop(CENTRAL_STOP), IntroUiEvent.ConfirmStop)
         pumpOnce(INTRO_SEARCH_DEBOUNCE_MS * 2)
 
         assertEquals(IntroStep.ORIGIN, rig.state.step)
@@ -326,12 +385,12 @@ class IntroFlowViewModelStopsTest {
             typed.stopResults.answer = listOf(result(CHATSWOOD_STOP))
             typed.send(IntroUiEvent.QueryChanged("chat"))
             pumpOnce(INTRO_SEARCH_DEBOUNCE_MS)
-            typed.send(IntroUiEvent.UseHighlightedStop)
+            typed.send(IntroUiEvent.SelectStop(CHATSWOOD_STOP), IntroUiEvent.ConfirmStop)
             assertTrue(typed.state.usedSearch)
             assertEquals(CHATSWOOD_STOP.stopId, typed.state.endStopId)
 
             val suggested = IntroRig(this, handle = savedAt(onDestination))
-            suggested.send(IntroUiEvent.ChooseStop(CENTRAL_STOP))
+            suggested.send(IntroUiEvent.SelectStop(CENTRAL_STOP), IntroUiEvent.ConfirmStop)
             assertFalse(suggested.state.usedSearch)
         }
 
@@ -342,7 +401,13 @@ class IntroFlowViewModelStopsTest {
 
         rig.send(IntroUiEvent.QueryChanged("chatswo"))
         pumpOnce(INTRO_SEARCH_DEBOUNCE_MS * 10)
-        rig.send(IntroUiEvent.UseHighlightedStop, IntroUiEvent.ChooseStop(TALLAWONG_STOP), IntroUiEvent.FinishPressed)
+        rig.send(
+            IntroUiEvent.SelectStop(CHATSWOOD_STOP),
+            IntroUiEvent.ConfirmStop,
+            IntroUiEvent.SelectStop(TALLAWONG_STOP),
+            IntroUiEvent.ConfirmStop,
+            IntroUiEvent.FinishPressed,
+        )
 
         assertTrue(rig.analytics.events.isNotEmpty(), "the finish reported its outcome")
         rig.analytics.events.forEach { event ->
@@ -364,7 +429,7 @@ class IntroFlowViewModelStopsTest {
     fun `the chosen stops and the screen survive a new view model, and what was typed does not`() = krailRunTest {
         val rig = IntroRig(this, handle = savedAt(onDestination))
         rig.stopResults.answer = listOf(result(CHATSWOOD_STOP))
-        rig.send(IntroUiEvent.ChooseStop(WYNYARD_STOP), IntroUiEvent.QueryChanged("chat"))
+        rig.send(IntroUiEvent.SelectStop(WYNYARD_STOP), IntroUiEvent.ConfirmStop, IntroUiEvent.QueryChanged("chat"))
         pumpOnce(INTRO_SEARCH_DEBOUNCE_MS)
         assertTrue(rig.state.search is IntroSearchPhase.Results)
 
@@ -400,7 +465,8 @@ class IntroFlowViewModelStopsTest {
         krailRunTest {
             val rig = IntroRig(this, handle = savedAt(onDestination))
 
-            rig.send(IntroUiEvent.ChooseStop(WYNYARD_STOP), IntroUiEvent.ChooseStop(TALLAWONG_STOP))
+            rig.send(IntroUiEvent.SelectStop(WYNYARD_STOP), IntroUiEvent.ConfirmStop)
+            rig.send(IntroUiEvent.SelectStop(TALLAWONG_STOP), IntroUiEvent.ConfirmStop)
             rig.send(IntroUiEvent.FinishPressed)
 
             val trip = rig.sandook.selectAllTrips().single()
@@ -416,7 +482,8 @@ class IntroFlowViewModelStopsTest {
     fun `not now on the confirm screen after two stops saves nothing and is reported as skipped`() = krailRunTest {
         val rig = IntroRig(this, handle = savedAt(onDestination))
 
-        rig.send(IntroUiEvent.ChooseStop(WYNYARD_STOP), IntroUiEvent.ChooseStop(TALLAWONG_STOP))
+        rig.send(IntroUiEvent.SelectStop(WYNYARD_STOP), IntroUiEvent.ConfirmStop)
+        rig.send(IntroUiEvent.SelectStop(TALLAWONG_STOP), IntroUiEvent.ConfirmStop)
         rig.send(IntroUiEvent.FinishWithoutTrip)
 
         assertTrue(rig.sandook.selectAllTrips().isEmpty())

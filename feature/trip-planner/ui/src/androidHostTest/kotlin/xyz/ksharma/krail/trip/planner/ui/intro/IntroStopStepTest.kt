@@ -7,14 +7,14 @@ import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsFocused
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotFocused
+import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -52,9 +52,8 @@ import kotlin.test.assertTrue
 import kotlin.time.TimeSource
 
 /**
- * The destination and origin screens with the real view model and the fakes at the edges: the list and its
- * highlighted row, choosing by tapping a row and by the right button, the left button opening the field without
- * choosing, typing, no match, a turn of the screen, and Back.
+ * The destination and origin screens with the real view model and the fakes at the edges: the list with no row
+ * selected, selecting by tapping a row, confirming with the one button, typing, no match and a turn of the screen.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -145,62 +144,91 @@ class IntroStopStepTest {
     }
 
     @Test
-    fun `only the first row is announced as selected`() {
+    fun `the first row carries a tag that does not depend on the stop, and it selects that row`() {
+        show()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_STOP_FIRST).performClick()
+        composeRule.waitForIdle()
+
+        row(ends.first().stopId).assertIsSelected()
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertExists()
+    }
+
+    @Test
+    fun `no row is announced as selected when the screen opens, and there is no button`() {
         show()
 
         val selected = ends.map {
             row(it.stopId).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Selected)
         }
 
-        assertEquals(listOf(true, false, false, false, false), selected)
+        assertEquals(listOf(false, false, false, false, false), selected)
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION).assertDoesNotExist()
+        composeRule.onNodeWithText(STOP_CHOOSE).assertDoesNotExist()
     }
 
     @Test
-    fun `the bar says No search on the left and Yes this one on the right`() {
-        show()
-
-        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION).assertTextEquals(STOP_SEARCH)
-        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertTextEquals(STOP_CHOOSE)
-    }
-
-    @Test
-    fun `tapping a row sets it as the end and moves to the origin screen without it in the list`() {
+    fun `tapping a row selects it, announces it as selected and shows the one button, and the screen stays`() {
         show()
 
         row(ends[1].stopId).performClick()
         composeRule.waitForIdle()
 
-        assertEquals(ends[1].stopId, viewModel.state.value.endStopId)
-        composeRule.onNodeWithText(ORIGIN_HEADING).assertIsDisplayed()
-        composeRule.onNodeWithTag(TripPlannerTestTags.introStop(ends[1].stopId)).assertDoesNotExist()
+        assertEquals(ends[1].stopId, viewModel.state.value.selectedStop?.stopId)
+        assertEquals(IntroStep.DESTINATION, viewModel.state.value.step)
+        assertEquals(null, viewModel.state.value.endStopId)
+        row(ends[1].stopId).assertIsSelected()
+        ends.filterNot { it == ends[1] }.forEach { row(it.stopId).assertIsNotSelected() }
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertTextEquals(STOP_CHOOSE).assertIsEnabled()
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION).assertDoesNotExist()
     }
 
     @Test
-    fun `Yes this one takes the first row and moves on`() {
+    fun `tapping another row moves the selection`() {
         show()
+
+        row(ends[1].stopId).performClick()
+        row(ends[3].stopId).performClick()
+        composeRule.waitForIdle()
+
+        row(ends[1].stopId).assertIsNotSelected()
+        row(ends[3].stopId).assertIsSelected()
+        assertEquals(ends[3].stopId, viewModel.state.value.selectedStop?.stopId)
+    }
+
+    @Test
+    fun `Yes this one sets the selected row as the end and moves to the origin screen without it in the list`() {
+        show()
+        row(ends[1].stopId).performClick()
+        composeRule.waitForIdle()
 
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
         composeRule.waitForIdle()
 
-        assertEquals(ends.first().stopId, viewModel.state.value.endStopId)
+        assertEquals(ends[1].stopId, viewModel.state.value.endStopId)
         composeRule.onNodeWithText(ORIGIN_HEADING).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.introStop(ends[1].stopId)).assertDoesNotExist()
+        starts.filterNot { it.stopId == ends[1].stopId }.forEach { row(it.stopId).assertIsNotSelected() }
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertDoesNotExist()
     }
 
     @Test
-    fun `No search focuses the field, never chooses and never leaves the screen`() {
+    fun `the search field is the only thing that opens the keyboard, and there is no No search button`() {
         show()
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_STOP_FIELD).assertIsNotFocused()
+        composeRule.onNodeWithText("No, search").assertDoesNotExist()
 
-        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION).performClick()
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_STOP_FIELD).performClick()
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_STOP_FIELD).assertIsFocused()
         assertEquals(IntroStep.DESTINATION, viewModel.state.value.step)
-        assertEquals(null, viewModel.state.value.endStopId)
+        assertEquals(null, viewModel.state.value.selectedStop)
     }
 
     @Test
-    fun `typing replaces the suggestions with the stops found and highlights the first of them`() {
+    fun `typing replaces the suggestions with the stops found, with none of them selected`() {
         stopResults.answer = listOf(SuggestedStop("206710", "Chatswood Station")).map(::stopResult)
         show()
 
@@ -208,20 +236,21 @@ class IntroStopStepTest {
 
         composeRule.onNodeWithText("Chatswood Station").assertIsDisplayed()
         ends.forEach { row(it.stopId).assertDoesNotExist() }
-        assertEquals(
-            true,
-            row("206710").fetchSemanticsNode().config.getOrNull(SemanticsProperties.Selected),
-        )
+        row("206710").assertIsNotSelected()
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertDoesNotExist()
         assertEquals(listOf("chat" to false), stopResults.searches)
     }
 
     @Test
-    fun `choosing a typed result sets it as the end and counts the search as used`() {
+    fun `selecting a typed result and confirming sets it as the end and counts the search as used`() {
         stopResults.answer = listOf(SuggestedStop("206710", "Chatswood Station")).map(::stopResult)
         show()
         type("chat")
 
         row("206710").performClick()
+        composeRule.waitForIdle()
+        row("206710").assertIsSelected()
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
         composeRule.waitForIdle()
 
         assertEquals("206710", viewModel.state.value.endStopId)
@@ -231,15 +260,29 @@ class IntroStopStepTest {
     }
 
     @Test
-    fun `a search with no match shows the line, highlights nothing and turns the right button off`() {
+    fun `typing after a row was selected drops the selection and the button goes`() {
+        stopResults.answer = listOf(SuggestedStop("206710", "Chatswood Station")).map(::stopResult)
+        show()
+        row(ends[0].stopId).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertExists()
+
+        type("chat")
+
+        assertEquals(null, viewModel.state.value.selectedStop)
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertDoesNotExist()
+    }
+
+    @Test
+    fun `a search with no match shows the line, selects nothing and shows no button`() {
         stopResults.answer = emptyList()
         show()
 
         type("zzzz")
 
         composeRule.onNodeWithText(STOP_NO_MATCH).assertIsDisplayed()
-        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertIsNotEnabled()
-        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION).assertIsEnabled()
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION).assertDoesNotExist()
         ends.forEach { row(it.stopId).assertDoesNotExist() }
     }
 
@@ -257,17 +300,37 @@ class IntroStopStepTest {
     }
 
     @Test
-    fun `the origin screen lists the curated starts, leaves out the chosen end and highlights the first`() {
+    fun `the origin screen lists the curated starts, leaves out the chosen end and selects none`() {
         show()
         row(ends[1].stopId).performClick()
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
         composeRule.waitForIdle()
 
         val expected = starts.filterNot { it.stopId == ends[1].stopId }
-        expected.forEach { row(it.stopId).assertIsDisplayed() }
-        assertEquals(
-            true,
-            row(expected.first().stopId).fetchSemanticsNode().config.getOrNull(SemanticsProperties.Selected),
-        )
+        expected.forEach {
+            row(it.stopId).assertIsDisplayed()
+            row(it.stopId).assertIsNotSelected()
+        }
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertDoesNotExist()
         assertFalse(viewModel.state.value.step == IntroStep.CONFIRM)
+    }
+
+    @Test
+    fun `the origin screen works the same way, a tap selects and the one button confirms and reaches the confirm screen`() {
+        show()
+        row(ends[1].stopId).performClick()
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
+        composeRule.waitForIdle()
+        val start = starts.first { it.stopId != ends[1].stopId }
+
+        row(start.stopId).performClick()
+        composeRule.waitForIdle()
+        row(start.stopId).assertIsSelected()
+        assertEquals(IntroStep.ORIGIN, viewModel.state.value.step)
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(start.stopId, viewModel.state.value.startStopId)
+        assertEquals(IntroStep.CONFIRM, viewModel.state.value.step)
     }
 }

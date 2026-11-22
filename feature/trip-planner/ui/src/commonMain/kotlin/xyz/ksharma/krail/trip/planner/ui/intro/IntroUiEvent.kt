@@ -44,19 +44,17 @@ internal sealed interface IntroUiEvent {
     data object DeclineParkRide : IntroUiEvent
 
     /**
-     * A row of the destination or origin list was tapped, or the right button took the highlighted one: the stop is
-     * the end on the destination screen and the start on the origin screen, and the Intro moves on. There is no Next.
+     * A row of the destination or origin list was tapped, or a typed result: the stop is selected, highlighted and
+     * announced as selected, and the single button appears. A tap on another row moves the selection. Nothing is chosen
+     * and the Intro does not move on.
      */
-    data class ChooseStop(val stop: IntroStop) : IntroUiEvent
-
-    /** `Yes, this one`: takes the highlighted row, which is the first one listed, and does what tapping it does. */
-    data object UseHighlightedStop : IntroUiEvent
+    data class SelectStop(val stop: IntroStop) : IntroUiEvent
 
     /**
-     * `No, search`: the search field takes the focus and the keyboard opens. The screen answers it, because only the
-     * screen has the field, and the view model ignores it. It never leaves a screen and never chooses anything.
+     * `Yes, this one`, the only button on the destination and origin screens: the selected stop is the end on the
+     * destination screen and the start on the origin screen, and the Intro moves on. Ignored with no stop selected.
      */
-    data object FocusSearch : IntroUiEvent
+    data object ConfirmStop : IntroUiEvent
 
     /**
      * The text in the search field changed. The view model runs the local stop search for it after a short pause in

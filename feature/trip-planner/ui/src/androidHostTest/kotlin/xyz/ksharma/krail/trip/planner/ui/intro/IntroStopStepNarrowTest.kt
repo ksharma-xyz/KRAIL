@@ -103,7 +103,7 @@ class IntroStopStepNarrowTest {
 
     @Test
     fun `the screen scrolls so the last row can be reached, and the bar stays where it was`() {
-        show(PreviewDestinationSuggestions)
+        show(PreviewDestinationSelected)
         val primary = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION)
         val before = primary.getUnclippedBoundsInRoot()
 
@@ -114,31 +114,28 @@ class IntroStopStepNarrowTest {
 
     @Test
     fun `the list reads in order below the field and above the bar`() {
-        show(PreviewOriginNearby)
+        show(PreviewOriginNearby.copy(selectedStop = PreviewOriginNearby.nearbyStops.first()))
 
         val field = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_STOP_FIELD).getUnclippedBoundsInRoot()
         val first = row(PreviewOriginNearby.nearbyStops.first().stopId).getUnclippedBoundsInRoot()
-        val bar = listOf(TripPlannerTestTags.INTRO_PRIMARY_ACTION, TripPlannerTestTags.INTRO_SECONDARY_ACTION)
-            .map { composeRule.onNodeWithTag(it).getUnclippedBoundsInRoot() }
+        val bar = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).getUnclippedBoundsInRoot()
 
         assertTrue(first.top >= field.bottom - ROUNDING, "the first row starts above the field ends: $field $first")
-        assertTrue(bar.all { it.top >= field.bottom - ROUNDING }, "the bar is above the field: $bar $field")
+        assertTrue(bar.top >= field.bottom - ROUNDING, "the bar is above the field: $bar $field")
     }
 
     @Test
-    fun `at 200 percent the bar keeps both whole labels, stacked with the right one on top or in one row`() {
+    fun `at 200 percent the bar is the one whole button across the window, once a stop is selected`() {
         show(PreviewDestinationSuggestions)
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertDoesNotExist()
+
+        show(PreviewDestinationSelected)
 
         val primary = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION)
-        val secondary = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION)
         primary.assertInsideWindowWidth(STOP_CHOOSE)
-        secondary.assertInsideWindowWidth(STOP_SEARCH)
-
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION).assertDoesNotExist()
         val p = primary.getUnclippedBoundsInRoot()
-        val s = secondary.getUnclippedBoundsInRoot()
-        val stacked = p.bottom <= s.top + ROUNDING
-        val inOneRow = s.right <= p.left + ROUNDING && p.top == s.top
-        assertTrue(stacked || inOneRow, "neither stacked nor in one row: $p $s")
+        assertTrue(p.width > composeRule.onRoot().getUnclippedBoundsInRoot().width / 2, "not across the window: $p")
     }
 
     @Test

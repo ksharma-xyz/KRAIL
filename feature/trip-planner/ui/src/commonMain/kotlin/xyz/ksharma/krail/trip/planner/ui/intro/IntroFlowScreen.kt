@@ -19,7 +19,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
@@ -55,8 +54,7 @@ internal fun IntroFlowScreen(
 ) {
     val dim = KrailTheme.dimensions
     val reduceMotion = isReduceMotionEnabled()
-    val searchFocus = remember { FocusRequester() }
-    val send = rememberIntroSender(searchFocus, onEvent)
+    val send = rememberIntroSender(onEvent)
 
     // Consumed on every screen after the first, so the rider cannot go back. On the first it is not handled here.
     BackHandler(enabled = state.step != IntroFirstStep) {}
@@ -83,7 +81,6 @@ internal fun IntroFlowScreen(
                     IntroStep.DESTINATION, IntroStep.ORIGIN -> IntroStopStepContent(
                         state = state,
                         suggestedStops = suggestedStops,
-                        focusRequester = searchFocus,
                         onEvent = send,
                     )
                     IntroStep.CONFIRM -> IntroConfirmStepContent(state = state)
@@ -108,27 +105,20 @@ internal fun IntroFlowScreen(
 }
 
 /**
- * The way the screen sends an event: to [onEvent], after doing what only the screen can for the keyboard. No search
- * focuses [searchFocus] and shows the keyboard, and a choice hides it and lets go of the focus, so it never
- * stays up over the next screen.
+ * The way the screen sends an event: to [onEvent], after doing what only the screen can for the keyboard. A selection
+ * and a confirmation hide it and let go of the focus, so it never stays up over the next screen. The search field
+ * opens the keyboard itself when it is tapped.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun rememberIntroSender(
-    searchFocus: FocusRequester,
-    onEvent: (IntroUiEvent) -> Unit,
-): (IntroUiEvent) -> Unit {
+private fun rememberIntroSender(onEvent: (IntroUiEvent) -> Unit): (IntroUiEvent) -> Unit {
     val keyboard = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     val latest by rememberUpdatedState(onEvent)
-    return remember(searchFocus, keyboard, focusManager) {
+    return remember(keyboard, focusManager) {
         {
                 event ->
             when (event.keyboardAction()) {
-                IntroKeyboardAction.Open -> {
-                    searchFocus.requestFocus()
-                    keyboard?.show()
-                }
                 IntroKeyboardAction.Close -> {
                     keyboard?.hide()
                     focusManager.clearFocus()

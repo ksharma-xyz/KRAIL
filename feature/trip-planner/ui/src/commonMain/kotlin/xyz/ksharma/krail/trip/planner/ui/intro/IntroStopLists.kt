@@ -31,17 +31,3 @@ internal fun destinationSuggestions(
 // The first of each place, so the order given is the order kept.
 private fun distinctStops(stops: List<IntroStop>): List<IntroStop> =
     stops.fold(emptyList()) { kept, stop -> if (kept.any { it.isSameStopAs(stop) }) kept else kept + stop }
-
-/** The row the destination screen opens with highlighted: the first of its list. */
-internal fun defaultDestination(list: List<IntroStop>): IntroStop? = list.firstOrNull()
-
-/**
- * The row the origin screen opens with highlighted: the station the rider has just added from Park & Ride when
- * there is one (that screen is passed over and this is the start), otherwise the first row of the list, which is
- * the nearest station when there is a fix and the first curated start when there is none.
- */
-internal fun defaultStart(
-    nearby: List<IntroStop>,
-    curatedStarts: List<SuggestedStop>,
-    parkRideStart: IntroStop?,
-): IntroStop? = parkRideStart ?: fromSuggestions(nearby, curatedStarts).firstOrNull()

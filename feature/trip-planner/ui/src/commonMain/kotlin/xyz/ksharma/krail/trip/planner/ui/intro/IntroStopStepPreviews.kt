@@ -39,8 +39,15 @@ private val PreviewModes = persistentMapOf(
     "206720" to persistentListOf(TransportMode.Bus),
 )
 
-/** The destination screen as it opens: the curated ends, the first one highlighted, and an empty field. */
+/** The destination screen as it opens: the curated ends with none selected, an empty field and no button yet. */
 internal val PreviewDestinationSuggestions = IntroState(step = IntroStep.DESTINATION, stopModes = PreviewModes)
+
+/** The destination screen after a row was tapped: that row is selected and the one button has appeared. */
+internal val PreviewDestinationSelected = IntroState(
+    step = IntroStep.DESTINATION,
+    stopModes = PreviewModes,
+    selectedStop = Wynyard,
+)
 
 /** The destination screen after the rider typed: the stops that match replace the suggestions. */
 internal val PreviewDestinationTyped = IntroState(
@@ -91,6 +98,11 @@ internal fun PreviewIntroStopStep(state: IntroState) {
 @PreviewScreen
 @Composable
 private fun PreviewIntroDestinationSuggestions() = PreviewIntroStopStep(PreviewDestinationSuggestions)
+
+@ScreenshotTest
+@PreviewScreen
+@Composable
+private fun PreviewIntroDestinationSelected() = PreviewIntroStopStep(PreviewDestinationSelected)
 
 @ScreenshotTest
 @PreviewScreen

@@ -30,6 +30,7 @@ class IntroStateTest {
         assertTrue(state.stopModes.isEmpty())
         assertEquals("", state.query)
         assertEquals(IntroSearchPhase.Idle, state.search)
+        assertNull(state.selectedStop, "nothing is selected when a screen opens")
     }
 
     @Test

@@ -202,8 +202,9 @@ internal fun parkRideStartPrefill(station: ParkRideStationPickerItem, stopNameLo
  *                 both buttons and the right one is disabled, so the bar never changes size or jumps.
  *                 No station near, a denied or missing location and stops that are not usable show no bar, because the
  *                 flow has already moved on.
- *   DESTINATION, ORIGIN: "No, search" and "Yes, this one". The left opens the search field and never chooses or moves on.
- *                 The right takes the highlighted row, and is off only while a typed search found no stop.
+ *   DESTINATION, ORIGIN: "Yes, this one" alone, a full width taj button, like the theme screen. It is NOT SHOWN until the
+ *                 rider has tapped a stop (`IntroState.selectedStop`), keeps its room, and then confirms that stop and moves on.
+ *                 There is no "No, search": the field opens the keyboard itself when it is tapped.
  *   CONFIRM:      "Not now" and "Yes, save it". Not now is the only way out without saving. The right button waits
  *                 for the stops data to be Ready or Failed, and a trip already written needs no wait.
  */
@@ -277,9 +278,8 @@ sealed interface IntroUiEvent {
     data class LocationResultReceived(val result: LocationResult, val location: LatLng?) : IntroUiEvent
     data object AddParkRideAndContinue : IntroUiEvent  // "Add to home": saves the station and moves on in one event
     data object DeclineParkRide : IntroUiEvent         // "Not now" on the card: moves on, and removes a station already added
-    data class ChooseStop(val stop: IntroStop) : IntroUiEvent   // a tap on a row: the end on the destination screen, the start on the origin screen
-    data object UseHighlightedStop : IntroUiEvent      // "Yes, this one": the same as a tap on the first listed row
-    data object FocusSearch : IntroUiEvent             // "No, search": the screen focuses the field, the view model ignores it
+    data class SelectStop(val stop: IntroStop) : IntroUiEvent   // a tap on a row or a typed result: selects it, shows the button, moves nothing on
+    data object ConfirmStop : IntroUiEvent             // "Yes, this one": the selected stop is the end on the destination screen, the start on the origin screen, and the Intro moves on
     data class QueryChanged(val text: String) : IntroUiEvent // the typed text, searched locally after a pause, never reported or saved
     data object FinishPressed : IntroUiEvent           // "Yes, save it" on the confirm screen: saves the trip
     data object FinishWithoutTrip : IntroUiEvent       // "Not now" on the confirm screen: ends the Intro with nothing saved
@@ -342,15 +342,14 @@ silent. Every rule here is a function of its inputs with a table test, in `Intro
 data class IntroStop(val stopId: String, val name: String)
 sealed interface IntroSearchPhase { data object Idle; data class Results(val stops: ImmutableList<IntroStop>); data object NoMatch }
 // IntroState gained four fields, none of them saved: nearbyStops, stopModes (id to modes, for the row badges), query, search.
+// Unit U8 added a fifth, selectedStop (IntroStop?, null on open), not saved either.
 
 // module: :feature:trip-planner:ui, intro/, internal and pure
 fun fromSuggestions(nearby: List<IntroStop>, curatedStarts: List<SuggestedStop>, size: Int = 5): List<IntroStop>
 fun destinationSuggestions(curatedEnds: List<SuggestedStop>, size: Int = 5): List<IntroStop>
-fun defaultDestination(list: List<IntroStop>): IntroStop?
-fun defaultStart(nearby: List<IntroStop>, curatedStarts: List<SuggestedStop>, parkRideStart: IntroStop?): IntroStop?
-fun IntroState.stopRows(suggested: SuggestedStops): List<IntroStop>      // what the screen lists
-fun IntroState.highlightedStop(suggested: SuggestedStops): IntroStop?    // the first of those
-fun IntroState.withStopChosen(stop: IntroStop): IntroState               // the pick, and on to the next screen
+fun IntroState.stopRows(suggested: SuggestedStops): List<IntroStop>      // what the screen lists, in order, with none selected
+fun IntroState.withStopSelected(stop: IntroStop): IntroState             // the tap: the selected stop, nothing chosen, nothing moves on
+fun IntroState.withStopChosen(stop: IntroStop): IntroState               // the confirm: the pick, and on to the next screen
 fun IntroState.toOutcome(stopsWait: StopsWait, declined: Boolean = false): IntroOutcome
 ```
 
@@ -361,37 +360,42 @@ fun IntroState.toOutcome(stopsWait: StopsWait, declined: Boolean = false): Intro
   alone, and with fewer than three nearby it is made up from the curated list. The row of a collapsed station is the stop named
   exactly as the station, else the nearest stop of it, and it keeps its own id and name.
 - **The destination list** is the curated ends alone: where a rider goes is not where they stand, so a fix never changes it.
-- **The highlighted row** is the first row of what the screen lists, and there is no separate highlight state. It is the nearest
-  station when there is a fix and the first curated stop when there is none. With a Park & Ride station added the origin screen
-  is passed over and that station is the start (`defaultStart`). Coming back to a screen, the rider's earlier choice leads the
-  list, so it is the highlighted row even when it was found by search and is not a suggestion, and the fifth suggestion makes way.
-  With results from a typed search the first result is highlighted, and with no match nothing is.
+- **The order of the rows, with none selected (changed in unit U8).** The first row is the nearest station when there is a fix and
+  the first curated stop when there is none, and it is a row like any other: no row is selected or highlighted when a screen
+  opens, because a pre-selection reads as already chosen. `highlightedStop`, `defaultDestination` and `defaultStart` are deleted, and
+  `stopRows` is the order and nothing more. With a Park & Ride station added the origin screen is passed over and that station is
+  the start. Coming back to a screen, the rider's earlier choice leads the list even when it was found by search and is not a
+  suggestion, and the fifth suggestion makes way, and it is still not selected. Results from a typed search are listed in order and
+  none is selected, and with no match there are no rows.
 - **Never the same place twice.** The stop chosen for the other end is left out of the list, by id and by station name, so a trip
   never starts and ends at one place. Picking the Park & Ride station as the destination clears the start it filled in, and the
   origin screen comes back.
-- **Choosing.** A tap on a row and the right button both end in `withStopChosen`: it sets the end on the destination screen and
+- **Selecting, then choosing (unit U8).** A tap on a row or a typed result is `SelectStop`, which is `withStopSelected`: that stop is
+  the selected one, highlighted with the activated row treatment and announced as selected, and the single button appears. A tap on
+  another row moves the selection, and a tap on the selected row keeps it. Typing text that differs from what was there, and
+  clearing the field, drop the selection, because the list under it is a different one and a button for a stop the rider can no
+  longer see would be misleading. The right button, `ConfirmStop`, ends in `withStopChosen`, which also drops the selection: it sets the end on the destination screen and
   the start on the origin screen, drops the typed text and results, sets `usedSearch` when the stop is one of the typed results,
   and moves on in the flow as it stands after the pick. With a Park & Ride start the flow goes from the destination to the confirm
   screen (`IntroStepFlow`, table tests). Any two chosen stops reach the
   confirm screen with a complete trip, which a test holds for every pair of the real curated lists.
-- **The events.** `ChooseStop(stop)` is a tap on a row, `UseHighlightedStop` is the right button and takes the first listed row,
-  `FocusSearch` is the left button and `QueryChanged(text)` is the field. `FocusSearch` is answered by the screen, which has the
-  field, and ignored by the view model: it never chooses and never leaves a screen. `PickStart`, `PickEnd` and `StopPickedFromSearch`
-  belonged to the earlier first trip screen and are deleted.
-- **The destination and origin screens, as built.** `IntroStopStepContent` draws both: `IntroHeadline` (destination "Where do", "you
-  go", "often" with the pin, origin "Where do", "you start" with the emoji `introEmojiFor` gives it), a taj `TextField` with
+- **The events.** `SelectStop(stop)` is a tap on a row, `ConfirmStop` is the right button and takes the selected stop (and does
+  nothing with none selected), and `QueryChanged(text)` is the field. `ChooseStop`, `UseHighlightedStop` and `FocusSearch` (the old
+  left button, `No, search`) are deleted. `PickStart`, `PickEnd` and `StopPickedFromSearch` belonged to the earlier first trip screen
+  and are deleted.
+- **The destination and origin screens, as built.** `IntroStopStepContent` draws both: `IntroHeadline` (destination "Where", "to?" with the pin, origin "Where", "from?" with the emoji `introEmojiFor` gives it, since unit U8), a taj `TextField` with
   `invertedColors()` (the search-on-the-page treatment Add Park & Ride has), and the stops below it as `IntroStopRow`, which is
   `StopLabelAssignRow`, the row Search Stop draws, with a new `showLabelAssign` parameter (default on, so Search Stop is unchanged)
-  turned off so there is no chevron. The highlighted row takes the app's activated row treatment (`themeBackgroundColor()` with a
+  turned off so there is no chevron. The selected row takes the app's activated row treatment (`themeBackgroundColor()` with a
   rounded shape, as `ManageStopLabelRow` does) and is announced as selected. The field's placeholder is Search Stop's own
   (`barPlaceholderFor` with the To or From bar, which the To and From form uses too), its filter is Search Stop's
   (`stopSearchInputFilter`, extracted from the old `SearchTopBar` and now the filter of the form's bars as well) and its
   cap is `SearchQueryAnalyticsRedaction.MAX_QUERY_LENGTH`. `IntroStepFrame` gained `centreMiddle` (default true): the stop screens
   pass false, so the field and rows start straight under the headline and never move when the list changes length.
-- **The keyboard.** Only the screen can open it, so `IntroKeyboardAction` (a pure table over the event) says what an event does to
-  it: `FocusSearch` focuses the field and shows the keyboard, `ChooseStop` and `UseHighlightedStop` hide it and clear the
-  focus, everything else leaves it alone. `IntroFlowScreen` sends every event through that table and then to the view model. The
-  field never takes the focus by itself, so a screen opens with the list in view.
+- **The keyboard.** Only the screen can close it, so `IntroKeyboardAction` (a pure table over the event, now `Close` and `None`) says
+  what an event does to it: `SelectStop` and `ConfirmStop` hide it and clear the focus, everything else leaves it alone.
+  `IntroFlowScreen` sends every event through that table and then to the view model. Nothing opens it: the field takes the focus
+  and the keyboard when the rider taps it, and never by itself, so a screen opens with the list in view.
 - **Removed.** The earlier first trip body (`IntroFirstTripStepContent`, `IntroFirstTripLayout` with the `FIRST_TRIP_*` strings and
   `Search another stop`, their previews) and the old search hand-off (`IntroSearchResult`, `IntroSearchResultEffect`, the
   `onNavigateToSearchStop` parameter of `IntroFlowRoute` and `IntroEntry`) are gone: nothing opens Search Stop from the Intro now, so
@@ -594,6 +598,16 @@ where it changes something an earlier unit said, the earlier text is edited to m
   least 48 dp each way, with the app's `klickable` on a circle over it, because the taj `RoundIconButton` is a fixed 48 dp circle that
   clips its content. The float, the dance, the tags, the spoken names and the selected state are as they were. The column is taller than the row was, so on a
   short phone or at 200 percent text the middle zone scrolls with the headline.
+- **The destination and origin screens, as changed.** The headlines are the questions `Where` / `to?` (the pin) and `Where` / `from?`.
+  The left button `No, search`, the `FocusSearch` event and its handling and `IntroKeyboardAction.Open` are deleted: the taj field takes the
+  focus and the keyboard when it is tapped. The bar is one button, `Yes, this one`, from `stopBar` with `left = null` and
+  `shown = state.selectedStop != null`. No row is selected on open. `IntroState.selectedStop` (state module, not saved) holds the
+  tapped stop, `SelectStop` sets it, `ConfirmStop` chooses it and moves on, and a different typed text drops it. `IntroStopRow` takes
+  `selected` (it was `highlighted`) and the first row of the list carries `intro.stop.first`, a tag that does not depend on the stop,
+  for a flow that only needs to select one. The wording guard allows a question mark in exactly the two question headlines.
+  Alternative wordings, for the record and not used: for the destination `Going where?`, `Where are you headed?`, `Where to today?`
+  and `Pick a place`; for the origin `Starting where?`, `Where are you now?`, `Where do you start?` and `Pick where you begin`. The
+  two chosen are the shortest, which is what fits one word to a line at the big headline size at 320 dp.
 
 Unit R1, as built, where this document was silent:
 
@@ -683,7 +697,7 @@ sequenceDiagram
     VM-->>UI: card, with Add to home in the decision bar
     UI->>VM: AddParkRideAndContinue
     VM->>DB: insertOrReplaceSavedParkRides(UserAdded)
-    UI->>VM: ChooseStop (destination, then origin unless a Park & Ride start filled it in)
+    UI->>VM: SelectStop then ConfirmStop (destination, then origin unless a Park & Ride start filled it in)
     UI->>VM: QueryChanged (local stop search after a pause, nothing reported)
     UI->>VM: FinishPressed (confirm screen only)
     VM->>R: awaitReady
@@ -842,7 +856,8 @@ Decisions unit R3 made for the destination and origin screens, where this docume
 
 - **No match.** The stops table answered and nothing matched: the list is replaced by one line, `No match found` (the app's own wording
   from Search Stop, without its exclamation mark, because the Intro's strings carry none), read out politely when it appears. Nothing
-  is highlighted and the right button is off. The left button still opens the field, so the rider is never stuck.
+  is selected and there is no button, so the rider cannot confirm a list with nothing in it. The field is still there to type in
+  again, so the rider is never stuck.
 - **Stops not ready.** The suggestions are bundled, so the screen looks the same. The field takes text and finds nothing until the
   stops are Ready, then fills in on its own; stops that Failed leave the suggestions showing for good, with no error and no Try again.
   This is the exact behaviour and it is held by `IntroFlowViewModelStopsTest`.
@@ -854,7 +869,7 @@ Decisions unit R3 made for the destination and origin screens, where this docume
 Decisions unit R3 made for the confirm screen, where this document was silent:
 
 - **Not now leaves with nothing saved, and it is the only way to.** A rider who wants no trip still chooses two stops first. The
-  screens before it have no way out, so the cost of a rider who wants none is two taps of the highlighted row. `skipped` is true for
+  screens before it have no way out, so the cost of a rider who wants none is two taps of a row and two of the button. `skipped` is true for
   Not now and false for a saved trip.
 - **Reduced motion.** The star fades in at rest and there is no burst. A burst has no settled frame that shows anything, because its
   last frame is empty, so for reduced motion it is the star that is settled.
@@ -1028,7 +1043,7 @@ destination, origin and confirm screens are temporary bodies (section 3).
 
 Every screen has three zones:
 
-- **Top, the headline.** Two to four short lines, left aligned, no question mark, in `typography.introTagline`, with the key
+- **Top, the headline.** Two to four short lines, left aligned, no question mark except the two stop questions, in `typography.introTagline`, with the key
   word on its own line, every line at the heaviest weight, drawn in capitals at 1.7 times the style (see section 3, Headline). The Park & Ride
   headline is "Driving", "to the", "station", the key word being "station", drawn DRIVING, TO THE, STATION. No colour is used for emphasis, so nothing competes with the theme colour on the primary button. Lines wrap
   rather than shrink at a large text size.
@@ -1040,12 +1055,13 @@ Every screen has three zones:
 
 | State | What the rider sees |
 |---|---|
-| Opening | Headline, an empty field showing "Choose destination" or "Choose starting point", then five rows. The first row is highlighted and announced as selected. Bar: `No, search`, `Yes, this one`. The keyboard is not up. |
-| Rider taps a row | That stop is chosen and the next screen slides in. The keyboard, if up, goes. |
-| Rider taps `Yes, this one` | The same as tapping the highlighted row. |
-| Rider taps `No, search` | The field takes the focus and the keyboard opens. The screen does not change and nothing is chosen. |
-| Typing | After 100 ms without a keystroke the rows are replaced by the stops found, best first, up to 20, the first highlighted. Clearing the field brings the suggestions back at once. |
-| No match | The line `No match found`, no rows, right button off, left button on. |
+| Opening | The headline `Where to?` (destination) or `Where from?` (origin), an empty field showing "Choose destination" or "Choose starting point", then five rows with none selected. No button, and its room is kept. The keyboard is not up. |
+| Rider taps the field | The field takes the focus and the keyboard opens. Nothing is chosen. |
+| Rider taps a row | That row is selected (the activated tint, announced as selected) and the one button `Yes, this one` fades in, in its kept room. The keyboard, if up, goes. The screen stays. |
+| Rider taps another row | The selection moves to it. |
+| Rider taps `Yes, this one` | The selected stop is chosen and the next screen slides in. |
+| Typing | The selection is dropped and the button goes. After 100 ms without a keystroke the rows are replaced by the stops found, best first, up to 20, none selected. Clearing the field brings the suggestions back at once. |
+| No match | The line `No match found`, no rows and no button. |
 | Stops loading | As opening. Typing shows the text and nothing is found until the stops are ready. |
 | Stops failed | As opening. Typing shows the text and the suggestions stay. No message. |
 
@@ -1088,7 +1104,9 @@ width (`introBarPlan`, a pure function of the widths, so a table test holds it).
 make a row fit, except the one rule below. A screen with nothing to decide has no bar.
 
 - **Wording.** No button or string in the Intro uses Skip, Skip for now, Later, Maybe later, Next, Continue or Done, and none
-  uses a question mark, an exclamation mark, a colon, an em dash, an arrow or a middle dot. Every button is an answer to the
+  uses a question mark, an exclamation mark, a colon, an em dash, an arrow or a middle dot, with one exception: the lines of the
+  destination and origin headlines are questions, so `to?` and `from?` have a question mark, and nothing else does
+  (`IntroBannedWordsTest` and `IntroCopyTest`, unit U8). Every button is an answer to the
   question on the screen. `IntroBannedWordsTest` reads every string literal in the Intro sources and every string resource they
   name, and `IntroCopyTest` checks every label the bar can show.
 - **Large text.** Above 130 percent text (`L_FONT_SCALE_THRESHOLD`) "Yes, show me free spots" shows as "Yes" and "No thanks" as
@@ -1322,7 +1340,7 @@ in `searchstop/` touched:
   not ready, ready inside the wait, failed, a failing query, nothing saved, and the badges read when the stops are ready).
   `IntroLocationNeverHeldTest` now allows stops as ids and names (with modes) in the state and still fails on a coordinate in any field
   of it, on a stop's position read in the gateway, and on the fix logged or held in any of the five files that touch it.
-- **Choosing and the typed search, built (unit R3).** `IntroFlowViewModelStopsTest`: a tap on each screen, the right button on each
+- **Choosing and the typed search, built (unit R3).** Unit U8 changed what these hold, see "Unit U8 tests, the stop screens" below. `IntroFlowViewModelStopsTest`: a tap on each screen, the right button on each
   (the first curated stop, the nearest station, the next when the destination was the nearest, the first result), No search doing
   nothing, a choice on another screen doing nothing, a Park & Ride start going from the destination to the confirm screen and back,
   Back returning with the earlier choice leading the list and dropping what was typed, the pause and only the last text being
@@ -1331,7 +1349,7 @@ in `searchstop/` touched:
   the typed text or a stop name, nothing typed in the saved text, the chosen stops surviving a new view model, and two chosen stops
   reaching a saved trip or a skip. `IntroSavedStateTest` holds that the stations, badges, text and results are never saved and the
   chosen stops are.
-- **The destination and origin screens, built (unit R3).** `IntroStopStepTest` (real view model, fakes at the edges: the headline, field and
+- **The destination and origin screens, built (unit R3).** Unit U8 changed what these hold, see "Unit U8 tests, the stop screens" below. `IntroStopStepTest` (real view model, fakes at the edges: the headline, field and
   five curated ends in order, only the first selected, the bar's words, no chevron on any row, a tap choosing and moving on without the
   chosen stop listed again, the right button, No search focusing the field and nothing else, typed results replacing the suggestions
   with the first selected, a typed choice setting `usedSearch`, no match with the right button off, a turn of the screen keeping the
@@ -1450,6 +1468,17 @@ in `searchstop/` touched:
   letter still the 14 sp white title, every mode's extra large letter white at 28 sp in a 64 dp circle), `IntroThemeBadgeTest` (as before at the
   new size), `IntroThemeStepTest` (64 dp, one to a row, in order, centred within the drift) and `IntroThemeStepNarrowTest` (320 dp at 200 percent:
   whole, a full 48 dp, alone in its row and centred, 102 dp at 200 percent, at least 16 dp apart). The old wrap whole test is replaced by the column test.
+- **Unit U8 tests, the stop screens.** `IntroFlowViewModelStopsTest` (nothing selected on open, a tap selects and nothing else moves, another row
+  moves the selection, confirming sets the end or the start and moves on and drops the selection, the button with nothing selected does
+  nothing, the nearest station leads the origin list and is not selected, different typed text drops the selection and the same text keeps it, the
+  selection is not saved), `IntroStopRowsTest` (selecting on a stop screen only, moving it, other screens ignoring it, typing, choosing drops it),
+  `IntroBarTest` (the stop bar is one button, not shown until a stop is selected, never disabled, whatever the search or the stops data),
+  `IntroKeyboardActionTest` (nothing opens the keyboard, a selection and a confirmation close it), `IntroCopyTest` and `IntroBannedWordsTest`
+  (the question mark is allowed in exactly the two question lines and caught everywhere else, including in the same words with more), `IntroStopStepTest`,
+  `IntroStopStepNarrowTest`, `IntroFlowScreenTest`, `IntroEntryTest` and `IntroFlowRouteTest` (a tap selects, the one button appears and confirms, the
+  tag of the first row, 320 dp at 200 percent with the one whole button), `IntroSavedStateTest` and `IntroStateTest` (the selected stop is not
+  saved and is null on open). Deleted on purpose: the `defaultDestination` and `defaultStart` tests and the `highlightedStop` assertions, the
+  tests of the `No, search` button, the focus it gave the field, and the right button being off for no match.
 
 ## 9. Open gaps and decisions
 
@@ -1496,18 +1525,18 @@ Each is a default taken to keep moving. None has been seen by the owner. The lis
 |---|---|---|---|
 | R3-1 | Stops are one station when their names match up to the first comma, and they are collapsed to the stop named as the station, else the nearest stop of it | The data names a stand as `Station, Stand A`, and the parent flag is not reliable (operator ruling). A light rail stop with a different name next to a station is its own row | Default, not yet seen by owner |
 | R3-2 | The same station name counts as the same place for the de duplication and for leaving the other end out, not only the same id | A list that showed `Central Station` twice under two ids, or a trip from one platform of a station to another, would be a worse result than hiding the second | Default, not yet seen by owner |
-| R3-3 | There is no stored highlight: the highlighted row is the first row of the list, and the rider's earlier choice leads the list when they come back | Tapping a row advances, so a highlight the rider could move would never be seen. If the rider should see their old choice among the suggestions in place, the list order has to stay fixed and a highlight has to be stored | Default, not yet seen by owner |
+| R3-3 | The rider's earlier choice leads the list when they come back. Replaced in unit U8: there is no highlighted first row, and a tap selects (see U8-12) | A tap used to advance, so a highlight the rider could move would never be seen. Now a tap selects and the selection is stored | Superseded by unit U8 |
 | R3-4 | `skipped` is true only for Not now on the confirm screen, and false for a saved trip | It is the rule set for the confirm screen. The old meaning, no complete pair, cannot happen now because the confirm screen needs both stops | Default, not yet seen by owner |
 | R3-5 | Nearby means train, metro and light rail stops within 3 km, at most 10 rows, then the nearest three stations | No radius was given. 3 km is a guess at a short bus ride in the suburbs. Too small leaves a suburban rider with the curated list, too large leads with a station they would not walk to | Default, not yet seen by owner |
 | R3-6 | The stations that arrive after the rider is on the origin screen are dropped | The rows must not move under a finger. The cost is the curated list for that visit when the stops were slow | Default, not yet seen by owner |
 | R3-7 | The curated stops' badges are read from the stops table once it is Ready, and drawn without badges until then | The curated lists carry only an id and a name. The cost is rows that gain a badge a moment later on a slow first run | Default, not yet seen by owner |
 | R3-8 | The nearby query goes to the stops table directly and not through `NearbyStopsRepository` | That repository logs the centre it is given in every build, and the Intro never logs the fix | Default, not yet seen by owner |
-| R3-9 | No match shows the line `No match found`, highlights nothing and turns the right button off | The right button has nothing to take. The line is Search Stop's wording without its exclamation mark and its dog, because the Intro's strings carry no exclamation mark and its emoji are fixed | Default, not yet seen by owner |
+| R3-9 | No match shows the line `No match found`, selects nothing and shows no button | The button has nothing to confirm. The line is Search Stop's wording without its exclamation mark and its dog, because the Intro's strings carry no exclamation mark and its emoji are fixed | Default, not yet seen by owner |
 | R3-10 | The typed search shows at most 20 stops and leaves routes and addresses out | Only a stop can end a trip here. Search Stop shows up to 50, which is more than a rider scrolls in an Intro | Default, not yet seen by owner |
 | R3-11 | The field's placeholder is Search Stop's own words for each end, `Choose destination` and `Choose starting point` | They already say what the field is for. If the owner wants another wording it is two constants | Default, not yet seen by owner |
-| R3-12 | A tap on any row and the right button both choose and move on in one function | There is no Next. One path means one set of tests | Default, not yet seen by owner |
-| R3-13 | The origin headline is two lines, `Where do` and `you start`, with the heaviest weight on the second, because the key word is inside it | Emphasis is by line, so the line holding the key word is the emphasised one | Default, not yet seen by owner |
-| R3-14 | The field does not take the focus on its own, only from `No, search` or a tap on it | The list is the main thing to read and a keyboard on open would cover half of it | Default, not yet seen by owner |
+| R3-12 | The confirm button chooses and moves on in one function (`withStopChosen`). A tap on a row no longer does, since unit U8 | There is no Next. One path means one set of tests | Default, not yet seen by owner |
+| R3-13 | The origin headline is two lines, `Where` and `from?` since unit U8 (it was `Where do` and `you start`), with the key word on the second | The key word lands last in the entrance | Default, not yet seen by owner |
+| R3-14 | The field does not take the focus on its own, only from a tap on it (there is no `No, search` since unit U8) | The list is the main thing to read and a keyboard on open would cover half of it | Default, not yet seen by owner |
 | R3-15 | A rider who wants no trip still chooses two stops before Not now | There is no way out of the destination and origin screens in the brief, and Not now is the only way out of the confirm screen without saving | Default, not yet seen by owner |
 | R3-16 | With reduced motion the star fades in over 200 ms at rest, with no burst | A burst's last frame is empty, so there is no settled frame of it to show. A plain fade is the one motion left | Default, not yet seen by owner |
 | R3-17 | The celebration is the headline's own pop and wobble plus an 800 ms burst, and the star is not given an animation of its own | One bounce for every emoji keeps the screens alike. Its length is the burst's, not a measured total of the pop and wobble, which add to a little under a second by their specs | Default, not yet seen by owner |
@@ -1554,6 +1583,12 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | U8-9 | The button fades in over 250 ms | The spec said fading in and gave no time. It is under the 350 ms of the tagline change so the two do not finish together | Default, not yet seen by owner |
 | U8-10 | The extra large icon is 64 dp, its letter is `headlineLarge` (28 sp), and the column gap is 24 dp | The spec said about 64 dp and a letter style from the existing tokens. 28 sp in 64 dp is the share 14 sp has in 32 dp. 24 dp is the existing gap, which keeps the drift and the dance from touching a neighbour | Default, not yet seen by owner |
 | U8-11 | A badge's click is a `klickable` circle over the icon in a plain box, not `RoundIconButton` | `RoundIconButton` is a fixed 48 dp circle that clips what it holds, so a 64 dp icon would be cut. The spec allowed no other component change | Default, not yet seen by owner |
+| U8-12 | A tap on a row selects and a button confirms. The selection is held in `IntroState.selectedStop`, which is not saved, and is dropped when the typed text changes | The spec said a row tap no longer advances. A selection saved across a killed process would put the button back on a row the rider may have forgotten, and a typed change makes the list a new one. After a killed process the rider taps again | Default, not yet seen by owner |
+| U8-13 | Tapping the selected row again keeps it selected, and the button does not go | The spec said tapping another row moves the selection and said nothing about the same row. A toggle would hide the button on an accidental second tap | Default, not yet seen by owner |
+| U8-14 | `highlightedStop`, `defaultDestination` and `defaultStart` are deleted, and `stopRows` stays as the order | The spec said the default logic stays as ordering only. Nothing reads a default row now, so the three functions and their tests went | Default, not yet seen by owner |
+| U8-15 | The headlines split as `Where` / `to?` and `Where` / `from?` | The spec said split as it fits. At the headline size one word to a line is the only split that fits 320 dp at the font scale ceiling | Default, not yet seen by owner |
+| U8-16 | A tap on a row or a result, and the button, hide the keyboard | The button sits above the keyboard, but the list is easier to see and the selection reads clearly with it down. The field brings it back when tapped | Default, not yet seen by owner |
+| U8-17 | The first row has the tag `intro.stop.first` on the row's container, not on its tap area | A node holds one tag and the tap area already has the stop's own tag, which the tests use. A tap in the middle of the container reaches the row | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

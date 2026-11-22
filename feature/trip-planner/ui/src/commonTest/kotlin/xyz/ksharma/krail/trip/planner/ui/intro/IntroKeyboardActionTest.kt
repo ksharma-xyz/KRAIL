@@ -7,11 +7,9 @@ import kotlin.test.assertEquals
 
 class IntroKeyboardActionTest {
 
-    private val open = listOf<IntroUiEvent>(IntroUiEvent.FocusSearch)
-
     private val close = listOf(
-        IntroUiEvent.ChooseStop(CENTRAL_STOP),
-        IntroUiEvent.UseHighlightedStop,
+        IntroUiEvent.SelectStop(CENTRAL_STOP),
+        IntroUiEvent.ConfirmStop,
     )
 
     private val leaveAlone = listOf(
@@ -28,12 +26,12 @@ class IntroKeyboardActionTest {
     )
 
     @Test
-    fun `No search is the one event that opens the keyboard`() {
-        open.forEach { assertEquals(IntroKeyboardAction.Open, it.keyboardAction(), "$it") }
+    fun `no event opens the keyboard, because the search field opens it itself when it is tapped`() {
+        assertEquals(setOf(IntroKeyboardAction.Close, IntroKeyboardAction.None), IntroKeyboardAction.entries.toSet())
     }
 
     @Test
-    fun `a choice closes the keyboard, so it never stays up over the next screen`() {
+    fun `selecting a stop and confirming one close the keyboard, so it never stays up over the next screen`() {
         close.forEach { assertEquals(IntroKeyboardAction.Close, it.keyboardAction(), "$it") }
     }
 

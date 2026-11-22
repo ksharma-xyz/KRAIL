@@ -100,6 +100,13 @@ class IntroEntryTest {
         composeRule.waitForIdle()
     }
 
+    // A stop screen asks for a tap on a row, which selects it and shows the one button, and then the button.
+    private fun pickFirstStop() {
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_STOP_FIRST).performClick()
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
+        composeRule.waitForIdle()
+    }
+
     private fun answerNo() {
         chooseTheme()
         composeRule.onNodeWithText(PARK_RIDE_NO).performClick()
@@ -128,11 +135,8 @@ class IntroEntryTest {
     fun `finishing goes to Saved Trips with the back stack cleared`() {
         launch()
         answerNo()
-        // The destination and then the origin are chosen with the right button, and the confirm screen saves.
-        repeat(2) {
-            composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
-            composeRule.waitForIdle()
-        }
+        // The destination and then the origin are picked and confirmed, and the confirm screen saves.
+        repeat(2) { pickFirstStop() }
 
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
         composeRule.waitForIdle()
@@ -146,10 +150,9 @@ class IntroEntryTest {
         finale.attachHost()
         launch()
         answerNo()
-        repeat(3) {
-            composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
-            composeRule.waitForIdle()
-        }
+        repeat(2) { pickFirstStop() }
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
+        composeRule.waitForIdle()
 
         assertEquals(emptyList<NavKey>(), navigator.cleared)
 

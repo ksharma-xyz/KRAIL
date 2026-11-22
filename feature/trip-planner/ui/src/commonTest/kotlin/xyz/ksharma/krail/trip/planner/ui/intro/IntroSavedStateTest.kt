@@ -60,7 +60,7 @@ class IntroSavedStateTest {
     }
 
     @Test
-    fun `the stations near the rider, the badges, the typed text and its results are never saved`() {
+    fun `the stations near the rider, the badges, the typed text, its results and the selected stop are never saved`() {
         val handle = SavedStateHandle()
         val kept = IntroState(
             step = IntroStep.ORIGIN,
@@ -74,6 +74,7 @@ class IntroSavedStateTest {
             stopModes = persistentMapOf("201510" to persistentListOf(TransportMode.Train)),
             query = "redf",
             search = IntroSearchPhase.Results(persistentListOf(IntroStop("201510", "Redfern Station"))),
+            selectedStop = IntroStop("200080", "Wynyard Station"),
         )
 
         handle.saveIntroState(withTransient)
@@ -81,6 +82,7 @@ class IntroSavedStateTest {
         assertEquals(kept, handle.restoreIntroState(), "the chosen stops and the screen come back, the rest does not")
         val saved = handle.get<String>(INTRO_SAVED_STATE_KEY).orEmpty()
         assertEquals(false, "redf" in saved, "the typed text is not in the saved text: $saved")
+        assertEquals(false, "200080" in saved || "Wynyard" in saved, "the selected stop is not saved: $saved")
     }
 
     @Test

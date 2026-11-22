@@ -118,34 +118,4 @@ class IntroStopListsTest {
     }
 
     // endregion
-
-    // region the highlighted row
-
-    @Test
-    fun `the destination highlights the first of its list, and nothing when the list is empty`() {
-        assertEquals(CENTRAL_STOP, defaultDestination(destinationSuggestions(curatedEnds)))
-        assertNull(defaultDestination(emptyList()))
-    }
-
-    @Test
-    fun `the start is the nearest station with a fix and the first curated start without one`() {
-        assertEquals(REDFERN_STOP, defaultStart(listOf(REDFERN_STOP, MUSEUM_STOP), curatedStarts, parkRideStart = null))
-        assertEquals(TALLAWONG_STOP, defaultStart(emptyList(), curatedStarts, parkRideStart = null))
-    }
-
-    @Test
-    fun `a car park station is the start whenever there is one`() {
-        assertEquals(
-            KELLYVILLE_STOP,
-            defaultStart(listOf(REDFERN_STOP), curatedStarts, parkRideStart = KELLYVILLE_STOP),
-        )
-        assertEquals(KELLYVILLE_STOP, defaultStart(emptyList(), curatedStarts, parkRideStart = KELLYVILLE_STOP))
-    }
-
-    @Test
-    fun `no start at all when there is nothing nearby, nothing curated and no car park`() {
-        assertNull(defaultStart(emptyList(), emptyList(), parkRideStart = null))
-    }
-
-    // endregion
 }

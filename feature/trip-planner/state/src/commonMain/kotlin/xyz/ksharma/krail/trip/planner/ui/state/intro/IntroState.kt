@@ -52,6 +52,13 @@ data class IntroState(
     val query: String = "",
     /** What the search found for [query]. Transient, like [query]. */
     val search: IntroSearchPhase = IntroSearchPhase.Idle,
+    /**
+     * The stop the rider has tapped on the destination or origin screen and not yet confirmed, or null while none is.
+     * Nothing is selected when a screen opens, so a list never reads as already chosen. The right button is shown
+     * only while this is set, and it confirms this stop. Transient, like [query]: it is dropped when the typed text
+     * changes, because the list under it is then a different one, and when the rider moves on.
+     */
+    val selectedStop: IntroStop? = null,
 ) {
     /**
      * A trip needs both ends. A start with no end cannot be saved, so it counts as nothing picked.

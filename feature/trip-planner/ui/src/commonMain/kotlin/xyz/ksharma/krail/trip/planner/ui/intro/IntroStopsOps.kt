@@ -30,9 +30,16 @@ internal fun IntroState.withNearby(found: List<ListedStop>): IntroState =
         copy(nearbyStops = found.map { it.stop }.toImmutableList()).withModesOf(found)
     }
 
-/** The text in the search field. Blank text is no search, so the suggestions show again at once. */
-internal fun IntroState.withQuery(text: String): IntroState =
-    copy(query = text, search = if (text.isBlank()) IntroSearchPhase.Idle else search)
+/**
+ * The text in the search field. Blank text is no search, so the suggestions show again at once. Text that is different
+ * from what was there drops the selection, because the list under it is about to be a different one and a button for a
+ * stop that is no longer in view would be a button for something the rider cannot see.
+ */
+internal fun IntroState.withQuery(text: String): IntroState = copy(
+    query = text,
+    search = if (text.isBlank()) IntroSearchPhase.Idle else search,
+    selectedStop = if (text == query) selectedStop else null,
+)
 
 /**
  * What the search found for [text], when [text] is still the query: an answer that arrives after the rider typed on

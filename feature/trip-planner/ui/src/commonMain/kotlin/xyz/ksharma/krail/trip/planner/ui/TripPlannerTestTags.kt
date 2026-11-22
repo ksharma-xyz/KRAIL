@@ -35,8 +35,10 @@ object TripPlannerTestTags {
     const val INTRO_THEME_BUS = "intro.theme.bus"
     const val INTRO_THEME_FERRY = "intro.theme.ferry"
 
-    // The destination and origin screens: the search field, and one row for each stop listed.
+    // The destination and origin screens: the search field, the first row of the list (a tag that does not depend on
+    // which stop it is, for a flow that only needs to select something), and one row for each stop listed.
     const val INTRO_STOP_FIELD = "intro.stop.field"
+    const val INTRO_STOP_FIRST = "intro.stop.first"
 
     // The confirm screen's trip tile.
     const val INTRO_CONFIRM_TILE = "intro.confirm.tile"

@@ -9,7 +9,8 @@ import kotlin.test.assertTrue
  * Every string the Intro draws is held to the Intro's wording rules: no word that lets a rider skip a
  * question (Skip, Later, Next, Continue, Done), and none of a question mark, an exclamation mark, a colon,
  * an em dash, an arrow or a middle dot. The rider always answers yes or no, so a screen never words a way
- * past the question, and the copy stays plain.
+ * past the question, and the copy stays plain. The one exception is a question mark in the lines of the
+ * destination and origin headlines, which are questions: exactly those lines may end in one.
  *
  * This reads the Intro sources the way `IntroNeverReviewsTest` does and checks every string literal in them,
  * so a new string is caught the day it is written, wherever it is. It also checks every string resource an
@@ -96,12 +97,29 @@ class IntroBannedWordsTest {
     private fun problems(text: String): List<String> {
         val words = BANNED_WORDS.filter { Regex("\\b$it\\b", RegexOption.IGNORE_CASE).containsMatchIn(text) }
             .map { "has the word $it" }
-        val characters = BANNED_CHARACTERS.filter { text.contains(Char(it)) }.map { "has U+${it.toString(HEX)}" }
+        val characters = BANNED_CHARACTERS
+            .filter { text.contains(Char(it)) && !(it == QUESTION_MARK && text in questionLines) }
+            .map { "has U+${it.toString(HEX)}" }
         val colon = if (COLON.containsMatchIn(text)) listOf("has a colon") else emptyList()
         return words + characters + colon
     }
 
     private fun stringLiterals(source: String): List<String> = LiteralReader(source).read()
+
+    // The lines of the two headlines that are questions, the only strings that may have a question mark.
+    private val questionLines: List<String> = DESTINATION_HEADLINE + ORIGIN_HEADLINE
+
+    @Test
+    fun `a question mark is allowed in the lines of the destination and origin headlines and nowhere else`() {
+        assertEquals(listOf("Where", "to?", "Where", "from?"), questionLines)
+        listOf("to?", "from?").forEach { assertEquals(emptyList(), problems(it), "$it") }
+        // The exemption is the exact line, so the same words with more, or any other question, are caught.
+        listOf("to? now", "Which one?", "from??", "Where to?", "Pick a colour?").forEach {
+            assertTrue(problems(it).isNotEmpty(), "\"$it\" was not caught")
+        }
+        // The other banned characters are caught in those lines as everywhere.
+        assertTrue(problems("to?!").isNotEmpty())
+    }
 
     private companion object {
         const val INTRO_PATH =
@@ -114,7 +132,8 @@ class IntroBannedWordsTest {
 
         // Written as code points so no banned character is typed into this file: a question mark, an
         // exclamation mark, an em dash, the arrows, and the middle dot.
-        val BANNED_CHARACTERS = listOf(0x3F, 0x21, 0x2014, 0x2190, 0x2192, 0x21D2, 0x00B7)
+        const val QUESTION_MARK = 0x3F
+        val BANNED_CHARACTERS = listOf(QUESTION_MARK, 0x21, 0x2014, 0x2190, 0x2192, 0x21D2, 0x00B7)
 
         val COLON = Regex("""\s:|:\s""")
         val RESOURCE = Regex("""<string name="([^"]+)"[^>]*>(.*?)</string>""", RegexOption.DOT_MATCHES_ALL)

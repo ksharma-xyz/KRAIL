@@ -144,17 +144,22 @@ class IntroFlowRouteTest {
         assertIs<ParkRideCardPhase.Card>(viewModel.state.value.parkRideCard)
     }
 
+    private fun pickFirstStop() {
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_STOP_FIRST).performClick()
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
+        composeRule.waitForIdle()
+    }
+
     @Test
     fun `the finish effect reaches the navigation callback once`() {
         show(FakeUserLocationManager())
         composeRule.onNodeWithText(PARK_RIDE_NO).performClick()
         composeRule.waitForIdle()
 
-        // The destination and the origin take the highlighted row each, and the confirm screen saves.
-        repeat(3) {
-            composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
-            composeRule.waitForIdle()
-        }
+        // The destination and the origin each have a row tapped and the button pressed, and the confirm screen saves.
+        repeat(2) { pickFirstStop() }
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
+        composeRule.waitForIdle()
 
         assertEquals(1, savedTripsOpened)
     }
@@ -165,10 +170,9 @@ class IntroFlowRouteTest {
         show(FakeUserLocationManager())
         composeRule.onNodeWithText(PARK_RIDE_NO).performClick()
         composeRule.waitForIdle()
-        repeat(3) {
-            composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
-            composeRule.waitForIdle()
-        }
+        repeat(2) { pickFirstStop() }
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
+        composeRule.waitForIdle()
 
         assertEquals(0, savedTripsOpened, "Saved Trips was opened before the finale covered the screen")
         val run = assertNotNull(finale.request.value)

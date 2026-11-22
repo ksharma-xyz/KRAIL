@@ -18,8 +18,8 @@ internal fun IntroStep.isStopScreen(): Boolean = this == IntroStep.DESTINATION |
  * - Typed results replace the suggestions, and no match is no rows. The stop already chosen for the other end is
  *   never listed, so a trip never starts and ends at one place.
  * - Otherwise it is the suggestions for the screen, without that stop. The rider's earlier choice for this
- *   screen, when they have come back to it, leads the list so it is the highlighted row, even when it was found
- *   by search and is not one of the suggestions.
+ *   screen, when they have come back to it, leads the list, even when it was found by search and is not one of the
+ *   suggestions. This is the order only: no row is selected until the rider taps one.
  * - Other screens have no rows.
  */
 internal fun IntroState.stopRows(suggested: SuggestedStops): List<IntroStop> {
@@ -42,14 +42,19 @@ internal fun IntroState.stopRows(suggested: SuggestedStops): List<IntroStop> {
     }
 }
 
-/** The row the right button takes: the first one listed, or null when there is none. */
-internal fun IntroState.highlightedStop(suggested: SuggestedStops): IntroStop? = stopRows(suggested).firstOrNull()
+/**
+ * The state after the rider tapped [stop] on the destination or origin screen: it is the selected stop, which is
+ * highlighted and shows the button, and any stop selected before is no longer. Nothing is chosen yet, and on any other
+ * screen it changes nothing.
+ */
+internal fun IntroState.withStopSelected(stop: IntroStop): IntroState =
+    if (step.isStopScreen()) copy(selectedStop = stop) else this
 
 /**
- * The state after the rider picked [stop] on the destination or origin screen, which is a tap on a row and the
- * right button alike: it is the end or the start, the typed text and results are dropped, `usedSearch` is set
- * when [stop] is one of the typed results, and the Intro moves on to the next screen of the flow. The flow is
- * worked out after the pick, so picking the stop a Park & Ride start was filled in with brings the origin screen
+ * The state after the rider confirmed [stop] on the destination or origin screen, which is the right button for the
+ * stop that was selected: it is the end or the start, the selection, the typed text and results are dropped,
+ * `usedSearch` is set when [stop] is one of the typed results, and the Intro moves on to the next screen of the flow. The
+ * flow is worked out after the pick, so picking the stop a Park & Ride start was filled in with brings the origin screen
  * back, and a pick that left no complete trip goes to the screen of the missing stop. On any other screen it changes
  * nothing.
  */
@@ -57,7 +62,7 @@ internal fun IntroState.withStopChosen(stop: IntroStop): IntroState {
     if (!step.isStopScreen()) return this
     val fromSearch = (search as? IntroSearchPhase.Results)?.stops?.any { it.stopId == stop.stopId } == true
     return withPick(isStart = step == IntroStep.ORIGIN, stopId = stop.stopId, stopName = stop.name)
-        .copy(usedSearch = usedSearch || fromSearch, query = "", search = IntroSearchPhase.Idle)
+        .copy(usedSearch = usedSearch || fromSearch, query = "", search = IntroSearchPhase.Idle, selectedStop = null)
         .movedOn()
         .backToMissingStop()
 }

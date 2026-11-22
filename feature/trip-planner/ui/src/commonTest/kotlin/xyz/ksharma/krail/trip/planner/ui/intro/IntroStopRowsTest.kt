@@ -55,7 +55,6 @@ class IntroStopRowsTest {
     fun `the other screens have no rows`() {
         listOf(IntroStep.THEME, IntroStep.PARK_RIDE, IntroStep.CONFIRM).forEach { step ->
             assertEquals(emptyList(), IntroState(step = step).stopRows(suggested), "$step")
-            assertNull(IntroState(step = step).highlightedStop(suggested), "$step")
         }
     }
 
@@ -80,14 +79,14 @@ class IntroStopRowsTest {
     }
 
     @Test
-    fun `back on a screen the rider's earlier choice leads the list and is the highlighted row`() {
+    fun `on a screen the rider has already chosen for, the earlier choice leads the list, and leading is not selecting`() {
         val comeBack = onDestination.chosenEnd(WYNYARD_STOP)
 
         assertEquals(
             listOf(WYNYARD_STOP, CENTRAL_STOP, PARRAMATTA_STOP, TOWN_HALL_STOP, MARTIN_PLACE_STOP),
             comeBack.stopRows(suggested),
         )
-        assertEquals(WYNYARD_STOP, comeBack.highlightedStop(suggested))
+        assertNull(comeBack.selectedStop, "the order never selects a row")
     }
 
     @Test
@@ -103,10 +102,10 @@ class IntroStopRowsTest {
     }
 
     @Test
-    fun `back on the origin screen the earlier start leads the list`() {
+    fun `on the origin screen an earlier start leads the list once`() {
         val comeBack = onOrigin.copy(nearbyStops = nearby).chosenStart(MUSEUM_STOP).chosenEnd(CENTRAL_STOP)
 
-        assertEquals(MUSEUM_STOP, comeBack.highlightedStop(suggested))
+        assertEquals(MUSEUM_STOP, comeBack.stopRows(suggested).first())
         assertEquals(1, comeBack.stopRows(suggested).count { it == MUSEUM_STOP })
     }
 
@@ -115,11 +114,11 @@ class IntroStopRowsTest {
     // region the typed search
 
     @Test
-    fun `typed results replace the suggestions, and the first result is the highlighted one`() {
+    fun `typed results replace the suggestions, and none of them is selected`() {
         val typed = onDestination.copy(query = "ch", search = results(CHATSWOOD_STOP, JUNIORS_KINGSFORD))
 
         assertEquals(listOf(CHATSWOOD_STOP, JUNIORS_KINGSFORD), typed.stopRows(suggested))
-        assertEquals(CHATSWOOD_STOP, typed.highlightedStop(suggested))
+        assertNull(typed.selectedStop)
     }
 
     @Test
@@ -127,7 +126,6 @@ class IntroStopRowsTest {
         val typed = onOrigin.chosenEnd(CHATSWOOD_STOP).copy(search = results(CHATSWOOD_STAND_A, REDFERN_STOP))
 
         assertEquals(listOf(REDFERN_STOP), typed.stopRows(suggested))
-        assertEquals(REDFERN_STOP, typed.highlightedStop(suggested))
     }
 
     @Test
@@ -138,11 +136,10 @@ class IntroStopRowsTest {
     }
 
     @Test
-    fun `no match is no rows and nothing is highlighted, so the right button has nothing to take`() {
+    fun `no match is no rows`() {
         val none = onDestination.copy(query = "zzzz", search = IntroSearchPhase.NoMatch)
 
         assertEquals(emptyList(), none.stopRows(suggested))
-        assertNull(none.highlightedStop(suggested))
     }
 
     @Test
@@ -154,7 +151,51 @@ class IntroStopRowsTest {
 
     // endregion
 
+    // region selecting a stop
+
+    @Test
+    fun `selecting a stop on a stop screen sets the selected stop and changes nothing else`() {
+        listOf(onDestination, onOrigin).forEach { on ->
+            val selected = on.withStopSelected(CENTRAL_STOP)
+
+            assertEquals(CENTRAL_STOP, selected.selectedStop, "${on.step}")
+            assertEquals(on.copy(selectedStop = CENTRAL_STOP), selected, "${on.step}")
+        }
+    }
+
+    @Test
+    fun `selecting another stop moves the selection, and selecting on another screen does nothing`() {
+        assertEquals(
+            WYNYARD_STOP,
+            onDestination.withStopSelected(CENTRAL_STOP).withStopSelected(WYNYARD_STOP).selectedStop,
+        )
+        listOf(IntroStep.THEME, IntroStep.PARK_RIDE, IntroStep.CONFIRM).forEach { step ->
+            val state = IntroState(step = step)
+
+            assertEquals(state, state.withStopSelected(CENTRAL_STOP), "$step")
+        }
+    }
+
+    @Test
+    fun `typing different text drops the selection, the same text keeps it, and blank text drops it`() {
+        val selected = onDestination.withStopSelected(CENTRAL_STOP)
+
+        assertNull(selected.withQuery("c").selectedStop)
+        assertEquals(CENTRAL_STOP, selected.copy(query = "c").withQuery("c").selectedStop)
+        assertNull(selected.copy(query = "c").withQuery("").selectedStop)
+    }
+
+    // endregion
+
     // region choosing a stop
+
+    @Test
+    fun `choosing drops the selection, so it does not follow the rider to the next screen`() {
+        val chosen = onDestination.withStopSelected(CENTRAL_STOP).withStopChosen(CENTRAL_STOP)
+
+        assertNull(chosen.selectedStop)
+        assertEquals(IntroStep.ORIGIN, chosen.step)
+    }
 
     @Test
     fun `choosing on the destination screen sets the end and moves to the origin screen`() {

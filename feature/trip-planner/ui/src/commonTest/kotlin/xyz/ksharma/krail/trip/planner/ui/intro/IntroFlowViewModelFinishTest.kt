@@ -104,8 +104,8 @@ class IntroFlowViewModelFinishTest {
 
         rig.send(
             IntroUiEvent.AnswerParkRide(yes = false),
-            IntroUiEvent.ChooseStop(CENTRAL.toIntroStop()),
-            IntroUiEvent.ChooseStop(TALLAWONG.toIntroStop()),
+            IntroUiEvent.SelectStop(CENTRAL.toIntroStop()), IntroUiEvent.ConfirmStop,
+            IntroUiEvent.SelectStop(TALLAWONG.toIntroStop()), IntroUiEvent.ConfirmStop,
             IntroUiEvent.FinishPressed,
         )
 
@@ -305,8 +305,8 @@ class IntroFlowViewModelFinishTest {
         )
         rig.send(
             IntroUiEvent.DeclineParkRide,
-            IntroUiEvent.ChooseStop(CENTRAL.toIntroStop()),
-            IntroUiEvent.ChooseStop(TALLAWONG.toIntroStop()),
+            IntroUiEvent.SelectStop(CENTRAL.toIntroStop()), IntroUiEvent.ConfirmStop,
+            IntroUiEvent.SelectStop(TALLAWONG.toIntroStop()), IntroUiEvent.ConfirmStop,
             IntroUiEvent.FinishPressed,
         )
         assertIs<ParkRideCardPhase.Card>(rig.state.parkRideCard, "the station card was found, so its name is in play")

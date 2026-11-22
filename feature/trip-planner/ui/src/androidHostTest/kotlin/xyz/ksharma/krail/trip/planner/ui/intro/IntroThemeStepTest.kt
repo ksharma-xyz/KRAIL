@@ -100,19 +100,35 @@ class IntroThemeStepTest {
     }
 
     @Test
-    fun `the badges are twice the size they were, one to a row, in order and centred`() {
+    fun `the badges are twice the size they were, in a loose grid of two columns centred across the window`() {
         show(none)
 
         val bounds = introThemeChoices().map { badge(it).getUnclippedBoundsInRoot() }
 
-        bounds.forEach { assertEquals(64.dp, it.width, "a badge is $it") }
-        assertEquals(bounds.sortedBy { it.top }, bounds, "the badges are not in order down the screen")
-        bounds.zipWithNext().forEach { (above, below) ->
-            assertTrue(below.top >= above.bottom, "two badges share a row: $above $below")
-        }
-        // A badge that is not selected drifts up to 4 dp sideways, so centred is within that.
-        bounds.forEach {
-            assertEquals(it.left.value, (window.width - it.right).value, DRIFT.value * 2, "a badge is not centred: $it")
+        bounds.forEach { assertEquals(64f, it.width.value, 0.01f, "a badge is $it") }
+        // A badge that is not selected drifts up to 4 dp sideways and 6 dp up and down, so every check allows for that.
+        val slack = DRIFT * 2
+        assertTrue(bounds[1].left > bounds[0].right && bounds[3].left > bounds[2].right, "the columns touch: $bounds")
+        assertEquals((bounds[0].height / 2).value, (bounds[1].top - bounds[0].top).value, VERTICAL_SLACK.value, "Metro is not half a badge lower: $bounds")
+        assertEquals((bounds[2].height / 2).value, (bounds[3].top - bounds[2].top).value, VERTICAL_SLACK.value, "Ferry is not half a badge lower: $bounds")
+        assertTrue(bounds[2].top >= bounds[0].bottom && bounds[3].top >= bounds[1].bottom, "a row sits over the one above: $bounds")
+        val leftmost = bounds.minOf { it.left }
+        val rightmost = bounds.maxOf { it.right }
+        assertEquals(leftmost.value, (window.width - rightmost).value, slack.value, "the grid is not centred: $bounds")
+    }
+
+    @Test
+    fun `no two badges are closer than 24 dp at rest, so the drift and the dance cannot reach one`() {
+        show(none)
+        val bounds = introThemeChoices().map { badge(it).getUnclippedBoundsInRoot() }
+
+        bounds.forEachIndexed { i, a ->
+            bounds.drop(i + 1).forEach { b ->
+                val across = maxOf(a.left - b.right, b.left - a.right)
+                val down = maxOf(a.top - b.bottom, b.top - a.bottom)
+                // The drift at the first frame is up to 4 dp across and 6 dp up and down for each of the two.
+                assertTrue(maxOf(across, down) >= 24.dp - VERTICAL_SLACK, "two badges are $across across and $down down: $a $b")
+            }
         }
     }
 
@@ -265,5 +281,8 @@ class IntroThemeStepTest {
     private companion object {
         val MIN_TOUCH = 48.dp
         val DRIFT = 4.dp
+
+        // Two badges each drifting up to 6 dp up and down can be 12 dp closer or further apart, and a pixel is rounding.
+        val VERTICAL_SLACK = 13.dp
     }
 }

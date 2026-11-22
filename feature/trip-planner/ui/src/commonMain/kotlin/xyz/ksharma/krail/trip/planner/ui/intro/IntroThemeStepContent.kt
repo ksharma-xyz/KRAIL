@@ -2,16 +2,13 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.AnnotatedString
@@ -58,11 +55,12 @@ internal fun IntroThemeStepContent(
 }
 
 /**
- * The badges, one to a row in a column, centred, with room between them for them to drift and dance without
- * touching. Every badge that is not selected drifts and the selected one dances, both from one clock that runs only
- * while the screen is resumed. With reduced motion, in a preview and in a screenshot nothing moves: the selected badge
- * sits lifted 4 dp. The column is as tall as four badges and their gaps, and the middle zone scrolls with the headline
- * when that does not fit, so nothing is squeezed.
+ * The badges in a loose, slightly lopsided grid of two columns ([themeBadgeGrid]): the right column lowered by half a
+ * badge and a little further out, centred across the room, with 24 dp between any two so they can drift and dance without
+ * touching. They wrap to a single staggered column only when two do not fit the width. Every badge that is not selected
+ * drifts and the selected one dances, both from one clock that runs only while the screen is resumed. With reduced motion,
+ * in a preview and in a screenshot nothing moves: the selected badge sits lifted 4 dp. The grid is as tall as it is, and the
+ * middle zone scrolls with the headline when that does not fit above the bar, so no badge is squeezed, cut or hidden.
  */
 @Composable
 internal fun IntroThemeBadges(
@@ -74,12 +72,13 @@ internal fun IntroThemeBadges(
     val motionRuns = themeMotionRuns(reduceMotion = isReduceMotionEnabled(), inspection = LocalInspectionMode.current)
     val clock = rememberThemeClock(running = motionRuns)
 
-    Column(
+    IntroThemeBadgeGrid(
+        gapX = dim.spacingXXXL,
+        gapY = dim.spacingXXXL,
+        shiftX = dim.spacingXL,
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = dim.pageHorizontalPadding),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(dim.spacingXXXL),
     ) {
         introThemeChoices().forEachIndexed { index, choice ->
             val selected = choice.style.id == selectedThemeId

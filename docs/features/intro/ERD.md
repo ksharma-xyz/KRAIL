@@ -533,6 +533,17 @@ that Park & Ride asks "No thanks" and "Yes, show me free spots" is superseded by
   from about 330 dp (a 360 dp phone) up, where the ceiling alone is used. The room comes from `IntroStepFrame` through
   `LocalHeadlineRoom`. `IntroHeadlineLayoutTest` reads the real layouts at 288 dp (200 percent), a phone and a wide window, and fails
   if any word is wider than `WIDEST_HEADLINE_WORD_DP`.
+- **The badge grid.** The four 64 dp badges (the existing `TransportModeIcon` at `XLarge`, white letters, drawn by that component) sit in a
+  loose, slightly lopsided grid instead of a column: `IntroThemeBadgeGrid` is a `Layout` over the pure function `themeBadgeGrid(count, badge,
+  gapX, gapY, shiftX, available)` in pixels. Two columns in reading order (Train, Metro, then Bus, Ferry): the right column is lowered by
+  half a badge and sits 16 dp further out (`spacingXL`), and the second row of the left column is moved in by the same 16 dp, so no row
+  lines up with the next. 24 dp (`spacingXXXL`) between any two badges across and down, the drift and the dance of a badge reach at most 19 dp
+  with a dancer next to a drifter (a table test), so they never touch. The grid is centred across the room. When two badges, the gap and the
+  shift do not fit the width (a badge much larger than at 200 percent on a 320 dp window, where it is 102 dp and still two columns fit
+  in 288 dp), whole badges wrap to a single staggered column, every second one moved in, never two to a row and never squeezed. At
+  64 dp the grid is 168 dp wide and 184 dp tall. The middle zone is the scrolling frame, so when the headline and the grid are taller
+  than the room above the bar it scrolls and every badge can be brought whole into view above the bar (a layout test at 320 by 568 dp at
+  200 percent scrolls to each). The float, the dance, the tags `intro.theme.*`, the 48 dp targets and the spoken names are unchanged.
 - **`finishedOn`.** The finish is now on the theme screen, after the trip screens, so `IntroStep.THEME` maps to `first_trip`, the value the
   finish always had. `park_ride` is left for a finish from the Park & Ride screen, which no flow reaches.
 - **Analytics screen names.** `view_screen` keeps the two existing names and the theme screen keeps `Intro`, so no screen name is added.
@@ -640,7 +651,7 @@ where it changes something an earlier unit said, the earlier text is edited to m
 - **Bigger badges, in a column.** `TransportModeIconSize` gains `XLarge` at 64 dp, twice `Large`, with `headlineLarge` as its letter style
   (the same share of the circle as the small title in the 32 dp one), chosen in a private `letterStyle()` whose `else` branch is the
   small title every other size keeps, so the existing sizes draw exactly as before. The letter colour is not touched: the component
-  still provides white. The four badges are a centred `Column`, one to a row, 24 dp between rows. A badge is a box the size of the icon, at
+  still provides white. The four badges were a centred `Column`, one to a row, 24 dp between rows (since unit U9 they are a loose grid, see that unit). A badge is a box the size of the icon, at
   least 48 dp each way, with the app's `klickable` on a circle over it, because the taj `RoundIconButton` is a fixed 48 dp circle that
   clips its content. The float, the dance, the tags, the spoken names and the selected state are as they were. The column is taller than the row was, so on a
   short phone or at 200 percent text the middle zone scrolls with the headline.
@@ -1198,7 +1209,7 @@ make a row fit, except the one rule below. A screen with nothing to decide has n
 | None chosen | The headline `What's your`, `favourite`, `transport mode`, `in Sydney?` and the four badges, drifting. Bar: nothing, and its room is kept, so the button is neither visible nor disabled |
 | A theme selected | The whole app in that theme's colour, the headline now that theme's tagline, the selected badge dancing and the others drifting. Bar: the one button `Yes, this one` fades in over 250 ms in the kept room, in that theme's colour, and it ends the Intro. With reduced motion it appears at once. When the rider said yes to saving the trip and the stops are still loading, the button is off until they are Ready or Failed |
 | Reduced motion, preview or screenshot | The same, with nothing moving: the selected badge lifted 4 dp |
-| 320 dp at 200 percent text | The four badges in a column, one to a row, each about 102 dp and a full touch target, centred. The bar, once there is a pick, is the one button across the window, whole. The middle zone scrolls with the headline |
+| 320 dp at 200 percent text | The four badges in the loose grid of two columns, each about 102 dp and a full touch target, centred across the window. The bar, once there is a pick, is the one button across the window, whole. The middle zone scrolls with the headline |
 
 - The one button is the only button besides the badges, and each badge is a button. A tap on a badge is the only way to choose:
   the owner ruled that the rider just picks a colour, with no option to say no (2026-11-22), so there is no left button and no
@@ -1536,7 +1547,7 @@ in `searchstop/` touched:
   badges do not move when it appears). Deleted: "a disabled right button sends nothing when it is tapped", which is the behaviour that was replaced.
 - **Unit U8 tests, the badges.** `TransportModeIconSizeTest` (the four sizes as they were and the extra large one twice the large one, the large
   letter still the 14 sp white title, every mode's extra large letter white at 28 sp in a 64 dp circle), `IntroThemeBadgeTest` (as before at the
-  new size), `IntroThemeStepTest` (64 dp, one to a row, in order, centred within the drift) and `IntroThemeStepNarrowTest` (320 dp at 200 percent:
+  new size), `IntroThemeStepTest` (64 dp, in the loose grid, centred within the drift; replaced in unit U9) and `IntroThemeStepNarrowTest` (320 dp at 200 percent:
   whole, a full 48 dp, alone in its row and centred, 102 dp at 200 percent, at least 16 dp apart). The old wrap whole test is replaced by the column test.
 - **Unit U8 tests, the stop screens.** `IntroFlowViewModelStopsTest` (nothing selected on open, a tap selects and nothing else moves, another row
   moves the selection, confirming sets the end or the start and moves on and drops the selection, the button with nothing selected does
@@ -1571,6 +1582,12 @@ in `searchstop/` touched:
   Every test that finished from the confirm screen now finishes by answering, choosing a theme and pressing the theme button
   (`IntroRig.answerAndFinish`). Deleted on purpose: the test that the confirm screen's yes waits for loading stops, and the test that the
   theme screen's button is never disabled, because the wait moved to the theme screen and only applies after a yes to saving.
+- **U9 tests, the badge grid.** `IntroThemeBadgeGridTest` (a table of the positions for a phone, an exact fit, one pixel short, 200 percent text at
+  320 dp and a room of one badge, the right column half a badge lower and the grid not symmetrical, no two badges closer than the gap for every
+  size, room and count, every badge inside the grid, two columns exactly when they fit, and the drift and dance reach under the gap),
+  `IntroThemeStepNarrowTest` (real bounds at 320 dp at 200 percent: every badge whole inside the window, two columns, centred, the loose
+  offsets, at least 24 dp between any two), `IntroThemeStepTest` (the same at 411 dp, allowing for the drift) and `IntroThemeBadgeGridShortTest`
+  (320 by 568 dp at 200 percent: every badge scrolls fully into view above the bar). Replaced on purpose: the two tests of one badge to a row.
 - **U9 tests, the headlines.** `IntroCopyTest` and `IntroBannedWordsTest` (a question mark only at the end of the last line of the five headlines, the
   apostrophe allowed, every other banned glyph and word still caught, a lead line with a question mark caught), `IntroHeadlineDisplayTest` (the new lines
   in capitals, and `headlineFontScale` in a room: held lower in 288 dp, the ceiling alone from 328 dp up), `IntroHeadlineMotionTest` and
@@ -1709,6 +1726,7 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | U9-8 | The Park & Ride answers show `Yes` and `No`, and `IntroBarAction` gets a `spokenLabel`. `compactLabel`, `visibleLabel` and the two compact constants are deleted | A button now shows one word and says a longer phrase at every size, which the old compact rule could not express, and nothing else used the compact form | Default, not yet seen by owner |
 | U9-9 | The five headlines are complete plain questions, and the longest word, TRANSPORT, is kept whole in a 320 dp window by holding the headline scale lower there only (0.94 in 288 dp, none from about 330 dp) | TRANSPORT does not fit 288 dp at the 1.05 ceiling (292 dp). The five line variant does not help, because it is the word that is wide. Lowering the ceiling would shrink every headline on every phone. If a 320 dp window is not worth a smaller headline, the alternative is to let that window scroll sideways, which the Intro never does, or to reword | Default, not yet seen by owner |
 | U9-10 | The headline room is given by the screen frame to its headline through `LocalHeadlineRoom`, and the headline reads it | The room is only known at layout, and the frame already measures it. A headline outside a frame, such as in a preview, has the ceiling alone | Default, not yet seen by owner |
+| U9-11 | The badges are two columns in reading order, the right column lowered by half a badge and 16 dp further out, the second left row moved in 16 dp, with 24 dp between any two | The spec gave an example of the stagger and left the numbers. 24 dp is the old gap and clears the drift and dance, and 16 dp is the token for a small offset. If the grid should read tighter or looser, change `spacingXL` and `spacingXXXL` at the one call | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

@@ -96,7 +96,7 @@ class IntroThemeStepNarrowTest {
     }
 
     @Test
-    fun `every badge is whole inside the window, a full 48 dp to tap, alone in its row and centred`() {
+    fun `every badge is whole inside the window and a full 48 dp to tap, in two columns centred across it`() {
         show(none)
 
         introThemeChoices().forEach { choice ->
@@ -105,11 +105,25 @@ class IntroThemeStepNarrowTest {
         val bounds = badgeBounds()
         bounds.forEach { assertTrue(it.width >= TOUCH_TARGET - ROUNDING, "a badge is only ${it.width} wide") }
         bounds.forEach { assertTrue(it.height >= TOUCH_TARGET - ROUNDING, "a badge is only ${it.height} high") }
-        assertEquals(4, bounds.map { it.top }.distinct().size, "two badges share a row: $bounds")
-        bounds.forEach {
-            assertEquals(it.left.value, (windowWidth() - it.right).value, ROUNDING.value, "a badge is not centred: $it")
-        }
-        assertEquals(bounds.sortedBy { it.top }, bounds, "the badges are not in order down the screen")
+        // Two to a row of the grid: the right column is Metro and Ferry, in line with each other and clear of the left.
+        assertEquals(bounds[1].left.value, bounds[3].left.value, ROUNDING.value, "the right column is not in line: $bounds")
+        assertTrue(bounds[1].left > bounds[0].right && bounds[1].left > bounds[2].right, "the columns touch: $bounds")
+        // The grid as a whole is centred across the window.
+        val leftmost = bounds.minOf { it.left }
+        val rightmost = bounds.maxOf { it.right }
+        assertEquals(leftmost.value, (windowWidth() - rightmost).value, ROUNDING.value, "the grid is not centred: $bounds")
+    }
+
+    @Test
+    fun `the grid is loose, the right column half a badge lower and the second row moved in, in reading order`() {
+        show(none)
+        val b = badgeBounds()
+        val badge = b[0].width
+
+        assertEquals((badge / 2).value, (b[1].top - b[0].top).value, ROUNDING.value, "Metro is not half a badge below Train")
+        assertEquals((badge / 2).value, (b[3].top - b[2].top).value, ROUNDING.value, "Ferry is not half a badge below Bus")
+        assertTrue(b[2].top >= b[0].bottom, "Bus is not under Train: $b")
+        assertEquals(SHIFT.value, (b[2].left - b[0].left).value, ROUNDING.value, "Bus is not moved in from Train: $b")
     }
 
     @Test
@@ -121,7 +135,7 @@ class IntroThemeStepNarrowTest {
     }
 
     @Test
-    fun `no two badges touch, and each is at least 16 dp from the next, in a row and between rows`() {
+    fun `no two badges touch, and each is at least 24 dp from every other, so the drift and the dance cannot reach one`() {
         show(none)
         val bounds = badgeBounds()
 
@@ -179,7 +193,8 @@ class IntroThemeStepNarrowTest {
     private companion object {
         const val LARGE_TEXT = 2.0f
         val TOUCH_TARGET = 48.dp
-        val MIN_GAP = 16.dp
+        val MIN_GAP = 24.dp
+        val SHIFT = 16.dp
         val ROUNDING = 1.dp
     }
 }

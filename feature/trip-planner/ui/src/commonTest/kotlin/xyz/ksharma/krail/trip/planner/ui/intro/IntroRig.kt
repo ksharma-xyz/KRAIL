@@ -26,6 +26,7 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.NswStopsSandook
 import xyz.ksharma.krail.sandook.Sandook
+import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideAvailabilityLoader
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
@@ -62,6 +63,11 @@ internal class IntroRig(
     availabilityLoader: ParkRideAvailabilityLoader? = null,
     val parkRideSandook: NswParkRideSandook = FakeNswParkRideSandook(),
     stopNames: Map<String, String> = INTRO_STOP_NAMES,
+    /**
+     * Where the Intro's saved progress goes. A store of its own, with no share in [log], so the order the finish is held
+     * to in so many tests is not about a write that is not part of it. Seed it before the view model is first used.
+     */
+    val progressPreferences: SandookPreferences = FakeSandookPreferences(),
 ) {
     val log = CallLog()
     val readiness = FakeAppDataReadiness(initial = initialReadiness, callLog = log)
@@ -92,7 +98,13 @@ internal class IntroRig(
                 IntroFlowViewModel(
                     savedStateHandle = handle,
                     appDataReadiness = readiness,
-                    completion = IntroCompletion(sandook, preferences, analytics, scope.ioDispatcher),
+                    completion = IntroCompletion(
+                        sandook = sandook,
+                        preferences = preferences,
+                        analytics = analytics,
+                        ioDispatcher = scope.ioDispatcher,
+                        progress = IntroProgressStore(progressPreferences, scope.ioDispatcher),
+                    ),
                     timeSource = timeSource ?: testTime,
                     parkRide = IntroParkRideGateway(
                         catalogue = catalogue,
@@ -206,5 +218,22 @@ internal class TickingTimeSource(private val tick: Duration) : TimeSource {
             elapsed += tick
             return elapsed
         }
+    }
+}
+
+/** The progress store's preferences, noting each write and each clear in [calls] in the order they happen. */
+internal class RecordingProgressPreferences(
+    private val inner: FakeSandookPreferences = FakeSandookPreferences(),
+    val calls: CallLog = CallLog(),
+) : SandookPreferences by inner {
+
+    override fun setString(key: String, value: String) {
+        inner.setString(key, value)
+        calls.record("write")
+    }
+
+    override fun deletePreference(key: String) {
+        inner.deletePreference(key)
+        calls.record("clear")
     }
 }

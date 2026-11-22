@@ -32,8 +32,10 @@ import kotlin.time.TimeSource
 internal const val FINISH_WAIT_TIMEOUT_MS = 15_000L
 
 /**
- * The Intro. Its state is saved as it changes, so the step, the answer and the picks survive rotation
- * and the process being killed. It never polls: the things it waits on are
+ * The Intro. Its state is saved as it changes, so the step, the answer and the picks survive rotation, the system
+ * saving its state, and the app being swiped away or force stopped: the last is the [IntroProgress] kept in the app's
+ * preferences, which a first run reads once when it opens and a replay from Settings clears and never writes. It
+ * never polls: the things it waits on are
  * [AppDataReadiness.awaitReady], once for the nearest station and once at the finish, and neither
  * wait blocks for good.
  *
@@ -49,8 +51,13 @@ internal class IntroFlowViewModel(
     stops: IntroStopsGateway,
 ) : ViewModel() {
 
-    private val _state = MutableStateFlow(savedStateHandle.restoreIntroState())
+    // Opened again after the Intro was finished: a replay from Settings, which always starts clean.
+    private val replay = completion.hasSeenIntro()
+
+    private val _state = MutableStateFlow(savedStateHandle.openingIntroState(replay, completion.progress))
     val state: StateFlow<IntroState> = _state.asStateFlow()
+
+    private val progressSaver = IntroProgressSaver(viewModelScope, completion.progress, _state.value)
 
     /** The stops the last button waits on, for the screen to read. The view model adds nothing to it. */
     val stopsReadiness: StateFlow<StopsReadiness> get() = appDataReadiness.state
@@ -94,6 +101,8 @@ internal class IntroFlowViewModel(
     )
 
     init {
+        // A replay starts at the first screen with nothing left over from before.
+        if (replay) progressSaver.clear()
         // After a killed process the saved station id is worked out into a card again.
         parkRideStep.restore()
         stopsStep.loadModes(suggestedStops)
@@ -213,6 +222,8 @@ internal class IntroFlowViewModel(
         completion.track(_state.value.toOutcome(stopsWaitBucket(waited, readiness)), savedTrip = trip)
         finished = true
         effectChannel.send(IntroEffect.NavigateToSavedTrips)
+        // Once the finale has been handed on, nothing of the progress is left, and nothing writes it again.
+        progressSaver.clear()
     }
 
     /** Written once, at the first of: the question answered or passed, or the finish. */
@@ -226,5 +237,7 @@ internal class IntroFlowViewModel(
     private fun update(transform: IntroState.() -> IntroState) {
         _state.update(transform)
         savedStateHandle.saveIntroState(_state.value)
+        // One small write when the progress changed, none on a replay and none once the finish has completed.
+        if (!replay && !finished) progressSaver.save(_state.value)
     }
 }

@@ -44,7 +44,7 @@ erDiagram
     INTRO_STATE {
         enum step "PARK_RIDE, DESTINATION, ORIGIN, CONFIRM, THEME"
         int selectedThemeId "nullable, the theme the rider picked on the last screen"
-        enum tripDecision "nullable SAVED or DECLINED, the answer on the confirm screen, transient"
+        enum tripDecision "nullable SAVED or DECLINED, the answer on the confirm screen, saved with the progress"
         enum parkRideAnswer "ASK, YES, NO"
         enum locationResult "NOT_ASKED, GRANTED, DENIED, UNAVAILABLE"
         enum parkRideCard "NONE, LOCATING, NO_STATION_NEAR, CARD"
@@ -98,7 +98,8 @@ erDiagram
 
 | Entity | Layer | Source of truth | Identity key | Lifetime |
 |---|---|---|---|---|
-| `IntroState` | ui | `IntroFlowViewModel` | none, one per Intro | Process, survives rotation (view model plus saved state) |
+| `IntroState` | ui | `IntroFlowViewModel` | none, one per Intro | Process, survives rotation (view model plus saved state). Its progress also survives the app being swiped away or force stopped (`IntroProgress`, below) |
+| `IntroProgress` (unit U10) | ui | The preference store, one string under `KEY_INTRO_PROGRESS` | none, one per install | From the first change on a first run until the finish completes, or the Intro is replayed from Settings |
 | `SuggestedStop` | domain | Bundled default, optionally Remote Config key `intro_suggested_stops` | `stopId` | Until the list is next refreshed |
 | `ParkRideStationPickerItem` (existing) | domain | `ParkRideCatalogue.stations()` | `stationId` (smallest stop id of the group) | Per call |
 | `ParkRideCardStation` and `ParkRideCarPark` (new) | ui state | `IntroParkRideStep`, from the catalogue item and the stored readings | `stationId`, `facilityId` | The Intro, in memory. Only `stationId` is saved |
@@ -299,11 +300,54 @@ sealed interface IntroEffect { data object NavigateToSavedTrips : IntroEffect }
 
 `IntroFlowViewModel` exposes `state: StateFlow<IntroState>`, `suggestedStops: SuggestedStops` (read once from the
 `intro_suggested_stops` flag, empty default so the bundled lists apply) and `effects: Flow<IntroEffect>`. It takes a
-`SavedStateHandle` and saves the step, answer, permission result, picks and flags on every change as one JSON string, so
-they survive rotation and the process being killed. It also saves which station the card was for (the station id, or a
+`SavedStateHandle` and saves the step, answer, permission result, picks, the answer on the confirm screen and flags on every change as one JSON string, so
+they survive rotation and the system saving the screen's state. It also saves which station the card was for (the station id, or a
 flag when there was none near) and nothing else about the card: no car park, no reading, and never a coordinate. After
-the process is killed the card is worked out again from that id (see section 5). Its writes and tracking live in `IntroCompletion`, which holds `Sandook`, `SandookPreferences`, `Analytics` and the IO
+the system restores it the card is worked out again from that id (see section 5). Its writes and tracking live in `IntroCompletion`, which holds `Sandook`, `SandookPreferences`, `Analytics` and the IO
 dispatcher, to keep the constructor under the detekt parameter limit.
+
+**Resume after the app is killed (unit U10).** What the handle keeps does not survive a swipe away from recents or a force stop,
+so the same progress is also kept in the app's own preference store, the one that holds `KEY_HAS_SEEN_INTRO` and
+`KEY_PARK_RIDE_SUGGESTION_SHOWN`. There is no new storage library and no new file format: one string under one key,
+`KEY_INTRO_PROGRESS`, defined in the Intro package (the `sandook` module is not touched).
+
+```kotlin
+@Serializable
+internal data class IntroProgress(
+    val version: Int,               // INTRO_PROGRESS_VERSION, 1. Any other value is ignored
+    val step: IntroStep,
+    val themeId: Int? = null,
+    val parkRide: ParkRideAnswer = ASK,       // yes, no or none
+    val locationResult: LocationResult = NOT_ASKED,
+    val added: Boolean = false,
+    val station: ProgressStop? = null,        // the station added to home, id and name
+    val start: ProgressStop? = null,          // id and name only
+    val end: ProgressStop? = null,            // id and name only
+    val startFromParkRide: Boolean = false,
+    val decision: TripDecision? = null,       // SAVED or DECLINED
+    val usedSearch: Boolean = false,
+    val saved: Boolean = false,
+)
+```
+
+- `IntroState.toProgress()` and `IntroProgress.toState()` are the two mappings, `IntroProgress.toText()` and `introProgressFromText()` the
+  serialiser. A text that is empty, cannot be read, has an unknown key or enum value, or has any version but the current one is
+  `null`, and the Intro starts at the first screen. Nothing of it is half used.
+- It never holds a coordinate, what was typed into search, the nearest stations, a car park, a reading or the selected row. A test
+  holds that on the serialised text.
+- While the rider is still on the Park & Ride screen and has not added a station, the question is saved as unanswered (answer none,
+  permission not asked), whatever was tapped or looked up on it, so a rider who is back on it is asked again.
+- `IntroProgressStore` (`read`, `write`, `clear`) is the one reader and writer of the key. `IntroCompletion` carries it as `progress`
+  and adds `hasSeenIntro()`, so the view model's constructor stays at six parameters. The read is synchronous and happens once, when
+  the view model is made, because the first frame must already be on the saved screen. The writes run on the IO dispatcher.
+- `IntroProgressSaver` owns one conflated `Channel` and one collector in the view model's scope for the writes, so a save, a later save and
+  the clear never pass each other and a save that is still waiting when a newer one arrives is dropped. `update` hands it the new state, and it
+  writes only when the text differs from the last one handed over, so typing, a selection and a list that loads write nothing.
+  `SavedStateHandle.openingIntroState` is the one place that decides what the Intro opens with.
+- On opening: the state is the handle's when the system saved one, otherwise the progress when the Intro has not been seen (`KEY_HAS_SEEN_INTRO`
+  is not set) and there is a valid one, otherwise the first screen. When the Intro has been seen the screen is a replay from Settings: it
+  starts at the first screen, clears whatever is stored, and never writes progress. A saved progress never survives a completed Intro.
+- The clear is sent after the effect that hands the finish to the finale, and `update` writes nothing once the finish has completed.
 
 The Park & Ride step is two more classes, so the view model stays small. `IntroParkRideGateway` is the injected one, like
 `IntroCompletion`: the catalogue, the availability loader (`ParkRideAvailabilityLoader`, the same one the Saved Trips card
@@ -516,8 +560,9 @@ that Park & Ride asks "No thanks" and "Yes, show me free spots" is superseded by
   then runs the finish exactly as it ran before: wait for the stops up to 15 s, write the trip when the decision is SAVED and both stops are
   set, write the suggestion flag and `KEY_HAS_SEEN_INTRO`, report `intro_lets_krail`, then send the effect that `onIntroFinished`
   hands to the finale. `IntroState.canFinish()` is the theme screen with a theme chosen. `skipped` is true only when the decision is
-  DECLINED (and nothing was saved). A finish with no decision recorded, such as after the process was killed on the theme screen, writes
-  no trip and is not skipped, because `tripDecision` is not saved with the screen: a later unit decides whether to save it.
+  DECLINED (and nothing was saved). Since unit U10 the decision is saved with the screen and with the progress on the device, so a rider
+  who is killed on the theme screen finishes with the answer they gave. A finish with no decision recorded (a progress that has none) still
+  writes no trip and is not skipped.
 - **The headlines.** Five complete plain questions, all drawn in capitals as before: Park & Ride `Do you drive` / `to the station?`,
   destination `Where are` / `you going?`, origin `Where are you` / `leaving from?`, confirm `Save this` / `trip?`, and the theme
   screen before a pick `What's your` / `favourite` / `transport mode` / `in Sydney?` (after a pick the chosen theme's tagline replaces
@@ -549,7 +594,7 @@ that Park & Ride asks "No thanks" and "Yes, show me free spots" is superseded by
 - **Analytics screen names.** `view_screen` keeps the two existing names and the theme screen keeps `Intro`, so no screen name is added.
   The order of a run is now `Intro` (Park & Ride), `IntroFirstTrip` (destination, origin and confirm, once), `Intro` (theme). A run
   therefore sends `Intro` twice, once at each end, with `IntroFirstTrip` between. The dedupe is unchanged: one view for each run of
-  screens that share a name, and one more after a killed process. For the analytics side (the owner tells them): a funnel that counted
+  screens that share a name. A resume reports the screen it opens on once, as a new run, and not once for each screen before it. For the analytics side (the owner tells them): a funnel that counted
   `Intro` once for each run must now count a run by its first `Intro` view, or by the `IntroFirstTrip` view for riders who got past
   Park & Ride, and the second `Intro` marks arrival on the colour screen.
 
@@ -952,6 +997,41 @@ are picked (superseded in unit R3: both stops are always chosen before the confi
 left button, Not now, leaves without saving), (2) there is no Try again and no error state, a Failed readiness behaves like Ready for the button and a trip
 can be saved while the stops failed, (3) the finish never blocks on the stops, it waits at most 15 s and then proceeds.
 
+### Resume after the app is killed (unit U10)
+
+```mermaid
+sequenceDiagram
+    participant VM as IntroFlowViewModel
+    participant W as Writer (one collector, IO)
+    participant P as Preference store
+    Note over VM: First run, step or answer changes
+    VM->>VM: update, toProgress().toText()
+    VM->>W: text, only if it differs from the last
+    W->>P: setString(KEY_INTRO_PROGRESS)
+    Note over VM: App swiped away, then opened again
+    VM->>P: getBoolean(KEY_HAS_SEEN_INTRO), once
+    VM->>P: getString(KEY_INTRO_PROGRESS), once, first run only
+    P-->>VM: valid progress, or nothing
+    VM->>VM: open on the saved step with the saved answers, or the first screen
+    Note over VM: The finish completes
+    VM-->>VM: effect to the finale, then the clear
+    VM->>W: clear
+    W->>P: deletePreference(KEY_INTRO_PROGRESS)
+```
+
+The rules, in the order they apply:
+
+1. A first run saves after every step change and every answer (the step, the picked theme, the Park & Ride answer and added station, the two
+   stops, the confirm answer). It does not save for typing, a selected row, a list that loads or anything else that is not part of the
+   progress, because the view model compares the new text with the one it last handed to the writer.
+2. A relaunch reads the progress once. It is used when the Intro has not been seen and the text is valid. Otherwise the Intro starts at the first screen.
+3. A replay (the Intro has been seen) never reads the progress, clears what is stored, and never writes: its relaunch goes to Saved Trips.
+4. The state the system saved with the screen wins over the progress, because it also carries the card's station id to work out again.
+5. The finish clears the progress after the hand-off to the finale. Nothing writes it again after the finish, and a finished Intro is never
+   resumed even if the clear did not run, because the seen flag is written first.
+6. The saved theme is applied again by the route on opening, as it is on a turn of the screen. The theme write itself is unchanged.
+7. Back is unchanged: system back on the first screen leaves the app, and it is consumed on every other screen, a resumed one too.
+
 ### The finale (unit R4)
 
 ```mermaid
@@ -1101,6 +1181,19 @@ Unit U8, the design fixes, the seven questions, with numbers where there are any
 | 6 | **Battery.** | The tagline change is one finite 350 ms fade and rise per pick, and the button one 250 ms fade, both alpha and transforms and nothing laid out per frame. The badges are twice the size, so the four layers the clock redraws each frame are bigger (a guess: about four times the pixels each, still four small layers), the cost to check first on a phone with the float and the dance. No timer and no background work. |
 | 7 | **Shared limits.** | None. |
 
+Unit U10, resume after the app is killed, the seven questions, with numbers where there are any. Nothing here was measured on a device, and every
+figure that is not arithmetic on the flow is a guess and is labelled one:
+
+| # | Question | Answer |
+|---|---|---|
+| 1 | **API calls.** | None. Nothing is sent anywhere and no analytics event name is added. |
+| 2 | **Payload.** | Local only. One string, **about 150 to 400 bytes** on the longest names (a guess; a test holds it under 500 characters). Nothing on the wire. |
+| 3 | **Timing.** | Time to first content: one key read for the seen flag and, on a first run only, one for the progress, both a primary key lookup in the preference table on the main thread when the view model is made (a guess: about a millisecond each, not measured). The first frame is already on the saved screen, so there is no flash of the first screen. Writes are off the main thread and never block a button. |
+| 4 | **UX.** | A rider who comes back after a kill lands on the screen they left with their answers, without a message. Corrupt, newer or unknown saved text starts again at the first screen. Offline is not a state. Loading is not a state. |
+| 5 | **Caching, dedupe, retries.** | One writer through a conflated channel, so writes are ordered and a stale one is dropped. A write only when the text differs from the last, so typing and selecting write nothing. No retry: a failed write loses one step's progress at worst. |
+| 6 | **Battery.** | **About 6 writes of one small value per Intro run** (the first answer, two stops, the confirm answer, one or more theme picks, and one clear at the finish; a guess at the count, it is one per change of the progress), no timer, no background work and no wake-up of its own. Foreground only. A replay writes one clear and nothing else. |
+| 7 | **Shared limits.** | None. Nothing for a BFF to collapse. |
+
 ## 7. States and UX
 
 The reference is an interactive review page (private). The states it shows are restated here.
@@ -1145,6 +1238,16 @@ Every screen has three zones:
 | Stops loading | `Yes, save it` is off and `Not now` is on |
 | `Yes, save it` | The trip is written and the Intro ends at Saved Trips, as before |
 | `Not now` | Nothing is written and the Intro ends at Saved Trips |
+
+**Resume (unit U10).**
+
+| State | What the rider sees |
+|---|---|
+| Opened again after the app was swiped away or force stopped, mid Intro | The screen they were on, with the answers they gave. No message, no animation of its own. The headline and the bar are the screen's usual ones |
+| Resumed on the destination screen after Add to home | The origin screen is still passed over, because the start is that station |
+| Resumed on the theme screen | The theme they had tapped is selected and the app is in its colour, and `Yes, this one` finishes with the answer they gave on the confirm screen |
+| Nothing saved, or the saved text cannot be read | The first screen, as on a first run |
+| The Intro was finished before (a replay from Settings) | The first screen. Nothing left over from before, and a kill during a replay opens Saved Trips |
 
 **The finale (unit R4).**
 
@@ -1604,6 +1707,20 @@ in `searchstop/` touched:
   shows), `IntroDecisionBarTest` (the answers are the one words at every text size and stay in one row at 288 dp and 200 percent, the phrase is the
   description, the stacking rule is held on the card bar) and `IntroParkRideStepNarrowTest`. Deleted on purpose: the tests of the compact label
   (`visibleLabel` at each font scale, the 130 percent boundary, and the whole phrase shown at or below it), because that rule is gone.
+- **U10 tests, resume after the app is killed.** `IntroProgressTest` (pure: every kept field and every screen round trips, the confirm answer, the
+  Park & Ride answer as yes, no or none, the question still open saved as unanswered, an added station kept as id and name and none for one that was not
+  added, half a stop not kept, **no coordinate, typed text, nearby station, car park, reading or selected row in the serialised text** (asserted on the
+  text), the version carried, another version newer or older ignored, a newer shape with an extra key ignored, unreadable text and wrong enum
+  values and types ignored, the text under 500 characters) and `IntroFlowViewModelResumeTest` (the view model: a first run with nothing saved opens the
+  first screen and writes nothing, an open at each of the four later screens with its answers, the origin screen passed over after Add to home,
+  carrying on to the finish writes the trip, killed on the theme screen after Yes writes the trip, after Not now none and with no answer none and not
+  skipped, the outcome event reports the answer, permission, station and search as before, the first screen view is reported once for the resumed
+  screen and the theme screen after it reports the Intro, a replay uses nothing and clears, a replay writes nothing, unreadable or other
+  version text opens the first screen, the system's saved state wins, each answer and change of screen saves, an added station is saved with id
+  and name, the open question saves nothing, typing and a selection write nothing, one write for each change of progress, the finish clears after
+  the effect and nothing writes after it, a finished Intro is never resumed). `IntroRig` keeps the progress in a store of its own (a parameter), so
+  the order held by the finish tests is not about a write that is not part of it. Changed on purpose: `IntroSavedStateTest` no longer says the
+  confirm answer is not saved (it is now saved with the screen, with a test of its own and a snapshot from before it reads as none).
 
 ## 9. Open gaps and decisions
 
@@ -1724,7 +1841,7 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | # | Decision | Why, and what changes if it is wrong | Decision |
 |---|---|---|---|
 | U9-1 | The wait for loading stops moved with the finish: the theme screen's button is off while the stops are Unknown or Loading, but only when the rider said yes to saving and the trip is not written. The confirm screen's two buttons never wait | The confirm screen no longer writes, and the old rule held the save back, never Not now. Holding the theme button for a rider who declined would be a new wait. If the button should never be off, drop `rightEnabled` from `themeBar` and let the 15 s finish wait carry it | Default, not yet seen by owner |
-| U9-2 | `tripDecision` is transient and not saved with the screen. A finish with none recorded (the process was killed on the theme screen) writes no trip and is not skipped | The spec called it transient and left saving to a later unit. Saving it is a one field change in `IntroSnapshot`. Until then a rider killed on the last screen gets no trip they said yes to | Default, not yet seen by owner |
+| U9-2 | `tripDecision` is transient and not saved with the screen. A finish with none recorded (the process was killed on the theme screen) writes no trip and is not skipped | The spec called it transient and left saving to a later unit. Saving it is a one field change in `IntroSnapshot`. Until then a rider killed on the last screen gets no trip they said yes to. Superseded by U10: it is saved now, with the screen and with the progress on the device | Default, not yet seen by owner |
 | U9-3 | `finishedOn` is `first_trip` for the theme screen | The finish is after the trip screens, and `first_trip` is the value every finish has always had. Mapping it to `park_ride` would split the funnel at the change | Default, not yet seen by owner |
 | U9-4 | The theme screen keeps the analytics name `Intro`, so a run now sends `Intro`, `IntroFirstTrip`, `Intro` | The spec said keep the existing name. The cost is a second `Intro` view in a run, and the analytics side must read a run by its first view | Default, not yet seen by owner |
 | U9-5 | The confirm answers are one event, `AnswerSaveTrip(yes)`, and `FinishPressed` and `FinishWithoutTrip` are gone | The old names say the Intro finishes there and it no longer does. One event with a flag mirrors `AnswerParkRide(yes)` | Default, not yet seen by owner |
@@ -1735,6 +1852,22 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | U9-10 | The headline room is given by the screen frame to its headline through `LocalHeadlineRoom`, and the headline reads it | The room is only known at layout, and the frame already measures it. A headline outside a frame, such as in a preview, has the ceiling alone | Default, not yet seen by owner |
 | U9-11 | The badges are two columns in reading order, the right column lowered by half a badge and 16 dp further out, the second left row moved in 16 dp, with 24 dp between any two | The spec gave an example of the stagger and left the numbers. 24 dp is the old gap and clears the drift and dance, and 16 dp is the token for a small offset. If the grid should read tighter or looser, change `spacingXL` and `spacingXXXL` at the one call | Default, not yet seen by owner |
 | U9-12 | The Maestro flow waits for `intro.screen` first, not a badge, and finds the Park & Ride screen as the one with a secondary button and no trip tile | The Train badge is no longer on the first screen. `intro.screen` is drawn at once on every screen and keeps the wait cheap. The Park & Ride screen has no tag of its own and no other screen has a secondary button without the tile. If a screen gains a tag, use it | Default, not yet seen by owner |
+
+### Unit U10, decisions where the spec was silent
+
+Each is a default taken to keep moving. None has been seen by the owner.
+
+| # | Decision | Why, and what changes if it is wrong | Decision |
+|---|---|---|---|
+| U10-1 | The progress is one string under `KEY_INTRO_PROGRESS`, a constant in the Intro package, and `SandookPreferences` is not changed | The spec asked for the existing preference store and one clearly named key. A constant is only a name, and keeping it in the Intro keeps this unit out of the `sandook` module. If the key should sit with the other first-run keys, move the constant | Default, not yet seen by owner |
+| U10-2 | The Park & Ride question still open is saved as unanswered (none, location not asked), whatever was tapped or looked up on it | A card, a wait for a location and a permission result are all things the screen works out again, and a saved Yes with no card would be passed over as having nothing to decide. The cost is one more tap on Yes for a rider killed on the first screen | Default, not yet seen by owner |
+| U10-3 | The progress also keeps `locationResult`, `usedSearch`, `saved` and `startFromParkRide`, none of which says where the rider is | The finish reports them in `intro_lets_krail` and the spec said that reporting is unchanged, `saved` stops a trip written just before the kill from being written twice, and `startFromParkRide` is how the flow knows the origin screen is skipped. Drop any of them and the finish reports a default for it | Default, not yet seen by owner |
+| U10-4 | A replay from Settings reads no progress, clears what is stored and writes none, so a kill during a replay opens Saved Trips | The spec said a replay always starts clean at the first screen and a saved progress never survives a completed Intro. A replay that wrote progress would leave a value that the seen flag then ignores for good | Default, not yet seen by owner |
+| U10-5 | The progress is read on the main thread, once, when the view model is made | The first frame has to be on the saved screen, and a read after it would show the first screen and jump. It is one primary key lookup (a guess: about a millisecond, not measured). If it is ever slow, load it before the Intro route is shown | Default, not yet seen by owner |
+| U10-6 | What the system saved with the screen wins over the progress on the device when both exist | It also carries the station id the card is worked out from, and it is the more recent of the two. They are written on the same changes, so they agree otherwise | Default, not yet seen by owner |
+| U10-7 | An added station comes back as a card with its name, no car parks and no readings, and is not worked out again | The question is behind the rider, and working it out again would make an availability call on a later screen for a card nobody sees. A rider resumed on the Park & Ride screen after an add, which no flow reaches, would see the name and no numbers | Default, not yet seen by owner |
+| U10-8 | The clear is sent after the effect that hands the finish to the finale, and not before | The spec said after the hand-off. The seen flag is written first, so a kill between the two never resumes a finished Intro | Default, not yet seen by owner |
+| U10-9 | Any version other than the current one, older or newer, is ignored and the Intro starts again | There is only version 1. Reading an older shape needs a migration, which nothing needs yet | Default, not yet seen by owner |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 

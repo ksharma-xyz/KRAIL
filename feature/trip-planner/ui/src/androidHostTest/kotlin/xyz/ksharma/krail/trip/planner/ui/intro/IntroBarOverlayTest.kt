@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.semantics.SemanticsActions
@@ -16,9 +17,11 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpRect
@@ -239,7 +242,10 @@ abstract class IntroBarOverlayTestBase(private val windowWidth: Dp, private val 
         show(PreviewDestinationSuggestions)
         scrollToEnd()
 
-        row(lastEndId).performClick()
+        // Where the bar's room starts is 60 dp above the bottom of the window (a button of 48 dp and 12 dp under it), and the
+        // hidden bar takes the touches in that room so its button can never be pressed unseen. So the tap is in the upper part of
+        // the row, which is above that room, and it is a tap on the row's own place and not the bar's.
+        row(lastEndId).performTouchInput { click(Offset(centerX, height * UPPER_PART)) }
 
         assertEquals(
             listOf(lastEndId),
@@ -309,6 +315,7 @@ abstract class IntroBarOverlayTestBase(private val windowWidth: Dp, private val 
         val ROUNDING = 1.dp
         const val SCROLLED_PX = 150f
         const val END_OF_SCROLL = 1_000_000f
+        const val UPPER_PART = 0.25f
     }
 }
 

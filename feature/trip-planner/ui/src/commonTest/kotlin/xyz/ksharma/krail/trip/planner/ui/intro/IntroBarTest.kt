@@ -21,13 +21,17 @@ class IntroBarTest {
     // The Park & Ride and confirm screens have a left button, so reading it is an assertion that there is one.
     private val IntroBar.negative: IntroBarAction get() = requireNotNull(left) { "no left button on $this" }
 
+    // The two pairs of words the Park & Ride bar can show, which it is sized by as one.
+    private val parkRidePairs = listOf("No thanks" to "Yes please", "Not now" to "Add to home")
+
     private val ask = IntroBar(
-        left = IntroBarAction("No", IntroUiEvent.AnswerParkRide(yes = false), spokenLabel = "No thanks"),
+        left = IntroBarAction("No thanks", IntroUiEvent.AnswerParkRide(yes = false), spokenLabel = "No thanks"),
         right = IntroBarAction(
-            "Yes",
+            "Yes please",
             IntroUiEvent.AnswerParkRide(yes = true),
-            spokenLabel = "Yes, show me parking spots",
+            spokenLabel = "Yes please, show me parking spots",
         ),
+        labelPairs = parkRidePairs,
     )
 
     private val parkRideRows = listOf(
@@ -64,6 +68,7 @@ class IntroBarTest {
         left = IntroBarAction("Not now", IntroUiEvent.DeclineParkRide),
         right = IntroBarAction("Add to home", IntroUiEvent.AddParkRideAndContinue),
         rightShown = addShown,
+        labelPairs = parkRidePairs,
     )
 
     private fun noStation() = IntroBar(
@@ -92,11 +97,11 @@ class IntroBarTest {
     }
 
     @Test
-    fun `the answers are the exact words, Yes and No shown and the longer phrases spoken, and every other button says what it shows`() {
-        assertEquals("No", PARK_RIDE_NO)
+    fun `the answers are the exact words, No thanks and Yes please shown and the longer phrase of Yes spoken, and every other button says what it shows`() {
+        assertEquals("No thanks", PARK_RIDE_NO)
         assertEquals("No thanks", PARK_RIDE_NO_SPOKEN)
-        assertEquals("Yes", PARK_RIDE_YES)
-        assertEquals("Yes, show me parking spots", PARK_RIDE_YES_SPOKEN)
+        assertEquals("Yes please", PARK_RIDE_YES)
+        assertEquals("Yes please, show me parking spots", PARK_RIDE_YES_SPOKEN)
         assertEquals("Not now", PARK_RIDE_NOT_NOW)
         assertEquals("Add to home", PARK_RIDE_ADD)
         assertEquals(PARK_RIDE_NOT_NOW, decide(addShown = true).negative.spokenLabel)
@@ -308,10 +313,10 @@ class IntroBarTest {
     }
 
     @Test
-    fun `the Park and Ride answers show one word and say the longer phrase, and the word starts the phrase`() {
-        assertEquals("Yes", ask.right.label)
-        assertEquals("Yes, show me parking spots", ask.right.spokenLabel)
-        assertEquals("No", ask.negative.label)
+    fun `the Park and Ride answers show two words and say the longer phrase, and the words start the phrase`() {
+        assertEquals("Yes please", ask.right.label)
+        assertEquals("Yes please, show me parking spots", ask.right.spokenLabel)
+        assertEquals("No thanks", ask.negative.label)
         assertEquals("No thanks", ask.negative.spokenLabel)
         assertTrue(ask.right.spokenLabel.startsWith(ask.right.label))
         assertTrue(ask.negative.spokenLabel.startsWith(ask.negative.label))

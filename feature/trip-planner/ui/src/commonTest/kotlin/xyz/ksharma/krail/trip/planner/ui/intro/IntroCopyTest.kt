@@ -54,7 +54,7 @@ class IntroCopyTest {
     fun `the bars are found, so this cannot pass by looking at nothing`() {
         val words = barWords()
 
-        assertTrue("Yes, show me parking spots" in words && "Add to home" in words && "Not now" in words, "$words")
+        assertTrue("Yes please, show me parking spots" in words && "Add to home" in words && "Not now" in words, "$words")
         assertTrue("Yes, this one" in words, "the stop screens' bar was not found: $words")
         assertTrue("OK" in words, "the no station message's button was not found: $words")
         assertTrue("No, search" !in words, "the left button of the stop screens is gone: $words")

@@ -125,9 +125,9 @@ class IntroParkRideCardTest {
     @Test
     fun `the words the rider reads are the agreed ones`() {
         assertEquals("Show parking spots at your nearest station?", PARK_RIDE_HEADING)
-        assertEquals("Yes", PARK_RIDE_YES)
-        assertEquals("No", PARK_RIDE_NO)
-        assertEquals("Yes, show me parking spots", PARK_RIDE_YES_SPOKEN)
+        assertEquals("Yes please", PARK_RIDE_YES)
+        assertEquals("No thanks", PARK_RIDE_NO)
+        assertEquals("Yes please, show me parking spots", PARK_RIDE_YES_SPOKEN)
         assertEquals("No thanks", PARK_RIDE_NO_SPOKEN)
         assertEquals("Add to home", PARK_RIDE_ADD)
         assertEquals("Not now", PARK_RIDE_NOT_NOW)

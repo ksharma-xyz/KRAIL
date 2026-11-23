@@ -41,7 +41,7 @@ class IntroBannedWordsTest {
     fun `the Intro sources and their strings are found, so this guard cannot pass by looking at nothing`() {
         assertTrue(introSources.size >= MIN_SOURCES, "found only ${introSources.map { it.name }}")
         val literals = introSources.flatMap { stringLiterals(it.readText()) }
-        assertTrue("Yes, show me parking spots" in literals && "Not now" in literals, "the bar words were not found")
+        assertTrue("Yes please, show me parking spots" in literals && "Not now" in literals, "the bar words were not found")
         assertTrue(stringResources.isNotEmpty(), "no string resources were found")
     }
 

@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import xyz.ksharma.krail.taj.contrast.ContrastAnalyzer.Companion.TEXT_CONTRAST_AA
 import xyz.ksharma.krail.taj.contrast.ContrastAnalyzer.Companion.UI_COMPONENT_CONTRAST_AA
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -101,6 +102,25 @@ internal fun hslColor(hue: Float, saturation: Float, lightness: Float): Color {
 
 private const val HUE_SECTORS = 6f
 private const val DEGREES_PER_SECTOR = 60f
+
+/** The least contrast a white label has on the fill of the primary button: text, so 4.5 to 1. */
+internal const val BUTTON_LABEL_MIN_CONTRAST = TEXT_CONTRAST_AA
+
+/**
+ * The fill of the primary button of a screen: the screen's theme colour [theme] made deeper by taj's own ink ladder
+ * ([asThemeInk], light mode, 4.5 to 1), in both light and dark mode, so the white label on it has at least 4.5 to 1. The theme
+ * colour is the family and the ladder takes it only as far as it has to.
+ */
+internal fun introButtonFill(theme: Color): Color =
+    theme.asThemeInk(darkMode = false, minContrast = BUTTON_LABEL_MIN_CONTRAST)
+
+/**
+ * The fill of the primary button of [step], or null for the colour screen, whose button is the colour the rider picked and which
+ * keeps the taj button's own colours. The label is always white ([Color.White], as the letter in the transport mode icon).
+ */
+@Composable
+internal fun introPrimaryFill(step: IntroStep): Color? =
+    if (step == IntroStep.THEME) null else remember(step) { introButtonFill(introAccentTheme(step)) }
 
 /**
  * The hero colour of [step] on the page the Intro is drawn on, in the mode the app is in ([introAccentInk]). It is remembered for the

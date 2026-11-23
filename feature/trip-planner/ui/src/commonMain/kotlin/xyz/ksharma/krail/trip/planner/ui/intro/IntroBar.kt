@@ -7,13 +7,12 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
 
 // The words on the decision bar. Every one is an answer, never a way past a question, so none of them
 // is Skip, Later, Next, Continue or Done. IntroBannedWordsTest holds that for every string the Intro draws.
-// The Park & Ride answers show one word at every text size, and the theme screen's button shows its name, and a screen reader
-// reads the longer phrase. Each visible word is the start of its spoken phrase, so voice control that says the word finds the
-// button.
-internal const val PARK_RIDE_NO = "No"
+// A button shows its words at every text size, and a screen reader reads the spoken phrase, which is the words and may go on. Each
+// visible label is the start of its spoken phrase, so voice control that says the label finds the button.
+internal const val PARK_RIDE_NO = "No thanks"
 internal const val PARK_RIDE_NO_SPOKEN = "No thanks"
-internal const val PARK_RIDE_YES = "Yes"
-internal const val PARK_RIDE_YES_SPOKEN = "Yes, show me parking spots"
+internal const val PARK_RIDE_YES = "Yes please"
+internal const val PARK_RIDE_YES_SPOKEN = "Yes please, show me parking spots"
 internal const val PARK_RIDE_NOT_NOW = "Not now"
 internal const val PARK_RIDE_ADD = "Add to home"
 
@@ -55,12 +54,17 @@ internal data class IntroBarAction(
  * [rightShown] is the same for the right button alone, while the left one stays shown and live. The Park & Ride card
  * has it false while the station is being found, so the rider can still say no and the bar does not change size when
  * Add to home appears.
+ *
+ * [labelPairs] is every pair of labels, left then right, that the screen's bar can show. The bar is laid out as one row or
+ * as one above the other from the widest of them, so it is one or the other for the whole screen and the room it takes does not
+ * change when the words do. It is the pair shown when it is not given.
  */
 internal data class IntroBar(
     val left: IntroBarAction?,
     val right: IntroBarAction,
     val shown: Boolean = true,
     val rightShown: Boolean = true,
+    val labelPairs: List<Pair<String, String>> = listOfNotNull(left?.let { it.label to right.label }),
 )
 
 // How long the single button takes to fade in once the rider has picked something.
@@ -127,9 +131,13 @@ private fun parkRideBar(state: IntroState): IntroBar? = when (state.parkRideCard
     is ParkRideCardPhase.Card -> decideBar(addShown = true)
 }
 
+// The two pairs of words the Park & Ride bar can show, the question's and the card's, which are sized as one.
+private val ParkRideLabelPairs = listOf(PARK_RIDE_NO to PARK_RIDE_YES, PARK_RIDE_NOT_NOW to PARK_RIDE_ADD)
+
 private fun askBar() = IntroBar(
     left = IntroBarAction(PARK_RIDE_NO, IntroUiEvent.AnswerParkRide(yes = false), PARK_RIDE_NO_SPOKEN),
     right = IntroBarAction(PARK_RIDE_YES, IntroUiEvent.AnswerParkRide(yes = true), PARK_RIDE_YES_SPOKEN),
+    labelPairs = ParkRideLabelPairs,
 )
 
 /**
@@ -145,6 +153,7 @@ private fun decideBar(addShown: Boolean) = IntroBar(
     left = IntroBarAction(PARK_RIDE_NOT_NOW, IntroUiEvent.DeclineParkRide),
     right = IntroBarAction(PARK_RIDE_ADD, IntroUiEvent.AddParkRideAndContinue),
     rightShown = addShown,
+    labelPairs = ParkRideLabelPairs,
 )
 
 /**

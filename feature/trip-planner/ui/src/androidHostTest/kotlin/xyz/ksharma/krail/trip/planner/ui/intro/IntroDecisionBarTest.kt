@@ -7,6 +7,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
@@ -20,6 +23,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
@@ -39,9 +43,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * The decision bar on its own, at the widths and text sizes that decide its layout: always two taj buttons,
- * one row when two whole buttons fit and otherwise one above the other with the primary on top, never
- * squeezed, and the Park & Ride answers Yes and No at every text size with the longer phrase kept for a screen reader.
+ * The decision bar on its own, at the widths and text sizes that decide its layout: always two taj buttons, one row when two whole
+ * buttons fit on one line each and otherwise one above the other, the negative on top and the positive under it, both the full width,
+ * never squeezed and never with a label on two lines. The Park & Ride answers are No thanks and Yes please at every text size, with
+ * the longer phrase kept for a screen reader, and the choice of row or stack is the same for every state of a screen.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -62,11 +67,13 @@ class IntroDecisionBarTest {
     private val accepting = mutableStateOf(true)
     private val single = mutableStateOf(false)
     private val useCardBar = mutableStateOf(false)
+    private val useConfirmBar = mutableStateOf(false)
     private val barShown = mutableStateOf(true)
     private var contentSet = false
 
     private val askBar = requireNotNull(introBar(PreviewAskState))
     private val cardBar = requireNotNull(introBar(PreviewCardContentState))
+    private val confirmBar = requireNotNull(introBar(PreviewConfirm))
     private val themeBar = requireNotNull(
         introBar(IntroState(step = IntroStep.THEME, selectedThemeId = 1)),
     )
@@ -79,8 +86,10 @@ class IntroDecisionBarTest {
         card: Boolean = false,
         showRight: Boolean = true,
         acceptPresses: Boolean = true,
+        confirm: Boolean = false,
     ) {
         useCardBar.value = card
+        useConfirmBar.value = confirm
         width.value = widthDp
         barShown.value = shown
         single.value = onlyRight
@@ -94,7 +103,7 @@ class IntroDecisionBarTest {
                 CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale = fontScale.value)) {
                     PreviewTheme {
                         Box(modifier = Modifier.width(width.value.dp)) {
-                            val bar = if (useCardBar.value) cardBar else askBar
+                            val bar = if (useConfirmBar.value) confirmBar else if (useCardBar.value) cardBar else askBar
                             IntroDecisionBar(
                                 left = bar.left.takeUnless { single.value },
                                 right = if (single.value) themeBar.right else bar.right,
@@ -102,6 +111,7 @@ class IntroDecisionBarTest {
                                 shown = barShown.value,
                                 rightShown = rightShown.value,
                                 acceptsPresses = accepting.value,
+                                labelPairs = bar.labelPairs,
                             )
                         }
                     }
@@ -148,20 +158,35 @@ class IntroDecisionBarTest {
     }
 
     @Test
-    fun `at 100 percent the answers are Yes and No, in one row or stacked with the primary on top`() {
+    fun `at 411 dp and 100 percent the answers are No thanks and Yes please in one row, the negative on the left`() {
         show(PHONE_WIDTH, 1f)
 
         primary().assertTextEquals(PARK_RIDE_YES)
         secondary().assertTextEquals(PARK_RIDE_NO)
         val yes = primary().bounds()
         val no = secondary().bounds()
-        val oneRow = no.top == yes.top && no.right <= yes.left
-        val stacked = yes.top < no.top && yes.bottom <= no.top && yes.left == no.left && yes.width == no.width
-        assertTrue(oneRow || stacked, "neither one row nor stacked, with Yes at $yes and No at $no")
+        assertEquals(no.top, yes.top, "one row")
+        assertTrue(no.right <= yes.left, "No thanks ends at ${no.right}, past where Yes please starts at ${yes.left}")
     }
 
     @Test
-    fun `when two whole buttons cannot fit the bar stacks with the primary on top at the same left and width`() {
+    fun `at 320 dp and 200 percent the bar is vertical, No thanks on top and Yes please under it, both the full width`() {
+        show(NARROW_WIDTH, 2f)
+
+        primary().assertTextEquals(PARK_RIDE_YES)
+        secondary().assertTextEquals(PARK_RIDE_NO)
+        val yes = primary().bounds()
+        val no = secondary().bounds()
+        assertTrue(no.bottom <= yes.top, "No thanks ends at ${no.bottom} and Yes please starts at ${yes.top}, so they are not stacked")
+        assertEquals(no.left, yes.left)
+        assertEquals(no.width, yes.width, "the two are the same width")
+        assertEquals(NARROW_WIDTH.dp, yes.width, "stacked buttons use the whole width")
+        assertEquals(12f, (yes.top - no.bottom).value, 0.5f, "the usual gap between them")
+        composeRule.onAllNodes(hasClickAction()).assertCountEquals(2)
+    }
+
+    @Test
+    fun `when two whole buttons cannot fit the bar stacks with the negative on top at the same left and width`() {
         show(NARROW_WIDTH, 2f, card = true)
 
         primary().assertTextEquals(PARK_RIDE_ADD)
@@ -169,8 +194,8 @@ class IntroDecisionBarTest {
         val add = primary().bounds()
         val notNow = secondary().bounds()
         assertTrue(
-            add.bottom <= notNow.top,
-            "Add to home ends at ${add.bottom} and Not now starts at ${notNow.top}, so they are not stacked",
+            notNow.bottom <= add.top,
+            "Not now ends at ${notNow.bottom} and Add to home starts at ${add.top}, so they are not stacked, or not in this order",
         )
         assertEquals(add.left, notNow.left)
         assertEquals(add.width, notNow.width)
@@ -178,18 +203,94 @@ class IntroDecisionBarTest {
         composeRule.onAllNodes(hasClickAction()).assertCountEquals(2)
     }
 
-    @Test
-    fun `at every text size the answers are the one words Yes and No, and the narrowest window at 200 percent keeps one row`() {
-        listOf(1f, 1.3f, 1.31f, 2f).forEach { scale ->
-            show(NARROW_WIDTH, scale)
+    // Every label is drawn once, whole, and on one line: the layout of each text is read for real.
+    private fun labelLayouts(): List<TextLayoutResult> = composeRule.onAllNodes(
+        SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult),
+        useUnmergedTree = true,
+    ).fetchSemanticsNodes().map { node ->
+        val results = mutableListOf<TextLayoutResult>()
+        node.config[SemanticsActions.GetTextLayoutResult].action?.invoke(results)
+        results.single()
+    }
 
-            primary().assertTextEquals(PARK_RIDE_YES)
-            secondary().assertTextEquals(PARK_RIDE_NO)
-            val yes = primary().bounds()
-            val no = secondary().bounds()
-            assertEquals(no.top, yes.top, "one row at $scale")
-            assertTrue(no.right <= yes.left, "No ends at ${no.right}, past where Yes starts at ${yes.left}, at $scale")
-            assertTrue(yes.right <= NARROW_WIDTH.dp, "Yes ends at ${yes.right}, outside the ${NARROW_WIDTH}dp bar")
+    @Test
+    fun `no label is ever on two lines, whatever the width, the text size or the state, and both buttons are inside the window`() {
+        listOf(false, true).forEach { card ->
+            listOf(NARROW_WIDTH, 320, 360, PHONE_WIDTH, 440, WIDE_WIDTH).forEach { widthDp ->
+                listOf(1f, 1.3f, 1.5f, 1.8f, 2f).forEach { scale ->
+                    show(widthDp, scale, card = card)
+                    val where = "card $card, $widthDp dp, $scale"
+
+                    labelLayouts().forEach { layout ->
+                        assertEquals(1, layout.lineCount, "\"${layout.layoutInput.text.text}\" is on two lines at $where")
+                    }
+                    listOf(primary(), secondary()).forEach { button ->
+                        val bounds = button.bounds()
+                        assertTrue(bounds.left >= 0.dp && bounds.right <= widthDp.dp + ROUNDING, "a button is outside the window at $where: $bounds")
+                        assertTrue(bounds.height >= MIN_TOUCH_HEIGHT - ROUNDING, "a button is only ${bounds.height} tall at $where")
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `the confirm bar never wraps a label either, is a row at 411 dp and stacked at 320 dp with 200 percent text, negative on top`() {
+        listOf(NARROW_WIDTH, 320, 360, PHONE_WIDTH, 440, WIDE_WIDTH).forEach { widthDp ->
+            listOf(1f, 1.3f, 1.5f, 1.8f, 2f).forEach { scale ->
+                show(widthDp, scale, confirm = true)
+                val where = "$widthDp dp, $scale"
+
+                secondary().assertTextEquals(CONFIRM_NOT_NOW)
+                primary().assertTextEquals(CONFIRM_SAVE)
+                labelLayouts().forEach { assertEquals(1, it.lineCount, "\"${it.layoutInput.text.text}\" is on two lines at $where") }
+                val no = secondary().bounds()
+                val yes = primary().bounds()
+                assertTrue(no.left >= 0.dp && yes.right <= widthDp.dp + ROUNDING, "a button is outside the window at $where")
+                assertTrue(no.height >= MIN_TOUCH_HEIGHT - ROUNDING && yes.height >= MIN_TOUCH_HEIGHT - ROUNDING, "a button is under 48 dp at $where")
+                if (no.top != yes.top) assertTrue(no.bottom <= yes.top, "the negative button is not on top at $where")
+            }
+        }
+        show(PHONE_WIDTH, 1f, confirm = true)
+        assertEquals(secondary().bounds().top, primary().bounds().top, "one row at 411 dp and 100 percent")
+        show(NARROW_WIDTH, 2f, confirm = true)
+        assertTrue(secondary().bounds().bottom <= primary().bounds().top, "stacked at 320 dp and 200 percent")
+    }
+
+    @Test
+    fun `the bar is a row or a stack for the whole screen, so it is the same for the question and for the card`() {
+        listOf(NARROW_WIDTH, 320, 360, PHONE_WIDTH, 440, WIDE_WIDTH).forEach { widthDp ->
+            listOf(1f, 1.3f, 1.5f, 1.8f, 2f).forEach { scale ->
+                val stacked = listOf(false, true).map { card ->
+                    show(widthDp, scale, card = card)
+                    val first = secondary().bounds()
+                    val second = primary().bounds()
+                    first.top != second.top
+                }
+                assertEquals(stacked[0], stacked[1], "the question and the card differ at $widthDp dp, $scale")
+            }
+        }
+    }
+
+    @Test
+    fun `the room the bar takes does not change between the question and the card, so nothing above it moves`() {
+        listOf(NARROW_WIDTH, PHONE_WIDTH, WIDE_WIDTH).forEach { widthDp ->
+            listOf(1f, 1.5f, 2f).forEach { scale ->
+                show(widthDp, scale, card = false)
+                val question = composeRule.onRoot().getUnclippedBoundsInRoot().height
+                show(widthDp, scale, card = true)
+                assertEquals(question, composeRule.onRoot().getUnclippedBoundsInRoot().height, "the bar changed height at $widthDp dp, $scale")
+            }
+        }
+    }
+
+    @Test
+    fun `the reading order is the negative button and then the positive one, in a row and stacked`() {
+        listOf(PHONE_WIDTH to 1f, NARROW_WIDTH to 2f).forEach { (widthDp, scale) ->
+            show(widthDp, scale)
+
+            val order = composeRule.onAllNodes(hasClickAction()).fetchSemanticsNodes().map { it.config[SemanticsProperties.ContentDescription].single() }
+            assertEquals(listOf(PARK_RIDE_NO_SPOKEN, PARK_RIDE_YES_SPOKEN), order, "at $widthDp dp, $scale")
         }
     }
 
@@ -262,20 +363,6 @@ class IntroDecisionBarTest {
     }
 
     @Test
-    fun `a label is never squeezed onto two lines in a row`() {
-        listOf(PHONE_WIDTH, WIDE_WIDTH).forEach { widthDp ->
-            show(widthDp, 1f)
-
-            val yes = primary().bounds()
-            val no = secondary().bounds()
-            if (no.top == yes.top) {
-                assertTrue(yes.height < ONE_LINE_BUTTON_MAX, "Yes is ${yes.height} high in a row, so its label wrapped")
-                assertTrue(no.height < ONE_LINE_BUTTON_MAX, "No is ${no.height} high in a row, so its label wrapped")
-            }
-        }
-    }
-
-    @Test
     fun `with no left button the bar is the one primary across the whole width, as tall as the two button bar`() {
         show(PHONE_WIDTH, 1f)
         val rowHeight = primary().bounds().height
@@ -305,6 +392,6 @@ class IntroDecisionBarTest {
         const val WIDE_WIDTH = 480
         const val NARROW_WIDTH = 288
         val ROUNDING = 1.dp
-        val ONE_LINE_BUTTON_MAX = 64.dp
+        val MIN_TOUCH_HEIGHT = 48.dp
     }
 }

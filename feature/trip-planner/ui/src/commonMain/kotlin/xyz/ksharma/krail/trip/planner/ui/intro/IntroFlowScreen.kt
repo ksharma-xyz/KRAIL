@@ -96,6 +96,7 @@ internal fun IntroFlowScreen(
         contentAlignment = Alignment.TopCenter,
     ) {
         val bar = introBar(state)
+        val primaryFill = introPrimaryFill(state.step)
         // The step on screen is moving to the step in the state until the one transition that draws it has finished.
         val transition = updateTransition(targetState = state.step, label = "intro-step")
         val settled = transition.currentState == transition.targetState && !transition.isRunning
@@ -112,6 +113,8 @@ internal fun IntroFlowScreen(
                         shown = it.shown && revealed,
                         rightShown = it.rightShown,
                         acceptsPresses = settled,
+                        labelPairs = it.labelPairs,
+                        primaryFill = primaryFill,
                         modifier = Modifier.padding(
                             horizontal = dim.pageHorizontalPadding,
                             vertical = dim.spacingL,

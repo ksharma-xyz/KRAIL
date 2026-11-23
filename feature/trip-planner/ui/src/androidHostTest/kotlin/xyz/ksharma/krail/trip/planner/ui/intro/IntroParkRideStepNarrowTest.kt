@@ -33,6 +33,7 @@ import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
@@ -136,7 +137,7 @@ class IntroParkRideStepNarrowTest {
     }
 
     @Test
-    fun `at 200 percent text the answers are Yes and No, in one row, and read in full to a screen reader`() {
+    fun `at 200 percent text the answers are one above the other, No thanks on top, and read in full to a screen reader`() {
         show(PreviewAskState)
 
         val no = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION)
@@ -145,10 +146,12 @@ class IntroParkRideStepNarrowTest {
         yes.assertTextEquals(PARK_RIDE_YES)
         composeRule.onNodeWithContentDescription(PARK_RIDE_YES_SPOKEN).assertExists()
         composeRule.onNodeWithContentDescription(PARK_RIDE_NO_SPOKEN).assertExists()
+        no.assertInsideWindow(PARK_RIDE_NO)
+        yes.assertInsideWindow(PARK_RIDE_YES)
         val noBounds = no.getUnclippedBoundsInRoot()
         val yesBounds = yes.getUnclippedBoundsInRoot()
-        assertTrue(noBounds.top == yesBounds.top, "one row, but No is at ${noBounds.top} and Yes at ${yesBounds.top}")
-        assertTrue(noBounds.right <= yesBounds.left, "No ends at ${noBounds.right}, past where Yes starts")
+        assertTrue(noBounds.bottom <= yesBounds.top, "No thanks ends at ${noBounds.bottom}, under where Yes please starts at ${yesBounds.top}")
+        assertEquals(noBounds.width, yesBounds.width, "the two buttons are the same width")
     }
 
     @Test

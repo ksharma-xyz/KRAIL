@@ -118,7 +118,7 @@ class IntroConfirmStepNarrowTest {
 
         val p = primary.getUnclippedBoundsInRoot()
         val s = secondary.getUnclippedBoundsInRoot()
-        val stacked = p.bottom <= s.top + ROUNDING
+        val stacked = s.bottom <= p.top + ROUNDING
         val inOneRow = s.right <= p.left + ROUNDING && p.top == s.top
         assertTrue(stacked || inOneRow, "neither stacked nor in one row: $p $s")
     }

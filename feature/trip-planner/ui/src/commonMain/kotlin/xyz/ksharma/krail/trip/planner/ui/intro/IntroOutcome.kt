@@ -6,6 +6,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import xyz.ksharma.krail.trip.planner.ui.state.intro.TripDecision
+import xyz.ksharma.krail.trip.planner.ui.themeselection.themeIdParam
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -18,7 +19,8 @@ internal enum class StopsWait { NONE, UNDER_2S, TWO_TO_FIVE_S, OVER_5S, FAILED }
 
 /**
  * What the Intro reports once, at the finish. The property names are the parameter names of the
- * existing `intro_lets_krail` event. It carries no coordinate, stop name or text.
+ * existing `intro_lets_krail` event. It carries no coordinate, stop name or text. [introVersion] is not optional
+ * and is set from one constant, so every outcome, the skipped one included, reports it.
  */
 internal data class IntroOutcome(
     val introVersion: Int,
@@ -30,6 +32,8 @@ internal data class IntroOutcome(
     val usedSearch: Boolean,
     val skipped: Boolean,
     val stopsWait: StopsWait,
+    /** The theme the rider chose on the last screen, or null when none was chosen. */
+    val themeId: Int?,
 )
 
 /**
@@ -47,6 +51,7 @@ internal fun IntroState.toOutcome(stopsWait: StopsWait): IntroOutcome = IntroOut
     usedSearch = usedSearch,
     skipped = tripDecision == TripDecision.DECLINED && !saved,
     stopsWait = stopsWait,
+    themeId = selectedThemeId,
 )
 
 /**
@@ -63,27 +68,34 @@ internal fun stopsWaitBucket(waited: Duration, readiness: StopsReadiness): Stops
 }
 
 /**
- * The nine parameters with the names and values of the measurement plan. An unanswered question is
- * reported as `skipped`, because that is what tapping Next past it means.
+ * The parameters with the names and values of the measurement plan, nine always and `themeId` when a theme was
+ * chosen. An unanswered question is reported as `skipped`, because that is what tapping Next past it means.
  */
-internal fun IntroOutcome.toParams(): Map<String, Any> = mapOf(
-    "introVersion" to introVersion,
-    "finishedOn" to finishedOn.toEventValue().value,
-    "parkRideAnswer" to when (parkRideAnswer) {
-        ParkRideAnswer.ASK -> "skipped"
-        ParkRideAnswer.YES -> "yes"
-        ParkRideAnswer.NO -> "no"
-    },
-    "locationResult" to locationResult.name.lowercase(),
-    "addedParkRide" to addedParkRide,
-    "savedTrip" to savedTrip,
-    "usedSearch" to usedSearch,
-    "skipped" to skipped,
-    "stopsWait" to when (stopsWait) {
-        StopsWait.NONE -> "none"
-        StopsWait.UNDER_2S -> "under_2s"
-        StopsWait.TWO_TO_FIVE_S -> "2_to_5s"
-        StopsWait.OVER_5S -> "over_5s"
-        StopsWait.FAILED -> "failed"
-    },
-)
+internal fun IntroOutcome.toParams(): Map<String, Any> = buildMap {
+    put("introVersion", introVersion)
+    put("finishedOn", finishedOn.toEventValue().value)
+    put(
+        "parkRideAnswer",
+        when (parkRideAnswer) {
+            ParkRideAnswer.ASK -> "skipped"
+            ParkRideAnswer.YES -> "yes"
+            ParkRideAnswer.NO -> "no"
+        },
+    )
+    put("locationResult", locationResult.name.lowercase())
+    put("addedParkRide", addedParkRide)
+    put("savedTrip", savedTrip)
+    put("usedSearch", usedSearch)
+    put("skipped", skipped)
+    put(
+        "stopsWait",
+        when (stopsWait) {
+            StopsWait.NONE -> "none"
+            StopsWait.UNDER_2S -> "under_2s"
+            StopsWait.TWO_TO_FIVE_S -> "2_to_5s"
+            StopsWait.OVER_5S -> "over_5s"
+            StopsWait.FAILED -> "failed"
+        },
+    )
+    themeId?.let { put("themeId", themeIdParam(it)) }
+}

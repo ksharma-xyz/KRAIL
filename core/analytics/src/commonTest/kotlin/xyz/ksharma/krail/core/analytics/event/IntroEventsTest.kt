@@ -114,6 +114,89 @@ class IntroEventsTest {
     }
 
     @Test
+    fun `a chosen colour is sent as themeId, in the form theme_selected sends it`() {
+        val event = IntroLetsKrailClickEvent(introVersion = 2, themeId = "4")
+
+        assertEquals(mapOf("introVersion" to 2, "themeId" to "4"), event.properties)
+        assertEquals(
+            AnalyticsEvent.ThemeSelectedEvent(themeId = "4").properties?.get("themeId"),
+            event.properties?.get("themeId"),
+        )
+    }
+
+    @Test
+    fun `themeId is left out when no colour was chosen`() {
+        val event = IntroLetsKrailClickEvent(introVersion = 2, finishedOn = FinishedOn.FIRST_TRIP)
+
+        assertEquals(false, event.properties.orEmpty().containsKey("themeId"))
+        assertEquals(setOf("introVersion", "finishedOn"), event.properties.orEmpty().keys)
+    }
+
+    @Test
+    fun `a finished Intro with a colour sends ten params, the nine and themeId`() {
+        val event = IntroLetsKrailClickEvent(
+            introVersion = 2,
+            finishedOn = FinishedOn.FIRST_TRIP,
+            parkRideAnswer = ParkRideAnswer.NO,
+            locationResult = LocationResult.NOT_ASKED,
+            addedParkRide = false,
+            savedTrip = false,
+            usedSearch = false,
+            skipped = true,
+            stopsWait = StopsWait.NONE,
+            themeId = "7",
+        )
+
+        assertEquals(
+            mapOf(
+                "introVersion" to 2,
+                "finishedOn" to "first_trip",
+                "parkRideAnswer" to "no",
+                "locationResult" to "not_asked",
+                "addedParkRide" to false,
+                "savedTrip" to false,
+                "usedSearch" to false,
+                "skipped" to true,
+                "stopsWait" to "none",
+                "themeId" to "7",
+            ),
+            event.properties,
+        )
+    }
+
+    @Test
+    fun `the five Intro screens have their own stable names and the two older names stay`() {
+        assertEquals(
+            listOf("IntroParkRide", "IntroDestination", "IntroOrigin", "IntroConfirm", "IntroTheme"),
+            listOf(
+                AnalyticsScreen.IntroParkRide,
+                AnalyticsScreen.IntroDestination,
+                AnalyticsScreen.IntroOrigin,
+                AnalyticsScreen.IntroConfirm,
+                AnalyticsScreen.IntroTheme,
+            ).map { it.name },
+        )
+        assertEquals("Intro", AnalyticsScreen.Intro.name)
+        assertEquals("IntroFirstTrip", AnalyticsScreen.IntroFirstTrip.name)
+    }
+
+    @Test
+    fun `each Intro screen name is a plain view_screen event with only its name`() {
+        listOf(
+            AnalyticsScreen.IntroParkRide to "IntroParkRide",
+            AnalyticsScreen.IntroDestination to "IntroDestination",
+            AnalyticsScreen.IntroOrigin to "IntroOrigin",
+            AnalyticsScreen.IntroConfirm to "IntroConfirm",
+            AnalyticsScreen.IntroTheme to "IntroTheme",
+        ).forEach { (screen, name) ->
+            val event = AnalyticsEvent.ScreenViewEvent(screen)
+
+            assertEquals("view_screen", event.name)
+            assertEquals(mapOf("name" to name), event.properties)
+        }
+    }
+
+    @Test
     fun `a Park and Ride change made in the Intro has the intro source`() {
         val event = ParkRideUserFacilityEvent(
             facilityId = "facility-1",

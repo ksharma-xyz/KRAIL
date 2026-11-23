@@ -1244,9 +1244,10 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      * Carousel Intro: [pageType] and [pageNumber], sent as `completedOnPage` and
      * `completedOnPageNumber`. They describe the carousel and are removed with it.
      *
-     * Two step Intro: the nine outcome params from [introVersion] to [stopsWait], sent together.
-     * Each is a flag or one of a short list of values. None carries a coordinate, a stop name or
-     * text.
+     * Two step Intro: the nine outcome params from [introVersion] to [stopsWait], sent together, and
+     * [themeId] with them when a colour was chosen. [introVersion] is on every firing of the two step
+     * Intro, the skipped outcome included. Each is a flag or one of a short list of values. None
+     * carries a coordinate, a stop name or text.
      *
      * @param pageType The carousel page the Intro was finished on.
      * @param pageNumber The number of that carousel page.
@@ -1259,6 +1260,9 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      * @param usedSearch Whether the search for another stop was used.
      * @param skipped Whether the Intro finished with no complete trip picked.
      * @param stopsWait How long the Intro waited on the stops data.
+     * @param themeId The colour the rider chose on the last step, in the form `theme_selected` sends it (the
+     *   theme's number as text). Left out when no colour was chosen. The Intro also sends `theme_selected`,
+     *   so this is the same choice on the one event the funnel reads.
      */
     data class IntroLetsKrailClickEvent(
         val pageType: InteractionPage? = null,
@@ -1272,6 +1276,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         val usedSearch: Boolean? = null,
         val skipped: Boolean? = null,
         val stopsWait: StopsWait? = null,
+        val themeId: String? = null,
     ) : AnalyticsEvent(
         name = "intro_lets_krail",
         rawProperties = buildMap {
@@ -1286,6 +1291,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
             usedSearch?.let { put("usedSearch", it) }
             skipped?.let { put("skipped", it) }
             stopsWait?.let { put("stopsWait", it.value) }
+            themeId?.let { put("themeId", it) }
         },
     ) {
         /** Carousel pages. Removed with the carousel. */

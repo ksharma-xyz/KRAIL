@@ -207,27 +207,32 @@ class IntroFlowRouteTest {
     }
 
     @Test
-    fun `each screen name is reported once as the rider moves through, and a turn of the screen reports nothing`() {
+    fun `each screen is reported once as the rider moves through, and a turn of the screen reports nothing`() {
         show(FakeUserLocationManager())
-        assertEquals(listOf<Any?>("Intro"), screenViews())
+        assertEquals(listOf<Any?>("IntroParkRide"), screenViews())
 
         restorationTester.emulateSavedInstanceStateRestore()
         composeRule.waitForIdle()
-        assertEquals(listOf<Any?>("Intro"), screenViews())
+        assertEquals(listOf<Any?>("IntroParkRide"), screenViews())
 
         composeRule.onNodeWithText(PARK_RIDE_NO).performClick()
         composeRule.waitForIdle()
-        assertEquals(listOf<Any?>("Intro", "IntroFirstTrip"), screenViews())
+        assertEquals(listOf<Any?>("IntroParkRide", "IntroDestination"), screenViews())
 
         restorationTester.emulateSavedInstanceStateRestore()
         composeRule.waitForIdle()
-        assertEquals(listOf<Any?>("Intro", "IntroFirstTrip"), screenViews())
+        assertEquals(listOf<Any?>("IntroParkRide", "IntroDestination"), screenViews())
 
-        // The destination, the origin and the confirm screen are one name, and the theme screen is the Intro again.
-        repeat(2) { pickFirstStop() }
-        assertEquals(listOf<Any?>("Intro", "IntroFirstTrip"), screenViews())
+        // The destination, the origin, the confirm and the theme screen each have a name of their own.
+        pickFirstStop()
+        assertEquals(listOf<Any?>("IntroParkRide", "IntroDestination", "IntroOrigin"), screenViews())
+        pickFirstStop()
+        assertEquals(listOf<Any?>("IntroParkRide", "IntroDestination", "IntroOrigin", "IntroConfirm"), screenViews())
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
         composeRule.waitForIdle()
-        assertEquals(listOf<Any?>("Intro", "IntroFirstTrip", "Intro"), screenViews())
+        assertEquals(
+            listOf<Any?>("IntroParkRide", "IntroDestination", "IntroOrigin", "IntroConfirm", "IntroTheme"),
+            screenViews(),
+        )
     }
 }

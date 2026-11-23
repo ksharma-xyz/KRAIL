@@ -224,22 +224,22 @@ class IntroFlowViewModelResumeTest {
         rig.viewModel.onStepShown(rig.state.step)
         rig.viewModel.onStepShown(rig.state.step)
 
-        assertEquals(listOf<Any?>("IntroFirstTrip"), rig.screenViews())
+        assertEquals(listOf<Any?>("IntroConfirm"), rig.screenViews())
 
         rig.send(IntroUiEvent.AnswerSaveTrip(yes = true))
         rig.viewModel.onStepShown(rig.state.step)
 
-        assertEquals(listOf<Any?>("IntroFirstTrip", "Intro"), rig.screenViews())
+        assertEquals(listOf<Any?>("IntroConfirm", "IntroTheme"), rig.screenViews())
     }
 
     @Test
-    fun `a resume on the theme screen reports the Intro once`() = krailRunTest {
+    fun `a resume on the theme screen reports the theme screen once`() = krailRunTest {
         val rig = freshProcess(this, tripPicked.copy(step = IntroStep.THEME, tripDecision = TripDecision.SAVED))
         rig.settle()
 
         repeat(2) { rig.viewModel.onStepShown(rig.state.step) }
 
-        assertEquals(listOf<Any?>("Intro"), rig.screenViews())
+        assertEquals(listOf<Any?>("IntroTheme"), rig.screenViews())
     }
 
     @Test

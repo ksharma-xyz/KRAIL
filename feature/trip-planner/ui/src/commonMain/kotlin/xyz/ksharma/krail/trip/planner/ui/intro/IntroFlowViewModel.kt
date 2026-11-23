@@ -66,7 +66,8 @@ internal class IntroFlowViewModel(
     /** Delivered once to whoever collects, never replayed after rotation. */
     val effects: Flow<IntroEffect> = effectChannel.receiveAsFlow()
 
-    private var lastStepShown: IntroStep? = null
+    // The steps reported as a screen view in this run. Not saved, so a restored process reports the step it resumes on.
+    private val stepsShown = mutableSetOf<IntroStep>()
     private var suggestionShownWritten = false
     // The finish press was accepted. From here no event changes anything.
     private var finishStarted = false
@@ -150,16 +151,14 @@ internal class IntroFlowViewModel(
     }
 
     /**
-     * The screen shows [step]. Reported as a screen view once each time the step on screen changes to a
-     * different analytics screen, so a turn of the screen that shows the same step again reports nothing and
-     * going between two screens that share a name reports nothing more. After the process is killed the restored
-     * step is reported once more, as a new run.
+     * The screen shows [step]. Reported as a screen view the first time each step is on screen in this run, under
+     * that step's own name, so a recomposition, a turn of the screen or the slide between two screens that shows a
+     * step again reports nothing. After the process is killed the restored step is reported once, as a new run.
      */
     fun onStepShown(step: IntroStep) {
-        val previous = lastStepShown
-        if (step == previous) return
-        lastStepShown = step
-        if (shouldTrackScreenView(previous, step)) completion.trackStepView(step)
+        if (!shouldTrackScreenView(stepsShown, step)) return
+        stepsShown += step
+        completion.trackStepView(step)
     }
 
     // A tap on a row selects the stop and nothing more: it is highlighted, the button appears, and a tap on another row

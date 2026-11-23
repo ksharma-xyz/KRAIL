@@ -142,7 +142,7 @@ class IntroFlowRouteThemeTest {
     }
 
     @Test
-    fun `yes finishes the Intro, reports the choice once, and the Intro screen is viewed once`() {
+    fun `yes finishes the Intro, reports the choice once, and the theme screen is viewed once`() {
         show()
         badge(KrailThemeStyle.Bus).performClick()
         composeRule.waitForIdle()
@@ -155,6 +155,6 @@ class IntroFlowRouteThemeTest {
             listOf<Any?>(KrailThemeStyle.Bus.id.toString()),
             analytics.getTrackedEvents("theme_selected").map { it.properties?.get("themeId") },
         )
-        assertEquals(listOf<Any?>("Intro"), screenViews())
+        assertEquals(listOf<Any?>("IntroTheme"), screenViews())
     }
 }

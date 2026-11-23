@@ -90,6 +90,7 @@ erDiagram
     }
     INTRO_OUTCOME {
         string introVersion
+        string themeId "unit N1, absent with no colour"
         bool savedTrip
         bool addedParkRide
         enum locationResult
@@ -546,13 +547,14 @@ three zone frame, and everything it decides is in pure functions with table test
   theme id is part of the saved state, so it survives rotation and a killed process, and a snapshot saved before it existed reads
   as no theme.
 - **One screen view.** The theme and Park & Ride screens are both `view_screen` `Intro`. `shouldTrackScreenView(previous, next)`
-  sends it on entering the Intro and when the screen name changes. No event name was added.
+  sends it on entering the Intro and when the screen name changes. No event name was added. **Superseded by unit N1 (section 9):**
+  each of the five screens has its own name and is sent once, the first time it is on screen in a run.
 - **The wording guard.** `IntroCopyTest` exempts exactly the themes' taglines, which are the app's own copy and carry an
   exclamation mark, and nothing else: a line of the Intro's own with the same fault, or a tagline with a word added, still fails.
 - **What R3 wires.** The chosen theme is `IntroState.selectedThemeId`, saved with the screen, and the app is already in its colour
   (applied and stored), so the finale reads it with `themeChoiceFor(id)?.style`, and an unset id means the default theme. R3 replaced
   `tripBar` with the bars of its three screens, replaced `IntroPendingStepBody` for the origin and confirm screens and deleted it,
-  kept `IntroFlowRoute`'s `onApplyTheme` as it is, and sends no `view_screen` of its own: the two names already cover its screens.
+  kept `IntroFlowRoute`'s `onApplyTheme` as it is, and sends no `view_screen` of its own (the two names covered its screens then, and unit N1 gave each screen its own name).
 
 Unit U9, part 1, as built (a new step order, the finish on the theme screen, the headlines, the buttons and the badges), where
 this document was silent. Earlier text in this section that says the theme screen is first, that the confirm screen finishes, or
@@ -605,7 +607,8 @@ that Park & Ride asks one pair of short words is superseded by this block, and b
   therefore sends `Intro` twice, once at each end, with `IntroFirstTrip` between. The dedupe is unchanged: one view for each run of
   screens that share a name. A resume reports the screen it opens on once, as a new run, and not once for each screen before it. For the analytics side (the owner tells them): a funnel that counted
   `Intro` once for each run must now count a run by its first `Intro` view, or by the `IntroFirstTrip` view for riders who got past
-  Park & Ride, and the second `Intro` marks arrival on the colour screen.
+  Park & Ride, and the second `Intro` marks arrival on the colour screen. **Superseded by unit N1 (section 9, N1-2):** the five screens have
+  five names and a run sends neither `Intro` nor `IntroFirstTrip`.
 
 Unit R4, as built (the finale), where this document was silent. The finale is the last thing the Intro does: after the trip
 is written and both flags are set, the gradient wordmark `#LET'S KRAIL` glows, settles into the rider's theme colour, that colour
@@ -796,7 +799,7 @@ Unit R1, as built, where this document was silent:
   completed with the confirm screen, where it will mean the rider answered No there. Until then it still means no complete trip
   was picked. `view_screen` maps the Park & Ride and theme screens to `Intro` and the other three to `IntroFirstTrip`, and it is
   sent once when the Intro is entered and again only when the name changes (unit R2, `shouldTrackScreenView`, and see unit U9 for
-  the order now that the theme screen is last).
+  the order now that the theme screen is last). Superseded by unit N1: one name for each of the five screens, each sent once.
 
 ### Unit V1, as built (the colour screen and the finale)
 
@@ -1057,6 +1060,8 @@ Decisions the UI branch made where this document was silent:
   route: `RouteAnalyticsScreen` maps routes to names for the window events and is not where `view_screen` is sent, and it is not
   changed. It is sent once each time the step on screen changes to a different name, `Intro` for the Park & Ride and theme screens and
   `IntroFirstTrip` for the destination, origin and confirm screens, so a turn of the screen sends nothing. After a killed process the restored step is sent once more.
+  Superseded by unit N1: it is sent the first time each step is on screen in a run, under that step's own name (`IntroParkRide`,
+  `IntroDestination`, `IntroOrigin`, `IntroConfirm`, `IntroTheme`). It is still sent from the view model and still not by route.
 
 Decisions unit R3 made for the stations near the rider, where this document was silent:
 
@@ -1370,6 +1375,15 @@ headline's height (the list's own default animation, a guess of a few hundred mi
 failed search leaves them). With the keyboard up the bar is at the top and the rows have the rest of the room, and with large text the bar stays in reach while the rows scroll.
 **Caching** none. **Battery** one animated scroll per focus and nothing else: no timer, no wake-up, no background work, and the sticky header is one more opaque fill drawn over the
 rows (a guess at a cost too small to measure). **Shared limits** none.
+
+Unit N1, the Intro events (`view_screen` for each of the five screens, and `themeId` on `intro_lets_krail`), the same questions: **API calls** none of ours. Each event is one
+`Analytics.track`, one Firebase log call that the SDK batches into its own upload, so there is no extra request (the analytics owner's estimate, a GUESS, not measured), and no timer.
+A run sends five `view_screen` events where it sent three before, and `intro_lets_krail` still once. **Payload** under 1 kB per event (a GUESS). Counted from the code and not
+measured on the wire, a `view_screen` is about 35 characters of name and param and `themeId` is 8 characters of name and value. There is no parsing. **Timing** unchanged for first
+content: the send is one set lookup when a step comes on screen, and nothing waits for it. **UX** none, there is no screen for it, and offline the SDK queues the events (SDK
+behaviour, not measured here). **Caching and dedupe** a set of the steps already reported in the run, held in the view model, so a rotation, a recomposition and the slide between
+screens send nothing; a killed process starts a new run and reports the step it resumes on once. **Battery** no wake-up of ours, no timer, no background work. **Shared limits** none
+touched, nothing for a BFF to collapse. No new event name, so the 500 name budget is not spent, and one new param name (`themeId`, which `theme_selected` already uses).
 
 ## 7. States and UX
 
@@ -1862,8 +1876,8 @@ in `searchstop/` touched:
 
 - **Unit U9 part 1 tests, the order and the finish.** Pure tables: `IntroStepFlowTest` (the order for each state and each first screen, the
   theme screen last and never skipped, `canFinish` for the theme screen with a theme chosen and no other), `IntroScreenViewTest` and
-  `IntroFlowViewModelStepShownTest` (the order of screen names is `Intro`, `IntroFirstTrip`, `Intro`, one view each, and no step maps
-  outside the two existing names), `IntroOutcomeTest` (`skipped` only from a DECLINED decision, `finishedOn` for every step),
+  `IntroFlowViewModelStepShownTest` (the order of screen names was `Intro`, `IntroFirstTrip`, `Intro`, one view each, and no step mapped
+  outside the two existing names; unit N1 made it five names, one view each, in step order), `IntroOutcomeTest` (`skipped` only from a DECLINED decision, `finishedOn` for every step),
   `IntroBarTest` (the confirm bar never waits, the theme bar waits only for a yes with loading stops and a trip not yet written),
   `IntroEmojiTest` (the origin entry is place 8, and the theme screen differs from the confirm screen before it) and `IntroStateTest`
   (the first and last steps, the decision). The view model with the fakes at the edges: `IntroFlowViewModelFinishTest` (the confirm
@@ -2082,7 +2096,7 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | U9-1 | The wait for loading stops moved with the finish: the theme screen's button is off while the stops are Unknown or Loading, but only when the rider said yes to saving and the trip is not written. The confirm screen's two buttons never wait | The confirm screen no longer writes, and the old rule held the save back, never Not now. Holding the theme button for a rider who declined would be a new wait. If the button should never be off, drop `rightEnabled` from `themeBar` and let the 15 s finish wait carry it | Superseded by X1-2: no button is ever off, and the wait runs under the finale |
 | U9-2 | `tripDecision` is transient and not saved with the screen. A finish with none recorded (the process was killed on the theme screen) writes no trip and is not skipped | The spec called it transient and left saving to a later unit. Saving it is a one field change in `IntroSnapshot`. Until then a rider killed on the last screen gets no trip they said yes to. Superseded by U10: it is saved now, with the screen and with the progress on the device | Default, not yet seen by owner |
 | U9-3 | `finishedOn` is `first_trip` for the theme screen | The finish is after the trip screens, and `first_trip` is the value every finish has always had. Mapping it to `park_ride` would split the funnel at the change | Default, not yet seen by owner |
-| U9-4 | The theme screen keeps the analytics name `Intro`, so a run now sends `Intro`, `IntroFirstTrip`, `Intro` | The spec said keep the existing name. The cost is a second `Intro` view in a run, and the analytics side must read a run by its first view | Default, not yet seen by owner |
+| U9-4 | The theme screen keeps the analytics name `Intro`, so a run now sends `Intro`, `IntroFirstTrip`, `Intro`. **Superseded by N1-2: each screen has its own name** | The spec said keep the existing name. The cost is a second `Intro` view in a run, and the analytics side must read a run by its first view | Default, not yet seen by owner |
 | U9-5 | The confirm answers are one event, `AnswerSaveTrip(yes)`, and `FinishPressed` and `FinishWithoutTrip` are gone | The old names say the Intro finishes there and it no longer does. One event with a flag mirrors `AnswerParkRide(yes)` | Default, not yet seen by owner |
 | U9-6 | The origin screen's emoji is place 8 of the list, a number of its own | It was the screen's position plus 5, and the new order moves that position. Place 8 keeps the same emoji it had | Default, not yet seen by owner |
 | U9-7 | No Settings entry since unit X5 (row X5-7), the code stays. A Settings replay shows the Intro in the rider's current colour until the last screen, and not the default theme | The spec said default until the last screen, which is true of a first run. Forcing the default on a replay would recolour the whole app for the length of the Intro and back | Default, not yet seen by owner |
@@ -2286,6 +2300,17 @@ Two changes, each its own commit, and one finding that is reported and not built
 | X6-5 | Tests. `ParkRideFigureRevealTest` holds the table (the constants and the 410 ms total, the start of each beat, the order, the ease out, the rise being what the fade leaves, and reduced motion as one fade). `IntroParkRideFiguresFadeTest` draws the real Intro slot on a clock stepped by hand and reads the opacity from the drawn pixels and the rise from where each line is drawn at 0, 100, 200 and 300 ms, that the numbers are drawn clear in the frame they arrive, complete after 410 ms, the height in every frame at 411 dp and at 320 dp with text at 200%, the name and tile in place and in full, that nothing is measured again, that a refresh does not fade, a restored card, reduced motion, every car park together, the one merged live region read once, and the home card called with exactly Saved Trips' arguments, which shows its numbers as before. `IntroParkRidePlaceholderWidthTest` holds X6-3 at 411 dp, 130% and 320 dp at 200%. Making the numbers snap fails six of the fade tests | The checks that the fade is the three beats and the room is the widest reading | Default, not yet seen by owner |
 | X6-6 | Cost. API calls: none added, on open or per minute. Payload: none, no asset. Parse: none. Time to first content: unchanged, nothing waits, and the card is complete one frame plus 410 ms after the numbers land, which is the fade itself and not a delay before it. Draw phase only: one animation progress and three `graphicsLayer` reads for the card, no layout and no recomposition per frame, and a card drawn with its numbers runs no animation. Battery: no wake-up beyond the existing animation clock, no timer, nothing in the background, and nothing when the card is not drawn. Caching and retries: none needed. UX: loading, slow, failed and offline are as before (the card keeps its room, and the failed and offline reading shows the name and no numbers). State: no new state in the view model, one remembered animation in the card | The rule that every feature answers the cost questions | Default, not yet seen by owner |
 
+### Unit N1, decisions where the spec was silent: the colour and the screens in the Intro events
+
+Two changes to what the Intro reports, so the Intro is measurable screen by screen and by colour. The analytics owner asked for them; none adds an event name. Every row is `Default, not yet seen by owner`.
+
+| # | Decision | Why and what to change | Status |
+|---|---|---|---|
+| N1-1 | `intro_lets_krail` gains `themeId`, the colour the rider chose, as the string `theme_selected` sends it (`themeIdParam`, the theme's number as text, the one function both events use). It is left out when no colour was chosen, and the finish needs one, so a normal firing has it. No new enum. **The brief that asked for it said the Intro does not send `theme_selected` today. It does**: `IntroThemeStep.confirm` calls `completion.trackTheme`, once, at the finish press, and `IntroFlowViewModelFinishTest` holds `track:theme_selected` in the order of the finish. So `themeId` repeats that choice on the one event the funnel reads and adds no information the other does not carry | The funnel joins one event, not two. `IntroLetsKrailThemeIdTest` holds the two to the same string for every theme the Intro offers | Default, not yet seen by owner |
+| N1-2 | Each of the five screens sends its own `view_screen` name: `IntroParkRide`, `IntroDestination`, `IntroOrigin`, `IntroConfirm`, `IntroTheme`, once, the first time the screen is on screen in a run (`IntroFlowViewModel.onStepShown`, a set of the steps reported, not saved). A recomposition, a turn of the screen and the slide between screens send nothing, because the view model holds the set. A killed process starts a new run, so the step it resumes on is sent once. The flow only moves forward, so a screen is not shown twice, and the set makes sure of it if it were. `Intro` and `IntroFirstTrip` stay defined in `AnalyticsScreen` for the builds in the field and the ledger, and no step sends either now. **For the route entry, exactly one event fires on entering the Intro: `view_screen` with `IntroParkRide`.** `RouteAnalyticsScreen` still maps `IntroRoute` to `Intro`, but only for the `screen` param of `device_window_changed`, which is not a `view_screen`, so the first screen is not counted twice. The origin screen sends none when Add to home filled the start and skipped it. Replaces U9-4 | One name for each screen answers where a rider left, which two shared names could not. A funnel that read `Intro` from builds before this reads `IntroParkRide` from builds after it for the first screen | Default, not yet seen by owner |
+| N1-3 | `introVersion` is on every firing of the new build. `IntroOutcome.introVersion` is a non-null Int set from one constant, `IntroOutcome.toEvent()` is the only place the event is built (`IntroEventCallSiteTest` reads the sources and fails on a second), and a test sends each way the Intro can finish through the real view model: saved, Not now, the question never answered, no pair picked and stops that failed to load. All carry `introVersion = 2` | A param that can be dropped by a second call site would split the funnel by version without anyone seeing it | Default, not yet seen by owner |
+| N1-4 | Cost. API calls: none added. `intro_lets_krail` has one more short param. `view_screen` goes from three sends in a run to five, each one Firebase log call that the SDK batches into its own upload (the analytics owner's estimate, a GUESS, not measured). Payload: under 1 kB per event (a GUESS). Counted from the code and not measured on the wire: a `view_screen` is about 35 characters (the event name, the `name` param and its value), and `themeId` adds 7 characters of name and one of value. Time to first content: unchanged, nothing waits. UX: no screen. Caching and dedupe: one send for each step in a run, by a set held in the view model, so no duplicate through a rotation. Battery: no timer, no radio of our own, no work beyond one set lookup per step change. Shared limits: none touched. Names: no new event name, five new values of an existing param, one new param name on an existing event | The brief's cost budget | Default, not yet seen by owner |
+
 ### Assumptions for approval (mandatory, no code until signed off)
 
 Evidence that comes from private analytics is shown to the owner in the message that introduces this ERD and is kept outside this repository. This table states the rule, the options and the public facts.
@@ -2373,7 +2398,9 @@ The rebuild, in three units on the same branch, in focused commits, none pushed:
 | Direct | Step 1 yes rate, location grant rate among Yes, add rate among Yes | Share answering Yes, share granting, share adding | `intro_lets_krail` params |
 | Direct | Skip rate, search rate | Share finishing with Skip, share using Search another stop | `intro_lets_krail` params. The search rate tells us whether the suggestions fit |
 | Lagging | Day one and day seven return, saved card opens in week one | Active again on a later day, and `saved_trip_card_click` | Existing events, by cohort |
-| Guardrail | Intro completion | Riders who see the Intro and finish | `view_screen` Intro and `intro_lets_krail` |
+| Guardrail | Intro completion | Riders who see the Intro and finish | `view_screen` `IntroParkRide` (the first screen) and `intro_lets_krail` |
+| Guardrail | Where riders leave | The last of the five screens a rider saw before leaving | `view_screen` `IntroParkRide`, `IntroDestination`, `IntroOrigin`, `IntroConfirm`, `IntroTheme` (unit N1) |
+| Direct | Colour chosen | Which colour the finishers chose | `intro_lets_krail` param `themeId` (unit N1) |
 | Guardrail | Stops wait | Bucket of time the rider waited for the stops after pressing the last button, under the finale | `intro_lets_krail` param `stopsWait` |
 | Guardrail | Stops failure | Finishes with a failed readiness | `stopsWait = failed` |
 
@@ -2387,17 +2414,20 @@ The 500 event-name budget is respected. Nothing here mints a name.
   old carousel. The new version stops sending them and sends:
   `introVersion` (2), `finishedOn` (park_ride or first_trip), `parkRideAnswer` (yes, no, skipped), `locationResult`
   (granted, denied, unavailable, not_asked), `addedParkRide` (bool), `savedTrip` (bool), `usedSearch` (bool), `skipped`
-  (bool), `stopsWait` (none, under_2s, 2_to_5s, over_5s, failed). Nine params, well inside the 25 per event.
+  (bool), `stopsWait` (none, under_2s, 2_to_5s, over_5s, failed). Nine params, well inside the 25 per event. Unit N1 adds a tenth,
+  `themeId`, the colour the rider chose, as the string `theme_selected` sends it, left out when none was chosen (the finish needs one,
+  so a normal firing has it). `introVersion` is on every firing, the skipped outcome included.
   In code, `IntroLetsKrailClickEvent` carries all eleven params as optional, and a null one is left out of the event, so
   the carousel sent its two and the new Intro sends its nine. The last carousel caller is now deleted, so nothing sends
   `completedOnPage` or `completedOnPageNumber` any more. Their definition and the `InteractionPage` enum stay in
   `AnalyticsEvent` until the analytics side has recorded the removal, because released versions still send them. The four
   lists are enums in the event, with the values above, and `IntroOutcomeEventTest` holds them to `IntroOutcome.toParams()`.
-- `view_screen` (existing) gets one new screen name, `IntroFirstTrip`. `Intro` is the Park & Ride and theme screens. Since unit U9
-  the theme screen is last, so a run sends `Intro` when the Intro is entered, `IntroFirstTrip` once for the destination, origin and
-  confirm screens, and `Intro` again on the theme screen (no new screen name). The analytics side reads a run by its first `Intro`
-  view, and the second `Intro` view marks arrival on the colour screen, where the Intro ends. A rider who reaches the trip screens and
-  never finishes is the drop-off. `theme_selected` (existing) is sent once when the rider presses `Let's KRAIL` on the theme screen,
+- `view_screen` (existing). **Unit N1 replaced the two names below with five.** A run sends `IntroParkRide`, `IntroDestination`,
+  `IntroOrigin`, `IntroConfirm` and `IntroTheme`, each once, the first time that screen is on screen (the origin is skipped when Add to
+  home filled the start, and then sends none). `Intro` and `IntroFirstTrip` stay defined for builds in the field and are sent by the
+  rebuilt Intro never. Before N1: `IntroFirstTrip` was the one new name, `Intro` was the Park & Ride and theme screens, and a run sent
+  `Intro`, `IntroFirstTrip` once for the three trip screens, and `Intro` again on the theme screen, so a funnel read a run by its first
+  `Intro` view. A rider who reaches a screen and never finishes is the drop-off, and the last name a rider sent says where. `theme_selected` (existing) is sent once when the rider presses `Let's KRAIL` on the theme screen,
   with `themeId` only, as the Settings screen sends it, and that press is also the finish that sends `intro_lets_krail`.
 - `park_ride_user_facility` (existing) gains `source = intro`. `save_trip_click` (existing) gains `source = intro`. These make
   Intro-created saves countable without a second event and without double counting.

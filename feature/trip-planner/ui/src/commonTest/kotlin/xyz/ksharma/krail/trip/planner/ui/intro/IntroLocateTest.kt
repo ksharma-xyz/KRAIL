@@ -115,7 +115,7 @@ class IntroLocateTest {
 
     @Test
     fun `each step reports its own screen`() {
-        assertEquals(AnalyticsScreen.Intro, IntroStep.PARK_RIDE.toAnalyticsScreen())
-        assertEquals(AnalyticsScreen.IntroFirstTrip, IntroStep.DESTINATION.toAnalyticsScreen())
+        assertEquals(AnalyticsScreen.IntroParkRide, IntroStep.PARK_RIDE.toAnalyticsScreen())
+        assertEquals(AnalyticsScreen.IntroDestination, IntroStep.DESTINATION.toAnalyticsScreen())
     }
 }

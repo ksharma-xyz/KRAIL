@@ -79,23 +79,22 @@ internal class IntroCompletion(
 }
 
 /**
- * The funnel reads from two screen names, and a new name needs a ledger row, so the rebuilt Intro
- * keeps them: the Park & Ride screen, which opens the Intro, and the theme screen, which closes it, are the Intro,
- * and the screens that ask for a trip are the first trip. The order is therefore Intro, first trip, Intro, and a
- * run sends the Intro name twice, once at each end, with the first trip between. [shouldTrackScreenView] sends one
- * view for each run of screens that share a name.
+ * One screen name for each of the five Intro screens, so a funnel can say which screen a rider left on. The two older
+ * names, `Intro` and `IntroFirstTrip`, stay defined for the builds in the field and are sent by no step now, so the
+ * first screen is `IntroParkRide` and nothing else, and no screen is counted under two names.
  */
 internal fun IntroStep.toAnalyticsScreen(): AnalyticsScreen = when (this) {
-    IntroStep.PARK_RIDE, IntroStep.THEME -> AnalyticsScreen.Intro
-    IntroStep.DESTINATION, IntroStep.ORIGIN, IntroStep.CONFIRM -> AnalyticsScreen.IntroFirstTrip
+    IntroStep.PARK_RIDE -> AnalyticsScreen.IntroParkRide
+    IntroStep.DESTINATION -> AnalyticsScreen.IntroDestination
+    IntroStep.ORIGIN -> AnalyticsScreen.IntroOrigin
+    IntroStep.CONFIRM -> AnalyticsScreen.IntroConfirm
+    IntroStep.THEME -> AnalyticsScreen.IntroTheme
 }
 
 /**
- * Whether showing [next] is a screen view to report. The first screen the rider sees is, and after that a
- * screen is only when its analytics name differs from the one before: the destination, origin and confirm screens
- * share the first trip name, so going from one to the next is the same screen and sends nothing, and the theme
- * screen after them is the Intro again, so it sends. [previous] is null before any screen has been shown, such as
- * after a killed process, which is a new run.
+ * Whether showing [next] is a screen view to report: the first time it is on screen in this run, and never again.
+ * [alreadyShown] is the screens this run has reported. The flow only moves forward, so a screen is not normally shown
+ * twice, and a turn of the screen shows the same screen again, which must not send. A killed process starts a new run
+ * with nothing shown, so the step it resumes on is reported once.
  */
-internal fun shouldTrackScreenView(previous: IntroStep?, next: IntroStep): Boolean =
-    previous == null || previous.toAnalyticsScreen() != next.toAnalyticsScreen()
+internal fun shouldTrackScreenView(alreadyShown: Set<IntroStep>, next: IntroStep): Boolean = next !in alreadyShown

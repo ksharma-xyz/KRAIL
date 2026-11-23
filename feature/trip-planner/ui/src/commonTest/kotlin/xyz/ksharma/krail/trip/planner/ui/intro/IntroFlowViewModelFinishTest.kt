@@ -264,6 +264,7 @@ class IntroFlowViewModelFinishTest {
                 "usedSearch" to false,
                 "skipped" to false,
                 "stopsWait" to "none",
+                "themeId" to KrailThemeStyle.Train.id.toString(),
             ),
             rig.outcomeEvent().properties,
         )
@@ -291,6 +292,7 @@ class IntroFlowViewModelFinishTest {
                 "usedSearch" to false,
                 "skipped" to true,
                 "stopsWait" to "none",
+                "themeId" to KrailThemeStyle.Train.id.toString(),
             ),
             rig.outcomeEvent().properties,
         )

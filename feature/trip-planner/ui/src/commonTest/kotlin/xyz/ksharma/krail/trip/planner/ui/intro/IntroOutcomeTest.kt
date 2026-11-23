@@ -30,6 +30,7 @@ class IntroOutcomeTest {
         usedSearch = false,
         skipped = false,
         stopsWait = StopsWait.NONE,
+        themeId = null,
     )
 
     @Test
@@ -120,6 +121,7 @@ class IntroOutcomeTest {
             usedSearch = false,
             skipped = false,
             stopsWait = StopsWait.TWO_TO_FIVE_S,
+            themeId = 4,
         )
 
         assertEquals(
@@ -133,9 +135,33 @@ class IntroOutcomeTest {
                 "usedSearch" to false,
                 "skipped" to false,
                 "stopsWait" to "2_to_5s",
+                "themeId" to "4",
             ),
             outcome.toParams(),
         )
+    }
+
+    @Test
+    fun `the chosen theme is read from the state, and no theme leaves themeId out`() {
+        assertEquals(restingOutcome.copy(themeId = 7), resting.copy(selectedThemeId = 7).toOutcome(StopsWait.NONE))
+        assertEquals(false, restingOutcome.toParams().containsKey("themeId"))
+        assertEquals("7", restingOutcome.copy(themeId = 7).toParams()["themeId"])
+    }
+
+    @Test
+    fun `the version is on every outcome, whatever the answers, so no firing is without it`() {
+        val outcomes = IntroStep.entries.flatMap { step ->
+            (listOf<TripDecision?>(null) + TripDecision.entries).flatMap { decision ->
+                listOf(true, false).map { saved ->
+                    resting.copy(step = step, tripDecision = decision, saved = saved).toOutcome(StopsWait.NONE)
+                }
+            }
+        }
+
+        assertEquals(setOf(2), outcomes.map { it.introVersion }.toSet())
+        assertEquals(setOf<Any?>(2), outcomes.map { it.toParams()["introVersion"] }.toSet())
+        assertEquals(setOf<Any?>(2), outcomes.map { it.toEvent().properties?.get("introVersion") }.toSet())
+        assertEquals(true, outcomes.any { it.skipped }, "the skipped outcome is among them")
     }
 
     @Test

@@ -40,6 +40,19 @@ class IntroOutcomeEventTest {
         }
     }
 
+    @Test
+    fun `the event carries the theme the outcome reports, for every theme the Intro offers`() {
+        val themeIds = listOf<Int?>(null) + introThemeChoices().map { it.style.id }
+        assertEquals(5, themeIds.size, "no theme and the four the Intro offers")
+        themeIds.forEach { themeId ->
+            val outcome = outcome(IntroStep.THEME, ParkRideAnswer.NO, LocationResult.NOT_ASKED, StopsWait.NONE)
+                .copy(themeId = themeId)
+
+            assertEquals(outcome.toParams(), outcome.toEvent().properties)
+            assertEquals(themeId?.toString(), outcome.toEvent().properties?.get("themeId"))
+        }
+    }
+
     private fun outcome(
         step: IntroStep,
         answer: ParkRideAnswer,
@@ -55,6 +68,7 @@ class IntroOutcomeEventTest {
         usedSearch = false,
         skipped = true,
         stopsWait = wait,
+        themeId = null,
     )
 
     private fun allOutcomes(): List<IntroOutcome> {

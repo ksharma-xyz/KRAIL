@@ -4,10 +4,13 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.IntroLetsKrailClick
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
+import xyz.ksharma.krail.trip.planner.ui.themeselection.themeIdParam
 
 /**
  * The `intro_lets_krail` event for this outcome. The carousel params stay unset, so only the nine
- * outcome params are sent. `IntroOutcomeEventTest` holds the event to [toParams] for every value.
+ * outcome params are sent, with `themeId` when a colour was chosen. This is the only place the event is built,
+ * and [IntroOutcome.introVersion] is not optional, so no firing is without it. `IntroOutcomeEventTest` holds the
+ * event to [toParams] for every value.
  */
 internal fun IntroOutcome.toEvent() = IntroLetsKrailClickEvent(
     introVersion = introVersion,
@@ -19,6 +22,7 @@ internal fun IntroOutcome.toEvent() = IntroLetsKrailClickEvent(
     usedSearch = usedSearch,
     skipped = skipped,
     stopsWait = stopsWait.toEventValue(),
+    themeId = themeId?.let(::themeIdParam),
 )
 
 /**

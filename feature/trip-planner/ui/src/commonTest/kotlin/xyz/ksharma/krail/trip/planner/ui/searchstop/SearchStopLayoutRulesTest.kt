@@ -13,25 +13,19 @@ class SearchStopLayoutRulesTest {
     // region the rows of the group card
 
     @Test
-    fun `a To and From form is the To bar, a divider and the From bar`() {
-        assertEquals(listOf(GroupRow.To, GroupRow.Divider, GroupRow.From), groupCardRows(FormShape.ToAndFrom))
+    fun `a To and From form is the To pill and then the From pill, with no divider`() {
+        assertEquals(listOf(GroupRow.To, GroupRow.From), groupCardRows(FormShape.ToAndFrom))
     }
 
     @Test
-    fun `a single bar has no divider and no From row`() {
+    fun `a single bar has no From row`() {
         assertEquals(listOf(GroupRow.To), groupCardRows(FormShape.Single))
     }
 
     @Test
-    fun `the To bar is always first and a divider is always between two bars`() {
+    fun `the To pill is always first`() {
         for (shape in FormShape.entries) {
-            val rows = groupCardRows(shape)
-            assertEquals(GroupRow.To, rows.first())
-            val divider = rows.indexOf(GroupRow.Divider)
-            if (divider >= 0) {
-                assertEquals(GroupRow.To, rows[divider - 1])
-                assertEquals(GroupRow.From, rows[divider + 1])
-            }
+            assertEquals(GroupRow.To, groupCardRows(shape).first())
         }
     }
 

@@ -27,8 +27,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.LocalContentColor
-import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.TextField
+import xyz.ksharma.krail.taj.components.TextFieldColors
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 
@@ -48,14 +48,16 @@ internal class FloatingRowsContent(
 )
 
 /**
- * The To and From block as two rows on one fixed dark card (`docs/MAP_HOME_UX.md` rules 33, 35 and 36).
+ * The To and From block as two soft pills on one card (`docs/MAP_HOME_UX.md` rules 33, 35 and 36).
  *
- * Neither bar has a fill, a ring or a card of its own: both are taj's [TextField] in [FloatingDark.barColors],
- * the same colours whether the bar has focus or not, so nothing swaps between dark and cream when focus moves.
- * The bar being edited holds the one query field. The other is the same field unfocused: it shows its stop,
- * or its placeholder, and a tap on it is the tap that edits it. A thin divider with [rowGap] above and below
- * sits between the rows, and each row is 48 tall with the same two 48 columns [toFromBarInsets] measures, so
- * the back arrow, the origin dot, the clear X and the go circle sit where they always did.
+ * Both bars are taj's [TextField] in [softFieldColors]: a pill that is a touch darker than the card in light mode
+ * and a touch lighter in dark mode, with the page's own text colour, so they read as shapes without a border and
+ * follow the app mode. The colours are the same whether the bar has focus or not, so nothing swaps between fills
+ * when focus moves. The bar being edited holds the one query field. The other is the same field unfocused: it
+ * shows its stop, or its placeholder, and a tap on it is the tap that edits it. [rowGap] separates the pills,
+ * with no divider, and each pill is 48 tall with the same two 48 columns [toFromBarInsets] measures, so the back
+ * arrow, the origin dot, the clear X and the go circle sit where they always did. A pill is one line and its text
+ * ends in an ellipsis, so the pair is the same height at every text size.
  */
 @Composable
 internal fun ToFromFloatingRows(
@@ -65,18 +67,18 @@ internal fun ToFromFloatingRows(
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
-    val ink = FloatingDark.content
-    val fromInk = FloatingDark.container
+    val colors = softFieldColors()
     Column(modifier = modifier.fillMaxWidth()) {
         FloatingBar(
             bar = rows.to,
             isEditing = ToFromField.To.hasDarkFill(rows.editing),
             editor = rows.editor,
             insets = insets,
+            colors = colors,
             leading = rows.toLeading,
             trailing = rows.toTrailing,
         )
-        // The divider and the gaps around it belong to the From row, so a hidden From leaves nothing under To.
+        // The gap belongs to the From row, so a hidden From leaves nothing under To.
         AnimatedVisibility(
             visible = rows.showFrom,
             enter = expandVertically(
@@ -84,20 +86,21 @@ internal fun ToFromFloatingRows(
                 animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing),
             ) + fadeIn(animationSpec = tween(350)),
         ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Divider(modifier = Modifier.padding(vertical = rowGap))
+            Column(modifier = Modifier.fillMaxWidth().padding(top = rowGap)) {
                 FloatingBar(
                     bar = rows.from,
                     isEditing = ToFromField.From.hasDarkFill(rows.editing),
                     editor = rows.editor,
                     insets = insets,
+                    colors = colors,
                     leading = { OriginDot() },
                     trailing = rows.fromTrailing
                         ?: if (rows.showGo) {
                             {
+                                // The opposite of the pill: its text colour for the circle, its fill for the arrow.
                                 GoCircle(
-                                    circle = ink,
-                                    arrow = fromInk,
+                                    circle = colors.contentColor,
+                                    arrow = colors.containerColor,
                                     diameter = goCircleDiameter(insets.column, dim.spacingXS),
                                     onClick = rows.onGoClick,
                                 )
@@ -118,14 +121,15 @@ private fun FloatingBar(
     isEditing: Boolean,
     editor: ToFromEditor?,
     insets: ToFromBarInsets,
+    colors: TextFieldColors,
     leading: @Composable () -> Unit,
     trailing: (@Composable () -> Unit)?,
 ) {
-    CompositionLocalProvider(LocalContentColor provides FloatingDark.content) {
+    CompositionLocalProvider(LocalContentColor provides colors.contentColor) {
         if (isEditing && editor != null) {
-            EditingBar(bar, editor, insets, FloatingDark.barColors(), leading, trailing)
+            EditingBar(bar, editor, insets, colors, leading, trailing)
         } else {
-            IdleFloatingBar(bar, insets, leading, trailing)
+            IdleFloatingBar(bar, insets, colors, leading, trailing)
         }
     }
 }
@@ -139,6 +143,7 @@ private fun FloatingBar(
 private fun IdleFloatingBar(
     bar: BarContent,
     insets: ToFromBarInsets,
+    colors: TextFieldColors,
     leading: @Composable () -> Unit,
     trailing: (@Composable () -> Unit)?,
 ) {
@@ -154,7 +159,7 @@ private fun IdleFloatingBar(
             placeholder = bar.placeholder,
             readOnly = true,
             modifier = Modifier.fillMaxWidth().focusProperties { canFocus = false },
-            colors = FloatingDark.barColors(),
+            colors = colors,
             leadingIcon = { BarSlot(insets.column, leading) },
             trailingIcon = trailing?.let { slot -> { BarSlot(insets.column, slot) } },
             contentPadding = PaddingValues(end = if (trailing == null) KrailTheme.dimensions.spacingXL else 0.dp),

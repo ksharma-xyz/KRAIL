@@ -34,8 +34,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
  * The form at the top of Search Stop: the app's To and From block with the search field typed into
  * the bar being edited, in place (rules 35 and 36 of `docs/MAP_HOME_UX.md`).
  *
- * - With [ToFromBlockStyle.FloatingRows], which the map state uses, both bars are the same taj text field
- *   on the group card's one dark surface, the same colour whichever has focus. The bar being edited holds
+ * - With [ToFromBlockStyle.FloatingRows], which Search Stop uses, both bars are the same taj text field as a
+ *   soft pill on the group card's one surface, the same colour whichever has focus. The bar being edited holds
  *   the query field, the other is that field unfocused, and tapping it moves the field and the keyboard to
  *   it. With [ToFromBlockStyle.Classic] the bar being edited is the dark one and the other the light
  *   button. No row moves either way.

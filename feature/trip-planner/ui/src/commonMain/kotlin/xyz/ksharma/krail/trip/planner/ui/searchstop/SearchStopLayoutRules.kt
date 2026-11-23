@@ -11,21 +11,18 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 // decision is a pure function or one table, so the order of the rows, which of them show and every gap are
 // pinned without a layout.
 
-/** One row of the group card at the top, in the order it is drawn. The card holds only the bars. */
-internal enum class GroupRow { To, Divider, From }
+/** One row of the group card at the top, in the order it is drawn. The card holds only the two pills. */
+internal enum class GroupRow { To, From }
 
 /**
- * The rows of the group card, top to bottom. The To bar is always first. The From bar comes under it with a
- * thin divider between them when the form is [FormShape.ToAndFrom], and a single bar (a label, or one leg of
- * a trip) has neither. The location status chip and the mode chips are not in this card at all: the chip is
+ * The rows of the group card, top to bottom. The To pill is always first. The From pill comes under it, one
+ * gap away with no divider, when the form is [FormShape.ToAndFrom], and a single bar (a label, or one leg of a
+ * trip) has only the one. The location status chip and the mode chips are not in this card at all: the chip is
  * under it ([locationChipShownFor]) and the mode chips are in [SearchStopModeControls].
  */
 internal fun groupCardRows(shape: FormShape): List<GroupRow> = buildList {
     add(GroupRow.To)
-    if (shape == FormShape.ToAndFrom) {
-        add(GroupRow.Divider)
-        add(GroupRow.From)
-    }
+    if (shape == FormShape.ToAndFrom) add(GroupRow.From)
 }
 
 /** Whether the location status chip is drawn under the group card: only while the location is not allowed. */

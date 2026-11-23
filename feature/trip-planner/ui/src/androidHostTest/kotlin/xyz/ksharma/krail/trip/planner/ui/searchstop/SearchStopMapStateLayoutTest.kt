@@ -103,7 +103,7 @@ class SearchStopMapStateLayoutTest {
 
     @Test
     @Config(qualifiers = W411)
-    fun `the bars are two rows of one width, one card padding inside the card, with a divider gap between`() {
+    fun `the bars are two pills of one width, one card padding inside the card, one gap apart`() {
         setScreen()
 
         val card = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
@@ -115,8 +115,7 @@ class SearchStopMapStateLayoutTest {
         assertNear("bars share a width", to.width, from.width)
         assertNear("To is 48 tall", 48.dp, to.height)
         assertNear("From is 48 tall", 48.dp, from.height)
-        // One row gap above the divider, the 1 dp divider, one row gap below it.
-        assertNear("From sits under the divider", to.bottom + gaps.betweenRows * 2 + 1.dp, from.top)
+        assertNear("From sits one gap under To", to.bottom + gaps.betweenRows, from.top)
     }
 
     @Test

@@ -73,18 +73,6 @@ internal object FloatingDark {
         placeholderColor = softContent,
         cursorColor = content,
     )
-
-    /**
-     * A bar that is a row on the card's own surface: no fill of its own, light text and caret, and a
-     * placeholder a step quieter than a typed stop. The same colours whether the bar has focus or not.
-     */
-    @Composable
-    fun barColors(): TextFieldColors = TextFieldColors(
-        containerColor = Color.Transparent,
-        contentColor = content,
-        placeholderColor = content.copy(alpha = PLACEHOLDER_ALPHA),
-        cursorColor = content,
-    )
 }
 
 /**

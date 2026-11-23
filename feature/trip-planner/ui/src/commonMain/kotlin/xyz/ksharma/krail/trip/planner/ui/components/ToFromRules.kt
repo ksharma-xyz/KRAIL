@@ -18,9 +18,9 @@ internal sealed interface ToFromBlockStyle {
     data object Classic : ToFromBlockStyle
 
     /**
-     * Search Stop's map state. The bars are two rows on the one fixed dark card the caller draws: both are the
-     * same taj text field with no fill of its own, a thin divider sits between them with [rowGap] above and
-     * below it, and which bar has focus changes the caret and the keyboard and nothing else.
+     * Search Stop's two soft pills on the one card the caller draws: both are the same taj text field in the soft
+     * pill colours, [rowGap] apart with no divider, and which bar has focus changes the caret and the keyboard and
+     * nothing else.
      */
     data class FloatingRows(val rowGap: Dp) : ToFromBlockStyle
 }

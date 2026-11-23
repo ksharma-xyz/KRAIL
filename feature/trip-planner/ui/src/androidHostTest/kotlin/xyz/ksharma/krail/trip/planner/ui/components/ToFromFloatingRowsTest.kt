@@ -28,12 +28,9 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
-import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.components.TextFieldColors
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.theme.md_theme_dark_onSurface
-import xyz.ksharma.krail.taj.theme.md_theme_on_stop_label_surface
-import xyz.ksharma.krail.taj.theme.md_theme_stop_label_surface
+import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import kotlin.math.abs
@@ -41,9 +38,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * The To and From block as two floating rows (`ToFromBlockStyle.FloatingRows`): the real rows on a card of the
- * fixed dark, read from real bounds. Both bars are rows on that one surface with no fill of their own, the same
- * in light and dark app mode and whichever bar has focus.
+ * The To and From block as two soft pills (`ToFromBlockStyle.FloatingRows`): the real pills on a card of the app's
+ * own surface, read from real bounds. Both bars are the same taj field in the shared soft colours, the same
+ * whichever bar has focus, with a gap between them and no divider.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -65,24 +62,22 @@ class ToFromFloatingRowsTest {
     ) {
         composeRule.setContent {
             PreviewTheme {
-                FloatingDarkTheme {
-                    Box(modifier = Modifier.background(FloatingDark.container).padding(cardPadding)) {
-                        ToFromBlock(
-                            toStopItem = to,
-                            fromStopItem = from,
-                            onToClick = onTo,
-                            onFromClick = onFrom,
-                            onGoClick = {},
-                            editing = editing.value,
-                            editor = ToFromEditor(
-                                state = rememberTextFieldState(),
-                                modifier = Modifier.testTag(QUERY_FIELD),
-                            ),
-                            toLeading = { Box(Modifier.size(48.dp).testTag(BACK_PROBE)) },
-                            showGo = false,
-                            style = ToFromBlockStyle.FloatingRows(rowGap = rowGap),
-                        )
-                    }
+                Box(modifier = Modifier.background(KrailTheme.colors.surface).padding(cardPadding)) {
+                    ToFromBlock(
+                        toStopItem = to,
+                        fromStopItem = from,
+                        onToClick = onTo,
+                        onFromClick = onFrom,
+                        onGoClick = {},
+                        editing = editing.value,
+                        editor = ToFromEditor(
+                            state = rememberTextFieldState(),
+                            modifier = Modifier.testTag(QUERY_FIELD),
+                        ),
+                        toLeading = { Box(Modifier.size(48.dp).testTag(BACK_PROBE)) },
+                        showGo = false,
+                        style = ToFromBlockStyle.FloatingRows(rowGap = rowGap),
+                    )
                 }
             }
         }
@@ -92,7 +87,7 @@ class ToFromFloatingRowsTest {
     private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
 
     @Test
-    fun `the bars are two rows of one width with a divider gap between and no fill of their own`() {
+    fun `the bars are two pills of one width, 48 tall, one gap apart with no divider between`() {
         setRows(mutableStateOf(ToFromField.To))
 
         val to = boundsOf(TripPlannerTestTags.SEARCH_ROW_TO)
@@ -101,8 +96,7 @@ class ToFromFloatingRowsTest {
         assertEquals(to.width, from.width)
         assertEquals(48.dp, to.height)
         assertEquals(48.dp, from.height)
-        // The gap above the divider, the 1 dp divider and the gap below it.
-        assertTrue(abs((from.top - to.bottom - (rowGap * 2 + 1.dp)).value) <= 1f, "To $to From $from")
+        assertTrue(abs((from.top - to.bottom - rowGap).value) <= 0.5f, "To $to From $from")
     }
 
     @Test
@@ -150,44 +144,34 @@ class ToFromFloatingRowsTest {
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-notnight")
-    fun `in light mode the floating colours are the fixed dark and light`() = assertFixedDark()
+    fun `in light mode the pills are the shared soft colours, a touch darker than the card`() = assertSoftPills()
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night")
-    fun `in dark mode the floating colours are the same fixed dark and light`() = assertFixedDark()
+    fun `in dark mode the pills are the same soft colours, a touch lighter than the card`() = assertSoftPills()
 
     /**
-     * Pixels cannot be read in this harness, so the colours are read where the rows get them: the card's fill
-     * and content are taj's two tokens, a bar's text field has no fill of its own and takes the content colour for
-     * its text and caret, and everything inside the scope that reads the app's own tokens reads the dark scheme.
+     * Pixels of the text are not read here, so the colours are read where the pills get them: the one
+     * [softFieldColors] holder, whose fill is a real step from the card and whose text and placeholder read on it.
      */
-    private fun assertFixedDark() {
-        var container = Color.Unspecified
-        var content = Color.Unspecified
-        var bar: TextFieldColors? = null
+    private fun assertSoftPills() {
+        var soft: TextFieldColors? = null
+        var card = Color.Unspecified
         var onSurface = Color.Unspecified
-        var label = Color.Unspecified
         composeRule.setContent {
             PreviewTheme {
-                FloatingDarkTheme {
-                    container = FloatingDark.container
-                    content = FloatingDark.content
-                    bar = FloatingDark.barColors()
-                    onSurface = KrailTheme.colors.onSurface
-                    label = KrailTheme.colors.label
-                }
+                soft = softFieldColors()
+                card = KrailTheme.colors.surface
+                onSurface = KrailTheme.colors.onSurface
             }
         }
         composeRule.waitForIdle()
 
-        assertEquals(md_theme_stop_label_surface, container)
-        assertEquals(md_theme_on_stop_label_surface, content)
-        val colors = checkNotNull(bar)
-        assertEquals(Color.Transparent, colors.containerColor, "A bar has no fill of its own.")
-        assertEquals(content, colors.contentColor)
-        assertEquals(content, colors.cursorColor)
-        assertEquals(md_theme_dark_onSurface, onSurface, "Tokens read inside the scope are the dark scheme's.")
-        assertEquals(md_theme_dark_onSurface, label)
+        val colors = checkNotNull(soft)
+        assertTrue(colors.containerColor != card, "A pill is not the card's own colour.")
+        assertEquals(onSurface, colors.contentColor)
+        assertEquals(onSurface, colors.cursorColor)
+        assertTrue(colors.containerColor.alpha == 1f, "A pill is a solid fill, never see through.")
     }
 
     private companion object {

@@ -76,9 +76,8 @@ internal fun toFromBarInsets(): ToFromBarInsets {
  * Because From is under To, showing it never moves To.
  *
  * [style] is the block's look. [ToFromBlockStyle.Classic] is everything above, the home's own. Search Stop's
- * map state passes [ToFromBlockStyle.FloatingRows]: the two bars are rows of taj's [TextField] on the one
- * fixed dark card the caller draws, with a thin divider between them, and neither bar swaps fill when focus
- * moves (see `ToFromFloatingRows`).
+ * map state passes [ToFromBlockStyle.FloatingRows]: the two bars are soft pills of taj's [TextField] on the one
+ * card the caller draws, a gap apart, and neither bar swaps fill when focus moves (see `ToFromFloatingRows`).
  */
 @Composable
 internal fun ToFromBlock(

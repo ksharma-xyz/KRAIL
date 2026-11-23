@@ -4,115 +4,175 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import kotlin.math.hypot
 import kotlin.math.max
+import kotlin.math.min
 
 /**
- * Where the theme badges sit, in pixels from the top left of the grid, and how big the grid is. [xs] and [ys] are the
- * top left of each badge in the order they were given, and [columns] is 2 for the loose grid and 1 for the column the
- * badges wrap to when two do not fit the width.
+ * How the badges are laid out for the room there is. [Wave] is the screen's own layout: one row of four, alternately high and low.
+ * [Zigzag] is the same four in two staggered rows, used where the wave would let two badges that are floating come too close.
+ * [Column] is one staggered column, for a window too narrow for either.
+ */
+internal enum class ThemeBadgeLayout { Wave, Zigzag, Column }
+
+/**
+ * Where the theme badges sit, in dp from the top left of the grid, and how big the grid is. [xsDp] and [ysDp] are the top left of
+ * each badge in the order they were given. [closestGapDp] is the least space between two badges at rest, edge to edge, and
+ * [floatAmplitudeDp] is how far each may float from its place (`floatAmplitudeDp`), which is less where the room is smaller, so
+ * that two badges that float, or one that dances, never touch.
  */
 internal data class ThemeBadgeGrid(
-    val xs: List<Int>,
-    val ys: List<Int>,
-    val width: Int,
-    val height: Int,
-    val columns: Int,
+    val xsDp: List<Float>,
+    val ysDp: List<Float>,
+    val widthDp: Float,
+    val heightDp: Float,
+    val layout: ThemeBadgeLayout,
+    val closestGapDp: Float,
+    val floatAmplitudeDp: Float,
 )
 
+/** How far a badge of the wave sits lower than its neighbours, the high ones at the top and the low ones this far down. */
+internal const val WAVE_DROP_DP = 48f
+
+/** How far the second badge of each row of the zigzag is lowered, and the step from the first row to the second is a badge and this. */
+internal const val ZIGZAG_LOWER_DP = 32f
+
+/** The most the second row of the zigzag is moved in from the first, so no two badges share a column. */
+internal const val ZIGZAG_MAX_INSET_DP = 72f
+
+/** The room between badges of the single column, and the most every second one is moved in, so it reads as staggered. */
+internal const val COLUMN_GAP_DP = 24f
+internal const val COLUMN_SHIFT_DP = 16f
+
+/** The least two badges that float at their widest may come to each other for the wave to be used. */
+internal const val MIN_FLOATING_GAP_DP = 8f
+
 /**
- * The loose, slightly lopsided grid the four theme badges sit in, as a pure function of pixels so a table can hold it.
- * Every badge is a square of [badge] pixels. The badges go in reading order, left then right, then down.
+ * The layout of [count] badges of [badgeDp], in a room [availableDp] wide, as a pure function of dp so a table can hold it. The room
+ * is the window's width, at most the content cap, less the page padding. The badge is a fixed size at every text size, so the choice
+ * is the room alone.
  *
- * Two columns when two badges, the [gapX] between them and the [shiftX] fit [available]: the right column is lowered by
- * half a badge and sits [shiftX] further out, and the second row of the left column is moved in by [shiftX], so no row
- * lines up with the next and the whole reads as scattered by hand. Otherwise one column, the badges one under the next
- * [gapY] apart, every second one moved in by [shiftX] (less if the room is short) so it still reads as staggered, and
- * never two to a row.
+ * - **Wave (the first choice).** One row, the badges spread across the whole room with the same step between their centres, alternately
+ *   at the top and [WAVE_DROP_DP] lower: high, low, high, low. It is used when two badges that float at their widest
+ *   ([FLOAT_MAX_DP], which moves a badge by up to [SQRT_TWO] times that, in any direction) would still keep [MIN_FLOATING_GAP_DP]
+ *   between them.
+ * - **Zigzag.** Four badges in two rows. In the first the second badge is at the far side and lowered by [ZIGZAG_LOWER_DP]. The second
+ *   row starts a badge and that far down, with the same two moved in by `h`, which is a third of the room and at most
+ *   [ZIGZAG_MAX_INSET_DP]. So no two badges share a column. It is used when the wave is not and its badges are at least
+ *   [minClearGapDp] apart at rest, so a dance can never touch the next badge even where there is no room to float.
+ * - **Column.** The badges one under the next [COLUMN_GAP_DP] apart, every second one moved in by [COLUMN_SHIFT_DP], or less
+ *   where the room is short. It is the last choice, and never has two to a row.
  *
- * No two badges ever overlap or sit closer than the smaller of [gapX] and [gapY]: in a column the neighbours are [gapY]
- * apart, and across the columns the nearest edges are [gapX] apart whatever the shift. That room is what the drift and the
- * dance of a badge use, so they cannot touch a neighbour. The grid is as wide and as tall as the badges, nothing more, and
- * the caller centres it.
+ * The grid is as wide as the layout it has and as tall as it needs, and the caller centres it.
  */
-internal fun themeBadgeGrid(
-    count: Int,
-    badge: Int,
-    gapX: Int,
-    gapY: Int,
-    shiftX: Int,
-    available: Int,
-): ThemeBadgeGrid {
-    if (count <= 0) return ThemeBadgeGrid(emptyList(), emptyList(), width = 0, height = 0, columns = 1)
-    val twoColumns = count > 1 && 2 * badge + gapX + shiftX <= available
-    return if (twoColumns) {
-        twoColumnGrid(count, badge, gapX, gapY, shiftX)
-    } else {
-        oneColumnGrid(count, badge, gapY, shiftX, available)
+internal fun themeBadgeGrid(count: Int, availableDp: Float, badgeDp: Float): ThemeBadgeGrid {
+    if (count <= 0) {
+        return ThemeBadgeGrid(
+            emptyList(),
+            emptyList(),
+            widthDp = 0f,
+            heightDp = 0f,
+            layout = ThemeBadgeLayout.Column,
+            closestGapDp = Float.POSITIVE_INFINITY,
+            floatAmplitudeDp = FLOAT_MAX_DP,
+        )
     }
+    val wave = waveGrid(count, availableDp, badgeDp)
+    if (count == 1 || wave.closestGapDp - 2f * SQRT_TWO * FLOAT_MAX_DP >= MIN_FLOATING_GAP_DP) return wave
+    if (count == FOUR) {
+        val zigzag = zigzagGrid(availableDp, badgeDp)
+        if (zigzag.closestGapDp >= minClearGapDp(badgeDp)) return zigzag
+    }
+    return columnGrid(count, availableDp, badgeDp)
 }
 
-private fun twoColumnGrid(count: Int, badge: Int, gapX: Int, gapY: Int, shiftX: Int): ThemeBadgeGrid {
-    val rightX = badge + gapX + shiftX
-    val lowered = badge / 2
-    val step = badge + gapY
-    val xs = List(count) { i -> if (i % 2 == 1) rightX else (i / 2) % 2 * shiftX }
-    val ys = List(count) { i -> i / 2 * step + if (i % 2 == 1) lowered else 0 }
+// The grid for the points, with the least space between any two of them and the float that space allows.
+private fun gridOf(
+    xs: List<Float>,
+    ys: List<Float>,
+    badgeDp: Float,
+    layout: ThemeBadgeLayout,
+): ThemeBadgeGrid {
+    val gap = closestGapDp(xs, ys, badgeDp)
     return ThemeBadgeGrid(
-        xs = xs,
-        ys = ys,
-        width = rightX + badge,
-        height = ys.max() + badge,
-        columns = 2,
+        xsDp = xs,
+        ysDp = ys,
+        widthDp = xs.max() + badgeDp,
+        heightDp = ys.max() + badgeDp,
+        layout = layout,
+        closestGapDp = gap,
+        floatAmplitudeDp = floatAmplitudeDp(gap, badgeDp),
     )
 }
 
-private fun oneColumnGrid(count: Int, badge: Int, gapY: Int, shiftX: Int, available: Int): ThemeBadgeGrid {
-    val shift = shiftX.coerceAtMost(max(0, available - badge))
-    val step = badge + gapY
-    val xs = List(count) { i -> i % 2 * shift }
-    val ys = List(count) { i -> i * step }
-    return ThemeBadgeGrid(
-        xs = xs,
-        ys = ys,
-        width = badge + if (count > 1) shift else 0,
-        height = ys.max() + badge,
-        columns = 1,
+/** The least space, edge to edge, between any two of the round badges at [xs] and [ys], which is negative when two overlap. */
+internal fun closestGapDp(xs: List<Float>, ys: List<Float>, badgeDp: Float): Float {
+    var closest = Float.POSITIVE_INFINITY
+    for (i in xs.indices) {
+        for (j in i + 1 until xs.size) {
+            closest = min(closest, hypot(xs[i] - xs[j], ys[i] - ys[j]) - badgeDp)
+        }
+    }
+    return closest
+}
+
+private fun waveGrid(count: Int, availableDp: Float, badgeDp: Float): ThemeBadgeGrid {
+    val span = availableDp - badgeDp
+    val xs = List(count) { i -> if (count == 1) 0f else i * span / (count - 1) }
+    val ys = List(count) { i -> if (i % 2 == 0) 0f else WAVE_DROP_DP }
+    return gridOf(xs, ys, badgeDp, ThemeBadgeLayout.Wave)
+}
+
+private fun zigzagGrid(availableDp: Float, badgeDp: Float): ThemeBadgeGrid {
+    val span = availableDp - badgeDp
+    val inset = min(ZIGZAG_MAX_INSET_DP, span / THIRD)
+    val across = span - inset
+    val rowStep = badgeDp + ZIGZAG_LOWER_DP
+    return gridOf(
+        xs = listOf(0f, across, inset, inset + across),
+        ys = listOf(0f, ZIGZAG_LOWER_DP, rowStep, rowStep + ZIGZAG_LOWER_DP),
+        badgeDp = badgeDp,
+        layout = ThemeBadgeLayout.Zigzag,
     )
 }
+
+private fun columnGrid(count: Int, availableDp: Float, badgeDp: Float): ThemeBadgeGrid {
+    val shift = min(COLUMN_SHIFT_DP, max(0f, availableDp - badgeDp))
+    val step = badgeDp + COLUMN_GAP_DP
+    return gridOf(
+        xs = List(count) { i -> i % 2 * shift },
+        ys = List(count) { i -> i * step },
+        badgeDp = badgeDp,
+        layout = ThemeBadgeLayout.Column,
+    )
+}
+
+private const val FOUR = 4
+private const val THIRD = 3f
 
 /**
- * Lays its children out as [themeBadgeGrid] says and centres the grid across the room it is given. Each child is measured
- * at its own size and the grid is built from the largest, so every badge keeps its whole self and is never squeezed.
- * It is as tall as the grid, and the middle zone of the screen scrolls when that is more than the room.
+ * Lays its children out as [grid] says and centres the grid across the room it is given. Each child is measured at its own size
+ * and is centred on its place in the grid, so every badge keeps its whole self and is never squeezed. It is as tall as the grid,
+ * and the middle zone of the screen scrolls when that is more than the room.
  */
 @Composable
 internal fun IntroThemeBadgeGrid(
-    gapX: Dp,
-    gapY: Dp,
-    shiftX: Dp,
+    grid: ThemeBadgeGrid,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
     Layout(content = content, modifier = modifier) { measurables, constraints ->
         val placeables = measurables.map { it.measure(Constraints()) }
         val badge = placeables.maxOfOrNull { max(it.width, it.height) } ?: 0
-        val room = if (constraints.hasBoundedWidth) constraints.maxWidth else Int.MAX_VALUE
-        val grid = themeBadgeGrid(
-            count = placeables.size,
-            badge = badge,
-            gapX = gapX.roundToPx(),
-            gapY = gapY.roundToPx(),
-            shiftX = shiftX.roundToPx(),
-            available = room,
-        )
-        val width = if (constraints.hasBoundedWidth) constraints.maxWidth else grid.width
-        layout(width, grid.height) {
-            val left = (width - grid.width) / 2
+        val gridWidth = grid.widthDp.dp.roundToPx()
+        val width = if (constraints.hasBoundedWidth) constraints.maxWidth else gridWidth
+        layout(width, grid.heightDp.dp.roundToPx()) {
+            val left = (width - gridWidth) / 2
             placeables.forEachIndexed { i, placeable ->
                 placeable.place(
-                    x = left + grid.xs[i] + (badge - placeable.width) / 2,
-                    y = grid.ys[i] + (badge - placeable.height) / 2,
+                    x = left + grid.xsDp[i].dp.roundToPx() + (badge - placeable.width) / 2,
+                    y = grid.ysDp[i].dp.roundToPx() + (badge - placeable.height) / 2,
                 )
             }
         }

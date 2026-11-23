@@ -1,6 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
+import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.hypot
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -22,37 +24,56 @@ class IntroThemeMotionTest {
         assertNear(expected.scale, actual.scale, "$message scale", tolerance)
     }
 
-    // region The drift
+    // region The float
 
     @Test
-    fun `the drift never goes further than 6 dp up or down or 4 dp sideways, for any badge at any time`() {
-        FloatSpecs.indices.forEach { index ->
-            sampleTimes.forEach { t ->
-                val offset = floatOffsetAt(index, t)
+    fun `the float never goes further than its amplitude up and down or side to side, for any badge, any amplitude and any time`() {
+        listOf(0f, 1.4f, 7.5f, FLOAT_MAX_DP).forEach { amplitude ->
+            FloatSpecs.indices.forEach { index ->
+                sampleTimes.forEach { t ->
+                    val offset = floatOffsetAt(index, t, amplitude)
+                    val spec = FloatSpecs[index]
 
-                assertTrue(abs(offset.yDp) <= FLOAT_MAX_VERTICAL_DP + TOLERANCE, "badge $index at $t: ${offset.yDp}")
-                assertTrue(abs(offset.xDp) <= FLOAT_MAX_HORIZONTAL_DP + TOLERANCE, "badge $index at $t: ${offset.xDp}")
+                    assertTrue(abs(offset.yDp) <= amplitude * spec.verticalShare + TOLERANCE, "badge $index at $t: ${offset.yDp}")
+                    assertTrue(abs(offset.xDp) <= amplitude * spec.horizontalShare + TOLERANCE, "badge $index at $t: ${offset.xDp}")
+                    // The most it is from its place, which is what the room between two badges is made for.
+                    assertTrue(hypot(offset.xDp, offset.yDp) <= amplitude * SQRT_TWO + TOLERANCE, "badge $index at $t")
+                }
             }
         }
     }
 
     @Test
-    fun `each badge's loop is between 8 and 13 seconds, and no two badges share a period or a phase`() {
-        FloatSpecs.forEach { assertTrue(it.periodSeconds in MIN_PERIOD..MAX_PERIOD, "${it.periodSeconds}") }
-        assertEquals(FloatSpecs.size, FloatSpecs.map { it.periodSeconds }.toSet().size, "periods differ")
-        assertEquals(FloatSpecs.size, FloatSpecs.map { it.phase }.toSet().size, "phases differ")
-        FloatSpecs.forEach {
-            assertTrue(it.verticalDp <= FLOAT_MAX_VERTICAL_DP, "vertical ${it.verticalDp}")
-            assertTrue(it.horizontalDp <= FLOAT_MAX_HORIZONTAL_DP, "horizontal ${it.horizontalDp}")
+    fun `with no amplitude a badge does not move at all`() {
+        FloatSpecs.indices.forEach { index ->
+            sampleTimes.take(50).forEach { t ->
+                val offset = floatOffsetAt(index, t, 0f)
+                assertEquals(0f, abs(offset.xDp))
+                assertEquals(0f, abs(offset.yDp))
+            }
         }
     }
 
     @Test
-    fun `a badge comes back to where it started after exactly one period, and is somewhere else halfway`() {
+    fun `each badge's loop is between 9 and 15 seconds, and no two badges share a period or a phase`() {
+        FloatSpecs.forEach { assertTrue(it.periodSeconds in MIN_PERIOD..MAX_PERIOD, "${it.periodSeconds}") }
+        assertEquals(FloatSpecs.size, FloatSpecs.map { it.periodSeconds }.toSet().size, "periods differ")
+        assertEquals(FloatSpecs.size, FloatSpecs.map { it.phase }.toSet().size, "phases differ")
+        FloatSpecs.forEach {
+            assertTrue(it.verticalShare in 0f..1f, "vertical ${it.verticalShare}")
+            assertTrue(it.horizontalShare in 0f..1f, "horizontal ${it.horizontalShare}")
+        }
+        // The full float, 8 dp, is reached up and down and side to side by some badge, so it is the number the layout reads.
+        assertEquals(FLOAT_MAX_DP, 8f)
+        assertTrue(FloatSpecs.any { it.verticalShare == 1f } && FloatSpecs.any { it.horizontalShare == 1f })
+    }
+
+    @Test
+    fun `a badge comes back to where it started after exactly one period, and is on the other side halfway`() {
         FloatSpecs.forEachIndexed { index, spec ->
-            val start = floatOffsetAt(index, 0f)
-            val after = floatOffsetAt(index, spec.periodSeconds)
-            val halfway = floatOffsetAt(index, spec.periodSeconds / 2f)
+            val start = floatOffsetAt(index, 0f, FLOAT_MAX_DP)
+            val after = floatOffsetAt(index, spec.periodSeconds, FLOAT_MAX_DP)
+            val halfway = floatOffsetAt(index, spec.periodSeconds / 2f, FLOAT_MAX_DP)
 
             assertNear(start.xDp, after.xDp, "badge $index x", tolerance = LOOSE)
             assertNear(start.yDp, after.yDp, "badge $index y", tolerance = LOOSE)
@@ -64,7 +85,7 @@ class IntroThemeMotionTest {
     @Test
     fun `at the same moment the badges are in different places, so they never move together`() {
         sampleTimes.take(SAMPLE_COUNT / 10).forEach { t ->
-            val places = FloatSpecs.indices.map { floatOffsetAt(it, t) }
+            val places = FloatSpecs.indices.map { floatOffsetAt(it, t, FLOAT_MAX_DP) }
 
             assertEquals(places.size, places.toSet().size, "at $t: $places")
         }
@@ -73,33 +94,32 @@ class IntroThemeMotionTest {
     @Test
     fun `a badge past the last spec takes the one at its place in the loop of specs`() {
         FloatSpecs.indices.forEach { index ->
-            assertEquals(floatOffsetAt(index, 3f), floatOffsetAt(index + FloatSpecs.size, 3f), "badge $index")
+            assertEquals(
+                floatOffsetAt(index, 3f, FLOAT_MAX_DP),
+                floatOffsetAt(index + FloatSpecs.size, 3f, FLOAT_MAX_DP),
+                "badge $index",
+            )
         }
     }
 
     @Test
-    fun `the drift at known moments`() {
-        // Badge 0: period 8 s, phase 0, 6 dp up and down, 3 dp sideways. A quarter turn is 2 s.
-        assertFrame(
-            BadgeFrame(xDp = 3f, yDp = 0f, rotationDegrees = 0f, scale = 1f),
-            floatOffsetAt(0, 0f).asFrame(),
-            "badge 0 at 0 s",
-        )
-        assertFrame(
-            BadgeFrame(xDp = 0f, yDp = 6f, rotationDegrees = 0f, scale = 1f),
-            floatOffsetAt(0, 2f).asFrame(),
-            "badge 0 at 2 s",
-        )
-        assertFrame(
-            BadgeFrame(xDp = -3f, yDp = 0f, rotationDegrees = 0f, scale = 1f),
-            floatOffsetAt(0, 4f).asFrame(),
-            "badge 0 at 4 s",
-        )
-        assertFrame(
-            BadgeFrame(xDp = 0f, yDp = -6f, rotationDegrees = 0f, scale = 1f),
-            floatOffsetAt(0, 6f).asFrame(),
-            "badge 0 at 6 s",
-        )
+    fun `the float is slow, no badge moving faster than about 6 dp a second at its widest`() {
+        FloatSpecs.forEach { spec ->
+            val fastest = 2f * PI.toFloat() * FLOAT_MAX_DP / spec.periodSeconds
+
+            assertTrue(fastest <= SLOW_DP_PER_SECOND, "a badge goes $fastest dp a second at its fastest")
+        }
+    }
+
+    @Test
+    fun `the float at known moments`() {
+        // Badge 0: period 9 s, phase 0, 8 dp up and down, 6.4 dp sideways (0.8 of it). A quarter turn is 2.25 s.
+        assertFrame(BadgeFrame(6.4f, 0f, 0f, 1f), floatOffsetAt(0, 0f, FLOAT_MAX_DP).asFrame(), "badge 0 at 0 s")
+        assertFrame(BadgeFrame(0f, 8f, 0f, 1f), floatOffsetAt(0, 2.25f, FLOAT_MAX_DP).asFrame(), "badge 0 at 2.25 s")
+        assertFrame(BadgeFrame(-6.4f, 0f, 0f, 1f), floatOffsetAt(0, 4.5f, FLOAT_MAX_DP).asFrame(), "badge 0 at 4.5 s")
+        assertFrame(BadgeFrame(0f, -8f, 0f, 1f), floatOffsetAt(0, 6.75f, FLOAT_MAX_DP).asFrame(), "badge 0 at 6.75 s")
+        // At half the amplitude it is half the distance.
+        assertFrame(BadgeFrame(0f, 4f, 0f, 1f), floatOffsetAt(0, 2.25f, 4f).asFrame(), "badge 0 at half the float")
     }
 
     private fun FloatOffset.asFrame() = BadgeFrame(xDp, yDp, rotationDegrees = 0f, scale = 1f)
@@ -161,25 +181,25 @@ class IntroThemeMotionTest {
     @Test
     fun `with no dance weight the badge only drifts, and with the full weight it only dances`() {
         listOf(0f, 1.7f, 9.3f).forEach { t ->
-            val drift = floatOffsetAt(2, t)
-            val none = badgeFrame(2, t, danceWeight = 0f)
+            val drift = floatOffsetAt(2, t, FLOAT_MAX_DP)
+            val none = badgeFrame(2, t, danceWeight = 0f, amplitudeDp = FLOAT_MAX_DP)
 
             assertFrame(BadgeFrame(drift.xDp, drift.yDp, 0f, 1f), none, "drift at $t")
-            assertFrame(danceAt(t), badgeFrame(2, t, danceWeight = 1f), "dance at $t")
+            assertFrame(danceAt(t), badgeFrame(2, t, danceWeight = 1f, amplitudeDp = FLOAT_MAX_DP), "dance at $t")
         }
     }
 
     @Test
     fun `half the weight is half way between, and a weight outside 0 to 1 is held to it`() {
         val t = 1.9f
-        val drift = badgeFrame(1, t, 0f)
-        val dance = badgeFrame(1, t, 1f)
-        val half = badgeFrame(1, t, 0.5f)
+        val drift = badgeFrame(1, t, 0f, FLOAT_MAX_DP)
+        val dance = badgeFrame(1, t, 1f, FLOAT_MAX_DP)
+        val half = badgeFrame(1, t, 0.5f, FLOAT_MAX_DP)
 
         assertNear((drift.yDp + dance.yDp) / 2f, half.yDp, "y")
         assertNear((drift.scale + dance.scale) / 2f, half.scale, "scale")
-        assertFrame(drift, badgeFrame(1, t, -2f), "below 0")
-        assertFrame(dance, badgeFrame(1, t, 2f), "above 1")
+        assertFrame(drift, badgeFrame(1, t, -2f, FLOAT_MAX_DP), "below 0")
+        assertFrame(dance, badgeFrame(1, t, 2f, FLOAT_MAX_DP), "above 1")
     }
 
     // endregion
@@ -208,8 +228,9 @@ class IntroThemeMotionTest {
         const val LOOSE = 0.01f
         const val SAMPLE_STEP_SECONDS = 1.1f
         const val SAMPLE_COUNT = 800
-        const val MIN_PERIOD = 8f
-        const val MAX_PERIOD = 13f
+        const val MIN_PERIOD = 9f
+        const val MAX_PERIOD = 15f
+        const val SLOW_DP_PER_SECOND = 6f
         const val JOIN_EPSILON = 0.001f
     }
 }

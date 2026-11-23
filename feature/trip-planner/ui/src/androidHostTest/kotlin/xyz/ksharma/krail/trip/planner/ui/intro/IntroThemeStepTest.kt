@@ -32,6 +32,7 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
+import kotlin.math.hypot
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -99,34 +100,42 @@ class IntroThemeStepTest {
     }
 
     @Test
-    fun `the badges are twice the size they were, in a loose grid of two columns centred across the window`() {
+    fun `the badges are 64 dp, in a wave of one row, high and low, spread across the window and centred`() {
         show(none)
 
         val bounds = introThemeChoices().map { badge(it).getUnclippedBoundsInRoot() }
 
         bounds.forEach { assertEquals(64f, it.width.value, 0.01f, "a badge is $it") }
-        // A badge that is not selected drifts up to 4 dp sideways and 6 dp up and down, so every check allows for that.
-        val slack = DRIFT * 2
-        assertTrue(bounds[1].left > bounds[0].right && bounds[3].left > bounds[2].right, "the columns touch: $bounds")
-        assertEquals((bounds[0].height / 2).value, (bounds[1].top - bounds[0].top).value, VERTICAL_SLACK.value, "Metro is not half a badge lower: $bounds")
-        assertEquals((bounds[2].height / 2).value, (bounds[3].top - bounds[2].top).value, VERTICAL_SLACK.value, "Ferry is not half a badge lower: $bounds")
-        assertTrue(bounds[2].top >= bounds[0].bottom && bounds[3].top >= bounds[1].bottom, "a row sits over the one above: $bounds")
+        // A badge that is not selected floats up to 8 dp each way, so every check allows for that, once for each badge compared.
+        val slack = FLOAT * 2
+        // Train, Metro, Bus and Ferry left to right, each clear of the one before.
+        assertTrue(bounds.zipWithNext().all { (a, b) -> b.left > a.left }, "the badges are not left to right: $bounds")
+        // Train and Bus are high, Metro and Ferry are 48 dp lower.
+        assertEquals(WAVE_DROP_DP, (bounds[1].top - bounds[0].top).value, slack.value, "Metro is not 48 dp lower than Train: $bounds")
+        assertEquals(WAVE_DROP_DP, (bounds[3].top - bounds[2].top).value, slack.value, "Ferry is not 48 dp lower than Bus: $bounds")
+        assertEquals(bounds[0].top.value, bounds[2].top.value, slack.value, "Train and Bus are not in line: $bounds")
+        assertEquals(bounds[1].top.value, bounds[3].top.value, slack.value, "Metro and Ferry are not in line: $bounds")
+        // The wave is spread over the whole room, the window less 16 dp of page padding each side, and is centred across the window.
         val leftmost = bounds.minOf { it.left }
         val rightmost = bounds.maxOf { it.right }
-        assertEquals(leftmost.value, (window.width - rightmost).value, slack.value, "the grid is not centred: $bounds")
+        assertEquals(leftmost.value, (window.width - rightmost).value, slack.value, "the wave is not centred: $bounds")
+        assertEquals(window.width.value - 32f, (rightmost - leftmost).value, slack.value, "the wave is not spread across the window: $bounds")
+        assertEquals(112f, (bounds.maxOf { it.bottom } - bounds.minOf { it.top }).value, slack.value * 2, "the wave is 112 dp tall: $bounds")
     }
 
     @Test
-    fun `no two badges are closer than 24 dp at rest, so the drift and the dance cannot reach one`() {
+    fun `no two badges are closer than 8 dp, even floating, and the nearest are well clear at rest`() {
         show(none)
         val bounds = introThemeChoices().map { badge(it).getUnclippedBoundsInRoot() }
 
         bounds.forEachIndexed { i, a ->
             bounds.drop(i + 1).forEach { b ->
-                val across = maxOf(a.left - b.right, b.left - a.right)
-                val down = maxOf(a.top - b.bottom, b.top - a.bottom)
-                // The drift at the first frame is up to 4 dp across and 6 dp up and down for each of the two.
-                assertTrue(maxOf(across, down) >= 24.dp - VERTICAL_SLACK, "two badges are $across across and $down down: $a $b")
+                // The badges are circles, so the space between two is the distance between their centres less a badge.
+                val centres = hypot(
+                    (a.left + a.right - b.left - b.right).value / 2f,
+                    (a.top + a.bottom - b.top - b.bottom).value / 2f,
+                )
+                assertTrue(centres - 64f >= 8f, "two badges are ${centres - 64f} dp apart, floating: $a $b")
             }
         }
     }
@@ -279,9 +288,8 @@ class IntroThemeStepTest {
 
     private companion object {
         val MIN_TOUCH = 48.dp
-        val DRIFT = 4.dp
 
-        // Two badges each drifting up to 6 dp up and down can be 12 dp closer or further apart, and a pixel is rounding.
-        val VERTICAL_SLACK = 13.dp
+        // A badge that is not chosen floats up to 8 dp each way from its place.
+        val FLOAT = 8.dp
     }
 }

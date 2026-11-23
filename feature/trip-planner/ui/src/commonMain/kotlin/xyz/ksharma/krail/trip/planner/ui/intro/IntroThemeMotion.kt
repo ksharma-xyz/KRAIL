@@ -3,35 +3,79 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.floor
+import kotlin.math.min
 import kotlin.math.sin
 
 // The maths behind the theme badges' two continuous animations, as pure functions of time so a table can
 // hold every number and no test needs a clock. The screen reads one clock, in seconds, and these turn it into
 // where a badge is. Distances are in dp and angles in degrees, and nothing here knows about pixels.
 
-/** How far a drifting badge may wander from its place, up and down and side to side. */
-internal const val FLOAT_MAX_VERTICAL_DP = 6f
-internal const val FLOAT_MAX_HORIZONTAL_DP = 4f
+/**
+ * How far a badge floats from its place at its widest, up and down and side to side, in a room with space to spare. Where the room is
+ * smaller, [floatAmplitudeDp] is less, so two badges never touch.
+ */
+internal const val FLOAT_MAX_DP = 8f
+
+/** The root of two: a badge that floats [FLOAT_MAX_DP] each way is, at the corner of that box, this many times as far from its place. */
+internal const val SQRT_TWO = 1.4142135f
+
+// The 1 dp of the float that is always kept back, so two badges at their widest still leave a little space between them.
+private const val FLOAT_MARGIN_DP = 1f
 
 /**
- * One badge's drift. [periodSeconds] is how long one loop takes, [phase] is how far round the loop it starts
- * as a share of it, and the two amplitudes are how far it moves. Every badge has its own period and phase, so
- * they never move together.
+ * How far the badge that is chosen reaches toward a neighbour with its dance, in dp, at the most: the rise of the dance and the growth of
+ * its circle, in any direction. A dancing badge is never moved sideways, so this is more than it can reach on most neighbours.
+ */
+internal fun danceReachDp(badgeDp: Float): Float = DANCE_RISE_TO_DP + badgeDp / 2f * (DANCE_SCALE_TO - 1f)
+
+// The margin of a dp of float on each of two badges, which is that many times its root two of space between them.
+private const val FLOAT_GAP_MARGIN_DP = 2f * SQRT_TWO * FLOAT_MARGIN_DP
+
+/**
+ * The least space two badges of [badgeDp] must have between them at rest, edge to edge, for a dance beside a neighbour that does not
+ * move at all to leave the margin: the reach of the dance and the margin. A layout with less than this between two badges is not used,
+ * because the chosen one could touch the next with no float to take back.
+ */
+internal fun minClearGapDp(badgeDp: Float): Float = danceReachDp(badgeDp) + FLOAT_GAP_MARGIN_DP
+
+/**
+ * How far a badge of [badgeDp] may float from its place, in dp each way, when the two nearest badges are [closestGapDp] apart at rest,
+ * edge to edge. It is [FLOAT_MAX_DP] where the room is wide enough and less where it is not, so two badges never touch:
+ *
+ * - two that float each reach [SQRT_TWO] times the float toward the other, so the float is at most the gap over twice that, less the
+ *   [FLOAT_MARGIN_DP] kept back, and
+ * - the badge that is chosen dances, and reaches [danceReachDp] toward a neighbour that floats, so the gap less that reach and the
+ *   margin has to hold the neighbour's float.
+ *
+ * It is never negative: with no room to spare the badges stay at their places.
+ */
+internal fun floatAmplitudeDp(closestGapDp: Float, badgeDp: Float): Float {
+    if (closestGapDp.isInfinite()) return FLOAT_MAX_DP
+    val floatingTogether = (closestGapDp - FLOAT_GAP_MARGIN_DP) / (2f * SQRT_TWO)
+    val danceAndFloat = (closestGapDp - minClearGapDp(badgeDp)) / SQRT_TWO
+    return min(FLOAT_MAX_DP, min(floatingTogether, danceAndFloat)).coerceAtLeast(0f)
+}
+
+/**
+ * One badge's float. [periodSeconds] is how long one loop takes, [phase] is how far round the loop it starts as a share of it, and
+ * the two shares are how much of the float's amplitude it uses up and down and side to side, so it goes round a slightly different
+ * ellipse from the next. Every badge has its own period and phase, so they never move together, and no share is over 1, so a badge
+ * never goes further from its place than [SQRT_TWO] times the float.
  */
 internal data class FloatSpec(
     val periodSeconds: Float,
     val phase: Float,
-    val verticalDp: Float,
-    val horizontalDp: Float,
+    val verticalShare: Float,
+    val horizontalShare: Float,
 )
 
-// Eight to thirteen seconds a loop, each different, with phases spread round the loop, so no two badges are ever
-// at the same point of it together. The amplitudes are under the maximums, so the drift reads as breathing.
+// Nine to fifteen seconds a loop, each different, with phases spread round the loop, so no two badges are ever at the same point of it
+// together and the float reads as slow and unhurried, like something in space. The shares are different ellipses.
 internal val FloatSpecs: List<FloatSpec> = listOf(
-    FloatSpec(periodSeconds = 8f, phase = 0f, verticalDp = 6f, horizontalDp = 3f),
-    FloatSpec(periodSeconds = 10f, phase = 0.35f, verticalDp = 5f, horizontalDp = 4f),
-    FloatSpec(periodSeconds = 12f, phase = 0.7f, verticalDp = 6f, horizontalDp = 3.5f),
-    FloatSpec(periodSeconds = 13f, phase = 0.15f, verticalDp = 4.5f, horizontalDp = 4f),
+    FloatSpec(periodSeconds = 9f, phase = 0f, verticalShare = 1f, horizontalShare = 0.8f),
+    FloatSpec(periodSeconds = 11f, phase = 0.35f, verticalShare = 0.8f, horizontalShare = 1f),
+    FloatSpec(periodSeconds = 13f, phase = 0.7f, verticalShare = 1f, horizontalShare = 0.9f),
+    FloatSpec(periodSeconds = 15f, phase = 0.15f, verticalShare = 0.9f, horizontalShare = 1f),
 )
 
 private const val QUARTER_TURN = 0.25f
@@ -41,16 +85,16 @@ private const val TWO_PI = (2.0 * PI).toFloat()
 internal data class FloatOffset(val xDp: Float, val yDp: Float)
 
 /**
- * Where the badge at [index] has drifted to, [seconds] after the clock started. It goes round an ellipse once
- * every period: up and down by the vertical amplitude, with the sideways movement a quarter turn behind so it
+ * Where the badge at [index] has floated to, [seconds] after the clock started, with a float of [amplitudeDp]. It goes round an ellipse
+ * once every period: up and down by the amplitude and its vertical share, with the sideways movement a quarter turn behind so it
  * is smooth rather than a line. The badges after the last spec wrap round to the first.
  */
-internal fun floatOffsetAt(index: Int, seconds: Float): FloatOffset {
+internal fun floatOffsetAt(index: Int, seconds: Float, amplitudeDp: Float): FloatOffset {
     val spec = FloatSpecs[index.mod(FloatSpecs.size)]
     val turns = seconds / spec.periodSeconds + spec.phase
     return FloatOffset(
-        xDp = spec.horizontalDp * sin(TWO_PI * (turns + QUARTER_TURN)),
-        yDp = spec.verticalDp * sin(TWO_PI * turns),
+        xDp = amplitudeDp * spec.horizontalShare * sin(TWO_PI * (turns + QUARTER_TURN)),
+        yDp = amplitudeDp * spec.verticalShare * sin(TWO_PI * turns),
     )
 }
 
@@ -94,13 +138,13 @@ internal fun easeInOut(progress: Float): Float = (1f - cos(PI.toFloat() * progre
 private fun lerp(from: Float, to: Float, fraction: Float): Float = from + (to - from) * fraction
 
 /**
- * The pose of the badge at [index] at [seconds]. [danceWeight] is how much of it is the dance: 0 is the drift
- * alone, 1 is the dance alone, and the shares between are a blend, so a badge that has just been chosen eases
- * from drifting into dancing and back, and never jumps.
+ * The pose of the badge at [index] at [seconds], with a float of [amplitudeDp]. [danceWeight] is how much of it is the dance: 0 is the
+ * float alone, 1 is the dance alone, and the shares between are a blend, so a badge that has just been chosen eases
+ * from floating into dancing and back, and never jumps.
  */
-internal fun badgeFrame(index: Int, seconds: Float, danceWeight: Float): BadgeFrame {
+internal fun badgeFrame(index: Int, seconds: Float, danceWeight: Float, amplitudeDp: Float): BadgeFrame {
     val weight = danceWeight.coerceIn(0f, 1f)
-    val drift = floatOffsetAt(index, seconds)
+    val drift = floatOffsetAt(index, seconds, amplitudeDp)
     val dance = danceAt(seconds)
     return BadgeFrame(
         xDp = lerp(drift.xDp, dance.xDp, weight),

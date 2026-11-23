@@ -22,9 +22,10 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.trip.planner.ui.components.TransportModeIconSize
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 
-// How long a badge takes to ease from drifting into dancing, and back.
+// How long a badge takes to ease from floating into dancing, and back.
 private const val DANCE_BLEND_MS = 250
 
 /**
@@ -81,12 +82,13 @@ internal fun IntroThemeStepContent(
 }
 
 /**
- * The badges in a loose, slightly lopsided grid of two columns ([themeBadgeGrid]): the right column lowered by half a
- * badge and a little further out, centred across the room, with 24 dp between any two so they can drift and dance without
- * touching. They wrap to a single staggered column only when two do not fit the width. Every badge that is not selected
- * drifts and the selected one dances, both from one clock that runs only while the screen is resumed. With reduced motion,
- * in a preview and in a screenshot nothing moves: the selected badge sits lifted 4 dp. The grid is as tall as it is, and the
- * middle zone scrolls with the headline when that does not fit above the bar, so no badge is squeezed, cut or hidden.
+ * The four badges in a wave, one row spread across the whole room, alternately high and low ([themeBadgeGrid]), centred across it. In a
+ * room too narrow for that they are in two staggered rows, and in a window too narrow for those in one staggered column, so no
+ * two badges are ever closer than the float allows. Every badge that is not selected floats slowly round its own small ellipse and
+ * the selected one dances, both from one clock that runs only while the screen is resumed. How far a badge floats is the layout's own
+ * (`floatAmplitudeDp`), less where the room is smaller. With reduced motion, in a preview and in a screenshot nothing moves: the
+ * selected badge sits lifted 4 dp. The grid is as tall as it is, and the middle zone scrolls with the headline when that does not fit
+ * above the bar, so no badge is squeezed, cut or hidden.
  */
 @Composable
 internal fun IntroThemeBadges(
@@ -98,33 +100,38 @@ internal fun IntroThemeBadges(
     val motionRuns = themeMotionRuns(reduceMotion = isReduceMotionEnabled(), inspection = LocalInspectionMode.current)
     val clock = rememberThemeClock(running = motionRuns)
     val change = LocalIntroThemeChange.current
+    val choices = introThemeChoices()
 
-    IntroThemeBadgeGrid(
-        gapX = dim.spacingXXXL,
-        gapY = dim.spacingXXXL,
-        shiftX = dim.spacingXL,
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = dim.pageHorizontalPadding),
-    ) {
-        introThemeChoices().forEachIndexed { index, choice ->
-            val selected = choice.style.id == selectedThemeId
-            val danceWeight = animateFloatAsState(
-                targetValue = if (selected) 1f else 0f,
-                animationSpec = tween(durationMillis = DANCE_BLEND_MS),
-                label = "dance-weight-${choice.name}",
-            )
-            IntroThemeBadge(
-                choice = choice,
-                selected = selected,
-                frame = pressed(badgeFrameSource(index, selected, motionRuns, clock, danceWeight), change, index),
-                // The sequence is told which badge it was and where, before the pick, so the wash can grow from it.
-                onClick = {
-                    change?.noteTap(index)
-                    onPick(choice.style.id)
-                },
-                modifier = Modifier.onGloballyPositioned { coordinates -> change?.attachBadge(index, coordinates) },
-            )
+    // The room is the window's width, at most the Intro's content width, less the page padding on both sides. The badge is a fixed
+    // size at every text size, so the layout is that room alone.
+    BoxWithConstraints(modifier = modifier.fillMaxWidth().padding(horizontal = dim.pageHorizontalPadding)) {
+        val grid = remember(maxWidth, choices.size) {
+            themeBadgeGrid(count = choices.size, availableDp = maxWidth.value, badgeDp = TransportModeIconSize.XLarge.dpSize.value)
+        }
+        IntroThemeBadgeGrid(grid = grid) {
+            choices.forEachIndexed { index, choice ->
+                val selected = choice.style.id == selectedThemeId
+                val danceWeight = animateFloatAsState(
+                    targetValue = if (selected) 1f else 0f,
+                    animationSpec = tween(durationMillis = DANCE_BLEND_MS),
+                    label = "dance-weight-${choice.name}",
+                )
+                IntroThemeBadge(
+                    choice = choice,
+                    selected = selected,
+                    frame = pressed(
+                        badgeFrameSource(index, selected, motionRuns, clock, danceWeight, grid.floatAmplitudeDp),
+                        change,
+                        index,
+                    ),
+                    // The sequence is told which badge it was and where, before the pick, so the wash can grow from it.
+                    onClick = {
+                        change?.noteTap(index)
+                        onPick(choice.style.id)
+                    },
+                    modifier = Modifier.onGloballyPositioned { coordinates -> change?.attachBadge(index, coordinates) },
+                )
+            }
         }
     }
 }
@@ -137,12 +144,13 @@ private fun badgeFrameSource(
     motionRuns: Boolean,
     clock: FloatState,
     danceWeight: State<Float>,
+    amplitudeDp: Float,
 ): () -> BadgeFrame {
     if (!motionRuns) {
         val settled = settledFrame(selected)
         return { settled }
     }
-    return { badgeFrame(index, clock.floatValue, danceWeight.value) }
+    return { badgeFrame(index, clock.floatValue, danceWeight.value, amplitudeDp) }
 }
 
 // The pose with the badge's press on top, while the change of theme it started plays: its own scale, times the press's.

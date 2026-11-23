@@ -1,13 +1,21 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableSet
+import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
@@ -38,14 +46,22 @@ internal sealed interface IntroCardSlot {
 
     /** The nearest station, with the numbers when it has them. */
     data class Station(val card: ParkRideUiState) : IntroCardSlot
+
+    /** No station within the wider distance either, said in words in the card's room. The bar's OK moves on. */
+    data object NoStation : IntroCardSlot
 }
 
+/** What the card's room says when no station is near. It is the whole content of the room, and the bar answers it with OK. */
+internal const val PARK_RIDE_NO_STATION = "No Park & Ride stations near you"
+
 /**
- * No station near is [IntroCardSlot.Empty]: that answer leaves nothing to decide, so the screen is
- * passed over and says nothing. Added is the same card, because the bar and not the card carries the action.
+ * No station near is [IntroCardSlot.NoStation], the message the rider answers with OK. No card with nothing to say, a
+ * location that could not be used, is [IntroCardSlot.Empty] and the screen is passed over. Added is the same card, because
+ * the bar and not the card carries the action.
  */
 internal fun introCardSlot(state: IntroState): IntroCardSlot = when (val phase = state.parkRideCard) {
-    ParkRideCardPhase.None, ParkRideCardPhase.NoStationNear -> IntroCardSlot.Empty
+    ParkRideCardPhase.None -> IntroCardSlot.Empty
+    ParkRideCardPhase.NoStationNear -> IntroCardSlot.NoStation
     is ParkRideCardPhase.Locating -> IntroCardSlot.Skeleton
     is ParkRideCardPhase.Card -> IntroCardSlot.Station(phase.station.toParkRideUiState())
 }
@@ -111,7 +127,28 @@ internal fun IntroParkRideCardSlot(slot: IntroCardSlot, modifier: Modifier = Mod
             IntroCardSlot.Empty -> Unit
             IntroCardSlot.Skeleton -> IntroParkRideCard(SkeletonCard, standIn = true)
             is IntroCardSlot.Station -> IntroParkRideCard(slot.card)
+            IntroCardSlot.NoStation -> IntroParkRideNoStation()
         }
+    }
+}
+
+// The message in the card's room, in the type and colour of the stop screens' no match line, centred, and read out when it
+// appears because the card the rider was watching is what it replaced. The card's own room is drawn clear under it, so the
+// screen keeps the height it had while the card was looked for and nothing moves when the message replaces it.
+@Composable
+private fun IntroParkRideNoStation() {
+    Box(contentAlignment = Alignment.Center) {
+        IntroParkRideCard(SkeletonCard, standIn = true, modifier = Modifier.alpha(0f))
+        Text(
+            text = PARK_RIDE_NO_STATION,
+            style = KrailTheme.typography.titleLarge,
+            color = KrailTheme.colors.onSurface,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding)
+                .semantics { liveRegion = LiveRegionMode.Polite },
+        )
     }
 }
 

@@ -14,18 +14,19 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardStation
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRideStationPickerItem
 
 /**
- * The longest the Park & Ride step waits for the stops before it gives up on a station. Past it the
- * answer is the same as no station near, with no error, because the nearest station needs the
- * stops table for its coordinates.
+ * The longest the Park & Ride step waits for the stops before it gives up on a station. Past it the screen is passed over
+ * with no message and no error, because the nearest station needs the stops table for its coordinates and nothing is known about
+ * what is near, so the rider is not told there is nothing.
  */
 internal const val PARK_RIDE_STOPS_WAIT_MS = 10_000L
 
 /**
  * The Park & Ride screen of the Intro: the answer, the one location result, the nearest station and
  * its one availability reading, and what the rider does with the card, which is to add the station or to
- * decline it. Both move the rider on to the next screen, as does every answer that leaves nothing to
- * decide. It runs in [scope], the view model's scope, so all of it is
- * cancelled when the view model is cleared, and it starts no timer and no repeat.
+ * decline it. Both move the rider on to the next screen, as does the OK on the message that no station is near,
+ * within [INTRO_PARK_RIDE_RADIUS_KM] or, failing that, [INTRO_PARK_RIDE_WIDER_RADIUS_KM]. Only a location that cannot be used,
+ * or stops that were not ready to look in, pass the screen over by themselves, with no message. It runs in [scope], the view
+ * model's scope, so all of it is cancelled when the view model is cleared, and it starts no timer and no repeat.
  *
  * The rider's position arrives in [onLocationResult], is used to find the station inside one
  * coroutine and goes out of scope with it. It is never written to the state or to what is saved.
@@ -70,7 +71,7 @@ internal class IntroParkRideStep(
         if (read().parkRideCard !is ParkRideCardPhase.Locating) return false
         if (result == LocationResult.GRANTED && location != null) {
             write { copy(locationResult = LocationResult.GRANTED) }
-            resolve { gateway.nearestStation(location) }
+            resolve(noneNearIsAnAnswer = true) { gateway.nearestStation(location) }
         } else {
             val recorded = if (result == LocationResult.GRANTED) LocationResult.UNAVAILABLE else result
             write { copy(locationResult = recorded, parkRideCard = ParkRideCardPhase.None).leavingParkRide() }
@@ -121,26 +122,43 @@ internal class IntroParkRideStep(
         }
     }
 
-    /** Works the card out again from the saved station id, when the process was killed with a card. */
-    fun restore() {
-        val stationId = (read().parkRideCard as? ParkRideCardPhase.Locating)?.stationId ?: return
-        resolve { gateway.stationById(stationId) }
+    /**
+     * OK, on the message that no station is near: the rider moves on to the next screen with nothing added. Only on that
+     * message, and only while the rider is on this screen, so a second press does nothing.
+     */
+    fun acknowledgeNoStation() {
+        if (read().parkRideCard != ParkRideCardPhase.NoStationNear) return
+        write { leavingParkRide() }
+        onLeftQuestion()
     }
 
-    private fun resolve(find: suspend () -> ParkRideStationPickerItem?) {
+    /**
+     * Works the card out again from the saved station id, when the process was killed with a card. A station that is no
+     * longer in the catalogue passes the screen over with no message, because the rider was never told there was none.
+     */
+    fun restore() {
+        val stationId = (read().parkRideCard as? ParkRideCardPhase.Locating)?.stationId ?: return
+        resolve(noneNearIsAnAnswer = false) { gateway.stationById(stationId) }
+    }
+
+    // Finds the station once the stops are ready. A station shows the card. None, when the look itself worked and
+    // [noneNearIsAnAnswer], shows the message and waits for the rider's OK. Stops that were not ready in time, a look that
+    // failed and a saved station that has gone say nothing was learned about what is near, so the screen is passed over, quietly.
+    private fun resolve(noneNearIsAnAnswer: Boolean, find: suspend () -> ParkRideStationPickerItem?) {
         job?.cancel()
         job = scope.launch {
-            val found = if (readiness.awaitReady(PARK_RIDE_STOPS_WAIT_MS) is StopsReadiness.Ready) {
-                attempt(find)
+            val looked = if (readiness.awaitReady(PARK_RIDE_STOPS_WAIT_MS) is StopsReadiness.Ready) {
+                attempt { listOfNotNull(find()) }
             } else {
                 null
             }
-            if (found == null) {
-                // Nothing for the rider to decide, so the screen is passed over: no line, no bar.
-                write { copy(parkRideCard = ParkRideCardPhase.NoStationNear).leavingParkRide() }
-                onLeftQuestion()
-            } else {
-                show(found)
+            when {
+                looked == null || (looked.isEmpty() && !noneNearIsAnAnswer) -> {
+                    write { copy(parkRideCard = ParkRideCardPhase.None).leavingParkRide() }
+                    onLeftQuestion()
+                }
+                looked.isEmpty() -> write { copy(parkRideCard = ParkRideCardPhase.NoStationNear) }
+                else -> show(looked.single())
             }
         }
     }

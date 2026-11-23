@@ -201,7 +201,9 @@ class IntroFlowViewModelParkRideAddTest {
             val rig = IntroRig(this)
 
             rig.send(*events.toTypedArray())
+            // The rider who was told there is no station near presses OK, and everyone else is already past it or declines the card.
             rig.send(
+                IntroUiEvent.AcknowledgeNoStation,
                 IntroUiEvent.DeclineParkRide,
                 IntroUiEvent.SelectStop(CENTRAL.toIntroStop()), IntroUiEvent.ConfirmStop,
                 IntroUiEvent.SelectStop(TALLAWONG.toIntroStop()), IntroUiEvent.ConfirmStop,

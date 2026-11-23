@@ -67,6 +67,9 @@ internal val PreviewCardContentState = asked(bellaVista(ParkRideAvailabilityStat
 internal val PreviewCardUnavailableState = asked(bellaVista(ParkRideAvailabilityState.Unavailable))
 internal val PreviewAddedState = asked(bellaVista(ParkRideAvailabilityState.Content), added = true)
 
+// No station within the first or the wider distance: the card's room says so and the one OK moves on.
+internal val PreviewNoStationState = asked(ParkRideCardPhase.NoStationNear)
+
 // The tallest card the default catalogue gives, three car parks, for the narrow and wide frames.
 internal val PreviewTallCardContentState = asked(tallawong(ParkRideAvailabilityState.Content))
 internal val PreviewTallAddedState = asked(tallawong(ParkRideAvailabilityState.Content), added = true)

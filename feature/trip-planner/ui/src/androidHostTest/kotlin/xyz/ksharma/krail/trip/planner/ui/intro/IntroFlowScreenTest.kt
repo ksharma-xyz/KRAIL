@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -146,16 +147,23 @@ class IntroFlowScreenTest {
     }
 
     @Test
-    fun `a Park and Ride screen with nothing to decide shows no bar`() {
-        listOf(
-            ON_PARK_RIDE.copy(parkRideAnswer = ParkRideAnswer.YES, parkRideCard = ParkRideCardPhase.NoStationNear),
-            ON_PARK_RIDE.copy(parkRideAnswer = ParkRideAnswer.YES, parkRideCard = ParkRideCardPhase.None),
-        ).forEach { state ->
-            show(state)
+    fun `a Park and Ride screen with nothing to decide and nothing to say shows no bar`() {
+        show(ON_PARK_RIDE.copy(parkRideAnswer = ParkRideAnswer.YES, parkRideCard = ParkRideCardPhase.None))
 
-            primary().assertDoesNotExist()
-            secondary().assertDoesNotExist()
-        }
+        primary().assertDoesNotExist()
+        secondary().assertDoesNotExist()
+    }
+
+    @Test
+    fun `no station near shows the message and one live OK button, and the OK sends the acknowledgement`() {
+        show(ON_PARK_RIDE.copy(parkRideAnswer = ParkRideAnswer.YES, parkRideCard = ParkRideCardPhase.NoStationNear))
+
+        composeRule.onNodeWithText(PARK_RIDE_NO_STATION).assertIsDisplayed()
+        secondary().assertDoesNotExist()
+        primary().assertTextEquals(PARK_RIDE_NO_STATION_OK).assertIsEnabled()
+        composeRule.onAllNodes(hasClickAction()).assertCountEquals(1)
+        primary().performClick()
+        assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.AcknowledgeNoStation), events)
     }
 
     @Test

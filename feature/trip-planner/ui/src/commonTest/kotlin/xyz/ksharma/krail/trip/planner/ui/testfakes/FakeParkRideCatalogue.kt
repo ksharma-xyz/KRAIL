@@ -13,7 +13,14 @@ internal class FakeParkRideCatalogue(
     var loadingEmoji: LoadingEmoji = LoadingEmoji(emoji = "🅿️", greeting = "Loading"),
 ) : ParkRideCatalogue {
 
-    override fun stations(): List<ParkRideStationPickerItem> = stations
+    /** How many times the list was read, so a test can hold that a look at the stations reads it once. */
+    var stationReads: Int = 0
+        private set
+
+    override fun stations(): List<ParkRideStationPickerItem> {
+        stationReads++
+        return stations
+    }
 
     override fun loadingEmoji(): LoadingEmoji = loadingEmoji
 }

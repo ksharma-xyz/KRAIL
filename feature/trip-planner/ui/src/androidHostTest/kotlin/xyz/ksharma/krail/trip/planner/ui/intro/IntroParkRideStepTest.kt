@@ -216,6 +216,7 @@ class IntroParkRideStepTest {
             "content" to PreviewCardContentState,
             "unavailable" to PreviewCardUnavailableState,
             "added" to PreviewAddedState,
+            "no station near, the message" to PreviewNoStationState,
         ).map { (name, state) ->
             show(state)
             name to slotHeight()
@@ -228,6 +229,21 @@ class IntroParkRideStepTest {
                 "$name is $height high and locating is $first, so the card jumps: $heights",
             )
         }
+    }
+
+    @Test
+    fun `no station near is the message in the card's room, the one OK button, and nothing else`() {
+        show(PreviewNoStationState)
+
+        composeRule.onNodeWithText(PARK_RIDE_NO_STATION).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertTextEquals(PARK_RIDE_NO_STATION_OK)
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION).assertDoesNotExist()
+        composeRule.onNodeWithText("Bella Vista").assertDoesNotExist()
+        composeRule.onNodeWithText(PARK_RIDE_NOT_NOW).assertDoesNotExist()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).performClick()
+
+        assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.AcknowledgeNoStation), events)
     }
 
     private companion object {

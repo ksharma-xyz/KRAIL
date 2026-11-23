@@ -45,8 +45,9 @@ class IntroBarTest {
         Row("card loading", yesWith(card(ParkRideAvailabilityState.Loading)), decide(addShown = true)),
         Row("card with numbers", yesWith(card(ParkRideAvailabilityState.Content)), decide(addShown = true)),
         Row("card unavailable", yesWith(card(ParkRideAvailabilityState.Unavailable)), decide(addShown = true)),
-        // Nothing to decide, so no bar at all and the flow has moved on.
-        Row("no car park near", yesWith(ParkRideCardPhase.NoStationNear), null),
+        // No station near, in the first look or the wider one: the card's room says so and the one button, OK, moves on.
+        Row("no car park near", yesWith(ParkRideCardPhase.NoStationNear), noStation()),
+        // Nothing to decide and nothing to say, so no bar at all and the flow has moved on.
         Row("denied or no fix", yesWith(ParkRideCardPhase.None), null),
     )
 
@@ -63,6 +64,11 @@ class IntroBarTest {
         left = IntroBarAction("Not now", IntroUiEvent.DeclineParkRide),
         right = IntroBarAction("Add to home", IntroUiEvent.AddParkRideAndContinue),
         rightShown = addShown,
+    )
+
+    private fun noStation() = IntroBar(
+        left = null,
+        right = IntroBarAction("OK", IntroUiEvent.AcknowledgeNoStation),
     )
 
     private fun theme(shown: Boolean) = IntroBar(
@@ -99,10 +105,23 @@ class IntroBarTest {
 
     @Test
     fun `no bar answers both ways with one event, so the two buttons are always different answers`() {
-        val bars = parkRideRows.mapNotNull { it.bar }
+        // The single button of the no station message has no other answer to differ from.
+        val bars = parkRideRows.mapNotNull { it.bar }.filter { it.left != null }
 
         assertTrue(bars.isNotEmpty())
         bars.forEach { bar -> assertNotEquals(bar.negative.event, bar.right.event) }
+    }
+
+    @Test
+    fun `the message that no station is near is one live OK button, shown at once, that says the same aloud and is not a way past a question`() {
+        val bar = requireNotNull(introBar(yesWith(ParkRideCardPhase.NoStationNear)))
+
+        assertEquals("OK", PARK_RIDE_NO_STATION_OK)
+        assertNull(bar.left, "there is no left button, so nothing else can move the rider on")
+        assertEquals("OK", bar.right.label)
+        assertEquals(bar.right.label, bar.right.spokenLabel, "it says what it shows")
+        assertEquals(IntroUiEvent.AcknowledgeNoStation, bar.right.event)
+        assertTrue(bar.shown && bar.rightShown, "it is live as soon as the message shows, and never disabled")
     }
 
     private fun stops(shown: Boolean) = IntroBar(

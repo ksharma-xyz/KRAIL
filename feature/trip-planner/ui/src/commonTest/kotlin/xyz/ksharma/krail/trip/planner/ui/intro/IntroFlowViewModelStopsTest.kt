@@ -119,10 +119,7 @@ class IntroFlowViewModelStopsTest {
         krailRunTest {
             val rig = IntroRig(this)
             rig.nswStops.nearbyRows = listOf(REDFERN_STOP, MUSEUM_STOP).map(::nearbyRow)
-            rig.send(
-                IntroUiEvent.AnswerParkRide(yes = true),
-                IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, AT_CENTRAL),
-            )
+            rig.passNoStationNear()
             // The rider takes their time on the destination screen, so the stations are found by then.
             rig.send(IntroUiEvent.SelectStop(WYNYARD_STOP), IntroUiEvent.ConfirmStop)
             assertEquals(IntroStep.ORIGIN, rig.state.step)
@@ -141,10 +138,7 @@ class IntroFlowViewModelStopsTest {
     fun `a destination that is also the nearest station is left out of the origin list`() = krailRunTest {
         val rig = IntroRig(this)
         rig.nswStops.nearbyRows = listOf(REDFERN_STOP, MUSEUM_STOP).map(::nearbyRow)
-        rig.send(
-            IntroUiEvent.AnswerParkRide(yes = true),
-            IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, AT_CENTRAL),
-        )
+        rig.passNoStationNear()
         rig.send(IntroUiEvent.SelectStop(REDFERN_STOP), IntroUiEvent.ConfirmStop)
 
         val rows = rig.state.stopRows(rig.viewModel.suggestedStops)

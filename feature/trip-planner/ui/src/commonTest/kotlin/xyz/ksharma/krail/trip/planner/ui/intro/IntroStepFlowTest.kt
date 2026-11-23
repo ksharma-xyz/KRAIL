@@ -44,7 +44,7 @@ class IntroStepFlowTest {
         row("nothing answered", untouched, PARK_RIDE, PARK_RIDE, DESTINATION, ORIGIN, CONFIRM, THEME),
         row("answered no", declined, PARK_RIDE, PARK_RIDE, DESTINATION, ORIGIN, CONFIRM, THEME),
         row("a card is showing", cardShown, PARK_RIDE, PARK_RIDE, DESTINATION, ORIGIN, CONFIRM, THEME),
-        row("no car park near", noStationNear, PARK_RIDE, DESTINATION, ORIGIN, CONFIRM, THEME),
+        row("no car park near, which the rider is told and answers OK", noStationNear, PARK_RIDE, PARK_RIDE, DESTINATION, ORIGIN, CONFIRM, THEME),
         row("no location", noLocation, PARK_RIDE, DESTINATION, ORIGIN, CONFIRM, THEME),
         row("a car park is the start", parkRideStart, PARK_RIDE, PARK_RIDE, DESTINATION, CONFIRM, THEME),
         row("opening on the destination screen", untouched, DESTINATION, DESTINATION, ORIGIN, CONFIRM, THEME),
@@ -94,14 +94,14 @@ class IntroStepFlowTest {
 
     @Test
     fun `the screen the rider is on stays in the order even when it has just become skippable`() {
-        val onIt = noStationNear.copy(step = PARK_RIDE)
+        val onIt = noLocation.copy(step = PARK_RIDE)
 
         assertEquals(listOf(PARK_RIDE, DESTINATION, ORIGIN, CONFIRM, THEME), onIt.stepsInFlow(PARK_RIDE))
         assertEquals(DESTINATION, onIt.stepAfter(PARK_RIDE))
     }
 
     @Test
-    fun `the Park and Ride screen has nothing to decide only after no car park or no location`() {
+    fun `the Park and Ride screen has nothing to decide only with no location, and no car park near is a message to answer`() {
         assertFalse(untouched.parkRideHasNothingToDecide(), "unanswered")
         assertFalse(declined.parkRideHasNothingToDecide(), "answered no, the rider may change their mind")
         assertFalse(cardShown.parkRideHasNothingToDecide(), "a card to decide on")
@@ -110,14 +110,14 @@ class IntroStepFlowTest {
                 .parkRideHasNothingToDecide(),
             "still looking",
         )
-        assertTrue(noStationNear.parkRideHasNothingToDecide(), "no car park near")
+        assertFalse(noStationNear.parkRideHasNothingToDecide(), "no car park near is told to the rider, who answers OK")
         assertTrue(noLocation.parkRideHasNothingToDecide(), "denied or no fix")
     }
 
     @Test
     fun `leaving Park and Ride moves to the next screen only while the rider is still on it`() {
         assertEquals(DESTINATION, untouched.leavingParkRide(PARK_RIDE).step)
-        assertEquals(DESTINATION, noStationNear.copy(step = PARK_RIDE).leavingParkRide().step)
+        assertEquals(DESTINATION, noStationNear.copy(step = PARK_RIDE).leavingParkRide().step, "the OK on the message")
         // A look that ends after the rider is on another screen never pulls them forward.
         assertEquals(THEME, untouched.copy(step = THEME).leavingParkRide().step)
         assertEquals(DESTINATION, untouched.copy(step = DESTINATION).leavingParkRide().step)

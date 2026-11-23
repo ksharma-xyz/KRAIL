@@ -12,6 +12,12 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRi
 internal const val INTRO_PARK_RIDE_RADIUS_KM = PARK_RIDE_SUGGESTION_DEFAULT_RADIUS_KM
 
 /**
+ * How far the Intro looks when nothing is within [INTRO_PARK_RIDE_RADIUS_KM]: the second pass of [nearestParkRideStationWidening].
+ * It is a distance of its own and not the home suggestion's, so changing the suggestion never changes how far the Intro looks.
+ */
+internal const val INTRO_PARK_RIDE_WIDER_RADIUS_KM = 10.0
+
+/**
  * The single nearest station within [radiusKm] of [location], or null. A station with no coordinates
  * is skipped, so it is never offered. The edge is inclusive. Shared with the map-first home stack.
  */
@@ -33,6 +39,20 @@ internal fun nearestParkRideStation(
     .filter { (_, distanceKm) -> distanceKm <= radiusKm }
     .minByOrNull { (_, distanceKm) -> distanceKm }
     ?.first
+
+/**
+ * The nearest station within [radiusKm] of [location] and, only when that finds nothing, within [widerRadiusKm], or null when
+ * there is none in either. Two passes over the same [stations], which are already in memory, so a second pass is one more
+ * walk over a short list and never a query or a call. With a [radiusKm] that is already [widerRadiusKm] or more there is no
+ * second pass, because it could find nothing more.
+ */
+internal fun nearestParkRideStationWidening(
+    location: LatLng,
+    stations: List<ParkRideStationPickerItem>,
+    radiusKm: Double = INTRO_PARK_RIDE_RADIUS_KM,
+    widerRadiusKm: Double = INTRO_PARK_RIDE_WIDER_RADIUS_KM,
+): ParkRideStationPickerItem? = nearestParkRideStation(location, stations, radiusKm)
+    ?: if (widerRadiusKm > radiusKm) nearestParkRideStation(location, stations, widerRadiusKm) else null
 
 /**
  * The stop to pre-fill as the first trip's start once the rider has added [station], or null when

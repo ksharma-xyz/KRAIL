@@ -22,6 +22,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroSearchPhase
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
+import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
 import xyz.ksharma.krail.trip.planner.ui.state.intro.TripDecision
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -84,6 +85,10 @@ class IntroNoDisabledButtonTest {
         "park and ride card loading" to PreviewCardLoadingState,
         "park and ride card with numbers" to PreviewCardContentState,
         "park and ride card unavailable" to PreviewCardUnavailableState,
+        "park and ride no station near" to ON_PARK_RIDE.copy(
+            parkRideAnswer = ParkRideAnswer.YES,
+            parkRideCard = ParkRideCardPhase.NoStationNear,
+        ),
         "destination, nothing selected" to IntroState(step = IntroStep.DESTINATION),
         "destination, a stop selected" to IntroState(step = IntroStep.DESTINATION, selectedStop = CENTRAL_STOP),
         "destination, no match" to IntroState(step = IntroStep.DESTINATION, search = IntroSearchPhase.NoMatch),
@@ -121,6 +126,7 @@ class IntroNoDisabledButtonTest {
         assertEquals(1, buttonsOnScreen["park and ride locating"], "only the left button, Add to home is not shown")
         assertEquals(2, buttonsOnScreen["park and ride card loading"])
         assertEquals(2, buttonsOnScreen["park and ride card with numbers"])
+        assertEquals(1, buttonsOnScreen["park and ride no station near"], "the one OK, live")
         assertEquals(0, buttonsOnScreen["destination, nothing selected"], "no button until a stop is selected")
         assertEquals(1, buttonsOnScreen["destination, a stop selected"])
         assertEquals(2, buttonsOnScreen["confirm"])

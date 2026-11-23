@@ -158,11 +158,11 @@ class IntroStateOpsTest {
     }
 
     @Test
-    fun `only a location being awaited or a card is in progress or shown`() {
+    fun `only a location being awaited, a card or the no station message is in progress or shown`() {
         assertTrue(ParkRideCardPhase.Locating().isInProgressOrShown())
         assertTrue(loading.parkRideCard.isInProgressOrShown())
+        assertTrue(ParkRideCardPhase.NoStationNear.isInProgressOrShown(), "a second yes must not start another look")
         assertFalse(ParkRideCardPhase.None.isInProgressOrShown())
-        assertFalse(ParkRideCardPhase.NoStationNear.isInProgressOrShown())
     }
 
     // endregion

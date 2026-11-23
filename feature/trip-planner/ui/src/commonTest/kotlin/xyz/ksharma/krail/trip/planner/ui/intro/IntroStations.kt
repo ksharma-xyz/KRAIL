@@ -60,9 +60,14 @@ internal val INTRO_STOP_NAMES = mapOf(
 internal val AT_TALLAWONG = LatLng(latitude = -33.69163, longitude = 150.906022)
 internal val AT_CENTRAL = LatLng(latitude = -33.883852, longitude = 151.206272)
 
-/** Due south of Bella Vista, and the nearest station is Bella Vista in both cases. */
+/** Due south of Bella Vista, and the nearest station is Bella Vista in each case. */
 internal val FOUR_POINT_SIX_KM_FROM_BELLA_VISTA = LatLng(latitude = -33.771961, longitude = 150.944024)
 internal val FIVE_POINT_FOUR_KM_FROM_BELLA_VISTA = LatLng(latitude = -33.779155, longitude = 150.944024)
+internal val FOUR_KM_FROM_BELLA_VISTA = LatLng(latitude = -33.766565, longitude = 150.944024)
+internal val SEVEN_KM_FROM_BELLA_VISTA = LatLng(latitude = -33.793545, longitude = 150.944024)
+internal val NINE_POINT_NINE_KM_FROM_BELLA_VISTA = LatLng(latitude = -33.819625, longitude = 150.944024)
+internal val TEN_POINT_ONE_KM_FROM_BELLA_VISTA = LatLng(latitude = -33.821423, longitude = 150.944024)
+internal val TWELVE_KM_FROM_BELLA_VISTA = LatLng(latitude = -33.838511, longitude = 150.944024)
 
 private const val TOTAL_SPOTS = 200L
 

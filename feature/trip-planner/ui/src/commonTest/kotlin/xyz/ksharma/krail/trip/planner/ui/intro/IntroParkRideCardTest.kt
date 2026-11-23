@@ -42,11 +42,12 @@ class IntroParkRideCardTest {
     }
 
     @Test
-    fun `no station near draws nothing, because that answer leaves nothing to decide and the screen moves on`() {
+    fun `no station near is the message in the card's room, and a location that cannot be used is still empty`() {
         assertEquals(
-            IntroCardSlot.Empty,
+            IntroCardSlot.NoStation,
             introCardSlot(IntroState(parkRideCard = ParkRideCardPhase.NoStationNear)),
         )
+        assertEquals("No Park & Ride stations near you", PARK_RIDE_NO_STATION)
     }
 
     @Test

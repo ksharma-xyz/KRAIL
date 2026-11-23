@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.testing.coroutines.krailRunTest
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
@@ -90,7 +91,7 @@ class IntroFlowViewModelParkRideRestoreTest {
     }
 
     @Test
-    fun `a saved station that is no longer in the catalogue becomes no station near`() = krailRunTest {
+    fun `a saved station that is no longer in the catalogue passes the screen over with no message`() = krailRunTest {
         val before = IntroRig(this)
         before.send(
             IntroUiEvent.AnswerParkRide(yes = true),
@@ -100,7 +101,8 @@ class IntroFlowViewModelParkRideRestoreTest {
         val after = IntroRig(this, handle = before.handle, stations = listOf(KELLYVILLE_STATION))
         after.settle()
 
-        assertEquals(ParkRideCardPhase.NoStationNear, after.state.parkRideCard)
+        assertEquals(ParkRideCardPhase.None, after.state.parkRideCard, "the rider was never told there was none")
+        assertEquals(IntroStep.DESTINATION, after.state.step)
         assertTrue(after.loader.refreshedMappings.isEmpty())
     }
 }

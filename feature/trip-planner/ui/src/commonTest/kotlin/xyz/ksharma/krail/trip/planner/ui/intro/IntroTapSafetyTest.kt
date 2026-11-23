@@ -35,6 +35,7 @@ class IntroTapSafetyTest {
         denied to setOf(IntroStep.PARK_RIDE),
         IntroUiEvent.AddParkRideAndContinue to setOf(IntroStep.PARK_RIDE),
         IntroUiEvent.DeclineParkRide to setOf(IntroStep.PARK_RIDE),
+        IntroUiEvent.AcknowledgeNoStation to setOf(IntroStep.PARK_RIDE),
         IntroUiEvent.SelectStop(CENTRAL_STOP) to setOf(IntroStep.DESTINATION, IntroStep.ORIGIN),
         IntroUiEvent.ConfirmStop to setOf(IntroStep.DESTINATION, IntroStep.ORIGIN),
         IntroUiEvent.QueryChanged("cen") to setOf(IntroStep.DESTINATION, IntroStep.ORIGIN),
@@ -55,7 +56,7 @@ class IntroTapSafetyTest {
 
     // The shapes a screen can be in. A stop is selected on a list screen in the second shape, and a theme on the last.
     private val shapes = mapOf(
-        IntroStep.PARK_RIDE to listOf("asking", "locating", "card"),
+        IntroStep.PARK_RIDE to listOf("asking", "locating", "card", "no station near"),
         IntroStep.DESTINATION to listOf("nothing selected", "a stop selected"),
         IntroStep.ORIGIN to listOf("nothing selected", "a stop selected"),
         IntroStep.CONFIRM to listOf("the trip"),
@@ -81,6 +82,10 @@ class IntroTapSafetyTest {
         when (shape) {
             "locating" -> rig.send(IntroUiEvent.AnswerParkRide(yes = true))
             "card" -> rig.showBellaVista()
+            "no station near" -> rig.send(
+                IntroUiEvent.AnswerParkRide(yes = true),
+                IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, AT_CENTRAL),
+            )
             "a stop selected" -> rig.send(IntroUiEvent.SelectStop(WYNYARD_STOP))
             "a theme" -> rig.send(IntroUiEvent.PickTheme(train))
         }
@@ -95,7 +100,7 @@ class IntroTapSafetyTest {
             setOf(
                 IntroUiEvent.AnswerParkRide::class, IntroUiEvent.LocationResultReceived::class,
                 IntroUiEvent.AddParkRideAndContinue::class, IntroUiEvent.DeclineParkRide::class,
-                IntroUiEvent.SelectStop::class, IntroUiEvent.ConfirmStop::class, IntroUiEvent.QueryChanged::class,
+                IntroUiEvent.AcknowledgeNoStation::class, IntroUiEvent.SelectStop::class, IntroUiEvent.ConfirmStop::class, IntroUiEvent.QueryChanged::class,
                 IntroUiEvent.AnswerSaveTrip::class, IntroUiEvent.PickTheme::class, IntroUiEvent.ConfirmTheme::class,
             ),
             allEvents.map { it::class }.toSet(),
@@ -132,6 +137,7 @@ class IntroTapSafetyTest {
             Advance(IntroStep.PARK_RIDE, "locating", denied, IntroStep.DESTINATION),
             Advance(IntroStep.PARK_RIDE, "card", IntroUiEvent.DeclineParkRide, IntroStep.DESTINATION),
             Advance(IntroStep.PARK_RIDE, "card", IntroUiEvent.AddParkRideAndContinue, IntroStep.DESTINATION),
+            Advance(IntroStep.PARK_RIDE, "no station near", IntroUiEvent.AcknowledgeNoStation, IntroStep.DESTINATION),
             Advance(IntroStep.DESTINATION, "a stop selected", IntroUiEvent.ConfirmStop, IntroStep.ORIGIN),
             Advance(IntroStep.ORIGIN, "a stop selected", IntroUiEvent.ConfirmStop, IntroStep.CONFIRM),
             Advance(IntroStep.CONFIRM, "the trip", IntroUiEvent.AnswerSaveTrip(yes = true), IntroStep.THEME),
@@ -149,12 +155,12 @@ class IntroTapSafetyTest {
     @Test
     fun `no run of events with no answer for the screen reaches the next one, from every shape of every screen`() =
         krailRunTest {
-            // The answer for each screen, which is the only way off it. The Park & Ride fix far from every station passes
-            // that screen over by itself, which is a defined skip and not in this list.
+            // The answer for each screen, which is the only way off it. The Park & Ride screen passes itself over, with no message,
+            // only when the location cannot be used, which is the defined skip in this list as denied.
             val answers: Map<IntroStep, Set<IntroUiEvent>> = mapOf(
                 IntroStep.PARK_RIDE to setOf(
                     IntroUiEvent.AnswerParkRide(yes = false), IntroUiEvent.AddParkRideAndContinue,
-                    IntroUiEvent.DeclineParkRide, denied,
+                    IntroUiEvent.DeclineParkRide, IntroUiEvent.AcknowledgeNoStation, denied,
                 ),
                 IntroStep.DESTINATION to setOf(IntroUiEvent.ConfirmStop),
                 IntroStep.ORIGIN to setOf(IntroUiEvent.ConfirmStop),
@@ -242,14 +248,22 @@ class IntroTapSafetyTest {
     }
 
     @Test
-    fun `a granted fix far from every station passes the Park and Ride screen over, which is the one skip that needs no tap`() =
+    fun `a granted fix far from every station shows the message and does not move on, the OK moves on once`() =
         krailRunTest {
             val rig = riderOn(IntroStep.PARK_RIDE, "locating")
 
             rig.send(IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, AT_CENTRAL))
 
-            assertEquals(IntroStep.DESTINATION, rig.state.step)
+            assertEquals(IntroStep.PARK_RIDE, rig.state.step, "no screen moves on without the rider's answer")
             assertEquals(ParkRideCardPhase.NoStationNear, rig.state.parkRideCard)
+
+            // A quick double tap on OK lands once: the second press is on a screen the Intro has left.
+            rig.viewModel.onEvent(IntroUiEvent.AcknowledgeNoStation, pressedOn = IntroStep.PARK_RIDE)
+            rig.viewModel.onEvent(IntroUiEvent.AcknowledgeNoStation, pressedOn = IntroStep.PARK_RIDE)
+            rig.viewModel.onEvent(IntroUiEvent.AcknowledgeNoStation)
+            rig.settle()
+
+            assertEquals(IntroStep.DESTINATION, rig.state.step)
             assertTrue(rig.state.selectedStop == null)
         }
 }

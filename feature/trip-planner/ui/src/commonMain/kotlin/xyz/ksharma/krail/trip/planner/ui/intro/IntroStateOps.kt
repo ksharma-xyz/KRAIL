@@ -71,9 +71,12 @@ internal fun IntroState.toTripOrNull(): Trip? {
  */
 internal fun IntroState.tripToWrite(save: Boolean): Trip? = if (save && !saved) toTripOrNull() else null
 
-/** True while a location result is awaited or a card shows, when a second yes must start nothing. */
+/**
+ * True while a location result is awaited, a card shows or the message that no station is near shows, when a second yes must
+ * start nothing: the look is done and the rider's answer to it is the bar's.
+ */
 internal fun ParkRideCardPhase.isInProgressOrShown(): Boolean =
-    this is ParkRideCardPhase.Locating || this is ParkRideCardPhase.Card
+    this is ParkRideCardPhase.Locating || this is ParkRideCardPhase.Card || this == ParkRideCardPhase.NoStationNear
 
 /**
  * The card for [stationId] once its one availability call is back. [carParks] is null when the call

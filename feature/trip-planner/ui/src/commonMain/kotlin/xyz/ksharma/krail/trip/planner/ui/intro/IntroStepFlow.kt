@@ -36,12 +36,12 @@ internal fun IntroState.leavingParkRide(first: IntroStep = IntroFirstStep): Intr
     if (step == IntroStep.PARK_RIDE) movedOn(first) else this
 
 /**
- * The Park & Ride screen asked and there is nothing for the rider to decide: no car park near, or no
- * location to look from. Such a screen is passed over.
+ * The Park & Ride screen asked and there is nothing for the rider to decide and nothing to tell them: there is no location to
+ * look from, or the stops were not ready to look in. Such a screen is passed over. No station near is not that: the rider is
+ * told so and answers OK ([IntroUiEvent.AcknowledgeNoStation]), so the screen stays until they do.
  */
 internal fun IntroState.parkRideHasNothingToDecide(): Boolean =
-    parkRideCard == ParkRideCardPhase.NoStationNear ||
-        (parkRideAnswer == ParkRideAnswer.YES && parkRideCard == ParkRideCardPhase.None)
+    parkRideAnswer == ParkRideAnswer.YES && parkRideCard == ParkRideCardPhase.None
 
 /**
  * Screens before [first] have no content yet. The Park & Ride screen is skipped when it has nothing to

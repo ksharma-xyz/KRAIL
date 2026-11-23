@@ -16,6 +16,10 @@ internal const val PARK_RIDE_YES = "Yes"
 internal const val PARK_RIDE_YES_SPOKEN = "Yes, show me free spots"
 internal const val PARK_RIDE_NOT_NOW = "Not now"
 internal const val PARK_RIDE_ADD = "Add to home"
+
+// The one button when no station is near. OK is an answer to being told there is nothing to add, not a way past a question, and
+// it is not one of the banned words. It is plain and says the same thing aloud, so voice control that says OK finds it.
+internal const val PARK_RIDE_NO_STATION_OK = "OK"
 internal const val THEME_CONFIRM = "Let's KRAIL"
 internal const val THEME_CONFIRM_SPOKEN = "Let's KRAIL, use this colour"
 internal const val STOP_CHOOSE = "Yes, this one"
@@ -112,12 +116,13 @@ private fun themeBar(state: IntroState) = IntroBar(
  * Asking, then deciding on the card. Locating, and a card still waiting for its numbers, keep the same bar, so it never
  * changes size or jumps. The left button is live throughout, so the rider can always say no while they wait. The right
  * one, Add to home, is not shown while the station is still being found, and is live as soon as a card shows, also while
- * its numbers load, because adding needs the station and not the readings. A screen with nothing to decide has no bar and
- * the flow has already moved on.
+ * its numbers load, because adding needs the station and not the readings. No station near, within the wider distance too,
+ * is one button, [noStationBar], because the rider has been told so and moves on with an answer of their own. A screen with no
+ * usable location, which has nothing to say, has no bar and the flow has already moved on.
  */
 private fun parkRideBar(state: IntroState): IntroBar? = when (state.parkRideCard) {
     ParkRideCardPhase.None -> if (state.parkRideAnswer == ParkRideAnswer.YES) null else askBar()
-    ParkRideCardPhase.NoStationNear -> null
+    ParkRideCardPhase.NoStationNear -> noStationBar()
     is ParkRideCardPhase.Locating -> decideBar(addShown = false)
     is ParkRideCardPhase.Card -> decideBar(addShown = true)
 }
@@ -125,6 +130,15 @@ private fun parkRideBar(state: IntroState): IntroBar? = when (state.parkRideCard
 private fun askBar() = IntroBar(
     left = IntroBarAction(PARK_RIDE_NO, IntroUiEvent.AnswerParkRide(yes = false), PARK_RIDE_NO_SPOKEN),
     right = IntroBarAction(PARK_RIDE_YES, IntroUiEvent.AnswerParkRide(yes = true), PARK_RIDE_YES_SPOKEN),
+)
+
+/**
+ * No Park & Ride station near, in the 5 km first look or the 10 km second one: the card's room says so, and the one button
+ * moves on to the next screen. It is live as soon as the message shows and nothing moves on without it.
+ */
+private fun noStationBar() = IntroBar(
+    left = null,
+    right = IntroBarAction(PARK_RIDE_NO_STATION_OK, IntroUiEvent.AcknowledgeNoStation),
 )
 
 private fun decideBar(addShown: Boolean) = IntroBar(

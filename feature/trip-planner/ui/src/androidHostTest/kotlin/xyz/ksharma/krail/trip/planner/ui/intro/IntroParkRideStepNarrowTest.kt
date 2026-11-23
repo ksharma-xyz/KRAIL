@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -17,6 +18,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -95,6 +97,25 @@ class IntroParkRideStepNarrowTest {
         composeRule.onNodeWithText(PARK_RIDE_HEADING).assertIsDisplayed().assertInsideWindow(PARK_RIDE_HEADING)
         listOf(TripPlannerTestTags.INTRO_PRIMARY_ACTION, TripPlannerTestTags.INTRO_SECONDARY_ACTION).forEach { tag ->
             composeRule.onNodeWithTag(tag).assertIsDisplayed().assertInsideWindow(tag)
+        }
+    }
+
+    @Test
+    fun `at 200 percent the no station message and the one OK are whole inside the window, the message wrapping at a word`() {
+        show(PreviewNoStationState)
+
+        composeRule.onNodeWithText(PARK_RIDE_NO_STATION).assertIsDisplayed().assertInsideWindow(PARK_RIDE_NO_STATION)
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertIsDisplayed()
+            .assertInsideWindow("OK")
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION).assertDoesNotExist()
+        val layouts = mutableListOf<TextLayoutResult>()
+        composeRule.onNodeWithText(PARK_RIDE_NO_STATION).fetchSemanticsNode().config[SemanticsActions.GetTextLayoutResult]
+            .action?.invoke(layouts)
+        val layout = layouts.single()
+        for (line in 0 until layout.lineCount - 1) {
+            val end = layout.getLineEnd(line)
+            val text = layout.layoutInput.text.text
+            assertTrue(text[end - 1].isWhitespace() || text[end].isWhitespace(), "the message breaks inside a word at line ${line + 1}")
         }
     }
 

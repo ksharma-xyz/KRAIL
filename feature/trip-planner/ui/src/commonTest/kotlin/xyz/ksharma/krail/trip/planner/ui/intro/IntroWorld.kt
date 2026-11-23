@@ -163,6 +163,7 @@ internal fun worldActions(step: IntroStep): List<WorldAction> = when (step) {
         WorldAction.Send(IntroUiEvent.LocationResultReceived(LocationResult.UNAVAILABLE, null)),
         WorldAction.Send(IntroUiEvent.AddParkRideAndContinue),
         WorldAction.Send(IntroUiEvent.DeclineParkRide),
+        WorldAction.Send(IntroUiEvent.AcknowledgeNoStation),
         WorldAction.Advance(PARK_RIDE_STOPS_WAIT_MS),
         WorldAction.LandAvailability(withReading = true),
         WorldAction.LandAvailability(withReading = false),

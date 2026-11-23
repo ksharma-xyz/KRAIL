@@ -144,6 +144,18 @@ internal class IntroRig(
         IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, FOUR_POINT_SIX_KM_FROM_BELLA_VISTA),
     )
 
+    /**
+     * A rider who answered Yes from a place with no station within ten kilometres, was told so, and pressed OK, so the Intro is
+     * on the destination screen. Two sends, because the look runs after the first and the message has to be on screen to answer.
+     */
+    fun passNoStationNear() {
+        send(
+            IntroUiEvent.AnswerParkRide(yes = true),
+            IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, AT_CENTRAL),
+        )
+        send(IntroUiEvent.AcknowledgeNoStation)
+    }
+
     fun showTallawong() = send(
         IntroUiEvent.AnswerParkRide(yes = true),
         IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, AT_TALLAWONG),

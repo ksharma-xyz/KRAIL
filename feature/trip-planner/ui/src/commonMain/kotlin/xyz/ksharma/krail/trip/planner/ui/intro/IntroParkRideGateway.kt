@@ -35,11 +35,13 @@ internal class IntroParkRideGateway(
     private val analytics: Analytics,
 ) {
     /**
-     * The nearest station within [INTRO_PARK_RIDE_RADIUS_KM] of [location], or null. [location] is
-     * used for this one computation and kept nowhere: not here, not in state, not saved.
+     * The nearest station within [INTRO_PARK_RIDE_RADIUS_KM] of [location] and, when there is none, within
+     * [INTRO_PARK_RIDE_WIDER_RADIUS_KM], or null when there is none in either. The catalogue is read once and both passes
+     * walk that one list, so the second pass is no call and no query. [location] is used for this one computation and kept
+     * nowhere: not here, not in state, not saved.
      */
     suspend fun nearestStation(location: LatLng): ParkRideStationPickerItem? = withContext(ioDispatcher) {
-        nearestParkRideStation(location, catalogue.stations(), INTRO_PARK_RIDE_RADIUS_KM)
+        nearestParkRideStationWidening(location, catalogue.stations())
     }
 
     /** The station with [stationId], to work the card out again after the process was killed. */

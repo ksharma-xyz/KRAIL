@@ -141,6 +141,7 @@ internal class IntroFlowViewModel(
             is IntroUiEvent.LocationResultReceived -> onLocationResult(event.result, event.location)
             IntroUiEvent.AddParkRideAndContinue -> parkRideStep.addAndContinue()
             IntroUiEvent.DeclineParkRide -> parkRideStep.decline()
+            IntroUiEvent.AcknowledgeNoStation -> parkRideStep.acknowledgeNoStation()
             is IntroUiEvent.SelectStop -> selectStop(event.stop)
             IntroUiEvent.ConfirmStop -> _state.value.selectedStop?.let(::chooseStop)
             is IntroUiEvent.QueryChanged -> stopsStep.onQueryChanged(event.text)

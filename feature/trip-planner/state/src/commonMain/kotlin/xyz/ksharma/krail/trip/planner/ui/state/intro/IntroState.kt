@@ -140,7 +140,7 @@ enum class ParkRideAvailabilityState { Loading, Content, Unavailable }
  */
 @Stable
 sealed interface ParkRideCardPhase {
-    /** No card: the question is unanswered, or the answer produced no usable location. */
+    /** No card: the question is unanswered, or the answer produced no usable location or the stops were not ready to look in. */
     data object None : ParkRideCardPhase
 
     /**
@@ -150,7 +150,10 @@ sealed interface ParkRideCardPhase {
      */
     data class Locating(val stationId: String? = null) : ParkRideCardPhase
 
-    /** No station within the radius, or the stops were not ready in time. One plain line and Next. */
+    /**
+     * No station within the first radius or the wider one. The card's room says so and the one button, OK, moves on: nothing
+     * moves on by itself. A look that could not be made, with the stops not ready in time, is [None] and passes the screen over.
+     */
     data object NoStationNear : ParkRideCardPhase
 
     /** The nearest station. It is Added when [IntroState.addedParkRide] is true. */

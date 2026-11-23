@@ -60,9 +60,9 @@ class IntroFlowViewModelParkRideLocateTest {
     }
 
     @Test
-    fun `a fix outside five kilometres shows no station near`() = krailRunTest {
-        // 5.4 km from the nearest station, and a rider in the city who is far from all three.
-        listOf(FIVE_POINT_FOUR_KM_FROM_BELLA_VISTA, AT_CENTRAL).forEach { fix ->
+    fun `a fix outside ten kilometres shows no station near and waits for OK, so the screen is not passed over`() = krailRunTest {
+        // 12 km from the nearest station, and a rider in the city who is far from all three.
+        listOf(TWELVE_KM_FROM_BELLA_VISTA, AT_CENTRAL).forEach { fix ->
             val rig = IntroRig(this)
 
             rig.send(
@@ -71,9 +71,9 @@ class IntroFlowViewModelParkRideLocateTest {
             )
 
             assertEquals(ParkRideCardPhase.NoStationNear, rig.state.parkRideCard, "$fix")
-            assertEquals(IntroStep.DESTINATION, rig.state.step, "nothing to decide, so the screen is passed over")
+            assertEquals(IntroStep.PARK_RIDE, rig.state.step, "nothing moves on without the rider's OK")
             assertEquals(LocationResult.GRANTED, rig.state.locationResult)
-            assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE), "$fix")
+            assertEquals(0, rig.log.count(SUGGESTION_FLAG_WRITE), "the question is not left yet: $fix")
         }
     }
 
@@ -152,10 +152,7 @@ class IntroFlowViewModelParkRideLocateTest {
     @Test
     fun `answering yes again after no station near is dropped, because the rider has already moved on`() = krailRunTest {
         val rig = IntroRig(this)
-        rig.send(
-            IntroUiEvent.AnswerParkRide(yes = true),
-            IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, AT_CENTRAL),
-        )
+        rig.passNoStationNear()
         assertEquals(ParkRideCardPhase.NoStationNear, rig.state.parkRideCard)
         assertEquals(IntroStep.DESTINATION, rig.state.step)
         val before = rig.state
@@ -187,7 +184,7 @@ class IntroFlowViewModelParkRideLocateTest {
     }
 
     @Test
-    fun `stops that never get ready give no station near after ten seconds and the screen then moves on`() =
+    fun `stops that never get ready pass the screen over after ten seconds, with no message, because nothing is known about what is near`() =
         krailRunTest {
             val rig = IntroRig(this, initialReadiness = StopsReadiness.Loading)
             rig.send(
@@ -201,7 +198,7 @@ class IntroFlowViewModelParkRideLocateTest {
             assertEquals(IntroStep.PARK_RIDE, rig.state.step)
             pumpOnce(1)
 
-            assertEquals(ParkRideCardPhase.NoStationNear, rig.state.parkRideCard)
+            assertEquals(ParkRideCardPhase.None, rig.state.parkRideCard, "no message, because the rider was not told anything")
             assertEquals(IntroStep.DESTINATION, rig.state.step)
             assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE))
             assertEquals(10_000L, PARK_RIDE_STOPS_WAIT_MS)
@@ -241,7 +238,7 @@ class IntroFlowViewModelParkRideLocateTest {
         }
 
     @Test
-    fun `stops that fail give no station near at once, with no error`() = krailRunTest {
+    fun `stops that fail pass the screen over at once, with no error and no message`() = krailRunTest {
         val rig = IntroRig(this, initialReadiness = StopsReadiness.Failed(attempt = 1, reason = "disk"))
 
         rig.send(
@@ -249,7 +246,7 @@ class IntroFlowViewModelParkRideLocateTest {
             IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, FOUR_POINT_SIX_KM_FROM_BELLA_VISTA),
         )
 
-        assertEquals(ParkRideCardPhase.NoStationNear, rig.state.parkRideCard)
+        assertEquals(ParkRideCardPhase.None, rig.state.parkRideCard)
         assertEquals(IntroStep.DESTINATION, rig.state.step)
     }
 

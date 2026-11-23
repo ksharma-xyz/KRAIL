@@ -48,6 +48,52 @@ class NearestParkRideStationTest {
         assertEquals("Seven Hills", nearest(locationOf(PARRAMATTA), radiusKm = 8.5))
     }
 
+    private fun widening(
+        location: LatLng,
+        radiusKm: Double = INTRO_PARK_RIDE_RADIUS_KM,
+        widerRadiusKm: Double = INTRO_PARK_RIDE_WIDER_RADIUS_KM,
+    ) = nearestParkRideStationWidening(location, stations, radiusKm, widerRadiusKm)?.stationName
+
+    @Test
+    fun `the second look goes out to ten kilometres`() {
+        assertEquals(10.0, INTRO_PARK_RIDE_WIDER_RADIUS_KM)
+        assertEquals(INTRO_PARK_RIDE_RADIUS_KM, 5.0, "the first look is unchanged")
+    }
+
+    @Test
+    fun `a rider with none within five kilometres gets the nearest within ten, on the second pass`() {
+        assertEquals("Ashfield", widening(locationOf(TOWN_HALL)))
+        assertEquals("Ashfield", widening(locationOf(CENTRAL)))
+        assertEquals("Seven Hills", widening(locationOf(PARRAMATTA)))
+    }
+
+    @Test
+    fun `a rider with one within five kilometres gets it on the first pass, the same as one look at ten would give`() {
+        assertEquals("Tallawong", widening(locationOf(TALLAWONG)))
+        stations.mapNotNull { station -> station.position?.let { LatLng(it.latitude, it.longitude) } }.forEach { here ->
+            assertEquals(
+                nearestParkRideStation(here, stations, radiusKm = 10.0)?.stationId,
+                nearestParkRideStationWidening(here, stations)?.stationId,
+            )
+        }
+    }
+
+    @Test
+    fun `a rider in a regional centre gets nothing in either pass`() {
+        assertNull(widening(LatLng(-34.4278, 150.8931)))
+        assertNull(widening(LatLng(-33.7117, 150.3119)))
+    }
+
+    @Test
+    fun `a first radius that is already ten or more has no second pass`() {
+        // Ashfield is a little over seven kilometres from Town Hall: found at 8, not found at 6 with nothing wider to try.
+        assertEquals("Ashfield", widening(locationOf(TOWN_HALL), radiusKm = 6.0, widerRadiusKm = 8.0))
+        assertNull(widening(locationOf(TOWN_HALL), radiusKm = 6.0, widerRadiusKm = 6.0))
+        assertNull(widening(locationOf(TOWN_HALL), radiusKm = 7.0, widerRadiusKm = 5.0), "a wider radius that is smaller is no pass")
+        assertEquals("Ashfield", widening(locationOf(TOWN_HALL), radiusKm = 10.0))
+        assertEquals(nearest(locationOf(TOWN_HALL), radiusKm = 12.0), widening(locationOf(TOWN_HALL), radiusKm = 12.0))
+    }
+
     @Test
     fun `a rider at an outer Metro station gets that station`() {
         assertEquals("Tallawong", nearest(locationOf(TALLAWONG)))

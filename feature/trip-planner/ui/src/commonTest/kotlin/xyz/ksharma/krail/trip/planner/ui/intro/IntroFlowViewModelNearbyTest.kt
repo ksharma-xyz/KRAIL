@@ -67,11 +67,15 @@ class IntroFlowViewModelNearbyTest {
         val rig = IntroRig(this)
         rig.stationsNear(CENTRAL_STOP, REDFERN_STOP)
 
-        // Central is nowhere near a car park, so the question moves straight on and no card shows.
+        // Central is nowhere near a car park, so no card shows: the rider is told so, and the stations are already found.
         rig.send(
             IntroUiEvent.AnswerParkRide(yes = true),
             IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, AT_CENTRAL),
         )
+        assertEquals(IntroStep.PARK_RIDE, rig.state.step, "the message waits for OK")
+        assertEquals(listOf(CENTRAL_STOP, REDFERN_STOP), rig.state.nearbyStops)
+
+        rig.send(IntroUiEvent.AcknowledgeNoStation)
 
         assertEquals(IntroStep.DESTINATION, rig.state.step)
         assertEquals(listOf(CENTRAL_STOP, REDFERN_STOP), rig.state.nearbyStops)
@@ -191,6 +195,8 @@ class IntroFlowViewModelNearbyTest {
         )
 
         assertTrue(rig.state.nearbyStops.isEmpty())
+        assertEquals(IntroStep.PARK_RIDE, rig.state.step, "no station near is a message, and it waits for OK")
+        rig.send(IntroUiEvent.AcknowledgeNoStation)
         assertEquals(IntroStep.DESTINATION, rig.state.step)
         assertEquals(LocationResult.GRANTED, rig.state.locationResult)
     }

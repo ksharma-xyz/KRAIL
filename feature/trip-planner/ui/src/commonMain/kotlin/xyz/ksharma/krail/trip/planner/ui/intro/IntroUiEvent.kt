@@ -45,6 +45,13 @@ internal sealed interface IntroUiEvent {
     data object DeclineParkRide : IntroUiEvent
 
     /**
+     * `OK`, the only button on the Park & Ride screen when no station is near, even at the wider distance. The rider has read that
+     * there is nothing to add, and this moves on to the next screen. Nothing moves on without it. Ignored on any other state of
+     * the screen, so a press that arrives twice moves on once.
+     */
+    data object AcknowledgeNoStation : IntroUiEvent
+
+    /**
      * A row of the destination or origin list was tapped, or a typed result: the stop is selected, highlighted and
      * announced as selected, and the single button appears. A tap on another row moves the selection. Nothing is chosen
      * and the Intro does not move on.
@@ -85,6 +92,7 @@ internal fun IntroUiEvent.validSteps(): Set<IntroStep> = when (this) {
     is IntroUiEvent.LocationResultReceived,
     IntroUiEvent.AddParkRideAndContinue,
     IntroUiEvent.DeclineParkRide,
+    IntroUiEvent.AcknowledgeNoStation,
     -> setOf(IntroStep.PARK_RIDE)
     is IntroUiEvent.SelectStop,
     IntroUiEvent.ConfirmStop,

@@ -4,6 +4,7 @@ import xyz.ksharma.krail.core.testing.coroutines.KrailTestScope
 import xyz.ksharma.krail.core.testing.coroutines.krailRunTest
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
+import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -18,8 +19,9 @@ import kotlin.test.assertTrue
  * - the screen is never empty: there is a bar, with a live button on it (there is no disabled one to find),
  * - every button that is shown does something when pressed, so a press is never a no-op,
  * - some path of presses, time and answers from the data leads to a finished Intro, so the rider can always finish, and
- * - the step moves on only with the rider's own answer on it, apart from the Park & Ride screen passing itself over when
- *   there is no station near and no usable location.
+ * - the step moves on only with the rider's own answer on it, apart from the Park & Ride screen passing itself over, with no
+ *   message, when there is no usable location or the stops were not ready to look in. No station near, at 5 km and at the wider
+ *   10 km, is a message with one OK button, and only the rider's OK moves on.
  */
 class IntroLivenessTest {
 
@@ -38,6 +40,24 @@ class IntroLivenessTest {
     @Test
     fun `with the stops Ready, every place can finish, every button does something, and a step moves only on an answer`() =
         krailRunTest { checkEveryPlace(StopsReadiness.Ready(stopCount = 100)) }
+
+    @Test
+    fun `the no station message is a place of its own with a live OK that moves on, and time and a second yes do not`() = krailRunTest {
+        val graph = exploreWorld(StopsReadiness.Ready(stopCount = 100))
+        val messages = graph.nodes.keys.filter {
+            it.state.step == IntroStep.PARK_RIDE && it.state.parkRideCard == ParkRideCardPhase.NoStationNear
+        }
+
+        assertTrue(messages.isNotEmpty(), "no path reached the no station message")
+        messages.forEach { place ->
+            val ok = graph.edgesFrom(place).single { it.action == WorldAction.Send(IntroUiEvent.AcknowledgeNoStation) }
+            assertEquals(IntroStep.DESTINATION, ok.to.state.step, "the OK did not move on")
+            // Nothing moves on by itself, and a stray yes starts nothing.
+            graph.edgesFrom(place).filter { it.action is WorldAction.Advance }.forEach { assertEquals(place, it.to, "time moved on") }
+            val yes = graph.edgesFrom(place).single { it.action == WorldAction.Send(IntroUiEvent.AnswerParkRide(yes = true)) }
+            assertEquals(place, yes.to, "a second yes changed the message")
+        }
+    }
 
     private fun KrailTestScope.checkEveryPlace(readiness: StopsReadiness) {
         val graph = exploreWorld(readiness)
@@ -102,7 +122,8 @@ class IntroLivenessTest {
             it is IntroUiEvent.AnswerParkRide ||
                 it == IntroUiEvent.DeclineParkRide ||
                 it == IntroUiEvent.AddParkRideAndContinue ||
-                // No usable location and no station near are passed over by themselves.
+                it == IntroUiEvent.AcknowledgeNoStation ||
+                // No usable location is passed over by itself, with no message. A fix that finds no station is not: it shows one.
                 it is IntroUiEvent.LocationResultReceived
         } || this is WorldAction.Advance
         IntroStep.DESTINATION, IntroStep.ORIGIN -> this == WorldAction.Send(IntroUiEvent.ConfirmStop)

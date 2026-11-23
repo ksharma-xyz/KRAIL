@@ -39,18 +39,18 @@ internal data class CardGrid(
     /** What a row gives up at its end for the controls: the text and the divider stop this far from the card's right edge. */
     val endReserved: Dp get() = endPad + circle + circleGap
 
+    /** Where the controls' shared vertical axis is, from the card's right edge: the go circle's centre, 16 plus half of 40. */
+    val axis: Dp get() = endPad + circle / 2f
+
+    /** What a row keeps above and below its lines, 12 each: [rowMin] less a 20 dp line is 36, and a taller line grows the row. */
+    val rowChrome: Dp get() = rowVerticalPad * 2f
+
     /**
      * How far the text of a row, or the divider, stops from the card's right edge: [endReserved] while a control stands in the
      * column at that height ([columnInUse]), and the card's own right padding [endPad], the same 16 as at the start, when nothing
      * does. A name is never closer to the edge than [endPad].
      */
     fun endRoom(columnInUse: Boolean): Dp = if (columnInUse) endReserved else endPad
-
-    /** Where the controls' shared vertical axis is, from the card's right edge: the go circle's centre, 16 plus half of 40. */
-    val axis: Dp get() = endPad + circle / 2f
-
-    /** What a row keeps above and below its lines, 12 each: [rowMin] less a 20 dp line is 36, and a taller line grows the row. */
-    val rowChrome: Dp get() = rowVerticalPad * 2f
 }
 
 internal fun cardGrid(dim: KrailDimensions = KrailDimensions()): CardGrid = CardGrid(

@@ -14,7 +14,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,21 +30,6 @@ import xyz.ksharma.krail.taj.components.TextField
 import xyz.ksharma.krail.taj.components.TextFieldColors
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
-
-/** What the two floating rows say and do, in one holder so the block hands it over as one argument. */
-@Immutable
-internal class FloatingRowsContent(
-    val to: BarContent,
-    val from: BarContent,
-    val editing: ToFromField?,
-    val editor: ToFromEditor?,
-    val showFrom: Boolean,
-    val firstLeading: @Composable () -> Unit,
-    val toTrailing: (@Composable () -> Unit)?,
-    val fromTrailing: (@Composable () -> Unit)?,
-    val showGo: Boolean,
-    val onGoClick: () -> Unit,
-)
 
 /**
  * The To and From block as two soft pills on one card (`docs/MAP_HOME_UX.md` rules 33, 35 and 36), From on top and To

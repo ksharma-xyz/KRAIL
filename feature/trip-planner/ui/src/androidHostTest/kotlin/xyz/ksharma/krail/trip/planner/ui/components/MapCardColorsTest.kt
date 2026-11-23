@@ -60,6 +60,13 @@ class MapCardColorsTest {
     private lateinit var accessor: MapCardColors
     private var timetableTint = Color.Unspecified
     private var themeColor = Color.Unspecified
+    private val themes = listOf(
+        KrailThemeStyle.Train,
+        KrailThemeStyle.Metro,
+        KrailThemeStyle.Bus,
+        KrailThemeStyle.Ferry,
+    )
+    private val allThemes = KrailThemeStyle.entries
 
     private fun readTokens() {
         composeRule.setContent {
@@ -75,13 +82,6 @@ class MapCardColorsTest {
         }
         composeRule.waitForIdle()
     }
-
-    private val themes = listOf(
-        KrailThemeStyle.Train,
-        KrailThemeStyle.Metro,
-        KrailThemeStyle.Bus,
-        KrailThemeStyle.Ferry,
-    )
 
     private fun assertFamily(mode: String, dark: Boolean) {
         readTokens()
@@ -106,8 +106,6 @@ class MapCardColorsTest {
             assertTrue(step >= HEADER_STEP, "$mode ${style.name}: the header is only $step to 1 from the body")
         }
     }
-
-    private val allThemes = KrailThemeStyle.entries
 
     /**
      * In light mode the accessor is the look it always was: the Timetable's light tint over white with the light palette's text, and
@@ -307,21 +305,25 @@ class MapCardColorsTest {
     private fun darkListLook(theme: Color): CardLook = modeCardLook(
         themeColor = theme,
         darkMode = true,
-        surface = md_theme_dark_surface,
-        onSurface = md_theme_dark_onSurface,
-        softLabel = md_theme_dark_softLabel,
-        labelPlaceholder = md_theme_dark_onSurface_placeholder,
-        outlineSubtle = md_theme_dark_outline_subtle,
+        tokens = ModeTokens(
+            surface = md_theme_dark_surface,
+            onSurface = md_theme_dark_onSurface,
+            softLabel = md_theme_dark_softLabel,
+            labelPlaceholder = md_theme_dark_onSurface_placeholder,
+            outlineSubtle = md_theme_dark_outline_subtle,
+        ),
     )
 
     private fun lightListLook(theme: Color): CardLook = modeCardLook(
         themeColor = theme,
         darkMode = false,
-        surface = md_theme_light_surface,
-        onSurface = md_theme_light_onSurface,
-        softLabel = md_theme_light_softLabel,
-        labelPlaceholder = md_theme_light_onSurface_placeholder,
-        outlineSubtle = md_theme_light_outline_subtle,
+        tokens = ModeTokens(
+            surface = md_theme_light_surface,
+            onSurface = md_theme_light_onSurface,
+            softLabel = md_theme_light_softLabel,
+            labelPlaceholder = md_theme_light_onSurface_placeholder,
+            outlineSubtle = md_theme_light_outline_subtle,
+        ),
     )
 
     /**

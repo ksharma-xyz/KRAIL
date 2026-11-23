@@ -454,7 +454,7 @@ follow the app mode on the map too, so a card is one colour wherever it stands (
   that start at x44, under the first word, and a line that holds only a marker never exists. A row is 56 dp or 24 dp plus its
   lines, whichever is taller, and the card grows with it; at 411 dp and 100 percent the rows are 56 and 56 and the card 113.
   Nothing is truncated or squeezed. The divider runs from x44 to the card's right padding, 16 from its right edge, while nothing is
-  drawn in the right column, and to 64 from the edge once the swap is there. `ToFromCardGrid.kt` holds the numbers.
+  drawn in the right column, and to 64 from the edge once the swap is there. `CardGrid.kt` holds the numbers.
 - **The room the right column takes follows what is drawn.** With no stop picked nothing stands in the column (the swap needs a
   picked stop and the go circle needs both), so the text of both rows and the divider run to the card's right padding, 16 from the
   edge, the same as the start, and a name wraps at that width. Once a stop is picked the swap belongs to the card, and with both

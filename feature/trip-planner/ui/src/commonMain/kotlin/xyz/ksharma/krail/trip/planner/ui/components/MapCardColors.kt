@@ -58,7 +58,7 @@ import xyz.ksharma.krail.taj.themeDecorColor
  * the text on both at 4.5 to 1 or better.
  */
 @Immutable
-internal class MapCardColors(
+internal data class MapCardColors(
     /** The stop card's body: the soft tint, in the mode the app is in. */
     val body: Color,
     /** A band on the stop card (its header): a visibly different step of the same family. */
@@ -110,20 +110,32 @@ internal data class CardLook(
  * placeholder token in light mode and the ink in dark mode, because the placeholder token is under 4.5 to 1 on the dark tint.
  * Plain numbers in and out, so the contrast of every theme is read with no composition.
  */
-internal fun modeCardLook(
-    themeColor: Color,
-    darkMode: Boolean,
-    surface: Color,
-    onSurface: Color,
-    softLabel: Color,
-    labelPlaceholder: Color,
-    outlineSubtle: Color,
-): CardLook = CardLook(
-    tint = mapCardColorsFor(themeColor, darkMode, surface, onSurface).chip,
-    onTint = onSurface,
-    edge = softLabel,
-    placeholder = if (darkMode) onSurface else labelPlaceholder,
-    divider = outlineSubtle,
+internal fun modeCardLook(themeColor: Color, darkMode: Boolean, tokens: ModeTokens): CardLook = CardLook(
+    tint = mapCardColorsFor(themeColor, darkMode, tokens.surface, tokens.onSurface).chip,
+    onTint = tokens.onSurface,
+    edge = tokens.softLabel,
+    placeholder = if (darkMode) tokens.onSurface else tokens.labelPlaceholder,
+    divider = tokens.outlineSubtle,
+)
+
+/** The five tokens of one app mode that a box's look is made from, so [modeCardLook] takes one thing and not seven. */
+@Immutable
+internal data class ModeTokens(
+    val surface: Color,
+    val onSurface: Color,
+    val softLabel: Color,
+    val labelPlaceholder: Color,
+    val outlineSubtle: Color,
+)
+
+/** The tokens of the app mode that is showing now. */
+@Composable
+internal fun currentModeTokens(): ModeTokens = ModeTokens(
+    surface = KrailTheme.colors.surface,
+    onSurface = KrailTheme.colors.onSurface,
+    softLabel = KrailTheme.colors.softLabel,
+    labelPlaceholder = KrailTheme.colors.labelPlaceholder,
+    outlineSubtle = KrailTheme.colors.outlineSubtle,
 )
 
 /**
@@ -193,15 +205,9 @@ internal fun mapCardColors(): MapCardColors {
         surface = KrailTheme.colors.surface,
         onSurface = KrailTheme.colors.onSurface,
     )
-    val look = LocalCardLook.current ?: modeCardLook(
-        themeColor = theme,
-        darkMode = darkMode,
-        surface = KrailTheme.colors.surface,
-        onSurface = KrailTheme.colors.onSurface,
-        softLabel = KrailTheme.colors.softLabel,
-        labelPlaceholder = KrailTheme.colors.labelPlaceholder,
-        outlineSubtle = KrailTheme.colors.outlineSubtle,
-    ).withEdgeShare(if (cardEdgeShown(darkMode, onGradient = false)) 1f else 0f)
+    val look = LocalCardLook.current
+        ?: modeCardLook(themeColor = theme, darkMode = darkMode, tokens = currentModeTokens())
+            .withEdgeShare(if (cardEdgeShown(darkMode, onGradient = false)) 1f else 0f)
     val tint = look.tint
     val onTint = look.onTint
     return MapCardColors(
@@ -245,15 +251,7 @@ internal fun mapCardColors(): MapCardColors {
 @Composable
 internal fun CardGroundScope(onGradient: Boolean, content: @Composable () -> Unit) {
     val darkMode = isAppInDarkMode()
-    val look = modeCardLook(
-        themeColor = themeDecorColor(),
-        darkMode = darkMode,
-        surface = KrailTheme.colors.surface,
-        onSurface = KrailTheme.colors.onSurface,
-        softLabel = KrailTheme.colors.softLabel,
-        labelPlaceholder = KrailTheme.colors.labelPlaceholder,
-        outlineSubtle = KrailTheme.colors.outlineSubtle,
-    )
+    val look = modeCardLook(themeColor = themeDecorColor(), darkMode = darkMode, tokens = currentModeTokens())
     val edgeShare by animateFloatAsState(
         targetValue = if (cardEdgeShown(darkMode, onGradient)) 1f else 0f,
         animationSpec = mapCardFadeSpec(isReduceMotionEnabled()),

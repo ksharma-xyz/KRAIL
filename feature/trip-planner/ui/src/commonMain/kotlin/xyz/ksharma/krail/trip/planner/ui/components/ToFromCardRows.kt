@@ -62,7 +62,7 @@ internal class CardRowContent(
 
 /** What the card's two rows say and do, in one holder so the block hands it over as one argument. */
 @Immutable
-internal class CardRowsContent(
+internal data class CardRowsContent(
     val from: CardRowContent,
     val to: CardRowContent,
     val editing: ToFromField?,
@@ -390,5 +390,4 @@ private fun RowMarker(isOrigin: Boolean, label: String?, grid: CardGrid) {
     }
 }
 
-/** The Timetable's own From dot. */
 private val ORIGIN_DOT_SIZE = 10.dp

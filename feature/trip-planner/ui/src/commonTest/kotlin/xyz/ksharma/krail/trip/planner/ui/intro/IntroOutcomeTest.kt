@@ -85,8 +85,14 @@ class IntroOutcomeTest {
         val picked = resting.copy(startStopId = "1", endStopId = "2")
 
         val declined = TripDecision.DECLINED
-        assertEquals(restingOutcome.copy(skipped = true), resting.copy(tripDecision = declined).toOutcome(StopsWait.NONE))
-        assertEquals(restingOutcome.copy(skipped = true), picked.copy(tripDecision = declined).toOutcome(StopsWait.NONE))
+        assertEquals(
+            restingOutcome.copy(skipped = true),
+            resting.copy(tripDecision = declined).toOutcome(StopsWait.NONE),
+        )
+        assertEquals(
+            restingOutcome.copy(skipped = true),
+            picked.copy(tripDecision = declined).toOutcome(StopsWait.NONE),
+        )
         assertEquals(restingOutcome.copy(skipped = false), picked.toOutcome(StopsWait.NONE))
         assertEquals(
             restingOutcome.copy(skipped = false),

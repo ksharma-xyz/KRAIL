@@ -107,8 +107,10 @@ class IntroFlowViewModelFinishTest {
 
         rig.send(
             IntroUiEvent.AnswerParkRide(yes = false),
-            IntroUiEvent.SelectStop(CENTRAL.toIntroStop()), IntroUiEvent.ConfirmStop,
-            IntroUiEvent.SelectStop(TALLAWONG.toIntroStop()), IntroUiEvent.ConfirmStop,
+            IntroUiEvent.SelectStop(CENTRAL.toIntroStop()),
+            IntroUiEvent.ConfirmStop,
+            IntroUiEvent.SelectStop(TALLAWONG.toIntroStop()),
+            IntroUiEvent.ConfirmStop,
         )
         rig.answerAndFinish(yes = true)
 
@@ -184,7 +186,10 @@ class IntroFlowViewModelFinishTest {
             val rig = rigAt(tripPicked, readiness = StopsReadiness.Loading)
 
             rig.answerAndFinish(yes = true)
-            assertEquals(listOf(THEME_REPORTED, SAVED_TRIP, SUGGESTION_SHOWN, SEEN_INTRO, "awaitReady"), rig.log.entries)
+            assertEquals(
+                listOf(THEME_REPORTED, SAVED_TRIP, SUGGESTION_SHOWN, SEEN_INTRO, "awaitReady"),
+                rig.log.entries,
+            )
             rig.readiness.emit(StopsReadiness.Failed(attempt = 4, reason = "disk"))
             rig.send()
 
@@ -330,8 +335,10 @@ class IntroFlowViewModelFinishTest {
         )
         rig.send(
             IntroUiEvent.DeclineParkRide,
-            IntroUiEvent.SelectStop(CENTRAL.toIntroStop()), IntroUiEvent.ConfirmStop,
-            IntroUiEvent.SelectStop(TALLAWONG.toIntroStop()), IntroUiEvent.ConfirmStop,
+            IntroUiEvent.SelectStop(CENTRAL.toIntroStop()),
+            IntroUiEvent.ConfirmStop,
+            IntroUiEvent.SelectStop(TALLAWONG.toIntroStop()),
+            IntroUiEvent.ConfirmStop,
         )
         rig.answerAndFinish(yes = true)
         assertIs<ParkRideCardPhase.Card>(rig.state.parkRideCard, "the station card was found, so its name is in play")
@@ -371,7 +378,11 @@ class IntroFlowViewModelFinishTest {
         rig.withEffects {
             rig.answerAndFinish(yes = true)
             assertEquals(IntroEffect.StartFinale, awaitItem())
-            rig.send(IntroUiEvent.ConfirmTheme, IntroUiEvent.ConfirmTheme, IntroUiEvent.PickTheme(KrailThemeStyle.Bus.id))
+            rig.send(
+                IntroUiEvent.ConfirmTheme,
+                IntroUiEvent.ConfirmTheme,
+                IntroUiEvent.PickTheme(KrailThemeStyle.Bus.id),
+            )
             expectNoEvents()
         }
 

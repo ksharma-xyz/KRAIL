@@ -89,7 +89,10 @@ class NearestParkRideStationTest {
         // Ashfield is a little over seven kilometres from Town Hall: found at 8, not found at 6 with nothing wider to try.
         assertEquals("Ashfield", widening(locationOf(TOWN_HALL), radiusKm = 6.0, widerRadiusKm = 8.0))
         assertNull(widening(locationOf(TOWN_HALL), radiusKm = 6.0, widerRadiusKm = 6.0))
-        assertNull(widening(locationOf(TOWN_HALL), radiusKm = 7.0, widerRadiusKm = 5.0), "a wider radius that is smaller is no pass")
+        assertNull(
+            widening(locationOf(TOWN_HALL), radiusKm = 7.0, widerRadiusKm = 5.0),
+            "a wider radius that is smaller is no pass",
+        )
         assertEquals("Ashfield", widening(locationOf(TOWN_HALL), radiusKm = 10.0))
         assertEquals(nearest(locationOf(TOWN_HALL), radiusKm = 12.0), widening(locationOf(TOWN_HALL), radiusKm = 12.0))
     }

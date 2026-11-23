@@ -65,13 +65,21 @@ class IntroThemeChangeTimelineTest {
     @Test
     fun `the colours move on one blend, 0 to 1 over 600 ms with motion and over the whole 200 ms with reduced motion`() {
         table("colour", listOf(Row(0f, 0f), Row(300f, 0.5f), Row(600f, 1f), Row(700f, 1f)), { themeColour(it, false) })
-        table("reduced colour", listOf(Row(0f, 0f), Row(100f, 0.5f), Row(200f, 1f), Row(500f, 1f)), { themeColour(it, true) })
+        table(
+            "reduced colour",
+            listOf(Row(0f, 0f), Row(100f, 0.5f), Row(200f, 1f), Row(500f, 1f)),
+            { themeColour(it, true) },
+        )
         assertMonotonic("the colour", increasing = true, samples = clock(700f).map { themeColour(it, false) })
     }
 
     @Test
     fun `the old headline eases up and fades out over the first third, 233 ms`() {
-        table("outgoing", listOf(Row(0f, 0f), Row(116.5f, 0.875f), Row(233f, 1f), Row(700f, 1f)), { themeOutgoing(it, false) })
+        table(
+            "outgoing",
+            listOf(Row(0f, 0f), Row(116.5f, 0.875f), Row(233f, 1f), Row(700f, 1f)),
+            { themeOutgoing(it, false) },
+        )
         assertNear(1f, themeOutgoingAlpha(1f, 0f), "opaque at the start")
         assertNear(0f, themeOutgoingAlpha(1f, 1f), "gone at the end")
         assertNear(0.25f, themeOutgoingAlpha(0.5f, 0.5f), "a line that was half shown leaves from there")
@@ -88,7 +96,11 @@ class IntroThemeChangeTimelineTest {
             assertNear(0f, themeIncomingLine(start, index, false), "line $index at its start")
             assertNear(1f, themeIncomingLine(start + 280f, index, false), "line $index 280 ms later")
             assertNear(0f, themeIncomingLine(start - 50f, index, false), "line $index before its start")
-            assertMonotonic("line $index", increasing = true, samples = clock(700f).map { themeIncomingLine(it, index, false) })
+            assertMonotonic(
+                "line $index",
+                increasing = true,
+                samples = clock(700f).map { themeIncomingLine(it, index, false) },
+            )
         }
         assertNear(60f, lineStarts[1] - lineStarts[0], "the stagger")
         // No line shows anything while the old headline is still leaving, so the two are never on screen together.
@@ -112,7 +124,11 @@ class IntroThemeChangeTimelineTest {
         assertTrue(spring.max() > 1f, "a short spring pops past 1")
         assertTrue(spring.max() < 1.1f, "the pop is small: ${spring.max()}")
         assertTrue(spring.all { it >= 0.6f - tolerance }, "it never goes below the low point")
-        assertMonotonic("the shrink", increasing = false, samples = (0..120).map { themeEmojiScale(it.toFloat(), 1f, false) })
+        assertMonotonic(
+            "the shrink",
+            increasing = false,
+            samples = (0..120).map { themeEmojiScale(it.toFloat(), 1f, false) },
+        )
     }
 
     @Test
@@ -161,7 +177,11 @@ class IntroThemeChangeTimelineTest {
             assertEquals(1f, frame.press, "press at $time")
             assertEquals(1f, frame.wash, "there is no growing circle at $time")
             assertEquals(1f, frame.emojiScale, "no pop at $time")
-            assertNear(themeColour(time, true), frame.outgoing, "the old headline fades on the same line as the colours at $time")
+            assertNear(
+                themeColour(time, true),
+                frame.outgoing,
+                "the old headline fades on the same line as the colours at $time",
+            )
             assertNear(frame.colour, frame.incomingLine(0), "the new headline comes in on the same line at $time")
             assertNear(frame.colour, frame.incomingLine(3), "with no stagger at $time")
             assertEquals(0f, themeIncomingRiseDp(frame.incomingLine(0), reduceMotion = true), "no rise at $time")

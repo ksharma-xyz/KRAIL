@@ -134,7 +134,11 @@ class StopCardContextActionTest {
         labelName = "Grandma and Grandpa's holiday house by the sea"
         show(fontScale = 2f)
 
-        assertEquals("Set as Grandma and Grandpa's holiday house by the sea", words(), "A screen reader hears the whole label")
+        assertEquals(
+            "Set as Grandma and Grandpa's holiday house by the sea",
+            words(),
+            "A screen reader hears the whole label",
+        )
         val layout = textLayout()
         assertEquals(1, layout.lineCount, "One line, never a second")
         assertTrue(layout.isLineEllipsized(0), "ending in an ellipsis")
@@ -162,11 +166,20 @@ class StopCardContextActionTest {
 
         change(PickRole.Start)
         composeRule.mainClock.advanceTimeBy(FRAME_MS * 4)
-        assertEquals(1, composeRule.onAllNodesWithText("Set as destination", useUnmergedTree = true).fetchSemanticsNodes().size)
-        assertEquals(1, composeRule.onAllNodesWithText("Set as starting point", useUnmergedTree = true).fetchSemanticsNodes().size)
+        assertEquals(
+            1,
+            composeRule.onAllNodesWithText("Set as destination", useUnmergedTree = true).fetchSemanticsNodes().size,
+        )
+        assertEquals(
+            1,
+            composeRule.onAllNodesWithText("Set as starting point", useUnmergedTree = true).fetchSemanticsNodes().size,
+        )
 
         composeRule.mainClock.advanceTimeBy(SETTLED_MS)
-        assertEquals(0, composeRule.onAllNodesWithText("Set as destination", useUnmergedTree = true).fetchSemanticsNodes().size)
+        assertEquals(
+            0,
+            composeRule.onAllNodesWithText("Set as destination", useUnmergedTree = true).fetchSemanticsNodes().size,
+        )
         assertEquals("Set as starting point", words())
     }
 
@@ -179,7 +192,10 @@ class StopCardContextActionTest {
         composeRule.mainClock.advanceTimeByFrame()
         composeRule.mainClock.advanceTimeByFrame()
 
-        assertEquals(0, composeRule.onAllNodesWithText("Set as destination", useUnmergedTree = true).fetchSemanticsNodes().size)
+        assertEquals(
+            0,
+            composeRule.onAllNodesWithText("Set as destination", useUnmergedTree = true).fetchSemanticsNodes().size,
+        )
         assertEquals("Set as starting point", words())
     }
 

@@ -364,7 +364,9 @@ class HomeChipRowLayoutTest {
     /** The whole touch target of a control, which the 48 dp interactive size gives a button that draws smaller. */
     private fun touchBounds(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true)
         .fetchSemanticsNode().touchBoundsInRoot.let { rect ->
-            with(composeRule.density) { DpRect(rect.left.toDp(), rect.top.toDp(), rect.right.toDp(), rect.bottom.toDp()) }
+            with(
+                composeRule.density,
+            ) { DpRect(rect.left.toDp(), rect.top.toDp(), rect.right.toDp(), rect.bottom.toDp()) }
         }
 
     private fun textBounds(text: String): DpRect =

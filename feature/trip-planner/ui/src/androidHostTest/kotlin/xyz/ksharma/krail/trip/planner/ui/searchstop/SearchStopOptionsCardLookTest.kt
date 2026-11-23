@@ -81,7 +81,10 @@ class SearchStopOptionsCardLookTest {
     private fun close(expected: Color, actual: Color) =
         abs(expected.red - actual.red) <= 0.03f && abs(expected.green - actual.green) <= 0.03f && abs(expected.blue - actual.blue) <= 0.03f
 
-    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(
+        tag,
+        useUnmergedTree = true,
+    ).getUnclippedBoundsInRoot()
 
     private fun hex(c: Color) = "%06X".format(c.toArgb() and 0xFFFFFF)
 
@@ -110,7 +113,7 @@ class SearchStopOptionsCardLookTest {
         val box = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS)
         val density = composeRule.density
         val y = with(density) { (box.top + (box.bottom - box.top) / 2f).roundToPx() }
-        return (with(density) { (box.left - 2.dp).roundToPx() }..with(density) { (box.left + 2.dp).roundToPx() })
+        return (with(density) { (box.left - 2.dp).roundToPx() } ..with(density) { (box.left + 2.dp).roundToPx() })
             .map { Color(image.getPixel(it, y)) }
     }
 
@@ -127,17 +130,28 @@ class SearchStopOptionsCardLookTest {
             .compositeOver(if (dark) md_theme_dark_surface else md_theme_light_surface)
         // The card's own padding, clear of every chip and of the hairline.
         val card = pixel(image, block.left + 24.dp, block.top + 6.dp)
-        assertTrue(close(expectedCard, card), "$mode: the Options card is the box's tint ${hex(expectedCard)}, drawn as ${hex(card)}")
+        assertTrue(
+            close(expectedCard, card),
+            "$mode: the Options card is the box's tint ${hex(expectedCard)}, drawn as ${hex(card)}",
+        )
         // A chip that is off is the app's own surface with its mode colour as its outline: white in light mode, the page surface in dark.
-        val unselected = boundsOf(TripPlannerTestTags.searchStopModeChip(NswTransportConfig.productClassFor(TransportMode.Train)))
+        val unselected = boundsOf(
+            TripPlannerTestTags.searchStopModeChip(NswTransportConfig.productClassFor(TransportMode.Train)),
+        )
         val offFill = pixel(image, unselected.right - 10.dp, unselected.top + (unselected.bottom - unselected.top) / 2f)
         val offFillTop = pixel(image, unselected.left + unselected.width() / 2f, unselected.top + 5.dp)
-        assertTrue(close(pageSurface, offFill) || close(pageSurface, offFillTop), "$mode: an unselected chip is filled with the app's surface ${hex(pageSurface)}")
+        assertTrue(
+            close(pageSurface, offFill) || close(pageSurface, offFillTop),
+            "$mode: an unselected chip is filled with the app's surface ${hex(pageSurface)}",
+        )
         // A chip that is on is filled with its mode colour.
         val selected = boundsOf(TripPlannerTestTags.searchStopModeChip(ferry))
         val ferryColor = NswTransportConfig.colorFor(TransportMode.Ferry).hexToComposeColor()
         val onFill = pixel(image, selected.right - 10.dp, selected.top + (selected.bottom - selected.top) / 2f)
-        assertTrue(close(ferryColor, onFill), "$mode: a chip that is on is the mode colour ${hex(ferryColor)}, drawn as ${hex(onFill)}")
+        assertTrue(
+            close(ferryColor, onFill),
+            "$mode: a chip that is on is the mode colour ${hex(ferryColor)}, drawn as ${hex(onFill)}",
+        )
 
         val strength = edgeStrength(image)
         println(
@@ -148,22 +162,48 @@ class SearchStopOptionsCardLookTest {
         )
         if (dark) {
             assertTrue(strength < HAIRLINE_PRESENT, "$mode: no hairline on the map, strength $strength")
-            assertTrue(md_theme_dark_softLabel.luminance() > HAIRLINE_PRESENT, "the dark softLabel would have been visible")
-            assertTrue(Color.Gray.contrastRatio(pageSurface) >= TEXT, "$mode: the off label reads on the dark chip: ${Color.Gray.contrastRatio(pageSurface)} to 1")
-            assertTrue(getForegroundColor(ferryColor).contrastRatio(ferryColor) >= TEXT, "$mode: the on label reads on its mode colour")
-            assertEquals(md_theme_dark_surface.toArgb(), pageSurface.toArgb(), "the chips are filled with the dark page surface")
+            assertTrue(
+                md_theme_dark_softLabel.luminance() > HAIRLINE_PRESENT,
+                "the dark softLabel would have been visible",
+            )
+            assertTrue(
+                Color.Gray.contrastRatio(pageSurface) >= TEXT,
+                "$mode: the off label reads on the dark chip: ${Color.Gray.contrastRatio(pageSurface)} to 1",
+            )
+            assertTrue(
+                getForegroundColor(ferryColor).contrastRatio(ferryColor) >= TEXT,
+                "$mode: the on label reads on its mode colour",
+            )
+            assertEquals(
+                md_theme_dark_surface.toArgb(),
+                pageSurface.toArgb(),
+                "the chips are filled with the dark page surface",
+            )
         } else {
-            assertTrue(edgeStrip(image).any { close(md_theme_light_softLabel, it) }, "$mode: the light softLabel hairline is drawn across the edge")
-            assertEquals(md_theme_light_surface.toArgb(), pageSurface.toArgb(), "the chips that are off are white, as they were")
+            assertTrue(
+                edgeStrip(image).any { close(md_theme_light_softLabel, it) },
+                "$mode: the light softLabel hairline is drawn across the edge",
+            )
+            assertEquals(
+                md_theme_light_surface.toArgb(),
+                pageSurface.toArgb(),
+                "the chips that are off are white, as they were",
+            )
         }
     }
 
     @Test
-    fun `in light mode the Options card is the light tint with a hairline and white chips that are off, as it was`() = assertOptionsCard("light", dark = false)
+    fun `in light mode the Options card is the light tint with a hairline and white chips that are off, as it was`() = assertOptionsCard(
+        "light",
+        dark = false,
+    )
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
-    fun `in dark mode the Options card is the dark tint with no hairline and the app's own dark chips`() = assertOptionsCard("dark", dark = true)
+    fun `in dark mode the Options card is the dark tint with no hairline and the app's own dark chips`() = assertOptionsCard(
+        "dark",
+        dark = true,
+    )
 
     private companion object {
         const val TEXT = 4.5f

@@ -128,14 +128,23 @@ class IntroParkRideCardGrowthTest {
         val distance = tall - skeleton
         val allowedStep = distance * largestShareInOneFrame() + ROUNDING_DP
 
-        assertTrue(abs(frames.first() - skeleton) <= allowedStep, "the first frame is ${frames.first()} dp, not near the skeleton's $skeleton")
+        assertTrue(
+            abs(frames.first() - skeleton) <= allowedStep,
+            "the first frame is ${frames.first()} dp, not near the skeleton's $skeleton",
+        )
         frames.zipWithNext().forEachIndexed { index, (before, after) ->
             assertTrue(after >= before - ROUNDING_DP, "the height shrinks from $before to $after in frame ${index + 2}")
-            assertTrue(after - before <= allowedStep, "the height jumps $before to $after in frame ${index + 2}, over $allowedStep dp")
+            assertTrue(
+                after - before <= allowedStep,
+                "the height jumps $before to $after in frame ${index + 2}, over $allowedStep dp",
+            )
         }
         val between = frames.count { it > skeleton + ROUNDING_DP && it < tall - ROUNDING_DP }
         assertTrue(between >= MIN_FRAMES_BETWEEN, "only $between frames are between the two heights: $frames")
-        assertTrue(abs(frames.last() - tall) <= ROUNDING_DP, "the growth has not ended after 300 ms: ${frames.last()} dp, not $tall")
+        assertTrue(
+            abs(frames.last() - tall) <= ROUNDING_DP,
+            "the growth has not ended after 300 ms: ${frames.last()} dp, not $tall",
+        )
     }
 
     @Test
@@ -148,7 +157,10 @@ class IntroParkRideCardGrowthTest {
         composeRule.mainClock.advanceTimeBy(PARK_RIDE_CARD_GROWTH_MS + FRAME_MS * 2)
         val tall = height()
 
-        assertTrue(early > skeleton + ROUNDING_DP && early < tall - TWO_CAR_PARKS_DP / 4, "at 100 ms the height is $early dp")
+        assertTrue(
+            early > skeleton + ROUNDING_DP && early < tall - TWO_CAR_PARKS_DP / 4,
+            "at 100 ms the height is $early dp",
+        )
         assertTrue(tall - skeleton >= TWO_CAR_PARKS_DP, "the growth ended at $tall dp from $skeleton dp")
     }
 
@@ -160,7 +172,10 @@ class IntroParkRideCardGrowthTest {
         val frames = heightsOver(PARK_RIDE_CARD_GROWTH_MS / FRAME_MS.toInt() + 4)
 
         assertTrue(frames.all { abs(it - skeleton) <= ROUNDING_DP }, "the height moved from $skeleton dp: $frames")
-        assertTrue(abs(settledHeight() - skeleton) <= ROUNDING_DP, "the settled height is not the skeleton's $skeleton dp")
+        assertTrue(
+            abs(settledHeight() - skeleton) <= ROUNDING_DP,
+            "the settled height is not the skeleton's $skeleton dp",
+        )
     }
 
     @Test
@@ -172,7 +187,10 @@ class IntroParkRideCardGrowthTest {
         val tall = settledHeight()
 
         assertTrue(tall - skeleton >= TWO_CAR_PARKS_DP, "the skeleton is $skeleton dp and three car parks are $tall dp")
-        assertTrue(abs(frames.first() - tall) <= ROUNDING_DP, "the first frame is ${frames.first()} dp, not the station's $tall: $frames")
+        assertTrue(
+            abs(frames.first() - tall) <= ROUNDING_DP,
+            "the first frame is ${frames.first()} dp, not the station's $tall: $frames",
+        )
         assertTrue(frames.all { abs(it - tall) <= ROUNDING_DP }, "a frame is between the two heights: $frames")
     }
 
@@ -186,7 +204,10 @@ class IntroParkRideCardGrowthTest {
         val skeleton = settledHeight()
 
         assertTrue(skeleton > 0f, "the skeleton has no height")
-        assertTrue(abs(first - skeleton) <= ROUNDING_DP, "the skeleton grew from nothing, $first dp in its first frame, not $skeleton")
+        assertTrue(
+            abs(first - skeleton) <= ROUNDING_DP,
+            "the skeleton grew from nothing, $first dp in its first frame, not $skeleton",
+        )
     }
 
     @Test

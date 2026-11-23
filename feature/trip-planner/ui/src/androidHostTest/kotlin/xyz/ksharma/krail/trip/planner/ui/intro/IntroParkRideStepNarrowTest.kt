@@ -10,7 +10,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -110,13 +109,18 @@ class IntroParkRideStepNarrowTest {
             .assertInsideWindow("OK")
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION).assertDoesNotExist()
         val layouts = mutableListOf<TextLayoutResult>()
-        composeRule.onNodeWithText(PARK_RIDE_NO_STATION).fetchSemanticsNode().config[SemanticsActions.GetTextLayoutResult]
+        composeRule.onNodeWithText(
+            PARK_RIDE_NO_STATION,
+        ).fetchSemanticsNode().config[SemanticsActions.GetTextLayoutResult]
             .action?.invoke(layouts)
         val layout = layouts.single()
         for (line in 0 until layout.lineCount - 1) {
             val end = layout.getLineEnd(line)
             val text = layout.layoutInput.text.text
-            assertTrue(text[end - 1].isWhitespace() || text[end].isWhitespace(), "the message breaks inside a word at line ${line + 1}")
+            assertTrue(
+                text[end - 1].isWhitespace() || text[end].isWhitespace(),
+                "the message breaks inside a word at line ${line + 1}",
+            )
         }
     }
 
@@ -150,7 +154,10 @@ class IntroParkRideStepNarrowTest {
         yes.assertInsideWindow(PARK_RIDE_YES)
         val noBounds = no.getUnclippedBoundsInRoot()
         val yesBounds = yes.getUnclippedBoundsInRoot()
-        assertTrue(noBounds.bottom <= yesBounds.top, "No thanks ends at ${noBounds.bottom}, under where Yes please starts at ${yesBounds.top}")
+        assertTrue(
+            noBounds.bottom <= yesBounds.top,
+            "No thanks ends at ${noBounds.bottom}, under where Yes please starts at ${yesBounds.top}",
+        )
         assertEquals(noBounds.width, yesBounds.width, "the two buttons are the same width")
     }
 

@@ -109,13 +109,23 @@ class IntroThemeStepNarrowTest {
         // A wave of one row would let floating badges come within 2 dp at this width, so it is two staggered rows, and no two
         // badges are in one column.
         bounds.forEachIndexed { i, a ->
-            bounds.drop(i + 1).forEach { b -> assertTrue(abs((a.left - b.left).value) > 1f, "two badges share a column: $a $b") }
+            bounds.drop(
+                i + 1,
+            ).forEach { b -> assertTrue(abs((a.left - b.left).value) > 1f, "two badges share a column: $a $b") }
         }
-        assertTrue(bounds[2].top > bounds[0].top && bounds[3].top > bounds[1].top, "the second row is not under the first: $bounds")
+        assertTrue(
+            bounds[2].top > bounds[0].top && bounds[3].top > bounds[1].top,
+            "the second row is not under the first: $bounds",
+        )
         // The grid as a whole is centred across the window.
         val leftmost = bounds.minOf { it.left }
         val rightmost = bounds.maxOf { it.right }
-        assertEquals(leftmost.value, (windowWidth() - rightmost).value, ROUNDING.value, "the grid is not centred: $bounds")
+        assertEquals(
+            leftmost.value,
+            (windowWidth() - rightmost).value,
+            ROUNDING.value,
+            "the grid is not centred: $bounds",
+        )
     }
 
     @Test
@@ -125,7 +135,12 @@ class IntroThemeStepNarrowTest {
 
         assertEquals(ZIGZAG_LOWER_DP, (b[1].top - b[0].top).value, ROUNDING.value, "Metro is not 32 dp below Train: $b")
         assertEquals(ZIGZAG_LOWER_DP, (b[3].top - b[2].top).value, ROUNDING.value, "Ferry is not 32 dp below Bus: $b")
-        assertEquals(64f + ZIGZAG_LOWER_DP, (b[2].top - b[0].top).value, ROUNDING.value, "Bus is not a row below Train: $b")
+        assertEquals(
+            64f + ZIGZAG_LOWER_DP,
+            (b[2].top - b[0].top).value,
+            ROUNDING.value,
+            "Bus is not a row below Train: $b",
+        )
         // Room 288 dp: the inset is a third of what is left of it after a badge, 72 dp at the most.
         assertEquals(72f, (b[2].left - b[0].left).value, ROUNDING.value, "Bus is not moved in from Train: $b")
         assertEquals(152f, (b[1].left - b[0].left).value, ROUNDING.value, "Metro is not across from Train: $b")
@@ -140,8 +155,22 @@ class IntroThemeStepNarrowTest {
         badgeBounds().forEach { assertEquals(64f, it.width.value, ROUNDING.value, "a badge is $it") }
         badgeBounds().forEach { assertEquals(64f, it.height.value, ROUNDING.value, "a badge is $it") }
         val b = badgeBounds()
-        assertEquals(288f, b.maxOf { it.right }.value - b.minOf { it.left }.value, ROUNDING.value, "the grid is not 288 dp across: $b")
-        assertEquals(192f, b.maxOf { it.bottom }.value - b.minOf { it.top }.value, ROUNDING.value, "the grid is not 192 dp tall: $b")
+        assertEquals(
+            288f,
+            b.maxOf {
+                it.right
+            }.value - b.minOf { it.left }.value,
+            ROUNDING.value,
+            "the grid is not 288 dp across: $b",
+        )
+        assertEquals(
+            192f,
+            b.maxOf {
+                it.bottom
+            }.value - b.minOf { it.top }.value,
+            ROUNDING.value,
+            "the grid is not 192 dp tall: $b",
+        )
     }
 
     @Test
@@ -151,8 +180,14 @@ class IntroThemeStepNarrowTest {
 
         bounds.forEachIndexed { i, a ->
             bounds.drop(i + 1).forEach { b ->
-                val centres = hypot((a.left + a.right - b.left - b.right).value / 2f, (a.top + a.bottom - b.top - b.bottom).value / 2f)
-                assertTrue(centres - 64f >= MIN_GAP - ROUNDING.value, "two badges are ${centres - 64f} dp apart at rest: $a $b")
+                val centres = hypot(
+                    (a.left + a.right - b.left - b.right).value / 2f,
+                    (a.top + a.bottom - b.top - b.bottom).value / 2f,
+                )
+                assertTrue(
+                    centres - 64f >= MIN_GAP - ROUNDING.value,
+                    "two badges are ${centres - 64f} dp apart at rest: $a $b",
+                )
             }
         }
     }

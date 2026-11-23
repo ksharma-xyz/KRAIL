@@ -41,9 +41,9 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.FROM_PLACEHOLDER
 import xyz.ksharma.krail.trip.planner.ui.components.TO_PLACEHOLDER
+import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
 import xyz.ksharma.krail.trip.planner.ui.components.cardColumnInUse
 import xyz.ksharma.krail.trip.planner.ui.components.cardGrid
-import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import kotlin.math.abs
 import kotlin.test.assertEquals
@@ -119,7 +119,10 @@ class SearchStopCardRowsTest {
         composeRule.waitForIdle()
     }
 
-    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(
+        tag,
+        useUnmergedTree = true,
+    ).getUnclippedBoundsInRoot()
 
     private fun DpRect.cy() = top + height / 2f
     private fun DpRect.w() = right - left
@@ -129,12 +132,17 @@ class SearchStopCardRowsTest {
     }
 
     private fun SemanticsNode.textLayouts(): List<Pair<SemanticsNode, TextLayoutResult>> {
-        val own = mutableListOf<TextLayoutResult>().also { config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(it) }
+        val own = mutableListOf<TextLayoutResult>().also {
+            config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(it)
+        }
         return own.map { this to it } + children.flatMap { it.textLayouts() }
     }
 
     private fun rowLines(tag: String): Int =
-        composeRule.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().textLayouts().first().second.lineCount
+        composeRule.onNodeWithTag(
+            tag,
+            useUnmergedTree = true,
+        ).fetchSemanticsNode().textLayouts().first().second.lineCount
 
     private fun px2dp(px: Float): Dp = with(composeRule.density) { px.toDp() }
 
@@ -150,7 +158,9 @@ class SearchStopCardRowsTest {
         val marker = boundsOf(markerTag)
         val rowNode = composeRule.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode()
         val (textNode, layout) = rowNode.textLayouts().first()
-        val textBounds = with(composeRule.density) { textNode.boundsInRoot.let { DpRect(it.left.toDp(), it.top.toDp(), it.right.toDp(), it.bottom.toDp()) } }
+        val textBounds = with(composeRule.density) {
+            textNode.boundsInRoot.let { DpRect(it.left.toDp(), it.top.toDp(), it.right.toDp(), it.bottom.toDp()) }
+        }
 
         val lines = layout.lineCount
         val firstLine = px2dp(layout.getLineBottom(0) - layout.getLineTop(0))
@@ -158,15 +168,35 @@ class SearchStopCardRowsTest {
 
         assertNear("$label, the text starts at x44", 44.dp, textBounds.left - card.left)
         for (line in 0 until lines) {
-            assertNear("$label, line ${line + 1} starts at the text start, never under the marker", 0.dp, px2dp(layout.getLineLeft(line)))
+            assertNear(
+                "$label, line ${line + 1} starts at the text start, never under the marker",
+                0.dp,
+                px2dp(layout.getLineLeft(line)),
+            )
         }
-        assertTrue(layout.getLineRight(0) > layout.getLineLeft(0), "$label, the first line holds words: a marker never stands on a line of its own")
-        assertNear("$label, the text block is centred in its row", row.top + (row.height - block) / 2f, textBounds.top, within = 1f)
+        assertTrue(
+            layout.getLineRight(0) > layout.getLineLeft(0),
+            "$label, the first line holds words: a marker never stands on a line of its own",
+        )
+        assertNear(
+            "$label, the text block is centred in its row",
+            row.top + (row.height - block) / 2f,
+            textBounds.top,
+            within = 1f,
+        )
         assertNear("$label, the marker is centred on the first line", textBounds.top + firstLine / 2f, marker.cy())
-        assertTrue(marker.cy() in (textBounds.top)..(textBounds.top + firstLine), "$label, the marker is on the first line, not above or below it")
+        assertTrue(
+            marker.cy() in (textBounds.top)..(textBounds.top + firstLine),
+            "$label, the marker is on the first line, not above or below it",
+        )
         assertTrue(marker.right <= card.left + 36.dp + 0.5.dp, "$label, the marker stays in its column, x16 to x36")
         assertTrue(marker.left >= card.left + 16.dp - 0.5.dp, "$label, the marker starts at x16 or later")
-        assertNear("$label, the row is 56 dp or 24 dp plus its lines", maxOf(56.dp, 24.dp + block), row.height, within = 1f)
+        assertNear(
+            "$label, the row is 56 dp or 24 dp plus its lines",
+            maxOf(56.dp, 24.dp + block),
+            row.height,
+            within = 1f,
+        )
         return row.height to lines
     }
 
@@ -174,7 +204,11 @@ class SearchStopCardRowsTest {
     private fun assertCardIsItsRows(label: String) {
         val from = boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).height
         val to = boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).height
-        assertNear("$label, the card is the rows and the 1 dp divider", from + to + 1.dp, boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).height)
+        assertNear(
+            "$label, the card is the rows and the 1 dp divider",
+            from + to + 1.dp,
+            boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).height,
+        )
     }
 
     private fun trip() {
@@ -189,9 +223,21 @@ class SearchStopCardRowsTest {
 
         assertNear("From row", 56.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).height)
         assertNear("To row", 56.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).height)
-        assertNear("the card is 113 dp, the approved picture's", 113.dp, boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).height)
-        val (_, fromLines) = assertRow("From", TripPlannerTestTags.SEARCH_ROW_FROM, TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT)
-        val (_, toLines) = assertRow("To", TripPlannerTestTags.SEARCH_ROW_TO, TripPlannerTestTags.SEARCH_ROW_DESTINATION_PIN)
+        assertNear(
+            "the card is 113 dp, the approved picture's",
+            113.dp,
+            boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).height,
+        )
+        val (_, fromLines) = assertRow(
+            "From",
+            TripPlannerTestTags.SEARCH_ROW_FROM,
+            TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT,
+        )
+        val (_, toLines) = assertRow(
+            "To",
+            TripPlannerTestTags.SEARCH_ROW_TO,
+            TripPlannerTestTags.SEARCH_ROW_DESTINATION_PIN,
+        )
         assertEquals(1, fromLines)
         assertEquals(1, toLines)
     }
@@ -202,7 +248,11 @@ class SearchStopCardRowsTest {
         setCard(fontScale = 1.3f)
 
         assertCardIsItsRows("411 dp, 130 percent")
-        val (_, fromLines) = assertRow("From", TripPlannerTestTags.SEARCH_ROW_FROM, TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT)
+        val (_, fromLines) = assertRow(
+            "From",
+            TripPlannerTestTags.SEARCH_ROW_FROM,
+            TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT,
+        )
         assertRow("To", TripPlannerTestTags.SEARCH_ROW_TO, TripPlannerTestTags.SEARCH_ROW_DESTINATION_PIN)
         assertEquals(2, fromLines, "The long name wraps by whole words onto two lines.")
     }
@@ -213,7 +263,11 @@ class SearchStopCardRowsTest {
         setCard(fontScale = 1.5f)
 
         assertCardIsItsRows("411 dp, 150 percent")
-        assertEquals(2, rowLines(TripPlannerTestTags.SEARCH_ROW_FROM), "The long name is on two lines and the To row on one.")
+        assertEquals(
+            2,
+            rowLines(TripPlannerTestTags.SEARCH_ROW_FROM),
+            "The long name is on two lines and the To row on one.",
+        )
         assertEquals(1, rowLines(TripPlannerTestTags.SEARCH_ROW_TO))
         assertRow("From", TripPlannerTestTags.SEARCH_ROW_FROM, TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT)
         assertRow("To", TripPlannerTestTags.SEARCH_ROW_TO, TripPlannerTestTags.SEARCH_ROW_DESTINATION_PIN)
@@ -226,8 +280,16 @@ class SearchStopCardRowsTest {
         setCard(fontScale = 2f)
 
         assertCardIsItsRows("320 dp, 200 percent")
-        val (_, fromLines) = assertRow("From", TripPlannerTestTags.SEARCH_ROW_FROM, TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT)
-        val (_, toLines) = assertRow("To", TripPlannerTestTags.SEARCH_ROW_TO, TripPlannerTestTags.SEARCH_ROW_DESTINATION_PIN)
+        val (_, fromLines) = assertRow(
+            "From",
+            TripPlannerTestTags.SEARCH_ROW_FROM,
+            TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT,
+        )
+        val (_, toLines) = assertRow(
+            "To",
+            TripPlannerTestTags.SEARCH_ROW_TO,
+            TripPlannerTestTags.SEARCH_ROW_DESTINATION_PIN,
+        )
         assertEquals(3, fromLines)
         assertEquals(2, toLines)
     }
@@ -248,8 +310,13 @@ class SearchStopCardRowsTest {
         trip()
         setCard()
         for ((name, scale) in listOf(
-            LONG_NAME to 1f, LONG_NAME to 1.3f, LONG_NAME to 1.5f, TOWN_HALL to 1f, TOWN_HALL to 1.5f,
-            SEVEN_HILLS to 1.3f, SEVEN_HILLS to 1.5f,
+            LONG_NAME to 1f,
+            LONG_NAME to 1.3f,
+            LONG_NAME to 1.5f,
+            TOWN_HALL to 1f,
+            TOWN_HALL to 1.5f,
+            SEVEN_HILLS to 1.3f,
+            SEVEN_HILLS to 1.5f,
         )) {
             composeRule.runOnIdle {
                 fromStop = name
@@ -257,7 +324,11 @@ class SearchStopCardRowsTest {
                 fontScaleState = scale
             }
             composeRule.waitForIdle()
-            assertRow("From ${name.stopName} at $scale", TripPlannerTestTags.SEARCH_ROW_FROM, TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT)
+            assertRow(
+                "From ${name.stopName} at $scale",
+                TripPlannerTestTags.SEARCH_ROW_FROM,
+                TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT,
+            )
             assertRow("To at $scale", TripPlannerTestTags.SEARCH_ROW_TO, TripPlannerTestTags.SEARCH_ROW_DESTINATION_PIN)
         }
     }
@@ -270,8 +341,16 @@ class SearchStopCardRowsTest {
         for (field in listOf<ToFromField?>(null, ToFromField.From, ToFromField.To)) {
             composeRule.runOnIdle { editing = field }
             composeRule.waitForIdle()
-            assertRow("From prompt, editing $field", TripPlannerTestTags.SEARCH_ROW_FROM, TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT)
-            assertRow("To prompt, editing $field", TripPlannerTestTags.SEARCH_ROW_TO, TripPlannerTestTags.SEARCH_ROW_DESTINATION_PIN)
+            assertRow(
+                "From prompt, editing $field",
+                TripPlannerTestTags.SEARCH_ROW_FROM,
+                TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT,
+            )
+            assertRow(
+                "To prompt, editing $field",
+                TripPlannerTestTags.SEARCH_ROW_TO,
+                TripPlannerTestTags.SEARCH_ROW_DESTINATION_PIN,
+            )
         }
     }
 
@@ -288,19 +367,32 @@ class SearchStopCardRowsTest {
         val icons = composeRule.onAllNodesIcon()
         assertEquals(2, icons.size, "Both labelled rows draw their label's own icon.")
         val homeText = composeRule.onNodeWithText("Home", useUnmergedTree = true).getUnclippedBoundsInRoot()
-        val stopText = composeRule.onNodeWithText("(${LONG_NAME.stopName})", useUnmergedTree = true).getUnclippedBoundsInRoot()
+        val stopText = composeRule.onNodeWithText(
+            "(${LONG_NAME.stopName})",
+            useUnmergedTree = true,
+        ).getUnclippedBoundsInRoot()
         val fromIcon = icons.minBy { it.top }
         assertNear("the label starts at x44", 44.dp, homeText.left - card.left)
         assertNear("the icon is centred on the label's line, the first", homeText.cy(), fromIcon.cy())
-        assertTrue(stopText.left - card.left >= 44.dp - 0.5.dp, "the brackets never go under the icon: ${stopText.left - card.left}")
+        assertTrue(
+            stopText.left - card.left >= 44.dp - 0.5.dp,
+            "the brackets never go under the icon: ${stopText.left - card.left}",
+        )
         assertTrue(stopText.top >= homeText.top - 0.5.dp, "the brackets are never above the label")
         assertTrue(fromIcon.cy() < from.top + from.height / 2f + 0.5.dp)
     }
 
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.onAllNodesIcon(): List<DpRect> =
-        onAllNodes(androidx.compose.ui.test.hasTestTag(TripPlannerTestTags.SEARCH_ROW_LABEL_ICON), useUnmergedTree = true)
+        onAllNodes(
+            androidx.compose.ui.test.hasTestTag(TripPlannerTestTags.SEARCH_ROW_LABEL_ICON),
+            useUnmergedTree = true,
+        )
             .fetchSemanticsNodes()
-            .map { node -> with(density) { node.boundsInRoot.let { DpRect(it.left.toDp(), it.top.toDp(), it.right.toDp(), it.bottom.toDp()) } } }
+            .map { node ->
+                with(density) {
+                    node.boundsInRoot.let { DpRect(it.left.toDp(), it.top.toDp(), it.right.toDp(), it.bottom.toDp()) }
+                }
+            }
 
     @Test
     fun `the card is as tall with none, one or two stops chosen, at 100 and 150 percent`() {
@@ -335,13 +427,19 @@ class SearchStopCardRowsTest {
 
     /** Where a row's idle text column ends, in the root, in dp. */
     private fun textRight(tag: String): Dp {
-        val (node, _) = composeRule.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().textLayouts().first()
+        val (node, _) = composeRule.onNodeWithTag(
+            tag,
+            useUnmergedTree = true,
+        ).fetchSemanticsNode().textLayouts().first()
         return with(composeRule.density) { node.boundsInRoot.right.toDp() }
     }
 
     /** Where the longest line of a row's name ends, in the root, in dp. */
     private fun longestLineRight(tag: String): Dp {
-        val (node, layout) = composeRule.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().textLayouts().first()
+        val (node, layout) = composeRule.onNodeWithTag(
+            tag,
+            useUnmergedTree = true,
+        ).fetchSemanticsNode().textLayouts().first()
         val left = with(composeRule.density) { node.boundsInRoot.left.toDp() }
         return left + px2dp((0 until layout.lineCount).maxOf { layout.getLineRight(it) })
     }
@@ -349,7 +447,10 @@ class SearchStopCardRowsTest {
     private fun dividerRoom(): Dp = card().right - boundsOf(TripPlannerTestTags.SEARCH_ROW_DIVIDER).right
 
     private fun fromLayout(): TextLayoutResult =
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_FROM, useUnmergedTree = true).fetchSemanticsNode().textLayouts().first().second
+        composeRule.onNodeWithTag(
+            TripPlannerTestTags.SEARCH_ROW_FROM,
+            useUnmergedTree = true,
+        ).fetchSemanticsNode().textLayouts().first().second
 
     /** The list state of the operator's picture: a start that filled itself in, nothing picked, the To row being edited. */
     private fun listState(name: StopItem) {
@@ -376,9 +477,17 @@ class SearchStopCardRowsTest {
         listState(LONG_NAME)
         setCard()
 
-        assertNear("the From name's column ends 16 dp from the card's right edge", 16.dp, card().right - textRight(TripPlannerTestTags.SEARCH_ROW_FROM))
+        assertNear(
+            "the From name's column ends 16 dp from the card's right edge",
+            16.dp,
+            card().right - textRight(TripPlannerTestTags.SEARCH_ROW_FROM),
+        )
         assertNear("the divider ends 16 dp from it", 16.dp, dividerRoom())
-        assertNear("the To prompt's field too", 16.dp, card().right - boundsOf(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).right)
+        assertNear(
+            "the To prompt's field too",
+            16.dp,
+            card().right - boundsOf(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).right,
+        )
     }
 
     @Test
@@ -389,7 +498,11 @@ class SearchStopCardRowsTest {
         swapOffered = true
         setCard()
 
-        assertNear("the name's column ends 64 dp from the card's right edge", 64.dp, card().right - textRight(TripPlannerTestTags.SEARCH_ROW_FROM))
+        assertNear(
+            "the name's column ends 64 dp from the card's right edge",
+            64.dp,
+            card().right - textRight(TripPlannerTestTags.SEARCH_ROW_FROM),
+        )
         assertNear("the divider ends 64 dp from it", 64.dp, dividerRoom())
     }
 
@@ -417,9 +530,15 @@ class SearchStopCardRowsTest {
         val limit = card().right - 16.dp
         assertTrue(
             longestLineRight(TripPlannerTestTags.SEARCH_ROW_FROM) <= limit + 0.5.dp,
-            "$label, the longest line ends ${longestLineRight(TripPlannerTestTags.SEARCH_ROW_FROM)}, no closer than 16 dp to the edge ($limit)",
+            "$label, the longest line ends ${longestLineRight(
+                TripPlannerTestTags.SEARCH_ROW_FROM,
+            )}, no closer than 16 dp to the edge ($limit)",
         )
-        assertNear("$label, the text column ends 16 dp from the card's right edge", 16.dp, card().right - textRight(TripPlannerTestTags.SEARCH_ROW_FROM))
+        assertNear(
+            "$label, the text column ends 16 dp from the card's right edge",
+            16.dp,
+            card().right - textRight(TripPlannerTestTags.SEARCH_ROW_FROM),
+        )
         assertNear("$label, the divider ends exactly 16 dp before it", 16.dp, dividerRoom())
         assertRow("$label, From", TripPlannerTestTags.SEARCH_ROW_FROM, TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT)
         assertCardIsItsRows(label)
@@ -452,9 +571,19 @@ class SearchStopCardRowsTest {
         val withSwap = fromLayout().lineCount
         val widthWith = card().w() - 44.dp - 64.dp
 
-        println("ROOM 130 percent natural=$natural without=$widthWithout lines=$withoutSwap with=$widthWith lines=$withSwap")
-        assertEquals(natural <= widthWithout, withoutSwap == 1, "No swap: $natural against a column of $widthWithout wraps to $withoutSwap lines")
-        assertEquals(natural <= widthWith, withSwap == 1, "Swap: $natural against a column of $widthWith wraps to $withSwap lines")
+        println(
+            "ROOM 130 percent natural=$natural without=$widthWithout lines=$withoutSwap with=$widthWith lines=$withSwap",
+        )
+        assertEquals(
+            natural <= widthWithout,
+            withoutSwap == 1,
+            "No swap: $natural against a column of $widthWithout wraps to $withoutSwap lines",
+        )
+        assertEquals(
+            natural <= widthWith,
+            withSwap == 1,
+            "Swap: $natural against a column of $widthWith wraps to $withSwap lines",
+        )
         assertTrue(withoutSwap <= withSwap, "The name never wraps more with the room than without it.")
     }
 
@@ -465,8 +594,16 @@ class SearchStopCardRowsTest {
         for (scale in listOf(1f, 1.3f, 1.5f)) {
             composeRule.runOnIdle { fontScaleState = scale }
             composeRule.waitForIdle()
-            assertRow("From, list state, $scale", TripPlannerTestTags.SEARCH_ROW_FROM, TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT)
-            assertRow("To, list state, $scale", TripPlannerTestTags.SEARCH_ROW_TO, TripPlannerTestTags.SEARCH_ROW_DESTINATION_PIN)
+            assertRow(
+                "From, list state, $scale",
+                TripPlannerTestTags.SEARCH_ROW_FROM,
+                TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT,
+            )
+            assertRow(
+                "To, list state, $scale",
+                TripPlannerTestTags.SEARCH_ROW_TO,
+                TripPlannerTestTags.SEARCH_ROW_DESTINATION_PIN,
+            )
             assertCardIsItsRows("list state, $scale")
         }
     }
@@ -496,7 +633,11 @@ class SearchStopCardRowsTest {
         composeRule.waitForIdle()
         assertNear("the From name's column is where it was", fromBefore, textRight(TripPlannerTestTags.SEARCH_ROW_FROM))
         assertNear("the divider is where it was", dividerBefore, dividerRoom())
-        assertNear("and the typed field leaves room for the X", 64.dp, card().right - boundsOf(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).right)
+        assertNear(
+            "and the typed field leaves room for the X",
+            64.dp,
+            card().right - boundsOf(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).right,
+        )
 
         // Nothing picked: the From name and the divider keep the full width and the typed row alone makes room for its X.
         composeRule.runOnIdle {
@@ -507,12 +648,20 @@ class SearchStopCardRowsTest {
         val fromFull = textRight(TripPlannerTestTags.SEARCH_ROW_FROM)
         val dividerFull = dividerRoom()
         assertNear("nothing picked, the divider runs to 16", 16.dp, dividerFull)
-        assertNear("and the empty field to 16 too", 16.dp, card().right - boundsOf(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).right)
+        assertNear(
+            "and the empty field to 16 too",
+            16.dp,
+            card().right - boundsOf(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).right,
+        )
         composeRule.runOnIdle { typed.setTextAndPlaceCursorAtEnd("Cen") }
         composeRule.waitForIdle()
         assertNear("typing keeps the From name's column", fromFull, textRight(TripPlannerTestTags.SEARCH_ROW_FROM))
         assertNear("typing keeps the divider", dividerFull, dividerRoom())
-        assertNear("the typed row stops before its X", 64.dp, card().right - boundsOf(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).right)
+        assertNear(
+            "the typed row stops before its X",
+            64.dp,
+            card().right - boundsOf(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).right,
+        )
     }
 
     @Test
@@ -537,8 +686,16 @@ class SearchStopCardRowsTest {
         assertNear("the first frame already holds the final room, 64", 64.dp, firstFrame)
         assertNear("and so does the From name", 64.dp, card().right - firstName)
         assertNear("nothing moves while the swap fades and glides", firstFrame, dividerRoom())
-        assertNear("the name's column is where the first frame put it", firstName, textRight(TripPlannerTestTags.SEARCH_ROW_FROM))
-        assertEquals(linesBefore, fromLayout().lineCount, "At 100 percent the name is on one line before and after the pick.")
+        assertNear(
+            "the name's column is where the first frame put it",
+            firstName,
+            textRight(TripPlannerTestTags.SEARCH_ROW_FROM),
+        )
+        assertEquals(
+            linesBefore,
+            fromLayout().lineCount,
+            "At 100 percent the name is on one line before and after the pick.",
+        )
         assertNear("the card is 113 dp after the pick, the picture's", 113.dp, card().height)
     }
 

@@ -4,8 +4,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasText
@@ -140,7 +140,10 @@ class TransportModeIconSizeTest {
         assertEquals(FontWeight.Black, result.layoutInput.style.fontWeight)
         assertEquals(Color.White, result.layoutInput.style.color)
         val circlePx = with(composeRule.density) { 64.dp.toPx() }
-        assertTrue(result.size.width <= circlePx && result.size.height <= circlePx, "the letter is ${result.size} px in a $circlePx px circle")
+        assertTrue(
+            result.size.width <= circlePx && result.size.height <= circlePx,
+            "the letter is ${result.size} px in a $circlePx px circle",
+        )
     }
 
     @Test
@@ -164,10 +167,20 @@ class TransportModeIconSizeTest {
             TransportModeIconSize.Large to 32.dp,
         ).forEach { (iconSize, base) ->
             show(iconSize, TransportMode.Bus, scale = 1f)
-            assertEquals(base.value, composeRule.onNodeWithTag("icon").getUnclippedBoundsInRoot().width.value, PIXEL_ROUNDING, "$iconSize at 1.0")
+            assertEquals(
+                base.value,
+                composeRule.onNodeWithTag("icon").getUnclippedBoundsInRoot().width.value,
+                PIXEL_ROUNDING,
+                "$iconSize at 1.0",
+            )
 
             show(iconSize, TransportMode.Bus, scale = 2f)
-            assertEquals(base.value * 2f * 0.8f, composeRule.onNodeWithTag("icon").getUnclippedBoundsInRoot().width.value, PIXEL_ROUNDING, "$iconSize at 2.0")
+            assertEquals(
+                base.value * 2f * 0.8f,
+                composeRule.onNodeWithTag("icon").getUnclippedBoundsInRoot().width.value,
+                PIXEL_ROUNDING,
+                "$iconSize at 2.0",
+            )
             val style = letter("B").layoutInput
             assertEquals(2f, style.density.fontScale, "$iconSize letter follows the text size")
             assertEquals(14f, style.style.fontSize.value, 0.01f, "$iconSize letter size")

@@ -34,8 +34,14 @@ class IntroThemeMotionTest {
                     val offset = floatOffsetAt(index, t, amplitude)
                     val spec = FloatSpecs[index]
 
-                    assertTrue(abs(offset.yDp) <= amplitude * spec.verticalShare + TOLERANCE, "badge $index at $t: ${offset.yDp}")
-                    assertTrue(abs(offset.xDp) <= amplitude * spec.horizontalShare + TOLERANCE, "badge $index at $t: ${offset.xDp}")
+                    assertTrue(
+                        abs(offset.yDp) <= amplitude * spec.verticalShare + TOLERANCE,
+                        "badge $index at $t: ${offset.yDp}",
+                    )
+                    assertTrue(
+                        abs(offset.xDp) <= amplitude * spec.horizontalShare + TOLERANCE,
+                        "badge $index at $t: ${offset.xDp}",
+                    )
                     // The most it is from its place, which is what the room between two badges is made for.
                     assertTrue(hypot(offset.xDp, offset.yDp) <= amplitude * SQRT_TWO + TOLERANCE, "badge $index at $t")
                 }

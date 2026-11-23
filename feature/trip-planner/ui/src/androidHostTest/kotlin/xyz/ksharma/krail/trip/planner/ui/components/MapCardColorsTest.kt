@@ -4,9 +4,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.test.junit4.createComposeRule
-import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
-import kotlin.test.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -31,6 +28,9 @@ import xyz.ksharma.krail.taj.theme.md_theme_light_surface
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeDecorColor
 import xyz.ksharma.krail.taj.tokens.AiThemeGradientTokens
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 
 /**
  * The colours of every card that floats over the map, from the one accessor ([mapCardColors]). A card follows the app mode wherever it
@@ -76,7 +76,12 @@ class MapCardColorsTest {
         composeRule.waitForIdle()
     }
 
-    private val themes = listOf(KrailThemeStyle.Train, KrailThemeStyle.Metro, KrailThemeStyle.Bus, KrailThemeStyle.Ferry)
+    private val themes = listOf(
+        KrailThemeStyle.Train,
+        KrailThemeStyle.Metro,
+        KrailThemeStyle.Bus,
+        KrailThemeStyle.Ferry,
+    )
 
     private fun assertFamily(mode: String, dark: Boolean) {
         readTokens()
@@ -125,17 +130,40 @@ class MapCardColorsTest {
         assertEquals(expected, accessor.chip.containerColor, "a chip is the card's tint")
         assertEquals(md_theme_light_onSurface_placeholder, accessor.placeholder, "the prompt is the light placeholder")
         assertEquals(md_theme_light_outline_subtle, accessor.divider, "the divider is the light outlineSubtle")
-        assertTrue(accessor.chipEdge.contrastRatio(MAP_GROUND) >= HAIRLINE, "the hairline is ${accessor.chipEdge.contrastRatio(MAP_GROUND)} to 1 against the map")
+        assertTrue(
+            accessor.chipEdge.contrastRatio(MAP_GROUND) >= HAIRLINE,
+            "the hairline is ${accessor.chipEdge.contrastRatio(MAP_GROUND)} to 1 against the map",
+        )
         for (style in allThemes) {
-            val tint = mapCardColorsFor(style.hexColorCode.hexToComposeColor(), darkMode = false, surface = lightSurface, onSurface = lightText).chip
+            val tint = mapCardColorsFor(
+                style.hexColorCode.hexToComposeColor(),
+                darkMode = false,
+                surface = lightSurface,
+                onSurface = lightText,
+            ).chip
             val text = lightText.contrastRatio(tint)
-            println("SEARCHCARD light ${style.name} textOnTint=$text hairlineOnMap=${accessor.chipEdge.contrastRatio(MAP_GROUND)} hairlineOnTint=${accessor.chipEdge.contrastRatio(tint)}")
-            assertTrue(text >= TEXT, "light ${style.name}: the stop name, prompt, dot and pin on the card are $text to 1")
+            println(
+                "SEARCHCARD light ${style.name} textOnTint=$text hairlineOnMap=${accessor.chipEdge.contrastRatio(
+                    MAP_GROUND,
+                )} hairlineOnTint=${accessor.chipEdge.contrastRatio(tint)}",
+            )
+            assertTrue(
+                text >= TEXT,
+                "light ${style.name}: the stop name, prompt, dot and pin on the card are $text to 1",
+            )
         }
         for (style in themes) {
-            val tint = mapCardColorsFor(style.hexColorCode.hexToComposeColor(), darkMode = false, surface = lightSurface, onSurface = lightText).chip
+            val tint = mapCardColorsFor(
+                style.hexColorCode.hexToComposeColor(),
+                darkMode = false,
+                surface = lightSurface,
+                onSurface = lightText,
+            ).chip
             val text = lightText.contrastRatio(tint)
-            assertTrue(text in CARD_TEXT_LOW..CARD_TEXT_HIGH, "light ${style.name}: the card text is $text to 1, the picture's 17.51 to 18.26")
+            assertTrue(
+                text in CARD_TEXT_LOW..CARD_TEXT_HIGH,
+                "light ${style.name}: the card text is $text to 1, the picture's 17.51 to 18.26",
+            )
         }
     }
 
@@ -152,33 +180,72 @@ class MapCardColorsTest {
         assertEquals(expected, accessor.chip.containerColor, "a chip is the card's tint")
         assertEquals(md_theme_dark_onSurface, accessor.onTint, "the text is cream")
         assertEquals(md_theme_dark_onSurface, accessor.chip.contentColor, "a chip carries the same text")
-        assertEquals(md_theme_dark_onSurface, accessor.placeholder, "the prompt is the ink, the placeholder token is under 4.5 to 1 on the dark tint")
+        assertEquals(
+            md_theme_dark_onSurface,
+            accessor.placeholder,
+            "the prompt is the ink, the placeholder token is under 4.5 to 1 on the dark tint",
+        )
         assertEquals(md_theme_dark_outline_subtle, accessor.divider, "the divider is the dark outlineSubtle")
-        assertEquals(md_theme_dark_softLabel.copy(alpha = 0f), accessor.chipEdge, "on the map the hairline has no alpha")
+        assertEquals(
+            md_theme_dark_softLabel.copy(alpha = 0f),
+            accessor.chipEdge,
+            "on the map the hairline has no alpha",
+        )
         assertEquals(md_theme_light_softLabel, accessor.pillEdge, "the pill's hairline is the light softLabel, drawn")
         assertEquals(md_theme_light_surface, accessor.pill.containerColor, "the Options pill is white")
         assertEquals(md_theme_light_onSurface, accessor.pill.contentColor, "with the light palette's text")
-        assertTrue(accessor.pillEdge.contrastRatio(MAP_GROUND) >= HAIRLINE, "and its hairline is ${accessor.pillEdge.contrastRatio(MAP_GROUND)} to 1 against the map")
+        assertTrue(
+            accessor.pillEdge.contrastRatio(MAP_GROUND) >= HAIRLINE,
+            "and its hairline is ${accessor.pillEdge.contrastRatio(MAP_GROUND)} to 1 against the map",
+        )
         for (style in allThemes) {
-            val tint = mapCardColorsFor(style.hexColorCode.hexToComposeColor(), darkMode = true, surface = md_theme_dark_surface, onSurface = md_theme_dark_onSurface).chip
+            val tint = mapCardColorsFor(
+                style.hexColorCode.hexToComposeColor(),
+                darkMode = true,
+                surface = md_theme_dark_surface,
+                onSurface = md_theme_dark_onSurface,
+            ).chip
             val text = md_theme_dark_onSurface.contrastRatio(tint)
-            println("SEARCHCARD dark ${style.name} textOnTint=$text tintOnMap=${tint.contrastRatio(MAP_GROUND)} softLabelOnMap=${md_theme_dark_softLabel.contrastRatio(MAP_GROUND)}")
+            println(
+                "SEARCHCARD dark ${style.name} textOnTint=$text tintOnMap=${tint.contrastRatio(
+                    MAP_GROUND,
+                )} softLabelOnMap=${md_theme_dark_softLabel.contrastRatio(MAP_GROUND)}",
+            )
             assertTrue(text >= TEXT, "dark ${style.name}: the text on the dark card is $text to 1")
         }
         for (style in themes) {
-            val tint = mapCardColorsFor(style.hexColorCode.hexToComposeColor(), darkMode = true, surface = md_theme_dark_surface, onSurface = md_theme_dark_onSurface).chip
-            assertTrue(tint.contrastRatio(MAP_GROUND) >= EDGE, "dark ${style.name}: the dark card stands ${tint.contrastRatio(MAP_GROUND)} to 1 off the map, so it needs no hairline there")
+            val tint = mapCardColorsFor(
+                style.hexColorCode.hexToComposeColor(),
+                darkMode = true,
+                surface = md_theme_dark_surface,
+                onSurface = md_theme_dark_onSurface,
+            ).chip
+            assertTrue(
+                tint.contrastRatio(MAP_GROUND) >= EDGE,
+                "dark ${style.name}: the dark card stands ${tint.contrastRatio(
+                    MAP_GROUND,
+                )} to 1 off the map, so it needs no hairline there",
+            )
         }
-        assertTrue(md_theme_dark_softLabel.contrastRatio(MAP_GROUND) < EDGE, "where the dark softLabel would be only ${md_theme_dark_softLabel.contrastRatio(MAP_GROUND)} to 1")
+        assertTrue(
+            md_theme_dark_softLabel.contrastRatio(MAP_GROUND) < EDGE,
+            "where the dark softLabel would be only ${md_theme_dark_softLabel.contrastRatio(MAP_GROUND)} to 1",
+        )
     }
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-notnight")
-    fun `in light mode every theme reads at 4_5 to 1 and the header is a visible step from the body`() = assertFamily("light", dark = false)
+    fun `in light mode every theme reads at 4_5 to 1 and the header is a visible step from the body`() = assertFamily(
+        "light",
+        dark = false,
+    )
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night")
-    fun `in dark mode every theme reads at 4_5 to 1 and the header is a visible step from the body`() = assertFamily("dark", dark = true)
+    fun `in dark mode every theme reads at 4_5 to 1 and the header is a visible step from the body`() = assertFamily(
+        "dark",
+        dark = true,
+    )
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-notnight")
@@ -202,7 +269,10 @@ class MapCardColorsTest {
         assertNotEquals(darkSlab, accessor.body, "The body is not the fixed dark container")
         assertNotEquals(surface, accessor.body, "nor the page's own surface")
         assertNotEquals(darkSlab, accessor.header)
-        assertTrue(accessor.body.contrastRatio(surface) >= DARK_STEP_OVER_PAGE, "The body stands ${accessor.body.contrastRatio(surface)} to 1 above the page")
+        assertTrue(
+            accessor.body.contrastRatio(surface) >= DARK_STEP_OVER_PAGE,
+            "The body stands ${accessor.body.contrastRatio(surface)} to 1 above the page",
+        )
         assertTrue(accessor.body.contrastRatio(darkSlab) >= DARK_STEP_OVER_PAGE, "and above the slab it replaces")
     }
 
@@ -264,7 +334,11 @@ class MapCardColorsTest {
         val stops = AiThemeGradientTokens.stopsFor(style)
         val peak = 0.32f * 0.85f
         return stops[2].copy(alpha = peak * 0.85f)
-            .compositeOver(stops[1].copy(alpha = peak).compositeOver(stops[0].copy(alpha = peak).compositeOver(md_theme_dark_surface)))
+            .compositeOver(
+                stops[1].copy(
+                    alpha = peak,
+                ).compositeOver(stops[0].copy(alpha = peak).compositeOver(md_theme_dark_surface)),
+            )
     }
 
     @Test
@@ -288,11 +362,20 @@ class MapCardColorsTest {
             )
             assertTrue(text >= TEXT, "dark ${style.name}: the text on the dark tint is $text to 1")
             assertTrue(placeholder >= TEXT, "dark ${style.name}: the prompt on the dark tint is $placeholder to 1")
-            assertTrue(edgeOnDarkest >= EDGE_ON_DARKEST, "dark ${style.name}: the hairline against the darkest gradient is $edgeOnDarkest to 1")
-            assertTrue(edgeOnLightest >= EDGE_ON_LIGHTEST_BOUND, "dark ${style.name}: the hairline against the lightest gradient bound is $edgeOnLightest to 1")
+            assertTrue(
+                edgeOnDarkest >= EDGE_ON_DARKEST,
+                "dark ${style.name}: the hairline against the darkest gradient is $edgeOnDarkest to 1",
+            )
+            assertTrue(
+                edgeOnLightest >= EDGE_ON_LIGHTEST_BOUND,
+                "dark ${style.name}: the hairline against the lightest gradient bound is $edgeOnLightest to 1",
+            )
             if (tokenPlaceholder < TEXT) placeholderTokenFails = true
         }
-        assertTrue(placeholderTokenFails, "the placeholder token alone is under 4.5 on the dark tint of a theme, which is why the prompt is the ink")
+        assertTrue(
+            placeholderTokenFails,
+            "the placeholder token alone is under 4.5 on the dark tint of a theme, which is why the prompt is the ink",
+        )
     }
 
     @Test
@@ -300,7 +383,11 @@ class MapCardColorsTest {
         for (style in themes) {
             val theme = style.hexColorCode.hexToComposeColor()
             val look = darkListLook(theme)
-            assertEquals(theme.copy(alpha = 0.45f).compositeOver(md_theme_dark_surface), look.tint, "${style.name}: the tint")
+            assertEquals(
+                theme.copy(alpha = 0.45f).compositeOver(md_theme_dark_surface),
+                look.tint,
+                "${style.name}: the tint",
+            )
             assertEquals(md_theme_dark_onSurface, look.onTint, "${style.name}: the ink")
             assertEquals(md_theme_dark_softLabel, look.edge, "${style.name}: the hairline")
             assertEquals(md_theme_dark_outline_subtle, look.divider, "${style.name}: the divider")
@@ -322,9 +409,17 @@ class MapCardColorsTest {
         for (style in themes) {
             val look = lightListLook(style.hexColorCode.hexToComposeColor())
             val text = look.onTint.contrastRatio(look.tint)
-            println("LISTGROUND light ${style.name} textOnTint=$text hairlineOnMap=${look.edge.contrastRatio(MAP_GROUND)}")
-            assertTrue(text in CARD_TEXT_LOW..CARD_TEXT_HIGH, "light ${style.name}: the text is $text to 1, 17.51 to 18.27 as before")
-            assertTrue(look.edge.contrastRatio(MAP_GROUND) >= HAIRLINE, "light ${style.name}: the hairline is 3.81 to 1 as before")
+            println(
+                "LISTGROUND light ${style.name} textOnTint=$text hairlineOnMap=${look.edge.contrastRatio(MAP_GROUND)}",
+            )
+            assertTrue(
+                text in CARD_TEXT_LOW..CARD_TEXT_HIGH,
+                "light ${style.name}: the text is $text to 1, 17.51 to 18.27 as before",
+            )
+            assertTrue(
+                look.edge.contrastRatio(MAP_GROUND) >= HAIRLINE,
+                "light ${style.name}: the hairline is 3.81 to 1 as before",
+            )
         }
     }
 
@@ -332,15 +427,25 @@ class MapCardColorsTest {
     fun `the hairline is drawn in light mode on both grounds, and in dark mode on the gradient only`() {
         assertTrue(cardEdgeShown(darkMode = false, onGradient = false), "light, on the map")
         assertTrue(cardEdgeShown(darkMode = false, onGradient = true), "light, on the gradient")
-        assertTrue(!cardEdgeShown(darkMode = true, onGradient = false), "dark, on the map: the dark box is clear of the light map")
-        assertTrue(cardEdgeShown(darkMode = true, onGradient = true), "dark, on the gradient, where it separates the box from the page")
+        assertTrue(
+            !cardEdgeShown(darkMode = true, onGradient = false),
+            "dark, on the map: the dark box is clear of the light map",
+        )
+        assertTrue(
+            cardEdgeShown(darkMode = true, onGradient = true),
+            "dark, on the gradient, where it separates the box from the page",
+        )
     }
 
     @Test
     fun `the edge share changes the hairline's alpha and nothing else, and is exact at both ends`() {
         val look = darkListLook(KrailThemeStyle.Train.hexColorCode.hexToComposeColor())
 
-        assertEquals(look, look.withEdgeShare(1f), "1 is this very look, so light mode is the same value at every frame")
+        assertEquals(
+            look,
+            look.withEdgeShare(1f),
+            "1 is this very look, so light mode is the same value at every frame",
+        )
         val gone = look.withEdgeShare(0f)
         assertEquals(0f, gone.edge.alpha, "0 draws no hairline")
         assertEquals(look.edge.copy(alpha = 0f), gone.edge)
@@ -380,14 +485,26 @@ class MapCardColorsTest {
             assertEquals(dark.divider, card.divider, "$ground: the divider")
             assertEquals(dark.tint, card.chip.containerColor, "$ground: a chip wears it too")
             assertEquals(dark.onTint, card.chip.contentColor, "$ground: with the same ink")
-            assertEquals(md_theme_light_surface, card.pill.containerColor, "$ground: the Options pill is white on either ground")
+            assertEquals(
+                md_theme_light_surface,
+                card.pill.containerColor,
+                "$ground: the Options pill is white on either ground",
+            )
             assertEquals(md_theme_light_onSurface, card.pill.contentColor)
         }
         assertEquals(dark.edge, checkNotNull(onGradient).chipEdge, "on the gradient the hairline is the dark softLabel")
-        assertEquals(dark.edge.copy(alpha = 0f), checkNotNull(onMap).chipEdge, "on the map there is none, the same colour with no alpha")
+        assertEquals(
+            dark.edge.copy(alpha = 0f),
+            checkNotNull(onMap).chipEdge,
+            "on the map there is none, the same colour with no alpha",
+        )
         val card = checkNotNull(outside)
         val map = checkNotNull(onMap)
-        assertEquals(map.tint, card.tint, "outside any scope a card stands on the map, so it is the scope's map look: the fill")
+        assertEquals(
+            map.tint,
+            card.tint,
+            "outside any scope a card stands on the map, so it is the scope's map look: the fill",
+        )
         assertEquals(map.onTint, card.onTint, "the ink")
         assertEquals(map.chipEdge, card.chipEdge, "the hairline, with no alpha")
         assertEquals(map.placeholder, card.placeholder, "the prompt")

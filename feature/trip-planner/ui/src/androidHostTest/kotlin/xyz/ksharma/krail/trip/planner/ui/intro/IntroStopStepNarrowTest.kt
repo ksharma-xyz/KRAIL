@@ -7,12 +7,12 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.hasScrollToNodeAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.hasScrollToNodeAction
-import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -87,7 +87,9 @@ class IntroStopStepNarrowTest {
 
     // The list is lazy, so a row below the window is not drawn until the list is scrolled to it.
     private fun scrolledTo(stopId: String): SemanticsNodeInteraction {
-        composeRule.onNode(hasScrollToNodeAction()).performScrollToNode(hasTestTag(TripPlannerTestTags.introStop(stopId)))
+        composeRule.onNode(
+            hasScrollToNodeAction(),
+        ).performScrollToNode(hasTestTag(TripPlannerTestTags.introStop(stopId)))
         composeRule.waitForIdle()
         return row(stopId)
     }
@@ -156,8 +158,14 @@ class IntroStopStepNarrowTest {
         val field = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_STOP_FIELD).getUnclippedBoundsInRoot()
         val first = row(DEFAULT_SUGGESTED_STOPS.end.first().stopId).getUnclippedBoundsInRoot()
 
-        assertTrue(field.top - title.bottom >= rhythm.titleToMiddle - ROUNDING, "the field is ${field.top - title.bottom} under the title")
-        assertTrue(first.top - field.bottom >= rhythm.fieldToList - ROUNDING, "the first row is ${first.top - field.bottom} under the field")
+        assertTrue(
+            field.top - title.bottom >= rhythm.titleToMiddle - ROUNDING,
+            "the field is ${field.top - title.bottom} under the title",
+        )
+        assertTrue(
+            first.top - field.bottom >= rhythm.fieldToList - ROUNDING,
+            "the first row is ${first.top - field.bottom} under the field",
+        )
     }
 
     @Test

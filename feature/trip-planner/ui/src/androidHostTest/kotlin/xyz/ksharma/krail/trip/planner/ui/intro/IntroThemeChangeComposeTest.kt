@@ -134,7 +134,9 @@ class IntroThemeChangeComposeTest {
     // How much of the headline can be seen, whichever of the two layers it is.
     private fun IntroThemeChange.visibleHeadline(): Float {
         val time = clock.value
-        val leaving = spec.headline.outgoing?.let { outgoingLooks(spec.headline.outgoingLooks, time, spec.reduceMotion).visibility } ?: 0f
+        val leaving = spec.headline.outgoing?.let {
+            outgoingLooks(spec.headline.outgoingLooks, time, spec.reduceMotion).visibility
+        } ?: 0f
         val arriving = incomingLooks(spec.headline.incoming.lines.size, time, spec.reduceMotion).visibility
         return maxOf(leaving, arriving)
     }
@@ -161,10 +163,19 @@ class IntroThemeChangeComposeTest {
         assertEquals(introThemeChoices().indexOfFirst { it.style == KrailThemeStyle.Bus }, sequence.spec.taps.tapped)
         assertTrue(distance(colourBefore, sequence.colourNow()) < STEP_COLOUR, "the theme colour jumped")
         assertTrue(distance(textBefore, sequence.textNow()) < STEP_COLOUR, "the text colour jumped")
-        assertTrue(abs(emojiBefore - sequence.emojiScaleNow()) < STEP_SCALE, "the emoji jumped from $emojiBefore to ${sequence.emojiScaleNow()}")
+        assertTrue(
+            abs(emojiBefore - sequence.emojiScaleNow()) < STEP_SCALE,
+            "the emoji jumped from $emojiBefore to ${sequence.emojiScaleNow()}",
+        )
         assertTrue(abs(headlineBefore - sequence.visibleHeadline()) < STEP_HEADLINE, "the headline jumped")
         assertTrue(
-            abs(firstPress - sequence.pressNow(introThemeChoices().indexOfFirst { it.style == KrailThemeStyle.Metro })) < STEP_SCALE,
+            abs(
+                firstPress - sequence.pressNow(
+                    introThemeChoices().indexOfFirst {
+                        it.style == KrailThemeStyle.Metro
+                    },
+                ),
+            ) < STEP_SCALE,
             "the first badge's press jumped",
         )
         step(THEME_CHANGE_MS.toLong() + SETTLE_MS)
@@ -207,7 +218,11 @@ class IntroThemeChangeComposeTest {
         sequence.spec.forEachGroundLayer(sequence.clock.value) { _, _, share -> layers += share }
         assertEquals(listOf(1f), layers, "there is no growing circle")
         assertEquals(1f, sequence.emojiScaleNow(), "there is no pop")
-        assertEquals(1f, sequence.pressNow(introThemeChoices().indexOfFirst { it.style == KrailThemeStyle.Ferry }), "there is no press")
+        assertEquals(
+            1f,
+            sequence.pressNow(introThemeChoices().indexOfFirst { it.style == KrailThemeStyle.Ferry }),
+            "there is no press",
+        )
         val old = sequence.outgoingAlphaNow(0)
         val new = sequence.incomingAlphaNow(0)
         assertTrue(old in 0.05f..0.95f && new in 0.05f..0.95f, "both headlines are part way: $old and $new")

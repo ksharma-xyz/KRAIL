@@ -79,7 +79,10 @@ class IntroProgressTest {
             everyKeptFieldSet.copy(
                 // A station added before is a card with its name and no car parks, not worked out again.
                 parkRideCard = ParkRideCardPhase.Card(
-                    bellaVista.copy(carParks = persistentListOf(), availability = ParkRideAvailabilityState.Unavailable),
+                    bellaVista.copy(
+                        carParks = persistentListOf(),
+                        availability = ParkRideAvailabilityState.Unavailable,
+                    ),
                 ),
             ),
             back,
@@ -104,7 +107,11 @@ class IntroProgressTest {
 
     @Test
     fun `the Park and Ride answer comes back as yes, no or none`() {
-        val past = everyKeptFieldSet.copy(step = IntroStep.DESTINATION, addedParkRide = false, parkRideCard = ParkRideCardPhase.None)
+        val past = everyKeptFieldSet.copy(
+            step = IntroStep.DESTINATION,
+            addedParkRide = false,
+            parkRideCard = ParkRideCardPhase.None,
+        )
 
         ParkRideAnswer.entries.forEach { answer ->
             assertEquals(answer, roundTrip(past.copy(parkRideAnswer = answer)).parkRideAnswer, "answer $answer")
@@ -152,7 +159,16 @@ class IntroProgressTest {
 
     @Test
     fun `a stop is kept as an id and a name, and half a stop is not kept`() {
-        val back = roundTrip(IntroState(step = IntroStep.CONFIRM, startStopId = "1", startName = null, endStopId = null, endName = "End"))
+        val back =
+            roundTrip(
+                IntroState(
+                    step = IntroStep.CONFIRM,
+                    startStopId = "1",
+                    startName = null,
+                    endStopId = null,
+                    endName = "End",
+                ),
+            )
 
         assertNull(back.startStopId)
         assertNull(back.startName)
@@ -168,7 +184,10 @@ class IntroProgressTest {
             "typedquerytext", "Nearby Redfern", "201510", "Searched Result", "209999", "Selected Row", "208888",
             "Level 7", "spots", "8:05", "120", "latitude", "longitude", "location",
         ).forEach { word ->
-            assertFalse(word.lowercase() in text.lowercase().replace("locationresult", ""), "$word is in the saved text: $text")
+            assertFalse(
+                word.lowercase() in text.lowercase().replace("locationresult", ""),
+                "$word is in the saved text: $text",
+            )
         }
         assertEquals(everyKeptFieldSet.toProgress(), everyDroppedFieldSet.toProgress())
     }

@@ -104,7 +104,10 @@ class SettingsScreenRowsTest {
         ).flatMap { path ->
             File(root, path).walkTopDown().filter { it.isFile && it.extension == "kt" && it.name != THIS_FILE }.toList()
         }
-        assertTrue(sources.size > MIN_SOURCES, "found only ${sources.size} sources, so this guard would pass by looking at nothing")
+        assertTrue(
+            sources.size > MIN_SOURCES,
+            "found only ${sources.size} sources, so this guard would pass by looking at nothing",
+        )
 
         val offenders = sources.flatMap { file ->
             val text = file.readText()

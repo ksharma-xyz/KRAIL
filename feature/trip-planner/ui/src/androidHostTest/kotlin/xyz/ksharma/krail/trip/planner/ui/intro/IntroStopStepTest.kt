@@ -180,7 +180,9 @@ class IntroStopStepTest {
         assertEquals(null, viewModel.state.value.endStopId)
         row(ends[1].stopId).assertIsSelected()
         ends.filterNot { it == ends[1] }.forEach { row(it.stopId).assertIsNotSelected() }
-        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertTextEquals(STOP_CHOOSE).assertIsEnabled()
+        composeRule.onNodeWithTag(
+            TripPlannerTestTags.INTRO_PRIMARY_ACTION,
+        ).assertTextEquals(STOP_CHOOSE).assertIsEnabled()
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION).assertDoesNotExist()
     }
 

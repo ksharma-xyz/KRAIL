@@ -79,9 +79,28 @@ class IntroThemeBadgeLandscapeTest {
 
         assertTrue(window.width == 640.dp && window.height == 360.dp, "the window is $window")
         // The chosen badge, Train here, sits lifted 4 dp, so that is the slack.
-        assertEquals(112f, (bounds.maxOf { it.bottom } - bounds.minOf { it.top }).value, LIFT.value + ROUNDING.value, "the wave is not 112 dp tall: $bounds")
-        assertEquals(bounds[0].top.value, bounds[2].top.value, LIFT.value + ROUNDING.value, "Train and Bus are not in line: $bounds")
-        assertEquals(bounds[1].top.value, bounds[3].top.value, ROUNDING.value, "Metro and Ferry are not in line: $bounds")
+        assertEquals(
+            112f,
+            (
+                bounds.maxOf {
+                    it.bottom
+                } - bounds.minOf { it.top }
+                ).value,
+            LIFT.value + ROUNDING.value,
+            "the wave is not 112 dp tall: $bounds",
+        )
+        assertEquals(
+            bounds[0].top.value,
+            bounds[2].top.value,
+            LIFT.value + ROUNDING.value,
+            "Train and Bus are not in line: $bounds",
+        )
+        assertEquals(
+            bounds[1].top.value,
+            bounds[3].top.value,
+            ROUNDING.value,
+            "Metro and Ferry are not in line: $bounds",
+        )
     }
 
     // The bar is over the bottom of the content now, so a badge scrolled into view can be under it. The content has room
@@ -116,10 +135,18 @@ class IntroThemeBadgeLandscapeTest {
             composeRule.onNodeWithTag(choice.tag).assertIsDisplayed()
 
             val bounds = composeRule.onNodeWithTag(choice.tag).getUnclippedBoundsInRoot()
-            val barTop = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).getUnclippedBoundsInRoot().top
-            assertTrue(bounds.left >= 0.dp && bounds.right <= window.width, "${choice.name} is outside the window: $bounds")
+            val barTop = composeRule.onNodeWithTag(
+                TripPlannerTestTags.INTRO_PRIMARY_ACTION,
+            ).getUnclippedBoundsInRoot().top
+            assertTrue(
+                bounds.left >= 0.dp && bounds.right <= window.width,
+                "${choice.name} is outside the window: $bounds",
+            )
             assertTrue(bounds.top >= 0.dp, "${choice.name} is above the top of the window: $bounds")
-            assertTrue(bounds.bottom <= barTop + ROUNDING, "${choice.name} ends at ${bounds.bottom}, behind the bar at $barTop")
+            assertTrue(
+                bounds.bottom <= barTop + ROUNDING,
+                "${choice.name} ends at ${bounds.bottom}, behind the bar at $barTop",
+            )
         }
     }
 

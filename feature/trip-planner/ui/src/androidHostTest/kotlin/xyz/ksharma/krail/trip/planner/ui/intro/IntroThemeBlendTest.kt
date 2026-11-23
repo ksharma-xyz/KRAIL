@@ -190,7 +190,10 @@ class IntroThemeBlendTest {
 
         assertNotEquals(from, middle, "still the old colour half way through")
         assertNotEquals(to, middle, "already the new colour half way through")
-        assertTrue(distance(from, middle) < distance(from, to) && distance(middle, to) < distance(from, to), "$from $middle $to")
+        assertTrue(
+            distance(from, middle) < distance(from, to) && distance(middle, to) < distance(from, to),
+            "$from $middle $to",
+        )
         composeRule.mainClock.advanceTimeBy(THEME_CHANGE_REDUCED_MS.toLong())
         assertEquals(to, seen.last())
     }

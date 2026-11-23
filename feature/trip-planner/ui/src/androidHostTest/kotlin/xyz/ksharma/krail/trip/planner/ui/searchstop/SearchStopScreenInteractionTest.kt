@@ -28,8 +28,8 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
-import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
@@ -418,7 +418,11 @@ class SearchStopScreenInteractionTest {
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_SEARCH, useUnmergedTree = true).performClick()
 
         val trip = checkNotNull(chosen) { "expected the trip to leave with go" }
-        assertEquals("stop_central", trip.first.stopId, "After the swap the start is the stop that was the destination.")
+        assertEquals(
+            "stop_central",
+            trip.first.stopId,
+            "After the swap the start is the stop that was the destination.",
+        )
         assertEquals("stop_town_hall", trip.second.stopId, "and the destination is the stop that was the start.")
     }
 

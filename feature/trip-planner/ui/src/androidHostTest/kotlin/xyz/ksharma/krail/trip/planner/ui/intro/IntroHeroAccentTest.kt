@@ -101,14 +101,25 @@ class IntroHeroAccentTest {
             composeRule.waitForIdle()
             val expectedAccent = introAccentInk(introAccentTheme(screen.step), pageSeen, dark)
             assertEquals(expectedAccent, accentSeen, "${screen.step} accent, dark $dark")
-            assertTrue(accentSeen.contrastRatio(pageSeen) >= 3.0f, "${screen.step} accent is under 3 to 1 on the page, dark $dark")
+            assertTrue(
+                accentSeen.contrastRatio(pageSeen) >= 3.0f,
+                "${screen.step} accent is under 3 to 1 on the page, dark $dark",
+            )
             drawn().forEachIndexed { index, layout ->
                 val text = layout.layoutInput.text.text
                 val colour = layout.layoutInput.style.color
                 if (index == screen.hero) {
-                    assertEquals(expectedAccent, colour, "${screen.step}: the hero \"$text\" is the accent, with its question mark")
+                    assertEquals(
+                        expectedAccent,
+                        colour,
+                        "${screen.step}: the hero \"$text\" is the accent, with its question mark",
+                    )
                 } else {
-                    assertEquals(inkSeen, colour, "${screen.step}: the whisper \"$text\" is the ink, with its question mark")
+                    assertEquals(
+                        inkSeen,
+                        colour,
+                        "${screen.step}: the whisper \"$text\" is the ink, with its question mark",
+                    )
                 }
             }
         }
@@ -148,7 +159,9 @@ class IntroHeroAccentTest {
         screens.forEach { screen ->
             current.value = screen
             composeRule.waitForIdle()
-            val headings = composeRule.onAllNodes(SemanticsMatcher.keyIsDefined(androidx.compose.ui.semantics.SemanticsProperties.Heading))
+            val headings = composeRule.onAllNodes(
+                SemanticsMatcher.keyIsDefined(androidx.compose.ui.semantics.SemanticsProperties.Heading),
+            )
             assertEquals(1, headings.fetchSemanticsNodes().size)
             assertEquals(
                 listOf(screen.spoken),

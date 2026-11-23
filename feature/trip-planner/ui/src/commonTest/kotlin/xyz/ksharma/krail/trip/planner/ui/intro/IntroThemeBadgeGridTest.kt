@@ -46,7 +46,14 @@ class IntroThemeBadgeGridTest {
             // The narrowest window of the table is too narrow for two rows that a dance cannot touch across, so it is one column.
             Row(200, ThemeBadgeLayout.Column, listOf(0f, 16f, 0f, 16f), listOf(0f, 88f, 176f, 264f), 25.44f, 7.995f),
             Row(240, ThemeBadgeLayout.Zigzag, listOf(0f, 96f, 48f, 144f), listOf(0f, 32f, 96f, 128f), 16f, 1.394f),
-            Row(280, ThemeBadgeLayout.Zigzag, listOf(0f, 122.67f, 61.33f, 184f), listOf(0f, 32f, 96f, 128f), 24.64f, 7.506f),
+            Row(
+                280,
+                ThemeBadgeLayout.Zigzag,
+                listOf(0f, 122.67f, 61.33f, 184f),
+                listOf(0f, 32f, 96f, 128f),
+                24.64f,
+                7.506f,
+            ),
             Row(320, ThemeBadgeLayout.Zigzag, listOf(0f, 152f, 72f, 224f), listOf(0f, 32f, 96f, 128f), 38.45f, 8f),
             Row(352, ThemeBadgeLayout.Wave, listOf(0f, 85.33f, 170.67f, 256f), listOf(0f, 48f, 0f, 48f), 33.91f, 8f),
             Row(360, ThemeBadgeLayout.Wave, listOf(0f, 88f, 176f, 264f), listOf(0f, 48f, 0f, 48f), 36.24f, 8f),
@@ -75,7 +82,11 @@ class IntroThemeBadgeGridTest {
             val grid = grid(window)
 
             assertEquals(ThemeBadgeLayout.Wave, grid.layout, "$window dp")
-            assertEquals(listOf(0f, WAVE_DROP_DP, 0f, WAVE_DROP_DP), grid.ysDp, "$window dp: Train and Bus high, Metro and Ferry low")
+            assertEquals(
+                listOf(0f, WAVE_DROP_DP, 0f, WAVE_DROP_DP),
+                grid.ysDp,
+                "$window dp: Train and Bus high, Metro and Ferry low",
+            )
             assertNear(0f, grid.xsDp.first(), "$window dp: the first badge is at the left edge")
             assertNear(room(window) - badge, grid.xsDp.last(), "$window dp: the last badge is at the right edge")
             assertNear(room(window).toFloat(), grid.widthDp, "$window dp: the grid is as wide as the room")
@@ -95,7 +106,11 @@ class IntroThemeBadgeGridTest {
             val span = room(window) - badge
             val inset = min(ZIGZAG_MAX_INSET_DP, span / 3f)
             assertNear(listOf(0f, span - inset, inset, span), grid.xsDp, "$window dp: xs")
-            assertEquals(listOf(0f, ZIGZAG_LOWER_DP, badge + ZIGZAG_LOWER_DP, badge + 2 * ZIGZAG_LOWER_DP), grid.ysDp, "$window dp: ys")
+            assertEquals(
+                listOf(0f, ZIGZAG_LOWER_DP, badge + ZIGZAG_LOWER_DP, badge + 2 * ZIGZAG_LOWER_DP),
+                grid.ysDp,
+                "$window dp: ys",
+            )
             val columns = grid.xsDp.map { it }
             columns.indices.forEach { i ->
                 columns.indices.filter { it > i }.forEach { j ->
@@ -130,7 +145,10 @@ class IntroThemeBadgeGridTest {
             val grid = themeBadgeGrid(4, available.toFloat(), badge)
             if (grid.layout == ThemeBadgeLayout.Wave) {
                 val floating = grid.closestGapDp - 2f * SQRT_TWO * FLOAT_MAX_DP
-                assertTrue(floating >= MIN_FLOATING_GAP_DP - 0.001f, "two floating badges are only $floating dp apart in $available dp")
+                assertTrue(
+                    floating >= MIN_FLOATING_GAP_DP - 0.001f,
+                    "two floating badges are only $floating dp apart in $available dp",
+                )
             }
             val now = when (grid.layout) {
                 ThemeBadgeLayout.Column -> 0
@@ -180,7 +198,10 @@ class IntroThemeBadgeGridTest {
                 grid.xsDp.indices.forEach { i ->
                     grid.xsDp.indices.filter { it > i }.forEach { j ->
                         val distance = hypot(grid.xsDp[i] - grid.xsDp[j], grid.ysDp[i] - grid.ysDp[j])
-                        assertTrue(distance > badge, "badges $i and $j overlap: $count of them in $available dp, $distance apart")
+                        assertTrue(
+                            distance > badge,
+                            "badges $i and $j overlap: $count of them in $available dp, $distance apart",
+                        )
                     }
                 }
             }
@@ -193,12 +214,21 @@ class IntroThemeBadgeGridTest {
             val grid = themeBadgeGrid(4, available.toFloat(), badge)
 
             grid.xsDp.indices.forEach { i ->
-                assertTrue(grid.xsDp[i] >= -0.001f && grid.xsDp[i] + badge <= grid.widthDp + 0.001f, "badge $i across in $available dp")
-                assertTrue(grid.ysDp[i] >= 0f && grid.ysDp[i] + badge <= grid.heightDp + 0.001f, "badge $i down in $available dp")
+                assertTrue(
+                    grid.xsDp[i] >= -0.001f && grid.xsDp[i] + badge <= grid.widthDp + 0.001f,
+                    "badge $i across in $available dp",
+                )
+                assertTrue(
+                    grid.ysDp[i] >= 0f && grid.ysDp[i] + badge <= grid.heightDp + 0.001f,
+                    "badge $i down in $available dp",
+                )
             }
             assertNear(grid.ysDp.max() + badge, grid.heightDp, "height in $available dp")
             assertNear(grid.xsDp.max() + badge, grid.widthDp, "width in $available dp")
-            assertTrue(grid.widthDp <= maxOf(available.toFloat(), badge) + 0.01f, "the grid is wider than the room of $available dp")
+            assertTrue(
+                grid.widthDp <= maxOf(available.toFloat(), badge) + 0.01f,
+                "the grid is wider than the room of $available dp",
+            )
         }
     }
 
@@ -224,7 +254,10 @@ class IntroThemeBadgeGridTest {
             val grid = themeBadgeGrid(4, available.toFloat(), badge)
             val before = last[grid.layout] ?: -1f
 
-            assertTrue(grid.floatAmplitudeDp >= before - 0.001f, "the float shrank from $before to ${grid.floatAmplitudeDp} at $available dp")
+            assertTrue(
+                grid.floatAmplitudeDp >= before - 0.001f,
+                "the float shrank from $before to ${grid.floatAmplitudeDp} at $available dp",
+            )
             last[grid.layout] = grid.floatAmplitudeDp
         }
     }
@@ -235,7 +268,12 @@ class IntroThemeBadgeGridTest {
         val floating = 24.64f / (2f * SQRT_TWO) - 1f
         val dancing = (24.64f - minClearGapDp(badge)) / SQRT_TWO
 
-        assertNear(min(FLOAT_MAX_DP, min(floating, dancing)), floatAmplitudeDp(24.64f, badge), "amplitude", tolerance = 0.001f)
+        assertNear(
+            min(FLOAT_MAX_DP, min(floating, dancing)),
+            floatAmplitudeDp(24.64f, badge),
+            "amplitude",
+            tolerance = 0.001f,
+        )
         assertNear(floating, 24.64f / (2f * SQRT_TWO) - 1f, "the brief's formula")
         // Plenty of room is the full float, no room is none, and a lone badge has nothing to touch.
         assertEquals(FLOAT_MAX_DP, floatAmplitudeDp(200f, badge))
@@ -269,7 +307,10 @@ class IntroThemeBadgeGridTest {
                 t += 0.25f
             }
 
-            assertTrue(closest >= KEPT_GAP_DP, "two floating badges come to $closest dp in a room of $available dp, float $a")
+            assertTrue(
+                closest >= KEPT_GAP_DP,
+                "two floating badges come to $closest dp in a room of $available dp, float $a",
+            )
         }
     }
 
@@ -317,7 +358,10 @@ class IntroThemeBadgeGridTest {
                 }
             }
 
-            assertTrue(closest >= KEPT_GAP_DP, "a dancing badge comes to $closest dp of a neighbour in a room of $available dp, float $a")
+            assertTrue(
+                closest >= KEPT_GAP_DP,
+                "a dancing badge comes to $closest dp of a neighbour in a room of $available dp, float $a",
+            )
         }
     }
 

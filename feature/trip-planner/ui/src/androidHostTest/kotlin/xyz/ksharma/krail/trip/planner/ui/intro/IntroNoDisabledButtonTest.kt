@@ -64,7 +64,11 @@ class IntroNoDisabledButtonTest {
             contentSet = true
             composeRule.setContent {
                 PreviewTheme {
-                    IntroFlowScreen(state = shown.value, suggestedStops = DEFAULT_SUGGESTED_STOPS, onEvent = { _, _ -> })
+                    IntroFlowScreen(
+                        state = shown.value,
+                        suggestedStops = DEFAULT_SUGGESTED_STOPS,
+                        onEvent = { _, _ -> },
+                    )
                 }
             }
         }

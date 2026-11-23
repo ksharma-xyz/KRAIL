@@ -36,8 +36,17 @@ class IntroButtonFillTest {
 
     @Test
     fun `a white label has at least 4_5 to 1 on every fill`() {
-        listOf(IntroStep.PARK_RIDE, IntroStep.DESTINATION, IntroStep.ORIGIN, IntroStep.CONFIRM, IntroStep.THEME).forEach { step ->
-            assertTrue(Color.White.contrastRatio(fill(step)) >= BUTTON_LABEL_MIN_CONTRAST, "$step: ${Color.White.contrastRatio(fill(step))}")
+        listOf(
+            IntroStep.PARK_RIDE,
+            IntroStep.DESTINATION,
+            IntroStep.ORIGIN,
+            IntroStep.CONFIRM,
+            IntroStep.THEME,
+        ).forEach { step ->
+            assertTrue(
+                Color.White.contrastRatio(fill(step)) >= BUTTON_LABEL_MIN_CONTRAST,
+                "$step: ${Color.White.contrastRatio(fill(step))}",
+            )
         }
     }
 
@@ -58,5 +67,4 @@ class IntroButtonFillTest {
             assertTrue(fill(step).contrastRatio(md_theme_dark_surface) >= 3.0f, "$step on the dark page")
         }
     }
-
 }

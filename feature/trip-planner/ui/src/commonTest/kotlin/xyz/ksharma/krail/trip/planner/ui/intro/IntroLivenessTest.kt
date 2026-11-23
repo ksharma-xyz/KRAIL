@@ -53,15 +53,21 @@ class IntroLivenessTest {
             val ok = graph.edgesFrom(place).single { it.action == WorldAction.Send(IntroUiEvent.AcknowledgeNoStation) }
             assertEquals(IntroStep.DESTINATION, ok.to.state.step, "the OK did not move on")
             // Nothing moves on by itself, and a stray yes starts nothing.
-            graph.edgesFrom(place).filter { it.action is WorldAction.Advance }.forEach { assertEquals(place, it.to, "time moved on") }
-            val yes = graph.edgesFrom(place).single { it.action == WorldAction.Send(IntroUiEvent.AnswerParkRide(yes = true)) }
+            graph.edgesFrom(place).filter {
+                it.action is WorldAction.Advance
+            }.forEach { assertEquals(place, it.to, "time moved on") }
+            val yes = graph.edgesFrom(
+                place,
+            ).single { it.action == WorldAction.Send(IntroUiEvent.AnswerParkRide(yes = true)) }
             assertEquals(place, yes.to, "a second yes changed the message")
         }
     }
 
     private fun KrailTestScope.checkEveryPlace(readiness: StopsReadiness) {
         val graph = exploreWorld(readiness)
-        println("liveness: readiness $readiness, ${graph.nodes.size} places, ${graph.edges.size} moves, ${graph.restores.size} reopenings")
+        println(
+            "liveness: readiness $readiness, ${graph.nodes.size} places, ${graph.edges.size} moves, ${graph.restores.size} reopenings",
+        )
         val problems = mutableListOf<String>()
         fun WorldNode.describe(): String {
             val recipe = graph.nodes.getValue(this)

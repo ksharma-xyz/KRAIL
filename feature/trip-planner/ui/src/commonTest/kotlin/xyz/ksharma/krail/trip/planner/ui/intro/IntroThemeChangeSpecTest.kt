@@ -70,7 +70,14 @@ class IntroThemeChangeSpecTest {
         return seen
     }
 
-    private val probes = listOf(0f, 100f, 200f, 450f, 700f, 900f).flatMap { x -> listOf(0f, 300f, 800f, 1500f, 1999f).map { y -> x to y } }
+    private val probes = listOf(
+        0f,
+        100f,
+        200f,
+        450f,
+        700f,
+        900f,
+    ).flatMap { x -> listOf(0f, 300f, 800f, 1500f, 1999f).map { y -> x to y } }
 
     private fun assertSameColour(expected: Color, actual: Color, what: String) {
         assertEquals(expected.red, actual.red, tolerance, "$what red")
@@ -125,8 +132,16 @@ class IntroThemeChangeSpecTest {
         // At 100 ms the question is half way out and the tagline has not started: the question leaves from there.
         val early = second(one, 100f)
         assertEquals(introThemeHeadline(null).lines, early.headline.outgoing?.lines)
-        assertEquals(themeOutgoingAlpha(1f, themeOutgoing(100f, false)), early.headline.outgoingLooks.alphas.first(), tolerance)
-        assertEquals(themeOutgoingRiseDp(0f, themeOutgoing(100f, false), false), early.headline.outgoingLooks.risesDp.first(), tolerance)
+        assertEquals(
+            themeOutgoingAlpha(1f, themeOutgoing(100f, false)),
+            early.headline.outgoingLooks.alphas.first(),
+            tolerance,
+        )
+        assertEquals(
+            themeOutgoingRiseDp(0f, themeOutgoing(100f, false), false),
+            early.headline.outgoingLooks.risesDp.first(),
+            tolerance,
+        )
 
         // At 400 ms the tagline is on its way in, and it is the one that leaves.
         val late = second(one, 400f)
@@ -145,9 +160,19 @@ class IntroThemeChangeSpecTest {
             val two = second(one, time)
             val at = time.coerceAtMost(one.durationMs)
 
-            assertEquals(themeEmojiScale(at, one.headline.emojiScaleAtStart, false), two.headline.emojiScaleAtStart, tolerance, "scale at $time")
+            assertEquals(
+                themeEmojiScale(at, one.headline.emojiScaleAtStart, false),
+                two.headline.emojiScaleAtStart,
+                tolerance,
+                "scale at $time",
+            )
             assertEquals(one.emojiAt(at), two.emojiAt(0f), "glyph at $time")
-            assertEquals(themeEmojiScale(at, 1f, false), themeEmojiScale(0f, two.headline.emojiScaleAtStart, false), tolerance, "scale at $time")
+            assertEquals(
+                themeEmojiScale(at, 1f, false),
+                themeEmojiScale(0f, two.headline.emojiScaleAtStart, false),
+                tolerance,
+                "scale at $time",
+            )
         }
     }
 
@@ -172,7 +197,11 @@ class IntroThemeChangeSpecTest {
         assertEquals(0f, second(one, 700f).buttonAtMs)
         val settled = settledThemeChangeSpec(request(KrailThemeStyle.Metro, -1, Offset.Unspecified), surface, onSurface)
         assertEquals(0f, settled.buttonAtMs, "a screen that opens with a theme already has its button")
-        assertEquals(Float.MAX_VALUE, settledThemeChangeSpec(questionRequest, surface, onSurface).buttonAtMs, "and with none it has not")
+        assertEquals(
+            Float.MAX_VALUE,
+            settledThemeChangeSpec(questionRequest, surface, onSurface).buttonAtMs,
+            "and with none it has not",
+        )
     }
 
     @Test

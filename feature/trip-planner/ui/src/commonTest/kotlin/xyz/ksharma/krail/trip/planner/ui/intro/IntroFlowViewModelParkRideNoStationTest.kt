@@ -47,7 +47,12 @@ class IntroFlowViewModelParkRideNoStationTest {
             assertEquals(km, kmFromBellaVista(fix), 0.01, "$fix")
             INTRO_STATIONS.filter { it != BELLA_VISTA_STATION }.forEach { other ->
                 val position = other.position!!
-                val away = GeoUtils.haversineDistance(fix.latitude, fix.longitude, position.latitude, position.longitude)!!
+                val away = GeoUtils.haversineDistance(
+                    fix.latitude,
+                    fix.longitude,
+                    position.latitude,
+                    position.longitude,
+                )!!
                 assertTrue(away > kmFromBellaVista(fix), "${other.stationName} is nearer to $fix")
             }
         }
@@ -76,7 +81,11 @@ class IntroFlowViewModelParkRideNoStationTest {
         assertEquals(listOf("Bella Vista"), card.carParks.map { it.name })
         assertEquals(introBar(rig.state), introBar(rig.state), "the card has its own bar, Not now and Add to home")
         assertEquals("Add to home", introBar(rig.state)?.right?.label)
-        assertEquals(1, rig.catalogue.stationReads, "the second pass walks the list already read, so it is no second read")
+        assertEquals(
+            1,
+            rig.catalogue.stationReads,
+            "the second pass walks the list already read, so it is no second read",
+        )
         assertEquals(1, rig.loader.refreshedMappings.size, "the one availability call, the same as at 4 km")
     }
 
@@ -214,8 +223,10 @@ class IntroFlowViewModelParkRideNoStationTest {
         rig.answerYesAt(TWELVE_KM_FROM_BELLA_VISTA)
         rig.send(IntroUiEvent.AcknowledgeNoStation)
         rig.send(
-            IntroUiEvent.SelectStop(CENTRAL.toIntroStop()), IntroUiEvent.ConfirmStop,
-            IntroUiEvent.SelectStop(TALLAWONG.toIntroStop()), IntroUiEvent.ConfirmStop,
+            IntroUiEvent.SelectStop(CENTRAL.toIntroStop()),
+            IntroUiEvent.ConfirmStop,
+            IntroUiEvent.SelectStop(TALLAWONG.toIntroStop()),
+            IntroUiEvent.ConfirmStop,
         )
         rig.answerAndFinish(yes = true)
 

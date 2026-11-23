@@ -14,13 +14,13 @@ import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.click
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.TextLayoutResult
@@ -177,7 +177,10 @@ class IntroDecisionBarTest {
         secondary().assertTextEquals(PARK_RIDE_NO)
         val yes = primary().bounds()
         val no = secondary().bounds()
-        assertTrue(no.bottom <= yes.top, "No thanks ends at ${no.bottom} and Yes please starts at ${yes.top}, so they are not stacked")
+        assertTrue(
+            no.bottom <= yes.top,
+            "No thanks ends at ${no.bottom} and Yes please starts at ${yes.top}, so they are not stacked",
+        )
         assertEquals(no.left, yes.left)
         assertEquals(no.width, yes.width, "the two are the same width")
         assertEquals(NARROW_WIDTH.dp, yes.width, "stacked buttons use the whole width")
@@ -222,12 +225,22 @@ class IntroDecisionBarTest {
                     val where = "card $card, $widthDp dp, $scale"
 
                     labelLayouts().forEach { layout ->
-                        assertEquals(1, layout.lineCount, "\"${layout.layoutInput.text.text}\" is on two lines at $where")
+                        assertEquals(
+                            1,
+                            layout.lineCount,
+                            "\"${layout.layoutInput.text.text}\" is on two lines at $where",
+                        )
                     }
                     listOf(primary(), secondary()).forEach { button ->
                         val bounds = button.bounds()
-                        assertTrue(bounds.left >= 0.dp && bounds.right <= widthDp.dp + ROUNDING, "a button is outside the window at $where: $bounds")
-                        assertTrue(bounds.height >= MIN_TOUCH_HEIGHT - ROUNDING, "a button is only ${bounds.height} tall at $where")
+                        assertTrue(
+                            bounds.left >= 0.dp && bounds.right <= widthDp.dp + ROUNDING,
+                            "a button is outside the window at $where: $bounds",
+                        )
+                        assertTrue(
+                            bounds.height >= MIN_TOUCH_HEIGHT - ROUNDING,
+                            "a button is only ${bounds.height} tall at $where",
+                        )
                     }
                 }
             }
@@ -243,11 +256,23 @@ class IntroDecisionBarTest {
 
                 secondary().assertTextEquals(CONFIRM_NOT_NOW)
                 primary().assertTextEquals(CONFIRM_SAVE)
-                labelLayouts().forEach { assertEquals(1, it.lineCount, "\"${it.layoutInput.text.text}\" is on two lines at $where") }
+                labelLayouts().forEach {
+                    assertEquals(
+                        1,
+                        it.lineCount,
+                        "\"${it.layoutInput.text.text}\" is on two lines at $where",
+                    )
+                }
                 val no = secondary().bounds()
                 val yes = primary().bounds()
-                assertTrue(no.left >= 0.dp && yes.right <= widthDp.dp + ROUNDING, "a button is outside the window at $where")
-                assertTrue(no.height >= MIN_TOUCH_HEIGHT - ROUNDING && yes.height >= MIN_TOUCH_HEIGHT - ROUNDING, "a button is under 48 dp at $where")
+                assertTrue(
+                    no.left >= 0.dp && yes.right <= widthDp.dp + ROUNDING,
+                    "a button is outside the window at $where",
+                )
+                assertTrue(
+                    no.height >= MIN_TOUCH_HEIGHT - ROUNDING && yes.height >= MIN_TOUCH_HEIGHT - ROUNDING,
+                    "a button is under 48 dp at $where",
+                )
                 if (no.top != yes.top) assertTrue(no.bottom <= yes.top, "the negative button is not on top at $where")
             }
         }
@@ -279,7 +304,11 @@ class IntroDecisionBarTest {
                 show(widthDp, scale, card = false)
                 val question = composeRule.onRoot().getUnclippedBoundsInRoot().height
                 show(widthDp, scale, card = true)
-                assertEquals(question, composeRule.onRoot().getUnclippedBoundsInRoot().height, "the bar changed height at $widthDp dp, $scale")
+                assertEquals(
+                    question,
+                    composeRule.onRoot().getUnclippedBoundsInRoot().height,
+                    "the bar changed height at $widthDp dp, $scale",
+                )
             }
         }
     }
@@ -289,7 +318,9 @@ class IntroDecisionBarTest {
         listOf(PHONE_WIDTH to 1f, NARROW_WIDTH to 2f).forEach { (widthDp, scale) ->
             show(widthDp, scale)
 
-            val order = composeRule.onAllNodes(hasClickAction()).fetchSemanticsNodes().map { it.config[SemanticsProperties.ContentDescription].single() }
+            val order = composeRule.onAllNodes(hasClickAction()).fetchSemanticsNodes().map {
+                it.config[SemanticsProperties.ContentDescription].single()
+            }
             assertEquals(listOf(PARK_RIDE_NO_SPOKEN, PARK_RIDE_YES_SPOKEN), order, "at $widthDp dp, $scale")
         }
     }
@@ -329,7 +360,11 @@ class IntroDecisionBarTest {
 
         show(NARROW_WIDTH, 1f, card = true, showRight = false)
 
-        assertEquals(withBoth, composeRule.onRoot().getUnclippedBoundsInRoot(), "the bar changed size without Add to home")
+        assertEquals(
+            withBoth,
+            composeRule.onRoot().getUnclippedBoundsInRoot(),
+            "the bar changed size without Add to home",
+        )
         primary().assertDoesNotExist()
         secondary().assertIsEnabled().assertTextEquals(PARK_RIDE_NOT_NOW)
         // A touch where the hidden button is takes nothing, and is not a click on something else.

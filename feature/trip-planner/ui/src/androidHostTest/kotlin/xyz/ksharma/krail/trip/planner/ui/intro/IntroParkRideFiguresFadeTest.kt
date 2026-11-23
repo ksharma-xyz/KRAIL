@@ -15,8 +15,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.SemanticsNode
-import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -112,7 +112,11 @@ class IntroParkRideFiguresFadeTest {
     }
 
     // The shared card with the Intro's switches one at a time.
-    private fun startCard(staged: Boolean, keepReadingSpace: Boolean, reduceMotion: Boolean? = null) = start { state, modifier ->
+    private fun startCard(
+        staged: Boolean,
+        keepReadingSpace: Boolean,
+        reduceMotion: Boolean? = null,
+    ) = start { state, modifier ->
         ParkRideCard(
             parkRideUiState = state,
             isExpanded = true,
@@ -160,12 +164,18 @@ class IntroParkRideFiguresFadeTest {
             .single()
 
     // The three lines of the reading, as drawn now: the bounds include the rise.
-    private fun lines(): List<SemanticsNode> = listOf(real("120"), real("40%"), real("Last updated at", substring = true))
+    private fun lines(): List<SemanticsNode> = listOf(
+        real("120"),
+        real("40%"),
+        real("Last updated at", substring = true),
+    )
 
     private fun tops(): List<Float> = lines().map { it.boundsInRoot.top }
 
     private fun heightDp(): Float =
-        with(composeRule.density) { composeRule.onNodeWithTag(INTRO_CARD_SLOT_TAG).fetchSemanticsNode().size.height.toDp().value }
+        with(composeRule.density) {
+            composeRule.onNodeWithTag(INTRO_CARD_SLOT_TAG).fetchSemanticsNode().size.height.toDp().value
+        }
 
     private fun picture(): BufferedImage = IntroPixels(composeRule).of(INTRO_CARD_SLOT_TAG)
 
@@ -198,7 +208,12 @@ class IntroParkRideFiguresFadeTest {
     /** How drawn each line is now, 0 for clear and 1 for at rest. */
     private fun alphas(rest: Rest): List<Float> {
         val picture = picture()
-        return lines().mapIndexed { index, line -> (ink(picture, line.boundsInRoot) / rest.ink[index]).coerceIn(0f, 1f) }
+        return lines().mapIndexed { index, line ->
+            (ink(picture, line.boundsInRoot) / rest.ink[index]).coerceIn(
+                0f,
+                1f,
+            )
+        }
     }
 
     /** How much of the rise each line still has to go, 1 for not started and 0 for in place. */
@@ -234,7 +249,9 @@ class IntroParkRideFiguresFadeTest {
 
         assertEquals(3, lines().size, "the three lines are composed as soon as the numbers arrive")
         alphas(rest).forEach { assertTrue(it < CLEAR, "a line is drawn at $it in the frame the numbers arrive") }
-        rises(rest).forEach { assertTrue(it > 0.9f, "a line is already in its place in the frame the numbers arrive: $it") }
+        rises(
+            rest,
+        ).forEach { assertTrue(it > 0.9f, "a line is already in its place in the frame the numbers arrive: $it") }
     }
 
     @Test
@@ -250,8 +267,18 @@ class IntroParkRideFiguresFadeTest {
             val alphas = alphas(rest)
             val rises = rises(rest)
             repeat(3) { beat ->
-                assertInside("the opacity of line ${beat + 1} at $elapsed ms", alphas[beat], opacityWindow(elapsed, beat), PIXEL_SLACK)
-                assertInside("the rise left of line ${beat + 1} at $elapsed ms", rises[beat], riseWindow(elapsed, beat), OFFSET_SLACK)
+                assertInside(
+                    "the opacity of line ${beat + 1} at $elapsed ms",
+                    alphas[beat],
+                    opacityWindow(elapsed, beat),
+                    PIXEL_SLACK,
+                )
+                assertInside(
+                    "the rise left of line ${beat + 1} at $elapsed ms",
+                    rises[beat],
+                    riseWindow(elapsed, beat),
+                    OFFSET_SLACK,
+                )
             }
             assertTrue(
                 alphas[0] + PIXEL_SLACK >= alphas[1] && alphas[1] + PIXEL_SLACK >= alphas[2],
@@ -272,7 +299,10 @@ class IntroParkRideFiguresFadeTest {
         val rises = rises(rest)
 
         assertTrue(alphas[0] > 0.2f && rises[0] < 0.9f, "the spots have not started at 100 ms: $alphas $rises")
-        assertTrue(alphas[2] < CLEAR && rises[2] > 0.9f, "the time of the reading has started at 100 ms: $alphas $rises")
+        assertTrue(
+            alphas[2] < CLEAR && rises[2] > 0.9f,
+            "the time of the reading has started at 100 ms: $alphas $rises",
+        )
     }
 
     @Test
@@ -307,7 +337,10 @@ class IntroParkRideFiguresFadeTest {
     }
 
     @Test
-    fun `the card is as high before, during and after the fade on a phone`() = assertCardKeepsItsHeight(widthDp = 411, fontScale = 1f)
+    fun `the card is as high before, during and after the fade on a phone`() = assertCardKeepsItsHeight(
+        widthDp = 411,
+        fontScale = 1f,
+    )
 
     @Test
     fun `the card is as high before, during and after the fade at 320 dp with text at 200 percent`() =
@@ -316,7 +349,10 @@ class IntroParkRideFiguresFadeTest {
     @Test
     fun `the name and the tile are as they always were, drawn in full and in place in every frame of the fade`() {
         startIntro()
-        val tile = composeRule.onAllNodes(hasText("P"), useUnmergedTree = true).fetchSemanticsNodes().single().boundsInRoot
+        val tile = composeRule.onAllNodes(
+            hasText("P"),
+            useUnmergedTree = true,
+        ).fetchSemanticsNodes().single().boundsInRoot
         val name = real("Bella Vista").boundsInRoot
         val before = picture()
         val nameInk = ink(before, name)
@@ -325,11 +361,22 @@ class IntroParkRideFiguresFadeTest {
         val zero = arrive()
         while (now() - zero < FIGURE_TOTAL_MS + SETTLE_MS) {
             val at = now() - zero
-            assertEquals(tile, composeRule.onAllNodes(hasText("P"), useUnmergedTree = true).fetchSemanticsNodes().single().boundsInRoot, "the tile moved at $at ms")
+            assertEquals(
+                tile,
+                composeRule.onAllNodes(
+                    hasText("P"),
+                    useUnmergedTree = true,
+                ).fetchSemanticsNodes().single().boundsInRoot,
+                "the tile moved at $at ms",
+            )
             assertEquals(name, real("Bella Vista").boundsInRoot, "the name moved at $at ms")
             val picture = picture()
             assertTrue(abs(ink(picture, name) - nameInk) < INK_TOLERANCE, "the name is not drawn in full at $at ms")
-            assertEquals(tileFill, picture.colourAt(tile.left - origin().left + 2f, tile.top - origin().top + 2f), "the tile changed colour at $at ms")
+            assertEquals(
+                tileFill,
+                picture.colourAt(tile.left - origin().left + 2f, tile.top - origin().top + 2f),
+                "the tile changed colour at $at ms",
+            )
             frame()
         }
     }
@@ -344,7 +391,11 @@ class IntroParkRideFiguresFadeTest {
 
         while (now() - zero < FIGURE_TOTAL_MS + SETTLE_MS) frame()
 
-        assertEquals(before, measurePasses, "the card was measured ${measurePasses - before} more times during the fade")
+        assertEquals(
+            before,
+            measurePasses,
+            "the card was measured ${measurePasses - before} more times during the fade",
+        )
     }
 
     @Test
@@ -360,7 +411,10 @@ class IntroParkRideFiguresFadeTest {
         val picture = picture()
         listOf("119", "41%", "Last updated at\u00A08:10\u00A0AM").forEachIndexed { index, text ->
             val node = real(text, substring = index == 2)
-            assertTrue(ink(picture, node.boundsInRoot) / rest.ink[index] > COMPLETE, "$text fades again when it is refreshed")
+            assertTrue(
+                ink(picture, node.boundsInRoot) / rest.ink[index] > COMPLETE,
+                "$text fades again when it is refreshed",
+            )
             assertEquals(rest.tops[index], node.boundsInRoot.top, "$text rises again when it is refreshed")
         }
     }
@@ -372,7 +426,10 @@ class IntroParkRideFiguresFadeTest {
 
         fresh(readingCard())
 
-        assertTrue(alphas(rest).all { it > COMPLETE }, "a card drawn with its numbers is not complete in its first frames")
+        assertTrue(
+            alphas(rest).all { it > COMPLETE },
+            "a card drawn with its numbers is not complete in its first frames",
+        )
         assertEquals(rest.tops, tops(), "a card drawn with its numbers is not in place")
         val tops = tops()
         framesUntil(now(), FIGURE_TOTAL_MS.toLong())
@@ -393,10 +450,16 @@ class IntroParkRideFiguresFadeTest {
         }
 
         samples.forEach { (at, alphas, rises) ->
-            assertTrue(alphas.max() - alphas.min() < PIXEL_SLACK, "the lines are staggered under reduced motion at $at ms: $alphas")
+            assertTrue(
+                alphas.max() - alphas.min() < PIXEL_SLACK,
+                "the lines are staggered under reduced motion at $at ms: $alphas",
+            )
             assertTrue(rises.all { abs(it) < OFFSET_SLACK }, "a line rises under reduced motion at $at ms: $rises")
         }
-        assertTrue(samples.first { it.first >= 64 }.second.all { it in 0.1f..0.95f }, "the one fade is not under way 64 ms in")
+        assertTrue(
+            samples.first { it.first >= 64 }.second.all { it in 0.1f..0.95f },
+            "the one fade is not under way 64 ms in",
+        )
         assertTrue(samples.first { it.first >= 200 }.second.all { it > COMPLETE }, "the one fade is not over at 200 ms")
     }
 
@@ -412,7 +475,12 @@ class IntroParkRideFiguresFadeTest {
         assertTrue(ink(picture, real("120").boundsInRoot) > 0.2f, "the home card's figures are faded as they arrive")
         framesUntil(zero, FIGURE_TOTAL_MS.toLong())
         assertEquals(rest.tops, tops(), "a line of the home card moves as the numbers arrive")
-        assertEquals(0, composeRule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.LiveRegion)).fetchSemanticsNodes().size)
+        assertEquals(
+            0,
+            composeRule.onAllNodes(
+                SemanticsMatcher.keyIsDefined(SemanticsProperties.LiveRegion),
+            ).fetchSemanticsNodes().size,
+        )
     }
 
     @Test
@@ -453,9 +521,18 @@ class IntroParkRideFiguresFadeTest {
     }
 
     // The card's one merged node, the one that carries the live region and the words.
-    private fun cardNode(): SemanticsNode = composeRule.onAllNodes(hasText("Bella Vista")).fetchSemanticsNodes().single()
+    private fun cardNode(): SemanticsNode = composeRule.onAllNodes(
+        hasText("Bella Vista"),
+    ).fetchSemanticsNodes().single()
 
-    private fun <T> SemanticsNode.prop(key: SemanticsPropertyKey<T>): T? = if (config.contains(key)) config[key] else null
+    private fun <T> SemanticsNode.prop(key: SemanticsPropertyKey<T>): T? = if (config.contains(
+            key,
+        )
+    ) {
+        config[key]
+    } else {
+        null
+    }
 
     private fun words(node: SemanticsNode): List<String> = node.prop(SemanticsProperties.Text).orEmpty().map { it.text }
 
@@ -477,10 +554,21 @@ class IntroParkRideFiguresFadeTest {
 
         val card = cardNode()
         assertEquals(LiveRegionMode.Polite, card.prop(live))
-        assertEquals(listOf("Bella Vista", "120", "spots available", "40%", "full", "Last updated at\u00A08:05\u00A0AM"), words(card))
+        assertEquals(
+            listOf("Bella Vista", "120", "spots available", "40%", "full", "Last updated at\u00A08:05\u00A0AM"),
+            words(card),
+        )
         assertEquals(1, seen.distinct().size, "the card's words change as the lines fade: ${seen.distinct()}")
-        assertEquals(1, composeRule.onAllNodes(SemanticsMatcher.keyIsDefined(live)).fetchSemanticsNodes().size, "more than one live region")
-        assertEquals(1, composeRule.onAllNodes(hasText("120")).fetchSemanticsNodes().size, "the figures are a node of their own")
+        assertEquals(
+            1,
+            composeRule.onAllNodes(SemanticsMatcher.keyIsDefined(live)).fetchSemanticsNodes().size,
+            "more than one live region",
+        )
+        assertEquals(
+            1,
+            composeRule.onAllNodes(hasText("120")).fetchSemanticsNodes().size,
+            "the figures are a node of their own",
+        )
     }
 
     @Test
@@ -490,7 +578,12 @@ class IntroParkRideFiguresFadeTest {
         frame()
 
         assertEquals(listOf("Bella Vista"), words(cardNode()))
-        assertEquals(0, composeRule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.LiveRegion)).fetchSemanticsNodes().size)
+        assertEquals(
+            0,
+            composeRule.onAllNodes(
+                SemanticsMatcher.keyIsDefined(SemanticsProperties.LiveRegion),
+            ).fetchSemanticsNodes().size,
+        )
     }
 
     private companion object {

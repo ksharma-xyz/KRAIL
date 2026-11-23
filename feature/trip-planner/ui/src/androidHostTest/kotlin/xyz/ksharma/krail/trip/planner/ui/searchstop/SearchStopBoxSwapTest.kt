@@ -18,8 +18,6 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -31,6 +29,8 @@ import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.FROM_PLACEHOLDER
 import xyz.ksharma.krail.trip.planner.ui.components.TO_PLACEHOLDER
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * The box at the top is the card when two fields show and one bare pill when one does. When the shape changes the two fade into
@@ -80,7 +80,9 @@ class SearchStopBoxSwapTest {
         Snapshot.sendApplyNotifications()
     }
 
-    private fun cards() = composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).fetchSemanticsNodes().size
+    private fun cards() = composeRule.onAllNodesWithTag(
+        TripPlannerTestTags.SEARCH_STOP_GROUP_CARD,
+    ).fetchSemanticsNodes().size
 
     @Test
     fun `a single field is the bare pill with no card`() {
@@ -96,7 +98,9 @@ class SearchStopBoxSwapTest {
         changeShape(FormShape.ToAndFrom)
         composeRule.mainClock.advanceTimeBy(FRAME_MS * 4)
         assertEquals(1, cards(), "The card is already coming in part way through")
-        val left = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).fetchSemanticsNode().boundsInRoot.left
+        val left = composeRule.onNodeWithTag(
+            TripPlannerTestTags.SEARCH_STOP_GROUP_CARD,
+        ).fetchSemanticsNode().boundsInRoot.left
 
         composeRule.mainClock.advanceTimeBy(SETTLED_MS)
         assertEquals(1, cards())

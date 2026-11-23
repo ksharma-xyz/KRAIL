@@ -61,7 +61,11 @@ class IntroTextWeightTest {
                     CompositionLocalProvider(LocalThemeColor provides themeColour) {
                         softLabel = KrailTheme.colors.secondaryLabel
                         ink = KrailTheme.colors.onSurface
-                        IntroFlowScreen(state = shown.value, suggestedStops = DEFAULT_SUGGESTED_STOPS, onEvent = { _, _ -> })
+                        IntroFlowScreen(
+                            state = shown.value,
+                            suggestedStops = DEFAULT_SUGGESTED_STOPS,
+                            onEvent = { _, _ -> },
+                        )
                     }
                 }
             }
@@ -70,7 +74,10 @@ class IntroTextWeightTest {
     }
 
     private fun layouts(): List<TextLayoutResult> =
-        composeRule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult), useUnmergedTree = true)
+        composeRule.onAllNodes(
+            SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult),
+            useUnmergedTree = true,
+        )
             .fetchSemanticsNodes().mapNotNull { node ->
                 val results = mutableListOf<TextLayoutResult>()
                 node.config[SemanticsActions.GetTextLayoutResult].action?.invoke(results)
@@ -78,7 +85,15 @@ class IntroTextWeightTest {
             }
 
     private fun weightOf(text: String, startsWith: Boolean = false): FontWeight? =
-        layouts().firstOrNull { if (startsWith) it.layoutInput.text.text.startsWith(text) else it.layoutInput.text.text == text }
+        layouts().firstOrNull {
+            if (startsWith) {
+                it.layoutInput.text.text.startsWith(
+                    text,
+                )
+            } else {
+                it.layoutInput.text.text == text
+            }
+        }
             ?.layoutInput?.style?.fontWeight
 
     private fun colourOf(text: String): Color =
@@ -136,7 +151,12 @@ class IntroTextWeightTest {
                     val themeColour = remember { mutableStateOf(KrailThemeStyle.Train.hexColorCode) }
                     CompositionLocalProvider(LocalThemeColor provides themeColour) {
                         Column(modifier = Modifier) {
-                            ParkRideCard(parkRideUiState = card, isExpanded = true, onClick = null, keepReadingSpace = true)
+                            ParkRideCard(
+                                parkRideUiState = card,
+                                isExpanded = true,
+                                onClick = null,
+                                keepReadingSpace = true,
+                            )
                             SavedTripCard(
                                 fromDisplay = StopDisplay(stopId = "1", name = "Tallawong Station"),
                                 toDisplay = StopDisplay(stopId = "2", name = "Central Station"),

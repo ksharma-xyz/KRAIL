@@ -73,7 +73,11 @@ class FinaleWordmarkLookTest {
     @Test
     fun `the gradient is still across the whole word for the website fill, and slides only for the others`() {
         listOf(0f, 0.5f, 1f).forEach { travel ->
-            assertEquals(0f to 500f, wordmarkGradientRangePx(website, widthPx = 500f, travel = travel), "travel $travel")
+            assertEquals(
+                0f to 500f,
+                wordmarkGradientRangePx(website, widthPx = 500f, travel = travel),
+                "travel $travel",
+            )
         }
         val old = finaleWordmarkLook(FinaleWordmarkFill.ThemePartner)
 

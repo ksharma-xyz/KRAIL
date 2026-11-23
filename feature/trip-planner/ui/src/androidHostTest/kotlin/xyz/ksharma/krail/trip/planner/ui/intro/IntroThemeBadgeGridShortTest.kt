@@ -79,7 +79,10 @@ class IntroThemeBadgeGridShortTest {
         }
 
         assertTrue(window.width == 320.dp && window.height == 568.dp, "the window is $window")
-        assertTrue(lastBadgeBottom > barTop, "everything fits above the bar at $barTop, so the scroll is not being tested")
+        assertTrue(
+            lastBadgeBottom > barTop,
+            "everything fits above the bar at $barTop, so the scroll is not being tested",
+        )
     }
 
     // The bar is over the bottom of the content now, so a badge scrolled into view can be under it. The content has room
@@ -105,10 +108,18 @@ class IntroThemeBadgeGridShortTest {
             composeRule.onNodeWithTag(choice.tag).assertIsDisplayed()
 
             val bounds = composeRule.onNodeWithTag(choice.tag).getUnclippedBoundsInRoot()
-            val barTop = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).getUnclippedBoundsInRoot().top
-            assertTrue(bounds.left >= 0.dp && bounds.right <= window.width, "${choice.name} is outside the window: $bounds")
+            val barTop = composeRule.onNodeWithTag(
+                TripPlannerTestTags.INTRO_PRIMARY_ACTION,
+            ).getUnclippedBoundsInRoot().top
+            assertTrue(
+                bounds.left >= 0.dp && bounds.right <= window.width,
+                "${choice.name} is outside the window: $bounds",
+            )
             assertTrue(bounds.top >= 0.dp, "${choice.name} is above the top of the window: $bounds")
-            assertTrue(bounds.bottom <= barTop + ROUNDING, "${choice.name} ends at ${bounds.bottom}, behind the bar at $barTop")
+            assertTrue(
+                bounds.bottom <= barTop + ROUNDING,
+                "${choice.name} ends at ${bounds.bottom}, behind the bar at $barTop",
+            )
         }
     }
 

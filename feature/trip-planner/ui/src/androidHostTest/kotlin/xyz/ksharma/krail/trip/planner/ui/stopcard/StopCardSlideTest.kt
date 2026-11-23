@@ -11,9 +11,6 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
-import kotlin.math.abs
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import kotlinx.collections.immutable.persistentListOf
 import org.junit.Rule
 import org.junit.Test
@@ -27,6 +24,9 @@ import xyz.ksharma.krail.departures.ui.state.DeparturesState
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags.StopCard
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
+import kotlin.math.abs
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * The stop card slides up from the bottom of the pane with a fade as it arrives and slides back down as it is dismissed,
@@ -101,7 +101,10 @@ class StopCardSlideTest {
         val series = frames(20).filter { !it.isNaN() }
 
         assertTrue(series.first() > home + 20f, "It begins below its place: ${series.first()} against $home")
-        assertTrue(series.any { it > home + 1f && it < series.first() - 1f }, "and passes through places between: $series")
+        assertTrue(
+            series.any { it > home + 1f && it < series.first() - 1f },
+            "and passes through places between: $series",
+        )
         assertTrue(series.zipWithNext().all { (a, b) -> b <= a + 0.01f }, "and only moves up: $series")
         composeRule.mainClock.advanceTimeBy(SETTLED_MS)
         assertTrue(abs(top() - home) < 1f, "It ends where it floats, ${top()} against $home")

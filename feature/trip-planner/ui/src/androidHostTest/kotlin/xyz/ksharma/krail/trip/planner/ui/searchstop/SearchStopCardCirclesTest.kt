@@ -17,12 +17,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.click
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.Density
@@ -105,7 +105,10 @@ class SearchStopCardCirclesTest {
         if (pausedClock) composeRule.mainClock.autoAdvance = false
     }
 
-    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(
+        tag,
+        useUnmergedTree = true,
+    ).getUnclippedBoundsInRoot()
 
     /** Where a node is drawn, from its bounds in the root, which include a graphics layer's own move (the swap's glide). */
     private fun rootBoundsOf(tag: String): DpRect = with(composeRule.density) {
@@ -146,13 +149,21 @@ class SearchStopCardCirclesTest {
 
         assertNear("$label, the go circle is 40 dp", 40.dp, go.w())
         assertNear("$label, the go circle's right edge is 16 dp from the card's", gaps.edge, card.right - go.right)
-        assertNear("$label, the swap and the go circle are on one vertical axis", swapTarget.cx(), go.cx(), within = 0.5f)
+        assertNear(
+            "$label, the swap and the go circle are on one vertical axis",
+            swapTarget.cx(),
+            go.cx(),
+            within = 0.5f,
+        )
         assertNear("$label, the axis is 36 dp from the card's right edge", 36.dp, card.right - swapTarget.cx())
         assertNear("$label, the go circle is centred on the To row's centre line", to.cy(), go.cy())
         assertNear("$label, the go circle's 48 dp target is centred on it", go.cy(), goTarget.cy())
         assertNear("$label, both targets are 48 dp", 48.dp, swapTarget.w())
         assertNear("$label, both targets are 48 dp", 48.dp, goTarget.w())
-        assertTrue(swapTarget.bottom <= goTarget.top + 0.5.dp, "$label, the swap's target $swapTarget does not overlap the go circle's $goTarget")
+        assertTrue(
+            swapTarget.bottom <= goTarget.top + 0.5.dp,
+            "$label, the swap's target $swapTarget does not overlap the go circle's $goTarget",
+        )
         val divider = boundsOf(TripPlannerTestTags.SEARCH_ROW_DIVIDER)
         assertNear("$label, the text stops 8 dp before the go circle", 8.dp, go.left - divider.right)
     }
@@ -186,7 +197,10 @@ class SearchStopCardCirclesTest {
         setCard()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_REVERSE, useUnmergedTree = true).assertDoesNotExist()
 
-        composeRule.runOnIdle { swapEnabled = true; toState = null }
+        composeRule.runOnIdle {
+            swapEnabled = true
+            toState = null
+        }
         composeRule.mainClock.advanceTimeBy(MapMotion.SWAP_FADE_MS.toLong() + 100)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_REVERSE, useUnmergedTree = true).assertExists()
@@ -358,11 +372,19 @@ class SearchStopCardCirclesTest {
 
     @Test
     fun `reduceTripSwap moves a lone stop across and edits the bar it leaves empty`() {
-        val fromOnly = reduceTripSwap(SearchStopTrip(from = CENTRAL), SearchStopFlow(editing = ToFromField.To), autoFrom = null)
+        val fromOnly = reduceTripSwap(
+            SearchStopTrip(from = CENTRAL),
+            SearchStopFlow(editing = ToFromField.To),
+            autoFrom = null,
+        )
         assertEquals(SearchStopTrip(from = null, to = CENTRAL), fromOnly.trip)
         assertEquals(ToFromField.From, fromOnly.flow.editing)
 
-        val toOnly = reduceTripSwap(SearchStopTrip(to = TOWN_HALL), SearchStopFlow(editing = ToFromField.From), autoFrom = null)
+        val toOnly = reduceTripSwap(
+            SearchStopTrip(to = TOWN_HALL),
+            SearchStopFlow(editing = ToFromField.From),
+            autoFrom = null,
+        )
         assertEquals(SearchStopTrip(from = TOWN_HALL, to = null), toOnly.trip)
         assertEquals(ToFromField.To, toOnly.flow.editing)
     }

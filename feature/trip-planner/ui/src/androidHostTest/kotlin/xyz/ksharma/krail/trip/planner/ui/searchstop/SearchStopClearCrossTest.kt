@@ -134,7 +134,10 @@ class SearchStopClearCrossTest {
         composeRule.waitForIdle()
     }
 
-    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(
+        tag,
+        useUnmergedTree = true,
+    ).getUnclippedBoundsInRoot()
 
     private fun exists(tag: String) = composeRule.onAllNodes(hasTestTag(tag), useUnmergedTree = true)
         .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
@@ -219,7 +222,11 @@ class SearchStopClearCrossTest {
 
         assertBareCross("the card", behind = tint)
         val card = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
-        assertNear("the cross stands on the controls' axis", 36.dp, card.right - boundsOf(TripPlannerTestTags.SEARCH_STOP_CLEAR_GLYPH).cx())
+        assertNear(
+            "the cross stands on the controls' axis",
+            36.dp,
+            card.right - boundsOf(TripPlannerTestTags.SEARCH_STOP_CLEAR_GLYPH).cx(),
+        )
     }
 
     @Test
@@ -272,7 +279,11 @@ class SearchStopClearCrossTest {
             type("Cen")
 
             val config = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_CLEAR).fetchSemanticsNode().config
-            assertEquals("Clear", config[SemanticsProperties.ContentDescription].joinToString(), "$shape, the name is unchanged")
+            assertEquals(
+                "Clear",
+                config[SemanticsProperties.ContentDescription].joinToString(),
+                "$shape, the name is unchanged",
+            )
             assertEquals(Role.Button, config[SemanticsProperties.Role], "$shape, it is a button")
 
             composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_CLEAR).performClick()

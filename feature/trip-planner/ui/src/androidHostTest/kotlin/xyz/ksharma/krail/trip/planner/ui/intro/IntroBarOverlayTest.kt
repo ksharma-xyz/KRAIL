@@ -10,6 +10,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasTestTag
@@ -17,7 +18,6 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.click
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
@@ -139,12 +139,20 @@ abstract class IntroBarOverlayTestBase(private val windowWidth: Dp, private val 
 
     @Test
     fun `the scrolling zone reaches the bottom of the window whether the bar is shown or not`() {
-        listOf(PreviewDestinationSuggestions, PreviewDestinationSelected, themeSelected, IntroState(step = IntroStep.THEME))
+        listOf(
+            PreviewDestinationSuggestions,
+            PreviewDestinationSelected,
+            themeSelected,
+            IntroState(step = IntroStep.THEME),
+        )
             .forEach { state ->
                 show(state)
 
                 val zone = bounds(scroller())
-                assertTrue(zone.bottom >= window().bottom - ROUNDING, "$state: the zone ends at ${zone.bottom}, the window at ${window().bottom}")
+                assertTrue(
+                    zone.bottom >= window().bottom - ROUNDING,
+                    "$state: the zone ends at ${zone.bottom}, the window at ${window().bottom}",
+                )
                 assertTrue(zone.top <= ROUNDING, "$state: the zone starts at ${zone.top}")
             }
     }
@@ -153,34 +161,54 @@ abstract class IntroBarOverlayTestBase(private val windowWidth: Dp, private val 
     fun `with no bar shown the last row scrolls whole to the bottom of the window and nothing is kept for a bar`() {
         show(PreviewDestinationSuggestions)
         primary().assertDoesNotExist()
-        assertTrue((rowEnds(lastEndId) ?: Dp.Infinity) > window().bottom, "the list fits, so the scroll is not being tested")
+        assertTrue(
+            (rowEnds(lastEndId) ?: Dp.Infinity) > window().bottom,
+            "the list fits, so the scroll is not being tested",
+        )
 
         scrollToEnd()
 
         row(lastEndId).assertIsDisplayed()
         val hiddenGap = window().bottom - bounds(row(lastEndId)).bottom
         // What is under the last row is the middle zone's own 16 dp and the row's own padding, and no bar.
-        assertTrue(hiddenGap < dim.spacingXXXXL + ROUNDING, "the last row ends $hiddenGap above the bottom of the window")
+        assertTrue(
+            hiddenGap < dim.spacingXXXXL + ROUNDING,
+            "the last row ends $hiddenGap above the bottom of the window",
+        )
 
         // With the bar shown the end of the scroll is exactly the bar's height further down, and no more.
         show(PreviewDestinationSelected)
         scrollToEnd()
         val shownGap = window().bottom - bounds(row(lastEndId)).bottom
         val bar = bounds(primary()).height + dim.spacingL * 2
-        assertEquals((hiddenGap + bar).value, shownGap.value, ROUNDING.value, "the room at the end is not the bar's $bar")
+        assertEquals(
+            (hiddenGap + bar).value,
+            shownGap.value,
+            ROUNDING.value,
+            "the room at the end is not the bar's $bar",
+        )
     }
 
     @Test
     fun `with the bar shown the last row scrolls fully above the bar`() {
         show(PreviewDestinationSelected)
-        assertTrue((rowEnds(lastEndId) ?: Dp.Infinity) > bounds(primary()).top, "the list fits above the bar, so the scroll is not being tested")
+        assertTrue(
+            (rowEnds(lastEndId) ?: Dp.Infinity) > bounds(primary()).top,
+            "the list fits above the bar, so the scroll is not being tested",
+        )
 
         scrollToEnd()
 
         row(lastEndId).assertIsDisplayed()
         val barTop = bounds(primary()).top - dim.spacingL
-        assertTrue(bounds(row(lastEndId)).bottom <= barTop + ROUNDING, "the last row ends at ${bounds(row(lastEndId)).bottom}, under the bar at $barTop")
-        assertTrue(window().bottom - bounds(primary()).bottom <= dim.spacingL + ROUNDING, "the bar is not at the bottom of the window")
+        assertTrue(
+            bounds(row(lastEndId)).bottom <= barTop + ROUNDING,
+            "the last row ends at ${bounds(row(lastEndId)).bottom}, under the bar at $barTop",
+        )
+        assertTrue(
+            window().bottom - bounds(primary()).bottom <= dim.spacingL + ROUNDING,
+            "the bar is not at the bottom of the window",
+        )
     }
 
     @Test
@@ -288,7 +316,9 @@ abstract class IntroBarOverlayTestBase(private val windowWidth: Dp, private val 
         val states = listOf(
             ON_PARK_RIDE,
             PreviewDestinationSelected,
-            PreviewOriginCurated.copy(selectedStop = DEFAULT_SUGGESTED_STOPS.start.first().let { IntroStop(it.stopId, it.name) }),
+            PreviewOriginCurated.copy(
+                selectedStop = DEFAULT_SUGGESTED_STOPS.start.first().let { IntroStop(it.stopId, it.name) },
+            ),
             IntroState(
                 step = IntroStep.CONFIRM,
                 startStopId = "200060",
@@ -304,10 +334,22 @@ abstract class IntroBarOverlayTestBase(private val windowWidth: Dp, private val 
             val title = bounds(heading())
             val bar = bounds(primary())
             assertTrue(title.top >= rhythm.top - ROUNDING, "${state.step}: the headline starts at ${title.top}")
-            assertTrue(title.left >= 0.dp && title.right <= window().width, "${state.step}: the headline is outside the window: $title")
-            assertTrue(bar.left >= 0.dp && bar.right <= window().width, "${state.step}: the bar is outside the window: $bar")
-            assertTrue(title.bottom <= bar.top, "${state.step}: the headline ends at ${title.bottom}, under the bar at ${bar.top}")
-            assertTrue(window().bottom - barBottom() <= dim.spacingL + ROUNDING, "${state.step}: the bar is not at the bottom")
+            assertTrue(
+                title.left >= 0.dp && title.right <= window().width,
+                "${state.step}: the headline is outside the window: $title",
+            )
+            assertTrue(
+                bar.left >= 0.dp && bar.right <= window().width,
+                "${state.step}: the bar is outside the window: $bar",
+            )
+            assertTrue(
+                title.bottom <= bar.top,
+                "${state.step}: the headline ends at ${title.bottom}, under the bar at ${bar.top}",
+            )
+            assertTrue(
+                window().bottom - barBottom() <= dim.spacingL + ROUNDING,
+                "${state.step}: the bar is not at the bottom",
+            )
         }
     }
 

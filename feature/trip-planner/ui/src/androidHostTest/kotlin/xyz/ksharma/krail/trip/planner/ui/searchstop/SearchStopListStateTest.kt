@@ -284,7 +284,11 @@ class SearchStopListStateTest {
         assertEquals(before, after, "Tapping a row does not move or resize the box.")
         assertNear("To is 56 tall", 56.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).height)
         assertNear("From is 56 tall", 56.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).height)
-        assertNear("the rows are one divider apart", 1.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).top - boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).bottom)
+        assertNear(
+            "the rows are one divider apart",
+            1.dp,
+            boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).top - boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).bottom,
+        )
     }
 
     // endregion
@@ -327,7 +331,10 @@ class SearchStopListStateTest {
         val box = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
         val chips = boundsOf(TripPlannerTestTags.SEARCH_STOP_LABEL_ROW)
         val select = textBounds("Select on map")
-        assertTrue(box.height > 136.dp, "The box grows to hold whole names at 200 percent, it does not cut them: ${box.height}.")
+        assertTrue(
+            box.height > 136.dp,
+            "The box grows to hold whole names at 200 percent, it does not cut them: ${box.height}.",
+        )
         assertTrue(chips.top >= box.bottom, "The chips $chips are under the box $box")
         assertTrue(select.top >= chips.bottom, "Select on map $select is under the chips $chips")
         assertTrue(select.left >= 0.dp && select.right <= 320.dp, "Select on map $select stays inside the window")

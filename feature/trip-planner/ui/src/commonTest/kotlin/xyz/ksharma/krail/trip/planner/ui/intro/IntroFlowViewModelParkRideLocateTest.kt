@@ -198,7 +198,11 @@ class IntroFlowViewModelParkRideLocateTest {
             assertEquals(IntroStep.PARK_RIDE, rig.state.step)
             pumpOnce(1)
 
-            assertEquals(ParkRideCardPhase.None, rig.state.parkRideCard, "no message, because the rider was not told anything")
+            assertEquals(
+                ParkRideCardPhase.None,
+                rig.state.parkRideCard,
+                "no message, because the rider was not told anything",
+            )
             assertEquals(IntroStep.DESTINATION, rig.state.step)
             assertEquals(1, rig.log.count(SUGGESTION_FLAG_WRITE))
             assertEquals(10_000L, PARK_RIDE_STOPS_WAIT_MS)
@@ -234,7 +238,11 @@ class IntroFlowViewModelParkRideLocateTest {
             )
 
             assertEquals(before, rig.state)
-            assertEquals(IntroStep.DESTINATION, rig.state.step, "the rider is not on the Park & Ride screen, so they stay put")
+            assertEquals(
+                IntroStep.DESTINATION,
+                rig.state.step,
+                "the rider is not on the Park & Ride screen, so they stay put",
+            )
         }
 
     @Test

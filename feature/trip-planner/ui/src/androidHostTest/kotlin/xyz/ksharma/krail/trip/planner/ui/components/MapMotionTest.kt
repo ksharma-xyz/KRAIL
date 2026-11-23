@@ -1,7 +1,5 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import org.junit.Test
 import xyz.ksharma.krail.trip.planner.ui.searchstop.MODE_BLOCK_ENTER_MS
 import xyz.ksharma.krail.trip.planner.ui.searchstop.MODE_BLOCK_EXIT_MS
@@ -9,6 +7,8 @@ import xyz.ksharma.krail.trip.planner.ui.searchstop.MODE_BLOCK_FADE_IN_MS
 import xyz.ksharma.krail.trip.planner.ui.searchstop.MODE_BLOCK_START_SCALE
 import xyz.ksharma.krail.trip.planner.ui.searchstop.modeBlockEnter
 import xyz.ksharma.krail.trip.planner.ui.searchstop.modeBlockExit
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * The one motion spec of the map screens: finite and short, an arrival a little slower than a departure, every fade from and
@@ -33,7 +33,10 @@ class MapMotionTest {
         assertTrue(MapMotion.GO_LEAVE_MS < MapMotion.GO_ENTER_MS, "A rider who has moved on is not made to wait")
         assertEquals(MapMotion.EXIT_MS, MapMotion.GO_LEAVE_MS)
         assertTrue(MapMotion.GO_PEAK_MS < MapMotion.GO_ENTER_MS && MapMotion.GO_FADE_IN_MS < MapMotion.GO_PEAK_MS)
-        assertTrue(MapMotion.SWAP_GLIDE_MS < MapMotion.GO_ENTER_MS, "The glide lands while the go circle is still settling")
+        assertTrue(
+            MapMotion.SWAP_GLIDE_MS < MapMotion.GO_ENTER_MS,
+            "The glide lands while the go circle is still settling",
+        )
         assertTrue(MapMotion.SWAP_TAP_ALPHA in 0.1f..0.9f && MapMotion.GO_TAP_SCALE in 0.5f..1f)
     }
 

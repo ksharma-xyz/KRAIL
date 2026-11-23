@@ -244,7 +244,10 @@ class IntroBarTest {
         assertEquals("Let's KRAIL", THEME_CONFIRM)
         assertEquals("Let's KRAIL, use this colour", bar.right.spokenLabel)
         assertEquals(THEME_CONFIRM_SPOKEN, bar.right.spokenLabel)
-        assertTrue(bar.right.spokenLabel.startsWith(bar.right.label), "voice control that says the label finds the button")
+        assertTrue(
+            bar.right.spokenLabel.startsWith(bar.right.label),
+            "voice control that says the label finds the button",
+        )
         assertEquals(IntroUiEvent.ConfirmTheme, bar.right.event)
     }
 

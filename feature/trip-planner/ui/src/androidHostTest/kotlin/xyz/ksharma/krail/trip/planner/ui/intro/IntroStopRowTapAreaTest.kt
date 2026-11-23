@@ -82,7 +82,9 @@ class IntroStopRowTapAreaTest {
                     CompositionLocalProvider(LocalThemeColor provides themeColour) {
                         surface = KrailTheme.colors.surface
                         IntroScreenColours(IntroStep.DESTINATION) {
-                            Column(modifier = Modifier.testTag(LIST).fillMaxWidth().background(KrailTheme.colors.surface)) {
+                            Column(
+                                modifier = Modifier.testTag(LIST).fillMaxWidth().background(KrailTheme.colors.surface),
+                            ) {
                                 stops.forEachIndexed { index, stop ->
                                     IntroStopRow(
                                         stop = stop,
@@ -92,7 +94,13 @@ class IntroStopRowTapAreaTest {
                                             taps += stop.stopId
                                             selected.value = stop.stopId
                                         },
-                                        modifier = if (index == 0) Modifier.testTag(TripPlannerTestTags.INTRO_STOP_FIRST) else Modifier,
+                                        modifier = if (index == 0) {
+                                            Modifier.testTag(
+                                                TripPlannerTestTags.INTRO_STOP_FIRST,
+                                            )
+                                        } else {
+                                            Modifier
+                                        },
                                     )
                                 }
                             }
@@ -182,7 +190,11 @@ class IntroStopRowTapAreaTest {
         val second = tile(stops[1])
         composeRule.onRoot().performTouchInput { click(Offset(second.center.x, second.top + px(3f))) }
         composeRule.waitForIdle()
-        assertEquals(listOf(stops[0].stopId, stops[1].stopId), taps, "a tap 3 dp below the top of the second row did nothing")
+        assertEquals(
+            listOf(stops[0].stopId, stops[1].stopId),
+            taps,
+            "a tap 3 dp below the top of the second row did nothing",
+        )
         row(stops[1]).assertIsSelected()
     }
 
@@ -263,7 +275,6 @@ class IntroStopRowTapAreaTest {
 
         assertEquals(before, stops.map { bounds(it) })
     }
-
 
     private companion object {
         const val LIST = "intro.rows.list"

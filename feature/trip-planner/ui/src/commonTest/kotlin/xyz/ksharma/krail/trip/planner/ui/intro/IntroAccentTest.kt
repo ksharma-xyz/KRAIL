@@ -59,7 +59,14 @@ class IntroAccentTest {
             IntroStep.THEME to 5.84f,
         )
 
-        expected.forEach { (step, want) -> assertEquals(want, contrast(step, dark = false), 0.05f, "$step in light mode") }
+        expected.forEach { (step, want) ->
+            assertEquals(
+                want,
+                contrast(step, dark = false),
+                0.05f,
+                "$step in light mode",
+            )
+        }
     }
 
     @Test
@@ -72,7 +79,14 @@ class IntroAccentTest {
             IntroStep.THEME to 3.80f,
         )
 
-        expected.forEach { (step, want) -> assertEquals(want, contrast(step, dark = true), 0.05f, "$step in dark mode") }
+        expected.forEach { (step, want) ->
+            assertEquals(
+                want,
+                contrast(step, dark = true),
+                0.05f,
+                "$step in dark mode",
+            )
+        }
     }
 
     @Test
@@ -119,7 +133,10 @@ class IntroAccentTest {
             assertEquals(saturation, darkerSaturation, 0.02f, "$step saturation")
             assertTrue(darkerLightness < lightness, "$step is darker")
             val oneStepLighter = hslColor(darkerHue, darkerSaturation, darkerLightness + 0.01f)
-            assertTrue(oneStepLighter.contrastRatio(md_theme_light_surface) < ACCENT_MIN_CONTRAST, "$step is darkened no further than it needs")
+            assertTrue(
+                oneStepLighter.contrastRatio(md_theme_light_surface) < ACCENT_MIN_CONTRAST,
+                "$step is darkened no further than it needs",
+            )
         }
     }
 
@@ -128,7 +145,10 @@ class IntroAccentTest {
         val purple = introAccentTheme(IntroStep.THEME)
         val lifted = accent(IntroStep.THEME, dark = true)
 
-        assertTrue(purple.contrastRatio(md_theme_dark_surface) < ACCENT_MIN_CONTRAST, "Purple Drip is under the bar as it is")
+        assertTrue(
+            purple.contrastRatio(md_theme_dark_surface) < ACCENT_MIN_CONTRAST,
+            "Purple Drip is under the bar as it is",
+        )
         assertTrue(lifted.contrastRatio(md_theme_dark_surface) >= ACCENT_MIN_CONTRAST)
         assertTrue(abs(purple.toHsl().first - lifted.toHsl().first) < 12f, "still a purple")
     }

@@ -215,7 +215,10 @@ class IntroHeadlineLayoutTest {
         val widestWord = everyHeadline.flatten().flatMap { it.split(" ") }.maxBy { widestWordDp(1f, it) }
 
         assertEquals("transport", widestWord)
-        assertTrue(widestWordDp(HEADLINE_FONT_SCALE_CEILING) > NARROW_ROOM_DP, "TRANSPORT now fits at the ceiling alone")
+        assertTrue(
+            widestWordDp(HEADLINE_FONT_SCALE_CEILING) > NARROW_ROOM_DP,
+            "TRANSPORT now fits at the ceiling alone",
+        )
     }
 
     @Test

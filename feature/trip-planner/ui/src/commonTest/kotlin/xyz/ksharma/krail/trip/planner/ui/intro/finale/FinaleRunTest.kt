@@ -63,7 +63,11 @@ class FinaleRunTest {
     fun `a run that is not released covers the screen and holds there, never asking to navigate and never fading`() {
         val run = simulate(releaseAtMs = null, limitMs = 15_000L)
 
-        assertEquals(emptyList(), run.navigateAskedAt, "the app was asked to navigate before the Intro released the run")
+        assertEquals(
+            emptyList(),
+            run.navigateAskedAt,
+            "the app was asked to navigate before the Intro released the run",
+        )
         assertNull(run.fadeStartedAt)
         assertNull(run.finishedAt)
         val held = run.frames.filter { it.frame.phase == FinalePhase.NAVIGATE }
@@ -104,14 +108,25 @@ class FinaleRunTest {
     @Test
     fun `the navigation is ready on the release, and at the ceiling whatever the Intro has done`() {
         assertEquals(true, navigationReadyAt(released = true, elapsedMs = 0L, coverMs = FINALE_COVER_MS))
-        assertEquals(false, navigationReadyAt(released = false, elapsedMs = FINALE_COVER_MS + 1000L, coverMs = FINALE_COVER_MS))
         assertEquals(
             false,
-            navigationReadyAt(released = false, elapsedMs = FINALE_COVER_MS + FINALE_RELEASE_CEILING_MS - 1, coverMs = FINALE_COVER_MS),
+            navigationReadyAt(released = false, elapsedMs = FINALE_COVER_MS + 1000L, coverMs = FINALE_COVER_MS),
+        )
+        assertEquals(
+            false,
+            navigationReadyAt(
+                released = false,
+                elapsedMs = FINALE_COVER_MS + FINALE_RELEASE_CEILING_MS - 1,
+                coverMs = FINALE_COVER_MS,
+            ),
         )
         assertEquals(
             true,
-            navigationReadyAt(released = false, elapsedMs = FINALE_COVER_MS + FINALE_RELEASE_CEILING_MS, coverMs = FINALE_COVER_MS),
+            navigationReadyAt(
+                released = false,
+                elapsedMs = FINALE_COVER_MS + FINALE_RELEASE_CEILING_MS,
+                coverMs = FINALE_COVER_MS,
+            ),
         )
         assertTrue(FINALE_RELEASE_CEILING_MS > 15_000L, "the ceiling must be past the Intro's own 15 s wait")
     }

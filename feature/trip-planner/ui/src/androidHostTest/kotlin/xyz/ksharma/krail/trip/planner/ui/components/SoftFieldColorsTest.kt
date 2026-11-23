@@ -51,8 +51,14 @@ class SoftFieldColorsTest {
         assertNotEquals(page, field.containerColor, "the field is the page surface")
         assertTrue(field.containerColor.contrastRatio(page) >= 1.1f, "the fill is not a visible step from the page")
         assertTrue(field.contentColor.contrastRatio(field.containerColor) >= 4.5f, "the text does not read on the fill")
-        assertTrue(field.placeholderColor.contrastRatio(field.containerColor) >= 4.5f, "the placeholder does not read on the fill")
-        assertTrue(field.cursorColor.contrastRatio(field.containerColor) >= 4.5f, "the cursor does not show on the fill")
+        assertTrue(
+            field.placeholderColor.contrastRatio(field.containerColor) >= 4.5f,
+            "the placeholder does not read on the fill",
+        )
+        assertTrue(
+            field.cursorColor.contrastRatio(field.containerColor) >= 4.5f,
+            "the cursor does not show on the fill",
+        )
     }
 
     @Test

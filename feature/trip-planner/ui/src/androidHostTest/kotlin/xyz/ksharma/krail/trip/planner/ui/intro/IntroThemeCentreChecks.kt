@@ -107,7 +107,12 @@ abstract class IntroThemeCentreChecks(private val textScale: Float) {
     fun `the grid is where the placement puts it, centred on the window middle and moved only to clear the headline and the bar`() {
         show(none)
 
-        assertEquals(expectedGridTop().value, gridTop().value, TOLERANCE.value, "the grid top, with the window ${windowMiddle()} tall in half")
+        assertEquals(
+            expectedGridTop().value,
+            gridTop().value,
+            TOLERANCE.value,
+            "the grid top, with the window ${windowMiddle()} tall in half",
+        )
     }
 
     @Test
@@ -116,9 +121,19 @@ abstract class IntroThemeCentreChecks(private val textScale: Float) {
 
         if (fitsBetweenHeadlineAndBar()) {
             val centre = (gridTop() + gridBottom()) / 2
-            assertEquals(windowMiddle().value, centre.value, TOLERANCE.value, "the grid centre is $centre, the window middle ${windowMiddle()}")
+            assertEquals(
+                windowMiddle().value,
+                centre.value,
+                TOLERANCE.value,
+                "the grid centre is $centre, the window middle ${windowMiddle()}",
+            )
         } else {
-            assertEquals(headlineBottom().value, gridTop().value, TOLERANCE.value, "the grid is not right under the headline")
+            assertEquals(
+                headlineBottom().value,
+                gridTop().value,
+                TOLERANCE.value,
+                "the grid is not right under the headline",
+            )
         }
     }
 
@@ -132,7 +147,10 @@ abstract class IntroThemeCentreChecks(private val textScale: Float) {
     fun `the grid is no nearer the headline than the one gap under it`() {
         show(none)
 
-        assertTrue(gridTop() >= headlineBottom() - TOLERANCE, "the grid starts at ${gridTop()}, the headline zone ends at ${headlineBottom()}")
+        assertTrue(
+            gridTop() >= headlineBottom() - TOLERANCE,
+            "the grid starts at ${gridTop()}, the headline zone ends at ${headlineBottom()}",
+        )
     }
 
     @Test
@@ -155,10 +173,15 @@ abstract class IntroThemeCentreChecks(private val textScale: Float) {
     fun `scrolled to the end the grid is one gap above the bar and never behind it, and no two badges overlap`() {
         show(none)
         val slotTop = barSlotTop()
-        composeRule.onNode(hasScrollAction()).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, SCROLL_FAR_PX) }
+        composeRule.onNode(
+            hasScrollAction(),
+        ).performSemanticsAction(SemanticsActions.ScrollBy) { it(0f, SCROLL_FAR_PX) }
         composeRule.waitForIdle()
 
-        assertTrue(gridBottom() <= slotTop - rhythm.middleBottom + TOLERANCE, "the grid ends at ${gridBottom()}, the bar starts at $slotTop")
+        assertTrue(
+            gridBottom() <= slotTop - rhythm.middleBottom + TOLERANCE,
+            "the grid ends at ${gridBottom()}, the bar starts at $slotTop",
+        )
         val bounds = badgeBounds()
         bounds.forEachIndexed { i, a ->
             bounds.drop(i + 1).forEach { b ->

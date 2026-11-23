@@ -41,11 +41,15 @@ class IntroMiddlePlacementTest {
     fun `it never overlaps the headline, and clears the bar by the gap whenever the two can both be kept`() {
         for (windowMiddle in 0..1000 step 20) {
             for (middle in listOf(0, 100, 184, 400, 800)) {
-                val top = windowCentredMiddleTop(windowMiddle, middle, headlineBottom = 300, barTop = 880, bottomGap = 16)
+                val top =
+                    windowCentredMiddleTop(windowMiddle, middle, headlineBottom = 300, barTop = 880, bottomGap = 16)
 
                 assertTrue(top >= 300, "middle $middle at window middle $windowMiddle starts at $top, in the headline")
                 if (300 + middle + 16 <= 880) {
-                    assertTrue(top + middle + 16 <= 880, "middle $middle at $windowMiddle ends at ${top + middle}, near the bar")
+                    assertTrue(
+                        top + middle + 16 <= 880,
+                        "middle $middle at $windowMiddle ends at ${top + middle}, near the bar",
+                    )
                 }
             }
         }
@@ -55,8 +59,10 @@ class IntroMiddlePlacementTest {
     fun `when it fits it is centred on the window middle to the pixel, and a longer headline above does not move it`() {
         // The headline's height is the only thing from above that is read, and a headline that is shorter moves nothing
         // while it ends above the middle's own top.
-        val tall = windowCentredMiddleTop(windowMiddle = 500, middle = 184, headlineBottom = 380, barTop = 880, bottomGap = 16)
-        val short = windowCentredMiddleTop(windowMiddle = 500, middle = 184, headlineBottom = 200, barTop = 880, bottomGap = 16)
+        val tall =
+            windowCentredMiddleTop(windowMiddle = 500, middle = 184, headlineBottom = 380, barTop = 880, bottomGap = 16)
+        val short =
+            windowCentredMiddleTop(windowMiddle = 500, middle = 184, headlineBottom = 200, barTop = 880, bottomGap = 16)
 
         assertEquals(408, tall)
         assertEquals(tall, short)

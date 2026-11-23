@@ -27,9 +27,6 @@ import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
-import kotlin.math.abs
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import kotlinx.collections.immutable.persistentListOf
 import org.junit.Rule
 import org.junit.Test
@@ -50,6 +47,9 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCard
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardPlacement
 import xyz.ksharma.krail.trip.planner.ui.stopcard.stopCardPalette
+import kotlin.math.abs
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * The close X of the stop card is a circle with a cross in it: taj's round icon button 40 dp across inside a real 48 dp box
@@ -109,14 +109,26 @@ class CloseButtonsTest {
         composeRule.waitForIdle()
     }
 
-    private fun bounds(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+    private fun bounds(tag: String): DpRect = composeRule.onNodeWithTag(
+        tag,
+        useUnmergedTree = true,
+    ).getUnclippedBoundsInRoot()
 
     private fun near(what: String, expected: Dp, actual: Dp) =
         assertTrue(abs(expected.value - actual.value) <= 1.5f, "$what should be $expected but is $actual")
 
     /** What a screen reader reads on the control: the merged node's description, whole. */
     private fun description(tag: String): String? = composeRule.onNodeWithTag(tag).fetchSemanticsNode().config
-        .let { if (it.contains(SemanticsProperties.ContentDescription)) it[SemanticsProperties.ContentDescription].joinToString() else null }
+        .let {
+            if (it.contains(
+                    SemanticsProperties.ContentDescription,
+                )
+            ) {
+                it[SemanticsProperties.ContentDescription].joinToString()
+            } else {
+                null
+            }
+        }
 
     // region the stop card's X
 
@@ -153,7 +165,11 @@ class CloseButtonsTest {
         val target = composeRule.onNodeWithTag(TripPlannerTestTags.StopCard.CLOSE).fetchSemanticsNode().boundsInRoot
         val density = composeRule.density.density
 
-        composeRule.onRoot().performTouchInput { click(Offset(target.left + 1.5f * density, target.top + 1.5f * density)) }
+        composeRule.onRoot().performTouchInput {
+            click(
+                Offset(target.left + 1.5f * density, target.top + 1.5f * density),
+            )
+        }
         composeRule.waitForIdle()
 
         assertEquals(1, closed, "The corner of the 48 dp box is the X's")
@@ -175,9 +191,17 @@ class CloseButtonsTest {
         }
         composeRule.waitForIdle()
 
-        println("CLOSE light glyphOnCircle=${glyph.contrastRatio(circle)} circleOnHeader=${circle.contrastRatio(header)}")
-        assertTrue(glyph.contrastRatio(circle) >= 4.5f, "The cross is ${glyph.contrastRatio(circle)} to 1 on its circle")
-        assertTrue(circle.contrastRatio(header) >= 1.15f, "The circle is ${circle.contrastRatio(header)} to 1 off the header")
+        println(
+            "CLOSE light glyphOnCircle=${glyph.contrastRatio(circle)} circleOnHeader=${circle.contrastRatio(header)}",
+        )
+        assertTrue(
+            glyph.contrastRatio(circle) >= 4.5f,
+            "The cross is ${glyph.contrastRatio(circle)} to 1 on its circle",
+        )
+        assertTrue(
+            circle.contrastRatio(header) >= 1.15f,
+            "The circle is ${circle.contrastRatio(header)} to 1 off the header",
+        )
     }
 
     @Test
@@ -196,9 +220,17 @@ class CloseButtonsTest {
         }
         composeRule.waitForIdle()
 
-        println("CLOSE dark glyphOnCircle=${glyph.contrastRatio(circle)} circleOnHeader=${circle.contrastRatio(header)}")
-        assertTrue(glyph.contrastRatio(circle) >= 4.5f, "The cross is ${glyph.contrastRatio(circle)} to 1 on its circle")
-        assertTrue(circle.contrastRatio(header) >= 1.15f, "The circle is ${circle.contrastRatio(header)} to 1 off the header")
+        println(
+            "CLOSE dark glyphOnCircle=${glyph.contrastRatio(circle)} circleOnHeader=${circle.contrastRatio(header)}",
+        )
+        assertTrue(
+            glyph.contrastRatio(circle) >= 4.5f,
+            "The cross is ${glyph.contrastRatio(circle)} to 1 on its circle",
+        )
+        assertTrue(
+            circle.contrastRatio(header) >= 1.15f,
+            "The circle is ${circle.contrastRatio(header)} to 1 off the header",
+        )
     }
 
     // endregion
@@ -228,7 +260,10 @@ class CloseButtonsTest {
     fun `the stop card's X is still a 40 dp circle while the search field's has none`() {
         showCard()
         near("the stop card's circle", 40.dp, bounds(TripPlannerTestTags.StopCard.CLOSE_CIRCLE).width)
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_CLEAR_GLYPH, useUnmergedTree = true).assertDoesNotExist()
+        composeRule.onNodeWithTag(
+            TripPlannerTestTags.SEARCH_STOP_CLEAR_GLYPH,
+            useUnmergedTree = true,
+        ).assertDoesNotExist()
     }
 
     // endregion

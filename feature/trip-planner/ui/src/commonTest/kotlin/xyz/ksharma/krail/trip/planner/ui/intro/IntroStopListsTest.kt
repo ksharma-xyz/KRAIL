@@ -3,7 +3,6 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStop
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 
 class IntroStopListsTest {
 

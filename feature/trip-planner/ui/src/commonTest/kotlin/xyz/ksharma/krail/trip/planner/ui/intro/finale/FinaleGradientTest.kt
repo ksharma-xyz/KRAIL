@@ -83,8 +83,16 @@ class FinaleGradientTest {
             if (lumaOf(partner) >= lumaOf(style.colour())) {
                 assertEquals(partner, third, "$style keeps its partner")
             } else {
-                assertTrue(third.red >= partner.red && third.green >= partner.green && third.blue >= partner.blue, "$style")
-                assertEquals(lumaOf(style.colour()), lumaOf(third), liftTolerance, "$style is lightened only as far as it needs")
+                assertTrue(
+                    third.red >= partner.red && third.green >= partner.green && third.blue >= partner.blue,
+                    "$style",
+                )
+                assertEquals(
+                    lumaOf(style.colour()),
+                    lumaOf(third),
+                    liftTolerance,
+                    "$style is lightened only as far as it needs",
+                )
             }
         }
     }
@@ -116,7 +124,10 @@ class FinaleGradientTest {
     fun `the old stops and the theme and partner stops are still there behind the switch`() {
         KrailThemeStyle.entries.forEach { style ->
             assertEquals(AiGradientTokens.stops, finaleBrandStops(style.colour(), FinaleWordmarkFill.Original))
-            assertEquals(themeGradientStops(style.colour()), finaleBrandStops(style.colour(), FinaleWordmarkFill.ThemePartner))
+            assertEquals(
+                themeGradientStops(style.colour()),
+                finaleBrandStops(style.colour(), FinaleWordmarkFill.ThemePartner),
+            )
             assertEquals(websiteSweepStops(), finaleBrandStops(style.colour(), FinaleWordmarkFill.WebsiteModes))
         }
         assertEquals(FinaleWordmarkFill.WebsiteModes, FINALE_WORDMARK_FILL)
@@ -129,7 +140,12 @@ class FinaleGradientTest {
 
         assertEquals(4, modes.size)
         assertEquals(
-            listOf(KrailThemeStyle.Train, KrailThemeStyle.Metro, KrailThemeStyle.Bus, KrailThemeStyle.Ferry).map { it.colour() },
+            listOf(
+                KrailThemeStyle.Train,
+                KrailThemeStyle.Metro,
+                KrailThemeStyle.Bus,
+                KrailThemeStyle.Ferry,
+            ).map { it.colour() },
             modes,
         )
         assertEquals(listOf(Color(0xFFF6891F), Color(0xFF009B77), Color(0xFF00B5EF), Color(0xFF5AB031)), modes)

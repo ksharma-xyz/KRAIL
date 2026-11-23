@@ -51,7 +51,11 @@ class IntroThemeHeadlineRoomTest {
                 LocalInspectionMode provides true,
             ) {
                 PreviewTheme {
-                    IntroFlowScreen(state = shown.value, suggestedStops = DEFAULT_SUGGESTED_STOPS, onEvent = { _, _ -> })
+                    IntroFlowScreen(
+                        state = shown.value,
+                        suggestedStops = DEFAULT_SUGGESTED_STOPS,
+                        onEvent = { _, _ -> },
+                    )
                 }
             }
         }
@@ -67,7 +71,9 @@ class IntroThemeHeadlineRoomTest {
         .onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading))
         .getUnclippedBoundsInRoot()
 
-    private fun badges(): List<DpRect> = introThemeChoices().map { composeRule.onNodeWithTag(it.tag).getUnclippedBoundsInRoot() }
+    private fun badges(): List<DpRect> = introThemeChoices().map {
+        composeRule.onNodeWithTag(it.tag).getUnclippedBoundsInRoot()
+    }
 
     private fun check(widthDp: Int, fontScale: Float) {
         start(widthDp, fontScale)
@@ -77,16 +83,41 @@ class IntroThemeHeadlineRoomTest {
             show(none.copy(selectedThemeId = choice.style.id))
             val tagline = headline()
 
-            assertEquals(question.left.value, tagline.left.value, ROUNDING, "${choice.name}: the headline moved across at $widthDp dp, $fontScale")
-            assertEquals(question.top.value, tagline.top.value, ROUNDING, "${choice.name}: the headline moved down at $widthDp dp, $fontScale")
-            assertEquals(question.bottom.value, tagline.bottom.value, ROUNDING, "${choice.name}: the headline changed height at $widthDp dp, $fontScale")
+            assertEquals(
+                question.left.value,
+                tagline.left.value,
+                ROUNDING,
+                "${choice.name}: the headline moved across at $widthDp dp, $fontScale",
+            )
+            assertEquals(
+                question.top.value,
+                tagline.top.value,
+                ROUNDING,
+                "${choice.name}: the headline moved down at $widthDp dp, $fontScale",
+            )
+            assertEquals(
+                question.bottom.value,
+                tagline.bottom.value,
+                ROUNDING,
+                "${choice.name}: the headline changed height at $widthDp dp, $fontScale",
+            )
             badges().forEachIndexed { index, now ->
                 val lift = if (index == picked) LIFT_DP else 0f
-                assertEquals(badgesBefore[index].top.value, now.top.value, lift + ROUNDING, "${choice.name}: badge $index moved at $widthDp dp, $fontScale")
+                assertEquals(
+                    badgesBefore[index].top.value,
+                    now.top.value,
+                    lift + ROUNDING,
+                    "${choice.name}: badge $index moved at $widthDp dp, $fontScale",
+                )
             }
         }
         show(none)
-        assertEquals(question.bottom.value, headline().bottom.value, ROUNDING, "the question came back to its own height")
+        assertEquals(
+            question.bottom.value,
+            headline().bottom.value,
+            ROUNDING,
+            "the question came back to its own height",
+        )
     }
 
     @Test

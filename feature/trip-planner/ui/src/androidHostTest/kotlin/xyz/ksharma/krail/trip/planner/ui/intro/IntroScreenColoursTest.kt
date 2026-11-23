@@ -99,7 +99,10 @@ class IntroScreenColoursTest {
     private fun pixel(x: Float, y: Float, rootTag: String = TripPlannerTestTags.INTRO_SCREEN): Color =
         IntroPixels(composeRule).of(rootTag).colourAt(x, y)
 
-    private fun boundsOf(tag: String) = composeRule.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+    private fun boundsOf(tag: String) = composeRule.onNodeWithTag(
+        tag,
+        useUnmergedTree = true,
+    ).fetchSemanticsNode().boundsInRoot
 
     private fun close(a: Color, b: Color, tolerance: Float = 0.015f) =
         abs(a.red - b.red) <= tolerance && abs(a.green - b.green) <= tolerance && abs(a.blue - b.blue) <= tolerance
@@ -150,8 +153,15 @@ class IntroScreenColoursTest {
         // Destination: the selected row is blue.
         shown.value = PreviewDestinationSelected
         composeRule.waitForIdle()
-        assertClose(tintOf(KrailThemeStyle.Bus, dark), selectedRowPixel(PreviewDestinationSelected), "$mode Destination row")
-        assertTrue(!close(trainTint, selectedRowPixel(PreviewDestinationSelected)), "$mode: the selected row is the Train tint")
+        assertClose(
+            tintOf(KrailThemeStyle.Bus, dark),
+            selectedRowPixel(PreviewDestinationSelected),
+            "$mode Destination row",
+        )
+        assertTrue(
+            !close(trainTint, selectedRowPixel(PreviewDestinationSelected)),
+            "$mode: the selected row is the Train tint",
+        )
 
         // Origin: the selected row is teal.
         val origin = PreviewOriginNearby.copy(selectedStop = PreviewOriginNearby.nearbyStops.first())
@@ -187,7 +197,11 @@ class IntroScreenColoursTest {
 
         shown.value = PreviewDestinationSelected
         composeRule.waitForIdle()
-        assertClose(tintOf(KrailThemeStyle.Bus, dark = false), selectedRowPixel(PreviewDestinationSelected), "Destination row")
+        assertClose(
+            tintOf(KrailThemeStyle.Bus, dark = false),
+            selectedRowPixel(PreviewDestinationSelected),
+            "Destination row",
+        )
         shown.value = PreviewConfirm
         composeRule.waitForIdle()
         assertClose(tintOf(KrailThemeStyle.BarbiePink, dark = false), confirmTilePixel(), "trip card")
@@ -237,12 +251,24 @@ class IntroScreenColoursTest {
         val margin = dp(d.pageHorizontalPadding)
 
         // The card is the Train tint and the tile is the raw Train colour, as they are on the home card.
-        assertClose(tintOf(KrailThemeStyle.Train, dark), pixel(park.left + margin + dp(4f), park.center.y, OUTSIDE), "$mode Park and Ride card")
+        assertClose(
+            tintOf(KrailThemeStyle.Train, dark),
+            pixel(park.left + margin + dp(4f), park.center.y, OUTSIDE),
+            "$mode Park and Ride card",
+        )
         val tileLeft = park.left + margin * 2
         val tileTop = park.top + dp(20f) + dp(d.spacingXXS)
-        assertClose(train, pixel(tileLeft + dp(3f), tileTop + dp(d.savedTripIconButtonSize) / 2f, OUTSIDE), "$mode P tile")
+        assertClose(
+            train,
+            pixel(tileLeft + dp(3f), tileTop + dp(d.savedTripIconButtonSize) / 2f, OUTSIDE),
+            "$mode P tile",
+        )
         // The saved trip card, which the Intro's trip card is, is the Train tint.
-        assertClose(tintOf(KrailThemeStyle.Train, dark), pixel(trip.left + margin + dp(4f), trip.center.y, OUTSIDE), "$mode saved trip card")
+        assertClose(
+            tintOf(KrailThemeStyle.Train, dark),
+            pixel(trip.left + margin + dp(4f), trip.center.y, OUTSIDE),
+            "$mode saved trip card",
+        )
     }
 
     @Test
@@ -276,8 +302,16 @@ class IntroScreenColoursTest {
         composeRule.waitForIdle()
 
         assertEquals(train, appThemeSeen, "outside the screen the app's theme")
-        assertEquals(KrailThemeStyle.Bus.hexColorCode.hexToComposeColor(), wrappedThemeSeen, "inside Destination it is Bus blue")
-        assertEquals(train, colourScreenThemeSeen, "the colour screen is not wrapped, so it reads the app's theme as it did")
+        assertEquals(
+            KrailThemeStyle.Bus.hexColorCode.hexToComposeColor(),
+            wrappedThemeSeen,
+            "inside Destination it is Bus blue",
+        )
+        assertEquals(
+            train,
+            colourScreenThemeSeen,
+            "the colour screen is not wrapped, so it reads the app's theme as it did",
+        )
     }
 
     @Composable

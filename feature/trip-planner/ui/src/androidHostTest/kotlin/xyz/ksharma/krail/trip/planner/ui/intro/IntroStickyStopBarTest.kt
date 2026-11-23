@@ -1,5 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.view.View
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.toArgb
@@ -20,9 +23,6 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.view.View
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpRect
@@ -121,13 +121,20 @@ abstract class IntroStickyStopBarTestBase(private val windowWidth: Dp, private v
     }
 
     // Each of the rows that is drawn now, with its bounds. A row off the window is not drawn.
-    private fun drawnRows(stopIds: List<String> = manyRows.map { it.stopId }): List<DpRect> = stopIds.mapNotNull { stopId ->
+    private fun drawnRows(
+        stopIds: List<String> = manyRows.map { it.stopId },
+    ): List<DpRect> = stopIds.mapNotNull { stopId ->
         val nodes = composeRule.onAllNodes(hasTestTag(TripPlannerTestTags.introStop(stopId)))
         if (nodes.fetchSemanticsNodes().isEmpty()) null else nodes[0].getUnclippedBoundsInRoot()
     }
 
     private fun assertBarAtTop(what: String) {
-        assertEquals(listTop().value, fieldBounds().top.value, ROUNDING.value, "$what: the bar is at ${fieldBounds().top}, the list starts at ${listTop()}")
+        assertEquals(
+            listTop().value,
+            fieldBounds().top.value,
+            ROUNDING.value,
+            "$what: the bar is at ${fieldBounds().top}, the list starts at ${listTop()}",
+        )
     }
 
     @Test
@@ -141,7 +148,10 @@ abstract class IntroStickyStopBarTestBase(private val windowWidth: Dp, private v
     fun `the bar starts under the headline and the headline and emoji scroll off, leaving the bar at the top`() {
         show(manyResults)
         headings().assertCountEquals(1)
-        assertTrue(fieldBounds().top > listTop() + ROUNDING, "the bar starts at ${fieldBounds().top}, which is not under the headline")
+        assertTrue(
+            fieldBounds().top > listTop() + ROUNDING,
+            "the bar starts at ${fieldBounds().top}, which is not under the headline",
+        )
 
         scrollToIndex(LAST_OF_MANY)
 
@@ -269,11 +279,15 @@ abstract class IntroStickyStopBarTestBase(private val windowWidth: Dp, private v
         // The list is no taller than its content, so the last row ends at the bottom of the window and no room is left past it.
         val bottom = drawnRows(DEFAULT_SUGGESTED_STOPS.end.map { it.stopId }).maxOf { it.bottom }
         assertTrue(bottom <= window().bottom + ROUNDING, "the last row ends at $bottom, past the window")
-        assertTrue(window().bottom - bottom < dim.spacingXXXXL + ROUNDING, "the last row ends $bottom, far above the window's bottom")
+        assertTrue(
+            window().bottom - bottom < dim.spacingXXXXL + ROUNDING,
+            "the last row ends $bottom, far above the window's bottom",
+        )
     }
 
     private companion object {
         const val MANY = 30
+
         // The headline, the bar, the rows and the end room: the last item of each list.
         const val LAST_OF_MANY = MANY + 2
         const val LAST_OF_SUGGESTIONS = 5 + 2

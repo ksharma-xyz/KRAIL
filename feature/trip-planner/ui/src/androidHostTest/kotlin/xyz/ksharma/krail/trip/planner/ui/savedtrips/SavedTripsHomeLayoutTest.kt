@@ -22,10 +22,10 @@ import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.TextLayoutResult
@@ -94,7 +94,11 @@ class SavedTripsHomeLayoutTest {
         val pills = bounds(TripPlannerTestTags.SAVED_TRIPS_LABEL_PILLS)
         val bar = bounds(TripPlannerTestTags.SEARCH_ROW_TO)
 
-        assertNear("the pill row starts 28 dp under the sheet's top, as the bar did", SHEET_TOP_PADDING, pills.top - sheet.top)
+        assertNear(
+            "the pill row starts 28 dp under the sheet's top, as the bar did",
+            SHEET_TOP_PADDING,
+            pills.top - sheet.top,
+        )
         assertNear("the pill row is one 48 dp row", 48.dp, pills.height)
         assertNear("the gap from the pill row to the bar", PILLS_GAP, bar.top - pills.bottom)
         assertNear("the pill row starts on the page inset", PAGE_PADDING, pills.left)
@@ -119,7 +123,10 @@ class SavedTripsHomeLayoutTest {
         ).assertDoesNotExist()
         val list = bounds(TripPlannerTestTags.SAVED_TRIPS_LIST)
         val title = textBounds("Saved Trips")
-        assertTrue(title.top >= list.top && title.top < list.top + 48.dp, "The list opens with its title $title in $list.")
+        assertTrue(
+            title.top >= list.top && title.top < list.top + 48.dp,
+            "The list opens with its title $title in $list.",
+        )
     }
 
     @Test
@@ -189,7 +196,10 @@ class SavedTripsHomeLayoutTest {
         assertTrue(gym.top >= home.bottom, "Gym wraps onto a line of its own: $home $gym")
         assertNear("the wrapped pill starts at the page inset", PAGE_PADDING, gym.left)
         listOf(home, work, gym).forEach { pill ->
-            assertTrue(pill.left >= PAGE_PADDING - 1.dp && pill.right <= NARROW_WIDTH - PAGE_PADDING + 1.dp, "$pill is whole in the row")
+            assertTrue(
+                pill.left >= PAGE_PADDING - 1.dp && pill.right <= NARROW_WIDTH - PAGE_PADDING + 1.dp,
+                "$pill is whole in the row",
+            )
         }
         listOf("Home", "Work", "Gym").forEach { name -> assertEquals(1, pillLineCount(name), "$name is one line") }
     }
@@ -366,7 +376,11 @@ class SavedTripsHomeLayoutTest {
         val pills = bounds(TripPlannerTestTags.SAVED_TRIPS_LABEL_PILLS)
         val bar = bounds(TripPlannerTestTags.SEARCH_ROW_TO)
         assertNear("the bar is still 48 dp", 48.dp, bar.height)
-        assertNear("the sheet is its padding, the pills, the gap and the bar", SHEET_TOP_PADDING + pills.height + PILLS_GAP + 48.dp + SHEET_BOTTOM_PADDING, sheet.height)
+        assertNear(
+            "the sheet is its padding, the pills, the gap and the bar",
+            SHEET_TOP_PADDING + pills.height + PILLS_GAP + 48.dp + SHEET_BOTTOM_PADDING,
+            sheet.height,
+        )
         assertNear("the gap from the pills to the bar", PILLS_GAP, bar.top - pills.bottom)
     }
 
@@ -418,13 +432,21 @@ class SavedTripsHomeLayoutTest {
     fun `when the labels load after the sheet is up the sheet grows by the pill row and the end of the list follows`() {
         val labels = mutableStateOf<ImmutableList<StopLabel>>(persistentListOf())
         setScreen(trips = manyTrips(), labelsState = labels)
-        assertNear("sheet height before the labels", SHEET_HEIGHT, bounds(TripPlannerTestTags.SAVED_TRIPS_BOTTOM_SHEET).height)
+        assertNear(
+            "sheet height before the labels",
+            SHEET_HEIGHT,
+            bounds(TripPlannerTestTags.SAVED_TRIPS_BOTTOM_SHEET).height,
+        )
         assertLastRowClearsSheet()
 
         labels.value = LABELS
         composeRule.waitForIdle()
 
-        assertNear("sheet height with the pills", SHEET_HEIGHT_WITH_PILLS, bounds(TripPlannerTestTags.SAVED_TRIPS_BOTTOM_SHEET).height)
+        assertNear(
+            "sheet height with the pills",
+            SHEET_HEIGHT_WITH_PILLS,
+            bounds(TripPlannerTestTags.SAVED_TRIPS_BOTTOM_SHEET).height,
+        )
         assertLastRowClearsSheet()
     }
 
@@ -444,7 +466,11 @@ class SavedTripsHomeLayoutTest {
         assertTrue(last.bottom <= sheet.top, "The last row $last ends above the sheet $sheet.")
         // Exactly the sheet's measured height and the 8 dp gap are kept, under the item's own 16 dp of trailing space:
         // not a constant that happens to fit this sheet, and not a blank band left under the last card.
-        assertNear("the end of the list is the sheet's height and the gap", PILLS_GAP + LAST_ITEM_TRAILING_SPACE, sheet.top - last.bottom)
+        assertNear(
+            "the end of the list is the sheet's height and the gap",
+            PILLS_GAP + LAST_ITEM_TRAILING_SPACE,
+            sheet.top - last.bottom,
+        )
     }
 
     // endregion
@@ -542,7 +568,11 @@ class SavedTripsHomeLayoutTest {
             DUAL_PANE_LIST_WIDTH - PAGE_PADDING * 2,
             bounds(TripPlannerTestTags.SEARCH_ROW_TO).width,
         )
-        assertNear("the pills start on the page inset in the list pane", PAGE_PADDING, bounds(TripPlannerTestTags.homeLabelChip("Home")).left)
+        assertNear(
+            "the pills start on the page inset in the list pane",
+            PAGE_PADDING,
+            bounds(TripPlannerTestTags.homeLabelChip("Home")).left,
+        )
     }
 
     @Test
@@ -552,7 +582,9 @@ class SavedTripsHomeLayoutTest {
 
         composeRule.onNodeWithText("Park & Ride").assertIsDisplayed()
         composeRule.onNodeWithText("Add Park & Ride").assertIsDisplayed()
-        composeRule.onNodeWithText("Save a trip and its station's parking shows here automatically.").assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "Save a trip and its station's parking shows here automatically.",
+        ).assertIsDisplayed()
         composeRule.onNodeWithTag(TripPlannerTestTags.SAVED_TRIPS_LABEL_PILLS).assertIsDisplayed()
     }
 
@@ -703,7 +735,9 @@ class SavedTripsHomeLayoutTest {
     /** The whole touch target of a control, which the 48 dp interactive size gives a button that draws smaller. */
     private fun touchBounds(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true)
         .fetchSemanticsNode().touchBoundsInRoot.let { rect ->
-            with(composeRule.density) { DpRect(rect.left.toDp(), rect.top.toDp(), rect.right.toDp(), rect.bottom.toDp()) }
+            with(
+                composeRule.density,
+            ) { DpRect(rect.left.toDp(), rect.top.toDp(), rect.right.toDp(), rect.bottom.toDp()) }
         }
 
     private fun textBounds(text: String): DpRect =

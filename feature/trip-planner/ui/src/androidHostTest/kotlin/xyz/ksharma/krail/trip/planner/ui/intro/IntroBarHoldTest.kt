@@ -17,10 +17,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.click
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
@@ -102,7 +102,15 @@ class IntroBarHoldTest {
                 KrailTheme(themeController = ThemeController(currentMode = ThemeMode.LIGHT, setThemeMode = {})) {
                     val themeColour = remember { mutableStateOf(KrailThemeStyle.Train.hexColorCode) }
                     CompositionLocalProvider(LocalThemeColor provides themeColour) {
-                        Box(modifier = if (widthDp == null) Modifier.fillMaxSize() else Modifier.width(widthDp.dp).fillMaxHeight()) {
+                        Box(
+                            modifier = if (widthDp == null) {
+                                Modifier.fillMaxSize()
+                            } else {
+                                Modifier.width(
+                                    widthDp.dp,
+                                ).fillMaxHeight()
+                            },
+                        ) {
                             IntroFlowScreen(
                                 state = shown.value,
                                 suggestedStops = DEFAULT_SUGGESTED_STOPS,
@@ -143,7 +151,10 @@ class IntroBarHoldTest {
 
     /** Every node with the text [label] in the unmerged tree and in the bar's rows, whatever its opacity. */
     private fun labelNodes(label: String, fromY: Float) =
-        composeRule.onAllNodes(hasText(label), useUnmergedTree = true).fetchSemanticsNodes().filter { it.boundsInRoot.top >= fromY }
+        composeRule.onAllNodes(
+            hasText(label),
+            useUnmergedTree = true,
+        ).fetchSemanticsNodes().filter { it.boundsInRoot.top >= fromY }
 
     private fun image(): BufferedImage = IntroPixels(composeRule).of(TripPlannerTestTags.INTRO_SCREEN)
 
@@ -165,7 +176,19 @@ class IntroBarHoldTest {
             var x = box.left
             while (x < box.right) {
                 points++
-                if (close(Color(picture.getRGB(x.toInt().coerceIn(0, picture.width - 1), y.toInt().coerceIn(0, picture.height - 1))), colour, tolerance)) hits++
+                if (close(
+                        Color(
+                            picture.getRGB(
+                                x.toInt().coerceIn(0, picture.width - 1),
+                                y.toInt().coerceIn(0, picture.height - 1),
+                            ),
+                        ),
+                        colour,
+                        tolerance,
+                    )
+                ) {
+                    hits++
+                }
                 x += step
             }
             y += step
@@ -212,22 +235,47 @@ class IntroBarHoldTest {
 
             // Straight away the old bar is what it was: its fill is on the screen, its words are drawn, and the new fill is not.
             var picture = image()
-            assertTrue(share(picture, old.shownRegion, old.fill, 0.05f) > 0.5f, "the old fill is not drawn at the first frame of $where")
-            assertTrue(share(picture, new.openRegion, new.fill, 0.02f) < 0.05f, "the new fill is drawn at the first frame of $where")
+            assertTrue(
+                share(picture, old.shownRegion, old.fill, 0.05f) > 0.5f,
+                "the old fill is not drawn at the first frame of $where",
+            )
+            assertTrue(
+                share(picture, new.openRegion, new.fill, 0.02f) < 0.05f,
+                "the new fill is drawn at the first frame of $where",
+            )
             val top = barTop()
-            labelsOf(from).forEach { assertTrue(labelNodes(it, top).isNotEmpty(), "\"$it\" is not drawn at the first frame of $where") }
+            labelsOf(
+                from,
+            ).forEach {
+                assertTrue(
+                    labelNodes(it, top).isNotEmpty(),
+                    "\"$it\" is not drawn at the first frame of $where",
+                )
+            }
 
             // Half way through the fade it is still the old bar and still never the new bar's fill.
             frames(BAR_REVEAL_MS / 2L)
             picture = image()
-            labelsOf(from).forEach { assertTrue(labelNodes(it, top).isNotEmpty(), "\"$it\" is gone half way through $where") }
-            assertTrue(share(picture, new.openRegion, new.fill, 0.02f) < 0.05f, "the new fill is drawn half way through $where")
+            labelsOf(
+                from,
+            ).forEach { assertTrue(labelNodes(it, top).isNotEmpty(), "\"$it\" is gone half way through $where") }
+            assertTrue(
+                share(picture, new.openRegion, new.fill, 0.02f) < 0.05f,
+                "the new fill is drawn half way through $where",
+            )
 
             // When the fade is over the old bar is gone, and the new one is still not shown.
             frames(BAR_REVEAL_MS.toLong())
             picture = image()
-            assertEquals(1, primaryNodes().fetchSemanticsNodes().size, "the old bar is still there after the fade of $where")
-            assertTrue(share(picture, new.openRegion, new.fill, 0.02f) < 0.05f, "the new fill is drawn after the fade of $where")
+            assertEquals(
+                1,
+                primaryNodes().fetchSemanticsNodes().size,
+                "the old bar is still there after the fade of $where",
+            )
+            assertTrue(
+                share(picture, new.openRegion, new.fill, 0.02f) < 0.05f,
+                "the new fill is drawn after the fade of $where",
+            )
         }
     }
 
@@ -242,8 +290,15 @@ class IntroBarHoldTest {
 
             val top = barTop()
             val old = labelsOf(from) - labelsOf(to).toSet()
-            old.forEach { assertTrue(labelNodes(it, top).isEmpty(), "\"$it\" of the old bar is held behind the new bar in $where") }
-            labelsOf(to).forEach { assertTrue(labelNodes(it, top).isNotEmpty(), "\"$it\" of the new bar is not drawn in $where") }
+            old.forEach {
+                assertTrue(
+                    labelNodes(it, top).isEmpty(),
+                    "\"$it\" of the old bar is held behind the new bar in $where",
+                )
+            }
+            labelsOf(
+                to,
+            ).forEach { assertTrue(labelNodes(it, top).isNotEmpty(), "\"$it\" of the new bar is not drawn in $where") }
             assertEquals(1, primaryNodes().fetchSemanticsNodes().size, where)
         }
     }
@@ -262,13 +317,21 @@ class IntroBarHoldTest {
             composeRule.onAllNodesWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertCountEquals(0)
             composeRule.onAllNodesWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION).assertCountEquals(0)
             // The unmerged tree has two: the old bar, held and fading, and the new one, hidden.
-            assertEquals(2, primaryNodes().fetchSemanticsNodes().size, "the old bar is not held while it fades in $where")
+            assertEquals(
+                2,
+                primaryNodes().fetchSemanticsNodes().size,
+                "the old bar is not held while it fades in $where",
+            )
             val buttons = composeRule.onAllNodes(
                 hasTestTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION) or hasTestTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION),
                 useUnmergedTree = true,
             ).fetchSemanticsNodes()
             buttons.forEach { node ->
-                composeRule.onRoot().performTouchInput { click(Offset(node.boundsInRoot.center.x, node.boundsInRoot.center.y)) }
+                composeRule.onRoot().performTouchInput {
+                    click(
+                        Offset(node.boundsInRoot.center.x, node.boundsInRoot.center.y),
+                    )
+                }
             }
             frames(FRAME_MS)
             assertEquals(emptyList(), events, "a tap on the fading bar was answered in $where")
@@ -307,7 +370,10 @@ class IntroBarHoldTest {
 
             val picture = image()
             assertEquals(1, primaryNodes().fetchSemanticsNodes().size, "an old bar is held in $where")
-            assertTrue(share(picture, old.shownRegion, old.fill, 0.05f) < 0.05f, "the old fill is still drawn in $where")
+            assertTrue(
+                share(picture, old.shownRegion, old.fill, 0.05f) < 0.05f,
+                "the old fill is still drawn in $where",
+            )
             assertTrue(share(picture, new.openRegion, new.fill, 0.02f) < 0.05f, "the new fill is drawn in $where")
         }
     }
@@ -327,7 +393,6 @@ class IntroBarHoldTest {
         assertTrue(labelNodes(THEME_CONFIRM, barTop()).isNotEmpty())
         assertEquals(emptyList(), events)
     }
-
 
     private companion object {
         const val FRAME_MS = 16L

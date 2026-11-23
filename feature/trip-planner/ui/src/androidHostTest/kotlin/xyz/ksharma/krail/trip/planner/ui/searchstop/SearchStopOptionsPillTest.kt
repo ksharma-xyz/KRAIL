@@ -89,7 +89,13 @@ class SearchStopOptionsPillTest {
                             cardOpen = false,
                             cardHeight = 0.dp,
                             hidesControlsForCard = true,
-                            locationBottomPadding = { clearance -> locationControlBottomPadding(gaps, measuredPill, clearance) },
+                            locationBottomPadding = { clearance ->
+                                locationControlBottomPadding(
+                                    gaps,
+                                    measuredPill,
+                                    clearance,
+                                )
+                            },
                             bottomControls = { clearance, controlsHidden ->
                                 SearchStopModeControls(
                                     open = false,
@@ -110,7 +116,10 @@ class SearchStopOptionsPillTest {
         composeRule.waitForIdle()
     }
 
-    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(
+        tag,
+        useUnmergedTree = true,
+    ).getUnclippedBoundsInRoot()
     private fun DpRect.cy() = top + (bottom - top) / 2f
     private fun DpRect.h() = bottom - top
 
@@ -137,7 +146,11 @@ class SearchStopOptionsPillTest {
     }
 
     private fun SemanticsNode.textColors(): List<Color> {
-        val own = mutableListOf<TextLayoutResult>().also { config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(it) }
+        val own = mutableListOf<TextLayoutResult>().also {
+            config.getOrNull(
+                SemanticsActions.GetTextLayoutResult,
+            )?.action?.invoke(it)
+        }
         return own.map { it.layoutInput.style.color } + children.flatMap { it.textColors() }
     }
 
@@ -146,7 +159,9 @@ class SearchStopOptionsPillTest {
     private fun pillHeightAt(scale: Float): Dp {
         setControls(fontScale = scale)
         val height = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_PILL).h()
-        println("OPTIONSPILL height at $scale = $height (the control line centre uses the measured height, $measuredPill)")
+        println(
+            "OPTIONSPILL height at $scale = $height (the control line centre uses the measured height, $measuredPill)",
+        )
         return height
     }
 
@@ -155,7 +170,11 @@ class SearchStopOptionsPillTest {
         val height = pillHeightAt(1f)
 
         assertNear("medium is 32 dp at 100 percent text", 32.dp, height)
-        assertEquals(32.dp, MAP_OPTIONS_PILL_REST_HEIGHT, "The rest height is what is measured, so the first frame is already where it ends up.")
+        assertEquals(
+            32.dp,
+            MAP_OPTIONS_PILL_REST_HEIGHT,
+            "The rest height is what is measured, so the first frame is already where it ends up.",
+        )
         assertTrue(height > 20.dp, "It was 20 dp as an extra small button.")
     }
 
@@ -183,12 +202,18 @@ class SearchStopOptionsPillTest {
         setControls(fontScale = scale)
         val pill = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_PILL)
         val location = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_BUTTON)
-        assertNear("at $scale the Options pill and the 48 dp location control share one centre line", pill.cy(), location.cy())
+        assertNear(
+            "at $scale the Options pill and the 48 dp location control share one centre line",
+            pill.cy(),
+            location.cy(),
+        )
         assertNear("the location control is 48 dp", 48.dp, location.h())
         assertNear("the measured pill height is the one the line is built from", pill.h(), measuredPill)
         val target = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON)
         assertTrue(target.h() >= 48.dp - 0.5.dp, "Options keeps a 48 dp finger target: ${target.h()}")
-        println("OPTIONSPILL scale=$scale pill=${pill.h()} centre=${pill.cy()} location=${location.cy()} target=${target.h()}")
+        println(
+            "OPTIONSPILL scale=$scale pill=${pill.h()} centre=${pill.cy()} location=${location.cy()} target=${target.h()}",
+        )
     }
 
     @Test
@@ -209,19 +234,42 @@ class SearchStopOptionsPillTest {
         val pill = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_PILL)
         val image = drawn()
         // Left of the icon, inside the rounded end and clear of the hairline.
-        assertTrue(close(md_theme_light_surface, pixel(image, pill.left + 7.dp, pill.cy())), "$mode: the resting pill is the light palette's white")
-        val colors = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_PILL, useUnmergedTree = true).fetchSemanticsNode().textColors()
+        assertTrue(
+            close(md_theme_light_surface, pixel(image, pill.left + 7.dp, pill.cy())),
+            "$mode: the resting pill is the light palette's white",
+        )
+        val colors = composeRule.onNodeWithTag(
+            TripPlannerTestTags.SEARCH_STOP_MODE_PILL,
+            useUnmergedTree = true,
+        ).fetchSemanticsNode().textColors()
         assertTrue(colors.isNotEmpty(), "$mode: the pill's label can be read")
-        for (color in colors) assertEquals(md_theme_light_onSurface, color.copy(alpha = 1f), "$mode: the label is the light palette's onSurface")
+        for (color in colors) assertEquals(
+            md_theme_light_onSurface,
+            color.copy(alpha = 1f),
+            "$mode: the label is the light palette's onSurface",
+        )
         // The hairline: a pixel across the pill's left edge is the light softLabel.
         val density = composeRule.density
         val y = with(density) { pill.cy().roundToPx() }
-        val across = (with(density) { (pill.left - 1.dp).roundToPx() }..with(density) { (pill.left + 2.dp).roundToPx() }).map { Color(image.getPixel(it, y)) }
-        assertTrue(across.any { close(md_theme_light_softLabel, it) }, "$mode: the 1 dp light softLabel hairline is drawn across the pill's edge")
+        val across = (
+            with(density) {
+                (pill.left - 1.dp).roundToPx()
+            } ..with(density) { (pill.left + 2.dp).roundToPx() }
+            ).map {
+            Color(
+                image.getPixel(it, y),
+            )
+        }
+        assertTrue(
+            across.any { close(md_theme_light_softLabel, it) },
+            "$mode: the 1 dp light softLabel hairline is drawn across the pill's edge",
+        )
     }
 
     @Test
-    fun `in light mode the resting pill is white with the light text and a light softLabel hairline`() = assertWhitePill("light")
+    fun `in light mode the resting pill is white with the light text and a light softLabel hairline`() = assertWhitePill(
+        "light",
+    )
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
@@ -237,7 +285,10 @@ class SearchStopOptionsPillTest {
         setControls()
 
         val pill = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_PILL)
-        assertTrue(close(activeFill, pixel(drawn(), pill.left + 7.dp, pill.cy())), "the active filter look is the theme colour")
+        assertTrue(
+            close(activeFill, pixel(drawn(), pill.left + 7.dp, pill.cy())),
+            "the active filter look is the theme colour",
+        )
         assertNotEquals(md_theme_light_surface, activeFill)
     }
 

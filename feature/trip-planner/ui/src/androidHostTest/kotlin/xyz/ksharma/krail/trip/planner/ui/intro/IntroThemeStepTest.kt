@@ -111,16 +111,40 @@ class IntroThemeStepTest {
         // Train, Metro, Bus and Ferry left to right, each clear of the one before.
         assertTrue(bounds.zipWithNext().all { (a, b) -> b.left > a.left }, "the badges are not left to right: $bounds")
         // Train and Bus are high, Metro and Ferry are 48 dp lower.
-        assertEquals(WAVE_DROP_DP, (bounds[1].top - bounds[0].top).value, slack.value, "Metro is not 48 dp lower than Train: $bounds")
-        assertEquals(WAVE_DROP_DP, (bounds[3].top - bounds[2].top).value, slack.value, "Ferry is not 48 dp lower than Bus: $bounds")
+        assertEquals(
+            WAVE_DROP_DP,
+            (bounds[1].top - bounds[0].top).value,
+            slack.value,
+            "Metro is not 48 dp lower than Train: $bounds",
+        )
+        assertEquals(
+            WAVE_DROP_DP,
+            (bounds[3].top - bounds[2].top).value,
+            slack.value,
+            "Ferry is not 48 dp lower than Bus: $bounds",
+        )
         assertEquals(bounds[0].top.value, bounds[2].top.value, slack.value, "Train and Bus are not in line: $bounds")
         assertEquals(bounds[1].top.value, bounds[3].top.value, slack.value, "Metro and Ferry are not in line: $bounds")
         // The wave is spread over the whole room, the window less 16 dp of page padding each side, and is centred across the window.
         val leftmost = bounds.minOf { it.left }
         val rightmost = bounds.maxOf { it.right }
         assertEquals(leftmost.value, (window.width - rightmost).value, slack.value, "the wave is not centred: $bounds")
-        assertEquals(window.width.value - 32f, (rightmost - leftmost).value, slack.value, "the wave is not spread across the window: $bounds")
-        assertEquals(112f, (bounds.maxOf { it.bottom } - bounds.minOf { it.top }).value, slack.value * 2, "the wave is 112 dp tall: $bounds")
+        assertEquals(
+            window.width.value - 32f,
+            (rightmost - leftmost).value,
+            slack.value,
+            "the wave is not spread across the window: $bounds",
+        )
+        assertEquals(
+            112f,
+            (
+                bounds.maxOf {
+                    it.bottom
+                } - bounds.minOf { it.top }
+                ).value,
+            slack.value * 2,
+            "the wave is 112 dp tall: $bounds",
+        )
     }
 
     @Test

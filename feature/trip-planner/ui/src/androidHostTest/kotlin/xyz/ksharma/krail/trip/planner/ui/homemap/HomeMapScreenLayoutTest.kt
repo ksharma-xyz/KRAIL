@@ -403,7 +403,10 @@ class HomeMapScreenLayoutTest {
             bounds(TripPlannerTestTags.SAVED_TRIPS_CHIP_PARK_RIDE),
         )
         chips.forEach { chip ->
-            assertTrue(chip.left >= row.left - 1.dp && chip.right <= row.right + 1.dp, "$chip is whole inside the row $row.")
+            assertTrue(
+                chip.left >= row.left - 1.dp && chip.right <= row.right + 1.dp,
+                "$chip is whole inside the row $row.",
+            )
         }
         assertTrue(chips.map { it.top }.toSet().size >= 2, "The chips wrap onto more than one line: $chips")
     }
@@ -551,7 +554,9 @@ class HomeMapScreenLayoutTest {
     /** The whole touch target of a control, which the 48 dp interactive size gives a button that draws smaller. */
     private fun touchBounds(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true)
         .fetchSemanticsNode().touchBoundsInRoot.let { rect ->
-            with(composeRule.density) { DpRect(rect.left.toDp(), rect.top.toDp(), rect.right.toDp(), rect.bottom.toDp()) }
+            with(
+                composeRule.density,
+            ) { DpRect(rect.left.toDp(), rect.top.toDp(), rect.right.toDp(), rect.bottom.toDp()) }
         }
 
     private fun textBounds(text: String): DpRect =

@@ -134,9 +134,15 @@ class InfoTilePlainTest {
         return Color(getPixel(with(density) { x.roundToPx() }, with(density) { y.roundToPx() }))
     }
 
-    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(
+        tag,
+        useUnmergedTree = true,
+    ).getUnclippedBoundsInRoot()
 
-    private fun textBounds(text: String): DpRect = composeRule.onNodeWithText(text, useUnmergedTree = true).getUnclippedBoundsInRoot()
+    private fun textBounds(text: String): DpRect = composeRule.onNodeWithText(
+        text,
+        useUnmergedTree = true,
+    ).getUnclippedBoundsInRoot()
 
     private fun lineCountOf(text: String): Int {
         val results = mutableListOf<TextLayoutResult>()
@@ -166,7 +172,11 @@ class InfoTilePlainTest {
         val tile = boundsOf(TILE)
         val image = drawnPixels()
         val midY = tile.top + tile.height / 2f
-        assertNotEquals(page, image.at(tile.left - 3.dp, midY).copy(alpha = 1f), "The glow tints the page outside the tile.")
+        assertNotEquals(
+            page,
+            image.at(tile.left - 3.dp, midY).copy(alpha = 1f),
+            "The glow tints the page outside the tile.",
+        )
     }
 
     @Test
@@ -250,7 +260,10 @@ class InfoTilePlainTest {
     fun `the expanded tile is one line of description at 100 percent and wraps taller at 200 percent`() {
         setTile(InfoTileStyle.Plain)
         val rest = boundsOf(TILE).height
-        assertTrue(rest in TILE_HEIGHT_100_MIN..TILE_HEIGHT_100_MAX, "Expanded at 100 percent is about 132 dp, was $rest.")
+        assertTrue(
+            rest in TILE_HEIGHT_100_MIN..TILE_HEIGHT_100_MAX,
+            "Expanded at 100 percent is about 132 dp, was $rest.",
+        )
     }
 
     @Test

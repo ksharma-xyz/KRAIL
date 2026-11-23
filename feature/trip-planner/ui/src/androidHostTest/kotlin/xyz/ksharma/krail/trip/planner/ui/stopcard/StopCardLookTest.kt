@@ -25,10 +25,6 @@ import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
-import kotlin.math.abs
-import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
-import kotlin.test.assertTrue
 import kotlinx.collections.immutable.persistentListOf
 import org.junit.Rule
 import org.junit.Test
@@ -46,6 +42,10 @@ import xyz.ksharma.krail.trip.planner.ui.components.FloatingDark
 import xyz.ksharma.krail.trip.planner.ui.components.MapCardColors
 import xyz.ksharma.krail.trip.planner.ui.components.mapCardColors
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
+import kotlin.math.abs
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 
 /**
  * The look of the stop card: a header band with the stop's name as the card's title, the mode badges and the close button,
@@ -97,7 +97,13 @@ class StopCardLookTest {
                     onEvent = {},
                     onClose = {},
                     boardOpenAtStart = boardOpen,
-                    actions = { StopCardAction(text = "Set as destination", onClick = {}, modifier = Modifier.testTag(StopCard.PICK)) },
+                    actions = {
+                        StopCardAction(
+                            text = "Set as destination",
+                            onClick = {},
+                            modifier = Modifier.testTag(StopCard.PICK),
+                        )
+                    },
                 )
             }
         }
@@ -129,9 +135,15 @@ class StopCardLookTest {
         near("and is as wide as the card", card.width, header.width)
         for (tag in listOf(StopCard.TITLE, StopCard.MODES, StopCard.CLOSE)) {
             val part = bounds(tag)
-            assertTrue(part.top >= header.top - TOLERANCE && part.bottom <= header.bottom + TOLERANCE, "$tag is in the band")
+            assertTrue(
+                part.top >= header.top - TOLERANCE && part.bottom <= header.bottom + TOLERANCE,
+                "$tag is in the band",
+            )
         }
-        assertTrue(bounds(StopCard.MODES).top >= bounds(StopCard.TITLE).bottom - TOLERANCE, "The badges sit under the title")
+        assertTrue(
+            bounds(StopCard.MODES).top >= bounds(StopCard.TITLE).bottom - TOLERANCE,
+            "The badges sit under the title",
+        )
         near("the body starts where the band ends, with nothing between", header.bottom, body.top)
         assertTrue(bounds(StopCard.BOARD_HEADING).top >= body.top - TOLERANCE, "The Departure Board row is in the body")
         assertTrue(bounds(StopCard.ACTIONS).top >= body.top - TOLERANCE, "and so is the action")
@@ -183,7 +195,11 @@ class StopCardLookTest {
     private fun pixel(tag: String, x: Int, y: Int): Color {
         val node = composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot
         val decor = composeRule.activity.window.decorView
-        val bitmap = Bitmap.createBitmap(decor.width.coerceAtLeast(1), decor.height.coerceAtLeast(1), Bitmap.Config.ARGB_8888)
+        val bitmap = Bitmap.createBitmap(
+            decor.width.coerceAtLeast(1),
+            decor.height.coerceAtLeast(1),
+            Bitmap.Config.ARGB_8888,
+        )
         decor.draw(Canvas(bitmap))
         val argb = bitmap.getPixel((node.left + x).toInt(), (node.top + y).toInt())
         return Color(argb)
@@ -223,7 +239,9 @@ class StopCardLookTest {
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-notnight")
-    fun `drawn at 200 percent the stop name is still bigger than Departure Board`() = assertTitleOverLabel(fontScale = 2f)
+    fun `drawn at 200 percent the stop name is still bigger than Departure Board`() = assertTitleOverLabel(
+        fontScale = 2f,
+    )
 
     private fun assertTitleOverLabel(fontScale: Float) {
         show(fontScale = fontScale)
@@ -236,7 +254,10 @@ class StopCardLookTest {
             "The title is ${title.fontSize} and the section label ${label.fontSize}",
         )
         assertTrue((title.fontWeight ?: FontWeight.Normal).weight > (label.fontWeight ?: FontWeight.Normal).weight)
-        assertTrue(layoutOf("Central Station").size.height >= layoutOf("Departure Board").size.height, "and a line taller")
+        assertTrue(
+            layoutOf("Central Station").size.height >= layoutOf("Departure Board").size.height,
+            "and a line taller",
+        )
     }
 
     // endregion
@@ -266,8 +287,14 @@ class StopCardLookTest {
         assertTrue(title.right <= close.left + TOLERANCE, "The title $title ends before the close button $close")
         assertTrue(close.right <= header.right && close.right <= windowWidth, "The close button stays on the card")
         assertTrue(title.bottom <= header.bottom, "The whole name is inside the band")
-        assertTrue(close.width >= 48.dp - TOLERANCE && close.height >= 48.dp - TOLERANCE, "and the button is still 48 dp")
-        assertEquals(1, composeRule.onAllNodesWithText(LONG_NAME.stopName, useUnmergedTree = true).fetchSemanticsNodes().size)
+        assertTrue(
+            close.width >= 48.dp - TOLERANCE && close.height >= 48.dp - TOLERANCE,
+            "and the button is still 48 dp",
+        )
+        assertEquals(
+            1,
+            composeRule.onAllNodesWithText(LONG_NAME.stopName, useUnmergedTree = true).fetchSemanticsNodes().size,
+        )
     }
 
     // endregion
@@ -284,8 +311,14 @@ class StopCardLookTest {
         assertTrue(action.bottom <= 640.dp + TOLERANCE, "The action ends at ${action.bottom}, inside the 640 dp window")
         assertTrue(action.top >= bounds(StopCard.HEADER).bottom - TOLERANCE, "under the header")
         assertTrue(card.top >= 0.dp - TOLERANCE, "and the card does not leave the top: ${card.top}")
-        assertTrue(bounds(StopCard.BODY).height > 0.dp, "The body keeps room, ${bounds(StopCard.BODY).height}, to scroll in")
-        assertTrue(bounds(StopCard.BOARD_HEADING).top >= bounds(StopCard.HEADER).bottom - TOLERANCE, "with the board's heading in view")
+        assertTrue(
+            bounds(StopCard.BODY).height > 0.dp,
+            "The body keeps room, ${bounds(StopCard.BODY).height}, to scroll in",
+        )
+        assertTrue(
+            bounds(StopCard.BOARD_HEADING).top >= bounds(StopCard.HEADER).bottom - TOLERANCE,
+            "with the board's heading in view",
+        )
     }
 
     // endregion

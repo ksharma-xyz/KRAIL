@@ -106,13 +106,27 @@ class HomeLabelPillColorsTest {
         assertEquals(Color.Transparent, read.unset.containerColor, "$style $mode: the outlined button has no fill")
         assertEquals(getForegroundColor(read.sheet), read.unset.contentColor, "$style $mode: the unset ink")
         val unsetText = read.unset.contentColor.contrastRatio(read.sheet)
-        assertEquals(expected.unset, unsetText, TOLERANCE, "$style $mode: the unset pill's text and outline on the sheet")
-        assertTrue(unsetText >= MIN_TEXT_CONTRAST, "$style $mode: the unset pill's text is $unsetText to 1 on the sheet")
-        assertTrue(unsetText >= MIN_EDGE_CONTRAST, "$style $mode: the unset pill's outline is $unsetText to 1 on the sheet")
+        assertEquals(
+            expected.unset,
+            unsetText,
+            TOLERANCE,
+            "$style $mode: the unset pill's text and outline on the sheet",
+        )
+        assertTrue(
+            unsetText >= MIN_TEXT_CONTRAST,
+            "$style $mode: the unset pill's text is $unsetText to 1 on the sheet",
+        )
+        assertTrue(
+            unsetText >= MIN_EDGE_CONTRAST,
+            "$style $mode: the unset pill's outline is $unsetText to 1 on the sheet",
+        )
 
         val tajDefault = read.tajDefault.contentColor.contrastRatio(read.sheet)
         assertEquals(expected.tajDefault, tajDefault, TOLERANCE, "$style $mode: taj's default outline on the sheet")
-        assertTrue(unsetText >= tajDefault, "$style $mode: the unset pill is never worse than taj's default ($tajDefault)")
+        assertTrue(
+            unsetText >= tajDefault,
+            "$style $mode: the unset pill is never worse than taj's default ($tajDefault)",
+        )
     }
 
     @Test
@@ -157,7 +171,10 @@ class HomeLabelPillColorsTest {
         val ink = layouts.first().layoutInput.style.color
 
         assertEquals(getForegroundColor(sheet), ink, "The pill's text is the ink picked for the sheet.")
-        assertTrue(ink.contrastRatio(sheet) >= MIN_TEXT_CONTRAST, "The text is ${ink.contrastRatio(sheet)} to 1 on the sheet.")
+        assertTrue(
+            ink.contrastRatio(sheet) >= MIN_TEXT_CONTRAST,
+            "The text is ${ink.contrastRatio(sheet)} to 1 on the sheet.",
+        )
     }
 
     /** What each pair measures to, so a change to a taj token or to a theme colour shows up here, not on a phone. */

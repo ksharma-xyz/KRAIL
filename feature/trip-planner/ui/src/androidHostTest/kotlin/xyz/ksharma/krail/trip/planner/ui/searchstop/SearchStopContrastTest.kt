@@ -13,23 +13,22 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import xyz.ksharma.krail.departures.ui.state.DeparturesState
+import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.theme.contrastRatio
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.theme.md_theme_dark_onSurface
 import xyz.ksharma.krail.taj.theme.md_theme_dark_surface
 import xyz.ksharma.krail.taj.theme.md_theme_light_onSurface
 import xyz.ksharma.krail.taj.theme.md_theme_light_softLabel
 import xyz.ksharma.krail.taj.theme.md_theme_light_surface
-import xyz.ksharma.krail.taj.hexToComposeColor
-import xyz.ksharma.krail.trip.planner.ui.components.mapCardColorsFor
-import xyz.ksharma.krail.taj.theme.contrastRatio
-import xyz.ksharma.krail.departures.ui.state.DeparturesState
 import xyz.ksharma.krail.trip.planner.ui.components.DepartureBoardBody
-import xyz.ksharma.krail.trip.planner.ui.components.FloatingDark
 import xyz.ksharma.krail.trip.planner.ui.components.mapActiveChipColors
 import xyz.ksharma.krail.trip.planner.ui.components.mapCardColors
+import xyz.ksharma.krail.trip.planner.ui.components.mapCardColorsFor
 import xyz.ksharma.krail.trip.planner.ui.components.softFieldColors
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -120,7 +119,10 @@ class SearchStopContrastTest {
         assertTrue(r.optionsInk.contrastRatio(r.optionsFill) >= TEXT, "$mode: the Options label on its fill")
         assertTrue(r.activeInk.contrastRatio(r.activeFill) >= TEXT, "$mode: the Options label in its active look")
         assertTrue(r.labelInk.contrastRatio(r.labelFill) >= TEXT, "$mode: the label pill text on its fill")
-        assertTrue(r.pillFill.contrastRatio(r.boxFill) >= PILL_SHAPE_FLOOR, "$mode: the pill is a visible step from the box")
+        assertTrue(
+            r.pillFill.contrastRatio(r.boxFill) >= PILL_SHAPE_FLOOR,
+            "$mode: the pill is a visible step from the box",
+        )
         // The Options pill is white, which sits close to the light map, so its edge is the hairline round it, the light softLabel in
         // both app modes: either the fill or the hairline stands 3 to 1 off the map.
         assertTrue(
@@ -143,7 +145,10 @@ class SearchStopContrastTest {
         readTokens()
 
         // Fill against the map is about 1.2 to 1, which is why the box wears the info tile's glow and border.
-        assertTrue(read.boxFill.contrastRatio(MAP_GROUND) < EDGE, "The fill alone is not the edge, so the glow is needed.")
+        assertTrue(
+            read.boxFill.contrastRatio(MAP_GROUND) < EDGE,
+            "The fill alone is not the edge, so the glow is needed.",
+        )
     }
 
     @Test
@@ -167,7 +172,10 @@ class SearchStopContrastTest {
         val placeholder = read.pillPlaceholder.contrastRatio(read.boxFill)
         val againstMap = read.boxFill.contrastRatio(MAP_GROUND)
         assertTrue(text >= TEXT, "$mode: the lone pill's text on the surface fill is $text to 1")
-        assertTrue(placeholder >= TEXT, "$mode: the lone pill's placeholder on the surface fill is $placeholder to 1 (map $againstMap)")
+        assertTrue(
+            placeholder >= TEXT,
+            "$mode: the lone pill's placeholder on the surface fill is $placeholder to 1 (map $againstMap)",
+        )
     }
 
     // region the box's numbers: the light look of the approved picture, and the dark tint the box follows in dark mode
@@ -187,7 +195,12 @@ class SearchStopContrastTest {
         val pillText = md_theme_light_onSurface.contrastRatio(white)
         val pillOnMap = white.contrastRatio(MAP_GROUND)
         val hairlineOnMap = hairline.contrastRatio(MAP_GROUND)
-        for (style in listOf(KrailThemeStyle.Train, KrailThemeStyle.Metro, KrailThemeStyle.Bus, KrailThemeStyle.Ferry)) {
+        for (style in listOf(
+            KrailThemeStyle.Train,
+            KrailThemeStyle.Metro,
+            KrailThemeStyle.Bus,
+            KrailThemeStyle.Ferry,
+        )) {
             val theme = style.hexColorCode.hexToComposeColor()
             val card = mapCardColorsFor(theme, darkMode = dark, surface = ground, onSurface = text).chip
             val goArrow = getForegroundColor(theme)
@@ -197,20 +210,37 @@ class SearchStopContrastTest {
                     "goArrowOnFill=${goArrow.contrastRatio(theme)} pillText=$pillText pillOnMapNoHairline=$pillOnMap",
             )
             if (dark) {
-                assertTrue(text.contrastRatio(card) in DARK_CARD_TEXT_LOW..DARK_CARD_TEXT_HIGH, "$mode ${style.name}: the card text is ${text.contrastRatio(card)} to 1")
-                assertTrue(card.contrastRatio(MAP_GROUND) >= EDGE, "$mode ${style.name}: the dark box is ${card.contrastRatio(MAP_GROUND)} to 1 off the map with no hairline")
+                assertTrue(
+                    text.contrastRatio(card) in DARK_CARD_TEXT_LOW..DARK_CARD_TEXT_HIGH,
+                    "$mode ${style.name}: the card text is ${text.contrastRatio(card)} to 1",
+                )
+                assertTrue(
+                    card.contrastRatio(MAP_GROUND) >= EDGE,
+                    "$mode ${style.name}: the dark box is ${card.contrastRatio(
+                        MAP_GROUND,
+                    )} to 1 off the map with no hairline",
+                )
             } else {
-                assertTrue(text.contrastRatio(card) in CARD_TEXT_LOW..CARD_TEXT_HIGH, "$mode ${style.name}: the card text is ${text.contrastRatio(card)} to 1")
+                assertTrue(
+                    text.contrastRatio(card) in CARD_TEXT_LOW..CARD_TEXT_HIGH,
+                    "$mode ${style.name}: the card text is ${text.contrastRatio(card)} to 1",
+                )
             }
             assertTrue(goArrow.contrastRatio(theme) >= TEXT, "$mode ${style.name}: the go circle's arrow on its fill")
         }
         assertTrue(pillText >= PILL_TEXT_FLOOR, "$mode: the pill's text on white is $pillText to 1")
-        assertTrue(hairlineOnMap >= HAIRLINE_FLOOR, "$mode: the light hairline is $hairlineOnMap to 1 against the map ground")
+        assertTrue(
+            hairlineOnMap >= HAIRLINE_FLOOR,
+            "$mode: the light hairline is $hairlineOnMap to 1 against the map ground",
+        )
     }
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-notnight")
-    fun `in light mode the box, go circle and pill hold the picture's contrast numbers`() = assertBoxNumbers("light", dark = false)
+    fun `in light mode the box, go circle and pill hold the picture's contrast numbers`() = assertBoxNumbers(
+        "light",
+        dark = false,
+    )
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night")
@@ -220,18 +250,26 @@ class SearchStopContrastTest {
     private fun assertOptionsPillIsWhite(mode: String) {
         readTokens()
 
-        assertEquals(md_theme_light_surface, read.optionsFill, "$mode: the resting Options pill is the light palette's white")
+        assertEquals(
+            md_theme_light_surface,
+            read.optionsFill,
+            "$mode: the resting Options pill is the light palette's white",
+        )
         assertEquals(md_theme_light_onSurface, read.optionsInk, "$mode: with the light palette's text")
         assertTrue(read.optionsInk.contrastRatio(read.optionsFill) >= PILL_TEXT_FLOOR, "$mode: 20.87 to 1")
     }
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-notnight")
-    fun `in light mode the Options pill is white and its label reads at 20_87 to 1`() = assertOptionsPillIsWhite("light")
+    fun `in light mode the Options pill is white and its label reads at 20_87 to 1`() = assertOptionsPillIsWhite(
+        "light",
+    )
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night")
-    fun `in dark mode the Options pill is the very same white and its label reads at 20_87 to 1`() = assertOptionsPillIsWhite("dark")
+    fun `in dark mode the Options pill is the very same white and its label reads at 20_87 to 1`() = assertOptionsPillIsWhite(
+        "dark",
+    )
 
     // endregion
 
@@ -267,10 +305,21 @@ class SearchStopContrastTest {
         val onHeader = board.softLabel.contrastRatio(board.header)
         val inkBody = board.onSurface.contrastRatio(board.body)
         val inkHeader = board.onSurface.contrastRatio(board.header)
-        println("CONTRAST $mode stopCardSecondary softLabelOnBody=$onBody softLabelOnHeader=$onHeader onSurfaceOnBody=$inkBody onSurfaceOnHeader=$inkHeader")
-        assertTrue(kotlin.math.abs(onBody - softOnBody) < 0.05f, "$mode: softLabel on the body is $onBody to 1, expected about $softOnBody")
-        assertTrue(kotlin.math.abs(onHeader - softOnHeader) < 0.05f, "$mode: softLabel on the header is $onHeader to 1, expected about $softOnHeader")
-        assertTrue(minOf(onBody, onHeader) < TEXT, "$mode: softLabel is under 4.5 on a band of the card, which is why the card passes its own text colour")
+        println(
+            "CONTRAST $mode stopCardSecondary softLabelOnBody=$onBody softLabelOnHeader=$onHeader onSurfaceOnBody=$inkBody onSurfaceOnHeader=$inkHeader",
+        )
+        assertTrue(
+            kotlin.math.abs(onBody - softOnBody) < 0.05f,
+            "$mode: softLabel on the body is $onBody to 1, expected about $softOnBody",
+        )
+        assertTrue(
+            kotlin.math.abs(onHeader - softOnHeader) < 0.05f,
+            "$mode: softLabel on the header is $onHeader to 1, expected about $softOnHeader",
+        )
+        assertTrue(
+            minOf(onBody, onHeader) < TEXT,
+            "$mode: softLabel is under 4.5 on a band of the card, which is why the card passes its own text colour",
+        )
         assertTrue(inkBody >= TEXT, "$mode: the card's own text colour on the body is $inkBody to 1, 4.5 needed")
         assertTrue(inkHeader >= TEXT, "$mode: the card's own text colour on the header is $inkHeader to 1, 4.5 needed")
     }
@@ -324,6 +373,7 @@ class SearchStopContrastTest {
 
     private companion object {
         const val TEXT = 4.5f
+
         /** softLabel on the light stop card header, the stronger step, as the run prints it. */
         const val LIGHT_HEADER_SOFT = 3.33f
         const val EDGE = 3f

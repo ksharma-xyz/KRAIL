@@ -159,9 +159,15 @@ class SearchStopListGroundTest {
     private fun Bitmap.at(x: Dp, y: Dp): Color =
         Color(getPixel(with(composeRule.density) { x.roundToPx() }, with(composeRule.density) { y.roundToPx() }))
 
-    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(
+        tag,
+        useUnmergedTree = true,
+    ).getUnclippedBoundsInRoot()
 
-    private fun exists(tag: String) = composeRule.onAllNodes(androidx.compose.ui.test.hasTestTag(tag), useUnmergedTree = true)
+    private fun exists(tag: String) = composeRule.onAllNodes(
+        androidx.compose.ui.test.hasTestTag(tag),
+        useUnmergedTree = true,
+    )
         .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
 
     private fun DpRect.cx() = left + width / 2f
@@ -181,7 +187,11 @@ class SearchStopListGroundTest {
     }
 
     private fun SemanticsNode.textColors(): List<Color> {
-        val own = mutableListOf<TextLayoutResult>().also { config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(it) }
+        val own = mutableListOf<TextLayoutResult>().also {
+            config.getOrNull(
+                SemanticsActions.GetTextLayoutResult,
+            )?.action?.invoke(it)
+        }
         return own.map { it.layoutInput.style.color } + children.flatMap { it.textColors() }
     }
 
@@ -235,14 +245,30 @@ class SearchStopListGroundTest {
         editing = ToFromField.To
         setCard(gradient = true)
 
-        assertClose(darkTint, cardFill(), "the box on the gradient in dark mode is the theme at 45 percent over the dark surface")
+        assertClose(
+            darkTint,
+            cardFill(),
+            "the box on the gradient in dark mode is the theme at 45 percent over the dark surface",
+        )
         assertTrue(!close(lightTint, cardFill()), "and it is not the light tint it was on the dark ground")
         val colors = textColorsIn(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
         assertTrue(colors.isNotEmpty(), "the box holds text")
-        for (color in colors) assertEquals(md_theme_dark_onSurface, color.copy(alpha = 1f), "every text in the box is the dark palette's cream")
-        assertClose(md_theme_dark_softLabel, edgePixel(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, md_theme_dark_softLabel), "the hairline is the dark palette's softLabel")
+        for (color in colors) assertEquals(
+            md_theme_dark_onSurface,
+            color.copy(alpha = 1f),
+            "every text in the box is the dark palette's cream",
+        )
+        assertClose(
+            md_theme_dark_softLabel,
+            edgePixel(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, md_theme_dark_softLabel),
+            "the hairline is the dark palette's softLabel",
+        )
         val divider = boundsOf(TripPlannerTestTags.SEARCH_ROW_DIVIDER)
-        assertClose(md_theme_dark_outline_subtle.compositeOver(darkTint), drawn().at(divider.cx(), divider.cy()), "the divider is the dark outlineSubtle")
+        assertClose(
+            md_theme_dark_outline_subtle.compositeOver(darkTint),
+            drawn().at(divider.cx(), divider.cy()),
+            "the divider is the dark outlineSubtle",
+        )
         val dot = boundsOf(TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT)
         assertClose(md_theme_dark_onSurface, drawn().at(dot.cx(), dot.cy()), "the From dot is the cream text colour")
     }
@@ -252,13 +278,25 @@ class SearchStopListGroundTest {
         editing = ToFromField.To
         setCard(gradient = true)
 
-        assertClose(lightTint, cardFill(), "the box on the gradient in light mode is the theme at 15 percent over white")
+        assertClose(
+            lightTint,
+            cardFill(),
+            "the box on the gradient in light mode is the theme at 15 percent over white",
+        )
         for (color in textColorsIn(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)) {
             assertEquals(md_theme_light_onSurface, color.copy(alpha = 1f), "the text is the light palette's onSurface")
         }
-        assertClose(md_theme_light_softLabel, edgePixel(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, md_theme_light_softLabel), "the hairline is the light softLabel")
+        assertClose(
+            md_theme_light_softLabel,
+            edgePixel(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, md_theme_light_softLabel),
+            "the hairline is the light softLabel",
+        )
         val divider = boundsOf(TripPlannerTestTags.SEARCH_ROW_DIVIDER)
-        assertClose(md_theme_light_outline_subtle.compositeOver(lightTint), drawn().at(divider.cx(), divider.cy()), "the divider is the light outlineSubtle")
+        assertClose(
+            md_theme_light_outline_subtle.compositeOver(lightTint),
+            drawn().at(divider.cx(), divider.cy()),
+            "the divider is the light outlineSubtle",
+        )
     }
 
     @Test
@@ -301,15 +339,35 @@ class SearchStopListGroundTest {
 
         assertClose(lightTint, cardFill(), "light: the box on the map is the theme at 15 percent over white")
         for (color in textColorsIn(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)) {
-            assertEquals(md_theme_light_onSurface, color.copy(alpha = 1f), "light: the text on the map is the light palette's onSurface")
+            assertEquals(
+                md_theme_light_onSurface,
+                color.copy(alpha = 1f),
+                "light: the text on the map is the light palette's onSurface",
+            )
         }
-        assertClose(md_theme_light_softLabel, edgePixel(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, md_theme_light_softLabel), "light: the hairline on the map is the light softLabel")
+        assertClose(
+            md_theme_light_softLabel,
+            edgePixel(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, md_theme_light_softLabel),
+            "light: the hairline on the map is the light softLabel",
+        )
         val divider = boundsOf(TripPlannerTestTags.SEARCH_ROW_DIVIDER)
-        assertClose(md_theme_light_outline_subtle.compositeOver(lightTint), drawn().at(divider.cx(), divider.cy()), "light: the divider on the map is the light one")
+        assertClose(
+            md_theme_light_outline_subtle.compositeOver(lightTint),
+            drawn().at(divider.cx(), divider.cy()),
+            "light: the divider on the map is the light one",
+        )
         val dot = boundsOf(TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT)
-        assertClose(md_theme_light_onSurface, drawn().at(dot.cx(), dot.cy()), "light: the dot on the map is the light text colour")
+        assertClose(
+            md_theme_light_onSurface,
+            drawn().at(dot.cx(), dot.cy()),
+            "light: the dot on the map is the light text colour",
+        )
         val notice = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
-        assertClose(lightTint, drawn().at(notice.left + 3.dp, notice.cy()), "light: the notice on the map is the very same light tint")
+        assertClose(
+            lightTint,
+            drawn().at(notice.left + 3.dp, notice.cy()),
+            "light: the notice on the map is the very same light tint",
+        )
     }
 
     @Test
@@ -322,15 +380,35 @@ class SearchStopListGroundTest {
         assertTrue(!close(lightTint, cardFill()), "dark: and it is not the light tint it was")
         val colors = textColorsIn(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
         assertTrue(colors.isNotEmpty(), "the box holds text")
-        for (color in colors) assertEquals(md_theme_dark_onSurface, color.copy(alpha = 1f), "dark: the text on the map is the dark palette's cream")
+        for (color in colors) assertEquals(
+            md_theme_dark_onSurface,
+            color.copy(alpha = 1f),
+            "dark: the text on the map is the dark palette's cream",
+        )
         val divider = boundsOf(TripPlannerTestTags.SEARCH_ROW_DIVIDER)
-        assertClose(md_theme_dark_outline_subtle.compositeOver(darkTint), drawn().at(divider.cx(), divider.cy()), "dark: the divider on the map is the dark outlineSubtle")
+        assertClose(
+            md_theme_dark_outline_subtle.compositeOver(darkTint),
+            drawn().at(divider.cx(), divider.cy()),
+            "dark: the divider on the map is the dark outlineSubtle",
+        )
         val dot = boundsOf(TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT)
-        assertClose(md_theme_dark_onSurface, drawn().at(dot.cx(), dot.cy()), "dark: the dot on the map is the cream text colour")
+        assertClose(
+            md_theme_dark_onSurface,
+            drawn().at(dot.cx(), dot.cy()),
+            "dark: the dot on the map is the cream text colour",
+        )
         val notice = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
-        assertClose(darkTint, drawn().at(notice.left + 3.dp, notice.cy()), "dark: the notice on the map is the very same dark tint")
+        assertClose(
+            darkTint,
+            drawn().at(notice.left + 3.dp, notice.cy()),
+            "dark: the notice on the map is the very same dark tint",
+        )
         assertTrue(
-            !close(md_theme_dark_softLabel, edgePixel(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, md_theme_dark_softLabel), 0.05f),
+            !close(
+                md_theme_dark_softLabel,
+                edgePixel(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, md_theme_dark_softLabel),
+                0.05f,
+            ),
             "dark: the box wears no hairline on the map",
         )
     }
@@ -347,10 +425,18 @@ class SearchStopListGroundTest {
         setCard(gradient = true)
 
         val pill = boundsOf(TripPlannerTestTags.SEARCH_ROW_TO)
-        assertClose(darkTint, drawn().at(pill.right - 24.dp, pill.cy()), "the lone pill on the gradient in dark mode is the dark tint")
+        assertClose(
+            darkTint,
+            drawn().at(pill.right - 24.dp, pill.cy()),
+            "the lone pill on the gradient in dark mode is the dark tint",
+        )
         val colors = textColorsIn(TripPlannerTestTags.SEARCH_ROW_TO)
         assertTrue(colors.isNotEmpty(), "the pill's prompt can be read")
-        for (color in colors) assertEquals(md_theme_dark_onSurface, color.copy(alpha = 1f), "the prompt reads in the box's own cream text colour")
+        for (color in colors) assertEquals(
+            md_theme_dark_onSurface,
+            color.copy(alpha = 1f),
+            "the prompt reads in the box's own cream text colour",
+        )
         assertClose(
             md_theme_dark_onSurface,
             nearestInk(boundsOf(TripPlannerTestTags.SEARCH_STOP_BACK), md_theme_dark_onSurface),
@@ -363,7 +449,11 @@ class SearchStopListGroundTest {
             nearestInk(boundsOf(TripPlannerTestTags.SEARCH_STOP_CLEAR_GLYPH), md_theme_dark_onSurface),
             "the clear X is the box's text colour",
         )
-        assertClose(md_theme_dark_softLabel, edgePixel(TripPlannerTestTags.SEARCH_ROW_TO, md_theme_dark_softLabel), "the pill's hairline is the dark softLabel")
+        assertClose(
+            md_theme_dark_softLabel,
+            edgePixel(TripPlannerTestTags.SEARCH_ROW_TO, md_theme_dark_softLabel),
+            "the pill's hairline is the dark softLabel",
+        )
     }
 
     @Test
@@ -373,7 +463,11 @@ class SearchStopListGroundTest {
         setCard(gradient = true)
 
         val pill = boundsOf(TripPlannerTestTags.SEARCH_ROW_TO)
-        assertClose(lightTint, drawn().at(pill.right - 24.dp, pill.cy()), "the lone pill on the gradient in light mode is the light tint")
+        assertClose(
+            lightTint,
+            drawn().at(pill.right - 24.dp, pill.cy()),
+            "the lone pill on the gradient in light mode is the light tint",
+        )
         for (color in textColorsIn(TripPlannerTestTags.SEARCH_ROW_TO)) {
             assertTrue(
                 color.copy(alpha = 1f) in setOf(md_theme_light_onSurface, md_theme_light_onSurface_placeholder),
@@ -389,9 +483,17 @@ class SearchStopListGroundTest {
         setCard(gradient = true)
 
         val swap = boundsOf(TripPlannerTestTags.SEARCH_ROW_SWAP_GLYPH)
-        assertClose(md_theme_dark_onSurface, nearestInk(swap, md_theme_dark_onSurface), "the swap glyph in the dark list state is cream")
+        assertClose(
+            md_theme_dark_onSurface,
+            nearestInk(swap, md_theme_dark_onSurface),
+            "the swap glyph in the dark list state is cream",
+        )
         val pin = boundsOf(TripPlannerTestTags.SEARCH_ROW_DESTINATION_PIN)
-        assertClose(md_theme_dark_onSurface, nearestInk(pin, md_theme_dark_onSurface), "the destination pin in the dark list state is cream")
+        assertClose(
+            md_theme_dark_onSurface,
+            nearestInk(pin, md_theme_dark_onSurface),
+            "the destination pin in the dark list state is cream",
+        )
 
         type("Cen")
         assertClose(
@@ -419,7 +521,11 @@ class SearchStopListGroundTest {
         setCard(gradient = true, withNotice = true)
 
         val notice = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
-        assertClose(darkTint, drawn().at(notice.left + 3.dp, notice.cy()), "the notice on the gradient in dark mode is the dark tint")
+        assertClose(
+            darkTint,
+            drawn().at(notice.left + 3.dp, notice.cy()),
+            "the notice on the gradient in dark mode is the dark tint",
+        )
         assertClose(darkTint, cardFill(), "and so is the box beside it")
         assertTrue(exists(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD))
     }

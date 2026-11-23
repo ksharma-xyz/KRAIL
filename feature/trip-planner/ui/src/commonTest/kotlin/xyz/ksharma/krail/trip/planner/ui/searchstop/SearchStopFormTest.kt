@@ -54,7 +54,12 @@ class SearchStopFormTest {
 
     @Test
     fun `the label field says Search and select with the label's saved name, exactly as saved`() {
-        fun prompt(name: String?) = barPlaceholderFor(ToFromField.To, SearchStopFieldType.LABEL, false, labelName = name)
+        fun prompt(name: String?) = barPlaceholderFor(
+            ToFromField.To,
+            SearchStopFieldType.LABEL,
+            false,
+            labelName = name,
+        )
 
         assertEquals("Search and select Home", prompt("Home"))
         assertEquals("Search and select Work", prompt("Work"))

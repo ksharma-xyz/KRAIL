@@ -163,7 +163,11 @@ class IntroEmojiTest {
         val originIndex = approved.indexOf(introEmojiFor(ORIGIN))
         assertEquals(2, originIndex)
         assertTrue(originIndex in approved.indices)
-        assertNotEquals(approved.indexOf(introEmojiFor(THEME, null)), originIndex, "the origin is the theme screen's entry")
+        assertNotEquals(
+            approved.indexOf(introEmojiFor(THEME, null)),
+            originIndex,
+            "the origin is the theme screen's entry",
+        )
         // Every longer list gives the same entry, because the place is under the length and nothing wraps.
         (approved.size..MAX_LIST).forEach { size ->
             val list = List(size) { "e$it" }

@@ -119,7 +119,10 @@ class SearchStopCardSwapTest {
         if (paused) composeRule.mainClock.autoAdvance = false
     }
 
-    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(
+        tag,
+        useUnmergedTree = true,
+    ).getUnclippedBoundsInRoot()
 
     /** Where a node is drawn, from its bounds in the root, which include the layer move of the swap's glide. */
     private fun drawnBoundsOf(tag: String): DpRect = with(composeRule.density) {
@@ -155,9 +158,13 @@ class SearchStopCardSwapTest {
     /** The swap's centre, from the card's top, with [card] and the divider read from the real nodes. */
     private fun swapCentreFromCardTop(): Dp = drawnBoundsOf(TripPlannerTestTags.SEARCH_ROW_REVERSE).cy() - boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).top
 
-    private fun dividerLevel(): Dp = boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).let { it.bottom - boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).top } + 0.5.dp
+    private fun dividerLevel(): Dp = boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).let {
+        it.bottom - boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).top
+    } + 0.5.dp
 
-    private fun fromCentre(): Dp = boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).let { it.cy() - boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).top }
+    private fun fromCentre(): Dp = boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).let {
+        it.cy() - boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).top
+    }
 
     // region geometry
 
@@ -179,7 +186,13 @@ class SearchStopCardSwapTest {
         // Nothing is drawn in the box but the glyph: the corner of the box is the card's own tint, so no circle, ring or fill.
         val image = drawn()
         val density = composeRule.density
-        val corner = Color(image.getPixel(with(density) { (box.left + 2.dp).roundToPx() }, with(density) { (box.cy()).roundToPx() }))
+        val corner =
+            Color(
+                image.getPixel(
+                    with(density) { (box.left + 2.dp).roundToPx() },
+                    with(density) { (box.cy()).roundToPx() },
+                ),
+            )
         assertTrue(
             abs(corner.red - tint.red) <= 0.03f && abs(corner.green - tint.green) <= 0.03f && abs(corner.blue - tint.blue) <= 0.03f,
             "the box has no fill of its own: $corner against the card's $tint",
@@ -216,7 +229,10 @@ class SearchStopCardSwapTest {
         composeRule.mainClock.advanceTimeBy(MapMotion.SWAP_GLIDE_MS.toLong() + 300)
         composeRule.waitForIdle()
         assertNear("both stops, on the From row's centre line", fromCentre(), swapCentreFromCardTop())
-        assertTrue(oneStop - swapCentreFromCardTop() > 28.dp, "The glide is half the From row plus half the divider, longer than at 100 percent.")
+        assertTrue(
+            oneStop - swapCentreFromCardTop() > 28.dp,
+            "The glide is half the From row plus half the divider, longer than at 100 percent.",
+        )
     }
 
     @Test
@@ -360,14 +376,18 @@ class SearchStopCardSwapTest {
         composeRule.mainClock.advanceTimeByFrame()
         composeRule.mainClock.advanceTimeBy(30)
 
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_REVERSE, useUnmergedTree = true).performTouchInput { click(center) }
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_REVERSE, useUnmergedTree = true).performTouchInput {
+            click(center)
+        }
         assertEquals(0, swaps, "Early in the fade, below alpha 0.5, a tap is not a swap.")
         assertEquals(0, mapTaps, "and it does not reach the map under it either.")
         assertEquals(150, MapMotion.SWAP_FADE_MS)
         assertEquals(0.5f, MapMotion.SWAP_TAP_ALPHA)
 
         composeRule.mainClock.advanceTimeBy(100)
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_REVERSE, useUnmergedTree = true).performTouchInput { click(center) }
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_REVERSE, useUnmergedTree = true).performTouchInput {
+            click(center)
+        }
         assertEquals(1, swaps, "Past alpha 0.5 it is a swap.")
     }
 

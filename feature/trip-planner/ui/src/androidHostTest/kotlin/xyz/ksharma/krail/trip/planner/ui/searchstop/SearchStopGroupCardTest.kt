@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,15 +21,14 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.getOrNull
-import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -203,9 +203,17 @@ class SearchStopGroupCardTest {
 
     private fun Bitmap.at(x: Int, y: Int): Color = Color(getPixel(x, y))
 
-    private fun Bitmap.at(x: Dp, y: Dp): Color = at(with(composeRule.density) { x.roundToPx() }, with(composeRule.density) { y.roundToPx() })
+    private fun Bitmap.at(x: Dp, y: Dp): Color = at(
+        with(composeRule.density) {
+            x.roundToPx()
+        },
+        with(composeRule.density) { y.roundToPx() },
+    )
 
-    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(
+        tag,
+        useUnmergedTree = true,
+    ).getUnclippedBoundsInRoot()
 
     // region the card
 
@@ -265,9 +273,18 @@ class SearchStopGroupCardTest {
     fun `a labelled stop shows its label icon in place of the marker and reads label then the stop in brackets`() {
         setBox(toStop = TOWN_HALL, fromStop = CENTRAL, fromLabel = "Home", toLabel = "Work", editing = null)
 
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT, useUnmergedTree = true).assertDoesNotExist()
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_DESTINATION_PIN, useUnmergedTree = true).assertDoesNotExist()
-        composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_ROW_LABEL_ICON, useUnmergedTree = true).assertCountEquals(2)
+        composeRule.onNodeWithTag(
+            TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT,
+            useUnmergedTree = true,
+        ).assertDoesNotExist()
+        composeRule.onNodeWithTag(
+            TripPlannerTestTags.SEARCH_ROW_DESTINATION_PIN,
+            useUnmergedTree = true,
+        ).assertDoesNotExist()
+        composeRule.onAllNodesWithTag(
+            TripPlannerTestTags.SEARCH_ROW_LABEL_ICON,
+            useUnmergedTree = true,
+        ).assertCountEquals(2)
         composeRule.onNodeWithText("Home", useUnmergedTree = true).assertExists()
         composeRule.onNodeWithText("(${CENTRAL.stopName})", useUnmergedTree = true).assertExists()
         composeRule.onNodeWithText("Work", useUnmergedTree = true).assertExists()
@@ -280,7 +297,10 @@ class SearchStopGroupCardTest {
 
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT, useUnmergedTree = true).assertExists()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_DESTINATION_PIN, useUnmergedTree = true).assertExists()
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_LABEL_ICON, useUnmergedTree = true).assertDoesNotExist()
+        composeRule.onNodeWithTag(
+            TripPlannerTestTags.SEARCH_ROW_LABEL_ICON,
+            useUnmergedTree = true,
+        ).assertDoesNotExist()
         composeRule.onNodeWithText("Mum", useUnmergedTree = true).assertExists()
     }
 
@@ -319,7 +339,11 @@ class SearchStopGroupCardTest {
         val label = "$width at ${(scale * 100).toInt()} percent"
 
         assertNear("$label, the go circle is 40 dp", 40.dp, go.right - go.left)
-        assertNear("$label, its right edge is 16 dp from the card's, the left padding", gaps.edge, card.right - go.right)
+        assertNear(
+            "$label, its right edge is 16 dp from the card's, the left padding",
+            gaps.edge,
+            card.right - go.right,
+        )
         assertNear("$label, centred on the To row's centre line", to.cy(), go.cy())
         assertNear("$label, the 48 dp target is centred on the circle", go.cx(), target.cx())
         assertNear("$label, the target is 48 dp", 48.dp, target.right - target.left)
@@ -329,8 +353,15 @@ class SearchStopGroupCardTest {
         assertNear("$label, the divider starts at the text, 44 dp, at every size", 44.dp, divider.left - card.left)
         assertNear("$label, the divider sits between the rows", from.bottom, divider.top)
         val dot = boundsOf(TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT)
-        assertNear("$label, the 10 dp dot is centred in the 20 dp marker column that starts 16 dp in", 21.dp, dot.left - card.left)
-        assertTrue(dot.cy() <= from.top + from.height / 2f + 1.5.dp, "$label, the marker is on the first line, never below the row's centre")
+        assertNear(
+            "$label, the 10 dp dot is centred in the 20 dp marker column that starts 16 dp in",
+            21.dp,
+            dot.left - card.left,
+        )
+        assertTrue(
+            dot.cy() <= from.top + from.height / 2f + 1.5.dp,
+            "$label, the marker is on the first line, never below the row's centre",
+        )
         assertTrue(to.height >= 56.dp - 1.dp, "$label, a row is at least 56 dp")
         assertTrue(from.height >= 56.dp - 1.dp, "$label, a row is at least 56 dp")
     }
@@ -339,15 +370,25 @@ class SearchStopGroupCardTest {
     fun `the grid at 411 dp and 100 percent text is the approved picture's, to the dp`() {
         assertGrid(411.dp, 1f)
         assertNear("a row is 56 dp", 56.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).height)
-        assertNear("the marker is centred on the row's centre line", boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).cy(), boundsOf(TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT).cy())
+        assertNear(
+            "the marker is centred on the row's centre line",
+            boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).cy(),
+            boundsOf(TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT).cy(),
+        )
     }
 
     @Test
-    fun `the grid at 411 dp and 150 percent text is the same, the marker still beside the name`() = assertGrid(411.dp, 1.5f)
+    fun `the grid at 411 dp and 150 percent text is the same, the marker still beside the name`() = assertGrid(
+        411.dp,
+        1.5f,
+    )
 
     @Test
     @Config(qualifiers = "w320dp-h640dp-notnight")
-    fun `at 320 dp and 200 percent text the text still starts at 44 dp and the divider with it`() = assertGrid(320.dp, 2f)
+    fun `at 320 dp and 200 percent text the text still starts at 44 dp and the divider with it`() = assertGrid(
+        320.dp,
+        2f,
+    )
 
     @Test
     fun `the card is 113 dp at 100 percent text, 56 and 56 and the divider`() {
@@ -370,14 +411,20 @@ class SearchStopGroupCardTest {
     }
 
     @Test
-    fun `the card is exactly as tall without the go circle as with it at 100 percent text`() = assertSameHeightWithoutGo(1f)
+    fun `the card is exactly as tall without the go circle as with it at 100 percent text`() = assertSameHeightWithoutGo(
+        1f,
+    )
 
     @Test
-    fun `the card is exactly as tall without the go circle as with it at 150 percent text`() = assertSameHeightWithoutGo(1.5f)
+    fun `the card is exactly as tall without the go circle as with it at 150 percent text`() = assertSameHeightWithoutGo(
+        1.5f,
+    )
 
     @Test
     @Config(qualifiers = "w320dp-h640dp-notnight")
-    fun `the card is exactly as tall without the go circle as with it at 320 dp and 200 percent text`() = assertSameHeightWithoutGo(2f)
+    fun `the card is exactly as tall without the go circle as with it at 320 dp and 200 percent text`() = assertSameHeightWithoutGo(
+        2f,
+    )
 
     @Test
     @Config(qualifiers = "w320dp-h640dp-notnight")
@@ -388,7 +435,10 @@ class SearchStopGroupCardTest {
             .fetchSemanticsNode()
             .collectTextLayouts()
         assertTrue(layouts.isNotEmpty(), "The rows hold text that can be measured.")
-        for (layout in layouts) assertTrue(!layout.hasVisualOverflow, "A name is never clipped or cut with an ellipsis.")
+        for (layout in layouts) assertTrue(
+            !layout.hasVisualOverflow,
+            "A name is never clipped or cut with an ellipsis.",
+        )
         assertTrue(cardBounds().height > 200.dp, "The card grew to hold the whole names: ${cardBounds().height}.")
     }
 
@@ -453,7 +503,12 @@ class SearchStopGroupCardTest {
         val image = drawnPixels()
         val density = composeRule.density
         // A point in the pill clear of its text and icons: its right end, where nothing is drawn.
-        val inPill = image.at(with(density) { (pill.right - 24.dp).roundToPx() }, with(density) { (pill.top + 24.dp).roundToPx() })
+        val inPill = image.at(
+            with(density) {
+                (pill.right - 24.dp).roundToPx()
+            },
+            with(density) { (pill.top + 24.dp).roundToPx() },
+        )
         assertClose(tint, inPill, "the pill, the box's own tint and not the soft one")
         assertNotEquals(pillFill, tint)
     }
@@ -514,7 +569,9 @@ class SearchStopGroupCardTest {
         val to = with(density) { (card.left + 2.dp).roundToPx() }
         val y = with(density) { midY.roundToPx() }
         val across = (from..to).map { Color(image.getPixel(it, y)) }
-        fun distance(c: Color) = abs(c.red - expectedEdge.red) + abs(c.green - expectedEdge.green) + abs(c.blue - expectedEdge.blue)
+        fun distance(
+            c: Color,
+        ) = abs(c.red - expectedEdge.red) + abs(c.green - expectedEdge.green) + abs(c.blue - expectedEdge.blue)
         return image.at(card.left - 3.dp, midY) to across.minBy { distance(it) }
     }
 
@@ -536,7 +593,10 @@ class SearchStopGroupCardTest {
 
         val (outside, onEdge) = pixelsOutsideAndOnEdge(md_theme_dark_softLabel)
         assertClose(surface, outside, "just outside the card is the page's own colour, no glow")
-        assertTrue(!isClose(md_theme_dark_softLabel, onEdge, 0.05f), "no pixel across the card's edge is the softLabel: $onEdge")
+        assertTrue(
+            !isClose(md_theme_dark_softLabel, onEdge, 0.05f),
+            "no pixel across the card's edge is the softLabel: $onEdge",
+        )
         assertNotEquals(modeSoftLabel, md_theme_light_softLabel, "the mode aware softLabel is the dark one")
     }
 

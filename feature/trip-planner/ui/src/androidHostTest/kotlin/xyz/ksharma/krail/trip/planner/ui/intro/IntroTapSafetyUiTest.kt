@@ -8,7 +8,6 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import kotlinx.coroutines.Dispatchers
@@ -119,7 +118,10 @@ class IntroTapSafetyUiTest {
 
         assertEquals(IntroStep.DESTINATION, viewModel.state.value.step, "the double tap skipped a screen")
         assertEquals(ParkRideAnswer.NO, viewModel.state.value.parkRideAnswer)
-        assertNull(viewModel.state.value.selectedStop, "the second tap selected a row on the screen that was still arriving")
+        assertNull(
+            viewModel.state.value.selectedStop,
+            "the second tap selected a row on the screen that was still arriving",
+        )
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertDoesNotExist()
     }
 

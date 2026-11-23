@@ -7,11 +7,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
@@ -107,18 +107,28 @@ class IntroParkRidePlaceholderWidthTest {
 
     // The node a rider reads, and not the clear room that holds its place.
     private fun real(text: String, substring: Boolean = false): SemanticsNode =
-        nodes(text, substring).single { node -> generateSequence(node) { it.parent }.none { it.config.isClearingSemantics } }
+        nodes(
+            text,
+            substring,
+        ).single { node -> generateSequence(node) { it.parent }.none { it.config.isClearingSemantics } }
 
     // The clear room's own copy of the same words.
     private fun room(text: String, substring: Boolean = false): SemanticsNode =
-        nodes(text, substring).single { node -> generateSequence(node) { it.parent }.any { it.config.isClearingSemantics } }
+        nodes(
+            text,
+            substring,
+        ).single { node -> generateSequence(node) { it.parent }.any { it.config.isClearingSemantics } }
 
     private fun assertSameHeightLoadedAndLoading(loadedCards: List<Pair<String, IntroCardSlot>>, loadingCard: IntroCardSlot, where: String) {
         show(loadingCard)
         val loadingHeight = heightPx()
         loadedCards.forEach { (what, card) ->
             show(card)
-            assertEquals(loadingHeight, heightPx(), "the card is a different height with $what than without numbers, $where")
+            assertEquals(
+                loadingHeight,
+                heightPx(),
+                "the card is a different height with $what than without numbers, $where",
+            )
             show(loadingCard)
             assertEquals(loadingHeight, heightPx(), "the card does not return to its height after $what, $where")
         }
@@ -159,7 +169,10 @@ class IntroParkRidePlaceholderWidthTest {
     fun `the card is as high with the widest readings as without at 130 percent text`() = heightChecks(411, 1.3f)
 
     @Test
-    fun `the card is as high with the widest readings as without at 320 dp and 200 percent text`() = heightChecks(320, 2f)
+    fun `the card is as high with the widest readings as without at 320 dp and 200 percent text`() = heightChecks(
+        320,
+        2f,
+    )
 
     private fun width(style: TextStyle, text: String) = measurer.measure(text, style).size.width
 
@@ -175,18 +188,40 @@ class IntroParkRidePlaceholderWidthTest {
         val available = (card.right - endPaddingPx - name.left).toInt()
 
         val counts = (0..9).map { "$it$it$it$it" } + listOf("1398", "1234", "9876", "2468", "8080")
-        counts.forEach { assertTrue(width(figureStyle, it) <= spots, "the room for the spots is narrower than $it, $where") }
-        (0..100).map { "$it%" }.forEach { assertTrue(width(figureStyle, it) <= percent, "the room for the share is narrower than $it, $where") }
+        counts.forEach {
+            assertTrue(
+                width(figureStyle, it) <= spots,
+                "the room for the spots is narrower than $it, $where",
+            )
+        }
+        (0..100).map { "$it%" }.forEach {
+            assertTrue(
+                width(figureStyle, it) <= percent,
+                "the room for the share is narrower than $it, $where",
+            )
+        }
         // The time is a line of words that wraps in a narrow room, so the room is compared with a reading in the same room, line for line.
         val roomLines = lineCount(updatedRoom)
         val times = (1..12).flatMap { hour ->
-            (0..59).flatMap { minute -> listOf("AM", "PM").map { "$hour:${minute.toString().padStart(2, '0')}\u00A0$it" } }
+            (0..59).flatMap { minute ->
+                listOf(
+                    "AM",
+                    "PM",
+                ).map { "$hour:${minute.toString().padStart(2, '0')}\u00A0$it" }
+            }
         }
         times.forEach {
-            val lines = measurer.measure("Last updated at\u00A0$it", updatedStyle, constraints = Constraints(maxWidth = available)).lineCount
+            val lines = measurer.measure(
+                "Last updated at\u00A0$it",
+                updatedStyle,
+                constraints = Constraints(maxWidth = available),
+            ).lineCount
             assertTrue(lines <= roomLines, "$it takes $lines lines and the room for it $roomLines, $where")
             if (roomLines == 1) {
-                assertTrue(width(updatedStyle, "Last updated at\u00A0$it") <= updatedRoom.size.width, "the room for the time is narrower than $it, $where")
+                assertTrue(
+                    width(updatedStyle, "Last updated at\u00A0$it") <= updatedRoom.size.width,
+                    "the room for the time is narrower than $it, $where",
+                )
             }
         }
         // The room is the widest reading of its kind, and not a width wider than the line it holds.
@@ -207,7 +242,10 @@ class IntroParkRidePlaceholderWidthTest {
     fun `the clear room is as wide as every count, share and time at 130 percent text`() = widthChecks(411, 1.3f)
 
     @Test
-    fun `the clear room is as wide as every count, share and time at 320 dp and 200 percent text`() = widthChecks(320, 2f)
+    fun `the clear room is as wide as every count, share and time at 320 dp and 200 percent text`() = widthChecks(
+        320,
+        2f,
+    )
 
     // Whether b sits to the right of a on the same line, as opposed to under it.
     private fun besides(a: Rect, b: Rect) = b.left >= a.right - HALF_PIXEL
@@ -240,27 +278,62 @@ class IntroParkRidePlaceholderWidthTest {
         // A count and its words are on one line when their widths and the gap between them fit the room, and wrap when they do not.
         val spotsFit = figures.spots.width + gapSmallPx + figures.spotsLabel.width <= figures.room
         val percentFit = figures.percent.width + gapSmallPx + figures.percentLabel.width <= figures.room
-        assertEquals(spotsFit, besides(figures.spots, figures.spotsLabel), "1398 and its words wrap where they fit, or stay where they do not, $where")
-        assertEquals(percentFit, besides(figures.percent, figures.percentLabel), "100% and its word wrap where they fit, or stay where they do not, $where")
+        assertEquals(
+            spotsFit,
+            besides(figures.spots, figures.spotsLabel),
+            "1398 and its words wrap where they fit, or stay where they do not, $where",
+        )
+        assertEquals(
+            percentFit,
+            besides(figures.percent, figures.percentLabel),
+            "100% and its word wrap where they fit, or stay where they do not, $where",
+        )
         val bothFit = span(figures.spots, figures.spotsLabel) + gapMediumPx + span(figures.percent, figures.percentLabel) <= figures.room
         if (spotsFit && percentFit) {
-            assertEquals(bothFit, besides(figures.spotsLabel, figures.percent), "the two figures wrap where they fit, or stay where they do not, $where")
+            assertEquals(
+                bothFit,
+                besides(figures.spotsLabel, figures.percent),
+                "the two figures wrap where they fit, or stay where they do not, $where",
+            )
         }
         if (fitsOnOneLine) {
-            assertTrue(spotsFit && percentFit && bothFit && besides(figures.spotsLabel, figures.percent), "1398 spots available 100% full wraps $where")
+            assertTrue(
+                spotsFit && percentFit && bothFit && besides(figures.spotsLabel, figures.percent),
+                "1398 spots available 100% full wraps $where",
+            )
         }
 
         // The held room wraps exactly where the reading does, so nothing moves when the reading arrives.
-        assertEquals(besides(held.spots, held.spotsLabel), besides(figures.spots, figures.spotsLabel), "the room and 1398 wrap differently, $where")
-        assertEquals(besides(held.percent, held.percentLabel), besides(figures.percent, figures.percentLabel), "the room and 100% wrap differently, $where")
-        assertEquals(besides(held.spotsLabel, held.percent), besides(figures.spotsLabel, figures.percent), "the room and the two figures wrap differently, $where")
+        assertEquals(
+            besides(held.spots, held.spotsLabel),
+            besides(figures.spots, figures.spotsLabel),
+            "the room and 1398 wrap differently, $where",
+        )
+        assertEquals(
+            besides(held.percent, held.percentLabel),
+            besides(figures.percent, figures.percentLabel),
+            "the room and 100% wrap differently, $where",
+        )
+        assertEquals(
+            besides(held.spotsLabel, held.percent),
+            besides(figures.spotsLabel, figures.percent),
+            "the room and the two figures wrap differently, $where",
+        )
     }
 
     @Test
-    fun `1398 spots available and 100 percent full are one line on a phone`() = wrapChecks(411, 1f, fitsOnOneLine = true)
+    fun `1398 spots available and 100 percent full are one line on a phone`() = wrapChecks(
+        411,
+        1f,
+        fitsOnOneLine = true,
+    )
 
     @Test
-    fun `1398 spots available and 100 percent full wrap only where they must at 130 percent text`() = wrapChecks(411, 1.3f, fitsOnOneLine = false)
+    fun `1398 spots available and 100 percent full wrap only where they must at 130 percent text`() = wrapChecks(
+        411,
+        1.3f,
+        fitsOnOneLine = false,
+    )
 
     @Test
     fun `1398 spots available and 100 percent full wrap only where they must at 320 dp and 200 percent text`() =

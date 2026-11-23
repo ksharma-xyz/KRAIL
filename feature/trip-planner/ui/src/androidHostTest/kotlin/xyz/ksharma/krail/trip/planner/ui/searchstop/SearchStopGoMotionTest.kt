@@ -20,12 +20,12 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.click
-import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -141,7 +141,10 @@ class SearchStopGoMotionTest {
     }
 
     private fun clickGo(offset: (androidx.compose.ui.test.TouchInjectionScope) -> Offset = { it.center }) {
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_SEARCH, useUnmergedTree = true).performTouchInput { click(offset(this)) }
+        composeRule.onNodeWithTag(
+            TripPlannerTestTags.SEARCH_ROW_SEARCH,
+            useUnmergedTree = true,
+        ).performTouchInput { click(offset(this)) }
     }
 
     /** The appear curve: 0 to 1.2 by 180 ms, then 1.2 to 1.0 by 300 ms, each on the arrival curve. */
@@ -164,9 +167,19 @@ class SearchStopGoMotionTest {
         composeRule.mainClock.advanceTimeBy(600)
         composeRule.waitForIdle()
         val go = rootBounds(TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE)
-        val to = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_TO, useUnmergedTree = true).getUnclippedBoundsInRoot()
-        val card = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, useUnmergedTree = true).getUnclippedBoundsInRoot()
-        assertNear("the go circle is in the card, on the To row's centre line", to.top + (to.bottom - to.top) / 2f, go.cy())
+        val to = composeRule.onNodeWithTag(
+            TripPlannerTestTags.SEARCH_ROW_TO,
+            useUnmergedTree = true,
+        ).getUnclippedBoundsInRoot()
+        val card = composeRule.onNodeWithTag(
+            TripPlannerTestTags.SEARCH_STOP_GROUP_CARD,
+            useUnmergedTree = true,
+        ).getUnclippedBoundsInRoot()
+        assertNear(
+            "the go circle is in the card, on the To row's centre line",
+            to.top + (to.bottom - to.top) / 2f,
+            go.cy(),
+        )
         assertNear("its centre is 36 dp from the card's right edge", 36.dp, card.right - go.cx())
         assertTrue(go.bottom <= card.bottom && go.top >= card.top, "inside the card, not floating on the map")
 
@@ -208,7 +221,10 @@ class SearchStopGoMotionTest {
         val peak = seen.first { it.first == 180L }.second
         assertTrue(peak in 1.1f..1.25f, "It peaks at 1.2 around 180 ms: $peak")
         assertNear("It has settled at 1.0 by 300 ms", 40.dp, checkNotNull(goWidth()), within = 1.5f)
-        assertTrue(rootBounds(TripPlannerTestTags.SEARCH_ROW_REVERSE).cy() < swapStart - 20.dp, "The swap has glided up while the go arrived.")
+        assertTrue(
+            rootBounds(TripPlannerTestTags.SEARCH_ROW_REVERSE).cy() < swapStart - 20.dp,
+            "The swap has glided up while the go arrived.",
+        )
         assertEquals(1.2f, MapMotion.GO_PEAK_SCALE)
         assertEquals(180, MapMotion.GO_PEAK_MS)
         assertEquals(300, MapMotion.GO_ENTER_MS)

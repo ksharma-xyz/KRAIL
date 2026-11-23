@@ -48,7 +48,12 @@ class IntroThemeGroundTest {
             introThemeChoices().forEach { choice ->
                 PreviewTheme(themeStyle = choice.style) {
                     val app = themeSolidBackgroundColor()
-                    val mine = introGroundColour(choice.style.hexColorCode.hexToComposeColor(), KrailTheme.colors.surface, isAppInDarkMode())
+                    val mine =
+                        introGroundColour(
+                            choice.style.hexColorCode.hexToComposeColor(),
+                            KrailTheme.colors.surface,
+                            isAppInDarkMode(),
+                        )
                     SideEffect { seen[choice.name] = app to mine }
                 }
             }

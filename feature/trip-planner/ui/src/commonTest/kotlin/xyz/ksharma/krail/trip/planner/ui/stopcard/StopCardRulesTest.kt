@@ -173,12 +173,27 @@ class StopCardRulesTest {
 
     @Test
     fun `back shuts an expanded board first, then dismisses the card, then is the screen's`() {
-        assertEquals(StopCardBackStep.CollapseBoard, stopCardBackStepFor(cardOpen = true, boardExpanded = true, covered = false))
-        assertEquals(StopCardBackStep.DismissCard, stopCardBackStepFor(cardOpen = true, boardExpanded = false, covered = false))
-        assertEquals(StopCardBackStep.Screen, stopCardBackStepFor(cardOpen = false, boardExpanded = false, covered = false))
+        assertEquals(
+            StopCardBackStep.CollapseBoard,
+            stopCardBackStepFor(cardOpen = true, boardExpanded = true, covered = false),
+        )
+        assertEquals(
+            StopCardBackStep.DismissCard,
+            stopCardBackStepFor(cardOpen = true, boardExpanded = false, covered = false),
+        )
+        assertEquals(
+            StopCardBackStep.Screen,
+            stopCardBackStepFor(cardOpen = false, boardExpanded = false, covered = false),
+        )
         // A covered map has no card the rider can see, so back is the screen's whatever the board was doing.
-        assertEquals(StopCardBackStep.Screen, stopCardBackStepFor(cardOpen = true, boardExpanded = true, covered = true))
-        assertEquals(StopCardBackStep.Screen, stopCardBackStepFor(cardOpen = false, boardExpanded = true, covered = false))
+        assertEquals(
+            StopCardBackStep.Screen,
+            stopCardBackStepFor(cardOpen = true, boardExpanded = true, covered = true),
+        )
+        assertEquals(
+            StopCardBackStep.Screen,
+            stopCardBackStepFor(cardOpen = false, boardExpanded = true, covered = false),
+        )
     }
 
     @Test
@@ -186,7 +201,11 @@ class StopCardRulesTest {
         assertEquals(176.dp, stopCardTopReserveFor(headerHeight = 176.dp, slide = 0f))
         assertEquals(88.dp, stopCardTopReserveFor(headerHeight = 176.dp, slide = 0.5f))
         assertEquals(0.dp, stopCardTopReserveFor(headerHeight = 176.dp, slide = 1f))
-        assertEquals(176.dp, stopCardTopReserveFor(headerHeight = 176.dp, slide = -1f), "never more than the form's height")
+        assertEquals(
+            176.dp,
+            stopCardTopReserveFor(headerHeight = 176.dp, slide = -1f),
+            "never more than the form's height",
+        )
         assertEquals(0.dp, stopCardTopReserveFor(headerHeight = 176.dp, slide = 2f), "and never less than none")
     }
 

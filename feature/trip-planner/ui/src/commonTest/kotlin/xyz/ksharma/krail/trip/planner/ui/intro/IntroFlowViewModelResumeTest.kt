@@ -285,7 +285,10 @@ class IntroFlowViewModelResumeTest {
     @Test
     fun `what the system saved with the screen wins over the progress on the device`() = krailRunTest {
         val rig = IntroRig(this, handle = savedAt(tripPicked.copy(step = IntroStep.ORIGIN)))
-        rig.progressPreferences.setString(INTRO_PROGRESS_KEY, tripPicked.copy(step = IntroStep.CONFIRM).toProgress().toText())
+        rig.progressPreferences.setString(
+            INTRO_PROGRESS_KEY,
+            tripPicked.copy(step = IntroStep.CONFIRM).toProgress().toText(),
+        )
 
         rig.settle()
 
@@ -404,7 +407,8 @@ class IntroFlowViewModelResumeTest {
 
     @Test
     fun `a finished Intro is never resumed, even if the clear did not run`() = krailRunTest {
-        val rig = freshProcess(this, tripPicked.copy(step = IntroStep.THEME, selectedThemeId = train), seenBefore = true)
+        val rig =
+            freshProcess(this, tripPicked.copy(step = IntroStep.THEME, selectedThemeId = train), seenBefore = true)
 
         rig.settle()
 

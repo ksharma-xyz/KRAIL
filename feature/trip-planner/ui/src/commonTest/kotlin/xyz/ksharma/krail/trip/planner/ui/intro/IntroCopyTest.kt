@@ -54,7 +54,10 @@ class IntroCopyTest {
     fun `the bars are found, so this cannot pass by looking at nothing`() {
         val words = barWords()
 
-        assertTrue("Yes please, show me parking spots" in words && "Add to home" in words && "Not now" in words, "$words")
+        assertTrue(
+            "Yes please, show me parking spots" in words && "Add to home" in words && "Not now" in words,
+            "$words",
+        )
         assertTrue("Yes, this one" in words, "the stop screens' bar was not found: $words")
         assertTrue("OK" in words, "the no station message's button was not found: $words")
         assertTrue("No, search" !in words, "the left button of the stop screens is gone: $words")
@@ -110,7 +113,12 @@ class IntroCopyTest {
             assertTrue(lines.last().endsWith(QUESTION_MARK), "$lines")
         }
         questionStrings.forEach { text ->
-            (BANNED_GLYPHS - QUESTION_MARK).forEach { glyph -> assertTrue(!text.contains(glyph), "\"$text\" has $glyph") }
+            (BANNED_GLYPHS - QUESTION_MARK).forEach { glyph ->
+                assertTrue(
+                    !text.contains(glyph),
+                    "\"$text\" has $glyph",
+                )
+            }
         }
     }
 
@@ -153,7 +161,12 @@ class IntroCopyTest {
 
         val everything = barWords() + headlines.flatten() +
             listOf(PARK_RIDE_HEADING, DESTINATION_HEADING, ORIGIN_HEADING, CONFIRM_HEADING, PICK_THEME_HEADING)
-        everything.forEach { assertTrue(!Regex("\\bfree\\b", RegexOption.IGNORE_CASE).containsMatchIn(it), "\"$it\" has the word free") }
+        everything.forEach {
+            assertTrue(
+                !Regex("\\bfree\\b", RegexOption.IGNORE_CASE).containsMatchIn(it),
+                "\"$it\" has the word free",
+            )
+        }
     }
 
     private fun isTagline(text: String) = taglines.any { text == it || text in taglineLines(it) }

@@ -31,8 +31,10 @@ class IntroFinishNeverStuckTest {
         val rig = IntroRig(this, readiness)
         rig.send(
             IntroUiEvent.AnswerParkRide(yes = false),
-            IntroUiEvent.SelectStop(CENTRAL.toIntroStop()), IntroUiEvent.ConfirmStop,
-            IntroUiEvent.SelectStop(TALLAWONG.toIntroStop()), IntroUiEvent.ConfirmStop,
+            IntroUiEvent.SelectStop(CENTRAL.toIntroStop()),
+            IntroUiEvent.ConfirmStop,
+            IntroUiEvent.SelectStop(TALLAWONG.toIntroStop()),
+            IntroUiEvent.ConfirmStop,
             IntroUiEvent.AnswerSaveTrip(yes = true),
             IntroUiEvent.PickTheme(KrailThemeStyle.Bus.id),
         )

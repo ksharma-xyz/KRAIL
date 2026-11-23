@@ -19,9 +19,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
-import kotlin.math.abs
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import kotlinx.collections.immutable.persistentListOf
 import org.junit.Rule
 import org.junit.Test
@@ -37,6 +34,9 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags.StopCard
 import xyz.ksharma.krail.trip.planner.ui.components.MapMotion
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
+import kotlin.math.abs
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * The Departure Board opens and closes smoothly, read frame by frame on a paused test clock: the card's height grows and
@@ -66,7 +66,13 @@ class StopCardBoardMotionTest {
                             departures = board,
                             onEvent = {},
                             onClose = {},
-                            actions = { StopCardAction(text = "Set as destination", onClick = {}, modifier = Modifier.testTag(StopCard.PICK)) },
+                            actions = {
+                                StopCardAction(
+                                    text = "Set as destination",
+                                    onClick = {},
+                                    modifier = Modifier.testTag(StopCard.PICK),
+                                )
+                            },
                         )
                     }
                 }
@@ -127,7 +133,10 @@ class StopCardBoardMotionTest {
         toggle()
         val series = frames(24) { cardHeight() }
 
-        assertTrue(series.any { it > collapsed + 1f && it < expanded - 1f }, "A frame has a height between the two: $series")
+        assertTrue(
+            series.any { it > collapsed + 1f && it < expanded - 1f },
+            "A frame has a height between the two: $series",
+        )
         assertTrue(series.zipWithNext().all { (a, b) -> b >= a - 0.01f }, "It only grows: $series")
         assertTrue(series.all { it <= expanded + 0.5f }, "and never overshoots: $series")
         val steps = series.zipWithNext { a, b -> b - a }.filter { it > 0.01f }
@@ -191,7 +200,10 @@ class StopCardBoardMotionTest {
         toggle()
         val series = frames(24) { cardHeight() }
 
-        assertTrue(series.any { it > collapsed + 1f && it < expanded - 1f }, "A frame has a height between the two: $series")
+        assertTrue(
+            series.any { it > collapsed + 1f && it < expanded - 1f },
+            "A frame has a height between the two: $series",
+        )
         assertTrue(series.zipWithNext().all { (a, b) -> b <= a + 0.01f }, "It only shrinks: $series")
         composeRule.mainClock.advanceTimeBy(FRAME_MS)
         // The rows are in the tree for as long as the close takes and gone after it, never pulled out under the height.
@@ -229,18 +241,35 @@ class StopCardBoardMotionTest {
         composeRule.waitForIdle()
         composeRule.mainClock.autoAdvance = false
 
-        composeRule.runOnUiThread { open = true; Snapshot.sendApplyNotifications() }
-        val opening = List(24) { composeRule.mainClock.advanceTimeByFrame(); probe() }
+        composeRule.runOnUiThread {
+            open = true
+            Snapshot.sendApplyNotifications()
+        }
+        val opening = List(24) {
+            composeRule.mainClock.advanceTimeByFrame()
+            probe()
+        }
         val reveal = opening.map { it.first }
         val alpha = opening.map { it.second }
         val firstReveal = reveal.indexOfFirst { it > 0.01f }
         val firstAlpha = alpha.indexOfFirst { it > 0.01f }
-        assertTrue(firstReveal in 0 until firstAlpha, "The height starts before the rows do: $firstReveal then $firstAlpha")
-        assertTrue(reveal.zipWithNext().all { (a, b) -> b >= a - 0.001f } && alpha.zipWithNext().all { (a, b) -> b >= a - 0.001f })
+        assertTrue(
+            firstReveal in 0 until firstAlpha,
+            "The height starts before the rows do: $firstReveal then $firstAlpha",
+        )
+        assertTrue(
+            reveal.zipWithNext().all { (a, b) -> b >= a - 0.001f } && alpha.zipWithNext().all { (a, b) -> b >= a - 0.001f },
+        )
 
         composeRule.mainClock.advanceTimeBy(SETTLED_MS)
-        composeRule.runOnUiThread { open = false; Snapshot.sendApplyNotifications() }
-        val closing = List(24) { composeRule.mainClock.advanceTimeByFrame(); probe() }
+        composeRule.runOnUiThread {
+            open = false
+            Snapshot.sendApplyNotifications()
+        }
+        val closing = List(24) {
+            composeRule.mainClock.advanceTimeByFrame()
+            probe()
+        }
         val goneAt = closing.indexOfFirst { it.second < 0.001f }
         val shutAt = closing.indexOfFirst { it.first < 0.001f }.let { if (it < 0) closing.size else it }
         assertTrue(goneAt in 0 until shutAt, "The rows are gone ($goneAt) before the height ends ($shutAt)")
@@ -259,12 +288,26 @@ class StopCardBoardMotionTest {
         setCard()
         toggle()
         composeRule.mainClock.advanceTimeBy(SETTLED_MS)
-        assertEquals(1, composeRule.onAllNodesWithText("Retry").fetchSemanticsNodes().size, "The failed board shows Retry")
+        assertEquals(
+            1,
+            composeRule.onAllNodesWithText("Retry").fetchSemanticsNodes().size,
+            "The failed board shows Retry",
+        )
 
-        composeRule.runOnUiThread { board = ROWS; Snapshot.sendApplyNotifications() }
+        composeRule.runOnUiThread {
+            board = ROWS
+            Snapshot.sendApplyNotifications()
+        }
         composeRule.mainClock.advanceTimeBy(FRAME_MS * 4)
-        assertEquals(1, composeRule.onAllNodesWithText("Retry").fetchSemanticsNodes().size, "It has not popped away: Retry is still there")
-        assertTrue(composeRule.onAllNodesWithText("Anywhere").fetchSemanticsNodes().isNotEmpty(), "and the rows are already coming in")
+        assertEquals(
+            1,
+            composeRule.onAllNodesWithText("Retry").fetchSemanticsNodes().size,
+            "It has not popped away: Retry is still there",
+        )
+        assertTrue(
+            composeRule.onAllNodesWithText("Anywhere").fetchSemanticsNodes().isNotEmpty(),
+            "and the rows are already coming in",
+        )
 
         composeRule.mainClock.advanceTimeBy(SETTLED_MS)
         assertEquals(0, composeRule.onAllNodesWithText("Retry").fetchSemanticsNodes().size, "Only the rows are left")

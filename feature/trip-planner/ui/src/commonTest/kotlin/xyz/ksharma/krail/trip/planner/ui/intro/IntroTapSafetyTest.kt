@@ -25,7 +25,10 @@ class IntroTapSafetyTest {
     private val train = KrailThemeStyle.Train.id
     private val bus = KrailThemeStyle.Bus.id
     private val denied = IntroUiEvent.LocationResultReceived(LocationResult.DENIED, null)
-    private val grantedNear = IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, FOUR_POINT_SIX_KM_FROM_BELLA_VISTA)
+    private val grantedNear = IntroUiEvent.LocationResultReceived(
+        LocationResult.GRANTED,
+        FOUR_POINT_SIX_KM_FROM_BELLA_VISTA,
+    )
 
     // Every shape of event, with the one step, or the two, each is for.
     private val table: List<Pair<IntroUiEvent, Set<IntroStep>>> = listOf(
@@ -66,11 +69,19 @@ class IntroTapSafetyTest {
     private fun KrailTestScope.riderOn(step: IntroStep, shape: String): IntroRig {
         val rig = when (step) {
             IntroStep.PARK_RIDE -> IntroRig(this)
-            IntroStep.DESTINATION -> IntroRig(this, handle = savedAt(IntroState(step = step, parkRideAnswer = ParkRideAnswer.NO)))
+            IntroStep.DESTINATION -> IntroRig(
+                this,
+                handle = savedAt(IntroState(step = step, parkRideAnswer = ParkRideAnswer.NO)),
+            )
             IntroStep.ORIGIN -> IntroRig(
                 this,
                 handle = savedAt(
-                    IntroState(step = step, parkRideAnswer = ParkRideAnswer.NO, endStopId = CENTRAL.stopId, endName = CENTRAL.name),
+                    IntroState(
+                        step = step,
+                        parkRideAnswer = ParkRideAnswer.NO,
+                        endStopId = CENTRAL.stopId,
+                        endName = CENTRAL.name,
+                    ),
                 ),
             )
             IntroStep.CONFIRM -> IntroRig(this, handle = savedAt(withBothStops.copy(step = step)))
@@ -194,7 +205,10 @@ class IntroTapSafetyTest {
             val rig = riderOn(IntroStep.DESTINATION, "a stop selected")
             rig.send(IntroUiEvent.ConfirmStop)
             assertEquals(IntroStep.ORIGIN, rig.state.step)
-            assertNull(rig.state.selectedStop, "the stop selected for the destination is still selected on the origin screen")
+            assertNull(
+                rig.state.selectedStop,
+                "the stop selected for the destination is still selected on the origin screen",
+            )
 
             // A second tap, which is what arrives from a double tap, finds nothing selected for this screen.
             rig.send(IntroUiEvent.ConfirmStop)

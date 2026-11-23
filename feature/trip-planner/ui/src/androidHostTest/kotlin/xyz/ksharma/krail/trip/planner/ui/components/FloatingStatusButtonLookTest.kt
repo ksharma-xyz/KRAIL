@@ -89,7 +89,10 @@ class FloatingStatusButtonLookTest {
     private fun Bitmap.at(x: Dp, y: Dp): Color =
         Color(getPixel(with(composeRule.density) { x.roundToPx() }, with(composeRule.density) { y.roundToPx() }))
 
-    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(
+        tag,
+        useUnmergedTree = true,
+    ).getUnclippedBoundsInRoot()
 
     private fun close(expected: Color, actual: Color, within: Float = 0.03f) =
         abs(expected.red - actual.red) <= within && abs(expected.green - actual.green) <= within &&
@@ -109,7 +112,7 @@ class FloatingStatusButtonLookTest {
         val box = boundsOf(tag)
         val density = composeRule.density
         val y = with(density) { (box.top + (box.bottom - box.top) / 2f).roundToPx() }
-        return (with(density) { (box.left - 2.dp).roundToPx() }..with(density) { (box.left + 2.dp).roundToPx() })
+        return (with(density) { (box.left - 2.dp).roundToPx() } ..with(density) { (box.left + 2.dp).roundToPx() })
             .map { Color(image.getPixel(it, y)) }
     }
 
@@ -131,14 +134,26 @@ class FloatingStatusButtonLookTest {
                 "textOnFill=${ink.contrastRatio(expectedFill)} fillOnMap=${expectedFill.contrastRatio(MAP_GROUND)} " +
                 "hairline=${hex(hairline)} wanted=${hex(edge)}",
         )
-        assertTrue(close(expectedFill, fill), "$mode: the notice is the box's tint ${hex(expectedFill)}, drawn as ${hex(fill)}")
+        assertTrue(
+            close(expectedFill, fill),
+            "$mode: the notice is the box's tint ${hex(expectedFill)}, drawn as ${hex(fill)}",
+        )
         assertEquals(ink.toArgb(), text.toArgb(), "$mode: the words are the mode's ink")
-        assertTrue(ink.contrastRatio(expectedFill) >= TEXT, "$mode: the words read at ${ink.contrastRatio(expectedFill)} to 1")
+        assertTrue(
+            ink.contrastRatio(expectedFill) >= TEXT,
+            "$mode: the words read at ${ink.contrastRatio(expectedFill)} to 1",
+        )
         if (dark) {
             assertTrue(!close(edge, hairline, 0.02f), "$mode: no hairline on the map: nearest pixel ${hex(hairline)}")
-            assertTrue(expectedFill.contrastRatio(MAP_GROUND) >= EDGE, "$mode: the dark notice is ${expectedFill.contrastRatio(MAP_GROUND)} to 1 off the map on its own")
+            assertTrue(
+                expectedFill.contrastRatio(MAP_GROUND) >= EDGE,
+                "$mode: the dark notice is ${expectedFill.contrastRatio(MAP_GROUND)} to 1 off the map on its own",
+            )
         } else {
-            assertTrue(close(edge, hairline), "$mode: the light softLabel hairline is drawn: nearest pixel ${hex(hairline)}")
+            assertTrue(
+                close(edge, hairline),
+                "$mode: the light softLabel hairline is drawn: nearest pixel ${hex(hairline)}",
+            )
         }
 
         // Map offline is the disabled look of the same button: the tint and the ink at 38 percent, as taj's disabled colours are.
@@ -151,11 +166,17 @@ class FloatingStatusButtonLookTest {
     }
 
     @Test
-    fun `in light mode the notices are the light tint with the light text and hairline, as they were`() = assertLook("light", dark = false)
+    fun `in light mode the notices are the light tint with the light text and hairline, as they were`() = assertLook(
+        "light",
+        dark = false,
+    )
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
-    fun `in dark mode the notices are the dark tint with cream text and no hairline on the map`() = assertLook("dark", dark = true)
+    fun `in dark mode the notices are the dark tint with cream text and no hairline on the map`() = assertLook(
+        "dark",
+        dark = true,
+    )
 
     private companion object {
         const val ASK = "Location permission required"

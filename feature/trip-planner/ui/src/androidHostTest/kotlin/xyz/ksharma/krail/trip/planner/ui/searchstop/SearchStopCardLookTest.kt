@@ -45,7 +45,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
-import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -60,7 +59,6 @@ import xyz.ksharma.krail.taj.theme.md_theme_light_surface
 import xyz.ksharma.krail.taj.themeDecorColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.FROM_PLACEHOLDER
-import xyz.ksharma.krail.trip.planner.ui.components.MapMotion
 import xyz.ksharma.krail.trip.planner.ui.components.TO_PLACEHOLDER
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
@@ -95,7 +93,12 @@ class SearchStopCardLookTest {
     private var withNotice by mutableStateOf(false)
     private lateinit var typed: TextFieldState
 
-    private val offered = listOf(KrailThemeStyle.Train, KrailThemeStyle.Metro, KrailThemeStyle.Bus, KrailThemeStyle.Ferry)
+    private val offered = listOf(
+        KrailThemeStyle.Train,
+        KrailThemeStyle.Metro,
+        KrailThemeStyle.Bus,
+        KrailThemeStyle.Ferry,
+    )
 
     private fun setCard(reduceMotion: Boolean = false) {
         val resolver = ApplicationProvider.getApplicationContext<Context>().contentResolver
@@ -169,7 +172,10 @@ class SearchStopCardLookTest {
     private fun Bitmap.at(x: Dp, y: Dp): Color =
         Color(getPixel(with(composeRule.density) { x.roundToPx() }, with(composeRule.density) { y.roundToPx() }))
 
-    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(
+        tag,
+        useUnmergedTree = true,
+    ).getUnclippedBoundsInRoot()
 
     private fun DpRect.cx() = left + width / 2f
     private fun DpRect.cy() = top + height / 2f
@@ -199,7 +205,10 @@ class SearchStopCardLookTest {
     }
 
     /** How present the hairline is: the lightest pixel across the edge, which the dark box and the dark page are both far below. */
-    private fun edgeStrength(tag: String, image: Bitmap = drawn()): Float = edgeStrip(tag, image).maxOf { it.luminance() }
+    private fun edgeStrength(
+        tag: String,
+        image: Bitmap = drawn(),
+    ): Float = edgeStrip(tag, image).maxOf { it.luminance() }
 
     /** The pixel across the edge nearest [expected]. */
     private fun edgeNearest(tag: String, expected: Color, image: Bitmap = drawn()): Color {
@@ -208,7 +217,11 @@ class SearchStopCardLookTest {
     }
 
     private fun SemanticsNode.textColors(): List<Color> {
-        val own = mutableListOf<TextLayoutResult>().also { config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(it) }
+        val own = mutableListOf<TextLayoutResult>().also {
+            config.getOrNull(
+                SemanticsActions.GetTextLayoutResult,
+            )?.action?.invoke(it)
+        }
         return own.map { it.layoutInput.style.color.copy(alpha = 1f) } + children.flatMap { it.textColors() }
     }
 
@@ -288,7 +301,9 @@ class SearchStopCardLookTest {
         setCard()
         val literal = if (dark) pictureDark else pictureLight
         val page = if (dark) md_theme_dark_surface else md_theme_light_surface
-        println("CARDLOOK table $mode: theme ground | box fill | notice fill | box text | notice title, words, Not now, pin | box edge, notice edge")
+        println(
+            "CARDLOOK table $mode: theme ground | box fill | notice fill | box text | notice title, words, Not now, pin | box edge, notice edge",
+        )
         for (style in offered) {
             use(style)
             val fills = mutableMapOf<Boolean, Color>()
@@ -317,10 +332,22 @@ class SearchStopCardLookTest {
                 )
 
                 // The fill is the picture's colour, built from the tokens, on both grounds.
-                assertClose(literal.getValue(style), expectedFill(themeColor, dark), "$mode ${style.name}: the tokens give the picture's colour")
-                assertClose(literal.getValue(style), boxFill, "$mode ${style.name} $ground: the box is the picture's colour")
+                assertClose(
+                    literal.getValue(style),
+                    expectedFill(themeColor, dark),
+                    "$mode ${style.name}: the tokens give the picture's colour",
+                )
+                assertClose(
+                    literal.getValue(style),
+                    boxFill,
+                    "$mode ${style.name} $ground: the box is the picture's colour",
+                )
                 // The notice is exactly the box: the same fill, the same hairline, the same corners, pixel for pixel.
-                assertEquals(boxFill.toArgb(), noticeFill.toArgb(), "$mode ${style.name} $ground: the notice's fill is the box's fill")
+                assertEquals(
+                    boxFill.toArgb(),
+                    noticeFill.toArgb(),
+                    "$mode ${style.name} $ground: the notice's fill is the box's fill",
+                )
                 assertEquals(
                     corner(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, top = true, image = image),
                     corner(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL, top = true, image = image),
@@ -339,24 +366,48 @@ class SearchStopCardLookTest {
                 }
                 assertClose(ink(dark), pinInk, "$mode ${style.name} $ground: the notice's pin is the ink")
                 assertClose(ink(dark), dotInk, "$mode ${style.name} $ground: the box's dot is the ink")
-                assertTrue(ink(dark).contrastRatio(boxFill) >= TEXT, "$mode ${style.name}: the text on the fill is ${ink(dark).contrastRatio(boxFill)} to 1")
+                assertTrue(
+                    ink(dark).contrastRatio(boxFill) >= TEXT,
+                    "$mode ${style.name}: the text on the fill is ${ink(dark).contrastRatio(boxFill)} to 1",
+                )
                 // The hairline: light mode always, dark mode on the gradient only.
                 val drawnEdge = !dark || gradient
                 if (drawnEdge) {
-                    assertClose(edge(dark), edgeNearest(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, edge(dark), image), "$mode ${style.name} $ground: the box's hairline")
-                    assertClose(edge(dark), edgeNearest(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL, edge(dark), image), "$mode ${style.name} $ground: the notice's hairline")
+                    assertClose(
+                        edge(dark),
+                        edgeNearest(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, edge(dark), image),
+                        "$mode ${style.name} $ground: the box's hairline",
+                    )
+                    assertClose(
+                        edge(dark),
+                        edgeNearest(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL, edge(dark), image),
+                        "$mode ${style.name} $ground: the notice's hairline",
+                    )
                 } else {
-                    for (tag in listOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)) {
+                    for (tag in listOf(
+                        TripPlannerTestTags.SEARCH_STOP_GROUP_CARD,
+                        TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL,
+                    )) {
                         assertTrue(
-                            edgeStrip(tag, image).all { close(page, it, 0.02f) || close(literal.getValue(style), it, 0.02f) || it.luminance() < 0.3f },
+                            edgeStrip(
+                                tag,
+                                image,
+                            ).all { close(page, it, 0.02f) || close(literal.getValue(style), it, 0.02f) || it.luminance() < 0.3f },
                             "$mode ${style.name} $ground: nothing but the page and the fill across $tag's edge on the map",
                         )
-                        assertTrue(edgeStrength(tag, image) < 0.3f, "$mode ${style.name} $ground: no hairline on the map")
+                        assertTrue(
+                            edgeStrength(tag, image) < 0.3f,
+                            "$mode ${style.name} $ground: no hairline on the map",
+                        )
                     }
                 }
                 fills[gradient] = boxFill
             }
-            assertEquals(fills.getValue(false).toArgb(), fills.getValue(true).toArgb(), "$mode ${style.name}: the map and the list state are one fill")
+            assertEquals(
+                fills.getValue(false).toArgb(),
+                fills.getValue(true).toArgb(),
+                "$mode ${style.name}: the map and the list state are one fill",
+            )
         }
     }
 
@@ -392,16 +443,29 @@ class SearchStopCardLookTest {
                     "CARDLOOK pill $mode ${style.name} $ground fill=${hex(fill)} prompt=${prompt.map { hex(it) }.toSet()} back=${hex(back)} " +
                         "edge=${edgeStrength(TripPlannerTestTags.SEARCH_ROW_TO)}",
                 )
-                assertClose(literal.getValue(style), fill, "$mode ${style.name} $ground: the bare pill is the picture's colour")
+                assertClose(
+                    literal.getValue(style),
+                    fill,
+                    "$mode ${style.name} $ground: the bare pill is the picture's colour",
+                )
                 assertTrue(prompt.isNotEmpty(), "the pill's prompt can be read")
                 for (color in prompt) {
-                    val allowed = if (dark) setOf(md_theme_dark_onSurface) else setOf(md_theme_light_onSurface, md_theme_light_onSurface_placeholder)
+                    val allowed = if (dark) {
+                        setOf(
+                            md_theme_dark_onSurface,
+                        )
+                    } else {
+                        setOf(md_theme_light_onSurface, md_theme_light_onSurface_placeholder)
+                    }
                     assertTrue(color in allowed, "$mode ${style.name} $ground: the prompt is ${hex(color)}")
                 }
                 assertClose(ink(dark), back, "$mode ${style.name} $ground: the back arrow is the box's ink")
                 val drawnEdge = !dark || gradient
                 val strength = edgeStrength(TripPlannerTestTags.SEARCH_ROW_TO)
-                assertTrue((strength > 0.3f) == drawnEdge, "$mode ${style.name} $ground: the pill's hairline is ${if (drawnEdge) "drawn" else "absent"}, strength $strength")
+                assertTrue(
+                    (strength > 0.3f) == drawnEdge,
+                    "$mode ${style.name} $ground: the pill's hairline is ${if (drawnEdge) "drawn" else "absent"}, strength $strength",
+                )
             }
         }
         // The clear X follows the ink too, once a query is typed, on both grounds.
@@ -449,9 +513,17 @@ class SearchStopCardLookTest {
             val dot = boundsOf(TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT)
             assertClose(md_theme_dark_onSurface, image.at(dot.cx(), dot.cy()), "$label: the dot")
             val swap = boundsOf(TripPlannerTestTags.SEARCH_ROW_SWAP_GLYPH)
-            assertClose(md_theme_dark_onSurface, nearestInk(swap, md_theme_dark_onSurface, image), "$label: the swap glyph")
+            assertClose(
+                md_theme_dark_onSurface,
+                nearestInk(swap, md_theme_dark_onSurface, image),
+                "$label: the swap glyph",
+            )
             val pin = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PIN)
-            assertClose(md_theme_dark_onSurface, nearestInk(pin, md_theme_dark_onSurface, image), "$label: the notice's pin")
+            assertClose(
+                md_theme_dark_onSurface,
+                nearestInk(pin, md_theme_dark_onSurface, image),
+                "$label: the notice's pin",
+            )
             for (color in textColorsIn(box) + textColorsIn(notice).filter { it != textColorOf(LOCATION_NOTICE_CTA_ALLOW) }) {
                 assertEquals(md_theme_dark_onSurface, color, "$label: every text")
             }
@@ -478,8 +550,14 @@ class SearchStopCardLookTest {
         assertTrue(atRest < 0.3f, "no hairline on the map at rest: $atRest")
         assertTrue(onGradient > 0.3f, "the hairline is drawn on the gradient: $onGradient")
         val going = strengths.subList(0, 7).map { it.second }
-        assertTrue(going.zipWithNext().all { (a, b) -> b >= a - 0.001f }, "the hairline only grows on the way to the list state: $going")
-        assertTrue(going.any { it > atRest + 0.01f && it < onGradient - 0.01f }, "and it passes through a part way frame: $going")
+        assertTrue(
+            going.zipWithNext().all { (a, b) -> b >= a - 0.001f },
+            "the hairline only grows on the way to the list state: $going",
+        )
+        assertTrue(
+            going.any { it > atRest + 0.01f && it < onGradient - 0.01f },
+            "and it passes through a part way frame: $going",
+        )
         val coming = strengths.subList(6, strengths.size).map { it.second }
         assertTrue(coming.zipWithNext().all { (a, b) -> b <= a + 0.001f }, "and only shrinks on the way back: $coming")
         assertTrue(strengths.last().second < 0.3f, "and is gone again on the map: ${strengths.last().second}")

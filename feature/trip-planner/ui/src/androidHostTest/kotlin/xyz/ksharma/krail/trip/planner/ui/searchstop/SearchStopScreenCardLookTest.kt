@@ -108,7 +108,10 @@ class SearchStopScreenCardLookTest {
         composeRule.waitForIdle()
     }
 
-    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(
+        tag,
+        useUnmergedTree = true,
+    ).getUnclippedBoundsInRoot()
 
     private fun drawn(): Bitmap {
         var bitmap: Bitmap? = null
@@ -148,7 +151,10 @@ class SearchStopScreenCardLookTest {
         collect(node)
         assertTrue(colors.isNotEmpty(), "$what holds text")
         for (layout in colors) {
-            assertTrue(close(cream, layout.layoutInput.style.color.copy(alpha = 1f)), "$what text is $cream, drawn as ${layout.layoutInput.style.color}")
+            assertTrue(
+                close(cream, layout.layoutInput.style.color.copy(alpha = 1f)),
+                "$what text is $cream, drawn as ${layout.layoutInput.style.color}",
+            )
         }
     }
 
@@ -159,7 +165,10 @@ class SearchStopScreenCardLookTest {
         val image = drawn()
         assertFilledWithListTint("$mode, the box", TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, image)
         val pill = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_PILL)
-        assertTrue(close(md_theme_light_surface, pixel(image, pill.left + 7.dp, pill.cy())), "$mode, the Options pill is white")
+        assertTrue(
+            close(md_theme_light_surface, pixel(image, pill.left + 7.dp, pill.cy())),
+            "$mode, the Options pill is white",
+        )
 
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).performClick()
         composeRule.waitForIdle()
@@ -168,14 +177,19 @@ class SearchStopScreenCardLookTest {
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-notnight-xxhdpi")
-    fun `in light mode the map state's box and Options card are the light tint and the Options pill is white`() = assertMapState("light")
+    fun `in light mode the map state's box and Options card are the light tint and the Options pill is white`() = assertMapState(
+        "light",
+    )
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
     fun `in dark mode the map state's box and Options card are the dark tint and the Options pill is still white`() {
         assertMapState("dark")
         assertNotEquals(pageSurface, listTint, "the box is not the page's own surface")
-        assertTrue(!close(lightTint, listTint), "the box on the map is the dark tint $listTint, not the light tint $lightTint")
+        assertTrue(
+            !close(lightTint, listTint),
+            "the box on the map is the dark tint $listTint, not the light tint $lightTint",
+        )
     }
 
     private fun assertNotice(mode: String) {
@@ -201,7 +215,11 @@ class SearchStopScreenCardLookTest {
         val image = drawn()
         assertFilledWithListTint("the box", TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, image)
         assertFilledWithListTint("the notice", TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL, image)
-        for (tag in listOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL, TripPlannerTestTags.SEARCH_STOP_LOCATION_BUTTON)) {
+        for (tag in listOf(
+            TripPlannerTestTags.SEARCH_STOP_GROUP_CARD,
+            TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL,
+            TripPlannerTestTags.SEARCH_STOP_LOCATION_BUTTON,
+        )) {
             val block = boundsOf(tag)
             assertTrue(block.left >= 0.dp && block.right <= 320.dp, "$tag $block stays inside the 320 dp window")
         }
@@ -250,14 +268,22 @@ class SearchStopScreenCardLookTest {
         composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
         composeRule.waitForIdle()
         composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertCountEquals(1)
-        assertFilledWithListTint("dark, back on the map state, the box", TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, drawn())
+        assertFilledWithListTint(
+            "dark, back on the map state, the box",
+            TripPlannerTestTags.SEARCH_STOP_GROUP_CARD,
+            drawn(),
+        )
         assertTextIsModeInk("dark, back on the map state, the box", TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
     }
 
     private fun assertWideWindow(mode: String) {
         setScreen()
 
-        assertFilledWithListTint("$mode, the box in the wide window's left pane", TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, drawn())
+        assertFilledWithListTint(
+            "$mode, the box in the wide window's left pane",
+            TripPlannerTestTags.SEARCH_STOP_GROUP_CARD,
+            drawn(),
+        )
         assertTextIsModeInk("$mode, the box in the wide window's left pane", TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
     }
 

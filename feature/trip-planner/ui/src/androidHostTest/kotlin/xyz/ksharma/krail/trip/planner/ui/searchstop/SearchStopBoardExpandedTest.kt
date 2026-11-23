@@ -36,9 +36,6 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
-import kotlin.math.abs
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import kotlinx.collections.immutable.persistentListOf
 import org.junit.Rule
 import org.junit.Test
@@ -58,6 +55,9 @@ import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardAction
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardBackHandlers
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardPlacement
 import xyz.ksharma.krail.trip.planner.ui.stopcard.stopCardTopReserveFor
+import kotlin.math.abs
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * While the Departure Board of an open stop card is expanded the box at the top gets out of the way: it slides up and fades,
@@ -106,7 +106,11 @@ class SearchStopBoardExpandedTest {
                                     boardExpanded = boardExpanded,
                                     onBoardExpandedChange = { boardExpanded = it },
                                     actions = {
-                                        StopCardAction(text = "Set as destination", onClick = {}, modifier = Modifier.testTag(StopCard.PICK))
+                                        StopCardAction(
+                                            text = "Set as destination",
+                                            onClick = {},
+                                            modifier = Modifier.testTag(StopCard.PICK),
+                                        )
                                     },
                                 )
                             }
@@ -172,7 +176,10 @@ class SearchStopBoardExpandedTest {
 
         setBoard(false)
         val returning = frames(24) { boxTop() }
-        assertTrue(returning.zipWithNext().all { (a, b) -> b >= a - 0.01f }, "It comes back down the same way: $returning")
+        assertTrue(
+            returning.zipWithNext().all { (a, b) -> b >= a - 0.01f },
+            "It comes back down the same way: $returning",
+        )
         composeRule.mainClock.advanceTimeBy(SETTLED_MS)
         assertEquals(home, boxTop(), "to the very place it was")
     }
@@ -237,7 +244,10 @@ class SearchStopBoardExpandedTest {
 
         assertTrue(expanded < collapsed - 20f, "The card reaches higher with the box gone: $collapsed to $expanded")
         assertTrue(growing.zipWithNext().all { (a, b) -> b <= a + 0.01f }, "Its top only rises: $growing")
-        assertTrue(growing.any { it < collapsed - 1f && it > expanded + 1f }, "through heights between the two: $growing")
+        assertTrue(
+            growing.any { it < collapsed - 1f && it > expanded + 1f },
+            "through heights between the two: $growing",
+        )
 
         setBoard(false)
         val shrinking = frames(24) { cardTop() }
@@ -281,7 +291,10 @@ class SearchStopBoardExpandedTest {
                 )
             }
         }
-        composeRule.runOnUiThread { boardExpanded = true; cardOpen = true }
+        composeRule.runOnUiThread {
+            boardExpanded = true
+            cardOpen = true
+        }
         composeRule.waitForIdle()
 
         composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }

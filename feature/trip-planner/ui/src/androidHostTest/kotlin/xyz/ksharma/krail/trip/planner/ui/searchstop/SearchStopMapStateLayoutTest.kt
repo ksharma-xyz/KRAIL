@@ -19,8 +19,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpRect
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
@@ -31,8 +31,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.core.maps.state.LatLng
-import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.core.transport.ModeSelectionSurface
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
@@ -93,7 +93,9 @@ class SearchStopMapStateLayoutTest {
 
     private fun touchBoundsOf(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true)
         .fetchSemanticsNode().touchBoundsInRoot.let { rect ->
-            with(composeRule.density) { DpRect(rect.left.toDp(), rect.top.toDp(), rect.right.toDp(), rect.bottom.toDp()) }
+            with(
+                composeRule.density,
+            ) { DpRect(rect.left.toDp(), rect.top.toDp(), rect.right.toDp(), rect.bottom.toDp()) }
         }
 
     private fun assertNear(what: String, expected: Dp, actual: Dp) {
@@ -303,7 +305,10 @@ class SearchStopMapStateLayoutTest {
         ).assertCountEquals(0)
         val location = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_BUTTON)
         assertNear("8 dp above the control line", location.top - 8.dp, card.bottom)
-        assertTrue(card.top > boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).bottom, "The card stays under the box.")
+        assertTrue(
+            card.top > boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).bottom,
+            "The card stays under the box.",
+        )
     }
 
     @Test

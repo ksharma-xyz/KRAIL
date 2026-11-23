@@ -91,8 +91,16 @@ class SearchStopLayoutRulesTest {
                 controlLineCentre(gaps, pill) - pill / 2,
                 "the pill's bottom edge is 4 dp over the i at $pill",
             )
-            assertEquals(centre - 24.dp, locationControlBottomPadding(gaps, pill), "the location control, centred on it")
-            assertEquals(MAP_ATTRIBUTION_GLYPH_TOP, optionsBottomPadding(gaps, pill), "Options' target ends at the i's top")
+            assertEquals(
+                centre - 24.dp,
+                locationControlBottomPadding(gaps, pill),
+                "the location control, centred on it",
+            )
+            assertEquals(
+                MAP_ATTRIBUTION_GLYPH_TOP,
+                optionsBottomPadding(gaps, pill),
+                "Options' target ends at the i's top",
+            )
         }
     }
 
@@ -196,7 +204,10 @@ class SearchStopLayoutRulesTest {
         )
         // Absent wins: the list state and a map that is not ready compose nothing, whatever the permission says.
         assertEquals(ModeControls.Absent, modeControlsFor(SearchStopMode.List, mapReady = true, locationGranted = true))
-        assertEquals(ModeControls.Absent, modeControlsFor(SearchStopMode.Map, mapReady = false, locationGranted = false))
+        assertEquals(
+            ModeControls.Absent,
+            modeControlsFor(SearchStopMode.Map, mapReady = false, locationGranted = false),
+        )
         assertEquals(false, modeControlsShown(SearchStopMode.Map, mapReady = true, locationGranted = false))
     }
 

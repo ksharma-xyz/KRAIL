@@ -64,7 +64,10 @@ class IntroHeadlinePlanTest {
         val actual = plan(screen, frame).sizes()
         assertEquals(expected.size, actual.size, "${screen.name}, ${frame.name}: lines")
         expected.zip(actual).forEachIndexed { i, (want, got) ->
-            assertTrue(abs(want - got) <= tolerance, "${screen.name}, ${frame.name}: line ${i + 1} is $got sp, the mock has $want")
+            assertTrue(
+                abs(want - got) <= tolerance,
+                "${screen.name}, ${frame.name}: line ${i + 1} is $got sp, the mock has $want",
+            )
         }
     }
 
@@ -114,7 +117,11 @@ class IntroHeadlinePlanTest {
             for (screen in screens) {
                 val plan = plan(screen, frame)
                 assertTrue(plan.heroScale!! <= frame.normal + 0.0001f, "${screen.name}, ${frame.name}")
-                assertEquals(screen === screens[4] && frame === narrow, plan.heroStacked, "${screen.name}, ${frame.name}")
+                assertEquals(
+                    screen === screens[4] && frame === narrow,
+                    plan.heroStacked,
+                    "${screen.name}, ${frame.name}",
+                )
             }
         }
     }
@@ -140,11 +147,18 @@ class IntroHeadlinePlanTest {
                 val words = screen.lines.flatMap { it.split(' ') }.toSet()
                 plan.units.forEach { unit ->
                     unit.rows.forEach { row ->
-                        assertTrue(widthAt(row, unit.scale) <= frame.roomDp, "${screen.name}, ${frame.name}: \"$row\" is too wide")
+                        assertTrue(
+                            widthAt(row, unit.scale) <= frame.roomDp,
+                            "${screen.name}, ${frame.name}: \"$row\" is too wide",
+                        )
                         assertTrue(row.split(' ').all { it in words }, "${screen.name}: \"$row\" splits a word")
                     }
                 }
-                assertEquals(screen.lines.joinToString(" "), plan.units.flatMap { it.rows }.joinToString(" "), screen.name)
+                assertEquals(
+                    screen.lines.joinToString(" "),
+                    plan.units.flatMap { it.rows }.joinToString(" "),
+                    screen.name,
+                )
             }
         }
     }
@@ -152,10 +166,26 @@ class IntroHeadlinePlanTest {
     @Test
     fun `the hero is the line at the hero index and carries its question mark, and a whisper that ends the question keeps its own`() {
         assertEquals("going?", plan(screens[1], phone).units.single { it.role == HeadlineRole.Hero }.rows.single())
-        assertEquals("leaving from?", plan(screens[2], phone).units.single { it.role == HeadlineRole.Hero }.rows.single())
+        assertEquals(
+            "leaving from?",
+            plan(screens[2], phone).units.single { it.role == HeadlineRole.Hero }.rows.single(),
+        )
         assertEquals("Save", plan(screens[3], phone).units.single { it.role == HeadlineRole.Hero }.rows.single())
-        assertEquals("this trip?", plan(screens[3], phone).units.single { it.role == HeadlineRole.Whisper }.rows.single())
-        assertEquals(listOf(HeadlineRole.Whisper, HeadlineRole.Hero, HeadlineRole.Whisper, HeadlineRole.Whisper), plan(screens[0], phone).units.map { it.role })
+        assertEquals(
+            "this trip?",
+            plan(screens[3], phone).units.single { it.role == HeadlineRole.Whisper }.rows.single(),
+        )
+        assertEquals(
+            listOf(
+                HeadlineRole.Whisper,
+                HeadlineRole.Hero,
+                HeadlineRole.Whisper,
+                HeadlineRole.Whisper,
+            ),
+            plan(screens[0], phone).units.map {
+                it.role
+            },
+        )
     }
 
     @Test
@@ -175,7 +205,12 @@ class IntroHeadlinePlanTest {
 
         assertTrue(plan.heroStacked)
         assertEquals(listOf("leaving", "from?"), plan.units[1].rows)
-        assertEquals(1f, plan.units[1].scale, 0.0001f, "the widest word fits at the normal size, so the stack is at the normal size")
+        assertEquals(
+            1f,
+            plan.units[1].scale,
+            0.0001f,
+            "the widest word fits at the normal size, so the stack is at the normal size",
+        )
         assertEquals(WHISPER_SHARE, plan.units[0].scale, 0.0001f)
     }
 

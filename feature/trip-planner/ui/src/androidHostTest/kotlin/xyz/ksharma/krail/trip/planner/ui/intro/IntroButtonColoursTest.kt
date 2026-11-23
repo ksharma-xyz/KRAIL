@@ -60,7 +60,11 @@ class IntroButtonColoursTest {
                     val themeColour = remember { mutableStateOf(KrailThemeStyle.Train.hexColorCode) }
                     CompositionLocalProvider(LocalThemeColor provides themeColour) {
                         label = KrailTheme.colors.label
-                        IntroFlowScreen(state = shown.value, suggestedStops = DEFAULT_SUGGESTED_STOPS, onEvent = { _, _ -> })
+                        IntroFlowScreen(
+                            state = shown.value,
+                            suggestedStops = DEFAULT_SUGGESTED_STOPS,
+                            onEvent = { _, _ -> },
+                        )
                     }
                 }
             }
@@ -126,7 +130,11 @@ class IntroButtonColoursTest {
         show(themeSelected)
 
         val pick = KrailThemeStyle.Train.hexColorCode.hexToComposeColor()
-        assertEquals(getForegroundColor(pick), labelOf(THEME_CONFIRM), "the label is taj's, which is not forced to white")
+        assertEquals(
+            getForegroundColor(pick),
+            labelOf(THEME_CONFIRM),
+            "the label is taj's, which is not forced to white",
+        )
         assertTrue(labelOf(THEME_CONFIRM) != Color.White)
     }
 

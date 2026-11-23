@@ -140,8 +140,14 @@ class SearchStopControlsHideTest {
 
         assertEquals(1, count(location), "It does not snap away: it is still there part way through")
         val mid = bounds(location)
-        assertTrue(mid.width < full.width - 1f && mid.width > 0.5f, "and already smaller, ${mid.width} of ${full.width}")
-        assertTrue(abs(mid.center.x - full.center.x) < 1f && abs(mid.center.y - full.center.y) < 1f, "about its own centre")
+        assertTrue(
+            mid.width < full.width - 1f && mid.width > 0.5f,
+            "and already smaller, ${mid.width} of ${full.width}",
+        )
+        assertTrue(
+            abs(mid.center.x - full.center.x) < 1f && abs(mid.center.y - full.center.y) < 1f,
+            "about its own centre",
+        )
         composeRule.mainClock.advanceTimeBy(SETTLED_MS)
         assertEquals(0, count(location), "and out of the tree once it has gone")
     }
@@ -156,7 +162,10 @@ class SearchStopControlsHideTest {
         setCard(false)
         composeRule.mainClock.advanceTimeBy(FRAME_MS * 4)
         val mid = bounds(location)
-        assertTrue(mid.width < before.width - 1f && mid.width > 0.5f, "It comes back from nothing, ${mid.width} of ${before.width}")
+        assertTrue(
+            mid.width < before.width - 1f && mid.width > 0.5f,
+            "It comes back from nothing, ${mid.width} of ${before.width}",
+        )
 
         composeRule.mainClock.advanceTimeBy(SETTLED_MS)
         val after = bounds(location)
@@ -177,7 +186,10 @@ class SearchStopControlsHideTest {
     @Test
     fun `Options and its card leave with the stop card and come back with the card shut`() {
         setControls()
-        composeRule.runOnUiThread { blockOpen = true; Snapshot.sendApplyNotifications() }
+        composeRule.runOnUiThread {
+            blockOpen = true
+            Snapshot.sendApplyNotifications()
+        }
         composeRule.mainClock.advanceTimeBy(SETTLED_MS)
         assertEquals(1, count(chips), "The Options card is open")
         val full = bounds(options)
@@ -186,7 +198,10 @@ class SearchStopControlsHideTest {
         composeRule.mainClock.advanceTimeBy(FRAME_MS * 4)
         val mid = bounds(options)
         assertEquals(1, count(options), "Options is still there part way through")
-        assertTrue(mid.width < full.width - 0.5f && mid.width > full.width * MapMotion.POP_START_SCALE - 1f, "shrinking, ${mid.width} of ${full.width}")
+        assertTrue(
+            mid.width < full.width - 0.5f && mid.width > full.width * MapMotion.POP_START_SCALE - 1f,
+            "shrinking, ${mid.width} of ${full.width}",
+        )
         composeRule.mainClock.advanceTimeBy(SETTLED_MS)
         assertEquals(0, count(options), "then gone")
         assertEquals(0, count(chips), "and so is the card")

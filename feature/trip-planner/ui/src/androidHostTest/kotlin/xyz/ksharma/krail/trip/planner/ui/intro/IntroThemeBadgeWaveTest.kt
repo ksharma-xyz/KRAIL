@@ -100,7 +100,11 @@ class IntroThemeBadgeWaveTest {
         )
     }
 
-    private fun bounds(): List<DpRect> = introThemeChoices().map { composeRule.onNodeWithTag(it.tag).getUnclippedBoundsInRoot() }
+    private fun bounds(): List<DpRect> = introThemeChoices().map {
+        composeRule.onNodeWithTag(
+            it.tag,
+        ).getUnclippedBoundsInRoot()
+    }
 
     private fun expected(window: Int) = themeBadgeGrid(
         count = 4,
@@ -125,7 +129,12 @@ class IntroThemeBadgeWaveTest {
                     assertEquals(left.value + grid.xsDp[i], rect.left.value, 1f, "$where: badge $i across")
                     assertEquals(room.top.value + grid.ysDp[i], rect.top.value, 1f, "$where: badge $i down")
                 }
-                assertEquals(grid.heightDp, (b.maxOf { it.bottom } - b.minOf { it.top }).value, 1f, "$where: the grid height")
+                assertEquals(
+                    grid.heightDp,
+                    (b.maxOf { it.bottom } - b.minOf { it.top }).value,
+                    1f,
+                    "$where: the grid height",
+                )
             }
         }
     }
@@ -171,8 +180,14 @@ class IntroThemeBadgeWaveTest {
                 val where = "$window dp at $scale"
 
                 b.forEachIndexed { i, rect ->
-                    assertTrue(rect.width >= 48.dp - 1.dp && rect.height >= 48.dp - 1.dp, "badge $i is only $rect: $where")
-                    assertTrue(rect.left >= room.left - 1.dp && rect.right <= room.right + 1.dp, "badge $i is outside the room: $rect $where")
+                    assertTrue(
+                        rect.width >= 48.dp - 1.dp && rect.height >= 48.dp - 1.dp,
+                        "badge $i is only $rect: $where",
+                    )
+                    assertTrue(
+                        rect.left >= room.left - 1.dp && rect.right <= room.right + 1.dp,
+                        "badge $i is outside the room: $rect $where",
+                    )
                 }
                 b.forEachIndexed { i, a ->
                     b.drop(i + 1).forEachIndexed { k, other ->
@@ -181,7 +196,10 @@ class IntroThemeBadgeWaveTest {
                             (a.left + a.right - other.left - other.right).value / 2f,
                             (a.top + a.bottom - other.top - other.bottom).value / 2f,
                         )
-                        assertTrue(centres - 64f >= 14f, "badges $i and ${i + 1 + k} are ${centres - 64f} dp apart: $where")
+                        assertTrue(
+                            centres - 64f >= 14f,
+                            "badges $i and ${i + 1 + k} are ${centres - 64f} dp apart: $where",
+                        )
                     }
                 }
             }

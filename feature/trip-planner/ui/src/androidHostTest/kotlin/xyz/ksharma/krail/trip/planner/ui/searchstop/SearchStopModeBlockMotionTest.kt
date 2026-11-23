@@ -5,8 +5,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.positionInRoot
@@ -137,7 +137,10 @@ class SearchStopModeBlockMotionTest {
         val width = drawnWidth()
         val linesAtFirst = chipLines()
         composeRule.mainClock.advanceTimeBy(SETTLED_MS)
-        assertTrue(width < drawnWidth() - 0.5f && width > drawnWidth() * MODE_BLOCK_START_SCALE - 1f, "It grows from $width")
+        assertTrue(
+            width < drawnWidth() - 0.5f && width > drawnWidth() * MODE_BLOCK_START_SCALE - 1f,
+            "It grows from $width",
+        )
         assertEquals(chipLines(), linesAtFirst, "The chips are on the lines they end on from the first frames.")
     }
 
@@ -268,6 +271,5 @@ class SearchStopModeBlockMotionTest {
         val GROUND = Color.Magenta
         const val FRAME_MS = 16L
         const val SETTLED_MS = 1_000L
-
     }
 }

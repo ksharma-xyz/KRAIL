@@ -6,7 +6,6 @@ import xyz.ksharma.krail.core.testing.coroutines.krailRunTest
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStop
-import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
 import kotlin.test.Test
@@ -110,7 +109,12 @@ class IntroFlowViewModelTest {
     fun `the same stop on both lists is a valid trip when the other end is different`() = krailRunTest {
         val rig = IntroRig(this, handle = savedAt(IntroState(step = IntroStep.DESTINATION)))
 
-        rig.send(IntroUiEvent.SelectStop(CENTRAL.toIntroStop()), IntroUiEvent.ConfirmStop, IntroUiEvent.SelectStop(WYNYARD.toIntroStop()), IntroUiEvent.ConfirmStop)
+        rig.send(
+            IntroUiEvent.SelectStop(CENTRAL.toIntroStop()),
+            IntroUiEvent.ConfirmStop,
+            IntroUiEvent.SelectStop(WYNYARD.toIntroStop()),
+            IntroUiEvent.ConfirmStop,
+        )
 
         assertEquals(true, rig.state.hasTrip)
         assertEquals(IntroStep.CONFIRM, rig.state.step)
@@ -122,8 +126,10 @@ class IntroFlowViewModelTest {
             val before = IntroRig(this)
             before.send(
                 IntroUiEvent.AnswerParkRide(yes = false),
-                IntroUiEvent.SelectStop(IntroStop(stopId = "9", name = "Nine")), IntroUiEvent.ConfirmStop,
-                IntroUiEvent.SelectStop(TALLAWONG.toIntroStop()), IntroUiEvent.ConfirmStop,
+                IntroUiEvent.SelectStop(IntroStop(stopId = "9", name = "Nine")),
+                IntroUiEvent.ConfirmStop,
+                IntroUiEvent.SelectStop(TALLAWONG.toIntroStop()),
+                IntroUiEvent.ConfirmStop,
             )
 
             val after = IntroRig(this, handle = before.handle)

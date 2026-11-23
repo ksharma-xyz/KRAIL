@@ -97,14 +97,20 @@ class IntroHeadlineSpacingTest {
     }
 
     // In the density the row was drawn in, which is how an Android phone turns sp to dp, not quite linearly above 100 percent.
-    private fun Row.sizeDp(): Float = with(layout.layoutInput.density) { layout.layoutInput.style.fontSize.toDp().value }
+    private fun Row.sizeDp(): Float = with(
+        layout.layoutInput.density,
+    ) { layout.layoutInput.style.fontSize.toDp().value }
 
-    private fun Row.boxDp(): Float = with(layout.layoutInput.density) { layout.layoutInput.style.lineHeight.toDp().value }
+    private fun Row.boxDp(): Float = with(
+        layout.layoutInput.density,
+    ) { layout.layoutInput.style.lineHeight.toDp().value }
 
     private fun Row.middleDp(density: Float): Float = (bounds.top + bounds.bottom) / 2f / density
 
     private fun headlineHeightDp(): Float {
-        val heading = composeRule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading)).fetchSemanticsNodes().single()
+        val heading = composeRule.onAllNodes(
+            SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading),
+        ).fetchSemanticsNodes().single()
         return heading.boundsInRoot.height / density
     }
 
@@ -132,7 +138,10 @@ class IntroHeadlineSpacingTest {
         val hero = rows.maxOf { it.sizeDp() }
         // Every box at 1.12 of its size, 2 dp between the units, 6 dp above and below the hero, and the stacked words' 2 dp between.
         val expected = rows.sumOf { it.boxDp().toDouble() }.toFloat() + (rows.size - 1) * 2f + 12f
-        assertTrue(rows.all { abs(it.boxDp() - HEADLINE_LINE_HEIGHT_FACTOR * it.sizeDp()) < 0.01f }, "a box is 1.12 of its size")
+        assertTrue(
+            rows.all { abs(it.boxDp() - HEADLINE_LINE_HEIGHT_FACTOR * it.sizeDp()) < 0.01f },
+            "a box is 1.12 of its size",
+        )
         assertEquals(expected, headlineHeightDp(), PX_DP * rows.size, "${screen.name}, $frame: the whole headline")
         assertTrue(rows.any { abs(it.sizeDp() - hero) < 0.01f })
     }

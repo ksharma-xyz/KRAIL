@@ -42,7 +42,9 @@ class IntroSurfaceContrastTest {
                 val fill = tint(style, dark)
                 val name = ink(dark).contrastRatio(fill)
                 val last = softLabel(dark).contrastRatio(fill)
-                println("P1 contrast, ${if (dark) "dark" else "light"}, ${style.name} ($step): name and figures $name, last updated $last")
+                println(
+                    "P1 contrast, ${if (dark) "dark" else "light"}, ${style.name} ($step): name and figures $name, last updated $last",
+                )
 
                 assertTrue(name >= MIN_TEXT, "${style.name} dark $dark: name and figures $name")
                 assertTrue(last >= MIN_TEXT, "${style.name} dark $dark: last updated $last")
@@ -74,7 +76,10 @@ class IntroSurfaceContrastTest {
             val (style, dark, which) = key
             val actual = (if (which == "name") ink(dark) else softLabel(dark)).contrastRatio(tint(style, dark))
 
-            assertTrue(abs(actual - expected) < MOCK_TOLERANCE, "${style.name} dark $dark $which: $actual against the mock's $expected")
+            assertTrue(
+                abs(actual - expected) < MOCK_TOLERANCE,
+                "${style.name} dark $dark $which: $actual against the mock's $expected",
+            )
         }
     }
 
@@ -85,7 +90,10 @@ class IntroSurfaceContrastTest {
         // 6.61 in the mock. The blue is a hair under it and the pink and teal are far better.
         assertEquals(6.61f, ink(true).contrastRatio(train), MOCK_TOLERANCE)
         accents.forEach { (_, style) ->
-            assertTrue(ink(true).contrastRatio(tint(style, true)) >= ink(true).contrastRatio(train) - MOCK_TOLERANCE, style.name)
+            assertTrue(
+                ink(true).contrastRatio(tint(style, true)) >= ink(true).contrastRatio(train) - MOCK_TOLERANCE,
+                style.name,
+            )
         }
     }
 
@@ -94,9 +102,14 @@ class IntroSurfaceContrastTest {
         val raw = KrailThemeStyle.Ferry.hexColorCode.hexToComposeColor()
         val fill = introButtonFill(raw)
 
-        println("P tile, white on ${fill}: ${Color.White.contrastRatio(fill)} (raw green ${Color.White.contrastRatio(raw)})")
+        println(
+            "P tile, white on $fill: ${Color.White.contrastRatio(fill)} (raw green ${Color.White.contrastRatio(raw)})",
+        )
         assertTrue(Color.White.contrastRatio(fill) >= MIN_TEXT)
-        assertTrue(Color.White.contrastRatio(raw) < 3f, "the raw green is under 3 to 1, which is why the tile uses the fill")
+        assertTrue(
+            Color.White.contrastRatio(raw) < 3f,
+            "the raw green is under 3 to 1, which is why the tile uses the fill",
+        )
     }
 
     private companion object {

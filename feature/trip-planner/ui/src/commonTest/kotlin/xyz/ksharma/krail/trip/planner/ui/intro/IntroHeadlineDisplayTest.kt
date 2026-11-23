@@ -97,7 +97,14 @@ class IntroHeadlineDisplayTest {
             3f to 40.dp,
         )
 
-        table.forEach { (scale, expected) -> assertEquals(expected.value, introEmojiTitleGap(base, scale).value, 0.001f, "at $scale") }
+        table.forEach { (scale, expected) ->
+            assertEquals(
+                expected.value,
+                introEmojiTitleGap(base, scale).value,
+                0.001f,
+                "at $scale",
+            )
+        }
         assertTrue(introEmojiTitleGap(base, 1f) >= 16.dp, "never under 16 dp")
     }
 

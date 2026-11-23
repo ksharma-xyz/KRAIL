@@ -37,7 +37,10 @@ class ParkRideFigureRevealTest {
         beats.forEach { beat ->
             val start = (beat * FIGURE_STAGGER_MS).toFloat()
             assertEquals(0f, figureFrame(start, beat, reduceMotion = false).alpha, "line $beat has started by $start")
-            assertTrue(figureFrame(start + 1f, beat, reduceMotion = false).alpha > 0f, "line $beat has not started by ${start + 1f}")
+            assertTrue(
+                figureFrame(start + 1f, beat, reduceMotion = false).alpha > 0f,
+                "line $beat has not started by ${start + 1f}",
+            )
             if (beat > 0) assertEquals(0f, figureFrame(start - 1f, beat, reduceMotion = false).alpha)
         }
     }
@@ -58,7 +61,10 @@ class ParkRideFigureRevealTest {
             val end = (beat * FIGURE_STAGGER_MS + FIGURE_BEAT_MS).toFloat()
             assertEquals(1f, figureFrame(end, beat, reduceMotion = false).alpha)
             assertEquals(0f, figureFrame(end, beat, reduceMotion = false).rise)
-            assertTrue(figureFrame(end - 1f, beat, reduceMotion = false).alpha < 1f, "line $beat is complete before $end")
+            assertTrue(
+                figureFrame(end - 1f, beat, reduceMotion = false).alpha < 1f,
+                "line $beat is complete before $end",
+            )
         }
         assertEquals(FIGURE_TOTAL_MS.toFloat(), (FIGURE_BEAT_COUNT - 1) * FIGURE_STAGGER_MS + FIGURE_BEAT_MS.toFloat())
         beats.forEach { assertEquals(1f, figureFrame(FIGURE_TOTAL_MS.toFloat(), it, reduceMotion = false).alpha) }
@@ -87,7 +93,10 @@ class ParkRideFigureRevealTest {
         assertTrue(half.alpha > 0.6f, "half way through the beat it is only ${half.alpha} drawn")
         // The first half covers more ground than the second, which is the ease out.
         assertTrue(half.alpha - 0f > 1f - half.alpha, "the first half does no more than the second")
-        assertTrue(threeQuarters.alpha > 0.9f, "three quarters through the beat it is only ${threeQuarters.alpha} drawn")
+        assertTrue(
+            threeQuarters.alpha > 0.9f,
+            "three quarters through the beat it is only ${threeQuarters.alpha} drawn",
+        )
         assertTrue(quarter.alpha < half.alpha)
     }
 

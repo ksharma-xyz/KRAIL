@@ -157,20 +157,33 @@ class SearchStopOptionsPermissionTest {
     @Test
     fun `the modes the rider switched off survive Options being hidden, and its card returns shut`() {
         setControls()
-        composeRule.runOnUiThread { blockOpen = true; Snapshot.sendApplyNotifications() }
+        composeRule.runOnUiThread {
+            blockOpen = true
+            Snapshot.sendApplyNotifications()
+        }
         composeRule.mainClock.advanceTimeBy(SETTLED_MS)
         assertEquals(ToggleableState.On, chipState(on))
         assertEquals(ToggleableState.Off, chipState(off))
 
         givePermission(PermissionStatus.Denied(canAskAgain = false))
         composeRule.mainClock.advanceTimeBy(SETTLED_MS)
-        assertEquals(0, composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).fetchSemanticsNodes().size)
+        assertEquals(
+            0,
+            composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).fetchSemanticsNodes().size,
+        )
 
         givePermission(PermissionStatus.Granted)
         composeRule.mainClock.advanceTimeBy(SETTLED_MS)
         assertEquals(1, optionsCount())
-        assertEquals(0, composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).fetchSemanticsNodes().size, "Shut")
-        composeRule.runOnUiThread { blockOpen = true; Snapshot.sendApplyNotifications() }
+        assertEquals(
+            0,
+            composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).fetchSemanticsNodes().size,
+            "Shut",
+        )
+        composeRule.runOnUiThread {
+            blockOpen = true
+            Snapshot.sendApplyNotifications()
+        }
         composeRule.mainClock.advanceTimeBy(SETTLED_MS)
         assertEquals(ToggleableState.On, chipState(on), "The mode that was on is still on")
         assertEquals(ToggleableState.Off, chipState(off), "and the one that was off is still off")

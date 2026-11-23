@@ -22,7 +22,10 @@ class IntroRhythmTest {
 
     @Test
     fun `the numbers are 16 dp above the headline, 24 dp under it, and 16 dp under the middle zone and under the search field`() {
-        assertEquals(IntroRhythm(top = 16.dp, titleToMiddle = 24.dp, middleBottom = 16.dp, fieldToList = 16.dp), introRhythm(dim))
+        assertEquals(
+            IntroRhythm(top = 16.dp, titleToMiddle = 24.dp, middleBottom = 16.dp, fieldToList = 16.dp),
+            introRhythm(dim),
+        )
     }
 
     @Test
@@ -32,7 +35,10 @@ class IntroRhythmTest {
         listOf(rhythm.top, rhythm.titleToMiddle, rhythm.middleBottom, rhythm.fieldToList).forEach {
             assertTrue(it >= 16.dp, "a gap is only $it")
         }
-        assertTrue(rhythm.titleToMiddle >= rhythm.fieldToList, "the title is further from what it asks than the field from its list")
+        assertTrue(
+            rhythm.titleToMiddle >= rhythm.fieldToList,
+            "the title is further from what it asks than the field from its list",
+        )
     }
 
     @Test

@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalDensity
@@ -21,14 +22,13 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertHasClickAction
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.click
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -114,9 +114,15 @@ class SearchStopLocationNoticeTest {
         composeRule.waitForIdle()
     }
 
-    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(
+        tag,
+        useUnmergedTree = true,
+    ).getUnclippedBoundsInRoot()
 
-    private fun textBounds(text: String): DpRect = composeRule.onNodeWithText(text, useUnmergedTree = true).getUnclippedBoundsInRoot()
+    private fun textBounds(text: String): DpRect = composeRule.onNodeWithText(
+        text,
+        useUnmergedTree = true,
+    ).getUnclippedBoundsInRoot()
 
     private fun lineCountOf(text: String): Int {
         val results = mutableListOf<TextLayoutResult>()
@@ -126,7 +132,10 @@ class SearchStopLocationNoticeTest {
         return results.first().lineCount
     }
 
-    private fun exists(tag: String) = composeRule.onAllNodes(androidx.compose.ui.test.hasTestTag(tag), useUnmergedTree = true)
+    private fun exists(tag: String) = composeRule.onAllNodes(
+        androidx.compose.ui.test.hasTestTag(tag),
+        useUnmergedTree = true,
+    )
         .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
 
     // region copy and calls
@@ -154,7 +163,13 @@ class SearchStopLocationNoticeTest {
 
     @Test
     fun `no word of the notice has a colon or an em dash`() {
-        for (text in listOf(LOCATION_NOTICE_TITLE, LOCATION_NOTICE_BODY, LOCATION_NOTICE_DISMISS, LOCATION_NOTICE_CTA_ALLOW, LOCATION_NOTICE_CTA_SETTINGS)) {
+        for (text in listOf(
+            LOCATION_NOTICE_TITLE,
+            LOCATION_NOTICE_BODY,
+            LOCATION_NOTICE_DISMISS,
+            LOCATION_NOTICE_CTA_ALLOW,
+            LOCATION_NOTICE_CTA_SETTINGS,
+        )) {
             assertTrue(':' !in text && EM_DASH !in text, "$text")
         }
     }
@@ -239,7 +254,10 @@ class SearchStopLocationNoticeTest {
 
         assertEquals(1, lineCountOf("Settings"), "Settings is one line, never Setti and ngs.")
         assertEquals(1, lineCountOf("Not now"))
-        assertTrue(textBounds("Settings").top >= textBounds("Not now").bottom - 1.dp, "Settings drops under Not now as a whole item.")
+        assertTrue(
+            textBounds("Settings").top >= textBounds("Not now").bottom - 1.dp,
+            "Settings drops under Not now as a whole item.",
+        )
         val tile = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
         assertTrue(tile.left >= 0.dp && tile.right <= 320.dp, "The tile stays inside the window: $tile")
     }
@@ -273,7 +291,9 @@ class SearchStopLocationNoticeTest {
         val y = with(density) { (tile.top + tile.height / 2f).roundToPx() }
         val across = (with(density) { (tile.left - 2.dp).roundToPx() }..with(density) { (tile.left + 2.dp).roundToPx() })
             .map { Color(image.getPixel(it, y)) }
-        fun distance(c: Color) = abs(c.red - expectedEdge.red) + abs(c.green - expectedEdge.green) + abs(c.blue - expectedEdge.blue)
+        fun distance(
+            c: Color,
+        ) = abs(c.red - expectedEdge.red) + abs(c.green - expectedEdge.green) + abs(c.blue - expectedEdge.blue)
         return across.minBy { distance(it) }
     }
 
@@ -285,7 +305,10 @@ class SearchStopLocationNoticeTest {
         val image = drawn()
         assertTrue(close(tint, pixelAt(image, tile.right - 8.dp, tile.top + 8.dp)), "the fill is the Timetable's tint")
         assertNotEquals(surface, tint)
-        assertTrue(close(surface, pixelAt(image, tile.left - 3.dp, tile.top + tile.height / 2f)), "nothing glows outside the tile")
+        assertTrue(
+            close(surface, pixelAt(image, tile.left - 3.dp, tile.top + tile.height / 2f)),
+            "nothing glows outside the tile",
+        )
     }
 
     @Test
@@ -301,7 +324,10 @@ class SearchStopLocationNoticeTest {
     fun `in dark mode the tile wears no hairline on the map, and the dark softLabel one on the gradient`() {
         setNotice()
 
-        assertTrue(!close(md_theme_dark_softLabel, edgeAcross(md_theme_dark_softLabel)), "no pixel across the tile's edge on the map is a hairline")
+        assertTrue(
+            !close(md_theme_dark_softLabel, edgeAcross(md_theme_dark_softLabel)),
+            "no pixel across the tile's edge on the map is a hairline",
+        )
         assertNotEquals(modeSoftLabel, md_theme_light_softLabel, "the mode aware softLabel is the dark one")
     }
 
@@ -310,7 +336,10 @@ class SearchStopLocationNoticeTest {
     fun `in dark mode on the gradient the tile wears the dark softLabel hairline`() {
         setNotice(onGradient = true)
 
-        assertTrue(close(md_theme_dark_softLabel, edgeAcross(md_theme_dark_softLabel)), "a pixel across the tile's edge is the dark hairline")
+        assertTrue(
+            close(md_theme_dark_softLabel, edgeAcross(md_theme_dark_softLabel)),
+            "a pixel across the tile's edge is the dark hairline",
+        )
     }
 
     @Test
@@ -321,15 +350,25 @@ class SearchStopLocationNoticeTest {
         val dark = themeColor.copy(alpha = 0.45f).compositeOver(md_theme_dark_surface)
         val tile = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
         val image = drawn()
-        assertTrue(close(dark, pixelAt(image, tile.right - 8.dp, tile.top + 8.dp)), "the fill is the theme at 45 percent over the dark surface")
+        assertTrue(
+            close(dark, pixelAt(image, tile.right - 8.dp, tile.top + 8.dp)),
+            "the fill is the theme at 45 percent over the dark surface",
+        )
         val light = themeColor.copy(alpha = 0.15f).compositeOver(md_theme_light_surface)
-        assertTrue(!close(light, pixelAt(image, tile.right - 8.dp, tile.top + 8.dp)), "and it is not the light tint it was")
+        assertTrue(
+            !close(light, pixelAt(image, tile.right - 8.dp, tile.top + 8.dp)),
+            "and it is not the light tint it was",
+        )
         assertNotEquals(surface, dark)
         for (text in listOf(LOCATION_NOTICE_TITLE, LOCATION_NOTICE_BODY, LOCATION_NOTICE_DISMISS)) {
             val results = mutableListOf<TextLayoutResult>()
             composeRule.onNodeWithText(text, useUnmergedTree = true).fetchSemanticsNode()
                 .config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(results)
-            assertEquals(md_theme_dark_onSurface, results.first().layoutInput.style.color.copy(alpha = 1f), "$text is the box's cream")
+            assertEquals(
+                md_theme_dark_onSurface,
+                results.first().layoutInput.style.color.copy(alpha = 1f),
+                "$text is the box's cream",
+            )
         }
     }
 

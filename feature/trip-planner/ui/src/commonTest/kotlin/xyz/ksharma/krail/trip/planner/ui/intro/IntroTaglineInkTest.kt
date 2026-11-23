@@ -72,7 +72,11 @@ class IntroTaglineInkTest {
             println("tagline, light, ${theme.name}: $ink $contrast")
 
             assertTrue(contrast >= TAGLINE_MIN_CONTRAST_LIGHT, "${theme.name}: $contrast is under 7")
-            assertNotEquals(md_theme_light_onSurface, ink, "${theme.name} went all the way to the plain ink, so the hue is lost")
+            assertNotEquals(
+                md_theme_light_onSurface,
+                ink,
+                "${theme.name} went all the way to the plain ink, so the hue is lost",
+            )
         }
     }
 
@@ -108,8 +112,14 @@ class IntroTaglineInkTest {
             themes.forEach { theme ->
                 val now = after(theme, dark).contrastRatio(ground(theme, dark))
 
-                assertTrue(now >= at45(theme, dark).contrastRatio(ground(theme, dark)) - 0.001f, "${theme.name}, dark $dark, against 4.5")
-                assertTrue(now >= before(theme, dark).contrastRatio(ground(theme, dark)) - 0.001f, "${theme.name}, dark $dark, against taj's")
+                assertTrue(
+                    now >= at45(theme, dark).contrastRatio(ground(theme, dark)) - 0.001f,
+                    "${theme.name}, dark $dark, against 4.5",
+                )
+                assertTrue(
+                    now >= before(theme, dark).contrastRatio(ground(theme, dark)) - 0.001f,
+                    "${theme.name}, dark $dark, against taj's",
+                )
             }
         }
     }

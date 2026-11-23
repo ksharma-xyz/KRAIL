@@ -46,7 +46,12 @@ class IntroHeroHeadlineTest {
     private class Screen(val name: String, val lines: List<String>, val hero: Int, val spoken: String)
 
     private val screens = listOf(
-        Screen("Park and Ride", PARK_RIDE_HEADLINE, PARK_RIDE_HERO_INDEX, "Show parking spots at your nearest station?"),
+        Screen(
+            "Park and Ride",
+            PARK_RIDE_HEADLINE,
+            PARK_RIDE_HERO_INDEX,
+            "Show parking spots at your nearest station?",
+        ),
         Screen("Destination", DESTINATION_HEADLINE, STOP_HERO_INDEX, "Where are you going?"),
         Screen("Origin", ORIGIN_HEADLINE, STOP_HERO_INDEX, "Where are you leaving from?"),
         Screen("Confirm", CONFIRM_HEADLINE, CONFIRM_HERO_INDEX, "Save this trip?"),
@@ -102,7 +107,11 @@ class IntroHeroHeadlineTest {
     // The test font is a little different from the mock's Roboto Black, so the sizes are held to a point of the mock's.
     private fun assertDrawn(screen: Screen, room: Int, expected: List<Float>) {
         val layouts = drawn()
-        assertEquals(expected.size, layouts.size, "${screen.name} at $room dp: ${layouts.map { it.layoutInput.text.text }}")
+        assertEquals(
+            expected.size,
+            layouts.size,
+            "${screen.name} at $room dp: ${layouts.map { it.layoutInput.text.text }}",
+        )
         layouts.zip(expected).forEachIndexed { index, (layout, size) ->
             assertTrue(
                 kotlin.math.abs(layout.sizeSp() - size) <= SIZE_TOLERANCE_SP,
@@ -118,7 +127,10 @@ class IntroHeroHeadlineTest {
             assertEquals(1, layout.lineCount, "\"$text\" wraps in $room dp")
             assertTrue(!layout.didOverflowWidth, "\"$text\" overflows in $room dp")
             assertTrue(layout.size.width <= layout.layoutInput.constraints.maxWidth, "\"$text\" is wider than its room")
-            assertTrue(layout.getLineRight(0) <= room * layout.layoutInput.density.density + 1f, "\"$text\" is cut in $room dp")
+            assertTrue(
+                layout.getLineRight(0) <= room * layout.layoutInput.density.density + 1f,
+                "\"$text\" is cut in $room dp",
+            )
         }
         assertEquals(
             screen.lines.joinToString(" ") { introHeadlineDisplay(it) },
@@ -185,7 +197,10 @@ class IntroHeroHeadlineTest {
             "the hero stacks word by word, and no word is split",
         )
         show(screens[0])
-        assertTrue(drawn()[1].sizeSp() / normal in 0.8f..0.9f, "PARKING SPOTS is about 0.85 of the normal size at 320 dp and 200 percent")
+        assertTrue(
+            drawn()[1].sizeSp() / normal in 0.8f..0.9f,
+            "PARKING SPOTS is about 0.85 of the normal size at 320 dp and 200 percent",
+        )
     }
 
     @Test
@@ -199,7 +214,14 @@ class IntroHeroHeadlineTest {
             assertTrue(hero <= ordinary + 0.01f, "${screen.name}: the hero is $hero sp over the ordinary $ordinary")
             layouts.forEachIndexed { index, layout ->
                 assertTrue(layout.sizeSp() <= hero + 0.01f, "${screen.name}: line ${index + 1} is larger than the hero")
-                if (index != screen.hero) assertEquals(0.7f * hero, layout.sizeSp(), 0.3f, "${screen.name}: line ${index + 1}")
+                if (index != screen.hero) {
+                    assertEquals(
+                        0.7f * hero,
+                        layout.sizeSp(),
+                        0.3f,
+                        "${screen.name}: line ${index + 1}",
+                    )
+                }
             }
         }
     }
@@ -211,7 +233,10 @@ class IntroHeroHeadlineTest {
             show(screen)
             val headings = composeRule.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.Heading))
             assertEquals(1, headings.fetchSemanticsNodes().size, "${screen.name} is one heading")
-            assertEquals(listOf(screen.spoken), headings[0].fetchSemanticsNode().config[SemanticsProperties.Text].map { it.text })
+            assertEquals(
+                listOf(screen.spoken),
+                headings[0].fetchSemanticsNode().config[SemanticsProperties.Text].map { it.text },
+            )
         }
     }
 

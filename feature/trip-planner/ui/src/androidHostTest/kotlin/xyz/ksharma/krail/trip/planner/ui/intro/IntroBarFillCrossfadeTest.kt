@@ -64,7 +64,11 @@ class IntroBarFillCrossfadeTest {
                 KrailTheme(themeController = ThemeController(currentMode = ThemeMode.LIGHT, setThemeMode = {})) {
                     val themeColour = remember { mutableStateOf(KrailThemeStyle.Train.hexColorCode) }
                     CompositionLocalProvider(LocalThemeColor provides themeColour) {
-                        IntroFlowScreen(state = shown.value, suggestedStops = DEFAULT_SUGGESTED_STOPS, onEvent = { _, _ -> })
+                        IntroFlowScreen(
+                            state = shown.value,
+                            suggestedStops = DEFAULT_SUGGESTED_STOPS,
+                            onEvent = { _, _ -> },
+                        )
                     }
                 }
             }
@@ -86,7 +90,9 @@ class IntroBarFillCrossfadeTest {
         val bounds = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION, useUnmergedTree = true)
             .fetchSemanticsNode().boundsInRoot
         val inset = with(composeRule.density) { 14.dp.toPx() }
-        return IntroPixels(composeRule).of(TripPlannerTestTags.INTRO_SCREEN).colourAt(bounds.left + inset, bounds.center.y)
+        return IntroPixels(
+            composeRule,
+        ).of(TripPlannerTestTags.INTRO_SCREEN).colourAt(bounds.left + inset, bounds.center.y)
     }
 
     private fun close(a: Color, b: Color, tolerance: Float = 0.015f) =

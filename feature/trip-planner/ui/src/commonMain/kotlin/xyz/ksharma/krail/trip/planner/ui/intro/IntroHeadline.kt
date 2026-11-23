@@ -15,6 +15,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -24,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -34,9 +36,11 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
@@ -48,9 +52,15 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 
 /**
  * How much bigger the headline is than the app's `introTagline` style: the style's size and line height times this.
- * The headline is meant to be the loudest thing on the screen. 1.7 is 47.6 sp on a 61.2 sp line.
+ * The headline is meant to be the loudest thing on the screen. 1.7 is 47.6 sp.
  */
 internal const val HEADLINE_SIZE_FACTOR = 1.7f
+
+/**
+ * The height of a line of the headline as a share of that line's own font size: 1.12, which is 53.3 sp for the 47.6 sp line and
+ * 37.3 sp for a whisper of 33.3 sp. Every line takes it from its own size, so a whisper is as snug as the hero.
+ */
+internal const val HEADLINE_LINE_HEIGHT_FACTOR = 1.12f
 
 /**
  * The weight of every headline line: the heaviest the display style's family has. The style is the system font at
@@ -106,13 +116,11 @@ internal fun headlineFontScale(systemScale: Float, room: Dp = Dp.Unspecified): F
 
 /**
  * The display style of the headline: the app's `introTagline` style, [HEADLINE_SIZE_FACTOR] times as large, at
- * [HEADLINE_WEIGHT].
+ * [HEADLINE_WEIGHT], with a line [HEADLINE_LINE_HEIGHT_FACTOR] of its own size.
  */
-internal fun TextStyle.asHeadlineStyle(): TextStyle = copy(
-    fontSize = fontSize * HEADLINE_SIZE_FACTOR,
-    lineHeight = lineHeight * HEADLINE_SIZE_FACTOR,
-    fontWeight = HEADLINE_WEIGHT,
-)
+internal fun TextStyle.asHeadlineStyle(): TextStyle = (fontSize * HEADLINE_SIZE_FACTOR).let { size ->
+    copy(fontSize = size, lineHeight = size * HEADLINE_LINE_HEIGHT_FACTOR, fontWeight = HEADLINE_WEIGHT)
+}
 
 /** The room between the emoji and the first line, which grows with the text: [base] at 100 percent and up to twice that. */
 internal fun introEmojiTitleGap(base: Dp, fontScale: Float): Dp = base * fontScale.coerceIn(1f, 2f)
@@ -275,7 +283,9 @@ private fun IntroHeadlineBody(
                             scaleY = emojiScale.value
                             rotationZ = emojiTilt.value
                             alpha = celebration.fade.value
-                        },
+                        }
+                        // Its box is its line height, so the room kept for it is exactly what it takes.
+                        .headlineLineBox(KrailTheme.typography.emoji.lineHeight) { 1 },
                 )
             }
             HeadlineUnits(plan = plan, accent = accent, ink = KrailTheme.colors.onSurface) { index ->
@@ -292,13 +302,25 @@ private fun IntroHeadlineBody(
     }
 }
 
-/** The room between two lines of a headline, and between the words of a stacked hero. */
+/** The room between two lines of a headline, and between the words of a stacked hero: 2 dp. */
 @Composable
-internal fun headlineLineGap(): Dp = KrailTheme.dimensions.spacingS
+internal fun headlineLineGap(): Dp = KrailTheme.dimensions.spacingXXS
 
-/** The extra room above and below the hero line, and only that line. */
+/** The extra room above and below the hero line, and only that line: 6 dp. */
 @Composable
-internal fun headlineHeroPad(): Dp = KrailTheme.dimensions.spacingNone
+internal fun headlineHeroPad(): Dp = KrailTheme.dimensions.spacingS
+
+/**
+ * Makes the box of a text [lines] lines of [lineHeight] tall, and puts the text in the middle of it. The text measures to the height
+ * its font has by nature, which is a little taller than the 1.12 of its size this box is, and it is drawn whole: it is not clipped
+ * and its glyphs sit where a line box on the web puts them, half the difference above and half below.
+ */
+internal fun Modifier.headlineLineBox(lineHeight: TextUnit, lines: () -> Int): Modifier =
+    layout { measurable, constraints ->
+        val placeable = measurable.measure(constraints)
+        val boxHeight = (lines() * lineHeight.toPx()).roundToInt()
+        layout(placeable.width, boxHeight) { placeable.place(0, (boxHeight - placeable.height) / 2) }
+    }
 
 /**
  * The lines of [plan], each unit its own block drawn at its own font scale, in a column with [headlineLineGap] between them.
@@ -329,7 +351,17 @@ internal fun HeadlineUnits(
                     horizontalAlignment = Alignment.Start,
                 ) {
                     unit.rows.forEach { row ->
-                        Text(text = introHeadlineDisplay(row), style = display, color = colour)
+                        // A row is a box of exactly one line height tall per line, and a line height is under the height the font
+                        // has by nature, so the text is not left to make its own box. Its text keeps the font's own height and sits
+                        // centred in the box, as a line box does on the web, so the rows are as snug as they were drawn.
+                        var lineCount by remember(row) { mutableIntStateOf(1) }
+                        Text(
+                            text = introHeadlineDisplay(row),
+                            style = display,
+                            color = colour,
+                            onTextLayout = { lineCount = it.lineCount },
+                            modifier = Modifier.headlineLineBox(display.lineHeight) { lineCount },
+                        )
                     }
                 }
             }

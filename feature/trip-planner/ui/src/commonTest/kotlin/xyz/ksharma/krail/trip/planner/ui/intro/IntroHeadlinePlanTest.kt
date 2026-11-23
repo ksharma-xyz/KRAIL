@@ -230,6 +230,42 @@ class IntroHeadlinePlanTest {
         assertEquals(0f, headlineHeightDp(HeadlinePlan(emptyList()), 100f, 10f, 6f))
     }
 
+    // The height of a headline at 411 dp and 100 percent, in dp: the rows at 1.12 of their size (a row is 53.31 dp at scale 1.0),
+    // 2 dp between lines and 6 dp above and below the hero only. The old spacing was 61.2 per row at scale 1.0 and 6 dp between.
+    private fun heightV2(screen: Screen, frame: Frame) =
+        headlineHeightDp(plan(screen, frame), rowHeightDp = 47.6f * 1.12f, lineGap = 2f, heroPad = 6f)
+
+    private fun heightV0(screen: Screen, frame: Frame) =
+        headlineHeightDp(plan(screen, frame), rowHeightDp = 61.2f, lineGap = 6f, heroPad = 0f)
+
+    @Test
+    fun `the headline heights at 411 dp and 100 percent are the mock's arithmetic, and spacing V2 is 24 dp shorter for Park and Ride`() {
+        // Old, as the mock drew it: Park 207.7, Destination and Origin 110.0, Confirm 110.0, Theme 143.5.
+        assertEquals(207.7f, heightV0(screens[0], phone), 0.2f)
+        assertEquals(110.0f, heightV0(screens[1], phone), 0.2f)
+        assertEquals(110.0f, heightV0(screens[3], phone), 0.2f)
+        assertEquals(143.5f, heightV0(screens[4], phone), 0.3f)
+        // New: 3.1 rows of 53.31, 3 gaps of 2 and 12 for the hero is 183.3 for Park and Ride.
+        assertEquals(183.3f, heightV2(screens[0], phone), 0.2f)
+        assertEquals(24.4f, heightV0(screens[0], phone) - heightV2(screens[0], phone), 0.3f)
+        // Destination and Confirm: a hero of 1.0 and a whisper of 0.7, one gap and the hero's 12.
+        assertEquals((1f + 0.7f) * 53.312f + 2f + 12f, heightV2(screens[1], phone), 0.2f)
+        assertEquals((1f + 0.7f) * 53.312f + 2f + 12f, heightV2(screens[3], phone), 0.2f)
+        // Theme: its hero is fitted to 0.895, its two whispers are 0.7 of that, two gaps of 2 and the hero's 12.
+        val hero = plan(screens[4], phone).heroScale!!
+        assertEquals((hero + 2 * 0.7f * hero) * 53.312f + 4f + 12f, heightV2(screens[4], phone), 0.2f)
+    }
+
+    @Test
+    fun `a stacked hero has 2 dp between its words and its 6 dp above and below are on the stack, not on each word`() {
+        val stacked = plan(screens[4], narrow)
+        val rowDp = 47.6f * 1.12f
+
+        // Whisper, hero of two rows, whisper: (0.7 + 2 + 0.7) rows of the normal size, 3 gaps of 2 between the 3 units' rows, 1 gap within the stack.
+        val expected = (0.7f + 1f + 1f + 0.7f) * rowDp * narrow.normal + 2f * 2f + 2f + 12f
+        assertEquals(expected, headlineHeightDp(stacked, rowDp, lineGap = 2f, heroPad = 6f), 0.3f)
+    }
+
     private companion object {
         const val BASE_SP = 47.6f
         const val TOLERANCE_SP = 0.5f

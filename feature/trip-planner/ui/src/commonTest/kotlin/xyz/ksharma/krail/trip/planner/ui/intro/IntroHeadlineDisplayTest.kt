@@ -61,14 +61,18 @@ class IntroHeadlineDisplayTest {
     }
 
     @Test
-    fun `the headline is 1_7 times the size of the display style, in size and line height`() {
+    fun `the headline is 1_7 times the size of the display style, with a line of 1_12 of its own size`() {
         val base = TextStyle(fontSize = 28.sp, lineHeight = 36.sp)
 
         val headline = base.asHeadlineStyle()
 
         assertEquals(1.7f, HEADLINE_SIZE_FACTOR)
+        assertEquals(1.12f, HEADLINE_LINE_HEIGHT_FACTOR)
         assertEquals(47.6f, headline.fontSize.value, 0.001f)
-        assertEquals(61.2f, headline.lineHeight.value, 0.001f)
+        assertEquals(53.31f, headline.lineHeight.value, 0.01f)
+        assertEquals(headline.fontSize.value * 1.12f, headline.lineHeight.value, 0.001f)
+        // The line height follows the size and not the style it came from, so every line of a plan is as snug as the next.
+        assertEquals(headline.lineHeight, TextStyle(fontSize = 28.sp, lineHeight = 90.sp).asHeadlineStyle().lineHeight)
     }
 
     @Test

@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.math.roundToInt
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
@@ -182,7 +183,8 @@ private fun rememberThemeHeadlineHeight(width: Dp): Dp {
         val heights = listOf(question) + themeTaglineVariants().map { planPlainHeadline(it, normal) }
         // Only a tagline line can wrap. The question's lines are fitted, so each row of it is one row.
         val rows = { unit: HeadlineUnit -> if (unit.role == HeadlineRole.Plain) rowsOf(unit) else unit.rows.size }
-        heights.maxOf { plan -> headlineHeightDp(plan, rowDp, gap.value, heroPad.value, rows) }.dp
+        val snap = { dp: Float -> density.density.let { d -> (dp * d).roundToInt() / d } }
+        heights.maxOf { plan -> headlineHeightDp(plan, rowDp, gap.value, heroPad.value, rows, snap) }.dp
     }
 }
 

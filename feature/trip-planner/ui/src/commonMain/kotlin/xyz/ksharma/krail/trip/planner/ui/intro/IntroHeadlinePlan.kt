@@ -124,7 +124,8 @@ private fun stepDown(scale: Float): Float = (scale * FIT_STEPS_PER_UNIT).toInt()
 /**
  * The height of [plan] in dp, with [lineGap] between units and between the rows of a stacked hero, [heroPad] above and below the
  * hero unit, and a row [rowHeightDp] at font scale 1.0, which is the headline style's line height in sp. A tagline line may wrap,
- * so [rowsOf] says how many rows a unit really takes, one by default.
+ * so [rowsOf] says how many rows a unit really takes, one by default. [snap] rounds a length in dp to the whole pixels the layout
+ * has, as the drawing does, so the room kept is never a pixel under what is drawn.
  */
 internal fun headlineHeightDp(
     plan: HeadlinePlan,
@@ -132,14 +133,16 @@ internal fun headlineHeightDp(
     lineGap: Float,
     heroPad: Float,
     rowsOf: (HeadlineUnit) -> Int = { it.rows.size },
+    snap: (Float) -> Float = { it },
 ): Float {
     if (plan.units.isEmpty()) return 0f
+    val gap = snap(lineGap)
     val units = plan.units.sumOf { unit ->
         val rows = rowsOf(unit)
-        val pad = if (unit.role == HeadlineRole.Hero) heroPad * 2 else 0f
-        (rows * rowHeightDp * unit.scale + (rows - 1) * lineGap + pad).toDouble()
+        val pad = if (unit.role == HeadlineRole.Hero) snap(heroPad) * 2 else 0f
+        (snap(rows * rowHeightDp * unit.scale) + (rows - 1) * gap + pad).toDouble()
     }.toFloat()
-    return units + (plan.units.size - 1) * lineGap
+    return units + (plan.units.size - 1) * gap
 }
 
 /**

@@ -79,7 +79,7 @@ internal fun IntroThemeSequenceHeadline(
                         val scale = change.emojiScaleNow()
                         scaleX = scale
                         scaleY = scale
-                    },
+                    }.headlineLineBox(KrailTheme.typography.emoji.lineHeight) { 1 },
                 )
             }
             Box {

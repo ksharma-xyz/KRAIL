@@ -165,7 +165,7 @@ If a design breaks one of these rules, the design changes, not the rule.
 25. Replaced by rule 36.
 26. **The go circle has one state.** It is a plain arrow. The next screen owns loading, success and error, so this screen
     never shows a trips error. The chips have no chevron: they are not dropdowns.
-27. **The spacing scale is 4, 8, 12, 16.** Edge inset 16 on every side. Gap between floating elements 8. Card padding 16 on
+27. **The spacing scale is 4, 8, 12, 16.** Edge inset 16 on every side, measured from the safe area on every side: the sides of a display that has a side safe area (the outer screen of a foldable iPhone, a camera cutout or a navigation bar in landscape) are left to the system, and the map still draws edge to edge behind the cards. Gap between floating elements 8. Card padding 16 on
     all four sides, and padding inside any card is equal top and bottom: a stretched card centres its content, a list card
     uses fixed row padding, never fixed row heights.
 28. **Chips share the pill's row** when the row is wide enough (about 650 and up) and otherwise sit above it, so a wide
@@ -508,9 +508,9 @@ only, with one float that animates the hairline for 200 ms when the screen chang
 | What | Value |
 |---|---|
 | Scale | 4, 8, 12, 16 (24 only between sections) |
-| Edge inset, all sides | 16 (top and bottom measured from the safe area) |
+| Edge inset, all sides | 16, measured from the safe area on every side (`searchStopSideInsets` on Search Stop: the box, the notice, the list and the Options line stand inside the side safe area, and the map is not inset) |
 | Gap between floating elements | 8 (the chips and notices flow to the pill, card to card, stack to the chips and notices). On Search Stop: between the two pills in the box, the box to the location button, and the Options card to the bottom row |
-| Search Stop edge | 16 from the system top inset to the box and from the box to the screen's sides |
+| Search Stop edge | 16 from the system top inset to the box and 16 from the box to the sides of the safe area, which is the window's edge on a phone in portrait |
 | Card padding | 16 on all four sides, equal top and bottom, for the Options card, which takes the card's own radius token (16) and padding token (16). The box has no padding of its own: its rows are 56 tall with 16 at the start and the circle column at the end, so it is 113 tall at 100 percent text and grows at large text when a name wraps onto more lines |
 | Search Stop bottom two lines | The info icon alone at the bottom most left, resting on the library's 8 margin with no padding of ours, its i starting 1.75 in from the icon's 21 square. Above it the control line: the Options pill 4 above the i, the location control ending 16 in and centred on the pill, one centre line at every text size. Options has a 48 finger target that ends at the i's top. The Options card is 8 above the line's visible top. The 21, 8 and 1.75 are read from the library, not measured on a device, and are the numbers to check on a phone |
 | List row | 14 above and below its content, 16 left, a 44 hit area for the plus |

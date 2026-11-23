@@ -119,6 +119,41 @@ pass both look exactly like a probe that works.
 A `verticalScroll` child measured by a `verticalScroll` parent gets an infinite height
 constraint and throws. If the content scrolls, the wrapper must not.
 
+### 1.6 Floating cards respect the horizontal safe area
+
+Anything that floats over a full-bleed surface (the Search Stop box, its notice, its list, the Options card and any card or
+control like them) stands inside the horizontal safe area. The surface under it, the map, still draws edge to edge; only the
+cards and their controls are inset. Use the one inset the rest of the app uses for the sides:
+
+```kotlin
+Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+// Search Stop names it: Modifier.searchStopSideInsets()
+```
+
+Not `WindowInsets.displayCutout.only(Horizontal)`. Measured on an iOS simulator of a foldable iPhone (its outer screen, where a status pill runs
+down the right edge), Compose on iOS reported `displayCutout` 0 at both sides, `statusBars` 0, and the
+84 dp side safe area only in `systemBars` and `safeDrawing`. A card padded by the cutout alone ran under the pill. The pill is a
+system touch target: a tap on it opened Control Center, so the swap and the go circle of the From and To card, which stood under
+it, could not be pressed at all. A phone in portrait has no side inset, so nothing moves there.
+
+The inset goes on the container of the floating group, once, and the keyboard stays with the screen's single `imePadding()`: the
+keyboard has no side, so `safeDrawing` horizontal adds nothing for it and §1.1 is not broken.
+
+**Test it with a non zero horizontal inset, never with a screen that has none.** Dispatch a real inset to the window and assert,
+with `getVisibleBoundsInRoot()` (§1.4), that every card, control and notice is inside the window the inset leaves, then touch the
+controls at their own coordinates with a node standing over the inset column that takes the touch, as the system does. Two
+traps, both hit writing `SearchStopSideInsetLayoutTest`:
+
+- `PreviewTheme` pads for the system bars itself, so a screen inside it is handed insets already used up and a screen that
+  ignores insets passes. Use the bare theme.
+- Hold the inset on the decor view, so every dispatch carries it, and make the window edge to edge
+  (`WindowCompat.setDecorFitsSystemWindows(window, false)`), or the window pads its content and the test cannot fail.
+
+The inset that matches iOS on Android is the caption bar type: no other padding call on the screen reads it. Mutation check
+the probe both ways: put `displayCutout` back and the tests must go red.
+
+Cost: layout only. No API call, no payload, no storage, no timer and no battery change.
+
 ---
 
 ## Part 2 — Diagnosing it when it happens

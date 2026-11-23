@@ -31,6 +31,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
@@ -278,6 +279,34 @@ class SearchStopListStateTest {
         assertNear("To is 48 tall", 48.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).height)
         assertNear("From is 48 tall", 48.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).height)
         assertNear("the pills are one gap apart", gaps.betweenRows, boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).top - boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).bottom)
+    }
+
+    // endregion
+
+    // region the space under the box
+
+    @Test
+    fun `the first row is one 16 dp step under the box, clear of the glow, with the label chips first`() {
+        setScreen(withMap())
+        tapToPill()
+        composeRule.waitForIdle()
+
+        val gap = boundsOf(TripPlannerTestTags.SEARCH_STOP_LABEL_ROW).top - boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).bottom
+        assertNear("the chips row is one 16 dp step under the box", 16.dp, gap)
+        assertTrue(gap >= InfoTileDefaults.shadowRadius + InfoTileDefaults.shadowSpread, "$gap clears the glow's 14 dp")
+    }
+
+    @Test
+    @Config(qualifiers = "w320dp-h640dp")
+    fun `Select on map is one 16 dp step under the box when it is the first row, at 200 percent text too`() {
+        setScreen(withMap(state = SearchStopFixtures.freshInstall()), fontScale = 2f)
+        tapToPill()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_LABEL_ROW).assertDoesNotExist()
+        val gap = boundsOf(TripPlannerTestTags.SEARCH_STOP_SELECT_ON_MAP).top - boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).bottom
+        assertNear("Select on map is one 16 dp step under the box", 16.dp, gap)
+        assertTrue(gap >= InfoTileDefaults.shadowRadius + InfoTileDefaults.shadowSpread, "$gap clears the glow's 14 dp")
     }
 
     // endregion

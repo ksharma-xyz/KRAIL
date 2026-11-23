@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import xyz.ksharma.krail.taj.theme.KrailDimensions
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
@@ -46,9 +47,17 @@ internal fun SearchStopListContent(
     }
 }
 
-/** What the list keeps under its last row, so the last stop clears the keyboard and the screen's edge. */
+/**
+ * What the list keeps above its first row and under its last. Above it is one [KrailDimensions.spacingXL] step, 16 dp, so
+ * the first row (the label chips, or Select on map when there are none) stands clear of the box's glow, which spreads
+ * `InfoTileDefaults.shadowRadius` plus `shadowSpread`, 14 dp, past the box. Under the last row it is what lets the last
+ * stop clear the keyboard and the screen's edge.
+ */
 @Composable
-private fun listPadding(): PaddingValues = PaddingValues(bottom = KrailTheme.dimensions.spacingXXXXL)
+private fun listPadding(): PaddingValues = PaddingValues(
+    top = KrailTheme.dimensions.spacingXL,
+    bottom = KrailTheme.dimensions.spacingXXXXL,
+)
 
 @Composable
 private fun RecentsList(

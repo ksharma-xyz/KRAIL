@@ -19,12 +19,12 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.themeGroundColor
 
-/** The one place the Directions glyph is chosen. Every Directions button in the app draws this drawable. */
 private val DIRECTIONS_GLYPH: DrawableResource = Res.drawable.ic_directions_turn_right
 
 /**
  * Directions to one car park: taj's [RoundIconButton] as it ships, filled with the theme colour through its own
- * `color` parameter, with the white [DIRECTIONS_GLYPH] on it, like the directions button of a maps app. It opens
+ * `color` parameter, with the white [DIRECTIONS_GLYPH] on it, like the directions button of a maps app. This file is
+ * the one place the glyph is chosen, so every Directions button in the app draws the same drawable. It opens
  * the default maps app on the car park's own position, which is the caller's [onClick], and a screen reader hears
  * which car park it is for. The button is taj's 48 dp circle, so the touch target is the button itself.
  */

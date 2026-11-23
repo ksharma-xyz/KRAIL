@@ -23,12 +23,20 @@ internal class IntroPixels(private val composeRule: ComposeContentTestRule) {
         val before = SWITCHES.associateWith { System.getProperty(it) }
         val file = File.createTempFile("intro-pixels", ".png")
         try {
-            SWITCHES.forEach { System.setProperty(it, if (it == RECORD) "true" else "false") }
+            SWITCHES.forEach { System.setProperty(it, (it == RECORD).toString()) }
             composeRule.onNodeWithTag(tag).captureRoboImage(file.path)
             return ImageIO.read(file)
         } finally {
-            before.forEach { (key, value) -> if (value == null) System.clearProperty(key) else System.setProperty(key, value) }
+            before.forEach { (key, value) -> putBack(key, value) }
             file.delete()
+        }
+    }
+
+    private fun putBack(key: String, value: String?) {
+        if (value == null) {
+            System.clearProperty(key)
+        } else {
+            System.setProperty(key, value)
         }
     }
 

@@ -7,6 +7,7 @@ import kotlin.time.ExperimentalTime
 private const val PROP_STOP_ID = "stopId"
 private const val PROP_ACTION = "action"
 private const val VALUE_SETTINGS = "settings"
+private const val VALUE_INTRO = "intro"
 private const val PROP_VARIANT = "variant"
 private const val PROP_SOURCE = "source"
 private const val PROP_EXPAND = "expand"
@@ -29,6 +30,7 @@ private const val PROP_ERROR_KIND = "errorKind"
 private const val PROP_TRANSPORT_UP = "transportUp"
 private const val PROP_UPSTREAM = "upstream"
 private const val PROP_ENDPOINT = "endpoint"
+private const val PROP_THEME_ID = "themeId"
 
 // Shared across the Ask KRAIL surfaces on purpose: GA4 registers an event-scoped dimension per
 // PARAMETER NAME, so one registration covers every event that sends it. Divergent vocabulary is
@@ -560,10 +562,10 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      */
     data class ThemeSelectedEvent(val themeId: String, val source: Source) : AnalyticsEvent(
         name = "theme_selected",
-        rawProperties = mapOf("themeId" to themeId, PROP_SOURCE to source.value),
+        rawProperties = mapOf(PROP_THEME_ID to themeId, PROP_SOURCE to source.value),
     ) {
         enum class Source(val value: String) {
-            INTRO("intro"),
+            INTRO(VALUE_INTRO),
             SETTINGS(VALUE_SETTINGS),
         }
     }
@@ -605,7 +607,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         companion object {
             const val SOURCE_STAR = "star"
             const val SOURCE_PROMPT = "prompt"
-            const val SOURCE_INTRO = "intro"
+            const val SOURCE_INTRO = VALUE_INTRO
         }
     }
 
@@ -1303,7 +1305,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
             usedSearch?.let { put("usedSearch", it) }
             skipped?.let { put("skipped", it) }
             stopsWait?.let { put("stopsWait", it.value) }
-            themeId?.let { put("themeId", it) }
+            themeId?.let { put(PROP_THEME_ID, it) }
         },
     ) {
         /** Carousel pages. Removed with the carousel. */
@@ -1460,7 +1462,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
             SAVED_TRIPS_SCREEN("saved_trips_screen"),
 
             /** Rider toggled the nearest station on the Park & Ride step of the Intro. */
-            INTRO("intro"),
+            INTRO(VALUE_INTRO),
 
             /** Rider added the nearby station the one-time suggestion card on home offered. */
             HOME_SUGGESTION("home_suggestion"),

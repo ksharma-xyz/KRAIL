@@ -1322,6 +1322,19 @@ The map asks for the permission only when the chip is tapped.
 `ParkRideRow*`, `ParkRideTile.kt`, `parkride/suggestion/`, `stopcard/ParkRidePinCard*` and `SearchStopRow.kt`. Their tests stay and
 run against the map home screen where they used to run against the classic one.
 
+**Pruned.** Code that the Search Stop map first work and the Intro left with no caller, removed with nothing else changed:
+`MapTimetableDataBadge` in `core:maps:ui` (only its own previews drew it, Search Stop's map stopped using it), `StopActionButton` in
+the shared `components/map/StopDetailsBottomSheet` (only the deleted Search Stop sheet wrapper used it), `ParkRideLoadedContent` and its
+three previews in `savedtrips/ParkRideContent.kt` (only the old Park & Ride map pane's sheet used it, and the pin card replaced that;
+`CarParkFigures`, which the Park & Ride row still uses, stays), `gradientBorder` and its file (the seven page Intro carousel was its only
+caller), `cardRowHeight`, `swapCentreY` and `swapGlideDistance` in `ToFromCardGrid.kt` (never called, no test), the `ic_info` drawable
+(only the Settings `How to KRAIL?` row used it, Intro ERD X5-7), and the nine `baseline.xml` lines for `ParkRideLoadedContent`, its previews
+and `gradientBorder`. Left on purpose: `NearbyStopFeature.hasParkAndRide` (A85, "left on `NearbyStopFeature`, unread, until a branch that
+needs it"), `FloatingDarkTheme` and `FloatingDark.fieldColors` (the `FloatingDark` rows above keep them, though nothing now draws inside the
+theme or reads the field colours), `ActionPlacement.kt`, `WhenChip.kt` and taj's `AiMicButton` (used only by the kept `SearchStopRow.kt`),
+`HomeStackOrder.kt` (used only by the kept `HomeStackList.kt`), the `MODE_BLOCK_*` names and `modeControlsShown` (read only by tests that
+pin the motion spec and the controls rule), and the Maestro helper `dismiss-map-options.yaml`, which has no caller.
+
 **Cost budget.**
 
 | Question | Answer |

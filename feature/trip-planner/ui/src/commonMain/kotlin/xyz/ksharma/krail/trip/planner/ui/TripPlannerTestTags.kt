@@ -96,10 +96,9 @@ object TripPlannerTestTags {
     const val SEARCH_ROW_ORIGIN_DOT = "searchrow.origindot"
     const val SEARCH_ROW_DESTINATION_PIN = "searchrow.destinationpin"
 
-    // The Search Stop card's label icon, drawn in place of the dot or pin, and the swap circle and its glyph. The swap's 48 dp
-    // target carries [SEARCH_ROW_REVERSE].
+    // The Search Stop card's label icon, drawn in place of the dot or pin, and the bare swap glyph. The swap's 48 dp target
+    // carries [SEARCH_ROW_REVERSE].
     const val SEARCH_ROW_LABEL_ICON = "searchrow.labelicon"
-    const val SEARCH_ROW_SWAP_CIRCLE = "searchrow.swapcircle"
     const val SEARCH_ROW_SWAP_GLYPH = "searchrow.swapglyph"
 
     // The 1 dp divider between the card's two rows.

@@ -1,11 +1,16 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.Indication
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -62,10 +67,10 @@ internal fun CloseCircleButton(
 
 /**
  * A [CIRCLE_DIAMETER] circle in [circle] with [glyph] drawn in it, inside a real [TARGET] box that is itself the clickable.
- * It is the pattern of [CloseCircleButton], for any round control that floats over the map (the swap and the go circle of
- * the Search Stop card): the target is a box that consumes the touch, not the slop Compose adds around a small clickable,
- * so a tap in the 48 dp reaches the control and never the map under it. [tag] is on that box, [circleTag] on the circle.
- * A screen reader hears one button, [contentDescription].
+ * It is the pattern of [CloseCircleButton], for any round control that floats over the map (the go circle of the Search Stop
+ * card): the target is a box that consumes the touch, not the slop Compose adds around a small clickable, so a tap in the 48 dp
+ * reaches the control and never the map under it. [tag] is on that box, [circleTag] on the circle. A screen reader hears one
+ * button, [contentDescription].
  */
 @Composable
 internal fun CircleTargetButton(
@@ -77,14 +82,7 @@ internal fun CircleTargetButton(
     circleTag: String? = null,
     glyph: @Composable () -> Unit,
 ) {
-    Box(
-        modifier = modifier
-            .size(TARGET)
-            .then(if (tag != null) Modifier.testTag(tag) else Modifier)
-            .semantics(mergeDescendants = true) { this.contentDescription = contentDescription }
-            .clickable(role = Role.Button, onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
+    TargetBox(contentDescription = contentDescription, onClick = onClick, modifier = modifier, tag = tag) {
         Box(
             modifier = Modifier
                 .size(CIRCLE_DIAMETER)
@@ -101,6 +99,38 @@ internal fun CircleTargetButton(
             }
         }
     }
+}
+
+/**
+ * The real [TARGET] box of a control that floats over the map: it is itself the clickable and consumes the touch, so a tap
+ * anywhere in its 48 dp reaches the control and never the map under it (a tap on the map outranks the touch slop Compose adds
+ * around a small clickable). [indication] is the press feedback, the box's own ripple unless a caller that draws a bare glyph
+ * asks for a round one. The content is centred in it. A screen reader hears one button, [contentDescription], and [tag] is on the
+ * box.
+ */
+@Composable
+internal fun TargetBox(
+    contentDescription: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    tag: String? = null,
+    indication: Indication? = LocalIndication.current,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    Box(
+        modifier = modifier
+            .size(TARGET)
+            .then(if (tag != null) Modifier.testTag(tag) else Modifier)
+            .semantics(mergeDescendants = true) { this.contentDescription = contentDescription }
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = indication,
+                role = Role.Button,
+                onClick = onClick,
+            ),
+        contentAlignment = Alignment.Center,
+        content = content,
+    )
 }
 
 /** The circle of an X, the same size as the go circle beside it in a search pill. */

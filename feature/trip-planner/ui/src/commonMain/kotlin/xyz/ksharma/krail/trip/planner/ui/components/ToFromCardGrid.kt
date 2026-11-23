@@ -12,13 +12,12 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 /**
  * The card's grid, at 411 dp and 100 percent text (the numbers of the approved picture):
  * - [startPad] 16 is the card's left padding and the marker's left edge.
- * - [marker] 20 is the marker's box, and [markerGap] 8 follows it, so the text starts at [textStart], 44.
- * - [circle] 40 is both round controls, and [circleGap] 8 is how far the text stops before them.
- * - [endPad] 16 is how far the circles' right edge is from the card's right edge, equal to [startPad].
- * - [rowMin] 56 is a row: a circle and [circleGap] above and below it, so the circle is centred on its row.
- * - [rowVerticalPad] 8 is the least a row keeps above and below its text, so at large text, when the text is taller than [rowMin]
- *   allows, the row grows by it.
- * - [stackedGap] 4 is the gap between a marker and the name under it, when the marker has wrapped above.
+ * - [marker] 20 is the marker's box, and [markerGap] 8 follows it, so the text starts at [textStart], 44, at every size and width.
+ * - [circle] 40 is the go circle, and [circleGap] 8 is how far the text stops before the controls.
+ * - [endPad] 16 is how far the go circle's right edge is from the card's right edge, equal to [startPad]. The controls share one
+ *   vertical axis [axis] from the right edge: the go circle's centre and the swap glyph's centre, 36.
+ * - [rowMin] 56 is a row's least height. A row is [rowChrome] 24 (12 above and below) plus its lines, whichever is taller.
+ * - [swapGlyph] 24 is the bare swap glyph, in a [target] 48 box.
  */
 @Immutable
 internal data class CardGrid(
@@ -30,16 +29,20 @@ internal data class CardGrid(
     val endPad: Dp,
     val rowMin: Dp,
     val rowVerticalPad: Dp,
-    val stackedGap: Dp,
+    val swapGlyph: Dp,
+    val target: Dp,
 ) {
-    /** Where the text starts when the marker is beside it, from the card's left edge. */
+    /** Where the text starts, from the card's left edge: beside the marker's column, at every size. */
     val textStart: Dp get() = startPad + marker + markerGap
 
-    /** What a row gives up at its end for the circles: the text and the divider stop this far from the card's right edge. */
+    /** What a row gives up at its end for the controls: the text and the divider stop this far from the card's right edge. */
     val endReserved: Dp get() = endPad + circle + circleGap
 
-    /** The width left for the text beside the marker in a card [cardWidth] wide. */
-    fun besideWidth(cardWidth: Dp): Dp = cardWidth - startPad - endReserved - marker - markerGap
+    /** Where the controls' shared vertical axis is, from the card's right edge: the go circle's centre, 16 plus half of 40. */
+    val axis: Dp get() = endPad + circle / 2f
+
+    /** What a row keeps above and below its lines, 12 each: [rowMin] less a 20 dp line is 36, and a taller line grows the row. */
+    val rowChrome: Dp get() = rowVerticalPad * 2f
 }
 
 internal fun cardGrid(dim: KrailDimensions = KrailDimensions()): CardGrid = CardGrid(
@@ -50,25 +53,24 @@ internal fun cardGrid(dim: KrailDimensions = KrailDimensions()): CardGrid = Card
     circleGap = dim.spacingM,
     endPad = dim.spacingXL,
     rowMin = CIRCLE_DIAMETER + dim.spacingM * 2,
-    rowVerticalPad = dim.spacingM,
-    stackedGap = dim.spacingXS,
+    rowVerticalPad = dim.spacingL,
+    swapGlyph = dim.iconM,
+    target = TARGET,
 )
 
 @Composable
 internal fun rememberCardGrid(): CardGrid = cardGrid(KrailTheme.dimensions)
 
-/**
- * Whether a row's marker stands beside its text: the text, as wide as it is on one line ([natural]), fits in what is left
- * beside the marker in a card [cardWidth] wide. When it does not, the marker wraps whole above the name and the name takes the
- * whole width, wrapping onto lines of its own. Nothing is truncated and nothing is squeezed to make it fit.
- */
-internal fun markerBeside(natural: Dp, cardWidth: Dp, grid: CardGrid): Boolean = natural <= grid.besideWidth(cardWidth)
-
-/** Where the divider starts: at the text, or at the card's padding when either row has its marker wrapped above its name. */
-internal fun dividerStart(grid: CardGrid, anyStacked: Boolean): Dp = if (anyStacked) grid.startPad else grid.textStart
+/** A row's height: 56 dp or the [lines] of [lineHeight] with 12 dp above and below, whichever is taller. A line is never cut. */
+internal fun cardRowHeight(grid: CardGrid, lines: Int, lineHeight: Dp): Dp =
+    maxOf(grid.rowMin, grid.rowChrome + lineHeight * lines.toFloat())
 
 /**
- * What a row keeps above and below its one line of text so the line is centred in [CardGrid.rowMin]: half of what the line
- * leaves, and never less than [CardGrid.rowVerticalPad]. At large text the line fills the row and the 8 dp wins.
+ * The swap's two resting heights, from the top of the card, for a From row [fromHeight] tall and a divider [divider] thick:
+ * the divider's centre while at most one stop is chosen, and the From row's centre line once both are.
  */
-internal fun rowTextPadding(grid: CardGrid, lineHeight: Dp): Dp = maxOf(grid.rowVerticalPad, (grid.rowMin - lineHeight) / 2f)
+internal fun swapCentreY(fromHeight: Dp, divider: Dp, lifted: Boolean): Dp =
+    if (lifted) fromHeight / 2f else fromHeight + divider / 2f
+
+/** How far the swap glides between its two resting heights: half the From row plus half the divider, 28.5 dp at 56 and 1. */
+internal fun swapGlideDistance(fromHeight: Dp, divider: Dp): Dp = fromHeight / 2f + divider / 2f

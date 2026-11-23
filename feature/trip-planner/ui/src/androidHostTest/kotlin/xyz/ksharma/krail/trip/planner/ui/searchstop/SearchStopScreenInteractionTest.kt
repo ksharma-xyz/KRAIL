@@ -398,7 +398,7 @@ class SearchStopScreenInteractionTest {
     }
 
     @Test
-    fun theSwapCircle_isAbsentUntilAStopIsPicked_thenTradesFromAndTo_andGoLeavesWithThemTraded() {
+    fun theSwap_isAbsentUntilAStopIsPicked_thenTradesFromAndTo_andGoLeavesWithThemTraded() {
         var chosen: Pair<StopItem, StopItem>? = null
         setForm(
             state = SearchStopFixtures.recentWithDefaults(),

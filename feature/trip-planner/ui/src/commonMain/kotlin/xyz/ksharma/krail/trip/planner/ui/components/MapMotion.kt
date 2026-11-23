@@ -4,8 +4,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.tween
@@ -77,6 +79,15 @@ internal object MapMotion {
 
     /** The half turn of the swap glyph, the Timetable's own reverse button turn. */
     const val SWAP_TURN_MS = 300
+
+    /** The swap glides between the divider level and the From row's centre line in this long, together with the go circle. */
+    const val SWAP_GLIDE_MS = 200
+
+    /** The swap fades in, and out, in this long: no bounce and no move. */
+    const val SWAP_FADE_MS = 150
+
+    /** The swap takes taps from this alpha while it fades in, and none while it fades out. */
+    const val SWAP_TAP_ALPHA = 0.5f
 
     val ENTER_EASING = FastOutSlowInEasing
     val FADE_IN_EASING = LinearOutSlowInEasing
@@ -162,6 +173,12 @@ internal fun mapGoCircleIn(reduceMotion: Boolean): EnterTransition =
                 },
             )
     }
+
+/** The swap's glide between the divider level and the From row's centre line, on the arrival curve. */
+internal fun swapGlideSpec(): AnimationSpec<Float> = tween(MapMotion.SWAP_GLIDE_MS, easing = MapMotion.ENTER_EASING)
+
+/** The swap's fade in and out: linear, no bounce and no move. */
+internal fun swapFadeSpec(): AnimationSpec<Float> = tween(MapMotion.SWAP_FADE_MS, easing = LinearEasing)
 
 /** A notice that comes and goes in place: it fades while its height grows or shrinks, on the arrival and leaving curves; plain with reduced motion. */
 internal fun mapSizeFadeIn(reduceMotion: Boolean): EnterTransition =

@@ -303,7 +303,7 @@ class SearchStopGroupCardTest {
 
     // region the grid
 
-    private fun assertGrid(width: Dp, scale: Float, stacked: Boolean) {
+    private fun assertGrid(width: Dp, scale: Float) {
         setBox(fontScale = scale, toStop = TOWN_HALL, fromStop = CENTRAL, editing = null)
 
         val card = cardBounds()
@@ -322,28 +322,28 @@ class SearchStopGroupCardTest {
         assertNear("$label, the divider is 1 dp", 1.dp, divider.height)
         assertNear("$label, the divider ends 64 dp from the card's right edge", 64.dp, card.right - divider.right)
         assertNear("$label, 8 dp from the divider's end to the circle", 8.dp, go.left - divider.right)
-        assertNear("$label, the divider starts at the text, 44 dp, or at the padding when the marker wraps above", if (stacked) 16.dp else 44.dp, divider.left - card.left)
+        assertNear("$label, the divider starts at the text, 44 dp, at every size", 44.dp, divider.left - card.left)
         assertNear("$label, the divider sits between the rows", from.bottom, divider.top)
         val dot = boundsOf(TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT)
-        if (stacked) {
-            assertTrue(dot.cy() < from.top + from.height / 2f, "$label, the marker wraps above the name, at the row's top")
-        } else {
-            assertNear("$label, the marker is centred on the row's centre line", from.cy(), dot.cy())
-            assertNear("$label, a row is 56 dp", 56.dp, from.height)
-        }
+        assertNear("$label, the 10 dp dot is centred in the 20 dp marker column that starts 16 dp in", 21.dp, dot.left - card.left)
+        assertTrue(dot.cy() <= from.top + from.height / 2f + 1.5.dp, "$label, the marker is on the first line, never below the row's centre")
         assertTrue(to.height >= 56.dp - 1.dp, "$label, a row is at least 56 dp")
+        assertTrue(from.height >= 56.dp - 1.dp, "$label, a row is at least 56 dp")
     }
 
     @Test
-    fun `the grid at 411 dp and 100 percent text is the approved picture's, to the dp`() = assertGrid(411.dp, 1f, stacked = false)
+    fun `the grid at 411 dp and 100 percent text is the approved picture's, to the dp`() {
+        assertGrid(411.dp, 1f)
+        assertNear("a row is 56 dp", 56.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).height)
+        assertNear("the marker is centred on the row's centre line", boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).cy(), boundsOf(TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT).cy())
+    }
 
     @Test
-    fun `the grid at 411 dp and 150 percent text is the same, the marker still beside the name`() = assertGrid(411.dp, 1.5f, stacked = false)
+    fun `the grid at 411 dp and 150 percent text is the same, the marker still beside the name`() = assertGrid(411.dp, 1.5f)
 
     @Test
     @Config(qualifiers = "w320dp-h640dp-notnight")
-    fun `at 320 dp and 200 percent text the marker wraps above the name and the divider starts at the padding`() =
-        assertGrid(320.dp, 2f, stacked = true)
+    fun `at 320 dp and 200 percent text the text still starts at 44 dp and the divider with it`() = assertGrid(320.dp, 2f)
 
     @Test
     fun `the card is 113 dp at 100 percent text, 56 and 56 and the divider`() {

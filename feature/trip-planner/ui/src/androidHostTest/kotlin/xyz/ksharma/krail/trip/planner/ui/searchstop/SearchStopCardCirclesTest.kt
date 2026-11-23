@@ -50,9 +50,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * The right column of the Search Stop card, read from the real card: the swap circle on the From row and the go circle on the
- * To row on one grid (`docs/MAP_HOME_UX.md`, The box), the go circle's appear and disappear on the paused clock, the swap's half
- * turn, and the finger targets that must beat the map under them.
+ * The right column of the Search Stop card, read from the real card: the bare swap glyph and the go circle on one axis
+ * (`docs/MAP_HOME_UX.md`, The box), the go circle's appear and disappear on the paused clock, the swap's half turn, and the
+ * finger targets that must beat the map under them. The swap's own positions and glide are in `SearchStopCardSwapTest`.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -107,6 +107,12 @@ class SearchStopCardCirclesTest {
 
     private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
 
+    /** Where a node is drawn, from its bounds in the root, which include a graphics layer's own move (the swap's glide). */
+    private fun rootBoundsOf(tag: String): DpRect = with(composeRule.density) {
+        val b = composeRule.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        DpRect(b.left.toDp(), b.top.toDp(), b.right.toDp(), b.bottom.toDp())
+    }
+
     private fun DpRect.cx() = left + (right - left) / 2f
     private fun DpRect.cy() = top + height / 2f
     private fun DpRect.w() = right - left
@@ -133,39 +139,32 @@ class SearchStopCardCirclesTest {
 
     private fun assertRightColumn(label: String) {
         val card = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
-        val from = boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM)
         val to = boundsOf(TripPlannerTestTags.SEARCH_ROW_TO)
-        val swap = boundsOf(TripPlannerTestTags.SEARCH_ROW_SWAP_CIRCLE)
         val go = boundsOf(TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE)
-        val swapTarget = boundsOf(TripPlannerTestTags.SEARCH_ROW_REVERSE)
+        val swapTarget = rootBoundsOf(TripPlannerTestTags.SEARCH_ROW_REVERSE)
         val goTarget = boundsOf(TripPlannerTestTags.SEARCH_ROW_SEARCH)
 
-        assertNear("$label, the swap is 40 dp", 40.dp, swap.w())
         assertNear("$label, the go circle is 40 dp", 40.dp, go.w())
-        assertNear("$label, the swap's right edge is 16 dp from the card's, the left padding", gaps.edge, card.right - swap.right)
         assertNear("$label, the go circle's right edge is 16 dp from the card's", gaps.edge, card.right - go.right)
-        assertNear("$label, both centres are on one vertical axis", swap.cx(), go.cx(), within = 0.5f)
-        assertNear("$label, the axis is 36 dp from the card's right edge", 36.dp, card.right - swap.cx())
-        assertNear("$label, the swap is centred on the From row's centre line", from.cy(), swap.cy())
+        assertNear("$label, the swap and the go circle are on one vertical axis", swapTarget.cx(), go.cx(), within = 0.5f)
+        assertNear("$label, the axis is 36 dp from the card's right edge", 36.dp, card.right - swapTarget.cx())
         assertNear("$label, the go circle is centred on the To row's centre line", to.cy(), go.cy())
-        assertNear("$label, the swap's 48 dp target is centred on it", swap.cy(), swapTarget.cy())
         assertNear("$label, the go circle's 48 dp target is centred on it", go.cy(), goTarget.cy())
         assertNear("$label, both targets are 48 dp", 48.dp, swapTarget.w())
         assertNear("$label, both targets are 48 dp", 48.dp, goTarget.w())
-        assertTrue(swapTarget.bottom <= goTarget.top, "$label, the swap's target $swapTarget does not overlap the go circle's $goTarget")
-        assertTrue(swapTarget.top >= from.top - 0.5.dp && goTarget.bottom <= to.bottom + 0.5.dp, "$label, a target stays inside its own row")
+        assertTrue(swapTarget.bottom <= goTarget.top + 0.5.dp, "$label, the swap's target $swapTarget does not overlap the go circle's $goTarget")
         val divider = boundsOf(TripPlannerTestTags.SEARCH_ROW_DIVIDER)
-        assertNear("$label, the text stops 8 dp before the circles", 8.dp, swap.left - divider.right)
+        assertNear("$label, the text stops 8 dp before the go circle", 8.dp, go.left - divider.right)
     }
 
     @Test
-    fun `at 411 dp and 100 percent text both circles are one grid, 16 dp from the right edge, on their rows' centre lines`() {
+    fun `at 411 dp and 100 percent text the swap glyph and the go circle are on one axis, 36 dp from the right edge`() {
         setCard()
         assertRightColumn("411 dp, 100 percent")
         val from = boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM)
-        val swap = boundsOf(TripPlannerTestTags.SEARCH_ROW_SWAP_CIRCLE)
-        assertNear("8 dp above the swap in its 56 dp row", 8.dp, swap.top - from.top)
-        assertNear("8 dp below the swap in its 56 dp row", 8.dp, from.bottom - swap.bottom)
+        val swap = rootBoundsOf(TripPlannerTestTags.SEARCH_ROW_SWAP_GLYPH)
+        assertNear("the bare glyph is 24 dp", 24.dp, swap.w())
+        assertNear("with both stops chosen the glyph is on the From row's centre line", from.cy(), swap.cy())
     }
 
     @Test
@@ -188,6 +187,7 @@ class SearchStopCardCirclesTest {
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_REVERSE, useUnmergedTree = true).assertDoesNotExist()
 
         composeRule.runOnIdle { swapEnabled = true; toState = null }
+        composeRule.mainClock.advanceTimeBy(MapMotion.SWAP_FADE_MS.toLong() + 100)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_REVERSE, useUnmergedTree = true).assertExists()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE, useUnmergedTree = true).assertDoesNotExist()
@@ -270,9 +270,9 @@ class SearchStopCardCirclesTest {
     }
 
     @Test
-    fun `a tap on the swap calls it once and the glyph makes a half turn in 300 ms while the circle stays still`() {
+    fun `a tap on the swap calls it once and the glyph makes a half turn in 300 ms while its box stays still`() {
         setCard(pausedClock = true)
-        val circleBefore = boundsOf(TripPlannerTestTags.SEARCH_ROW_SWAP_CIRCLE)
+        val boxBefore = boundsOf(TripPlannerTestTags.SEARCH_ROW_REVERSE)
         assertNear("at rest the glyph square is 24 dp", 24.dp, glyphWidthDp(), within = 0.5f)
 
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_REVERSE, useUnmergedTree = true).performClick()
@@ -287,7 +287,7 @@ class SearchStopCardCirclesTest {
         assertEquals(1, swaps, "One tap is one swap.")
         assertTrue(widest > 30.dp, "Part way through the turn the glyph is on a slant, at its widest $widest.")
         assertNear("A half turn ends square again", 24.dp, end, within = 0.5f)
-        assertEquals(circleBefore, boundsOf(TripPlannerTestTags.SEARCH_ROW_SWAP_CIRCLE), "The circle itself stays still.")
+        assertEquals(boxBefore, boundsOf(TripPlannerTestTags.SEARCH_ROW_REVERSE), "The 48 dp box itself stays still.")
         assertEquals(300, MapMotion.SWAP_TURN_MS)
     }
 
@@ -308,7 +308,7 @@ class SearchStopCardCirclesTest {
     // region the targets beat the map
 
     @Test
-    fun `a tap in the corner of the 48 dp swap target, outside the 40 dp circle, still reaches the swap`() {
+    fun `a tap in the corner of the 48 dp swap target, far from the 24 dp glyph, still reaches the swap`() {
         setCard()
 
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_REVERSE, useUnmergedTree = true)

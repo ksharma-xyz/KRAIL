@@ -99,7 +99,7 @@ internal fun ToFromBlock(
     fromPlaceholder: String = FROM_PLACEHOLDER,
     showGo: Boolean = true,
     fromTrailing: (@Composable () -> Unit)? = null,
-    // Only the card style reads these: the saved label of each stop (Home, Work) and what the swap circle does.
+    // Only the card style reads these: the saved label of each stop (Home, Work) and what the swap does.
     fromLabel: String? = null,
     toLabel: String? = null,
     onSwap: (() -> Unit)? = null,

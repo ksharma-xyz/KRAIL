@@ -51,7 +51,7 @@ internal data class SearchStopFormModel(
     /** The saved label of the stop each row holds (Home, Work), or null. The card names the stop with it and draws its icon. */
     val fromLabel: String? = null,
     val toLabel: String? = null,
-    /** Reverses From and To. Null draws no swap circle: the rider has picked no stop yet, so there is nothing to reverse. */
+    /** Reverses From and To. Null draws no swap: the rider has picked no stop yet, so there is nothing to reverse. */
     val onSwap: (() -> Unit)? = null,
 )
 

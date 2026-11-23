@@ -1,69 +1,55 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.snap
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.clearText
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_location_on
-import krail.feature.trip_planner.ui.generated.resources.ic_reverse
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextField
 import xyz.ksharma.krail.taj.components.TextFieldColors
-import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.modifier.klickable
-import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.md_theme_light_outline_subtle
-import xyz.ksharma.krail.taj.theme.md_theme_light_softLabel
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import kotlin.math.roundToInt
 
 /** What one row of the card says: the bar (its tag, prompt and tap) and the saved label of the stop it holds. */
 @Immutable
@@ -84,77 +70,133 @@ internal class CardRowsContent(
     val editor: ToFromEditor?,
     val showGo: Boolean,
     val onGoClick: () -> Unit,
-    /** Reverses From and To. Null draws no swap circle: no stop has been picked yet, so there is nothing to reverse. */
+    /** Reverses From and To. Null draws no swap: no stop has been picked yet, so there is nothing to reverse. */
     val onSwap: (() -> Unit)?,
 )
 
 /**
  * The To and From block as the Timetable's own card (`docs/MAP_HOME_UX.md`, The box): two plain rows, From above To, on the
- * card the caller draws in the soft theme tint, with the 1 dp divider between them and no fill of their own. The rows are the
- * editable fields: taj's [TextField] with no container, the page's text colour for text, prompt and caret, so the card's tint
- * is all that shows.
+ * card the caller draws in the fixed light tint, with the 1 dp divider between them and no fill of their own. The rows are the
+ * editable fields: taj's [TextField] with no container, the card's text colour for text, prompt and caret, so the card's tint is
+ * all that shows.
  *
- * A row is, from the start, its marker (the 10 dp dot for From, the pin for To, or the stop's own label icon when it has
- * one), then its text. A stop with a saved label reads the way the Timetable reads it, the label in bold and the stop in
- * brackets after it. The marker stands beside the text while the text fits beside it on one line, and wraps whole above it when
- * it does not (a narrow phone, large text), where the text takes the full width and wraps onto lines of its own. Nothing is
- * truncated or squeezed, so the card grows instead.
+ * A row is, from the start, its marker (the 10 dp dot for From, the pin for To, or the stop's own label icon when it has one) in
+ * a fixed 20 dp column at x16, then its text column at x44 at every size and width. The marker stands beside the first line of
+ * the name, centred on that line, and a long name wraps by whole words onto lines that start at x44 under the first word (a
+ * hanging indent), never under the marker and never above it, so a line that holds only a marker cannot exist. A stop with a
+ * saved label reads the way the Timetable reads it, the label in bold and the stop in brackets after it. A row is 56 dp or its
+ * lines plus 24 dp, whichever is taller, and the card grows with it. Nothing is truncated or squeezed.
  *
- * On the right, one column of two round controls on one axis ([CardGrid]): the swap at the end of the From row and the go
- * circle at the end of the To row, each centred on its row. The column is reserved in every state, so the card is the same
- * height with and without the go circle. While the row being edited holds text, an X takes its row's circle and clears it.
+ * On the right, one column of controls on one axis ([CardGrid.axis], 36 dp from the card's right edge): the bare swap glyph and,
+ * only when both stops are chosen, the go circle in the To row. The swap rests at the divider level while at most one stop is
+ * chosen and on the From row's centre line once both are, and it glides between the two in [MapMotion.SWAP_GLIDE_MS] as the go
+ * circle arrives or leaves (Design Y). It is above the go circle in z order, so it wins any overlap. While the row being edited
+ * holds text, an X takes that row's end slot and clears it, and the swap steps aside. The column is reserved in every state, so
+ * the card is the same height with none, one or two stops chosen.
  */
 @Composable
 internal fun ToFromCardRows(rows: CardRowsContent, modifier: Modifier = Modifier) {
     val grid = rememberCardGrid()
-    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
-        val fromBeside = markerBeside(rememberNaturalWidth(rows.from, editing = rows.editing == ToFromField.From), maxWidth, grid)
-        val toBeside = markerBeside(rememberNaturalWidth(rows.to, editing = rows.editing == ToFromField.To), maxWidth, grid)
-        Column(modifier = Modifier.fillMaxWidth()) {
-            CardStopRow(
-                row = rows.from,
-                isOrigin = true,
-                isEditing = rows.editing == ToFromField.From,
-                editor = rows.editor,
-                beside = fromBeside,
-                grid = grid,
-            ) { editorState ->
-                if (editorState != null) {
-                    ClearCircle(editorState)
-                } else if (rows.onSwap != null) {
-                    SwapCircle(onSwap = rows.onSwap)
+    val editor = rows.editor
+    val hasText = editor != null && editor.state.text.isNotEmpty()
+    val fromClear = hasText && rows.editing == ToFromField.From
+    val toClear = hasText && rows.editing == ToFromField.To
+    val swapShown = rows.onSwap != null && !fromClear && !toClear
+    val swap = rememberSwapMotion(shown = swapShown, lifted = rows.showGo)
+    CardLayout(grid = grid, swap = swap, modifier = modifier) {
+        CardStopRow(
+            row = rows.from,
+            isOrigin = true,
+            isEditing = rows.editing == ToFromField.From,
+            editor = editor,
+            grid = grid,
+            modifier = Modifier.layoutId(CardPart.From),
+        ) { editorState ->
+            if (editorState != null) ClearCircle(editorState)
+        }
+        Box(
+            modifier = Modifier
+                .layoutId(CardPart.Divider)
+                .padding(start = grid.textStart, end = grid.endReserved),
+        ) {
+            Divider(
+                modifier = Modifier.testTag(TripPlannerTestTags.SEARCH_ROW_DIVIDER),
+                color = md_theme_light_outline_subtle,
+            )
+        }
+        CardStopRow(
+            row = rows.to,
+            isOrigin = false,
+            isEditing = rows.editing == ToFromField.To,
+            editor = editor,
+            grid = grid,
+            modifier = Modifier.layoutId(CardPart.To),
+        ) { editorState ->
+            if (editorState != null) ClearCircle(editorState)
+            GoCircleSlot(shown = rows.showGo && editorState == null, onClick = rows.onGoClick)
+        }
+        if (swap.present) {
+            SwapControl(
+                onSwap = { rows.onSwap?.invoke() },
+                shown = swapShown,
+                motion = swap,
+                modifier = Modifier.layoutId(CardPart.Swap),
+            )
+        }
+    }
+}
+
+/** The four parts of the card, by the id each is laid out under. */
+private enum class CardPart { From, Divider, To, Swap }
+
+/**
+ * Lays the card out: the From row, the divider and the To row stacked at the card's width, so the card is as tall as they are
+ * and nothing else, and the swap's 48 dp box on top of them (placed last, so it is drawn and hit first). The swap is placed at the
+ * divider level, centred on the card's controls axis, and [swap] moves it up toward the From row's centre line in a graphics
+ * layer, so the move is a draw phase animation that moves its touch target with it and never relays out the rows.
+ */
+@Composable
+private fun CardLayout(
+    grid: CardGrid,
+    swap: SwapMotion,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Layout(content = content, modifier = modifier.fillMaxWidth()) { measurables, constraints ->
+        val width = constraints.maxWidth
+        val rowConstraints = constraints.copy(minWidth = width, maxWidth = width, minHeight = 0)
+        fun part(id: CardPart) = measurables.first { it.layoutId == id }
+        val from = part(CardPart.From).measure(rowConstraints)
+        val divider = part(CardPart.Divider).measure(rowConstraints)
+        val to = part(CardPart.To).measure(rowConstraints)
+        val targetPx = grid.target.roundToPx()
+        val swapPlaceable = measurables.firstOrNull { it.layoutId == CardPart.Swap }?.measure(Constraints.fixed(targetPx, targetPx))
+        layout(width, from.height + divider.height + to.height) {
+            from.placeRelative(0, 0)
+            divider.placeRelative(0, from.height)
+            to.placeRelative(0, from.height + divider.height)
+            swapPlaceable?.let { placeable ->
+                val restCentre = from.height + divider.height / 2f
+                val glide = from.height / 2f + divider.height / 2f
+                placeable.placeRelativeWithLayer(
+                    x = width - grid.axis.roundToPx() - targetPx / 2,
+                    y = (restCentre - targetPx / 2f).roundToInt(),
+                ) {
+                    translationY = -glide * swap.lift.value
+                    alpha = swap.fade.value
                 }
-            }
-            Box(
-                modifier = Modifier.padding(
-                    start = dividerStart(grid, anyStacked = !fromBeside || !toBeside),
-                    end = grid.endReserved,
-                ),
-            ) {
-                Divider(
-                    modifier = Modifier.testTag(TripPlannerTestTags.SEARCH_ROW_DIVIDER),
-                    color = md_theme_light_outline_subtle,
-                )
-            }
-            CardStopRow(
-                row = rows.to,
-                isOrigin = false,
-                isEditing = rows.editing == ToFromField.To,
-                editor = rows.editor,
-                beside = toBeside,
-                grid = grid,
-            ) { editorState ->
-                if (editorState != null) ClearCircle(editorState)
-                GoCircle(visible = rows.showGo && editorState == null, onClick = rows.onGoClick)
             }
         }
     }
 }
 
 /**
- * One row. [circle] is its end slot, given the row's editor state while that row is being edited and holds text (the X clears
- * it), and null otherwise. The slot is a 48 dp target at the row's end, centred on the row, so the circle's right edge is
+ * One row. [end] is its end slot, given the row's editor state while that row is being edited and holds text (the X clears
+ * it), and null otherwise. The slot is a 48 dp target at the row's end, centred on the row, so a circle's right edge is
  * [CardGrid.endPad] from the card's edge and its centre is on the row's centre line.
+ *
+ * The row is [CardGrid.rowMin] tall or its text plus [CardGrid.rowChrome], and the text block is centred in it. The text block is
+ * a marker column [CardGrid.marker] wide and one line tall beside the text column, so the marker is centred on the first line.
  */
 @Composable
 private fun CardStopRow(
@@ -162,56 +204,41 @@ private fun CardStopRow(
     isOrigin: Boolean,
     isEditing: Boolean,
     editor: ToFromEditor?,
-    beside: Boolean,
     grid: CardGrid,
-    circle: @Composable (TextFieldState?) -> Unit,
+    modifier: Modifier = Modifier,
+    end: @Composable (TextFieldState?) -> Unit,
 ) {
     val bar = row.bar
     val editingHere = isEditing && editor != null
-    val density = LocalDensity.current
-    val padV = rowTextPadding(grid, with(density) { KrailTheme.typography.titleLarge.lineHeight.toDp() })
+    val firstLine = rememberFirstLineHeight(isPrompt = editingHere || row.stopName == null)
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
+            .heightIn(min = grid.rowMin)
             .testTag(bar.tag)
             .semantics { selected = editingHere },
     ) {
-        val text: @Composable (PaddingValues) -> Unit = { padding ->
-            if (editingHere) {
-                EditingRowField(bar = bar, editor = checkNotNull(editor), padding = padding)
-            } else {
-                IdleRowText(row = row, padding = padding)
+        Row(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .fillMaxWidth()
+                .padding(start = grid.startPad, end = grid.endReserved, top = grid.rowVerticalPad, bottom = grid.rowVerticalPad),
+            horizontalArrangement = Arrangement.spacedBy(grid.markerGap),
+            verticalAlignment = Alignment.Top,
+        ) {
+            Box(modifier = Modifier.width(grid.marker).height(firstLine), contentAlignment = Alignment.Center) {
+                RowMarker(isOrigin = isOrigin, label = row.stopLabel.takeIf { row.stopName != null }, grid = grid)
             }
-        }
-        val marker: @Composable () -> Unit = {
-            RowMarker(isOrigin = isOrigin, label = row.stopLabel.takeIf { row.stopName != null }, grid = grid)
-        }
-        if (beside) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = grid.rowMin)
-                    .padding(start = grid.startPad, end = grid.endReserved),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(grid.markerGap),
-            ) {
-                marker()
-                Box(modifier = Modifier.weight(1f)) { text(PaddingValues(vertical = padV)) }
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = grid.rowMin)
-                    .padding(start = grid.startPad, end = grid.endReserved, top = grid.rowVerticalPad),
-            ) {
-                marker()
-                Spacer(modifier = Modifier.height(grid.stackedGap))
-                text(PaddingValues(bottom = grid.rowVerticalPad))
+            Box(modifier = Modifier.weight(1f)) {
+                if (editingHere) {
+                    EditingRowField(bar = bar, editor = checkNotNull(editor))
+                } else {
+                    IdleRowText(row = row)
+                }
             }
         }
         if (!editingHere) {
-            // The whole row up to the circles is the tap that edits it, so nothing under it is the map's.
+            // The whole row up to the controls is the tap that edits it, so nothing under it is the map's.
             Box(
                 modifier = Modifier
                     .matchParentSize()
@@ -224,16 +251,33 @@ private fun CardStopRow(
         Box(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .padding(end = grid.endPad - (TARGET - grid.circle) / 2f),
+                .padding(end = grid.endPad - (grid.target - grid.circle) / 2f),
         ) {
-            circle(if (hasText) editor?.state else null)
+            end(if (hasText) editor?.state else null)
         }
+    }
+}
+
+/**
+ * The height of the first line of a row's text, measured with the style the row is drawn in and not assumed from a number, so
+ * the marker is centred on the line the text engine really lays out at this density and font size: the prompt and the typed text
+ * are taj's field style (`titleLarge` at normal weight), a stop and a label are `titleMedium`. A row is drawn in one style at a
+ * time, and the line it measures is the first one however many follow.
+ */
+@Composable
+private fun rememberFirstLineHeight(isPrompt: Boolean): Dp {
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val typography = KrailTheme.typography
+    return remember(isPrompt, density, typography) {
+        val style = if (isPrompt) typography.titleLarge.copy(fontWeight = FontWeight.Normal) else typography.titleMedium
+        with(density) { measurer.measure(text = "Ag", style = style, softWrap = false, maxLines = 1).size.height.toDp() }
     }
 }
 
 /** The query field of the row being edited: empty with its fixed prompt, in the page's text colour and no fill. */
 @Composable
-private fun EditingRowField(bar: BarContent, editor: ToFromEditor, padding: PaddingValues) {
+private fun EditingRowField(bar: BarContent, editor: ToFromEditor) {
     TextField(
         state = editor.state,
         placeholder = bar.placeholder,
@@ -243,7 +287,7 @@ private fun EditingRowField(bar: BarContent, editor: ToFromEditor, padding: Padd
         colors = cardFieldColors(),
         lineLimits = TextFieldLineLimits.MultiLine(),
         minHeight = 0.dp,
-        contentPadding = padding,
+        contentPadding = PaddingValues(),
     ) { value -> editor.onTextChange(value) }
 }
 
@@ -252,13 +296,13 @@ private fun EditingRowField(bar: BarContent, editor: ToFromEditor, padding: Padd
  * items that wrap. Any other row is the same taj field read only: the stop as its text, in bold, or the prompt.
  */
 @Composable
-private fun IdleRowText(row: CardRowContent, padding: PaddingValues) {
+private fun IdleRowText(row: CardRowContent) {
     val bar = row.bar
     val name = row.stopName
     val label = row.stopLabel
     if (name != null && label != null) {
         FlowRow(
-            modifier = Modifier.fillMaxWidth().padding(padding),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingXS),
             verticalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingXS),
         ) {
@@ -276,7 +320,7 @@ private fun IdleRowText(row: CardRowContent, padding: PaddingValues) {
             textStyle = if (bar.hasStop) KrailTheme.typography.titleMedium.copy(color = mapCardColors().onTint) else null,
             lineLimits = TextFieldLineLimits.MultiLine(),
             minHeight = 0.dp,
-            contentPadding = padding,
+            contentPadding = PaddingValues(),
         )
     }
 }
@@ -293,7 +337,7 @@ private fun cardFieldColors(): TextFieldColors {
 private fun RowMarker(isOrigin: Boolean, label: String?, grid: CardGrid) {
     val ink = mapCardColors().onTint
     val labelIcon = label?.let { stopLabelIcon(it) }
-    Box(modifier = Modifier.size(grid.marker), contentAlignment = Alignment.Center) {
+    Box(modifier = Modifier.requiredSize(grid.marker), contentAlignment = Alignment.Center) {
         when {
             labelIcon != null -> Image(
                 painter = painterResource(labelIcon),
@@ -322,112 +366,3 @@ private fun RowMarker(isOrigin: Boolean, label: String?, grid: CardGrid) {
 /** The Timetable's own From dot. */
 private val ORIGIN_DOT_SIZE = 10.dp
 
-/**
- * How wide a row's text is on one line, which decides whether its marker can stand beside it. The row being edited is
- * measured by its prompt, whatever is typed, so the layout does not change as the rider types.
- */
-@Composable
-private fun rememberNaturalWidth(row: CardRowContent, editing: Boolean): Dp {
-    val measurer = rememberTextMeasurer()
-    val density = LocalDensity.current
-    val typography = KrailTheme.typography
-    return remember(row.stopName, row.stopLabel, row.bar.placeholder, editing, density, typography) {
-        val prompt = typography.titleLarge.copy(fontWeight = FontWeight.Normal)
-        val name = row.stopName
-        val label = row.stopLabel
-        fun width(text: String, style: TextStyle): Int =
-            measurer.measure(text = text, style = style, softWrap = false, maxLines = 1).size.width
-        val px = when {
-            editing || name == null -> width(row.bar.placeholder, prompt)
-            label != null -> maxOf(width(label, typography.titleMedium), width("($name)", typography.bodySmall))
-            else -> width(name, typography.titleMedium)
-        }
-        with(density) { px.toDp() }
-    }
-}
-
-/**
- * The swap: a 40 dp circle in `softLabel` (grey on the soft tint, 3 to 1 or better against it in every theme and mode) with
- * the reverse glyph in the colour taj gives its fill. A tap reverses From and To, and the glyph makes a half turn
- * while the circle stays still: 180 degrees in [MapMotion.SWAP_TURN_MS], plain with reduced motion. The glyph looks the same
- * at 0 and at 180 degrees, so the turn is a gesture and not a state.
- */
-@Composable
-private fun SwapCircle(onSwap: () -> Unit) {
-    val fill = md_theme_light_softLabel
-    var turned by rememberSaveable { mutableStateOf(false) }
-    val reduceMotion = isReduceMotionEnabled()
-    val angle by animateFloatAsState(
-        targetValue = if (turned) SWAP_HALF_TURN else 0f,
-        animationSpec = if (reduceMotion) snap() else tween(MapMotion.SWAP_TURN_MS, easing = FastOutSlowInEasing),
-        label = "swapGlyphTurn",
-    )
-    CircleTargetButton(
-        contentDescription = "Swap From and To",
-        onClick = {
-            turned = !turned
-            onSwap()
-        },
-        circle = fill,
-        tag = TripPlannerTestTags.SEARCH_ROW_REVERSE,
-        circleTag = TripPlannerTestTags.SEARCH_ROW_SWAP_CIRCLE,
-    ) {
-        Image(
-            painter = painterResource(Res.drawable.ic_reverse),
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(getForegroundColor(fill)),
-            modifier = Modifier
-                .size(KrailTheme.dimensions.iconM)
-                .graphicsLayer { rotationZ = angle }
-                .testTag(TripPlannerTestTags.SEARCH_ROW_SWAP_GLYPH),
-        )
-    }
-}
-
-private const val SWAP_HALF_TURN = 180f
-
-/**
- * The go circle: the theme colour with the app's arrow in the colour taj gives that fill. It is there only while both stops are
- * chosen (absent, not disabled), arriving by [mapGoCircleIn] and leaving by [mapVanishOut], and it takes no touch while it is
- * on its way out. The slot is reserved, so the card is the same height with it and without it.
- */
-@Composable
-private fun GoCircle(visible: Boolean, onClick: () -> Unit) {
-    val reduceMotion = isReduceMotionEnabled()
-    MapControlVisibility(
-        visible = visible,
-        enter = mapGoCircleIn(reduceMotion),
-        exit = mapVanishOut(reduceMotion),
-    ) {
-        val fill = mapActiveChipColors().containerColor
-        CircleTargetButton(
-            contentDescription = "Show trips",
-            onClick = onClick,
-            circle = fill,
-            tag = TripPlannerTestTags.SEARCH_ROW_SEARCH,
-            circleTag = TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE,
-        ) {
-            Image(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null,
-                colorFilter = ColorFilter.tint(getForegroundColor(fill)),
-                modifier = Modifier.size(KrailTheme.dimensions.iconM),
-            )
-        }
-    }
-}
-
-/** The X in a row's circle slot while its field holds text: it clears the field and does nothing else. */
-@Composable
-private fun ClearCircle(state: TextFieldState) {
-    val fill = md_theme_light_softLabel
-    CloseCircleButton(
-        contentDescription = "Clear",
-        onClick = { state.clearText() },
-        circle = fill,
-        glyph = getForegroundColor(fill),
-        glyphSize = KrailTheme.dimensions.iconL,
-        tag = TripPlannerTestTags.SEARCH_STOP_CLEAR,
-        circleTag = TripPlannerTestTags.SEARCH_STOP_CLEAR_CIRCLE,
-    )
-}

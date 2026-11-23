@@ -89,7 +89,7 @@ internal fun SearchStopGroupCard(
  * change here.
  */
 @Composable
-private fun Modifier.searchStopEdge(shape: Shape): Modifier = infoTileGlow(shape)
+internal fun Modifier.searchStopEdge(shape: Shape): Modifier = infoTileGlow(shape)
 
 /**
  * The group card (rules 33, 35 and 36 of `docs/MAP_HOME_UX.md`): one rounded box on taj's own `surface`, white in light

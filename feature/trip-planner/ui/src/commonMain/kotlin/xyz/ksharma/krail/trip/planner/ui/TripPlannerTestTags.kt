@@ -175,6 +175,10 @@ object TripPlannerTestTags {
     /** The floating stop card's tags, kept in their own object so this one stays under its limit. */
     object StopCard {
         const val CARD = "stopcard.card"
+        const val HEADER = "stopcard.header"
+        const val TITLE = "stopcard.title"
+        const val BODY = "stopcard.body"
+        const val FOOTER = "stopcard.footer"
         const val CLOSE = "stopcard.close"
         const val MODES = "stopcard.modes"
         const val BOARD_HEADING = "stopcard.board.heading"

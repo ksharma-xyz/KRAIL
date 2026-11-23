@@ -32,8 +32,8 @@ import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.DeparturesRelativeTimeTicker
-import xyz.ksharma.krail.trip.planner.ui.components.TransportModeIcon
 import xyz.ksharma.krail.trip.planner.ui.components.MapMotion
+import xyz.ksharma.krail.trip.planner.ui.components.TransportModeIcon
 import xyz.ksharma.krail.trip.planner.ui.components.TransportModeIconSize
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 
@@ -69,12 +69,11 @@ internal fun StopCardWithDepartures(
 }
 
 /**
- * The floating card a stop pin opens, `docs/MAP_HOME_UX.md` (Stop card): the stop's name with the
- * close button, its mode badges, the Departure Board, then the actions, all on the card's one surface.
- * Padding 16 all round and 8 between the blocks.
+ * The floating card a stop pin opens, `docs/MAP_HOME_UX.md` (Stop card): a header band holding the stop's name as the
+ * card's title, the close button and the mode badges, then on the body the Departure Board, with the actions pinned
+ * at the bottom. Padding 16 at the sides and 8 between the blocks.
  *
- * [actions] is the slot at the bottom, for the stop's one pick action today and for Save as, Go here
- * and Start here later, so filling it does not reshape the card. The card is keyed on its stop, so
+ * [actions] is the slot at the bottom, for the stop's pick action and Save as, so filling it does not reshape the card. The card is keyed on its stop, so
  * the board's state belongs to the stop and a rotation keeps it.
  */
 @Composable
@@ -97,12 +96,21 @@ internal fun StopCard(
             heading = {
                 Text(
                     text = stop.stopName,
-                    style = KrailTheme.typography.titleMedium,
-                    modifier = Modifier.semantics { heading() },
+                    style = StopCardType.title,
+                    modifier = Modifier.testTag(TripPlannerTestTags.StopCard.TITLE).semantics { heading() },
                 )
             },
+            headerContent = if (layout.showsModes) {
+                { ModeBadges(modes = stop.transportModes) }
+            } else {
+                null
+            },
+            footer = if (layout.showsActionSlot) {
+                { ActionSlot(actions) }
+            } else {
+                null
+            },
         ) {
-            if (layout.showsModes) ModeBadges(modes = stop.transportModes)
             if (layout.showsBoard) {
                 StopCardBoardSection(
                     stopId = stop.stopId,
@@ -112,7 +120,6 @@ internal fun StopCard(
                     boardOpenAtStart = boardOpenAtStart,
                 )
             }
-            if (layout.showsActionSlot) ActionSlot(actions)
         }
     }
 }
@@ -127,7 +134,6 @@ private fun ModeBadges(modes: ImmutableList<TransportMode>) {
     FlowRow(
         modifier = Modifier
             .testTag(TripPlannerTestTags.StopCard.MODES)
-            .cardInset()
             .clearAndSetSemantics { contentDescription = modes.joinToString(separator = ", ") { it.name } },
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
         verticalArrangement = Arrangement.spacedBy(dim.spacingM),

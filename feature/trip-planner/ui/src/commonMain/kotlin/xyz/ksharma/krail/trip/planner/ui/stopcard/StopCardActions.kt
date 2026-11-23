@@ -30,7 +30,6 @@ import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags.StopCard
 import xyz.ksharma.krail.trip.planner.ui.components.FloatingDark
-import xyz.ksharma.krail.trip.planner.ui.components.FloatingDarkTheme
 import xyz.ksharma.krail.trip.planner.ui.components.LabelPillSize
 import xyz.ksharma.krail.trip.planner.ui.components.SetLabelPill
 import xyz.ksharma.krail.trip.planner.ui.components.UnsetLabelPill
@@ -84,24 +83,20 @@ private fun SaveAsRow(pills: List<SaveAsPill>, onSave: (StopLabel) -> Unit) {
     val dim = KrailTheme.dimensions
     val density = LocalDensity.current
     var reserved by remember { mutableStateOf(0.dp) }
-    // The pills are the app's own and the unset one reads mode adaptive tokens with no colours to pass, so the
-    // row is drawn in the dark scheme the card is.
-    FloatingDarkTheme {
-        FlowRow(
-            modifier = Modifier
-                .testTag(StopCard.SAVE_AS)
-                .fillMaxWidth()
-                .heightIn(min = reserved)
-                .onSizeChanged { size -> reserved = reservedRoom(reserved, with(density) { size.height.toDp() }) },
-            horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
-            verticalArrangement = Arrangement.spacedBy(dim.spacingS),
-        ) {
-            pills.forEach { pill ->
-                key(pill.label.label) {
-                    when (pill) {
-                        is SaveAsPill.Saved -> SavedPill(pill.label)
-                        is SaveAsPill.Offered -> OfferedPill(pill = pill, onSave = { onSave(pill.label) })
-                    }
+    FlowRow(
+        modifier = Modifier
+            .testTag(StopCard.SAVE_AS)
+            .fillMaxWidth()
+            .heightIn(min = reserved)
+            .onSizeChanged { size -> reserved = reservedRoom(reserved, with(density) { size.height.toDp() }) },
+        horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
+        verticalArrangement = Arrangement.spacedBy(dim.spacingS),
+    ) {
+        pills.forEach { pill ->
+            key(pill.label.label) {
+                when (pill) {
+                    is SaveAsPill.Saved -> SavedPill(pill.label)
+                    is SaveAsPill.Offered -> OfferedPill(pill = pill, onSave = { onSave(pill.label) })
                 }
             }
         }

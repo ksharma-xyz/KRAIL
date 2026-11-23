@@ -57,6 +57,8 @@ internal fun ParkRidePinCard(
             closeLabel = "Close ${tile.stationName}",
             onClose = onClose,
             modifier = modifier,
+            // The numbers below are drawn by the home's Park & Ride row in the fixed light, so this card keeps the fixed dark.
+            palette = darkStopCardPalette(),
             heading = { StationLine(name = tile.stationName, large = true) },
         ) {
             if (layout.showsTotal) StationTotal(tile = tile)

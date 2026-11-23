@@ -83,7 +83,7 @@ abstract class IntroStickyStopBarTestBase(private val windowWidth: Dp, private v
                         IntroFlowScreen(
                             state = shown.value,
                             suggestedStops = DEFAULT_SUGGESTED_STOPS,
-                            onEvent = {},
+                            onEvent = { _, _ -> },
                         )
                     }
                 }

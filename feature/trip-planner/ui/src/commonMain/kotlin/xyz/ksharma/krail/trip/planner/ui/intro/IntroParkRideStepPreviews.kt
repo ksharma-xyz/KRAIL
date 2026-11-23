@@ -12,7 +12,7 @@ internal fun PreviewIntroStepOne(state: IntroState) {
         IntroFlowScreen(
             state = state,
             suggestedStops = DEFAULT_SUGGESTED_STOPS,
-            onEvent = {},
+            onEvent = { _, _ -> },
         )
     }
 }

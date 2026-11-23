@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStop
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 
 /** What the Intro screens tell the view model. */
@@ -69,6 +70,30 @@ internal sealed interface IntroUiEvent {
      * only way to leave without saving.
      */
     data class AnswerSaveTrip(val yes: Boolean) : IntroUiEvent
+}
+
+/**
+ * The only steps an event is valid on, and it is dropped on every other, whatever the state says. This is what keeps a tap that
+ * arrives late, from the screen that is sliding out or from a double tap, from doing anything on the screen that came after.
+ * One table over the sealed type, so a new event is a compile error here and not an event that is accepted anywhere.
+ *
+ * The stop screens share their three events, so those also carry the step they were pressed on (see
+ * [IntroFlowViewModel.onEvent]), because the destination and the origin screen cannot tell them apart by type.
+ */
+internal fun IntroUiEvent.validSteps(): Set<IntroStep> = when (this) {
+    is IntroUiEvent.AnswerParkRide,
+    is IntroUiEvent.LocationResultReceived,
+    IntroUiEvent.AddParkRideAndContinue,
+    IntroUiEvent.DeclineParkRide,
+    -> setOf(IntroStep.PARK_RIDE)
+    is IntroUiEvent.SelectStop,
+    IntroUiEvent.ConfirmStop,
+    is IntroUiEvent.QueryChanged,
+    -> setOf(IntroStep.DESTINATION, IntroStep.ORIGIN)
+    is IntroUiEvent.AnswerSaveTrip -> setOf(IntroStep.CONFIRM)
+    is IntroUiEvent.PickTheme,
+    IntroUiEvent.ConfirmTheme,
+    -> setOf(IntroStep.THEME)
 }
 
 /** One shot instructions for the screen. Each is delivered once and never replayed. */

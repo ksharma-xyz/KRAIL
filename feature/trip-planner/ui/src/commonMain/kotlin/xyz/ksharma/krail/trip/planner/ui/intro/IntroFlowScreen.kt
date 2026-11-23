@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -18,10 +19,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import xyz.ksharma.krail.core.adaptiveui.DUAL_PANE_LIST_WIDTH
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -36,8 +39,14 @@ private val IntroMaxContentWidth = DUAL_PANE_LIST_WIDTH
 
 /**
  * The Intro: the screen and the decision bar. It holds no state of its own beyond scroll, so every decision is
- * [state], and everything the rider does leaves through [onEvent]. Nothing on it depends on whether the stops data is
- * loaded, and no button on it is ever disabled.
+ * [state], and everything the rider does leaves through [onEvent], with the step it was pressed on. Nothing on it depends on
+ * whether the stops data is loaded, and no button on it is ever disabled.
+ *
+ * Nothing takes a press while a screen is moving. From the moment the step changes until the slide, which is the same
+ * transition that draws it, has finished, the screens and the decision bar take no touch (`consumeTouches`), so a quick
+ * second tap cannot land on the next screen's button or row, and a screen that is still arriving, at half opacity, is not a
+ * target. The screen that is leaving takes none at all, and is hidden from a screen reader. Whatever still gets through, such
+ * as a press from the accessibility services, carries its step, and the view model drops it when the Intro has moved on.
  *
  * The flow only moves forward. There is no back button, and system back and the back swipe do nothing on every
  * screen after the first, where they are consumed. On the first screen they follow the platform and leave the app.
@@ -50,7 +59,7 @@ private val IntroMaxContentWidth = DUAL_PANE_LIST_WIDTH
 internal fun IntroFlowScreen(
     state: IntroState,
     suggestedStops: SuggestedStops,
-    onEvent: (IntroUiEvent) -> Unit,
+    onEvent: (event: IntroUiEvent, pressedOn: IntroStep) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
@@ -87,6 +96,10 @@ internal fun IntroFlowScreen(
         contentAlignment = Alignment.TopCenter,
     ) {
         val bar = introBar(state)
+        // The step on screen is moving to the step in the state until the one transition that draws it has finished.
+        val transition = updateTransition(targetState = state.step, label = "intro-step")
+        val settled = transition.currentState == transition.targetState && !transition.isRunning
+        val sendFromBar = remember(send, state.step) { { event: IntroUiEvent -> send(event, state.step) } }
         IntroBarLayer(
             barShown = bar?.shown == true && revealed,
             modifier = Modifier.widthIn(max = IntroMaxContentWidth).fillMaxHeight(),
@@ -95,9 +108,10 @@ internal fun IntroFlowScreen(
                     IntroDecisionBar(
                         left = it.left,
                         right = it.right,
-                        onEvent = send,
+                        onEvent = sendFromBar,
                         shown = it.shown && revealed,
                         rightShown = it.rightShown,
+                        acceptsPresses = settled,
                         modifier = Modifier.padding(
                             horizontal = dim.pageHorizontalPadding,
                             vertical = dim.spacingL,
@@ -106,43 +120,71 @@ internal fun IntroFlowScreen(
                 }
             },
         ) {
-            AnimatedContent(
-                targetState = state.step,
+            transition.AnimatedContent(
                 // Clipped, so a screen sliding past the edge of a capped column never draws in the margin.
-                modifier = Modifier.fillMaxSize().clipToBounds(),
+                modifier = Modifier.fillMaxSize().clipToBounds().consumeTouches(!settled),
                 transitionSpec = { introScreenTransition(initialState, targetState, reduceMotion) },
-                label = "intro-step",
             ) { step ->
-                when (step) {
-                    IntroStep.THEME -> IntroThemeStepContent(selectedThemeId = state.selectedThemeId, onEvent = send)
-                    IntroStep.PARK_RIDE -> IntroParkRideStepContent(state = state)
-                    IntroStep.DESTINATION, IntroStep.ORIGIN -> IntroStopStepContent(
-                        state = state,
-                        suggestedStops = suggestedStops,
-                        onEvent = send,
-                        ground = pageGround,
-                    )
-                    IntroStep.CONFIRM -> IntroConfirmStepContent(state = state)
-                }
+                IntroStepContent(
+                    step = step,
+                    state = state,
+                    suggestedStops = suggestedStops,
+                    send = send,
+                    ground = pageGround,
+                )
             }
         }
     }
 }
 
 /**
- * The way the screen sends an event: to [onEvent], after doing what only the screen can for the keyboard. A selection
- * and a confirmation hide it and let go of the focus, so it never stays up over the next screen. The search field
- * opens the keyboard itself when it is tapped.
+ * The screen of [step]. When [step] is not the step the Intro is on, this is the screen that is sliding out: it takes no touch
+ * and a screen reader does not find it, and whatever it sends carries the step it was drawn for.
+ */
+@Composable
+private fun IntroStepContent(
+    step: IntroStep,
+    state: IntroState,
+    suggestedStops: SuggestedStops,
+    send: (IntroUiEvent, IntroStep) -> Unit,
+    ground: Color,
+) {
+    val sendOnStep = remember(send, step) { { event: IntroUiEvent -> send(event, step) } }
+    val leaving = step != state.step
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .then(if (leaving) Modifier.consumeTouches(true).clearAndSetSemantics {} else Modifier),
+    ) {
+        when (step) {
+            IntroStep.THEME -> IntroThemeStepContent(selectedThemeId = state.selectedThemeId, onEvent = sendOnStep)
+            IntroStep.PARK_RIDE -> IntroParkRideStepContent(state = state)
+            IntroStep.DESTINATION, IntroStep.ORIGIN -> IntroStopStepContent(
+                state = state,
+                suggestedStops = suggestedStops,
+                onEvent = sendOnStep,
+                ground = ground,
+            )
+            IntroStep.CONFIRM -> IntroConfirmStepContent(state = state)
+        }
+    }
+}
+
+/**
+ * The way the screen sends an event: to [onEvent], with the step it was pressed on, after doing what only the screen can for
+ * the keyboard. A selection and a confirmation hide it and let go of the focus, so it never stays up over the next screen. The
+ * search field opens the keyboard itself when it is tapped.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun rememberIntroSender(onEvent: (IntroUiEvent) -> Unit): (IntroUiEvent) -> Unit {
+private fun rememberIntroSender(
+    onEvent: (event: IntroUiEvent, pressedOn: IntroStep) -> Unit,
+): (IntroUiEvent, IntroStep) -> Unit {
     val keyboard = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     val latest by rememberUpdatedState(onEvent)
     return remember(keyboard, focusManager) {
-        {
-                event ->
+        { event, pressedOn ->
             when (event.keyboardAction()) {
                 IntroKeyboardAction.Close -> {
                     keyboard?.hide()
@@ -150,7 +192,7 @@ private fun rememberIntroSender(onEvent: (IntroUiEvent) -> Unit): (IntroUiEvent)
                 }
                 IntroKeyboardAction.None -> Unit
             }
-            latest(event)
+            latest(event, pressedOn)
         }
     }
 }

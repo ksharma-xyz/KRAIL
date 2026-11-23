@@ -75,7 +75,7 @@ class IntroFlowScreenTest {
                     IntroFlowScreen(
                         state = shownState.value,
                         suggestedStops = DEFAULT_SUGGESTED_STOPS,
-                        onEvent = { events += it },
+                        onEvent = { event, _ -> events += event },
                     )
                 }
             }

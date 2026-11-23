@@ -123,8 +123,17 @@ internal class IntroFlowViewModel(
         }
     }
 
-    fun onEvent(event: IntroUiEvent) {
+    /**
+     * Takes what a screen sends. An event is valid on one step only ([validSteps]) and is dropped anywhere else, and one that
+     * says the step it was [pressedOn] is dropped when the Intro has moved on from that step, such as a tap on a screen that
+     * was already sliding out. From the finish press on nothing changes anything. So no event can answer a question the
+     * rider is not looking at, and the Intro only moves on with the answer on the screen it is on.
+     */
+    fun onEvent(event: IntroUiEvent, pressedOn: IntroStep? = null) {
         if (finishStarted) return
+        val step = _state.value.step
+        if (pressedOn != null && pressedOn != step) return
+        if (step !in event.validSteps()) return
         when (event) {
             is IntroUiEvent.PickTheme -> themeStep.pick(event.themeId)
             IntroUiEvent.ConfirmTheme -> if (themeStep.confirm()) finish()
@@ -134,7 +143,7 @@ internal class IntroFlowViewModel(
             IntroUiEvent.DeclineParkRide -> parkRideStep.decline()
             is IntroUiEvent.SelectStop -> selectStop(event.stop)
             IntroUiEvent.ConfirmStop -> _state.value.selectedStop?.let(::chooseStop)
-            is IntroUiEvent.QueryChanged -> if (_state.value.step.isStopScreen()) stopsStep.onQueryChanged(event.text)
+            is IntroUiEvent.QueryChanged -> stopsStep.onQueryChanged(event.text)
             is IntroUiEvent.AnswerSaveTrip -> answerSaveTrip(event.yes)
         }
     }
@@ -257,9 +266,13 @@ internal class IntroFlowViewModel(
         completion.writeSuggestionShown()
     }
 
-    // Always on the main thread, so a stale snapshot can never be saved over a newer one.
+    // Always on the main thread, so a stale snapshot can never be saved over a newer one. A stop selected on one screen is not
+    // the selection of the next, so a change of step always drops it.
     private fun update(transform: IntroState.() -> IntroState) {
-        _state.update(transform)
+        _state.update { before ->
+            val after = before.transform()
+            if (after.step == before.step) after else after.copy(selectedStop = null)
+        }
         savedStateHandle.saveIntroState(_state.value)
         // One small write when the progress changed, none on a replay and none once the finish has completed.
         if (!replay && !finished) progressSaver.save(_state.value)

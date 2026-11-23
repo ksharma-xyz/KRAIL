@@ -63,7 +63,7 @@ class IntroThemeChangeComposeTest {
                                 IntroFlowScreen(
                                     state = IntroState(step = IntroStep.THEME, selectedThemeId = selected.value),
                                     suggestedStops = DEFAULT_SUGGESTED_STOPS,
-                                    onEvent = { event -> if (event is IntroUiEvent.PickTheme) selected.value = event.themeId },
+                                    onEvent = { event, _ -> if (event is IntroUiEvent.PickTheme) selected.value = event.themeId },
                                 )
                             }
                         }

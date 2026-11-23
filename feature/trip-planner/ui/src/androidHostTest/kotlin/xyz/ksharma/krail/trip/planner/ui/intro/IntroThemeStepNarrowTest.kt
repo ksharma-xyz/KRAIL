@@ -68,7 +68,7 @@ class IntroThemeStepNarrowTest {
                         IntroFlowScreen(
                             state = shown.value,
                             suggestedStops = DEFAULT_SUGGESTED_STOPS,
-                            onEvent = {},
+                            onEvent = { _, _ -> },
                         )
                     }
                 }

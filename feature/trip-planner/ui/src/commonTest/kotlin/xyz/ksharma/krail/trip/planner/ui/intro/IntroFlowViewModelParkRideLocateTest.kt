@@ -150,20 +150,22 @@ class IntroFlowViewModelParkRideLocateTest {
     }
 
     @Test
-    fun `answering yes again after no station near looks again`() = krailRunTest {
+    fun `answering yes again after no station near is dropped, because the rider has already moved on`() = krailRunTest {
         val rig = IntroRig(this)
         rig.send(
             IntroUiEvent.AnswerParkRide(yes = true),
             IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, AT_CENTRAL),
         )
         assertEquals(ParkRideCardPhase.NoStationNear, rig.state.parkRideCard)
+        assertEquals(IntroStep.DESTINATION, rig.state.step)
+        val before = rig.state
 
         rig.send(
             IntroUiEvent.AnswerParkRide(yes = true),
             IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, FOUR_POINT_SIX_KM_FROM_BELLA_VISTA),
         )
 
-        assertEquals("Bella Vista", rig.card().stationName)
+        assertEquals(before, rig.state, "a Park & Ride answer from another screen changed the Intro")
     }
 
     @Test
@@ -224,16 +226,19 @@ class IntroFlowViewModelParkRideLocateTest {
         }
 
     @Test
-    fun `a look that ends after the rider has left the screen never pulls them forward`() = krailRunTest {
-        val rig = IntroRig(this, handle = savedAt(IntroState(step = IntroStep.DESTINATION)))
-        rig.send(
-            IntroUiEvent.AnswerParkRide(yes = true),
-            IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, AT_CENTRAL),
-        )
+    fun `a Park and Ride answer sent from a later screen is dropped, so it starts no look and never pulls anyone forward`() =
+        krailRunTest {
+            val rig = IntroRig(this, handle = savedAt(IntroState(step = IntroStep.DESTINATION)))
+            val before = rig.state
 
-        assertEquals(ParkRideCardPhase.NoStationNear, rig.state.parkRideCard)
-        assertEquals(IntroStep.DESTINATION, rig.state.step, "the rider is not on the Park & Ride screen, so they stay put")
-    }
+            rig.send(
+                IntroUiEvent.AnswerParkRide(yes = true),
+                IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, AT_CENTRAL),
+            )
+
+            assertEquals(before, rig.state)
+            assertEquals(IntroStep.DESTINATION, rig.state.step, "the rider is not on the Park & Ride screen, so they stay put")
+        }
 
     @Test
     fun `stops that fail give no station near at once, with no error`() = krailRunTest {

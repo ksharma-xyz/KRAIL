@@ -58,7 +58,7 @@ class IntroParkRideStepTest {
                     IntroFlowScreen(
                         state = shown.value,
                         suggestedStops = DEFAULT_SUGGESTED_STOPS,
-                        onEvent = { events += it },
+                        onEvent = { event, _ -> events += event },
                     )
                 }
             }

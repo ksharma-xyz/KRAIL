@@ -53,7 +53,7 @@ class IntroConfirmStepTest {
                 IntroFlowScreen(
                     state = PreviewConfirm,
                     suggestedStops = DEFAULT_SUGGESTED_STOPS,
-                    onEvent = { events += it },
+                    onEvent = { event, _ -> events += event },
                 )
             }
         }

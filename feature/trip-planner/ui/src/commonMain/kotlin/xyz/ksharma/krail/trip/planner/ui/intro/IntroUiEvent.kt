@@ -14,7 +14,7 @@ internal sealed interface IntroUiEvent {
     data class PickTheme(val themeId: Int) : IntroUiEvent
 
     /**
-     * `Yes, this one`, the only button on the theme screen, which is the last: the selected theme is the rider's
+     * `Let's KRAIL`, the only button on the theme screen, which is the last: the selected theme is the rider's
      * choice, and the Intro finishes, writing the trip if the rider said yes to saving it. Ignored with none selected.
      */
     data object ConfirmTheme : IntroUiEvent

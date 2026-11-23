@@ -201,7 +201,7 @@ class IntroThemeStepTest {
         primary().assertDoesNotExist()
         secondary().assertDoesNotExist()
         composeRule.onNodeWithText(THEME_CONFIRM).assertDoesNotExist()
-        composeRule.onNodeWithContentDescription(THEME_CONFIRM).assertDoesNotExist()
+        composeRule.onNodeWithContentDescription(THEME_CONFIRM_SPOKEN).assertDoesNotExist()
         composeRule.onNodeWithText("No", substring = true).assertDoesNotExist()
 
         show(none.copy(selectedThemeId = KrailThemeStyle.Ferry.id))
@@ -222,7 +222,7 @@ class IntroThemeStepTest {
             "the one button is not the full width of the bar: $bounds in $window",
         )
         assertEquals(
-            THEME_CONFIRM,
+            THEME_CONFIRM_SPOKEN,
             primary().fetchSemanticsNode().config[SemanticsProperties.ContentDescription].single(),
         )
     }

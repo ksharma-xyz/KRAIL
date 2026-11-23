@@ -9,15 +9,18 @@ class IntroHeadlineMotionTest {
 
     @Test
     fun `the headline reads as one phrase, lines in order with a single space between`() {
-        assertEquals("Do you drive to the station?", introHeadlinePhrase(listOf("Do you drive", "to the station?")))
+        assertEquals(
+            "Show free parking at your nearest station?",
+            introHeadlinePhrase(listOf("Show free", "parking at", "your nearest", "station?")),
+        )
         assertEquals("One", introHeadlinePhrase(listOf("One")))
         assertEquals("", introHeadlinePhrase(emptyList()))
     }
 
     @Test
     fun `the Park and Ride headline is a plain question in two lines`() {
-        assertEquals(listOf("Do you drive", "to the station?"), PARK_RIDE_HEADLINE)
-        assertEquals("Do you drive to the station?", PARK_RIDE_HEADING)
+        assertEquals(listOf("Show free", "parking at", "your nearest", "station?"), PARK_RIDE_HEADLINE)
+        assertEquals("Show free parking at your nearest station?", PARK_RIDE_HEADING)
         assertTrue(PARK_RIDE_HEADLINE.size in 2..4, "two to four short lines")
     }
 

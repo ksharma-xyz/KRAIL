@@ -37,7 +37,7 @@ internal class IntroThemeStep(
     }
 
     /**
-     * `Yes, this one`: reports the choice once, and says whether there is a choice to finish on. False, and nothing
+     * `Let's KRAIL`: reports the choice once, and says whether there is a choice to finish on. False, and nothing
      * reported, with no theme selected and on any other screen.
      */
     fun confirm(): Boolean {

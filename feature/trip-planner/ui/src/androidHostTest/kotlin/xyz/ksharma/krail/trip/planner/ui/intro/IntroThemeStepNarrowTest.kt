@@ -166,7 +166,7 @@ class IntroThemeStepNarrowTest {
         // The button is not shown until a theme is picked, and then it is in the room that was kept for it.
         show(none.copy(selectedThemeId = KrailThemeStyle.Train.id))
         val primary = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION)
-        primary.assertIsDisplayed().assertInsideWindow("Yes, this one")
+        primary.assertIsDisplayed().assertInsideWindow(THEME_CONFIRM)
         assertTrue(badgesBottom <= primary.getUnclippedBoundsInRoot().top + ROUNDING)
     }
 

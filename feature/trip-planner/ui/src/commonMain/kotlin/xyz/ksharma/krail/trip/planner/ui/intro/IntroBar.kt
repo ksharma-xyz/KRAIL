@@ -7,15 +7,17 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
 
 // The words on the decision bar. Every one is an answer, never a way past a question, so none of them
 // is Skip, Later, Next, Continue or Done. IntroBannedWordsTest holds that for every string the Intro draws.
-// The Park & Ride answers show one word at every text size, and a screen reader reads the longer phrase. Each visible
-// word is the start of its spoken phrase, so voice control that says the word finds the button.
+// The Park & Ride answers show one word at every text size, and the theme screen's button shows its name, and a screen reader
+// reads the longer phrase. Each visible word is the start of its spoken phrase, so voice control that says the word finds the
+// button.
 internal const val PARK_RIDE_NO = "No"
 internal const val PARK_RIDE_NO_SPOKEN = "No thanks"
 internal const val PARK_RIDE_YES = "Yes"
 internal const val PARK_RIDE_YES_SPOKEN = "Yes, show me free spots"
 internal const val PARK_RIDE_NOT_NOW = "Not now"
 internal const val PARK_RIDE_ADD = "Add to home"
-internal const val THEME_CONFIRM = "Yes, this one"
+internal const val THEME_CONFIRM = "Let's KRAIL"
+internal const val THEME_CONFIRM_SPOKEN = "Let's KRAIL, use this colour"
 internal const val STOP_CHOOSE = "Yes, this one"
 internal const val CONFIRM_NOT_NOW = "Not now"
 internal const val CONFIRM_SAVE = "Yes, save it"
@@ -102,7 +104,7 @@ private fun stopBar(state: IntroState) = IntroBar(
  */
 private fun themeBar(state: IntroState) = IntroBar(
     left = null,
-    right = IntroBarAction(THEME_CONFIRM, IntroUiEvent.ConfirmTheme),
+    right = IntroBarAction(THEME_CONFIRM, IntroUiEvent.ConfirmTheme, THEME_CONFIRM_SPOKEN),
     shown = state.selectedThemeId != null,
 )
 

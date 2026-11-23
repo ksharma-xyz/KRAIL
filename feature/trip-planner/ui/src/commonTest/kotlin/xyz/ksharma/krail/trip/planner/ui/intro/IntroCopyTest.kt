@@ -93,7 +93,7 @@ class IntroCopyTest {
 
     @Test
     fun `the five headlines are questions, with one question mark at the end of the last line and no other banned glyph`() {
-        assertEquals(listOf("Do you drive", "to the station?"), PARK_RIDE_HEADLINE)
+        assertEquals(listOf("Show free", "parking at", "your nearest", "station?"), PARK_RIDE_HEADLINE)
         assertEquals(listOf("Where are", "you going?"), DESTINATION_HEADLINE)
         assertEquals(listOf("Where are you", "leaving from?"), ORIGIN_HEADLINE)
         assertEquals(listOf("Save this", "trip?"), CONFIRM_HEADLINE)

@@ -67,7 +67,7 @@ class IntroBarTest {
 
     private fun theme(shown: Boolean) = IntroBar(
         left = null,
-        right = IntroBarAction("Yes, this one", IntroUiEvent.ConfirmTheme),
+        right = IntroBarAction("Let's KRAIL", IntroUiEvent.ConfirmTheme, spokenLabel = "Let's KRAIL, use this colour"),
         shown = shown,
     )
 
@@ -186,7 +186,7 @@ class IntroBarTest {
         val none = requireNotNull(introBar(IntroState(step = IntroStep.THEME)))
 
         assertEquals(false, none.shown)
-        assertEquals("Yes, this one", none.right.label)
+        assertEquals("Let's KRAIL", none.right.label)
         assertNull(none.left)
     }
 
@@ -212,13 +212,27 @@ class IntroBarTest {
     }
 
     @Test
-    fun `the theme bar is the one button, in the exact words, with no short form and nothing to its left`() {
+    fun `the theme bar is the one button, Let's KRAIL, with the longer phrase spoken and nothing to its left`() {
         val bar = requireNotNull(introBar(IntroState(step = IntroStep.THEME)))
 
         assertNull(bar.left, "the theme screen has no way to say no")
-        assertEquals("Yes, this one", bar.right.label)
+        assertEquals("Let's KRAIL", bar.right.label)
+        assertEquals("Let's KRAIL", THEME_CONFIRM)
+        assertEquals("Let's KRAIL, use this colour", bar.right.spokenLabel)
+        assertEquals(THEME_CONFIRM_SPOKEN, bar.right.spokenLabel)
+        assertTrue(bar.right.spokenLabel.startsWith(bar.right.label), "voice control that says the label finds the button")
         assertEquals(IntroUiEvent.ConfirmTheme, bar.right.event)
-        assertEquals(bar.right.label, bar.right.spokenLabel, "it says what it shows")
+    }
+
+    @Test
+    fun `the stop screens keep Yes, this one, and only the theme screen says Let's KRAIL`() {
+        assertEquals("Yes, this one", STOP_CHOOSE)
+        listOf(IntroStep.DESTINATION, IntroStep.ORIGIN).forEach { step ->
+            assertEquals("Yes, this one", introBar(IntroState(step = step))?.right?.label, "$step")
+        }
+        IntroStep.entries.filter { it != IntroStep.THEME }.forEach { step ->
+            assertTrue(introBar(IntroState(step = step))?.right?.label != "Let's KRAIL", "$step")
+        }
     }
 
     @Test

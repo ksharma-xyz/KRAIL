@@ -118,7 +118,7 @@ class IntroBannedWordsTest {
     @Test
     fun `a question mark is allowed at the end of the last line of the five headlines and nowhere else`() {
         assertEquals(
-            listOf("to the station?", "you going?", "leaving from?", "trip?", "in Sydney?"),
+            listOf("station?", "you going?", "leaving from?", "trip?", "in Sydney?"),
             questionLines,
         )
         questionLines.forEach { assertEquals(emptyList(), problems(it), "$it") }

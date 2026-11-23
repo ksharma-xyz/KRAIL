@@ -5,8 +5,12 @@ import androidx.compose.ui.Modifier
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 
-/** The question, in two lines, a complete plain question. */
-internal val PARK_RIDE_HEADLINE = listOf("Do you drive", "to the station?")
+/**
+ * The question, in four short lines, a complete plain question. It offers what a Yes does, which is to show the free parking at
+ * the nearest station, and the rider answers it with No or Yes on the bar below. It is drawn in capitals by the Intro's own
+ * display code, and a screen reader reads the sentence as it is written.
+ */
+internal val PARK_RIDE_HEADLINE = listOf("Show free", "parking at", "your nearest", "station?")
 
 /** The whole headline as one phrase, which a screen reader reads as the heading. */
 internal val PARK_RIDE_HEADING = introHeadlinePhrase(PARK_RIDE_HEADLINE)

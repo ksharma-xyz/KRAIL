@@ -124,7 +124,7 @@ class IntroDecisionBarTest {
             val reserved = composeRule.onRoot().getUnclippedBoundsInRoot().height
 
             primary().assertDoesNotExist()
-            composeRule.onNodeWithContentDescription(THEME_CONFIRM).assertDoesNotExist()
+            composeRule.onNodeWithContentDescription(THEME_CONFIRM_SPOKEN).assertDoesNotExist()
             composeRule.onAllNodes(hasClickAction()).assertCountEquals(0)
             assertTrue(reserved > 0.dp, "no room is kept at $scale")
 

@@ -8,20 +8,13 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
@@ -319,8 +312,9 @@ internal fun SavedTripsTitleBarActions(
 }
 
 /**
- * The one search bar pinned to the bottom of the screen, on the page's own edges and above the navigation bar. It
- * slides up and fades in once the saved trips have loaded, and is gone while the cards are being reordered.
+ * The one search bar pinned to the bottom of the screen, inside the theme coloured sheet `main` drew the search row
+ * in ([HomeSearchSheet]), above the navigation bar. The sheet slides up and fades in once the saved trips have loaded,
+ * as `main` revealed the search row, and is gone while the cards are being reordered.
  */
 @Composable
 internal fun BoxScope.SavedTripsBottomSearchRow(
@@ -330,7 +324,6 @@ internal fun BoxScope.SavedTripsBottomSearchRow(
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
     isAiSearchAvailable: Boolean = false,
 ) {
-    val dim = KrailTheme.dimensions
     AnimatedVisibility(
         visible = visible,
         enter = slideInVertically(
@@ -339,16 +332,12 @@ internal fun BoxScope.SavedTripsBottomSearchRow(
         ) + fadeIn(animationSpec = tween(durationMillis = 200)),
         modifier = modifier,
     ) {
-        HomeSearchPill(
-            onClick = onSearchBarClick,
-            isAiAvailable = isAiSearchAvailable,
-            onAiEvent = onAiEvent,
-            modifier = Modifier
-                .background(color = KrailTheme.colors.surface)
-                .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal))
-                .navigationBarsPadding()
-                .padding(top = dim.spacingM, bottom = dim.spacingXL)
-                .padding(horizontal = dim.pageHorizontalPadding),
-        )
+        HomeSearchSheet {
+            HomeSearchPill(
+                onClick = onSearchBarClick,
+                isAiAvailable = isAiSearchAvailable,
+                onAiEvent = onAiEvent,
+            )
+        }
     }
 }

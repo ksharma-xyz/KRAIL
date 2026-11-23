@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
@@ -54,8 +55,8 @@ import kotlin.test.assertTrue
 
 /**
  * The Saved Trips screen as the classic home: the Set Home and Set Work pills are the first row of the list,
- * the one search bar is pinned at the bottom with the microphone inside it, and the map, the Park & Ride tiles,
- * the notices and the suggestion are not on it.
+ * the one search bar is pinned at the bottom with the microphone inside it, in the theme coloured sheet `main` drew the
+ * search row in, and the map, the Park & Ride tiles, the notices and the suggestion are not on it.
  *
  * Each test runs in a window of its own size (density 1, so a dp is a pixel) and reads where the real nodes
  * landed.
@@ -183,14 +184,14 @@ class SavedTripsHomeLayoutTest {
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `the bar is one 48 dp row, full width less the page insets, 16 dp above the bottom`() {
+    fun `the bar is one 48 dp row, full width less the page insets, 20 dp above the bottom of the sheet`() {
         setScreen()
 
         val bar = bounds(TripPlannerTestTags.SEARCH_ROW_TO)
         assertNear("bar height", 48.dp, bar.height)
         assertNear("bar left inset", PAGE_PADDING, bar.left)
         assertNear("bar width", PHONE_WIDTH - PAGE_PADDING * 2, bar.width)
-        assertNear("bar bottom", PHONE_HEIGHT - PAGE_PADDING, bar.bottom)
+        assertNear("bar bottom", PHONE_HEIGHT - SHEET_BOTTOM_PADDING, bar.bottom)
         val text = textBounds("Where are you going?")
         assertTrue(text.top >= bar.top && text.bottom <= bar.bottom, "The placeholder is one line inside the bar.")
     }
@@ -251,6 +252,52 @@ class SavedTripsHomeLayoutTest {
         val mic = bounds(TripPlannerTestTags.SEARCH_ROW_ASK_KRAIL)
         assertNear("bar height at 200 percent", 48.dp, bar.height)
         assertTrue(mic.left >= bar.left && mic.right <= bar.right + 1.dp, "The microphone $mic is inside $bar.")
+    }
+
+    // endregion
+
+    // region the sheet
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `the bar sits in a 96 dp sheet at the bottom, full width, with 28 dp above the bar and 20 dp below`() {
+        setScreen()
+
+        val sheet = bounds(TripPlannerTestTags.SAVED_TRIPS_BOTTOM_SHEET)
+        val bar = bounds(TripPlannerTestTags.SEARCH_ROW_TO)
+        assertNear("sheet height", SHEET_HEIGHT, sheet.height)
+        assertNear("sheet left", 0.dp, sheet.left)
+        assertNear("sheet width", PHONE_WIDTH, sheet.width)
+        assertNear("sheet bottom", PHONE_HEIGHT, sheet.bottom)
+        assertNear("space above the bar", SHEET_TOP_PADDING, bar.top - sheet.top)
+        assertNear("space below the bar", SHEET_BOTTOM_PADDING, sheet.bottom - bar.bottom)
+    }
+
+    @Test
+    @Config(qualifiers = NARROW)
+    fun `at 320 dp and 200 percent the sheet is the same 96 dp, because the bar is a fixed 48 dp`() {
+        setScreen(fontScale = 2f)
+
+        assertNear("sheet height", SHEET_HEIGHT, bounds(TripPlannerTestTags.SAVED_TRIPS_BOTTOM_SHEET).height)
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `the list's bottom padding clears the sheet and the tallest navigation bar, so the last card scrolls fully into view`() {
+        assertTrue(
+            LAZY_COLUMN_BOTTOM_PADDING.dp >= SHEET_HEIGHT + THREE_BUTTON_NAV_BAR,
+            "$LAZY_COLUMN_BOTTOM_PADDING dp clears a $SHEET_HEIGHT sheet and a $THREE_BUTTON_NAV_BAR navigation bar.",
+        )
+        setScreen(trips = manyTrips())
+
+        val list = composeRule.onNodeWithTag(TripPlannerTestTags.SAVED_TRIPS_LIST)
+        val itemCount = list.fetchSemanticsNode().config[SemanticsProperties.CollectionInfo].rowCount
+        list.performScrollToIndex(itemCount - 1)
+        composeRule.waitForIdle()
+
+        val last = textBounds(PARK_RIDE_EMPTY_LINE)
+        val sheet = bounds(TripPlannerTestTags.SAVED_TRIPS_BOTTOM_SHEET)
+        assertTrue(last.bottom <= sheet.top, "The last row $last ends above the sheet $sheet.")
     }
 
     // endregion
@@ -486,9 +533,14 @@ class SavedTripsHomeLayoutTest {
         const val MAP_TAG = "test.map"
         const val MANY = 14
         const val TOLERANCE_DP = 1.5f
+        const val PARK_RIDE_EMPTY_LINE = "Save a trip and its station's parking shows here automatically."
         const val HOME_STOP_ID = "200080"
         const val HOME_STOP_NAME = "Wynyard Station"
         val PAGE_PADDING = 16.dp
+        val SHEET_BOTTOM_PADDING = 20.dp
+        val SHEET_TOP_PADDING = 28.dp
+        val SHEET_HEIGHT = 96.dp
+        val THREE_BUTTON_NAV_BAR = 48.dp
         val PHONE_WIDTH = 411.dp
         val PHONE_HEIGHT = 891.dp
         val NARROW_WIDTH = 320.dp

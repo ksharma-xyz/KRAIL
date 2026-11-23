@@ -61,6 +61,9 @@ object TripPlannerTestTags {
     // The classic home's Set Home and Set Work pills, the first row of the list. Each pill carries [homeLabelChip].
     const val SAVED_TRIPS_LABEL_PILLS = "savedtrips.pills"
 
+    // The theme coloured sheet at the bottom of the classic home, the one that holds the search bar.
+    const val SAVED_TRIPS_BOTTOM_SHEET = "savedtrips.sheet"
+
     // The Park & Ride row of tiles on home. The tiles and their car parks are per station and per
     // car park, see [parkRideTile], [parkRideCarPark] and [parkRideDirections].
     const val SAVED_TRIPS_PARK_RIDE_ROW = "savedtrips.parkride.row"

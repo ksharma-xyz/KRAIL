@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.components.MicIcon
 import xyz.ksharma.krail.taj.components.TextField
+import xyz.ksharma.krail.taj.components.TextFieldColors
 import xyz.ksharma.krail.taj.components.TextFieldDefaults
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.preview.PreviewComponent
@@ -44,9 +45,10 @@ private const val ASK_KRAIL_DESCRIPTION = "Ask KRAIL"
  * The one search bar at the bottom of the Saved Trips screen: a tap opens Search Stop for the destination,
  * exactly as the To bar of the old search row did, and its text is one line that ends in an ellipsis.
  *
- * The bar is taj's [TextField] as it ships, read only, in taj's own [TextFieldDefaults.invertedColors]: it holds
- * no text, it shows the placeholder, it cannot take focus, and the tap over it opens Search Stop. It is
- * 48 dp tall, taj's own height, and a full pill.
+ * The bar is taj's [TextField] as it ships, read only, in taj's own default field colours ([homeSearchPillColors]):
+ * it holds no text, it shows the placeholder, it cannot take focus, and the tap over it opens Search Stop. It is
+ * 48 dp tall, taj's own height, and a full pill. It sits inside the theme coloured sheet that
+ * [HomeSearchSheet] draws, so the page surface fill of the default colours is the pill's edge against the sheet.
  *
  * The microphone at its end is taj's [MicIcon] as it ships, with no gradient, no circle and no background, in
  * the bar's own content colour, in a 48 dp touch slot flush with the bar's end. It opens Ask KRAIL, and shows
@@ -71,7 +73,7 @@ internal fun HomeSearchPill(
                 placeholder = HOME_PILL_PLACEHOLDER,
                 readOnly = true,
                 modifier = Modifier.fillMaxWidth().focusProperties { canFocus = false },
-                colors = TextFieldDefaults.invertedColors(),
+                colors = homeSearchPillColors(),
                 trailingIcon = if (isAiAvailable) {
                     { AskKrailMic(slot = micSlot, onClick = { onAiEvent(AiSearchInputEvent.OpenInput) }) }
                 } else {
@@ -96,6 +98,15 @@ internal fun HomeSearchPill(
         }
     }
 }
+
+/**
+ * The colours of the bar, in the one place: taj's own default field colours as they ship, the page surface with the
+ * page's text colour in both modes, never the inverted set (a cream bar in dark mode and a black one in light mode).
+ * The placeholder and the microphone read on that fill at 4.5 to 1 or more in every theme and both modes
+ * (`HomeSearchPillColorsTest`).
+ */
+@Composable
+internal fun homeSearchPillColors(): TextFieldColors = TextFieldDefaults.colors()
 
 /** The microphone: taj's plain [MicIcon] in the bar's content colour, centred in a square touch [slot]. */
 @Composable

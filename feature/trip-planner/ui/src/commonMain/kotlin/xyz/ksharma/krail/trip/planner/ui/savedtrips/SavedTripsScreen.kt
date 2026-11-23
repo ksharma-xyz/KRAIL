@@ -94,8 +94,12 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import app.krail.taj.resources.Res as TajRes
 
-// Clear of the bottom search bar and the navigation bar, so the last card scrolls fully into view.
-private const val LAZY_COLUMN_BOTTOM_PADDING = 160
+// The bottom of the list is clear of the sheet that holds the search bar, so the last card scrolls fully into view.
+// The sheet is 96 dp tall (28 above the 48 dp bar, 20 below) plus the navigation bar inset, which is 24 dp or less
+// with gesture navigation and 48 dp with the three button bar. 96 + 48 = 144 is the smallest figure that clears
+// the sheet on both, and `main` used 300 for the taller two row sheet. The bar is a fixed 48 dp, so none of this
+// moves with the text size: at 320 dp and 200 percent the sheet is the same height.
+internal const val LAZY_COLUMN_BOTTOM_PADDING = 144
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable

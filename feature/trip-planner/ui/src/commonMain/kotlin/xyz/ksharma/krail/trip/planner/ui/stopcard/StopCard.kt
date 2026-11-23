@@ -1,5 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.stopcard
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.FlowRow
@@ -14,6 +17,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.collections.immutable.ImmutableList
 import org.koin.compose.viewmodel.koinViewModel
@@ -24,10 +28,12 @@ import xyz.ksharma.krail.departures.ui.state.DeparturesUiEvent
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.DeparturesRelativeTimeTicker
 import xyz.ksharma.krail.trip.planner.ui.components.TransportModeIcon
+import xyz.ksharma.krail.trip.planner.ui.components.MapMotion
 import xyz.ksharma.krail.trip.planner.ui.components.TransportModeIconSize
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 
@@ -142,14 +148,35 @@ internal fun ActionSlot(actions: @Composable () -> Unit) {
  * One action of the slot: taj's [Button] at its large size, a verb or a place and nothing else, at least as
  * tall as the search bar, 48 dp, which is the touch target (rule 21). The words are the caller's, so the
  * slot reads Go here on a stop and Add to home on a station.
+ *
+ * When the words change in place (the rider moves from the From field to the To field with the card open) the old
+ * ones fade out as the new ones fade in, in [MapMotion.CROSSFADE_MS], and plainly with reduced motion. With [singleLine]
+ * the words stay on one line and end in an ellipsis if they are too long, which only a rider's own label name can be. The
+ * words a screen reader reads are the words drawn, whole.
  */
 @Composable
-internal fun StopCardAction(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+internal fun StopCardAction(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    singleLine: Boolean = false,
+    reduceMotion: Boolean = isReduceMotionEnabled(),
+) {
     Button(
         onClick = onClick,
         modifier = modifier.heightIn(min = KrailTheme.dimensions.textFieldHeight),
         dimensions = ButtonDefaults.largeButtonSize(),
     ) {
-        Text(text = text)
+        Crossfade(
+            targetState = text,
+            animationSpec = if (reduceMotion) snap() else tween(MapMotion.CROSSFADE_MS),
+            label = "stop-card-action-words",
+        ) { words ->
+            Text(
+                text = words,
+                maxLines = if (singleLine) 1 else Int.MAX_VALUE,
+                overflow = if (singleLine) TextOverflow.Ellipsis else TextOverflow.Clip,
+            )
+        }
     }
 }

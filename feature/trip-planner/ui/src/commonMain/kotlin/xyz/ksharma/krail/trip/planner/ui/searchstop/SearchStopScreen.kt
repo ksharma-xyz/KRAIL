@@ -79,6 +79,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardOptions
+import xyz.ksharma.krail.trip.planner.ui.stopcard.contextPickText
 import xyz.ksharma.krail.trip.planner.ui.stopcard.pickRoleFor
 
 // Less travel than the AI input surface uses. There the field is the screen and can move as
@@ -225,11 +226,15 @@ fun SearchStopScreen(
         onNewLabelClick = labels.onNewLabelClick,
         onEvent = onEvent,
         // The card's Save as is the assign path the rows use, and its action is the field being filled in.
-        stopCardOptions = StopCardOptions(
-            pickRole = pickRoleFor(pickFieldFor(shape, flow.editing, fieldType)),
-            labels = searchStopState.stopLabels,
-            onSaveAs = { label, stop -> onLabelPillClick(stop, label, LabelAssignSurface.MAP_CARD) },
-        ),
+        stopCardOptions = pickRoleFor(pickFieldFor(shape, flow.editing, fieldType)).let { pickRole ->
+            StopCardOptions(
+                pickRole = pickRole,
+                labels = searchStopState.stopLabels,
+                onSaveAs = { label, stop -> onLabelPillClick(stop, label, LabelAssignSurface.MAP_CARD) },
+                // The card says what the rider is doing: Set as destination, Set as starting point, Set as Home.
+                pickText = contextPickText(pickRole, labelName),
+            )
+        },
     )
     // Same "close keyboard before navigating" order as the back button: otherwise the keyboard stays
     // up mid-navigation and dismisses itself awkwardly once ManageStopLabelsScreen is on screen.

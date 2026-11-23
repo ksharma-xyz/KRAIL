@@ -40,6 +40,23 @@ class StopCardActionRulesTest {
     }
 
     @Test
+    fun `Search Stop's card says what the rider is doing, with the label's saved name exactly as saved`() {
+        assertEquals("Set as destination", contextPickText(PickRole.Destination, labelName = null))
+        assertEquals("Set as starting point", contextPickText(PickRole.Start, labelName = null))
+        assertEquals("Set as Home", contextPickText(PickRole.Choose, labelName = "Home"))
+        assertEquals("Set as Work", contextPickText(PickRole.Choose, labelName = "Work"))
+        assertEquals("Set as Mum's  place", contextPickText(PickRole.Choose, labelName = "Mum's  place"))
+        // A label name is only read for a label: the fields never take one.
+        assertEquals("Set as destination", contextPickText(PickRole.Destination, labelName = "Home"))
+    }
+
+    @Test
+    fun `a label with no name to read never leaves the action blank`() {
+        assertEquals("Set as label", contextPickText(PickRole.Choose, labelName = null))
+        assertEquals("Set as label", contextPickText(PickRole.Choose, labelName = "  "))
+    }
+
+    @Test
     fun `a stop with an id offers its action even when the stops table knows nothing else of it`() {
         assertTrue(offersPick("200060"))
         assertTrue(offersPick("not-in-any-table"))

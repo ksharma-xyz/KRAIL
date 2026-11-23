@@ -41,6 +41,18 @@ internal fun pickActionText(role: PickRole): String = when (role) {
 }
 
 /**
+ * The words of the primary action on Search Stop, which knows what the rider is trying to do: Set as destination for the To
+ * field, Set as starting point for the From field, and for a label's stop Set as followed by the label's saved name exactly
+ * as saved (Set as Home, Set as Work, Set as Gym). A label with no name to read says Set as label, so the action is never
+ * blank. Hosts with no field to name keep [pickActionText].
+ */
+internal fun contextPickText(role: PickRole, labelName: String?): String = when (role) {
+    PickRole.Destination -> "Set as destination"
+    PickRole.Start -> "Set as starting point"
+    PickRole.Choose -> if (labelName.isNullOrBlank()) "Set as label" else "Set as $labelName"
+}
+
+/**
  * A stop is offered whenever it has an id. Nothing here asks the stops table whether it knows the
  * stop, so a stop with no modes or no row of its own still offers its action: the trip planner takes
  * a stop id, and a card that hid the action for a stop it knew less about would promise less than it

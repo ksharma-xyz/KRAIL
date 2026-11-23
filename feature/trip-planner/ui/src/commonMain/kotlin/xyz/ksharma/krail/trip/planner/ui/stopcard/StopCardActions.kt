@@ -26,6 +26,7 @@ import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.OutlinedButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.klickable
+import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags.StopCard
 import xyz.ksharma.krail.trip.planner.ui.components.FloatingDark
@@ -48,6 +49,7 @@ internal fun StopCardPickActions(
     options: StopCardOptions,
     onPick: () -> Unit,
     modifier: Modifier = Modifier,
+    reduceMotion: Boolean = isReduceMotionEnabled(),
 ) {
     val pills = remember(stop.stopId, options.pickRole, options.labels) {
         saveAsPillsFor(stop.stopId, options.pickRole, options.labels)
@@ -61,9 +63,11 @@ internal fun StopCardPickActions(
         }
         if (offersPick(stop.stopId)) {
             StopCardAction(
-                text = pickActionText(options.pickRole),
+                text = options.pickText ?: pickActionText(options.pickRole),
                 onClick = onPick,
                 modifier = Modifier.testTag(StopCard.PICK),
+                singleLine = options.pickText != null,
+                reduceMotion = reduceMotion,
             )
         }
     }

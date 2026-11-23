@@ -49,8 +49,10 @@ import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.components.CloseCircleButton
 import xyz.ksharma.krail.trip.planner.ui.components.FloatingDark
 import xyz.ksharma.krail.trip.planner.ui.components.mapCardColors
+import xyz.ksharma.krail.trip.planner.ui.components.softCloseCircle
 import xyz.ksharma.krail.trip.planner.ui.searchstop.searchStopEdge
 import app.krail.taj.resources.Res as TajRes
 
@@ -109,16 +111,27 @@ internal class StopCardPalette(
     val body: Color,
     val content: Color,
     val edged: Boolean,
+    val closeCircle: Color,
+    val closeGlyph: Color,
 )
 
 @Composable
 internal fun stopCardPalette(): StopCardPalette = mapCardColors().let {
-    StopCardPalette(header = it.header, body = it.body, content = it.onCard, edged = true)
+    val (circle, glyph) = softCloseCircle()
+    StopCardPalette(header = it.header, body = it.body, content = it.onCard, edged = true, closeCircle = circle, closeGlyph = glyph)
 }
 
 @Composable
 internal fun darkStopCardPalette(): StopCardPalette =
-    StopCardPalette(header = FloatingDark.container, body = FloatingDark.container, content = FloatingDark.content, edged = false)
+    StopCardPalette(
+        header = FloatingDark.container,
+        body = FloatingDark.container,
+        content = FloatingDark.content,
+        edged = false,
+        // The light circle with the dark cross, the fixed pair inverted.
+        closeCircle = FloatingDark.content,
+        closeGlyph = FloatingDark.container,
+    )
 
 /**
  * The two type styles of a stop card, so the card has a hierarchy at every text size. The stop name is the card's title: the
@@ -253,7 +266,15 @@ private fun StopCardHeader(
             ) {
                 heading()
             }
-            CloseButton(label = closeLabel, tint = palette.content, onClick = onClose)
+            CloseCircleButton(
+                contentDescription = closeLabel,
+                onClick = onClose,
+                circle = palette.closeCircle,
+                glyph = palette.closeGlyph,
+                glyphSize = dim.iconM,
+                tag = TripPlannerTestTags.StopCard.CLOSE,
+                circleTag = TripPlannerTestTags.StopCard.CLOSE_CIRCLE,
+            )
         }
         headerContent?.invoke(this)
     }
@@ -262,24 +283,3 @@ private fun StopCardHeader(
 /** The page edge inset on each side, which a block of a stop card puts on itself so another can run edge to edge. */
 @Composable
 internal fun Modifier.cardInset(): Modifier = padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding)
-
-/**
- * The close button: taj's [RoundIconButton] with no fill, a 48 dp target, and the card's own name
- * for a screen reader so it says which card it closes.
- */
-@Composable
-private fun CloseButton(label: String, tint: Color, onClick: () -> Unit) {
-    RoundIconButton(
-        onClick = onClick,
-        color = Color.Transparent,
-        onClickLabel = label,
-        modifier = Modifier.testTag(TripPlannerTestTags.StopCard.CLOSE),
-    ) {
-        Image(
-            painter = painterResource(TajRes.drawable.ic_close),
-            contentDescription = label,
-            colorFilter = ColorFilter.tint(tint),
-            modifier = Modifier.size(KrailTheme.dimensions.iconS),
-        )
-    }
-}

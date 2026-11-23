@@ -104,6 +104,7 @@ object TripPlannerTestTags {
 
     /** The X in the search bar. It clears the text and nothing else. */
     const val SEARCH_STOP_CLEAR = "searchstop.clear"
+    const val SEARCH_STOP_CLEAR_CIRCLE = "searchstop.clear.circle"
 
     /** The one rounded box at the top of Search Stop, holding the To and From pills. */
     const val SEARCH_STOP_GROUP_CARD = "searchstop.groupcard"
@@ -180,6 +181,7 @@ object TripPlannerTestTags {
         const val BODY = "stopcard.body"
         const val FOOTER = "stopcard.footer"
         const val CLOSE = "stopcard.close"
+        const val CLOSE_CIRCLE = "stopcard.close.circle"
         const val MODES = "stopcard.modes"
         const val BOARD_HEADING = "stopcard.board.heading"
         const val BOARD_BODY = "stopcard.board.body"

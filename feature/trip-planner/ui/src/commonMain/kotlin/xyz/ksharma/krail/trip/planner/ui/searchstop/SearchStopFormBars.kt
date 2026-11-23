@@ -20,15 +20,16 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import xyz.ksharma.krail.taj.LocalContentColor
-import xyz.ksharma.krail.taj.components.CloseIcon
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.components.CloseCircleButton
 import xyz.ksharma.krail.trip.planner.ui.components.FloatingGoCircle
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromBlock
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromBlockStyle
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromEditor
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
+import xyz.ksharma.krail.trip.planner.ui.components.softFieldColors
 import xyz.ksharma.krail.trip.planner.ui.components.toFromBarInsets
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -164,14 +165,22 @@ private fun BackArrowButton(onClick: () -> Unit) {
     )
 }
 
-/** The X in the end column: it clears the field and does nothing else. */
+/**
+ * The X in the end column: it clears the field and does nothing else. It is a circle with a cross in it, the go circle's
+ * own colours, the bar's text colour for the circle and the bar's fill for the cross, so it is the same kind of round control
+ * as the go circle it takes the place of while there is text, and reads on the soft pill and on the lone pill alike.
+ */
 @Composable
 private fun ClearTextButton(onClick: () -> Unit) {
-    BarIconButton(
-        icon = CloseIcon,
+    val colors = softFieldColors()
+    CloseCircleButton(
         contentDescription = "Clear",
-        tag = TripPlannerTestTags.SEARCH_STOP_CLEAR,
         onClick = onClick,
+        circle = colors.contentColor,
+        glyph = colors.containerColor,
+        glyphSize = KrailTheme.dimensions.iconL,
+        tag = TripPlannerTestTags.SEARCH_STOP_CLEAR,
+        circleTag = TripPlannerTestTags.SEARCH_STOP_CLEAR_CIRCLE,
     )
 }
 

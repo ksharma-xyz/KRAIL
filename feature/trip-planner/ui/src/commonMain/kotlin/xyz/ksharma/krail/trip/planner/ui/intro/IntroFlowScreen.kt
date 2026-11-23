@@ -79,11 +79,11 @@ internal fun IntroFlowScreen(
     val change = LocalIntroThemeChange.current
     // Once a theme is chosen the window's ground is a light tint of it, which the wash grows into when a badge is tapped.
     val tint = themeSolidBackgroundColor()
-    val settledGround = if (state.selectedThemeId != null) tint else null
+    val settledGround = tint.takeIf { state.selectedThemeId != null }
     // On the colour screen the button shows from the point in the sequence that says so, and at once on every other screen.
     val revealed = state.step != IntroStep.THEME || change?.buttonRevealed ?: true
     // The window's ground, which a sticky bar over scrolling rows is opaque in: the tint once it is drawn, else the surface.
-    val pageGround = if (change != null && settledGround != null) settledGround else KrailTheme.colors.surface
+    val pageGround = settledGround.takeIf { change != null } ?: KrailTheme.colors.surface
 
     Box(
         modifier = modifier

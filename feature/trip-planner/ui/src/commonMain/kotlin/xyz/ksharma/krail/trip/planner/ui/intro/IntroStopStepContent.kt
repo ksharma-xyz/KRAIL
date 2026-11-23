@@ -104,7 +104,6 @@ internal fun IntroStopStepContent(
     }
 }
 
-/** The key of the one line that stands in for the rows when the search finds nothing. */
 private const val INTRO_STOP_NO_MATCH_KEY = "intro-no-match"
 
 @Composable

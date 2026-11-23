@@ -79,12 +79,13 @@ internal fun themeBadgeGrid(count: Int, availableDp: Float, badgeDp: Float): The
         )
     }
     val wave = waveGrid(count, availableDp, badgeDp)
-    if (count == 1 || wave.closestGapDp - 2f * SQRT_TWO * FLOAT_MAX_DP >= MIN_FLOATING_GAP_DP) return wave
-    if (count == FOUR) {
-        val zigzag = zigzagGrid(availableDp, badgeDp)
-        if (zigzag.closestGapDp >= minClearGapDp(badgeDp)) return zigzag
+    val waveFloats = count == 1 || wave.closestGapDp - 2f * SQRT_TWO * FLOAT_MAX_DP >= MIN_FLOATING_GAP_DP
+    val zigzag = if (!waveFloats && count == FOUR) zigzagGrid(availableDp, badgeDp) else null
+    return when {
+        waveFloats -> wave
+        zigzag != null && zigzag.closestGapDp >= minClearGapDp(badgeDp) -> zigzag
+        else -> columnGrid(count, availableDp, badgeDp)
     }
-    return columnGrid(count, availableDp, badgeDp)
 }
 
 // The grid for the points, with the least space between any two of them and the float that space allows.

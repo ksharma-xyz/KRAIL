@@ -122,23 +122,32 @@ internal fun fitLineScale(line: String, ceiling: Float, roomPx: Int, widthAt: (S
 private fun stepDown(scale: Float): Float = (scale * FIT_STEPS_PER_UNIT).toInt() / FIT_STEPS_PER_UNIT
 
 /**
+ * How the layout really draws a unit, which can differ from the plan alone. A tagline line may wrap, so [rowsOf] says how
+ * many rows a unit really takes, one row per planned row by default. [snap] rounds a length in dp to the whole pixels the
+ * layout has, as the drawing does, so the room kept is never a pixel under what is drawn.
+ */
+internal class HeadlineDrawing(
+    val rowsOf: (HeadlineUnit) -> Int = { it.rows.size },
+    val snap: (Float) -> Float = { it },
+)
+
+/**
  * The height of [plan] in dp, with [lineGap] between units and between the rows of a stacked hero, [heroPad] above and below the
- * hero unit, and a row [rowHeightDp] at font scale 1.0, which is the headline style's line height in sp. A tagline line may wrap,
- * so [rowsOf] says how many rows a unit really takes, one by default. [snap] rounds a length in dp to the whole pixels the layout
- * has, as the drawing does, so the room kept is never a pixel under what is drawn.
+ * hero unit, and a row [rowHeightDp] at font scale 1.0, which is the headline style's line height in sp. [drawing] says how
+ * many rows a unit really takes and how lengths are rounded.
  */
 internal fun headlineHeightDp(
     plan: HeadlinePlan,
     rowHeightDp: Float,
     lineGap: Float,
     heroPad: Float,
-    rowsOf: (HeadlineUnit) -> Int = { it.rows.size },
-    snap: (Float) -> Float = { it },
+    drawing: HeadlineDrawing = HeadlineDrawing(),
 ): Float {
     if (plan.units.isEmpty()) return 0f
+    val snap = drawing.snap
     val gap = snap(lineGap)
     val units = plan.units.sumOf { unit ->
-        val rows = rowsOf(unit)
+        val rows = drawing.rowsOf(unit)
         val pad = if (unit.role == HeadlineRole.Hero) snap(heroPad) * 2 else 0f
         (snap(rows * rowHeightDp * unit.scale) + (rows - 1) * gap + pad).toDouble()
     }.toFloat()

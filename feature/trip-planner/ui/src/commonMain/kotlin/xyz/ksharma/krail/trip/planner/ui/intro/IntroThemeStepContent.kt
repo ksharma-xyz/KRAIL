@@ -124,7 +124,11 @@ internal fun IntroThemeBadges(
                     choice = choice,
                     selected = selected,
                     frame = pressed(
-                        badgeFrameSource(index, selected, motionRuns, clock, danceWeight, grid.floatAmplitudeDp),
+                        if (motionRuns) {
+                            movingFrameSource(index, clock, danceWeight, grid.floatAmplitudeDp)
+                        } else {
+                            settledFrameSource(selected)
+                        },
                         change,
                         index,
                     ),
@@ -142,20 +146,17 @@ internal fun IntroThemeBadges(
 
 // The pose of a badge each time it is drawn. With motion it is read from the clock and the blend, and without it,
 // it is the settled one. Either way the function itself is only called while drawing.
-private fun badgeFrameSource(
+private fun settledFrameSource(selected: Boolean): () -> BadgeFrame {
+    val settled = settledFrame(selected)
+    return { settled }
+}
+
+private fun movingFrameSource(
     index: Int,
-    selected: Boolean,
-    motionRuns: Boolean,
     clock: FloatState,
     danceWeight: State<Float>,
     amplitudeDp: Float,
-): () -> BadgeFrame {
-    if (!motionRuns) {
-        val settled = settledFrame(selected)
-        return { settled }
-    }
-    return { badgeFrame(index, clock.floatValue, danceWeight.value, amplitudeDp) }
-}
+): () -> BadgeFrame = { badgeFrame(index, clock.floatValue, danceWeight.value, amplitudeDp) }
 
 // The pose with the badge's press on top, while the change of theme it started plays: its own scale, times the press's.
 private fun pressed(base: () -> BadgeFrame, change: IntroThemeChange?, index: Int): () -> BadgeFrame {
@@ -196,7 +197,15 @@ private fun rememberThemeHeadlineHeight(width: Dp): Dp {
         // Only a tagline line can wrap. The question's lines are fitted, so each row of it is one row.
         val rows = { unit: HeadlineUnit -> if (unit.role == HeadlineRole.Plain) rowsOf(unit) else unit.rows.size }
         val snap = { dp: Float -> density.density.let { d -> (dp * d).roundToInt() / d } }
-        heights.maxOf { plan -> headlineHeightDp(plan, rowDp, gap.value, heroPad.value, rows, snap) }.dp
+        heights.maxOf { plan ->
+            headlineHeightDp(
+                plan,
+                rowDp,
+                gap.value,
+                heroPad.value,
+                HeadlineDrawing(rows, snap),
+            )
+        }.dp
     }
 }
 

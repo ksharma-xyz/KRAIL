@@ -59,6 +59,15 @@ internal class IntroThemeChange(initial: ThemeChangeSpec) {
     private var pendingTap = -1
     private var pendingOrigin = Offset.Unspecified
 
+    /** Whether the run has not finished. */
+    val isRunning: Boolean get() = running.value
+
+    /** Whether the button is there: always, once it has been, and from [ThemeChangeSpec.buttonAtMs] on the pick that shows it first. */
+    val buttonRevealed: Boolean get() = revealed.value
+
+    /** Whether the emoji is the new one. It only changes while the emoji is at its smallest. */
+    val emojiShowsNew: Boolean get() = emojiIsNew.value
+
     /** The coordinates of the window the wash is drawn in. */
     fun attachRoot(coordinates: LayoutCoordinates) {
         root = coordinates
@@ -74,7 +83,8 @@ internal class IntroThemeChange(initial: ThemeChangeSpec) {
         pendingTap = index
         val badge = badges.getOrNull(index)
         val window = root
-        pendingOrigin = if (badge != null && window != null && badge.isAttached && window.isAttached) {
+        val attached = badge?.isAttached == true && window?.isAttached == true
+        pendingOrigin = if (attached && badge != null && window != null) {
             window.localPositionOf(badge, badge.size.toSize().center)
         } else {
             Offset.Unspecified
@@ -109,15 +119,6 @@ internal class IntroThemeChange(initial: ThemeChangeSpec) {
     private suspend fun animateClock(run: ThemeChangeSpec) {
         clock.animateTo(run.durationMs, tween(durationMillis = run.durationMs.toInt(), easing = LinearEasing))
     }
-
-    /** Whether the run has not finished. */
-    val isRunning: Boolean get() = running.value
-
-    /** Whether the button is there: always, once it has been, and from [ThemeChangeSpec.buttonAtMs] on the pick that shows it first. */
-    val buttonRevealed: Boolean get() = revealed.value
-
-    /** Whether the emoji is the new one. It only changes while the emoji is at its smallest. */
-    val emojiShowsNew: Boolean get() = emojiIsNew.value
 
     /**
      * Draws the ground of the window, the wash, into the scope's whole size. [settled] is the ground that stays once it is over, or

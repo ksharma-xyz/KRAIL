@@ -22,8 +22,6 @@ import xyz.ksharma.krail.taj.theme.asThemeInk
 import xyz.ksharma.krail.taj.theme.contrastRatio
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.roundToInt
 
 /**
@@ -76,42 +74,6 @@ private fun Color.darkenedUntil(surface: Color, minContrast: Float): Color {
     }
     return candidate
 }
-
-/** The colour in HSL, with the hue in degrees and the saturation and lightness from 0 to 1. */
-internal fun Color.toHsl(): Triple<Float, Float, Float> {
-    val maxChannel = max(red, max(green, blue))
-    val minChannel = min(red, min(green, blue))
-    val delta = maxChannel - minChannel
-    val lightness = (maxChannel + minChannel) / 2f
-    if (delta == 0f) return Triple(0f, 0f, lightness)
-    val saturation = delta / (1f - kotlin.math.abs(2f * lightness - 1f))
-    val sector = when (maxChannel) {
-        red -> ((green - blue) / delta).mod(HUE_SECTORS)
-        green -> (blue - red) / delta + 2f
-        else -> (red - green) / delta + 4f
-    }
-    return Triple(sector * DEGREES_PER_SECTOR, saturation, lightness)
-}
-
-/** The opaque colour with [hue] in degrees and [saturation] and [lightness] from 0 to 1. */
-internal fun hslColor(hue: Float, saturation: Float, lightness: Float): Color {
-    val chroma = (1f - kotlin.math.abs(2f * lightness - 1f)) * saturation
-    val sector = (hue / DEGREES_PER_SECTOR).mod(HUE_SECTORS)
-    val second = chroma * (1f - kotlin.math.abs(sector.mod(2f) - 1f))
-    val (r, g, b) = when (sector.toInt()) {
-        0 -> Triple(chroma, second, 0f)
-        1 -> Triple(second, chroma, 0f)
-        2 -> Triple(0f, chroma, second)
-        3 -> Triple(0f, second, chroma)
-        4 -> Triple(second, 0f, chroma)
-        else -> Triple(chroma, 0f, second)
-    }
-    val match = lightness - chroma / 2f
-    return Color(red = r + match, green = g + match, blue = b + match)
-}
-
-private const val HUE_SECTORS = 6f
-private const val DEGREES_PER_SECTOR = 60f
 
 /** The least contrast a white label has on the fill of the primary button: text, so 4.5 to 1. */
 internal const val BUTTON_LABEL_MIN_CONTRAST = TEXT_CONTRAST_AA

@@ -28,10 +28,15 @@ internal fun themeEmojiIsNew(timeMs: Float, reduceMotion: Boolean): Boolean =
 internal fun themeEmojiScale(timeMs: Float, scaleAtStart: Float, reduceMotion: Boolean): Float {
     if (reduceMotion) return scaleAtStart + (1f - scaleAtStart) * themeShare(timeMs, 0f, THEME_CHANGE_REDUCED_MS)
     val low = min(scaleAtStart, THEME_EMOJI_LOW)
-    if (timeMs < THEME_EMOJI_SHRINK_MS) {
-        return scaleAtStart + (low - scaleAtStart) * easeInOut(themeShare(timeMs, 0f, THEME_EMOJI_SHRINK_MS))
+    return if (timeMs < THEME_EMOJI_SHRINK_MS) {
+        scaleAtStart + (low - scaleAtStart) * easeInOut(themeShare(timeMs, 0f, THEME_EMOJI_SHRINK_MS))
+    } else {
+        emojiSpringScale(low, (timeMs - THEME_EMOJI_SHRINK_MS) / THEME_MILLIS_PER_SECOND)
     }
-    val seconds = (timeMs - THEME_EMOJI_SHRINK_MS) / THEME_MILLIS_PER_SECOND
+}
+
+// The spring half of the emoji's pop, [seconds] after it started to spring back up from [low]: exactly 1 once it has settled.
+private fun emojiSpringScale(low: Float, seconds: Float): Float {
     if (seconds >= EMOJI_SPRING_SECONDS) return 1f
     val damped = EMOJI_OMEGA * sqrt(1f - EMOJI_ZETA * EMOJI_ZETA)
     val decay = exp(-EMOJI_ZETA * EMOJI_OMEGA * seconds)

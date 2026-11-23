@@ -1,7 +1,5 @@
 package xyz.ksharma.krail.trip.planner.ui.intro.finale
 
-import androidx.compose.ui.graphics.Color
-import xyz.ksharma.krail.taj.tokens.AiGradientTokens
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -39,11 +37,6 @@ internal const val GLOW_STEPS = 12
 private const val GLOW_BLUR_RATIO = 0.45f
 private const val GLOW_MAX_ALPHA = 0.9f
 
-// The brand gradient is wider than the wordmark and slides across it, so the whole range is seen by the end of
-// the hold: it starts at the left edge and ends this share of a width to the left of it.
-internal const val GRADIENT_SPAN = 1.6f
-internal const val GRADIENT_SLIDE = 0.6f
-
 // The least a wordmark scales down to. Below this the screen is not wide enough for a word at any size
 // worth reading, and the largest text sizes are not allowed to push the mark off the screen.
 private const val MIN_FIT_SCALE = 0.1f
@@ -67,25 +60,6 @@ internal fun fitScale(measuredWidthPx: Float, availableWidthPx: Float): Float = 
 internal fun wordmarkFitScale(lineWidthsPx: List<Float>, availableWidthPx: Float): Float =
     lineWidthsPx.fold(1f) { scale, width -> min(scale, fitScale(width, availableWidthPx)) }
 
-/**
- * The gradient with every stop moved [blend] of the way to [themeColour], 0 being the [brand] colours as they
- * are and 1 being the theme colour at every stop, which is a solid colour. The wordmark passes the stops
- * [finaleBrandStops] gives it, and with none given these are the app's own AI gradient stops.
- */
-internal fun finaleGradientColors(
-    blend: Float,
-    themeColour: Color,
-    brand: List<Color> = AiGradientTokens.stops,
-): List<Color> = brand.map { mix(it, themeColour, blend.coerceIn(0f, 1f)) }
-
-// A straight blend of the two colours' channels, so 0 and 1 give back exactly the colour at that end.
-private fun mix(from: Color, to: Color, share: Float): Color = Color(
-    red = from.red + (to.red - from.red) * share,
-    green = from.green + (to.green - from.green) * share,
-    blue = from.blue + (to.blue - from.blue) * share,
-    alpha = from.alpha + (to.alpha - from.alpha) * share,
-)
-
 /** The glow, 0 to 1, as a whole step from 0 to [GLOW_STEPS]. */
 internal fun glowStep(glow: Float): Int = (glow.coerceIn(0f, 1f) * GLOW_STEPS).roundToInt()
 
@@ -95,23 +69,6 @@ internal fun glowBlurPx(step: Int, letterSizePx: Float): Float =
 
 /** The glow's opacity at [step]: none at step 0 and [GLOW_MAX_ALPHA] at the last. */
 internal fun glowAlpha(step: Int): Float = step.coerceIn(0, GLOW_STEPS).toFloat() / GLOW_STEPS * GLOW_MAX_ALPHA
-
-/**
- * Where the gradient starts and ends across a wordmark [widthPx] wide, [travel] of the way through its slide:
- * from the left edge to [GRADIENT_SPAN] widths along at 0, and [GRADIENT_SLIDE] of a width to the left of that
- * at 1. Returned as the start and the end.
- */
-internal fun gradientRangePx(widthPx: Float, travel: Float): Pair<Float, Float> {
-    val start = -widthPx * GRADIENT_SLIDE * travel.coerceIn(0f, 1f)
-    return start to start + widthPx * GRADIENT_SPAN
-}
-
-/**
- * Where the gradient sits across a word [widthPx] wide for [look]: sliding with [travel] when the look slides it, and, when it does
- * not, still, from the left edge to the right edge of the word, whatever [travel] is. The website's sweep is the second.
- */
-internal fun wordmarkGradientRangePx(look: FinaleWordmarkLook, widthPx: Float, travel: Float): Pair<Float, Float> =
-    if (look.gradientSlides) gradientRangePx(widthPx, travel) else 0f to widthPx
 
 /**
  * How far the circle that floods the screen is, in pixels, when it is [share] of the way grown from a centre at

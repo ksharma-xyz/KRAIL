@@ -24,10 +24,10 @@ import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextField
 import xyz.ksharma.krail.taj.components.TextFieldColors
-import xyz.ksharma.krail.taj.components.TextFieldDefaults
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
+import xyz.ksharma.krail.trip.planner.ui.components.softFieldColors
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchQueryAnalyticsRedaction
 import xyz.ksharma.krail.trip.planner.ui.searchstop.barPlaceholderFor
@@ -157,11 +157,13 @@ private fun IntroSearchField(
 }
 
 /**
- * The colours of the stop field, in the one place: taj's own default field colours as they ship, a white field with dark text
- * in light mode and a dark field with light text in dark mode, never the inverted set.
+ * The colours of the stop field, in the one place: the soft pill colours the app's search fields share (`softFieldColors`), a
+ * grey fill a touch darker than the page in light mode and a touch lighter in dark mode, with the page's text on it. Taj's
+ * default colours were the page surface itself, so on the Intro's page the field had no fill and read as a heading, and the
+ * inverted set was a harsh black bar.
  */
 @Composable
-internal fun introStopFieldColors(): TextFieldColors = TextFieldDefaults.colors()
+internal fun introStopFieldColors(): TextFieldColors = softFieldColors()
 
 // One item for each stop, keyed by the stop. A stop is listed once, because a list refuses a key it has seen.
 private fun LazyListScope.introStopItems(

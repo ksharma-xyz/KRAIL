@@ -18,7 +18,7 @@ import xyz.ksharma.krail.trip.planner.ui.intro.finale.IntroFinaleSignal
  * The Intro with its view model: the screen, and the platform glue the screen needs and
  * the view model does not have.
  *
- * - State and readiness are collected with the lifecycle, and the one shot [IntroEffect]s only while
+ * - State is collected with the lifecycle, and the one shot [IntroEffect]s only while
  *   the screen is started, so none is lost and none is replayed after a turn of the screen.
  * - The location permission and the one fix are [IntroLocationEffect], which sends one result for
  *   each yes.
@@ -47,7 +47,6 @@ internal fun IntroFlowRoute(
     finale: IntroFinaleSignal = remember { IntroFinaleSignal() },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val readiness by viewModel.stopsReadiness.collectAsStateWithLifecycle()
 
     IntroEffectsCollector(
         viewModel = viewModel,
@@ -77,7 +76,6 @@ internal fun IntroFlowRoute(
         IntroFlowScreen(
             state = state,
             suggestedStops = viewModel.suggestedStops,
-            readiness = readiness,
             onEvent = viewModel::onEvent,
             modifier = modifier,
         )

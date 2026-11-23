@@ -60,7 +60,6 @@ abstract class IntroThemeCentreChecks(private val textScale: Float) {
                         IntroFlowScreen(
                             state = shown.value,
                             suggestedStops = DEFAULT_SUGGESTED_STOPS,
-                            readiness = PreviewReady,
                             onEvent = {},
                         )
                     }

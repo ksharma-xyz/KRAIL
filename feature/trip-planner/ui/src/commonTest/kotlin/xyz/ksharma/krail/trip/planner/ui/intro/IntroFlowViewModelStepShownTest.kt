@@ -1,7 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import xyz.ksharma.krail.core.testing.coroutines.krailRunTest
-import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -52,15 +51,5 @@ class IntroFlowViewModelStepShownTest {
         repeat(2) { rig.viewModel.onStepShown(IntroStep.THEME) }
 
         assertEquals(listOf<Any?>("Intro"), rig.screenViews())
-    }
-
-    @Test
-    fun `the readiness the last button waits on is the one the data layer reports`() = krailRunTest {
-        val rig = IntroRig(this, initialReadiness = StopsReadiness.Loading)
-        assertEquals(StopsReadiness.Loading, rig.viewModel.stopsReadiness.value)
-
-        rig.readiness.emit(StopsReadiness.Ready(stopCount = 100))
-
-        assertEquals(StopsReadiness.Ready(stopCount = 100), rig.viewModel.stopsReadiness.value)
     }
 }

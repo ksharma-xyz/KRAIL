@@ -64,24 +64,30 @@ private fun IntroState.toSnapshot() = IntroSnapshot(
     noStationNear = parkRideCard == ParkRideCardPhase.NoStationNear,
 )
 
-private fun IntroSnapshot.toState() = IntroState(
-    step = step,
-    parkRideAnswer = parkRideAnswer,
-    locationResult = locationResult,
-    startStopId = startStopId,
-    startName = startName,
-    endStopId = endStopId,
-    endName = endName,
-    addedParkRide = addedParkRide,
-    usedSearch = usedSearch,
-    saved = saved,
-    startFromParkRide = startFromParkRide,
-    selectedThemeId = selectedThemeId,
-    tripDecision = tripDecision,
-    parkRideCard = when {
-        // Shown as the skeleton until the Park & Ride step has worked the station out again.
-        cardStationId != null -> ParkRideCardPhase.Locating(cardStationId)
-        noStationNear -> ParkRideCardPhase.NoStationNear
-        else -> ParkRideCardPhase.None
-    },
-)
+private fun IntroSnapshot.toState(): IntroState {
+    // A yes whose location was still awaited when the state was saved has nothing to show: the awaited location is not kept,
+    // so the question is open again and the screen opens on it, never on an answer with no card and no buttons.
+    val lookLost = step == IntroStep.PARK_RIDE && parkRideAnswer == ParkRideAnswer.YES &&
+        cardStationId == null && !noStationNear
+    return IntroState(
+        step = step,
+        parkRideAnswer = if (lookLost) ParkRideAnswer.ASK else parkRideAnswer,
+        locationResult = if (lookLost) LocationResult.NOT_ASKED else locationResult,
+        startStopId = startStopId,
+        startName = startName,
+        endStopId = endStopId,
+        endName = endName,
+        addedParkRide = addedParkRide,
+        usedSearch = usedSearch,
+        saved = saved,
+        startFromParkRide = startFromParkRide,
+        selectedThemeId = selectedThemeId,
+        tripDecision = tripDecision,
+        parkRideCard = when {
+            // Shown as the skeleton until the Park & Ride step has worked the station out again.
+            cardStationId != null -> ParkRideCardPhase.Locating(cardStationId)
+            noStationNear -> ParkRideCardPhase.NoStationNear
+            else -> ParkRideCardPhase.None
+        },
+    )
+}

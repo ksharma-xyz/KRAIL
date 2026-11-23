@@ -1,6 +1,5 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
-import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
@@ -20,13 +19,6 @@ import kotlin.test.assertTrue
  * so end in a question mark on their last line, and nothing else does. The apostrophe is plain copy.
  */
 class IntroCopyTest {
-
-    private val readiness = listOf(
-        StopsReadiness.Unknown,
-        StopsReadiness.Loading,
-        StopsReadiness.Ready(stopCount = 100),
-        StopsReadiness.Failed(attempt = 1, reason = "disk full"),
-    )
 
     private val cards = listOf(
         ParkRideCardPhase.None,
@@ -53,7 +45,7 @@ class IntroCopyTest {
     private val taglines = KrailThemeStyle.entries.map { it.tagLine }
 
     private fun barWords(): List<String> = states.flatMap { state ->
-        readiness.mapNotNull { introBar(state, it) }.flatMap { bar ->
+        listOfNotNull(introBar(state)).flatMap { bar ->
             listOfNotNull(bar.left, bar.right).flatMap { listOf(it.label, it.spokenLabel) }
         }
     }.distinct()

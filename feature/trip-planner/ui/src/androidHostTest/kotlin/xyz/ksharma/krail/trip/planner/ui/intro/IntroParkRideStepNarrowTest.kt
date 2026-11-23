@@ -63,7 +63,6 @@ class IntroParkRideStepNarrowTest {
                         IntroFlowScreen(
                             state = shown.value,
                             suggestedStops = DEFAULT_SUGGESTED_STOPS,
-                            readiness = PreviewReady,
                             onEvent = {},
                         )
                     }

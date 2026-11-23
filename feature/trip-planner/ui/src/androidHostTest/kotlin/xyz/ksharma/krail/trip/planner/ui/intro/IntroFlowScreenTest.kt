@@ -6,7 +6,6 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
@@ -25,7 +24,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
-import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.taj.theme.KrailDimensions
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -55,7 +53,6 @@ class IntroFlowScreenTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     private val events = mutableListOf<IntroUiEvent>()
-    private val ready = StopsReadiness.Ready(stopCount = 100)
     private val stepTwo = IntroState(step = IntroStep.DESTINATION)
     private val tripPair = IntroState(
         step = IntroStep.CONFIRM,
@@ -66,13 +63,11 @@ class IntroFlowScreenTest {
     )
 
     private val shownState = mutableStateOf(ON_PARK_RIDE)
-    private val shownReadiness = mutableStateOf<StopsReadiness>(ready)
     private var contentSet = false
 
     /** Sets the content once, and from then on changes what it shows, as a test may only set it once. */
-    private fun show(state: IntroState, readiness: StopsReadiness = ready) {
+    private fun show(state: IntroState) {
         shownState.value = state
-        shownReadiness.value = readiness
         if (!contentSet) {
             contentSet = true
             composeRule.setContent {
@@ -80,7 +75,6 @@ class IntroFlowScreenTest {
                     IntroFlowScreen(
                         state = shownState.value,
                         suggestedStops = DEFAULT_SUGGESTED_STOPS,
-                        readiness = shownReadiness.value,
                         onEvent = { events += it },
                     )
                 }
@@ -119,28 +113,36 @@ class IntroFlowScreenTest {
     }
 
     @Test
-    fun `the card bar says Not now and Add to home, with Add off until the numbers have come`() {
-        show(PreviewCardLoadingState)
-        secondary().assertTextEquals(PARK_RIDE_NOT_NOW).assertIsEnabled()
-        primary().assertTextEquals(PARK_RIDE_ADD).assertIsNotEnabled()
+    fun `the card bar says Not now and Add to home, and Add is live from the moment the card shows, with or without numbers`() {
+        listOf(PreviewCardLoadingState, PreviewCardContentState, PreviewCardUnavailableState).forEach { state ->
+            events.clear()
+            show(state)
 
-        show(PreviewCardContentState)
-        primary().assertTextEquals(PARK_RIDE_ADD).assertIsEnabled()
-        primary().performClick()
-        secondary().performClick()
+            secondary().assertTextEquals(PARK_RIDE_NOT_NOW).assertIsEnabled()
+            primary().assertTextEquals(PARK_RIDE_ADD).assertIsEnabled()
+            primary().performClick()
+            secondary().performClick()
 
-        assertEquals<List<IntroUiEvent>>(
-            listOf(IntroUiEvent.AddParkRideAndContinue, IntroUiEvent.DeclineParkRide),
-            events,
-        )
+            assertEquals<List<IntroUiEvent>>(
+                listOf(IntroUiEvent.AddParkRideAndContinue, IntroUiEvent.DeclineParkRide),
+                events,
+                "${state.parkRideCard}",
+            )
+        }
     }
 
     @Test
-    fun `while locating the bar is still there, with no being a live answer and add off`() {
+    fun `while locating the left button is live and Add to home is not shown, and its room is kept`() {
+        show(PreviewCardContentState)
+        val room = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION).getUnclippedBoundsInRoot()
+
         show(PreviewLocatingState)
 
         secondary().assertTextEquals(PARK_RIDE_NOT_NOW).assertIsEnabled()
-        primary().assertTextEquals(PARK_RIDE_ADD).assertIsNotEnabled()
+        primary().assertDoesNotExist()
+        assertEquals(room, secondary().getUnclippedBoundsInRoot(), "the left button moved when Add to home went")
+        secondary().performClick()
+        assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.DeclineParkRide), events)
     }
 
     @Test
@@ -157,24 +159,27 @@ class IntroFlowScreenTest {
     }
 
     @Test
-    fun `every Park and Ride screen that asks has exactly two clickable buttons and no third`() {
-        listOf(ON_PARK_RIDE, PreviewLocatingState, PreviewCardContentState, PreviewAddedState).forEach { state ->
+    fun `every Park and Ride screen that asks has two clickable buttons and no third, but Add to home is not there while locating`() {
+        listOf(ON_PARK_RIDE, PreviewCardContentState, PreviewAddedState).forEach { state ->
             show(state)
 
             composeRule.onAllNodes(hasClickAction()).assertCountEquals(2)
         }
+        show(PreviewLocatingState)
+
+        composeRule.onAllNodes(hasClickAction()).assertCountEquals(1)
     }
 
     @Test
     fun `the destination and origin screens have no button until a stop is selected, then the one button sends the confirm`() {
         listOf(IntroStep.DESTINATION, IntroStep.ORIGIN).forEach { step ->
             events.clear()
-            show(IntroState(step = step), StopsReadiness.Loading)
+            show(IntroState(step = step))
 
             primary().assertDoesNotExist()
             secondary().assertDoesNotExist()
 
-            show(IntroState(step = step, selectedStop = CENTRAL_STOP), StopsReadiness.Loading)
+            show(IntroState(step = step, selectedStop = CENTRAL_STOP))
 
             primary().assertTextEquals(STOP_CHOOSE).assertIsEnabled()
             secondary().assertDoesNotExist()
@@ -185,13 +190,11 @@ class IntroFlowScreenTest {
     }
 
     @Test
-    fun `the confirm screen asks Not now and Yes save it, and neither waits for the stops data`() {
-        listOf(StopsReadiness.Loading, StopsReadiness.Unknown, ready).forEach { readiness ->
-            show(tripPair, readiness)
+    fun `the confirm screen asks Not now and Yes save it, and neither is disabled`() {
+        show(tripPair)
 
-            secondary().assertTextEquals(CONFIRM_NOT_NOW).assertIsEnabled()
-            primary().assertTextEquals(CONFIRM_SAVE).assertIsEnabled()
-        }
+        secondary().assertTextEquals(CONFIRM_NOT_NOW).assertIsEnabled()
+        primary().assertTextEquals(CONFIRM_SAVE).assertIsEnabled()
     }
 
     @Test
@@ -208,18 +211,16 @@ class IntroFlowScreenTest {
     }
 
     @Test
-    fun `the theme screen waits for loading stops only after a yes to saving, and its button finishes the Intro`() {
+    fun `the theme screen's one button is live whether the rider said yes to saving or not, and finishes the Intro`() {
         val saving = tripPair.copy(
             step = IntroStep.THEME,
             selectedThemeId = KrailThemeStyle.Train.id,
             tripDecision = TripDecision.SAVED,
         )
-        show(saving, StopsReadiness.Loading)
-        primary().assertTextEquals(THEME_CONFIRM).assertIsNotEnabled()
+        show(saving)
+        primary().assertTextEquals(THEME_CONFIRM).assertIsEnabled()
 
-        show(saving, ready)
-        primary().assertIsEnabled()
-        show(saving.copy(tripDecision = TripDecision.DECLINED), StopsReadiness.Loading)
+        show(saving.copy(tripDecision = TripDecision.DECLINED))
         primary().assertIsEnabled()
 
         primary().performClick()

@@ -200,7 +200,7 @@ class IntroSavedStateTest {
             IntroState(parkRideAnswer = ParkRideAnswer.YES, parkRideCard = ParkRideCardPhase.Locating()),
         )
 
-        assertEquals(IntroState(parkRideAnswer = ParkRideAnswer.YES), handle.restoreIntroState())
+        assertEquals(IntroState(parkRideAnswer = ParkRideAnswer.ASK), handle.restoreIntroState())
     }
 
     @Test
@@ -214,5 +214,42 @@ class IntroSavedStateTest {
             IntroState(step = IntroStep.DESTINATION, parkRideAnswer = ParkRideAnswer.NO),
             handle.restoreIntroState(),
         )
+    }
+
+    @Test
+    fun `a yes whose location was still awaited when the state was saved opens as the open question, never as a yes with nothing under it`() {
+        val handle = SavedStateHandle()
+        handle.saveIntroState(
+            IntroState(
+                step = IntroStep.PARK_RIDE,
+                parkRideAnswer = ParkRideAnswer.YES,
+                locationResult = LocationResult.GRANTED,
+                parkRideCard = ParkRideCardPhase.Locating(),
+            ),
+        )
+
+        val restored = handle.restoreIntroState()
+
+        assertEquals(IntroStep.PARK_RIDE, restored.step)
+        assertEquals(ParkRideAnswer.ASK, restored.parkRideAnswer)
+        assertEquals(LocationResult.NOT_ASKED, restored.locationResult)
+        assertEquals(ParkRideCardPhase.None, restored.parkRideCard)
+        assertEquals(true, introBar(restored)?.shown, "the question has its two buttons")
+    }
+
+    @Test
+    fun `a yes that was working a saved station out again still opens as that card, and a yes on a later screen is kept`() {
+        val handle = SavedStateHandle()
+        val looking = IntroState(
+            step = IntroStep.PARK_RIDE,
+            parkRideAnswer = ParkRideAnswer.YES,
+            parkRideCard = ParkRideCardPhase.Locating(stationId = "2153478"),
+        )
+        handle.saveIntroState(looking)
+        assertEquals(looking, handle.restoreIntroState())
+
+        val later = IntroState(step = IntroStep.DESTINATION, parkRideAnswer = ParkRideAnswer.YES)
+        handle.saveIntroState(later)
+        assertEquals(later, handle.restoreIntroState())
     }
 }

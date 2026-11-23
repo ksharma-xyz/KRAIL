@@ -1,7 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import kotlinx.collections.immutable.persistentListOf
-import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroSearchPhase
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
@@ -22,11 +21,6 @@ class IntroBarTest {
     // The Park & Ride and confirm screens have a left button, so reading it is an assertion that there is one.
     private val IntroBar.negative: IntroBarAction get() = requireNotNull(left) { "no left button on $this" }
 
-    private val unknown = StopsReadiness.Unknown
-    private val loading = StopsReadiness.Loading
-    private val ready = StopsReadiness.Ready(stopCount = 100)
-    private val failed = StopsReadiness.Failed(attempt = 1, reason = "disk full")
-
     private val ask = IntroBar(
         left = IntroBarAction("No", IntroUiEvent.AnswerParkRide(yes = false), spokenLabel = "No thanks"),
         right = IntroBarAction(
@@ -38,23 +32,22 @@ class IntroBarTest {
 
     private val parkRideRows = listOf(
         // Asking. The stops never matter on this screen.
-        Row("unanswered", parkRide(ParkRideAnswer.ASK, ParkRideCardPhase.None), loading, ask),
-        Row("answered no, then back", parkRide(ParkRideAnswer.NO, ParkRideCardPhase.None), failed, ask),
-        // Looking. The bar keeps its shape with the right button off, so nothing jumps.
-        Row("locating", yesWith(ParkRideCardPhase.Locating()), ready, decide(addEnabled = false)),
+        Row("unanswered", parkRide(ParkRideAnswer.ASK, ParkRideCardPhase.None), ask),
+        Row("answered no, then back", parkRide(ParkRideAnswer.NO, ParkRideCardPhase.None), ask),
+        // Looking. The bar keeps its shape with the right button not shown, so nothing jumps, and the left one is live.
+        Row("locating", yesWith(ParkRideCardPhase.Locating()), decide(addShown = false)),
         Row(
             "a saved card being worked out again",
             yesWith(ParkRideCardPhase.Locating(stationId = "1")),
-            ready,
-            decide(addEnabled = false),
+            decide(addShown = false),
         ),
-        // A card still waiting for its numbers keeps the right button off, then it comes on.
-        Row("card loading", yesWith(card(ParkRideAvailabilityState.Loading)), ready, decide(addEnabled = false)),
-        Row("card with numbers", yesWith(card(ParkRideAvailabilityState.Content)), ready, decide(addEnabled = true)),
-        Row("card unavailable", yesWith(card(ParkRideAvailabilityState.Unavailable)), ready, decide(addEnabled = true)),
+        // A card still waiting for its numbers is live, because adding needs the station and not the readings.
+        Row("card loading", yesWith(card(ParkRideAvailabilityState.Loading)), decide(addShown = true)),
+        Row("card with numbers", yesWith(card(ParkRideAvailabilityState.Content)), decide(addShown = true)),
+        Row("card unavailable", yesWith(card(ParkRideAvailabilityState.Unavailable)), decide(addShown = true)),
         // Nothing to decide, so no bar at all and the flow has moved on.
-        Row("no car park near", yesWith(ParkRideCardPhase.NoStationNear), ready, null),
-        Row("denied or no fix", yesWith(ParkRideCardPhase.None), ready, null),
+        Row("no car park near", yesWith(ParkRideCardPhase.NoStationNear), null),
+        Row("denied or no fix", yesWith(ParkRideCardPhase.None), null),
     )
 
     private fun card(availability: ParkRideAvailabilityState) = ParkRideCardPhase.Card(
@@ -66,16 +59,15 @@ class IntroBarTest {
 
     private fun yesWith(card: ParkRideCardPhase) = parkRide(ParkRideAnswer.YES, card)
 
-    private fun decide(addEnabled: Boolean) = IntroBar(
+    private fun decide(addShown: Boolean) = IntroBar(
         left = IntroBarAction("Not now", IntroUiEvent.DeclineParkRide),
         right = IntroBarAction("Add to home", IntroUiEvent.AddParkRideAndContinue),
-        rightEnabled = addEnabled,
+        rightShown = addShown,
     )
 
-    private fun theme(shown: Boolean, enabled: Boolean = true) = IntroBar(
+    private fun theme(shown: Boolean) = IntroBar(
         left = null,
         right = IntroBarAction("Yes, this one", IntroUiEvent.ConfirmTheme),
-        rightEnabled = enabled,
         shown = shown,
     )
 
@@ -84,12 +76,12 @@ class IntroBarTest {
         right = IntroBarAction("Yes, save it", IntroUiEvent.AnswerSaveTrip(yes = true)),
     )
 
-    private class Row(val name: String, val state: IntroState, val readiness: StopsReadiness, val bar: IntroBar?)
+    private class Row(val name: String, val state: IntroState, val bar: IntroBar?)
 
     @Test
     fun `the Park and Ride screen has the bar the table says in every state`() {
         parkRideRows.forEach { row ->
-            assertEquals(row.bar, introBar(row.state, row.readiness), row.name)
+            assertEquals(row.bar, introBar(row.state), row.name)
         }
     }
 
@@ -101,8 +93,8 @@ class IntroBarTest {
         assertEquals("Yes, show me free spots", PARK_RIDE_YES_SPOKEN)
         assertEquals("Not now", PARK_RIDE_NOT_NOW)
         assertEquals("Add to home", PARK_RIDE_ADD)
-        assertEquals(PARK_RIDE_NOT_NOW, decide(true).negative.spokenLabel)
-        assertEquals(PARK_RIDE_ADD, decide(true).right.spokenLabel)
+        assertEquals(PARK_RIDE_NOT_NOW, decide(addShown = true).negative.spokenLabel)
+        assertEquals(PARK_RIDE_ADD, decide(addShown = true).right.spokenLabel)
     }
 
     @Test
@@ -120,7 +112,7 @@ class IntroBarTest {
     )
 
     @Test
-    fun `the destination and origin screens are one button, not shown until a stop is selected, whatever the search or the stops data`() {
+    fun `the destination and origin screens are one button, not shown until a stop is selected, whatever the search`() {
         val phases = listOf(
             IntroSearchPhase.Idle,
             IntroSearchPhase.Results(persistentListOf(CENTRAL_STOP)),
@@ -128,78 +120,70 @@ class IntroBarTest {
         )
 
         listOf(IntroStep.DESTINATION, IntroStep.ORIGIN).forEach { step ->
-            listOf(unknown, loading, ready, failed).forEach { readiness ->
-                phases.forEach { phase ->
-                    val none = IntroState(step = step, search = phase)
-                    val selected = none.copy(selectedStop = CENTRAL_STOP)
+            phases.forEach { phase ->
+                val none = IntroState(step = step, search = phase)
+                val selected = none.copy(selectedStop = CENTRAL_STOP)
 
-                    assertEquals(stops(shown = false), introBar(none, readiness), "$step $readiness $phase")
-                    assertEquals(stops(shown = true), introBar(selected, readiness), "$step $readiness $phase")
-                }
+                assertEquals(stops(shown = false), introBar(none), "$step $phase")
+                assertEquals(stops(shown = true), introBar(selected), "$step $phase")
             }
         }
     }
 
     @Test
     fun `the stop bar's words are exact, whole at every text size, with nothing to its left and never a disabled button`() {
-        val bar = requireNotNull(introBar(IntroState(step = IntroStep.DESTINATION), ready))
+        val bar = requireNotNull(introBar(IntroState(step = IntroStep.DESTINATION)))
 
         assertEquals("Yes, this one", STOP_CHOOSE)
         assertNull(bar.left, "there is no No, search")
         assertEquals("Yes, this one", bar.right.label)
         assertEquals(bar.right.label, bar.right.spokenLabel, "it says what it shows")
-        assertTrue(bar.rightEnabled)
         assertEquals(IntroUiEvent.ConfirmStop, bar.right.event)
     }
 
     @Test
-    fun `the confirm screen has two buttons that only record the answer, so neither waits for the stops`() {
-        listOf(unknown, loading, ready, failed).forEach { readiness ->
-            listOf(false, true).forEach { saved ->
-                val state = IntroState(step = IntroStep.CONFIRM, saved = saved)
+    fun `the confirm screen has two buttons that only record the answer, so neither waits for anything`() {
+        listOf(false, true).forEach { saved ->
+            val state = IntroState(step = IntroStep.CONFIRM, saved = saved)
 
-                assertEquals(trip(), introBar(state, readiness), "$readiness saved=$saved")
-            }
+            assertEquals(trip(), introBar(state), "saved=$saved")
         }
-        assertTrue(trip().rightEnabled)
         assertEquals("Not now", CONFIRM_NOT_NOW)
         assertEquals("Yes, save it", CONFIRM_SAVE)
     }
 
     @Test
-    fun `the theme screen is one button, not shown until a theme is selected, and not held back with nothing to write`() {
+    fun `the theme screen is one button, not shown until a theme is selected and live from then on, whatever was answered`() {
         val none = IntroState(step = IntroStep.THEME)
         val selected = none.copy(selectedThemeId = KrailThemeStyle.Metro.id)
-        val declined = selected.copy(tripDecision = TripDecision.DECLINED)
 
-        listOf(unknown, loading, ready, failed).forEach { readiness ->
-            assertEquals(theme(shown = false), introBar(none, readiness), "nothing selected, $readiness")
-            assertEquals(theme(shown = true), introBar(selected, readiness), "a theme selected, $readiness")
-            assertEquals(theme(shown = true), introBar(declined, readiness), "declined at confirm, $readiness")
+        assertEquals(theme(shown = false), introBar(none), "nothing selected")
+        assertEquals(theme(shown = true), introBar(selected), "a theme selected")
+        TripDecision.entries.forEach { decision ->
+            listOf(false, true).forEach { saved ->
+                val state = selected.copy(tripDecision = decision, saved = saved)
+                assertEquals(theme(shown = true), introBar(state), "$decision saved=$saved")
+            }
         }
+        assertEquals(theme(shown = true), introBar(selected.copy(tripDecision = null)), "no answer recorded")
     }
 
     @Test
-    fun `the theme button waits for stops that are still loading only when the rider said yes to saving the trip`() {
+    fun `the theme button is the same whether the rider said yes to saving the trip or not, it never waits for the stops`() {
         val saving = IntroState(
             step = IntroStep.THEME,
             selectedThemeId = KrailThemeStyle.Metro.id,
             tripDecision = TripDecision.SAVED,
         )
 
-        assertEquals(theme(shown = true, enabled = false), introBar(saving, unknown))
-        assertEquals(theme(shown = true, enabled = false), introBar(saving, loading))
-        assertEquals(theme(shown = true), introBar(saving, ready))
-        assertEquals(theme(shown = true), introBar(saving, failed), "a failed load is no different from a ready one")
-        // A trip already written needs no wait.
-        assertEquals(theme(shown = true), introBar(saving.copy(saved = true), loading))
-        // Not shown yet is still a kept room, and never a disabled looking one: it is hidden, not off.
-        assertEquals(false, introBar(saving.copy(selectedThemeId = null), loading)?.shown)
+        assertEquals(theme(shown = true), introBar(saving))
+        assertEquals(theme(shown = true), introBar(saving.copy(saved = true)))
+        assertEquals(false, introBar(saving.copy(selectedThemeId = null))?.shown, "hidden, with its room kept")
     }
 
     @Test
     fun `a bar that is not shown still has its button, so the room for it is kept`() {
-        val none = requireNotNull(introBar(IntroState(step = IntroStep.THEME), ready))
+        val none = requireNotNull(introBar(IntroState(step = IntroStep.THEME)))
 
         assertEquals(false, none.shown)
         assertEquals("Yes, this one", none.right.label)
@@ -215,7 +199,7 @@ class IntroBarTest {
             IntroState(step = IntroStep.ORIGIN, selectedStop = CENTRAL_STOP)
 
         states.forEach { state ->
-            val bar = introBar(state, ready)
+            val bar = introBar(state)
             assertTrue(bar == null || bar.shown, "${state.step} $state")
         }
     }
@@ -229,7 +213,7 @@ class IntroBarTest {
 
     @Test
     fun `the theme bar is the one button, in the exact words, with no short form and nothing to its left`() {
-        val bar = requireNotNull(introBar(IntroState(step = IntroStep.THEME), ready))
+        val bar = requireNotNull(introBar(IntroState(step = IntroStep.THEME)))
 
         assertNull(bar.left, "the theme screen has no way to say no")
         assertEquals("Yes, this one", bar.right.label)
@@ -256,10 +240,7 @@ class IntroBarTest {
                 ),
                 IntroState(step = step, search = IntroSearchPhase.NoMatch),
             )
-            val readinesses = listOf(unknown, loading, ready, failed)
-            val bars = states.flatMap { state ->
-                readinesses.mapNotNull { introBar(state, it) }
-            }
+            val bars = states.mapNotNull { introBar(it) }
             bars.any { it.left == null }
         }
 
@@ -269,12 +250,12 @@ class IntroBarTest {
     @Test
     fun `which theme is selected does not change the bar, only whether it is shown`() {
         introThemeChoices().forEach { choice ->
-            val bar = introBar(IntroState(step = IntroStep.THEME, selectedThemeId = choice.style.id), ready)
+            val bar = introBar(IntroState(step = IntroStep.THEME, selectedThemeId = choice.style.id))
 
             assertEquals(theme(shown = true), bar, choice.name)
         }
         // An id the Intro does not offer is still a selection as far as the bar goes: the view model never stores one.
-        assertEquals(theme(shown = true), introBar(IntroState(step = IntroStep.THEME, selectedThemeId = 99), ready))
+        assertEquals(theme(shown = true), introBar(IntroState(step = IntroStep.THEME, selectedThemeId = 99)))
     }
 
     @Test
@@ -289,7 +270,7 @@ class IntroBarTest {
 
         assertEquals(IntroStep.entries.toSet(), covered.keys)
         covered.forEach { (step, hasBar) ->
-            assertEquals(hasBar, introBar(IntroState(step = step), ready) != null, "$step")
+            assertEquals(hasBar, introBar(IntroState(step = step)) != null, "$step")
         }
     }
 
@@ -305,8 +286,8 @@ class IntroBarTest {
 
     @Test
     fun `a button with no longer phrase says what it shows, at every text size, since there is no compact form any more`() {
-        assertEquals("Add to home", decide(true).right.spokenLabel)
-        assertEquals("Not now", decide(true).negative.spokenLabel)
+        assertEquals("Add to home", decide(addShown = true).right.spokenLabel)
+        assertEquals("Not now", decide(addShown = true).negative.spokenLabel)
         assertEquals("Yes, save it", trip().right.spokenLabel)
         assertEquals("Not now", trip().negative.spokenLabel)
     }

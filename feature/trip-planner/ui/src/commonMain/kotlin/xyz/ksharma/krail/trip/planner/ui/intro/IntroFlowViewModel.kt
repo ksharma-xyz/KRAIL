@@ -59,9 +59,6 @@ internal class IntroFlowViewModel(
 
     private val progressSaver = IntroProgressSaver(viewModelScope, completion.progress, _state.value)
 
-    /** The stops the last button waits on, for the screen to read. The view model adds nothing to it. */
-    val stopsReadiness: StateFlow<StopsReadiness> get() = appDataReadiness.state
-
     /** Read once, so the lists never change under the rider. */
     val suggestedStops: SuggestedStops = stops.suggestedStops
 
@@ -106,6 +103,22 @@ internal class IntroFlowViewModel(
         // After a killed process the saved station id is worked out into a card again.
         parkRideStep.restore()
         stopsStep.loadModes(suggestedStops)
+        warmStops()
+    }
+
+    /**
+     * Gets the stops load going now, on the first screen, so it is normally Ready long before the last one and nothing at
+     * the end has to wait for it. The load is the app launch's own job and is usually already running or done, and this
+     * is the same call, [AppDataReadiness.retry]: a no-op while Loading or Ready, the first run (with its automatic
+     * retries) from Unknown, and one more attempt from Failed. So it adds no network call, because the stops are bundled
+     * and the load is a local insert, and no second run, because the claim is atomic. It costs one call when the Intro opens
+     * and nothing at all when the load is under way, and it never suspends.
+     */
+    private fun warmStops() {
+        when (appDataReadiness.state.value) {
+            StopsReadiness.Unknown, is StopsReadiness.Failed -> appDataReadiness.retry()
+            StopsReadiness.Loading, is StopsReadiness.Ready -> Unit
+        }
     }
 
     fun onEvent(event: IntroUiEvent) {

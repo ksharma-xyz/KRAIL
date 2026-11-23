@@ -30,7 +30,7 @@ data class IntroState(
     val saved: Boolean = false,
     /**
      * The theme the rider picked on the last screen, as the id of the app's theme, or null before a pick. The
-     * right button stays off until there is one. It is kept as the id so the state module needs nothing from
+     * right button is not shown until there is one. It is kept as the id so the state module needs nothing from
      * the design system, and the Intro's UI turns it back into a theme.
      */
     val selectedThemeId: Int? = null,

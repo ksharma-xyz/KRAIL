@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.testTag
@@ -37,9 +38,15 @@ import kotlin.math.max
  * With no [left], which the screens that ask for a pick have, the bar is the one positive button at the full width.
  * It is the same taj button, so it is the same height as the two button bar, and nothing is left empty beside it.
  *
- * While [shown] is false the bar is not there for the rider: it draws nothing, a screen reader and a tap cannot
- * reach it, and it is not a disabled button, but it still takes the room its buttons will, so the screen does not
- * move when it appears. It then fades in over [BAR_REVEAL_MS], or simply appears with reduced motion.
+ * No button is ever drawn disabled. A button is live, or it is not shown. While [shown] is false the bar is not there for
+ * the rider: it draws nothing, a screen reader and a tap cannot reach it, but it still takes the room its buttons will, so
+ * the screen does not move when it appears. It then fades in over [BAR_REVEAL_MS], or simply appears with reduced
+ * motion. [rightShown] does the same for the right button alone, which the Park & Ride bar keeps hidden until its card
+ * shows.
+ *
+ * [acceptsPresses] is false while the screen the bar belongs to is still moving, so a second tap on a bar that changes in
+ * place is dropped and never lands on the next screen's button. The bar is drawn exactly as it is, live. A button that has
+ * not yet fully faded in takes no press either.
  *
  * The two sit in one row. When two whole buttons cannot fit side by side, as at 320 dp with large text,
  * the bar stacks them with the primary on top, and never squeezes, shrinks or truncates a label. It
@@ -52,18 +59,17 @@ internal fun IntroDecisionBar(
     right: IntroBarAction,
     onEvent: (IntroUiEvent) -> Unit,
     modifier: Modifier = Modifier,
-    rightEnabled: Boolean = true,
     shown: Boolean = true,
+    rightShown: Boolean = true,
+    acceptsPresses: Boolean = true,
 ) {
-    val enabled = rightEnabled && shown
-    Revealed(shown = shown, modifier = modifier) {
+    Revealed(shown = shown, acceptsPresses = acceptsPresses, modifier = modifier) {
         if (left == null) {
-            PrimaryButton(right, onEvent, enabled, Modifier.fillMaxWidth())
+            PrimaryButton(right, onEvent, Modifier.fillMaxWidth())
         } else {
             IntroBarLayout(gap = KrailTheme.dimensions.spacingL) {
                 OutlinedButton(
                     onClick = { onEvent(left.event) },
-                    enabled = shown,
                     dimensions = ButtonDefaults.largeButtonSize(),
                     modifier = Modifier
                         .testTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION)
@@ -71,29 +77,42 @@ internal fun IntroDecisionBar(
                 ) {
                     Text(text = left.label, textAlign = TextAlign.Center)
                 }
-                PrimaryButton(right, onEvent, enabled)
+                // The room is kept while it is hidden, and a layout that gives the box a tight width gives it to the button.
+                Revealed(shown = rightShown, propagateMinConstraints = true) { PrimaryButton(right, onEvent) }
             }
         }
     }
 }
 
 /**
- * Draws [content] when [shown] and, when not, keeps its room and nothing else: it is transparent, taps do nothing and a
- * screen reader finds nothing. It fades between the two over [introBarRevealMs] and is never drawn half way in a preview
- * or a screenshot, where the state it starts in is the state it is drawn in.
+ * Draws [content] when [shown] and, when not, keeps its room and nothing else: it is transparent, taps are taken before the
+ * content sees them, the keyboard cannot focus it and a screen reader finds nothing. It fades between the two over
+ * [introBarRevealMs] and is never drawn half way in a preview or a screenshot, where the state it starts in is the state it
+ * is drawn in. The content is never disabled: while it fades in, and while [acceptsPresses] is false, the touch is consumed
+ * instead, so a press that is not ready is ignored without the button looking off.
  */
 @Composable
-private fun Revealed(shown: Boolean, modifier: Modifier, content: @Composable () -> Unit) {
+private fun Revealed(
+    shown: Boolean,
+    modifier: Modifier = Modifier,
+    acceptsPresses: Boolean = true,
+    propagateMinConstraints: Boolean = false,
+    content: @Composable () -> Unit,
+) {
     val reveal = introBarRevealMs(isReduceMotionEnabled())
     val alpha by animateFloatAsState(
         targetValue = if (shown) 1f else 0f,
         animationSpec = if (reveal == 0) snap() else tween(durationMillis = reveal),
         label = "intro-bar-reveal",
     )
+    val live = shown && alpha == 1f
     Box(
         modifier = modifier
             .graphicsLayer { this.alpha = alpha }
-            .then(if (shown) Modifier else Modifier.clearAndSetSemantics {}),
+            .then(if (shown) Modifier else Modifier.clearAndSetSemantics {})
+            .focusProperties { canFocus = live }
+            .consumeTouches(!live || !acceptsPresses),
+        propagateMinConstraints = propagateMinConstraints,
     ) {
         content()
     }
@@ -104,12 +123,10 @@ private fun Revealed(shown: Boolean, modifier: Modifier, content: @Composable ()
 private fun PrimaryButton(
     action: IntroBarAction,
     onEvent: (IntroUiEvent) -> Unit,
-    enabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Button(
         onClick = { onEvent(action.event) },
-        enabled = enabled,
         modifier = modifier
             .testTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION)
             .semantics { contentDescription = action.spokenLabel },
@@ -198,8 +215,8 @@ private fun tightWidth(width: Int, maxHeight: Int) =
 @Composable
 private fun PreviewIntroDecisionBarAsk() {
     PreviewTheme {
-        val bar = requireNotNull(introBar(PreviewAskState, PreviewReady))
-        IntroDecisionBar(left = bar.left, right = bar.right, onEvent = {}, rightEnabled = bar.rightEnabled)
+        val bar = requireNotNull(introBar(PreviewAskState))
+        IntroDecisionBar(left = bar.left, right = bar.right, onEvent = {}, rightShown = bar.rightShown)
     }
 }
 
@@ -208,8 +225,8 @@ private fun PreviewIntroDecisionBarAsk() {
 @Composable
 private fun PreviewIntroDecisionBarAddToHome() {
     PreviewTheme {
-        val bar = requireNotNull(introBar(PreviewCardContentState, PreviewReady))
-        IntroDecisionBar(left = bar.left, right = bar.right, onEvent = {}, rightEnabled = bar.rightEnabled)
+        val bar = requireNotNull(introBar(PreviewCardContentState))
+        IntroDecisionBar(left = bar.left, right = bar.right, onEvent = {}, rightShown = bar.rightShown)
     }
 }
 
@@ -218,7 +235,7 @@ private fun PreviewIntroDecisionBarAddToHome() {
 @Composable
 private fun PreviewIntroDecisionBarAddToHomeWaiting() {
     PreviewTheme {
-        val bar = requireNotNull(introBar(PreviewCardLoadingState, PreviewReady))
-        IntroDecisionBar(left = bar.left, right = bar.right, onEvent = {}, rightEnabled = bar.rightEnabled)
+        val bar = requireNotNull(introBar(PreviewCardLoadingState))
+        IntroDecisionBar(left = bar.left, right = bar.right, onEvent = {}, rightShown = bar.rightShown)
     }
 }

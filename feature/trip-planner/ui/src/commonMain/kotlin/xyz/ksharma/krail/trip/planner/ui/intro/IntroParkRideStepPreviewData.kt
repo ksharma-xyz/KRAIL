@@ -1,7 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import kotlinx.collections.immutable.persistentListOf
-import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
@@ -60,9 +59,6 @@ private fun tallawong(availability: ParkRideAvailabilityState) = ParkRideCardPha
         availability = availability,
     ),
 )
-
-/** The stops data the previews are drawn with, so the bar is whole. */
-internal val PreviewReady = StopsReadiness.Ready(stopCount = 100)
 
 internal val PreviewAskState = IntroState(step = IntroStep.PARK_RIDE)
 internal val PreviewLocatingState = asked(ParkRideCardPhase.Locating())

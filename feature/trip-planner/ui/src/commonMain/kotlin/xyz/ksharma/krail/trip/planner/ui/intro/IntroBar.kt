@@ -1,12 +1,9 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
-import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
-import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAvailabilityState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
-import xyz.ksharma.krail.trip.planner.ui.state.intro.TripDecision
 
 // The words on the decision bar. Every one is an answer, never a way past a question, so none of them
 // is Skip, Later, Next, Continue or Done. IntroBannedWordsTest holds that for every string the Intro draws.
@@ -36,7 +33,10 @@ internal data class IntroBarAction(
 /**
  * The decision bar of a screen: two buttons, the negative answer on the left and the positive
  * one on the right. The right one is the primary and is the only place the theme colour is drawn.
- * Only the right one is ever disabled.
+ *
+ * No button of the Intro is ever drawn disabled, and there is no field here that could say so. A button is either shown
+ * and live, so pressing it does something sensible whatever data is or is not ready, or it is not shown at all and keeps
+ * its room. A rider who has not answered is never held on a button that cannot be pressed, and no state is a dead end.
  *
  * The screens that ask the rider to pick something, the theme and the two stop screens, are the exception: there is
  * no answer of no, so [left] is null and the bar is the primary alone. Every other screen has both. `IntroBarTest`
@@ -45,12 +45,16 @@ internal data class IntroBarAction(
  * [shown] is false while the bar has nothing to answer yet, which is a single button on a screen where nothing has
  * been picked. The bar then draws nothing and cannot be reached, and it keeps the room it will take, so the screen
  * does not move when the button appears. A screen that has no bar at all is the null from [introBar] instead.
+ *
+ * [rightShown] is the same for the right button alone, while the left one stays shown and live. The Park & Ride card
+ * has it false while the station is being found, so the rider can still say no and the bar does not change size when
+ * Add to home appears.
  */
 internal data class IntroBar(
     val left: IntroBarAction?,
     val right: IntroBarAction,
-    val rightEnabled: Boolean = true,
     val shown: Boolean = true,
+    val rightShown: Boolean = true,
 )
 
 // How long the single button takes to fade in once the rider has picked something.
@@ -62,13 +66,14 @@ internal fun introBarRevealMs(reduceMotion: Boolean): Int = if (reduceMotion) 0 
 /**
  * What the bar of the screen [state] is on says and does, or null when the screen asks nothing and
  * shows no bar. A table over the step, so a new step is a compile error here and not a screen with the
- * wrong bar. [readiness] is the stops data, which only the theme screen, where the trip is written, waits on.
+ * wrong bar. It reads the state and nothing else: no data that is still loading can change a button, because every
+ * button does something whether or not it is ready.
  *
  * Each screen has its own bar: [themeBar], [parkRideBar], [stopBar] for the destination and origin screens, which
  * share one, and [confirmBar].
  */
-internal fun introBar(state: IntroState, readiness: StopsReadiness): IntroBar? = when (state.step) {
-    IntroStep.THEME -> themeBar(state, readiness)
+internal fun introBar(state: IntroState): IntroBar? = when (state.step) {
+    IntroStep.THEME -> themeBar(state)
     IntroStep.PARK_RIDE -> parkRideBar(state)
     IntroStep.DESTINATION, IntroStep.ORIGIN -> stopBar(state)
     IntroStep.CONFIRM -> confirmBar()
@@ -88,32 +93,31 @@ private fun stopBar(state: IntroState) = IntroBar(
 /**
  * The theme screen, the last: a single button with nothing beside it, which ends the Intro. A theme is chosen by
  * tapping its badge, there is no answer of no, and the rider must pick a colour to go on, so the single button is not
- * shown until a theme is selected, and then it fades in where the room for it was kept. It is a full width taj button
- * the height of the two button bar, so nothing moves when it appears. Its words are the whole phrase at every text
- * size, and a screen reader hears the same words.
+ * shown until a theme is selected, and then it fades in where the room for it was kept, and is live. It is a full width
+ * taj button the height of the two button bar, so nothing moves when it appears. Its words are the whole phrase at every
+ * text size, and a screen reader hears the same words.
  *
- * The finish waits for the stops data to be Ready or Failed, as it always has, but only when there is a trip to write,
- * so the button is off while it is still loading and the rider said yes to saving. A rider who said Not now has nothing
- * to write and is never held back, and a trip already written needs no wait.
+ * It never waits for the stops data. The press starts the finale at once, and anything that has to wait for the stops
+ * waits under the colour the finale draws (`IntroFlowViewModel`), so the button is never off while the data loads.
  */
-private fun themeBar(state: IntroState, readiness: StopsReadiness) = IntroBar(
+private fun themeBar(state: IntroState) = IntroBar(
     left = null,
     right = IntroBarAction(THEME_CONFIRM, IntroUiEvent.ConfirmTheme),
-    rightEnabled = state.saved || state.tripDecision != TripDecision.SAVED || readiness.isUsable(),
     shown = state.selectedThemeId != null,
 )
 
 /**
- * Asking, then deciding on the card. Locating and a card still waiting for its numbers keep the same
- * bar with the right button disabled, so the bar never changes size or jumps, and the left button
- * stays live so the rider can always say no while they wait. A screen with nothing to decide has no bar
- * and the flow has already moved on.
+ * Asking, then deciding on the card. Locating, and a card still waiting for its numbers, keep the same bar, so it never
+ * changes size or jumps. The left button is live throughout, so the rider can always say no while they wait. The right
+ * one, Add to home, is not shown while the station is still being found, and is live as soon as a card shows, also while
+ * its numbers load, because adding needs the station and not the readings. A screen with nothing to decide has no bar and
+ * the flow has already moved on.
  */
-private fun parkRideBar(state: IntroState): IntroBar? = when (val card = state.parkRideCard) {
+private fun parkRideBar(state: IntroState): IntroBar? = when (state.parkRideCard) {
     ParkRideCardPhase.None -> if (state.parkRideAnswer == ParkRideAnswer.YES) null else askBar()
     ParkRideCardPhase.NoStationNear -> null
-    is ParkRideCardPhase.Locating -> addBar(addEnabled = false)
-    is ParkRideCardPhase.Card -> addBar(addEnabled = card.station.availability != ParkRideAvailabilityState.Loading)
+    is ParkRideCardPhase.Locating -> decideBar(addShown = false)
+    is ParkRideCardPhase.Card -> decideBar(addShown = true)
 }
 
 private fun askBar() = IntroBar(
@@ -121,10 +125,10 @@ private fun askBar() = IntroBar(
     right = IntroBarAction(PARK_RIDE_YES, IntroUiEvent.AnswerParkRide(yes = true), PARK_RIDE_YES_SPOKEN),
 )
 
-private fun addBar(addEnabled: Boolean) = IntroBar(
+private fun decideBar(addShown: Boolean) = IntroBar(
     left = IntroBarAction(PARK_RIDE_NOT_NOW, IntroUiEvent.DeclineParkRide),
     right = IntroBarAction(PARK_RIDE_ADD, IntroUiEvent.AddParkRideAndContinue),
-    rightEnabled = addEnabled,
+    rightShown = addShown,
 )
 
 /**
@@ -135,10 +139,3 @@ private fun confirmBar() = IntroBar(
     left = IntroBarAction(CONFIRM_NOT_NOW, IntroUiEvent.AnswerSaveTrip(yes = false)),
     right = IntroBarAction(CONFIRM_SAVE, IntroUiEvent.AnswerSaveTrip(yes = true)),
 )
-
-// Only stops that are still loading hold the finish back. A failed load is no different from a ready one,
-// because the picks carry their own id and name, so a trip never needs the stops table.
-private fun StopsReadiness.isUsable(): Boolean = when (this) {
-    StopsReadiness.Unknown, StopsReadiness.Loading -> false
-    is StopsReadiness.Failed, is StopsReadiness.Ready -> true
-}

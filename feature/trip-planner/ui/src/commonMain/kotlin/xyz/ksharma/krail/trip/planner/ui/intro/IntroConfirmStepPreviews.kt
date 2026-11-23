@@ -6,7 +6,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
-import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -41,7 +40,6 @@ internal fun PreviewIntroConfirmStep(state: IntroState) {
         IntroFlowScreen(
             state = state,
             suggestedStops = DEFAULT_SUGGESTED_STOPS,
-            readiness = StopsReadiness.Ready(stopCount = 100),
             onEvent = {},
         )
     }

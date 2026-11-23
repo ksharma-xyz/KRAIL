@@ -5,7 +5,6 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.core.transport.TransportMode
-import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroSearchPhase
@@ -88,7 +87,6 @@ internal fun PreviewIntroStopStep(state: IntroState) {
         IntroFlowScreen(
             state = state,
             suggestedStops = DEFAULT_SUGGESTED_STOPS,
-            readiness = StopsReadiness.Ready(stopCount = 100),
             onEvent = {},
         )
     }

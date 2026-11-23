@@ -23,7 +23,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import xyz.ksharma.krail.core.adaptiveui.DUAL_PANE_LIST_WIDTH
-import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.themeSolidBackgroundColor
@@ -37,7 +36,8 @@ private val IntroMaxContentWidth = DUAL_PANE_LIST_WIDTH
 
 /**
  * The Intro: the screen and the decision bar. It holds no state of its own beyond scroll, so every decision is
- * [state] and [readiness], and everything the rider does leaves through [onEvent].
+ * [state], and everything the rider does leaves through [onEvent]. Nothing on it depends on whether the stops data is
+ * loaded, and no button on it is ever disabled.
  *
  * The flow only moves forward. There is no back button, and system back and the back swipe do nothing on every
  * screen after the first, where they are consumed. On the first screen they follow the platform and leave the app.
@@ -50,7 +50,6 @@ private val IntroMaxContentWidth = DUAL_PANE_LIST_WIDTH
 internal fun IntroFlowScreen(
     state: IntroState,
     suggestedStops: SuggestedStops,
-    readiness: StopsReadiness,
     onEvent: (IntroUiEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -87,7 +86,7 @@ internal fun IntroFlowScreen(
             .safeDrawingPadding(),
         contentAlignment = Alignment.TopCenter,
     ) {
-        val bar = introBar(state, readiness)
+        val bar = introBar(state)
         IntroBarLayer(
             barShown = bar?.shown == true && revealed,
             modifier = Modifier.widthIn(max = IntroMaxContentWidth).fillMaxHeight(),
@@ -97,8 +96,8 @@ internal fun IntroFlowScreen(
                         left = it.left,
                         right = it.right,
                         onEvent = send,
-                        rightEnabled = it.rightEnabled,
                         shown = it.shown && revealed,
+                        rightShown = it.rightShown,
                         modifier = Modifier.padding(
                             horizontal = dim.pageHorizontalPadding,
                             vertical = dim.spacingL,

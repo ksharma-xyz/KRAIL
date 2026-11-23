@@ -146,7 +146,8 @@ class IntroFlowViewModelFinishTest {
 
             assertEquals(1, rig.sandook.selectAllTrips().size)
             assertEquals(1, rig.log.count(SAVED_TRIP))
-            assertEquals(1, rig.readiness.retryCallCount)
+            // Once when the Intro opened and once more at the finish.
+            assertEquals(2, rig.readiness.retryCallCount)
             assertEquals("failed", rig.outcomeEvent().properties?.get("stopsWait"))
             assertEquals(1, rig.log.count(SEEN_INTRO))
             assertTrue(rig.state.saved)
@@ -188,12 +189,14 @@ class IntroFlowViewModelFinishTest {
                 val rig = rigAt(tripPicked, readiness = stillNotReady)
 
                 rig.answerAndFinish(yes = true)
-                assertEquals(listOf(THEME_REPORTED, "awaitReady"), rig.log.entries, "readiness $stillNotReady")
+                // From Unknown the Intro opening asked the load to start, and that is the only difference.
+                val opened = if (stillNotReady == StopsReadiness.Unknown) listOf("retry") else emptyList()
+                assertEquals(opened + listOf(THEME_REPORTED, "awaitReady"), rig.log.entries, "readiness $stillNotReady")
                 rig.testTime += FINISH_WAIT_TIMEOUT_MS.milliseconds
                 pumpOnce(FINISH_WAIT_TIMEOUT_MS)
 
                 assertEquals(1, rig.log.count(SAVED_TRIP), "readiness $stillNotReady")
-                assertEquals(1, rig.readiness.retryCallCount, "readiness $stillNotReady")
+                assertEquals(opened.size + 1, rig.readiness.retryCallCount, "readiness $stillNotReady")
                 assertEquals("over_5s", rig.outcomeEvent().properties?.get("stopsWait"))
             }
         }

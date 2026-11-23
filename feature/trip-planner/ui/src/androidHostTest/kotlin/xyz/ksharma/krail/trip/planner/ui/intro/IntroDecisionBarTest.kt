@@ -5,11 +5,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasClickAction
@@ -17,7 +17,9 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
@@ -56,32 +58,35 @@ class IntroDecisionBarTest {
     private val events = mutableListOf<IntroUiEvent>()
     private val width = mutableStateOf(PHONE_WIDTH)
     private val fontScale = mutableStateOf(1f)
-    private val rightEnabled = mutableStateOf(true)
+    private val rightShown = mutableStateOf(true)
+    private val accepting = mutableStateOf(true)
     private val single = mutableStateOf(false)
     private val useCardBar = mutableStateOf(false)
     private val barShown = mutableStateOf(true)
     private var contentSet = false
 
-    private val askBar = requireNotNull(introBar(PreviewAskState, PreviewReady))
-    private val cardBar = requireNotNull(introBar(PreviewCardContentState, PreviewReady))
+    private val askBar = requireNotNull(introBar(PreviewAskState))
+    private val cardBar = requireNotNull(introBar(PreviewCardContentState))
     private val themeBar = requireNotNull(
-        introBar(IntroState(step = IntroStep.THEME, selectedThemeId = 1), PreviewReady),
+        introBar(IntroState(step = IntroStep.THEME, selectedThemeId = 1)),
     )
 
     private fun show(
         widthDp: Int,
         scale: Float,
-        enabled: Boolean = true,
         onlyRight: Boolean = false,
         shown: Boolean = true,
         card: Boolean = false,
+        showRight: Boolean = true,
+        acceptPresses: Boolean = true,
     ) {
         useCardBar.value = card
         width.value = widthDp
         barShown.value = shown
         single.value = onlyRight
         fontScale.value = scale
-        rightEnabled.value = enabled
+        rightShown.value = showRight
+        accepting.value = acceptPresses
         if (!contentSet) {
             contentSet = true
             composeRule.setContent {
@@ -94,8 +99,9 @@ class IntroDecisionBarTest {
                                 left = bar.left.takeUnless { single.value },
                                 right = if (single.value) themeBar.right else bar.right,
                                 onEvent = { events += it },
-                                rightEnabled = rightEnabled.value,
                                 shown = barShown.value,
+                                rightShown = rightShown.value,
+                                acceptsPresses = accepting.value,
                             )
                         }
                     }
@@ -200,16 +206,59 @@ class IntroDecisionBarTest {
     }
 
     @Test
-    fun `only the right button is ever disabled, and a disabled one sends nothing`() {
-        show(PHONE_WIDTH, 1f, enabled = false)
+    fun `no button is ever disabled, and each button sends its own event`() {
+        show(PHONE_WIDTH, 1f)
 
         secondary().assertIsEnabled()
-        primary().assertIsNotEnabled()
+        primary().assertIsEnabled()
         primary().performClick()
+        secondary().performClick()
+
+        assertEquals<List<IntroUiEvent>>(
+            listOf(IntroUiEvent.AnswerParkRide(yes = true), IntroUiEvent.AnswerParkRide(yes = false)),
+            events,
+        )
+    }
+
+    @Test
+    fun `a right button that is not shown keeps its room, takes no press and leaves the left button live`() {
+        show(NARROW_WIDTH, 1f, card = true)
+        val withBoth = composeRule.onRoot().getUnclippedBoundsInRoot()
+        val addLeft = primary().bounds().left
+
+        show(NARROW_WIDTH, 1f, card = true, showRight = false)
+
+        assertEquals(withBoth, composeRule.onRoot().getUnclippedBoundsInRoot(), "the bar changed size without Add to home")
+        primary().assertDoesNotExist()
+        secondary().assertIsEnabled().assertTextEquals(PARK_RIDE_NOT_NOW)
+        // A touch where the hidden button is takes nothing, and is not a click on something else.
+        composeRule.onRoot().performTouchInput { click(Offset(addLeft.toPx() + 8f, centerY)) }
+        composeRule.waitForIdle()
         assertEquals<List<IntroUiEvent>>(emptyList(), events)
 
         secondary().performClick()
-        assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.AnswerParkRide(yes = false)), events)
+        assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.DeclineParkRide), events)
+
+        show(NARROW_WIDTH, 1f, card = true, showRight = true)
+        primary().assertIsEnabled().performClick()
+        assertEquals(IntroUiEvent.AddParkRideAndContinue, events.last())
+    }
+
+    @Test
+    fun `while the screen is still moving the bar takes no press, and is drawn live and not disabled`() {
+        show(PHONE_WIDTH, 1f, acceptPresses = false)
+
+        primary().assertIsEnabled()
+        secondary().assertIsEnabled()
+        composeRule.onRoot().performTouchInput { click(Offset(width - 20f, centerY)) }
+        composeRule.onRoot().performTouchInput { click(Offset(20f, centerY)) }
+        composeRule.waitForIdle()
+        assertEquals<List<IntroUiEvent>>(emptyList(), events, "a press went through while the screen was moving")
+
+        show(PHONE_WIDTH, 1f, acceptPresses = true)
+        composeRule.onRoot().performTouchInput { click(Offset(width - 20f, centerY)) }
+        composeRule.waitForIdle()
+        assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.AnswerParkRide(yes = true)), events)
     }
 
     @Test
@@ -242,15 +291,11 @@ class IntroDecisionBarTest {
     }
 
     @Test
-    fun `the one button keeps its whole label and the full width at the narrowest window at 200 percent, and stays off until enabled`() {
-        show(NARROW_WIDTH, 2f, enabled = false, onlyRight = true)
+    fun `the one button keeps its whole label and the full width at the narrowest window at 200 percent, and is live`() {
+        show(NARROW_WIDTH, 2f, onlyRight = true)
 
-        primary().assertTextEquals(themeBar.right.label).assertIsNotEnabled()
+        primary().assertTextEquals(themeBar.right.label).assertIsEnabled()
         assertTrue(primary().bounds().width >= NARROW_WIDTH.dp - ROUNDING, "not the full width: ${primary().bounds()}")
-        primary().performClick()
-        assertEquals<List<IntroUiEvent>>(emptyList(), events)
-
-        show(NARROW_WIDTH, 2f, enabled = true, onlyRight = true)
         primary().performClick()
         assertEquals<List<IntroUiEvent>>(listOf(IntroUiEvent.ConfirmTheme), events)
     }

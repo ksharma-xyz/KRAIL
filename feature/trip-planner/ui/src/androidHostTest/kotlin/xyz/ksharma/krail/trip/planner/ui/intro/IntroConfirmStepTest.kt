@@ -24,7 +24,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
-import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import kotlin.test.assertEquals
@@ -48,13 +47,12 @@ class IntroConfirmStepTest {
 
     private val events = mutableListOf<IntroUiEvent>()
 
-    private fun show(readiness: StopsReadiness = StopsReadiness.Ready(stopCount = 100)) {
+    private fun show() {
         composeRule.setContent {
             PreviewTheme {
                 IntroFlowScreen(
                     state = PreviewConfirm,
                     suggestedStops = DEFAULT_SUGGESTED_STOPS,
-                    readiness = readiness,
                     onEvent = { events += it },
                 )
             }
@@ -104,8 +102,8 @@ class IntroConfirmStepTest {
     }
 
     @Test
-    fun `neither answer waits for the stops, because the answer only records it`() {
-        show(StopsReadiness.Loading)
+    fun `neither answer is disabled, because the answer only records it and waits for nothing`() {
+        show()
 
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).assertIsEnabled()
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION).assertIsEnabled()

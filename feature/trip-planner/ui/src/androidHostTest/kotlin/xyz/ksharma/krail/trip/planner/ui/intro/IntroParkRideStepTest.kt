@@ -58,7 +58,6 @@ class IntroParkRideStepTest {
                     IntroFlowScreen(
                         state = shown.value,
                         suggestedStops = DEFAULT_SUGGESTED_STOPS,
-                        readiness = PreviewReady,
                         onEvent = { events += it },
                     )
                 }
@@ -188,14 +187,15 @@ class IntroParkRideStepTest {
     }
 
     @Test
-    fun `the bar keeps its place and size from locating to the card with numbers`() {
+    fun `the bar keeps its place and size from locating to the card with numbers, with Add to home appearing in its room`() {
         val bars = listOf(
             "locating" to PreviewLocatingState,
             "loading" to PreviewCardLoadingState,
             "content" to PreviewCardContentState,
         ).map { (name, state) ->
             show(state)
-            name to composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION).getUnclippedBoundsInRoot()
+            // The left button is there in every one of them, and Add to home only once a card shows.
+            name to composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION).getUnclippedBoundsInRoot()
         }
 
         val first = bars.first().second

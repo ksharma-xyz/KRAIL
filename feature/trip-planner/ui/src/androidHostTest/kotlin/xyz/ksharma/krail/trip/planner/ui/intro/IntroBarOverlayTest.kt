@@ -75,7 +75,6 @@ abstract class IntroBarOverlayTestBase(private val windowWidth: Dp, private val 
                         IntroFlowScreen(
                             state = shown.value,
                             suggestedStops = DEFAULT_SUGGESTED_STOPS,
-                            readiness = PreviewReady,
                             onEvent = { events += it },
                         )
                     }

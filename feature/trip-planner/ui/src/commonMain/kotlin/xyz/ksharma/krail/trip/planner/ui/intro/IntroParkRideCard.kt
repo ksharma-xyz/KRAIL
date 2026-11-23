@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,6 +18,7 @@ import androidx.compose.ui.text.style.TextAlign
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableSet
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
@@ -122,10 +124,22 @@ private val SkeletonCard = ParkRideUiState(
  * The card in the middle of the screen. Every state that has a card keeps the same lines, a name and the
  * numbers, so the card does not change height when the numbers arrive or fail. The numbers arrive as three
  * staggered fades in the room that was held for them (`ParkRideCard` with `stagedReading`).
+ *
+ * The skeleton holds one car park, so a station with several is taller than it, and the room grows when the station is found.
+ * It grows over [PARK_RIDE_CARD_GROWTH_MS] ([introCardGrowthSpec]) and, under [reduceMotion], at once, so the card and the
+ * middle of the screen, which is centred around it, glide and do not jump. The home card keeps its own behaviour.
  */
 @Composable
-internal fun IntroParkRideCardSlot(slot: IntroCardSlot, modifier: Modifier = Modifier) {
-    Box(modifier = modifier.testTag(INTRO_CARD_SLOT_TAG)) {
+internal fun IntroParkRideCardSlot(
+    slot: IntroCardSlot,
+    modifier: Modifier = Modifier,
+    reduceMotion: Boolean = isReduceMotionEnabled(),
+) {
+    Box(
+        modifier = modifier
+            .testTag(INTRO_CARD_SLOT_TAG)
+            .then(if (slot.animatesGrowth(reduceMotion)) Modifier.animateContentSize(introCardGrowthSpec()) else Modifier),
+    ) {
         when (slot) {
             IntroCardSlot.Empty -> Unit
             IntroCardSlot.Skeleton -> IntroParkRideCard(SkeletonCard, standIn = true)

@@ -20,6 +20,9 @@ internal fun StopCardBackHandlers(
     onDismissCard: () -> Unit,
 ) {
     val step = stopCardBackStepFor(cardOpen = cardOpen, boardExpanded = boardExpanded, covered = covered)
-    BackHandler(enabled = step == StopCardBackStep.DismissCard || step == StopCardBackStep.CollapseBoard, onBack = onDismissCard)
+    BackHandler(
+        enabled = step == StopCardBackStep.DismissCard || step == StopCardBackStep.CollapseBoard,
+        onBack = onDismissCard,
+    )
     BackHandler(enabled = step == StopCardBackStep.CollapseBoard, onBack = onCollapseBoard)
 }

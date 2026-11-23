@@ -180,7 +180,9 @@ private fun CardLayout(
         val divider = part(CardPart.Divider).measure(rowConstraints)
         val to = part(CardPart.To).measure(rowConstraints)
         val targetPx = grid.target.roundToPx()
-        val swapPlaceable = measurables.firstOrNull { it.layoutId == CardPart.Swap }?.measure(Constraints.fixed(targetPx, targetPx))
+        val swapPlaceable = measurables.firstOrNull {
+            it.layoutId == CardPart.Swap
+        }?.measure(Constraints.fixed(targetPx, targetPx))
         layout(width, from.height + divider.height + to.height) {
             from.placeRelative(0, 0)
             divider.placeRelative(0, from.height)
@@ -283,7 +285,9 @@ private fun rememberFirstLineHeight(isPrompt: Boolean): Dp {
     val typography = KrailTheme.typography
     return remember(isPrompt, density, typography) {
         val style = if (isPrompt) typography.titleLarge.copy(fontWeight = FontWeight.Normal) else typography.titleMedium
-        with(density) { measurer.measure(text = "Ag", style = style, softWrap = false, maxLines = 1).size.height.toDp() }
+        with(
+            density,
+        ) { measurer.measure(text = "Ag", style = style, softWrap = false, maxLines = 1).size.height.toDp() }
     }
 }
 
@@ -329,7 +333,13 @@ private fun IdleRowText(row: CardRowContent) {
             readOnly = true,
             modifier = Modifier.fillMaxWidth().focusProperties { canFocus = false },
             colors = cardFieldColors(),
-            textStyle = if (bar.hasStop) KrailTheme.typography.titleMedium.copy(color = mapCardColors().onTint) else null,
+            textStyle = if (bar.hasStop) {
+                KrailTheme.typography.titleMedium.copy(
+                    color = mapCardColors().onTint,
+                )
+            } else {
+                null
+            },
             lineLimits = TextFieldLineLimits.MultiLine(),
             minHeight = 0.dp,
             contentPadding = PaddingValues(),
@@ -341,7 +351,12 @@ private fun IdleRowText(row: CardRowContent) {
 @Composable
 private fun cardFieldColors(): TextFieldColors {
     val ink = mapCardColors().onTint
-    return TextFieldColors(containerColor = Color.Transparent, contentColor = ink, placeholderColor = ink, cursorColor = ink)
+    return TextFieldColors(
+        containerColor = Color.Transparent,
+        contentColor = ink,
+        placeholderColor = ink,
+        cursorColor = ink,
+    )
 }
 
 /** The marker in its 20 dp box: the stop's label icon, else the 10 dp dot for From or the pin for To, in the page's text colour. */
@@ -377,4 +392,3 @@ private fun RowMarker(isOrigin: Boolean, label: String?, grid: CardGrid) {
 
 /** The Timetable's own From dot. */
 private val ORIGIN_DOT_SIZE = 10.dp
-

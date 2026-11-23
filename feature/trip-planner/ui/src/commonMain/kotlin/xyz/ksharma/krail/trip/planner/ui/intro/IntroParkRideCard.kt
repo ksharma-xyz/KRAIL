@@ -138,7 +138,9 @@ internal fun IntroParkRideCardSlot(
     Box(
         modifier = modifier
             .testTag(INTRO_CARD_SLOT_TAG)
-            .then(if (slot.animatesGrowth(reduceMotion)) Modifier.animateContentSize(introCardGrowthSpec()) else Modifier),
+            .then(
+                if (slot.animatesGrowth(reduceMotion)) Modifier.animateContentSize(introCardGrowthSpec()) else Modifier,
+            ),
     ) {
         when (slot) {
             IntroCardSlot.Empty -> Unit

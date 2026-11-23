@@ -52,11 +52,11 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.components.MapControlVisibility
+import xyz.ksharma.krail.trip.planner.ui.components.MapMotion
 import xyz.ksharma.krail.trip.planner.ui.components.mapActiveChipColors
 import xyz.ksharma.krail.trip.planner.ui.components.mapCardColors
 import xyz.ksharma.krail.trip.planner.ui.components.mapChipEdge
-import xyz.ksharma.krail.trip.planner.ui.components.MapControlVisibility
-import xyz.ksharma.krail.trip.planner.ui.components.MapMotion
 import xyz.ksharma.krail.trip.planner.ui.components.mapPopIn
 import xyz.ksharma.krail.trip.planner.ui.components.mapPopOut
 

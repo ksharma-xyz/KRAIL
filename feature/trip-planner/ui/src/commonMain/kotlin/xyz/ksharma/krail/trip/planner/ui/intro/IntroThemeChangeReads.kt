@@ -12,7 +12,11 @@ internal fun IntroThemeChange.colourNow(): Color = spec.colourAt(clock.value)
 internal fun IntroThemeChange.textNow(): Color = spec.textAt(clock.value)
 
 /** The emoji's scale now. */
-internal fun IntroThemeChange.emojiScaleNow(): Float = themeEmojiScale(clock.value, spec.headline.emojiScaleAtStart, spec.reduceMotion)
+internal fun IntroThemeChange.emojiScaleNow(): Float = themeEmojiScale(
+    clock.value,
+    spec.headline.emojiScaleAtStart,
+    spec.reduceMotion,
+)
 
 /** The scale of badge [index] from its press now. */
 internal fun IntroThemeChange.pressNow(index: Int): Float = spec.pressAt(index, clock.value)
@@ -20,7 +24,10 @@ internal fun IntroThemeChange.pressNow(index: Int): Float = spec.pressAt(index, 
 /** Opacity of line [index] of the headline that is leaving, now. */
 internal fun IntroThemeChange.outgoingAlphaNow(index: Int): Float {
     val s = spec
-    return themeOutgoingAlpha(s.headline.outgoingLooks.alphas.getOrElse(index) { 0f }, themeOutgoing(clock.value, s.reduceMotion))
+    return themeOutgoingAlpha(
+        s.headline.outgoingLooks.alphas.getOrElse(index) { 0f },
+        themeOutgoing(clock.value, s.reduceMotion),
+    )
 }
 
 /** How far line [index] of the headline that is leaving is moved now, in dp. */
@@ -34,7 +41,11 @@ internal fun IntroThemeChange.outgoingRiseNowDp(index: Int): Float {
 }
 
 /** Opacity of line [index] of the headline that is arriving, now. */
-internal fun IntroThemeChange.incomingAlphaNow(index: Int): Float = themeIncomingLine(clock.value, index, spec.reduceMotion)
+internal fun IntroThemeChange.incomingAlphaNow(
+    index: Int,
+): Float = themeIncomingLine(clock.value, index, spec.reduceMotion)
 
 /** How far line [index] of the headline that is arriving is moved now, in dp. */
-internal fun IntroThemeChange.incomingRiseNowDp(index: Int): Float = themeIncomingRiseDp(incomingAlphaNow(index), spec.reduceMotion)
+internal fun IntroThemeChange.incomingRiseNowDp(
+    index: Int,
+): Float = themeIncomingRiseDp(incomingAlphaNow(index), spec.reduceMotion)

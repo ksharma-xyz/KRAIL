@@ -214,7 +214,8 @@ private fun rememberIntroSender(
     val focusManager = LocalFocusManager.current
     val latest by rememberUpdatedState(onEvent)
     return remember(keyboard, focusManager) {
-        { event, pressedOn ->
+        {
+                event, pressedOn ->
             when (event.keyboardAction()) {
                 IntroKeyboardAction.Close -> {
                     keyboard?.hide()

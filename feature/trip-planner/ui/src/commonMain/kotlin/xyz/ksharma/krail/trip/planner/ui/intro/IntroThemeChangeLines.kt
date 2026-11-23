@@ -15,7 +15,15 @@ internal const val THEME_LINE_IN_MS = 280f
 
 /** How far the old headline has gone, 0 to 1: it eases up and fades over [THEME_OUT_MS], or over the cross-fade with reduced motion. */
 internal fun themeOutgoing(timeMs: Float, reduceMotion: Boolean): Float =
-    if (reduceMotion) themeShare(timeMs, 0f, THEME_CHANGE_REDUCED_MS) else easeOutCubic(themeShare(timeMs, 0f, THEME_OUT_MS))
+    if (reduceMotion) {
+        themeShare(
+            timeMs,
+            0f,
+            THEME_CHANGE_REDUCED_MS,
+        )
+    } else {
+        easeOutCubic(themeShare(timeMs, 0f, THEME_OUT_MS))
+    }
 
 /**
  * How far line [index] of the new headline has come in, 0 to 1. With motion each line starts [THEME_LINE_STAGGER_MS] after the one
@@ -67,4 +75,3 @@ internal fun incomingLooks(count: Int, timeMs: Float, reduceMotion: Boolean): Li
     val progress = List(count) { themeIncomingLine(timeMs, it, reduceMotion) }
     return LineLooks(alphas = progress, risesDp = progress.map { themeIncomingRiseDp(it, reduceMotion) })
 }
-

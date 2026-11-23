@@ -10,8 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.semantics.SemanticsPropertyKey
 import androidx.compose.ui.semantics.SemanticsPropertyReceiver
-import kotlin.math.roundToInt
 import xyz.ksharma.krail.trip.planner.ui.components.MapMotion
+import kotlin.math.roundToInt
 
 /** The angle of the Departure Board's chevron, as the screen draws it right now, for a screen reader's tree and a test. */
 internal val ChevronDegrees = SemanticsPropertyKey<Float>("ChevronDegrees")

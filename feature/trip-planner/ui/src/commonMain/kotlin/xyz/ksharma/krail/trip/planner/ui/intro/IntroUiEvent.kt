@@ -1,8 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import xyz.ksharma.krail.core.maps.state.LatLng
-import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStop
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStop
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 
 /** What the Intro screens tell the view model. */

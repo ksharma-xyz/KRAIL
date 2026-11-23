@@ -65,7 +65,15 @@ internal fun themeWash(timeMs: Float): Float = easeInOut(themeShare(timeMs, 0f, 
  * nothing is out of step. [THEME_COLOUR_MS] with motion, and a plain straight line over the whole short window with reduced motion.
  */
 internal fun themeColour(timeMs: Float, reduceMotion: Boolean): Float =
-    if (reduceMotion) themeShare(timeMs, 0f, THEME_CHANGE_REDUCED_MS) else easeInOut(themeShare(timeMs, 0f, THEME_COLOUR_MS))
+    if (reduceMotion) {
+        themeShare(
+            timeMs,
+            0f,
+            THEME_CHANGE_REDUCED_MS,
+        )
+    } else {
+        easeInOut(themeShare(timeMs, 0f, THEME_COLOUR_MS))
+    }
 
 /** Whether the button is there at [timeMs] when it was not there before the tap: from [buttonAtMs], and at once with reduced motion. */
 internal fun themeButtonShown(timeMs: Float, buttonAtMs: Float): Boolean = timeMs >= buttonAtMs

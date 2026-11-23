@@ -114,7 +114,10 @@ private fun LocationPin() {
 }
 
 /** Whether the notice is drawn: location is not allowed and the rider has not said Not now this visit. */
-internal fun locationNoticeShown(pill: LocationPill, dismissed: Boolean): Boolean = locationChipShownFor(pill) && !dismissed
+internal fun locationNoticeShown(
+    pill: LocationPill,
+    dismissed: Boolean,
+): Boolean = locationChipShownFor(pill) && !dismissed
 
 /** The call to action: Allow while the rider can still be asked, Settings once they have to go there. */
 internal fun locationNoticeCta(pill: LocationPill): String = when (pill) {

@@ -95,7 +95,13 @@ internal class MapCardColors(
  * the ink of its text, markers and glyphs, the hairline round it, the prompt of a field in it and the divider inside it.
  */
 @Immutable
-internal data class CardLook(val tint: Color, val onTint: Color, val edge: Color, val placeholder: Color, val divider: Color)
+internal data class CardLook(
+    val tint: Color,
+    val onTint: Color,
+    val edge: Color,
+    val placeholder: Color,
+    val divider: Color,
+)
 
 /**
  * The look of a box in the app mode [darkMode] reads: the Timetable's own tint of [themeColor] over [surface] (the same function
@@ -148,7 +154,9 @@ internal const val BODY_ALPHA_DARK = 0.225f
  * text. Plain numbers in and out, so the contrast of every theme in both modes is read with no composition.
  */
 internal fun mapCardColorsFor(themeColor: Color, darkMode: Boolean, surface: Color, onSurface: Color): MapCardTints {
-    val timetable = themeColor.copy(alpha = if (darkMode) TIMETABLE_ALPHA_DARK else TIMETABLE_ALPHA_LIGHT).compositeOver(surface)
+    val timetable = themeColor.copy(
+        alpha = if (darkMode) TIMETABLE_ALPHA_DARK else TIMETABLE_ALPHA_LIGHT,
+    ).compositeOver(surface)
     return if (darkMode) {
         MapCardTints(
             header = timetable,
@@ -278,7 +286,11 @@ internal fun Modifier.mapChipEdge(shape: Shape, color: Color = mapCardColors().c
     drawWithContent {
         drawContent()
         if (color.alpha > 0f) {
-            drawOutline(outline = shape.createOutline(size, layoutDirection, this), color = color, style = Stroke(width = 1.dp.toPx()))
+            drawOutline(
+                outline = shape.createOutline(size, layoutDirection, this),
+                color = color,
+                style = Stroke(width = 1.dp.toPx()),
+            )
         }
     }
 

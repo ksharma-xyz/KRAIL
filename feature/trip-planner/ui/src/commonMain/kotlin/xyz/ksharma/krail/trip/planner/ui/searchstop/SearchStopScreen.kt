@@ -613,7 +613,9 @@ private fun SearchStopScreenSinglePane(
     Box(modifier = modifier.fillMaxSize().imePadding()) {
         if (mapState != null) {
             SearchStopMap(
-                modifier = Modifier.fillMaxSize().then(if (showGradient) Modifier.clearAndSetSemantics {} else Modifier),
+                modifier = Modifier.fillMaxSize().then(
+                    if (showGradient) Modifier.clearAndSetSemantics {} else Modifier,
+                ),
                 mapUiState = mapState,
                 keyboard = keyboard,
                 focusRequester = form.focusRequester,
@@ -632,7 +634,13 @@ private fun SearchStopScreenSinglePane(
                     onMapTap()
                 },
                 stopCardOptions = rows.stopCardOptions,
-                locationBottomPadding = { clearance -> locationControlBottomPadding(gaps, optionsPillHeight, clearance) },
+                locationBottomPadding = { clearance ->
+                    locationControlBottomPadding(
+                        gaps,
+                        optionsPillHeight,
+                        clearance,
+                    )
+                },
                 // The controls get out of an open stop card's way by hiding, not by riding above it.
                 hidesControlsForCard = true,
                 stopCardTopReserve = stopCardTopReserveFor(headerHeight, slide),
@@ -672,7 +680,9 @@ private fun SearchStopScreenSinglePane(
             // Over the map, so the list state looks as the list always did. It takes every touch, so nothing reaches the
             // map under it.
             CloudGradientBackground(
-                modifier = Modifier.fillMaxSize().testTag(TripPlannerTestTags.SEARCH_STOP_LIST_BACKGROUND).pointerInput(Unit) {},
+                modifier = Modifier.fillMaxSize().testTag(
+                    TripPlannerTestTags.SEARCH_STOP_LIST_BACKGROUND,
+                ).pointerInput(Unit) {},
                 themeColor = themeColor.hexToComposeColor(),
                 spec = CloudFieldSpec.aiPair(themeColorHex = themeColor, motionScale = SEARCH_FIELD_MOTION_SCALE),
             ) {}

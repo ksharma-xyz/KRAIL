@@ -24,7 +24,6 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.FlowPreview
@@ -69,6 +68,7 @@ import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardPickActions
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardWithDepartures
 import xyz.ksharma.krail.trip.planner.ui.stopcard.controlsClearanceFor
 import xyz.ksharma.krail.trip.planner.ui.stopcard.nearbyStopFor
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun SearchStopMap(
@@ -465,7 +465,11 @@ internal fun BoxScope.MapControlsLayer(
     locationBottomPadding: ((clearance: Dp) -> Dp)?,
     bottomControls: @Composable BoxScope.(clearance: Dp, controlsHidden: Boolean) -> Unit,
 ) {
-    val clearance = controlsClearanceFor(cardHeight = cardHeight, cardOpen = cardOpen, controlsHide = hidesControlsForCard)
+    val clearance = controlsClearanceFor(
+        cardHeight = cardHeight,
+        cardOpen = cardOpen,
+        controlsHide = hidesControlsForCard,
+    )
     val controlsHidden = cardOpen && hidesControlsForCard
     if (showsLocationButton) {
         MapActionButtons(

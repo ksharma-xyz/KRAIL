@@ -77,7 +77,11 @@ internal data class ThemeChangeRequest(
 internal const val THEME_WASH_FROZEN_MAX = 4
 
 /** The run that is already over, showing [request]'s theme with nothing moving: the state the screen opens in. */
-internal fun settledThemeChangeSpec(request: ThemeChangeRequest, ground: Color, text: Color): ThemeChangeSpec = ThemeChangeSpec(
+internal fun settledThemeChangeSpec(
+    request: ThemeChangeRequest,
+    ground: Color,
+    text: Color,
+): ThemeChangeSpec = ThemeChangeSpec(
     reduceMotion = request.reduceMotion,
     target = request.target,
     colours = ThemeChangeColours(
@@ -159,7 +163,11 @@ internal inline fun ThemeChangeSpec.forEachGroundLayer(timeMs: Float, draw: (Col
  * emoji it showed, and the badge pressed before carries on from how far it had got. A [previous] that is over is just a start from
  * its end.
  */
-internal fun themeChangeSpecAfter(previous: ThemeChangeSpec, timeMs: Float, request: ThemeChangeRequest): ThemeChangeSpec {
+internal fun themeChangeSpecAfter(
+    previous: ThemeChangeSpec,
+    timeMs: Float,
+    request: ThemeChangeRequest,
+): ThemeChangeSpec {
     val over = timeMs >= previous.durationMs
     val time = timeMs.coerceIn(0f, previous.durationMs)
     val fromColour = previous.colourAt(time)

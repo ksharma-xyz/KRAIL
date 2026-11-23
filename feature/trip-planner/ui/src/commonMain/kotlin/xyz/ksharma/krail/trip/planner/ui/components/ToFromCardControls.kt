@@ -24,10 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
-import krail.feature.trip_planner.ui.generated.resources.Res
-import krail.feature.trip_planner.ui.generated.resources.ic_reverse
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import krail.feature.trip_planner.ui.generated.resources.Res
+import krail.feature.trip_planner.ui.generated.resources.ic_reverse
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -65,12 +65,20 @@ internal fun rememberSwapMotion(shown: Boolean, lifted: Boolean): SwapMotion {
     val motion = remember { SwapMotion(Animatable(if (lifted) 1f else 0f), Animatable(if (shown) 1f else 0f), shown) }
     LaunchedEffect(lifted, reduceMotion) {
         val target = if (lifted) 1f else 0f
-        if (reduceMotion) motion.lift.snapTo(target) else if (motion.lift.value != target) motion.lift.animateTo(target, swapGlideSpec())
+        if (reduceMotion) {
+            motion.lift.snapTo(
+                target,
+            )
+        } else if (motion.lift.value != target) motion.lift.animateTo(target, swapGlideSpec())
     }
     LaunchedEffect(shown, reduceMotion) {
         val target = if (shown) 1f else 0f
         if (shown) motion.present = true
-        if (reduceMotion) motion.fade.snapTo(target) else if (motion.fade.value != target) motion.fade.animateTo(target, swapFadeSpec())
+        if (reduceMotion) {
+            motion.fade.snapTo(
+                target,
+            )
+        } else if (motion.fade.value != target) motion.fade.animateTo(target, swapFadeSpec())
         if (!shown) motion.present = false
     }
     return motion

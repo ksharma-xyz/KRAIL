@@ -69,6 +69,7 @@ internal class IntroFlowViewModel(
     // The steps reported as a screen view in this run. Not saved, so a restored process reports the step it resumes on.
     private val stepsShown = mutableSetOf<IntroStep>()
     private var suggestionShownWritten = false
+
     // The finish press was accepted. From here no event changes anything.
     private var finishStarted = false
 

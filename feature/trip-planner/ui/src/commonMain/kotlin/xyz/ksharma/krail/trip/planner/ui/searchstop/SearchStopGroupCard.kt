@@ -25,11 +25,11 @@ import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.CardGroundScope
+import xyz.ksharma.krail.trip.planner.ui.components.ToFromBlockStyle
+import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
 import xyz.ksharma.krail.trip.planner.ui.components.mapCardFadeSpec
 import xyz.ksharma.krail.trip.planner.ui.components.mapChipEdge
 import xyz.ksharma.krail.trip.planner.ui.components.searchStopCardSurface
-import xyz.ksharma.krail.trip.planner.ui.components.ToFromBlockStyle
-import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /** Everything the form needs, in one holder so the two layouts take it as one argument. */

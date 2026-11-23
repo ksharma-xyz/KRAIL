@@ -19,11 +19,11 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlin.math.roundToInt
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.components.TransportModeIconSize
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
+import kotlin.math.roundToInt
 
 // How long a badge takes to ease from floating into dancing, and back.
 private const val DANCE_BLEND_MS = 250
@@ -106,7 +106,11 @@ internal fun IntroThemeBadges(
     // size at every text size, so the layout is that room alone.
     BoxWithConstraints(modifier = modifier.fillMaxWidth().padding(horizontal = dim.pageHorizontalPadding)) {
         val grid = remember(maxWidth, choices.size) {
-            themeBadgeGrid(count = choices.size, availableDp = maxWidth.value, badgeDp = TransportModeIconSize.XLarge.dpSize.value)
+            themeBadgeGrid(
+                count = choices.size,
+                availableDp = maxWidth.value,
+                badgeDp = TransportModeIconSize.XLarge.dpSize.value,
+            )
         }
         IntroThemeBadgeGrid(grid = grid) {
             choices.forEachIndexed { index, choice ->

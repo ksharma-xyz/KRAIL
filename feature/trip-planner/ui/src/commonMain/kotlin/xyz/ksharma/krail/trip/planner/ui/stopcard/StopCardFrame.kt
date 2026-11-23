@@ -2,7 +2,6 @@ package xyz.ksharma.krail.trip.planner.ui.stopcard
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,7 +18,6 @@ import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -34,7 +32,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -45,11 +42,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import app.krail.taj.resources.ic_close
-import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalTextColor
-import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
@@ -60,7 +54,6 @@ import xyz.ksharma.krail.trip.planner.ui.components.mapSlideDownOut
 import xyz.ksharma.krail.trip.planner.ui.components.mapSlideUpIn
 import xyz.ksharma.krail.trip.planner.ui.components.softCloseCircle
 import xyz.ksharma.krail.trip.planner.ui.searchstop.searchStopEdge
-import app.krail.taj.resources.Res as TajRes
 
 /**
  * Where a stop card floats: at the bottom of the map pane, centred, in the one column of rule 45 and
@@ -153,7 +146,14 @@ internal class StopCardPalette(
 @Composable
 internal fun stopCardPalette(): StopCardPalette = mapCardColors().let {
     val (circle, glyph) = softCloseCircle()
-    StopCardPalette(header = it.header, body = it.body, content = it.onCard, edged = true, closeCircle = circle, closeGlyph = glyph)
+    StopCardPalette(
+        header = it.header,
+        body = it.body,
+        content = it.onCard,
+        edged = true,
+        closeCircle = circle,
+        closeGlyph = glyph,
+    )
 }
 
 @Composable

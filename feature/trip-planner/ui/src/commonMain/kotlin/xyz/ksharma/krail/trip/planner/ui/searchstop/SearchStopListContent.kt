@@ -35,7 +35,15 @@ internal fun SearchStopListContent(
 ) {
     val showLabelRow = shouldShowLabelRow(listState, searchStopState.stopLabels)
     when (listState) {
-        ListState.Recent -> RecentsList(showLabelRow, recentsCard, searchStopState, actions, onManageClick, onOpenMap, modifier)
+        ListState.Recent -> RecentsList(
+            showLabelRow,
+            recentsCard,
+            searchStopState,
+            actions,
+            onManageClick,
+            onOpenMap,
+            modifier,
+        )
         is ListState.Results ->
             ResultsList(listState, showLabelRow, searchStopState, actions, onManageClick, onOpenMap, modifier)
         ListState.NoMatch -> NoMatchContent(searchStopState, actions, modifier)

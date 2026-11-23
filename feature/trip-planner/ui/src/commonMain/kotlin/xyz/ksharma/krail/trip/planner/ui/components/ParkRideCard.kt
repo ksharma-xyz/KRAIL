@@ -18,7 +18,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -53,6 +56,13 @@ private val ParkRideCardVerticalPadding = 20.dp // no token equivalent
  * [textWeight] is the weight of the lines that are Regular on the home card (the car park name, the words beside the figures and
  * `Last updated`), for a surface that reads them a step heavier, such as the Intro. The figures stay Bold, and every colour and size
  * stay as they are. It is null on the home card, which keeps the weights it has.
+ *
+ * [stagedReading] is for a surface that wants the numbers to arrive smoothly, such as the Intro, and needs [keepReadingSpace], whose held
+ * room it draws into. When the numbers arrive for the first time the three lines of each reading (the spots, the share full and the
+ * time) fade in and rise into place one after another, each [FIGURE_BEAT_MS] long and [FIGURE_STAGGER_MS] after the one before,
+ * all in the draw phase so nothing is laid out again. A later value just replaces the text. The card is also one merged node for a
+ * screen reader, which announces it politely once the numbers are in. It is off on the home card, whose numbers appear as they always
+ * did. [reduceMotion] is the rider's setting when null, and under it the three lines are one plain fade with no rise and no stagger.
  */
 @Composable
 fun ParkRideCard(
@@ -63,11 +73,20 @@ fun ParkRideCard(
     keepReadingSpace: Boolean = false,
     iconColor: Color? = null,
     textWeight: FontWeight? = null,
+    stagedReading: Boolean = false,
+    reduceMotion: Boolean? = null,
 ) {
     val dim = KrailTheme.dimensions
+    val figuresShown = parkRideUiState.facilities.any { it.spotsAvailable >= 0 }
+    val reveal = rememberFigureReveal(
+        figuresShown = figuresShown,
+        staged = stagedReading && keepReadingSpace,
+        reduceMotion = reduceMotion,
+    )
     Row(
         modifier = modifier.fillMaxWidth()
             .cardBackground()
+            .then(if (reveal != null) Modifier.readingSemantics(figuresShown) else Modifier)
             .then(if (onClick != null) Modifier.klickable { onClick() } else Modifier)
             .animateContentSize()
             .padding(
@@ -86,35 +105,15 @@ fun ParkRideCard(
                 enter = expandVertically() + fadeIn(spring(stiffness = Spring.StiffnessVeryLow)),
                 exit = shrinkVertically() + fadeOut(spring(stiffness = Spring.StiffnessVeryLow)),
             ) {
-                if (keepReadingSpace || parkRideUiState.facilities.any { it.spotsAvailable >= 0 }) {
+                if (keepReadingSpace || figuresShown) {
                     Column(verticalArrangement = Arrangement.spacedBy(ParkRideCardVerticalPadding)) {
                         parkRideUiState.facilities.forEach { facility ->
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
-                            ) {
-                                // Facility Name
-                                Text(
-                                    text = facility.facilityName,
-                                    style = KrailTheme.typography.displaySmall.copy(
-                                        fontWeight = textWeight ?: FontWeight.Normal,
-                                    ),
-                                )
-
-                                if (facility.spotsAvailable >= 0 || !keepReadingSpace) {
-                                    ParkRideFigures(
-                                        spots = "${facility.spotsAvailable}",
-                                        percentFull = "${facility.percentageFull}%",
-                                        textWeight = textWeight,
-                                    )
-
-                                    // Time Information
-                                    if (facility.timeText.isNotBlank()) {
-                                        ParkRideUpdatedAt(timeText = facility.timeText, textWeight = textWeight)
-                                    }
-                                } else {
-                                    ParkRideReadingPlaceholder(textWeight = textWeight)
-                                }
-                            }
+                            ParkRideFacility(
+                                facility = facility,
+                                keepReadingSpace = keepReadingSpace,
+                                textWeight = textWeight,
+                                reveal = reveal,
+                            )
                         }
                     }
                 } else {
@@ -140,15 +139,97 @@ fun ParkRideCard(
     }
 }
 
+/** One car park of the open card: its name, and under it the reading, or the room the reading will take. */
 @Composable
-private fun ParkRideFigures(spots: String, percentFull: String, textWeight: FontWeight?) {
+private fun ParkRideFacility(
+    facility: ParkRideUiState.ParkRideFacilityDetail,
+    keepReadingSpace: Boolean,
+    textWeight: FontWeight?,
+    reveal: FigureReveal?,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingXS)) {
+        // Facility Name
+        Text(
+            text = facility.facilityName,
+            style = KrailTheme.typography.displaySmall.copy(
+                fontWeight = textWeight ?: FontWeight.Normal,
+            ),
+        )
+
+        if (keepReadingSpace) {
+            ParkRideReadingRoom(facility = facility, textWeight = textWeight, reveal = reveal)
+        } else {
+            ParkRideFigures(
+                spots = "${facility.spotsAvailable}",
+                percentFull = "${facility.percentageFull}%",
+                textWeight = textWeight,
+            )
+
+            // Time Information
+            if (facility.timeText.isNotBlank()) {
+                ParkRideUpdatedAt(timeText = facility.timeText, textWeight = textWeight)
+            }
+        }
+    }
+}
+
+/** The reading of a car park when it has one, with its three lines staged when [reveal] is given, and the held room when it has not. */
+@Composable
+private fun ParkRideReadingRoom(
+    facility: ParkRideUiState.ParkRideFacilityDetail,
+    textWeight: FontWeight?,
+    reveal: FigureReveal?,
+) {
+    if (facility.spotsAvailable >= 0) {
+        ParkRideFigures(
+            spots = "${facility.spotsAvailable}",
+            percentFull = "${facility.percentageFull}%",
+            textWeight = textWeight,
+            spotsBeat = reveal?.beats?.get(SPOTS_BEAT) ?: Modifier,
+            percentBeat = reveal?.beats?.get(PERCENT_BEAT) ?: Modifier,
+        )
+
+        // Time Information
+        if (facility.timeText.isNotBlank()) {
+            ParkRideUpdatedAt(
+                timeText = facility.timeText,
+                textWeight = textWeight,
+                modifier = reveal?.beats?.get(UPDATED_BEAT) ?: Modifier,
+            )
+        }
+    } else {
+        ParkRideReadingPlaceholder(textWeight = textWeight)
+    }
+}
+
+// The order the three lines of a reading arrive in, and read in.
+private const val SPOTS_BEAT = 0
+private const val PERCENT_BEAT = 1
+private const val UPDATED_BEAT = 2
+
+/**
+ * One merged node for a screen reader, with a polite live region once [figuresShown], so the name and the numbers are read together
+ * and once, when the numbers arrive, and not a line at a time. Nothing about the fade is in the semantics, so it is not read again as it plays.
+ */
+private fun Modifier.readingSemantics(figuresShown: Boolean): Modifier = semantics(mergeDescendants = true) {
+    if (figuresShown) liveRegion = LiveRegionMode.Polite
+}
+
+@Composable
+private fun ParkRideFigures(
+    spots: String,
+    percentFull: String,
+    textWeight: FontWeight?,
+    spotsBeat: Modifier = Modifier,
+    percentBeat: Modifier = Modifier,
+) {
     val dim = KrailTheme.dimensions
     // Spots Information
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(dim.spacingML),
         verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
     ) {
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(dim.spacingXS)) {
+        FlowRow(modifier = spotsBeat, horizontalArrangement = Arrangement.spacedBy(dim.spacingXS)) {
             Text(
                 text = spots,
                 style = KrailTheme.typography.headlineMedium,
@@ -162,6 +243,7 @@ private fun ParkRideFigures(spots: String, percentFull: String, textWeight: Font
         }
 
         FlowRow(
+            modifier = percentBeat,
             horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
         ) {
             Text(
@@ -179,11 +261,12 @@ private fun ParkRideFigures(spots: String, percentFull: String, textWeight: Font
 }
 
 @Composable
-private fun ParkRideUpdatedAt(timeText: String, textWeight: FontWeight?) {
+private fun ParkRideUpdatedAt(timeText: String, textWeight: FontWeight?, modifier: Modifier = Modifier) {
     Text(
         text = "Last updated at\u00A0$timeText",
         style = KrailTheme.typography.bodySmall.withWeight(textWeight),
         color = KrailTheme.colors.secondaryLabel,
+        modifier = modifier,
     )
 }
 

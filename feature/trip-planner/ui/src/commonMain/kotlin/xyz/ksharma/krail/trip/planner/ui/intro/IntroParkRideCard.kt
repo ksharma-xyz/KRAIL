@@ -120,7 +120,8 @@ private val SkeletonCard = ParkRideUiState(
 
 /**
  * The card in the middle of the screen. Every state that has a card keeps the same lines, a name and the
- * numbers, so the card does not change height when the numbers arrive or fail.
+ * numbers, so the card does not change height when the numbers arrive or fail. The numbers arrive as three
+ * staggered fades in the room that was held for them (`ParkRideCard` with `stagedReading`).
  */
 @Composable
 internal fun IntroParkRideCardSlot(slot: IntroCardSlot, modifier: Modifier = Modifier) {
@@ -168,6 +169,8 @@ private fun IntroParkRideCard(card: ParkRideUiState, modifier: Modifier = Modifi
         parkRideUiState = card,
         isExpanded = true,
         keepReadingSpace = true,
+        // The numbers fade in line by line when they arrive, and the card reads as one node to a screen reader.
+        stagedReading = true,
         onClick = null,
         // The tile is the screen's button fill, because the white letter is not legible on the raw theme colour. The tint of
         // the card is the screen's colour family, which the screen provides as its theme (IntroScreenColours).

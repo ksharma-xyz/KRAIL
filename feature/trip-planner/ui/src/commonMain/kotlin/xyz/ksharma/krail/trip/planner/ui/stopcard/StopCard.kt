@@ -50,6 +50,8 @@ internal fun StopCardWithDepartures(
     stop: NearbyStopFeature,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
+    boardExpanded: Boolean? = null,
+    onBoardExpandedChange: ((Boolean) -> Unit)? = null,
     actions: @Composable () -> Unit = {},
 ) {
     val departuresViewModel = koinViewModel<DeparturesViewModel>()
@@ -64,6 +66,8 @@ internal fun StopCardWithDepartures(
         onEvent = departuresViewModel::onEvent,
         onClose = onClose,
         modifier = modifier,
+        boardExpanded = boardExpanded,
+        onBoardExpandedChange = onBoardExpandedChange,
         actions = actions,
     )
 }
@@ -84,6 +88,8 @@ internal fun StopCard(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
     boardOpenAtStart: Boolean = false,
+    boardExpanded: Boolean? = null,
+    onBoardExpandedChange: ((Boolean) -> Unit)? = null,
     actions: @Composable () -> Unit = {},
 ) {
     val layout = stopCardLayout(StopCardKind.Stop, modeCount = stop.transportModes.size, carParkCount = 0)
@@ -118,6 +124,8 @@ internal fun StopCard(
                     state = departures,
                     onEvent = onEvent,
                     boardOpenAtStart = boardOpenAtStart,
+                    expanded = boardExpanded,
+                    onExpandedChange = onBoardExpandedChange,
                 )
             }
         }

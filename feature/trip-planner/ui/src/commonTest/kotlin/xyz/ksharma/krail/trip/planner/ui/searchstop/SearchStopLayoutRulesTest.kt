@@ -168,6 +168,13 @@ class SearchStopLayoutRulesTest {
     }
 
     @Test
+    fun `the top box is hidden only while an open card's board is expanded, in the map state`() {
+        assertEquals(true, topBoxHiddenFor(SearchStopMode.Map, boardExpanded = true))
+        assertEquals(false, topBoxHiddenFor(SearchStopMode.Map, boardExpanded = false))
+        assertEquals(false, topBoxHiddenFor(SearchStopMode.List, boardExpanded = true))
+    }
+
+    @Test
     fun `the mode controls are shown only with the location allowed, hidden with it not or with a stop card open`() {
         assertEquals(ModeControls.Shown, modeControlsFor(SearchStopMode.Map, mapReady = true, locationGranted = true))
         assertEquals(ModeControls.Hidden, modeControlsFor(SearchStopMode.Map, mapReady = true, locationGranted = false))

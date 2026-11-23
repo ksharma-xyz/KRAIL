@@ -112,3 +112,23 @@ internal fun controlsClearanceFor(cardHeight: Dp, cardOpen: Boolean, controlsHid
  * stop's card closed and a rotation keeps this one as it was.
  */
 internal fun stopCardStateKey(kind: StopCardKind, id: String): String = "${kind.name}:$id"
+
+/**
+ * What a system back does while a stop card is up on Search Stop, in order: first it shuts an expanded Departure Board
+ * ([CollapseBoard]), then it dismisses the card ([DismissCard]), and only then is it the screen's own two step back
+ * ([Screen]). While the host covers the map ([covered]) the card is closed and back is the screen's.
+ */
+internal enum class StopCardBackStep { CollapseBoard, DismissCard, Screen }
+
+internal fun stopCardBackStepFor(cardOpen: Boolean, boardExpanded: Boolean, covered: Boolean): StopCardBackStep = when {
+    covered || !cardOpen -> StopCardBackStep.Screen
+    boardExpanded -> StopCardBackStep.CollapseBoard
+    else -> StopCardBackStep.DismissCard
+}
+
+/**
+ * How much of the form's height the stop card keeps clear at its top while the box slides away ([slide], 0 with the box
+ * in place to 1 with it gone): all of [headerHeight] with the box there and none with it gone, so the card's room grows as
+ * the box leaves, on the same curve.
+ */
+internal fun stopCardTopReserveFor(headerHeight: Dp, slide: Float): Dp = headerHeight * (1f - slide.coerceIn(0f, 1f))

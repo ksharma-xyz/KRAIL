@@ -215,3 +215,12 @@ internal fun reduceModeBlock(open: Boolean, event: ModeBlockEvent): Boolean = wh
     ModeBlockEvent.ButtonTapped -> !open
     ModeBlockEvent.MapTapped, ModeBlockEvent.LeftMapState, ModeBlockEvent.ControlsHidden -> false
 }
+
+/**
+ * Whether the box at the top (the group card or the bare pill, and the location chip under it) is hidden: while the
+ * Departure Board of an open stop card is expanded ([boardExpanded], which is false with no card open) in the map state, which
+ * hands its room to the card. It comes back when the board is collapsed or the card is dismissed, and it is never hidden in
+ * the list state, which is that box and the list.
+ */
+internal fun topBoxHiddenFor(mode: SearchStopMode, boardExpanded: Boolean): Boolean =
+    mode == SearchStopMode.Map && boardExpanded

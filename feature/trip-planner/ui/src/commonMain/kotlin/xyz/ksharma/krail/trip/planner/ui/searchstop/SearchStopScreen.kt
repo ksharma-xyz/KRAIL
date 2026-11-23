@@ -81,6 +81,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardOptions
 import xyz.ksharma.krail.trip.planner.ui.stopcard.contextPickText
 import xyz.ksharma.krail.trip.planner.ui.stopcard.pickRoleFor
+import xyz.ksharma.krail.trip.planner.ui.stopcard.stopCardTopReserveFor
 
 // Less travel than the AI input surface uses. There the field is the screen and can move as
 // much as it likes; here it sits behind a list of stop names that a rider is reading, and the
@@ -569,6 +570,15 @@ private fun SearchStopScreenSinglePane(
         headerHeight = headerHeight,
     )
 
+    // The Departure Board of an open stop card is expanded: the box at the top slides away and fades, and the card takes its
+    // room, both on the one curve, so the card's cap grows as the box leaves. The box is kept, not rebuilt.
+    var boardExpanded by remember { mutableStateOf(false) }
+    val topBoxHidden = topBoxHiddenFor(mode = flow.mode, boardExpanded = boardExpanded)
+    val slide by rememberTopBoxSlide(hidden = topBoxHidden)
+    val slideExtraPx = with(density) {
+        (WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + gaps.edge).toPx()
+    }
+
     // The Options pill's drawn height, which the location control stands level with. It starts at the 100 percent height.
     var optionsPillHeight by remember { mutableStateOf(MAP_OPTIONS_PILL_REST_HEIGHT) }
 
@@ -603,6 +613,8 @@ private fun SearchStopScreenSinglePane(
                 locationBottomPadding = { clearance -> locationControlBottomPadding(gaps, optionsPillHeight, clearance) },
                 // The controls get out of an open stop card's way by hiding, not by riding above it.
                 hidesControlsForCard = true,
+                stopCardTopReserve = stopCardTopReserveFor(headerHeight, slide),
+                onBoardExpandedChange = { boardExpanded = it },
                 bottomControls = { clearance, controlsHidden ->
                     // One rule for where Options is: shown only with the location allowed and no stop card open.
                     val controls = modeControlsFor(
@@ -657,7 +669,9 @@ private fun SearchStopScreenSinglePane(
                 form = form,
                 location = location,
                 onBack = onBack,
-                modifier = Modifier.onGloballyPositioned { headerHeightPx = it.size.height },
+                modifier = Modifier
+                    .onGloballyPositioned { headerHeightPx = it.size.height }
+                    .slideAwayUp(progress = { slide }, extraDistancePx = slideExtraPx, hidden = topBoxHidden),
                 showLocationChip = flow.mode == SearchStopMode.Map,
             )
             if (flow.mode == SearchStopMode.List) {

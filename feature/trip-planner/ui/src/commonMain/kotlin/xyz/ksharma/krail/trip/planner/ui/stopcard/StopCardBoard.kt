@@ -74,8 +74,12 @@ internal fun StopCardBoardSection(
     onEvent: (DeparturesUiEvent) -> Unit,
     modifier: Modifier = Modifier,
     boardOpenAtStart: Boolean = false,
+    expanded: Boolean? = null,
+    onExpandedChange: ((Boolean) -> Unit)? = null,
 ) {
-    var boardOpen by rememberSaveable { mutableStateOf(boardOpenAtStart) }
+    var savedOpen by rememberSaveable { mutableStateOf(boardOpenAtStart) }
+    // A host that needs to know (Search Stop hides its top box while the board is open) holds the state and passes it in.
+    val boardOpen = expanded ?: savedOpen
     val board = stopCardBoard(state, boardOpen)
     val reduceMotion = isReduceMotionEnabled()
     val motion = rememberBoardMotion(open = boardOpen, reduceMotion = reduceMotion)
@@ -89,9 +93,10 @@ internal fun StopCardBoardSection(
             boardOpen = boardOpen,
             chevronDegrees = motion.chevronDegrees,
             onClick = {
-                boardOpen = !boardOpen
+                val next = !boardOpen
+                if (onExpandedChange != null) onExpandedChange(next) else savedOpen = next
                 onEvent(
-                    DeparturesUiEvent.DepartureBoardToggle(stopId, stopName, boardOpen, DepartureBoardSource.MAP_SHEET),
+                    DeparturesUiEvent.DepartureBoardToggle(stopId, stopName, next, DepartureBoardSource.MAP_SHEET),
                 )
             },
         )

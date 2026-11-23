@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,15 +17,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.FlowPreview
@@ -62,13 +62,13 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardBackHandlers
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardOptions
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardPickActions
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardPlacement
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardWithDepartures
 import xyz.ksharma.krail.trip.planner.ui.stopcard.controlsClearanceFor
 import xyz.ksharma.krail.trip.planner.ui.stopcard.nearbyStopFor
-import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun SearchStopMap(
@@ -109,6 +109,11 @@ fun SearchStopMap(
     // shrinks away and back, the host's bottom controls are told, and no clearance lifts anything. False keeps the lift
     // above the card, as the home map pane and every other host have it.
     hidesControlsForCard: Boolean = false,
+    // How much room the stop card keeps clear at its top. Null keeps [ornamentTopPadding], the form's height. Search Stop
+    // shrinks it to nothing as it slides its box away while the Departure Board is expanded.
+    stopCardTopReserve: Dp? = null,
+    // Told whether the open card's Departure Board is expanded, so a host can hand its own room to the card.
+    onBoardExpandedChange: (Boolean) -> Unit = {},
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         when (mapUiState) {
@@ -140,6 +145,8 @@ fun SearchStopMap(
                     bottomControls = bottomControls,
                     locationBottomPadding = locationBottomPadding,
                     hidesControlsForCard = hidesControlsForCard,
+                    stopCardTopReserve = stopCardTopReserve,
+                    onBoardExpandedChange = onBoardExpandedChange,
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -167,7 +174,6 @@ private fun ErrorMessage(
     )
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun MapContent(
     mapState: MapUiState.Ready,
@@ -190,6 +196,8 @@ private fun MapContent(
     bottomControls: @Composable BoxScope.(clearance: Dp, controlsHidden: Boolean) -> Unit = { _, _ -> },
     locationBottomPadding: ((clearance: Dp) -> Dp)? = null,
     hidesControlsForCard: Boolean = false,
+    stopCardTopReserve: Dp? = null,
+    onBoardExpandedChange: (Boolean) -> Unit = {},
 ) {
     log(
         "[NEARBY_STOPS_UI] MapContent rendered: nearbyStops.size=${mapState.mapDisplay.nearbyStops.size}, " +
@@ -207,11 +215,24 @@ private fun MapContent(
     val selectedStop = remember(selectedStopId, nearbyStops) { nearbyStopFor(selectedStopId, nearbyStops) }
     var cardHeight by remember { mutableStateOf(0.dp) }
 
-    // System back closes the card first. It is registered after the screen's own two step back, so
-    // while a card is open it is the one that answers, and with none it is off and the screen's is. While the
-    // host covers the map the card is closed and back is the host's.
+    // Whether the open card's Departure Board is expanded, held here for the back order and for the host, which hides its box
+    // while it is. Keyed on the stop, so another pin's card starts with its board shut.
+    var boardExpanded by rememberSaveable(selectedStopId) { mutableStateOf(false) }
+    val cardOpen = selectedStop != null
+    LaunchedEffect(cardOpen, boardExpanded) { onBoardExpandedChange(cardOpen && boardExpanded) }
+    DisposableEffect(Unit) { onDispose { onBoardExpandedChange(false) } }
+
+    // System back, one step at a time while a card is up: an expanded board shuts first, then the card is dismissed, then it
+    // is the screen's own two step back. These are registered after the screen's, so while a card is open they answer, and
+    // with none they are off and the screen's is. While the host covers the map the card is closed and back is the host's.
     LaunchedEffect(isCovered) { if (isCovered) selectedStopId = null }
-    BackHandler(enabled = selectedStop != null && !isCovered) { selectedStopId = null }
+    StopCardBackHandlers(
+        cardOpen = cardOpen,
+        boardExpanded = boardExpanded,
+        covered = isCovered,
+        onCollapseBoard = { boardExpanded = false },
+        onDismissCard = { selectedStopId = null },
+    )
 
     // The permission is the screen's now: the location pill under the form says what is wrong and
     // asks or opens Settings, and [allowPermissionRequest] is false until the rider taps it (or the
@@ -348,10 +369,12 @@ private fun MapContent(
 
             // The floating stop card, over the map and never a sheet.
             selectedStop?.let { stop ->
-                StopCardPlacement(topReserve = ornamentTopPadding, onHeight = { cardHeight = it }) {
+                StopCardPlacement(topReserve = stopCardTopReserve ?: ornamentTopPadding, onHeight = { cardHeight = it }) {
                     StopCardWithDepartures(
                         stop = stop,
                         onClose = { selectedStopId = null },
+                        boardExpanded = boardExpanded,
+                        onBoardExpandedChange = { boardExpanded = it },
                         // Save as, then Go here or Start here by the field being filled in.
                         actions = {
                             StopCardPickActions(

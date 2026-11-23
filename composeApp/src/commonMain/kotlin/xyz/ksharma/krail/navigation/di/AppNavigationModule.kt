@@ -22,7 +22,7 @@ import xyz.ksharma.krail.navigation.Navigator
 import xyz.ksharma.krail.splash.SplashScreen
 import xyz.ksharma.krail.splash.SplashUiEvent
 import xyz.ksharma.krail.splash.SplashViewModel
-import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.splash.splashLogoColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 
 /**
@@ -86,7 +86,8 @@ private fun EntryProviderScope<NavKey>.SplashEntry(
 
         SplashScreen(
             splashState = splashState,
-            logoColor = navigator.themeColor.hexToComposeColor(),
+            // The ink on a first run and until the stored values are read, the rider's colour after that.
+            logoColor = splashLogoColor(splashState),
             backgroundColor = KrailTheme.colors.surface,
             onSplashAnimationComplete = {
                 viewModel.onUiEvent(SplashUiEvent.SplashAnimationComplete)

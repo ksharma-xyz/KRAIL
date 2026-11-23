@@ -275,11 +275,15 @@ If a design breaks one of these rules, the design changes, not the rule.
     once, never when a station is already saved, and never when the Intro already asked. The card is the Park & Ride tile's own
     shell and figures with the two buttons under them, in the row's place while there is no row. Home that has no station near
     gives no card, even with the rider at one.
-48. **Every X is inside a circle.** The close X of the stop card and the clear X of the search field are taj's round icon button,
-    a 40 dp circle in a real 48 dp box that is itself the clickable, because Compose's minimum touch target loses to the map
-    under a control that floats over it. The cross is one step of the icon scale larger than a bare glyph (24 on the card, 32 in
-    the field). The stop card's circle is the app's surface on the header band, the field's is the go circle's own pair, and the
-    cross is 4.5 to 1 or better on its circle. A screen reader hears one button, Close with the stop's name or Clear.
+48. **Every X is inside a circle, except the clear X of a search field.** The close X of the stop card (and the Departure Board,
+    the notices, the Options card and the sheets) is taj's round icon button, a 40 dp circle in a real 48 dp box that is itself
+    the clickable, because Compose's minimum touch target loses to the map under a control that floats over it. The cross is one
+    step of the icon scale larger than a bare glyph (24 on the card). The stop card's circle is the app's surface on the header
+    band, and the cross is 4.5 to 1 or better on its circle. A screen reader hears one button, Close with the stop's name. The
+    clear X of a search field (the single pill, and a From or To row while it holds text) is a bare cross with no circle, no fill
+    and no ring: the close icon at 24 dp, the size of the field's back arrow, in the card's text colour, inside an invisible
+    48 dp box that is the clickable and consumes the touch (`ClearGlyphButton`). It shows only while the field holds text, clears
+    it, and a screen reader hears Clear.
 
 ## Design rules
 
@@ -423,7 +427,15 @@ are one fixed light look in both app modes.
   x44. The marker (dot, pin or label icon) is centred on the first line of the name. A long name wraps by whole words onto lines
   that start at x44, under the first word, and a line that holds only a marker never exists. A row is 56 dp or 24 dp plus its
   lines, whichever is taller, and the card grows with it; at 411 dp and 100 percent the rows are 56 and 56 and the card 113.
-  Nothing is truncated or squeezed. The divider runs from x44 to 64 from the card's right edge. `ToFromCardGrid.kt` holds the numbers.
+  Nothing is truncated or squeezed. The divider runs from x44 to the card's right padding, 16 from its right edge, while nothing is
+  drawn in the right column, and to 64 from the edge once the swap is there. `ToFromCardGrid.kt` holds the numbers.
+- **The room the right column takes follows what is drawn.** With no stop picked nothing stands in the column (the swap needs a
+  picked stop and the go circle needs both), so the text of both rows and the divider run to the card's right padding, 16 from the
+  edge, the same as the start, and a name wraps at that width. Once a stop is picked the swap belongs to the card, and with both
+  stops the go circle too, so the text and the divider stop 8 before the column, 64 from the edge. The room follows the pick and
+  never the swap's fade or glide or the rider's typing, so the card does not reflow while it animates. A row that holds the clear X
+  keeps 64 for it. A name that fitted on one line at the full width may wrap onto a second when the first stop is picked, in the
+  frame the row changes.
 - **The right column.** One vertical axis, 36 from the card's right edge, for the three things that stand on it.
   - The swap is a bare 24 dp glyph, no circle and no fill, in an invisible 48 dp box that consumes the touch so a tap never
     reaches the map (`SwapControl`, `ic_reverse` in the card's text colour, screen reader Swap From and To). A tap trades the
@@ -438,7 +450,7 @@ are one fixed light look in both app modes.
     back down. Its box keeps its size, takes no tap until the scale reaches 0.9 and none from the first frame of leaving, and
     consumes the touch meanwhile. At rest the two boxes are 57 apart centre to centre with 9 between them, and they only overlap
     briefly mid glide. There is no floating go on the map.
-  - While the row being edited holds text, an X takes that row's end.
+  - While the row being edited holds text, a bare X (24 dp, the card's text colour, no circle, in a 48 dp box) takes that row's end.
 - **No glow anywhere in Search Stop.** The info tile keeps its glow on the home and in the timetable.
 - **The location notice is the real info tile.** Under the box, one 8 gap down, left aligned and the box's width: the `InfoTile`
   in its `Plain` style (the box's fixed light tint, the 1 dp light hairline, no shadow), expanded, titled Location is off, with

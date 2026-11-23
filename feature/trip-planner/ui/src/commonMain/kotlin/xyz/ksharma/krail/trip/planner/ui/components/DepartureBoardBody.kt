@@ -134,19 +134,11 @@ private fun DepartureBoardBodyContent(
     }
 
     val filteredDepartures = remember(state.departures, selectedLine) {
-        if (selectedLine == null) {
-            state.departures
-        } else {
-            state.departures.filter { it.lineNumber == selectedLine }.toImmutableList()
-        }
+        departuresOnLine(state.departures, selectedLine)
     }
 
     val filteredPreviousDepartures = remember(state.previousDepartures, selectedLine) {
-        if (selectedLine == null) {
-            state.previousDepartures
-        } else {
-            state.previousDepartures.filter { it.lineNumber == selectedLine }.toImmutableList()
-        }
+        departuresOnLine(state.previousDepartures, selectedLine)
     }
 
     val phase = when {
@@ -190,9 +182,12 @@ private fun DepartureBoardBodyContent(
                         onTogglePrevious = {
                             showPrevious = !showPrevious
                             onShowPreviousToggle?.invoke(showPrevious)
-                            if (showPrevious &&
-                                state.previousDepartures.isEmpty() &&
-                                !state.isPreviousLoading
+                            if (
+                                previousDeparturesWanted(
+                                    showPrevious = showPrevious,
+                                    hasPrevious = state.previousDepartures.isNotEmpty(),
+                                    previousLoading = state.isPreviousLoading,
+                                )
                             ) {
                                 previousRequested = true
                                 onLoadPreviousDepartures()

@@ -54,6 +54,14 @@ appId: ${APP_ID}
     visible:
       id: "searchstop.query"
     timeout: 20000
+
+# Search Stop opens on its map state, and the denial is the Location is off notice under the box. It is drawn
+# on the map state only: the list state a typed query raises draws no notice on a phone, so it is asserted here
+# and not after the pick.
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.locationpill"
+    timeout: 20000
 - tapOn:
     id: "searchstop.query"
 - inputText: "Central"
@@ -65,21 +73,26 @@ appId: ${APP_ID}
     id: "searchstop.result..*"
     index: 0
 
-# Still on Search Stop, with the denial shown as its own small button under the group card and the
-# form on screen. If the denial had crashed a background coroutine this is where it surfaces.
+# Still on Search Stop, in its list state, with the form on screen. If the denial had crashed a background
+# coroutine this is where it surfaces.
 - extendedWaitUntil:
     visible:
       id: "searchrow.from"
     timeout: 30000
 - assertVisible:
     id: "searchrow.to"
-- assertVisible:
-    id: "searchstop.locationpill"
 - assertNotVisible:
     id: "savedtrips.screen"
 
-# Back leaves for home, still alive.
-- back
+# Back leaves for home, still alive. It goes one step at a time, the keyboard, then the list state to the map
+# state, then the screen, so it is pressed for as long as Search Stop is on screen.
+- repeat:
+    times: 4
+    while:
+      visible:
+        id: "searchstop.query"
+    commands:
+      - back
 - extendedWaitUntil:
     visible:
       id: "savedtrips.screen"

@@ -649,7 +649,7 @@ private fun LazyListScope.journeyCardItems(
                 )
             },
             modifier = Modifier
-                .testTag(TripPlannerTestTags.timeTableJourneyCard(journey.journeyId))
+                .testTag(TripPlannerTestTags.Results.timeTableJourneyCard(journey.journeyId))
                 .padding(vertical = KrailTheme.dimensions.spacingM)
                 .animateItem(),
             departureDeviation = journey.departureDeviation,

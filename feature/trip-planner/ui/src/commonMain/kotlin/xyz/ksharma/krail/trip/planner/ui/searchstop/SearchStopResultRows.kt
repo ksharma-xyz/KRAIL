@@ -60,7 +60,7 @@ private fun SearchResultItem(result: SearchStopState.SearchResult, actions: Stop
                 surface = LabelAssignSurface.SEARCH_RESULT,
                 isRecentSearch = false,
                 actions = actions,
-                modifier = Modifier.testTag(TripPlannerTestTags.searchStopResult(result.stopId)),
+                modifier = Modifier.testTag(TripPlannerTestTags.Results.searchStopResult(result.stopId)),
             )
             Divider(modifier = Modifier.padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding))
         }

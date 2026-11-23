@@ -129,7 +129,7 @@ private fun RecentStopRow(stop: SearchStopState.StopResult, actions: StopRowActi
             surface = LabelAssignSurface.RECENT,
             isRecentSearch = true,
             actions = actions,
-            modifier = Modifier.testTag(TripPlannerTestTags.searchStopResult(stop.stopId)),
+            modifier = Modifier.testTag(TripPlannerTestTags.Results.searchStopResult(stop.stopId)),
         )
     }
     Divider(modifier = Modifier.padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding))

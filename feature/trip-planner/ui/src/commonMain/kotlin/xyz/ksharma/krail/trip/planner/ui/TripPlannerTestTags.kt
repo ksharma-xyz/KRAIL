@@ -222,12 +222,15 @@ object TripPlannerTestTags {
     /** One chip of that row, by the mode's product class. */
     fun searchStopModeChip(productClass: Int) = "searchstop.modechip.$productClass"
 
-    /** One search result row, keyed by the stop it would select. */
-    fun searchStopResult(stopId: String): String = "searchstop.result.$stopId"
-
     /** One row of the Intro's destination or origin list, keyed by the stop it would choose. */
     fun introStop(stopId: String): String = "intro.stop.$stopId"
 
-    /** One journey result card. */
-    fun timeTableJourneyCard(journeyId: String): String = "timetable.journey.$journeyId"
+    /** The result rows of Search Stop and of the timetable, kept in their own object so this one stays under its limit. */
+    object Results {
+        /** One search result row, keyed by the stop it would select. */
+        fun searchStopResult(stopId: String): String = "searchstop.result.$stopId"
+
+        /** One journey result card. */
+        fun timeTableJourneyCard(journeyId: String): String = "timetable.journey.$journeyId"
+    }
 }

@@ -117,20 +117,20 @@ class SearchStopMapStateLayoutTest {
 
     @Test
     @Config(qualifiers = W411)
-    fun `the box holds From above To, two pills of one width, 48 tall, one padding inside and one gap apart`() {
+    fun `the box holds From above To, two plain rows as wide as the card, 56 tall and one divider apart`() {
         setScreen()
 
         val box = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
         val to = boundsOf(TripPlannerTestTags.SEARCH_ROW_TO)
         val from = boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM)
-        assertNear("From left", box.left + gaps.cardPadding, from.left)
-        assertNear("From top", box.top + gaps.cardPadding, from.top)
-        assertNear("pills share a left edge", to.left, from.left)
-        assertNear("pills share a width", to.width, from.width)
-        assertNear("To is 48 tall", 48.dp, to.height)
-        assertNear("From is 48 tall", 48.dp, from.height)
-        assertNear("To sits one gap under From", from.bottom + gaps.betweenRows, to.top)
-        assertNear("the box ends one padding under To", to.bottom + gaps.cardPadding, box.bottom)
+        assertNear("From fills the card at the start", box.left, from.left)
+        assertNear("From starts at the card's top", box.top, from.top)
+        assertNear("the rows share a left edge", to.left, from.left)
+        assertNear("the rows share a width", to.width, from.width)
+        assertNear("To is 56 tall", 56.dp, to.height)
+        assertNear("From is 56 tall", 56.dp, from.height)
+        assertNear("To sits one 1 dp divider under From", from.bottom + 1.dp, to.top)
+        assertNear("the box ends with To", to.bottom, box.bottom)
     }
 
     @Test
@@ -280,7 +280,7 @@ class SearchStopMapStateLayoutTest {
     }
 
     @Test
-    @Config(qualifiers = W320)
+    @Config(qualifiers = W320_TALL)
     fun `at 320 dp and 200 percent text the mode chips wrap whole and never scroll sideways`() {
         setScreen(fontScale = 2f)
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).performClick()
@@ -328,8 +328,10 @@ class SearchStopMapStateLayoutTest {
 
     // region 320 dp at 200 percent
 
+    // The box now holds whole names, so at 200 percent on a 320 dp wide phone it is taller (the picture's own note: the Options card
+    // open under it needs about 900 dp). The window is that tall here, so the check is that nothing overlaps once there is room.
     @Test
-    @Config(qualifiers = W320)
+    @Config(qualifiers = W320_TALL)
     fun `at 320 dp and 200 percent text nothing overlaps and nothing leaves the window`() {
         setScreen(fontScale = 2f)
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).performClick()
@@ -346,7 +348,7 @@ class SearchStopMapStateLayoutTest {
             assertTrue(item.top >= 0.dp && item.bottom <= windowHeight, "$item stays inside the window height")
         }
         assertNotEquals(0.dp, options.width, "Options is drawn.")
-        assertEquals(48.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).height, "The pill stays one 48 dp line.")
+        assertTrue(boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).height >= 56.dp, "A row is at least 56 dp.")
     }
 
     @Test
@@ -370,5 +372,6 @@ class SearchStopMapStateLayoutTest {
     private companion object {
         const val W411 = "w411dp-h891dp"
         const val W320 = "w320dp-h640dp"
+        const val W320_TALL = "w320dp-h900dp"
     }
 }

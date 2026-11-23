@@ -99,10 +99,53 @@ internal fun ToFromBlock(
     fromPlaceholder: String = FROM_PLACEHOLDER,
     showGo: Boolean = true,
     fromTrailing: (@Composable () -> Unit)? = null,
+    // Only the card style reads these: the saved label of each stop (Home, Work).
+    fromLabel: String? = null,
+    toLabel: String? = null,
     style: ToFromBlockStyle = ToFromBlockStyle.Classic,
 ) {
     val dim = KrailTheme.dimensions
     val insets = toFromBarInsets()
+    if (style is ToFromBlockStyle.CardRows) {
+        ToFromCardRows(
+            rows = CardRowsContent(
+                from = CardRowContent(
+                    bar = BarContent(
+                        tag = TripPlannerTestTags.SEARCH_ROW_FROM,
+                        text = fromStopItem?.stopName ?: fromPlaceholder,
+                        hasStop = fromStopItem != null,
+                        label = toFromFieldLabel(FROM_ROLE, fromPlaceholder, labelledStopName(fromLabel, fromStopItem)),
+                        placeholder = fromPlaceholder,
+                        slideUp = true,
+                        animationLabel = "startingFromText",
+                        onClick = onFromClick,
+                    ),
+                    stopName = fromStopItem?.stopName,
+                    stopLabel = fromLabel,
+                ),
+                to = CardRowContent(
+                    bar = BarContent(
+                        tag = TripPlannerTestTags.SEARCH_ROW_TO,
+                        text = toStopItem?.stopName ?: toPlaceholder,
+                        hasStop = toStopItem != null,
+                        label = toFromFieldLabel(TO_ROLE, toPlaceholder, labelledStopName(toLabel, toStopItem)),
+                        placeholder = toPlaceholder,
+                        slideUp = false,
+                        animationLabel = "destinationText",
+                        onClick = onToClick,
+                    ),
+                    stopName = toStopItem?.stopName,
+                    stopLabel = toLabel,
+                ),
+                editing = editing,
+                editor = editor,
+                showGo = showGo,
+                onGoClick = onGoClick,
+            ),
+            modifier = modifier,
+        )
+        return
+    }
     if (style is ToFromBlockStyle.FloatingRows) {
         ToFromFloatingRows(
             rows = FloatingRowsContent(
@@ -229,6 +272,10 @@ internal fun ToFromBlock(
         }
     }
 }
+
+/** What a screen reader says for a stop: its name, with its saved label first when it has one (Home, Central Station). */
+private fun labelledStopName(label: String?, stop: StopItem?): String? =
+    stop?.stopName?.let { name -> if (label.isNullOrBlank()) name else "$label, $name" }
 
 private const val TO_ROLE = "To"
 private const val FROM_ROLE = "From"

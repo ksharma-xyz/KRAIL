@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
+import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -9,7 +10,7 @@ import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
@@ -31,7 +32,6 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.transport.TransportMode
-import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
@@ -53,7 +53,12 @@ import kotlin.test.assertTrue
 class SearchStopListStateTest {
 
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createAndroidComposeRule<ComponentActivity>()
+
+    /** System back, the one step back there is now that the box has no back arrow. */
+    private fun pressSystemBack() {
+        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
+    }
 
     private val quietKeyboard = object : SoftwareKeyboardController {
         override fun show() = Unit
@@ -207,13 +212,13 @@ class SearchStopListStateTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertIsDisplayed()
 
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_BACK).performClick()
+        pressSystemBack()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertDoesNotExist()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertIsDisplayed()
         assertEquals(0, wentBack, "The first back stays on the screen.")
 
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_BACK).performClick()
+        pressSystemBack()
         composeRule.waitForIdle()
         assertEquals(1, wentBack, "The second back leaves.")
     }
@@ -276,10 +281,10 @@ class SearchStopListStateTest {
         composeRule.waitForIdle()
 
         val after = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
-        assertEquals(before, after, "Tapping a pill does not move or resize the box.")
-        assertNear("To is 48 tall", 48.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).height)
-        assertNear("From is 48 tall", 48.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).height)
-        assertNear("the pills are one gap apart", gaps.betweenRows, boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).top - boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).bottom)
+        assertEquals(before, after, "Tapping a row does not move or resize the box.")
+        assertNear("To is 56 tall", 56.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).height)
+        assertNear("From is 56 tall", 56.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).height)
+        assertNear("the rows are one divider apart", 1.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).top - boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).bottom)
     }
 
     // endregion
@@ -287,14 +292,13 @@ class SearchStopListStateTest {
     // region the space under the box
 
     @Test
-    fun `the first row is one 16 dp step under the box, clear of the glow, with the label chips first`() {
+    fun `the first row is one 16 dp step under the box, with the label chips first`() {
         setScreen(withMap())
         tapToPill()
         composeRule.waitForIdle()
 
         val gap = boundsOf(TripPlannerTestTags.SEARCH_STOP_LABEL_ROW).top - boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).bottom
         assertNear("the chips row is one 16 dp step under the box", 16.dp, gap)
-        assertTrue(gap >= InfoTileDefaults.shadowRadius + InfoTileDefaults.shadowSpread, "$gap clears the glow's 14 dp")
     }
 
     @Test
@@ -307,7 +311,6 @@ class SearchStopListStateTest {
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_LABEL_ROW).assertDoesNotExist()
         val gap = boundsOf(TripPlannerTestTags.SEARCH_STOP_SELECT_ON_MAP).top - boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).bottom
         assertNear("Select on map is one 16 dp step under the box", 16.dp, gap)
-        assertTrue(gap >= InfoTileDefaults.shadowRadius + InfoTileDefaults.shadowSpread, "$gap clears the glow's 14 dp")
     }
 
     // endregion
@@ -316,7 +319,7 @@ class SearchStopListStateTest {
 
     @Test
     @Config(qualifiers = "w320dp-h640dp")
-    fun `at 320 dp and 200 percent text the list stays under the box, inside the window, with the pill still one line`() {
+    fun `at 320 dp and 200 percent text the list stays under the box, inside the window, with the rows whole`() {
         setScreen(withMap(), fontScale = 2f)
         tapToPill()
         composeRule.waitForIdle()
@@ -324,11 +327,11 @@ class SearchStopListStateTest {
         val box = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
         val chips = boundsOf(TripPlannerTestTags.SEARCH_STOP_LABEL_ROW)
         val select = textBounds("Select on map")
-        assertEquals(136.dp, box.height, "The box is the same 136 dp at 200 percent.")
+        assertTrue(box.height > 136.dp, "The box grows to hold whole names at 200 percent, it does not cut them: ${box.height}.")
         assertTrue(chips.top >= box.bottom, "The chips $chips are under the box $box")
         assertTrue(select.top >= chips.bottom, "Select on map $select is under the chips $chips")
         assertTrue(select.left >= 0.dp && select.right <= 320.dp, "Select on map $select stays inside the window")
-        assertEquals(48.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).height, "The pill stays one 48 dp line.")
+        assertTrue(boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).height >= 56.dp, "A row is at least 56 dp.")
         assertTrue(select.width > 0.dp && windowHeight > 0.dp)
     }
 

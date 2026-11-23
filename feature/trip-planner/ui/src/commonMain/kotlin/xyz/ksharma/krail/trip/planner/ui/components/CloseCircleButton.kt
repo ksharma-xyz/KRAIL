@@ -43,6 +43,40 @@ internal fun CloseCircleButton(
     tag: String? = null,
     circleTag: String? = null,
 ) {
+    CircleTargetButton(
+        contentDescription = contentDescription,
+        onClick = onClick,
+        circle = circle,
+        modifier = modifier,
+        tag = tag,
+        circleTag = circleTag,
+    ) {
+        Image(
+            imageVector = CloseIcon,
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(glyph),
+            modifier = Modifier.size(glyphSize),
+        )
+    }
+}
+
+/**
+ * A [CIRCLE_DIAMETER] circle in [circle] with [glyph] drawn in it, inside a real [TARGET] box that is itself the clickable.
+ * It is the pattern of [CloseCircleButton], for any round control that floats over the map (the swap and the go circle of
+ * the Search Stop card): the target is a box that consumes the touch, not the slop Compose adds around a small clickable,
+ * so a tap in the 48 dp reaches the control and never the map under it. [tag] is on that box, [circleTag] on the circle.
+ * A screen reader hears one button, [contentDescription].
+ */
+@Composable
+internal fun CircleTargetButton(
+    contentDescription: String,
+    onClick: () -> Unit,
+    circle: Color,
+    modifier: Modifier = Modifier,
+    tag: String? = null,
+    circleTag: String? = null,
+    glyph: @Composable () -> Unit,
+) {
     Box(
         modifier = modifier
             .size(TARGET)
@@ -56,19 +90,14 @@ internal fun CloseCircleButton(
                 .size(CIRCLE_DIAMETER)
                 .then(if (circleTag != null) Modifier.testTag(circleTag) else Modifier),
         ) {
-            // The round button is the circle and the cross. The box round it is the one a screen reader finds, so the
+            // The round button is the circle and the glyph. The box round it is the one a screen reader finds, so the
             // button's own semantics are cleared and the name is said once.
             RoundIconButton(
                 onClick = onClick,
                 color = circle,
                 modifier = Modifier.fillMaxSize().clearAndSetSemantics {},
             ) {
-                Image(
-                    imageVector = CloseIcon,
-                    contentDescription = null,
-                    colorFilter = ColorFilter.tint(glyph),
-                    modifier = Modifier.size(glyphSize),
-                )
+                glyph()
             }
         }
     }

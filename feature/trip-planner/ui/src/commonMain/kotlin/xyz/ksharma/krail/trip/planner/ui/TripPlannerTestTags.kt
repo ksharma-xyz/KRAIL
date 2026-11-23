@@ -96,6 +96,12 @@ object TripPlannerTestTags {
     const val SEARCH_ROW_ORIGIN_DOT = "searchrow.origindot"
     const val SEARCH_ROW_DESTINATION_PIN = "searchrow.destinationpin"
 
+    // The Search Stop card's label icon, drawn in place of the dot or pin.
+    const val SEARCH_ROW_LABEL_ICON = "searchrow.labelicon"
+
+    // The 1 dp divider between the card's two rows.
+    const val SEARCH_ROW_DIVIDER = "searchrow.divider"
+
     // Search stop
     const val SEARCH_STOP_QUERY_FIELD = "searchstop.query"
     const val SEARCH_STOP_BACK = "searchstop.back"

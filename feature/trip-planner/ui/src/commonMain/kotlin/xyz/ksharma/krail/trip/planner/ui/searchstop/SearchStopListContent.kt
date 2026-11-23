@@ -49,8 +49,7 @@ internal fun SearchStopListContent(
 
 /**
  * What the list keeps above its first row and under its last. Above it is one [KrailDimensions.spacingXL] step, 16 dp, so
- * the first row (the label chips, or Select on map when there are none) stands clear of the box's glow, which spreads
- * `InfoTileDefaults.shadowRadius` plus `shadowSpread`, 14 dp, past the box. Under the last row it is what lets the last
+ * the first row (the label chips, or Select on map when there are none) stands clear of the box and its hairline edge. Under the last row it is what lets the last
  * stop clear the keyboard and the screen's edge.
  */
 @Composable

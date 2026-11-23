@@ -40,6 +40,11 @@ internal class MapCardColors(
     val body: Color,
     /** A band on a card (the stop card's header): a visibly different step of the same family. */
     val header: Color,
+    /**
+     * The Timetable's own tint, opaque, whatever the mode: the Search Stop box (the From and To card) and the location notice
+     * under it are this colour, so they are the very card the rider knows from the Timetable. In light mode it is [body].
+     */
+    val tint: Color,
     /** Text and icons on [body] and [header]: the page's own text colour. */
     val onCard: Color,
     /** A small chip on the map: the Timetable's tint, opaque, with [onCard] on it. */
@@ -94,6 +99,7 @@ internal fun mapCardColors(): MapCardColors {
     return MapCardColors(
         body = tints.body,
         header = tints.header,
+        tint = timetable,
         onCard = onCard,
         chip = ButtonColors(
             containerColor = timetable,

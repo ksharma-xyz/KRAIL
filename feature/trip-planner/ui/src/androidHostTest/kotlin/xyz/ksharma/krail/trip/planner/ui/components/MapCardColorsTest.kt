@@ -88,6 +88,42 @@ class MapCardColorsTest {
         }
     }
 
+    private val allThemes = KrailThemeStyle.entries
+
+    /**
+     * The Search Stop card is the Timetable's own tint ([MapCardColors.tint]) with the page's text colour on it, the hairline
+     * `softLabel` as its edge in light mode, and no edge on the dark map where the card stands off the ground by itself. The
+     * numbers are printed for every theme, and held to the floors of the approved picture: text 4.5, the hairline and the dark
+     * card 3 against the map ground.
+     */
+    private fun assertSearchStopCard(mode: String, dark: Boolean) {
+        readTokens()
+        assertEquals(timetableTint, accessor.tint, "$mode: the card's tint is the Timetable's own")
+        for (style in allThemes) {
+            val tint = mapCardColorsFor(style.hexColorCode.hexToComposeColor(), darkMode = dark, surface = surface, onSurface = onSurface).chip
+            val text = onSurface.contrastRatio(tint)
+            val cardOnMap = tint.contrastRatio(MAP_GROUND)
+            val hairlineOnMap = softLabel.contrastRatio(MAP_GROUND)
+            println("SEARCHCARD $mode ${style.name} textOnTint=$text cardOnMap=$cardOnMap hairlineOnMap=$hairlineOnMap")
+            assertTrue(text >= TEXT, "$mode ${style.name}: the stop name, prompt, dot and pin on the card are $text to 1")
+            if (dark) {
+                assertTrue(cardOnMap >= EDGE, "$mode ${style.name}: the dark card needs no edge, it is $cardOnMap to 1 against the map")
+            } else {
+                assertTrue(hairlineOnMap >= EDGE, "$mode ${style.name}: the hairline is $hairlineOnMap to 1 against the map")
+            }
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-notnight")
+    fun `in light mode the Search Stop card reads at 4_5 to 1 on every theme and its hairline holds 3 to 1 on the map`() =
+        assertSearchStopCard("light", dark = false)
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-night")
+    fun `in dark mode the Search Stop card reads at 4_5 to 1 on every theme and stands off the map by itself`() =
+        assertSearchStopCard("dark", dark = true)
+
     @Test
     @Config(qualifiers = "w411dp-h891dp-notnight")
     fun `in light mode every theme reads at 4_5 to 1 and the header is a visible step from the body`() = assertFamily("light", dark = false)
@@ -146,6 +182,7 @@ class MapCardColorsTest {
 
     private companion object {
         const val TEXT = 4.5f
+        const val EDGE = 3f
         const val HEADER_STEP = 1.15f
         const val DARK_STEP_OVER_PAGE = 1.3f
         val MAP_GROUND = Color(0xFFEDEBE4)

@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
+import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -10,7 +11,7 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertTouchHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -71,7 +72,12 @@ import kotlin.test.assertEquals
 class SearchStopScreenInteractionTest {
 
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createAndroidComposeRule<ComponentActivity>()
+
+    /** System back, the one step back there is now that the box has no back arrow. */
+    private fun pressSystemBack() {
+        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
+    }
 
     private val quietKeyboard = object : SoftwareKeyboardController {
         override fun show() = Unit
@@ -235,7 +241,7 @@ class SearchStopScreenInteractionTest {
     }
 
     @Test
-    fun theArrowIsTwoStepsBack_listToMapToHome() {
+    fun systemBackIsTwoSteps_listToMapToHome() {
         var wentBack = 0
         setScreen(withMap(), goBack = { wentBack++ })
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
@@ -243,12 +249,12 @@ class SearchStopScreenInteractionTest {
 
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertDoesNotExist()
 
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_BACK).performClick()
+        pressSystemBack()
 
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertIsDisplayed()
         assert(wentBack == 0) { "the first back returns to the map state and does not leave" }
 
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_BACK).performClick()
+        pressSystemBack()
         composeRule.waitForIdle()
 
         assert(wentBack == 1) { "the second back goes home, got $wentBack" }
@@ -433,10 +439,10 @@ class SearchStopScreenInteractionTest {
         composeRule.onNodeWithText("Central Station").performClick()
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_BACK).performClick()
+        pressSystemBack()
         composeRule.waitForIdle()
         assert(wentBack == 0) { "the first back returns to the map state, got $wentBack" }
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_BACK).performClick()
+        pressSystemBack()
         composeRule.waitForIdle()
 
         assert(wentBack == 1) { "back leaves, got $wentBack" }

@@ -214,6 +214,8 @@ fun SearchStopScreen(
             log("value: $value")
             textFieldText = value
         },
+        fromLabel = stopLabelNameFor(fromStop, searchStopState.stopLabels),
+        toLabel = stopLabelNameFor(trip.to, searchStopState.stopLabels),
     )
     val onLabelPillClick = labels.onLabelPillClick(onEvent)
     val rows = StopRowActions(
@@ -673,6 +675,7 @@ private fun SearchStopScreenSinglePane(
                     .onGloballyPositioned { headerHeightPx = it.size.height }
                     .slideAwayUp(progress = { slide }, extraDistancePx = slideExtraPx, hidden = topBoxHidden),
                 showLocationChip = flow.mode == SearchStopMode.Map,
+                onGradient = showGradient,
             )
             if (flow.mode == SearchStopMode.List) {
                 SearchStopListSection(
@@ -793,7 +796,7 @@ private fun SearchStopScreenDualPane(
                 spec = CloudFieldSpec.aiPair(themeColorHex = themeColor, motionScale = SEARCH_FIELD_MOTION_SCALE),
             ) {
                 Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
-                    SearchStopTopBlock(form = form, location = location, onBack = onBack)
+                    SearchStopTopBlock(form = form, location = location, onBack = onBack, onGradient = true)
                     // The map is already in the right pane, so there is no Select on map to go to.
                     SearchStopListSection(
                         searchStopState = searchStopState,

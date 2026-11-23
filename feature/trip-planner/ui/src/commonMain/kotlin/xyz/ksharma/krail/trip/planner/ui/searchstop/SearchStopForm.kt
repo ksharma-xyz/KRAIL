@@ -7,6 +7,7 @@ import xyz.ksharma.krail.trip.planner.ui.components.TO_PLACEHOLDER
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.LABEL_TAP_RADIUS_KM
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -65,6 +66,13 @@ private const val PLACEHOLDER_CHANGE_DESTINATION = "Change destination"
  */
 internal fun goVisible(from: StopItem?, to: StopItem?): Boolean =
     from != null && to != null && from.stopId != to.stopId
+
+/**
+ * The saved label of [stop] (Home, Work, Gym), or null: the label whose stop is this one. A label with no stop set names
+ * nothing, and a stop with no label keeps its plain name. The card reads it for the row's icon and its text.
+ */
+internal fun stopLabelNameFor(stop: StopItem?, labels: List<StopLabel>): String? =
+    stop?.let { held -> labels.firstOrNull { it.isSet && it.stopId == held.stopId }?.label }
 
 /**
  * Which field of the trip a pick is for. To and From edit the bar the rider is on, whichever field

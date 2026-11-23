@@ -24,6 +24,13 @@ internal sealed interface ToFromBlockStyle {
      * standing directly on the map wants, since the soft fill is only a touch off white and would nearly vanish there.
      */
     data class FloatingRows(val rowGap: Dp, val fillSurface: Boolean = false) : ToFromBlockStyle
+
+    /**
+     * Search Stop's From and To card in the Timetable's own style (see [ToFromCardRows]): two plain rows on the soft tint
+     * the caller draws, a divider between them, a marker at the start of each and the swap and go circles at the end. It has
+     * no back arrow: system back does the two step back.
+     */
+    data object CardRows : ToFromBlockStyle
 }
 
 /**

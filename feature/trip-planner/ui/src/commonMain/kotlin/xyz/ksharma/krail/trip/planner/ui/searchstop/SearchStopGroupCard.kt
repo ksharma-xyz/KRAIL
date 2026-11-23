@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,7 +17,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.testTag
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
@@ -26,31 +24,9 @@ import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.CardGroundScope
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromBlockStyle
-import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
 import xyz.ksharma.krail.trip.planner.ui.components.mapCardFadeSpec
 import xyz.ksharma.krail.trip.planner.ui.components.mapChipEdge
 import xyz.ksharma.krail.trip.planner.ui.components.searchStopCardSurface
-import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
-
-/** Everything the form needs, in one holder so the two layouts take it as one argument. */
-internal data class SearchStopFormModel(
-    val shape: FormShape,
-    val editing: ToFromField?,
-    val toPlaceholder: String,
-    val fromPlaceholder: String,
-    val toStop: StopItem?,
-    val fromStop: StopItem?,
-    val fieldState: TextFieldState,
-    val focusRequester: FocusRequester,
-    val onFlowEvent: (SearchStopFlowEvent) -> Unit,
-    val onGoClick: () -> Unit,
-    val onTextChange: (String) -> Unit,
-    /** The saved label of the stop each row holds (Home, Work), or null. The card names the stop with it and draws its icon. */
-    val fromLabel: String? = null,
-    val toLabel: String? = null,
-    /** Reverses From and To. Null draws no swap: the rider has picked no stop yet, so there is nothing to reverse. */
-    val onSwap: (() -> Unit)? = null,
-)
 
 /**
  * The top of Search Stop: the [SearchStopGroupCard] and, directly under it while the location is not allowed, the

@@ -88,16 +88,10 @@ internal fun settleLateAutoFrom(
     flow: SearchStopFlow,
     trip: SearchStopTrip,
     autoFrom: StopItem?,
-): SearchStopFlow = if (
-    autoFrom != null &&
-    trip.from == null &&
-    trip.to != null &&
-    flow.editing == ToFromField.From &&
-    flow.mode == SearchStopMode.Map
-) {
-    flow.copy(editing = null)
-} else {
-    flow
+): SearchStopFlow {
+    val onlyDestinationHeld = trip.from == null && trip.to != null
+    val waitingOnStart = flow.editing == ToFromField.From && flow.mode == SearchStopMode.Map
+    return if (autoFrom != null && onlyDestinationHeld && waitingOnStart) flow.copy(editing = null) else flow
 }
 
 /**
@@ -111,7 +105,11 @@ internal fun tripToGo(trip: SearchStopTrip, autoFrom: StopItem?): Pair<StopItem,
     return if (from != null && to != null && from.stopId != to.stopId) from to to else null
 }
 
-private const val STOP_FIELD_COUNT = 4
+private const val STOP_ID_AT = 0
+private const val STOP_NAME_AT = 1
+private const val STOP_KIND_AT = 2
+private const val STOP_ADDRESS_TYPE_AT = 3
+private const val STOP_FIELD_COUNT = STOP_ADDRESS_TYPE_AT + 1
 
 /**
  * Saves the picked stops across rotation, theme and font changes as eight strings, four per stop (id,
@@ -135,13 +133,13 @@ private fun encodeStop(stop: StopItem?): List<String> =
     }
 
 private fun decodeStop(parts: List<String>): StopItem? {
-    val id = parts.getOrNull(0).orEmpty()
+    val id = parts.getOrNull(STOP_ID_AT).orEmpty()
     if (id.isEmpty()) return null
     return StopItem(
         stopId = id,
-        stopName = parts.getOrElse(1) { "" },
-        locationKind = LocationKind.entries.firstOrNull { it.name == parts.getOrNull(2) }
+        stopName = parts.getOrElse(STOP_NAME_AT) { "" },
+        locationKind = LocationKind.entries.firstOrNull { it.name == parts.getOrNull(STOP_KIND_AT) }
             ?: LocationKind.TRANSIT_STOP,
-        addressType = parts.getOrNull(3)?.takeIf { it.isNotEmpty() },
+        addressType = parts.getOrNull(STOP_ADDRESS_TYPE_AT)?.takeIf { it.isNotEmpty() },
     )
 }

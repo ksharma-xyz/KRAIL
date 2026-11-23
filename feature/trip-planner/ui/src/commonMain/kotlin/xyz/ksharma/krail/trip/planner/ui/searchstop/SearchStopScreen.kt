@@ -475,11 +475,16 @@ internal class LocationPillState(
     // The permission is granted, or the rider's position is already known. Not the same as the pill being hidden, which
     // it also is while the permission has not been looked up yet.
     val granted: Boolean,
-    val allowPermissionRequest: Boolean,
-    val onPermissionStatus: (PermissionStatus) -> Unit,
-    val onRequestPermission: () -> Unit,
+    val ask: LocationPermissionAsk,
     val userLocationManager: UserLocationManager,
     val onClick: () -> Unit,
+)
+
+/** The permission ask the map and the dual pane layout share: whether to ask now, the answer, and the request. */
+internal class LocationPermissionAsk(
+    val allowRequest: Boolean,
+    val onStatus: (PermissionStatus) -> Unit,
+    val onRequest: () -> Unit,
 )
 
 @Composable
@@ -505,9 +510,11 @@ private fun rememberLocationPillState(
     return LocationPillState(
         pill = pill,
         granted = locationGrantedFor(status, hasUserLocation),
-        allowPermissionRequest = allowPermissionRequest,
-        onPermissionStatus = { status = it },
-        onRequestPermission = { allowPermissionRequest = true },
+        ask = LocationPermissionAsk(
+            allowRequest = allowPermissionRequest,
+            onStatus = { status = it },
+            onRequest = { allowPermissionRequest = true },
+        ),
         userLocationManager = userLocationManager,
         onClick = {
             when (pill) {
@@ -626,9 +633,9 @@ private fun SearchStopScreenSinglePane(
                 mapEntry = MapEntry.SEARCH_STOP,
                 onEvent = onEvent,
                 onStopSelect = onStopSelect,
-                allowPermissionRequest = location.allowPermissionRequest,
-                onPermissionStatus = location.onPermissionStatus,
-                onRequestPermission = location.onRequestPermission,
+                allowPermissionRequest = location.ask.allowRequest,
+                onPermissionStatus = location.ask.onStatus,
+                onRequestPermission = location.ask.onRequest,
                 onMapTap = {
                     modeBlockOpen = reduceModeBlock(modeBlockOpen, ModeBlockEvent.MapTapped)
                     onMapTap()
@@ -646,33 +653,18 @@ private fun SearchStopScreenSinglePane(
                 stopCardTopReserve = stopCardTopReserveFor(headerHeight, slide),
                 onBoardExpandedChange = { boardExpanded = it },
                 bottomControls = { clearance, controlsHidden ->
-                    // One rule for where Options is: shown only with the location allowed and no stop card open.
-                    val controls = modeControlsFor(
+                    SearchStopBottomControls(
                         mode = flow.mode,
-                        mapReady = mapState is MapUiState.Ready,
+                        mapState = mapState,
                         locationGranted = location.granted,
                         stopCardOpen = controlsHidden,
+                        modeBlockOpen = modeBlockOpen,
+                        onModeBlockEvent = { modeBlockOpen = reduceModeBlock(modeBlockOpen, it) },
+                        pillHeight = optionsPillHeight,
+                        onPillHeight = { optionsPillHeight = it },
+                        clearance = clearance,
+                        onEvent = onEvent,
                     )
-                    // A block that was open is shut as the button goes, and stays shut when it returns.
-                    LaunchedEffect(controls) {
-                        if (controls == ModeControls.Hidden) {
-                            modeBlockOpen = reduceModeBlock(modeBlockOpen, ModeBlockEvent.ControlsHidden)
-                        }
-                    }
-                    if (controls != ModeControls.Absent && mapState is MapUiState.Ready) {
-                        SearchStopModeControls(
-                            open = modeBlockOpen,
-                            visible = controls == ModeControls.Shown,
-                            selectedModes = mapState.mapDisplay.selectedTransportModes,
-                            onButtonClick = {
-                                modeBlockOpen = reduceModeBlock(modeBlockOpen, ModeBlockEvent.ButtonTapped)
-                            },
-                            onToggleMode = { onEvent(SearchStopUiEvent.TransportModeFilterToggled(it)) },
-                            pillHeight = optionsPillHeight,
-                            onPillHeight = { optionsPillHeight = it },
-                            clearance = clearance,
-                        )
-                    }
                 },
             )
         }
@@ -809,10 +801,10 @@ private fun SearchStopScreenDualPane(
     mapOpen: MapOpenTracker? = null,
 ) {
     // This layout has no map of its own to track the rider, so a tap that asks for permission asks here.
-    LaunchedEffect(location.allowPermissionRequest) {
-        if (location.allowPermissionRequest) {
+    LaunchedEffect(location.ask.allowRequest) {
+        if (location.ask.allowRequest) {
             location.userLocationManager.getCurrentLocation()
-            location.onPermissionStatus(location.userLocationManager.checkPermissionStatus())
+            location.ask.onStatus(location.userLocationManager.checkPermissionStatus())
         }
     }
 

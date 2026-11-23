@@ -30,7 +30,6 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
-import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
 import org.maplibre.compose.map.MapOptions
 import org.maplibre.compose.map.MaplibreMap
@@ -42,7 +41,6 @@ import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.state.NearbyStopsConfig
-import xyz.ksharma.krail.core.maps.state.UserLocationConfig
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.ATTRIBUTION_ALIGNMENT
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.ATTRIBUTION_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.COMPASS_ENABLED
@@ -68,7 +66,6 @@ import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardPickActions
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardWithDepartures
 import xyz.ksharma.krail.trip.planner.ui.stopcard.controlsClearanceFor
 import xyz.ksharma.krail.trip.planner.ui.stopcard.nearbyStopFor
-import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun SearchStopMap(
@@ -291,37 +288,7 @@ private fun MapContent(
             onPermissionDeny = onPermissionStatus,
         )
 
-        // Auto-center on first user location, exactly once, smoothly.
-        //
-        // CRITICAL: key the effect on a STABLE boolean (hasUserLocation), NOT on the changing
-        // LatLng. GPS emits a stream of slightly-different fixes; keying on the value re-launched
-        // this effect on every jitter, which CANCELLED the in-flight animateTo. Because
-        // hasAutoCentered had already flipped true, it never re-fired — so the camera was left
-        // frozen wherever the cancelled animation stopped: at the Sydney seed, or (on iOS) at an
-        // intermediate zoomed-all-the-way-out frame. Rotating "fixed" it only because
-        // rememberCameraState re-seeded firstPosition at the now-known location (the seed path,
-        // not this animate path). hasUserLocation flips false→true once and then stays true, so
-        // subsequent jitter no longer re-keys the effect and the animation runs to completion.
-        //
-        // If location permission is absent, userLocation stays null → no animation → the camera
-        // stays at the Sydney default seed. Only when a real fix arrives do we move to it.
-        val userLocation = mapState.mapDisplay.userLocation
-        val hasUserLocation = userLocation != null
-        // Saved, so turning the phone never glides the camera back from where the rider panned it.
-        var hasAutoCentered by rememberSaveable { mutableStateOf(false) }
-        LaunchedEffect(hasUserLocation) {
-            val target = userLocation
-            if (target != null && shouldAutoCenter(hasUserLocation, hasAutoCentered)) {
-                hasAutoCentered = true
-                cameraState.animateTo(
-                    CameraPosition(
-                        target = target.toPosition(),
-                        zoom = UserLocationConfig.AUTO_CENTER_ZOOM,
-                    ),
-                    duration = UserLocationConfig.AUTO_CENTER_ANIMATION_MS.milliseconds,
-                )
-            }
-        }
+        AutoCenterOnFirstFix(userLocation = mapState.mapDisplay.userLocation, cameraState = cameraState)
 
         // Track camera moves to update map center and reload stops
         @OptIn(FlowPreview::class)

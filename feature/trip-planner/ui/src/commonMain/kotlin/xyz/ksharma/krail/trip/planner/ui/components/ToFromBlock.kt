@@ -137,6 +137,7 @@ internal fun ToFromBlock(
             ),
             insets = insets,
             rowGap = style.rowGap,
+            fillSurface = style.fillSurface,
             modifier = modifier,
         )
         return

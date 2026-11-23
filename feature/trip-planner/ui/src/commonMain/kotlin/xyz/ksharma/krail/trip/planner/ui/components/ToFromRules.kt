@@ -20,9 +20,10 @@ internal sealed interface ToFromBlockStyle {
     /**
      * Search Stop's two soft pills on the one card the caller draws: both are the same taj text field in the soft
      * pill colours, [rowGap] apart with no divider, and which bar has focus changes the caret and the keyboard and
-     * nothing else.
+     * nothing else. With [fillSurface] the bars are filled with the app's own surface instead, which is what a lone pill
+     * standing directly on the map wants, since the soft fill is only a touch off white and would nearly vanish there.
      */
-    data class FloatingRows(val rowGap: Dp) : ToFromBlockStyle
+    data class FloatingRows(val rowGap: Dp, val fillSurface: Boolean = false) : ToFromBlockStyle
 }
 
 /**

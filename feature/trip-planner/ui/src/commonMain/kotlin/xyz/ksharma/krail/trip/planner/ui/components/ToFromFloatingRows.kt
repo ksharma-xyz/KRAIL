@@ -68,8 +68,9 @@ internal fun ToFromFloatingRows(
     insets: ToFromBarInsets,
     rowGap: Dp,
     modifier: Modifier = Modifier,
+    fillSurface: Boolean = false,
 ) {
-    val colors = softFieldColors()
+    val colors = floatingFieldColors(fillSurface)
     Column(modifier = modifier.fillMaxWidth()) {
         // The gap belongs to the From row, so a hidden From leaves nothing above To.
         AnimatedVisibility(
@@ -110,6 +111,14 @@ internal fun ToFromFloatingRows(
         )
     }
 }
+
+/**
+ * The bars' colours: the shared [softFieldColors], or the same with the fill swapped for the app's own surface when
+ * [fillSurface] is set. The text, the placeholder and the caret keep the soft colours' tokens, which read on both.
+ */
+@Composable
+private fun floatingFieldColors(fillSurface: Boolean): TextFieldColors =
+    softFieldColors().let { if (fillSurface) it.copy(containerColor = KrailTheme.colors.surface) else it }
 
 /**
  * The go circle of the floating rows: the opposite of the pill, its text colour for the circle and its fill for the

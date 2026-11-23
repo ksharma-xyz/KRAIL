@@ -117,6 +117,9 @@ class SearchStopGroupCardTest {
                 LocalDensity provides if (fontScale != null) Density(density.density, fontScale) else density,
             ) {
                 PreviewTheme {
+                    composeView = LocalView.current
+                    surface = KrailTheme.colors.surface
+                    pillFill = softFieldColors().containerColor
                     Box(modifier = Modifier.fillMaxSize().padding(gaps.edge)) {
                         SearchStopGroupCard(
                             form = SearchStopFormModel(
@@ -235,6 +238,39 @@ class SearchStopGroupCardTest {
                 composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_FROM).assertDoesNotExist()
             }
         }
+    }
+
+    @Test
+    fun `a single field is one bare pill with no card, 16 dp in on both sides and filled with the surface`() {
+        setSingleBar()
+        showSingle(ToFromField.To, labelPromptFor("Home"))
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).assertDoesNotExist()
+        val pill = boundsOf(TripPlannerTestTags.SEARCH_ROW_TO)
+        assertNear("the pill starts one edge in", gaps.edge, pill.left)
+        assertNear("and ends one edge in", 411.dp - gaps.edge, pill.right)
+        assertNear("the pill is 48 tall", 48.dp, pill.height)
+        assertNear("with nothing above it", gaps.edge, pill.top)
+
+        val image = drawnPixels()
+        val density = composeRule.density
+        // A point in the pill clear of its text and icons: its right end, where nothing is drawn.
+        val inPill = image.at(with(density) { (pill.right - 24.dp).roundToPx() }, with(density) { (pill.top + 24.dp).roundToPx() })
+        assertClose(surface, inPill, "the pill, the card's own fill and not the soft one")
+        assertNotEquals(pillFill, surface)
+    }
+
+    @Test
+    @Config(qualifiers = "w320dp-h640dp-notnight")
+    fun `the lone pill is 48 tall and 16 dp in at 100 and at 200 percent text`() {
+        setSingleBar(fontScale = 2f)
+        showSingle(null, labelPromptFor("Home"))
+
+        val pill = boundsOf(TripPlannerTestTags.SEARCH_ROW_TO)
+        assertNear("48 tall at 200 percent", 48.dp, pill.height)
+        assertNear("16 in at the start", gaps.edge, pill.left)
+        assertNear("16 in at the end", 320.dp - gaps.edge, pill.right)
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).assertDoesNotExist()
     }
 
     @Test

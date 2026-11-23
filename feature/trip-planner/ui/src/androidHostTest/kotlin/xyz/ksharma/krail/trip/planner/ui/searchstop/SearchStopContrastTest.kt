@@ -119,6 +119,30 @@ class SearchStopContrastTest {
         assertTrue(read.boxFill.contrastRatio(MAP_GROUND) < EDGE, "The fill alone is not the edge, so the glow is needed.")
     }
 
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-notnight")
+    fun `in light mode the lone pill's text and placeholder read on the surface fill`() = assertLonePill("light")
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-night")
+    fun `in dark mode the lone pill's text and placeholder read on the surface fill`() = assertLonePill("dark")
+
+    /**
+     * The lone pill is the soft field's text, placeholder and caret on the card's own surface fill. The numbers are the
+     * test's message so a run prints them: the text and the placeholder both clear 4.5 to 1 on the fill, and the fill
+     * against the map is under 3 to 1 in light mode (white on a light map), which is why the pill wears the same edge
+     * as the card.
+     */
+    private fun assertLonePill(mode: String) {
+        readTokens()
+
+        val text = read.pillText.contrastRatio(read.boxFill)
+        val placeholder = read.pillPlaceholder.contrastRatio(read.boxFill)
+        val againstMap = read.boxFill.contrastRatio(MAP_GROUND)
+        assertTrue(text >= TEXT, "$mode: the lone pill's text on the surface fill is $text to 1")
+        assertTrue(placeholder >= TEXT, "$mode: the lone pill's placeholder on the surface fill is $placeholder to 1 (map $againstMap)")
+    }
+
     private companion object {
         const val TEXT = 4.5f
         const val EDGE = 3f

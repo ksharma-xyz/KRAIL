@@ -21,13 +21,13 @@ import xyz.ksharma.krail.core.transport.ModeSelectionSurface
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.info.tiles.ui.infoTileGlow
-import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.TransportModeChip
+import xyz.ksharma.krail.trip.planner.ui.components.mapCardColors
 
 /**
- * The mode filter block of the map state: a rounded card on taj's own surface, white in light mode and dark in dark
- * mode, with the info tile's glow around it, holding one whole chip per mode the map can show. It opens from the Options
+ * The mode filter block of the map state: a rounded card in the soft theme tint ([mapCardColors], the family the Timetable's
+ * cards are in) with the info tile's glow around it, holding one whole chip per mode the map can show. It opens from the Options
  * button at the bottom of the map and never sits in the group card at the top.
  *
  * Whole chips wrap onto the next line when width is short, at every text size, so it is never a row that
@@ -51,7 +51,7 @@ internal fun SearchStopModeBlock(
             .testTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS)
             .infoTileGlow(shape)
             .clip(shape)
-            .background(KrailTheme.colors.surface)
+            .background(mapCardColors().body)
             .padding(gaps.cardPadding),
         horizontalArrangement = Arrangement.spacedBy(gaps.betweenRows),
         verticalArrangement = Arrangement.spacedBy(gaps.betweenRows),

@@ -65,7 +65,8 @@ class SearchStopListStateTest {
 
     private fun withMap(
         state: SearchStopState = SearchStopFixtures.recentWithHomeSet(),
-        display: MapDisplay = MapDisplay(),
+        // A fix in hand means the location is allowed, which is what puts the Options button on the map state.
+        display: MapDisplay = MapDisplay(userLocation = LatLng(-33.8688, 151.2093)),
     ) = state.copy(isMapsAvailable = true, mapUiState = MapUiState.Ready(mapDisplay = display))
 
     private fun setScreen(state: SearchStopState, fontScale: Float? = null) {

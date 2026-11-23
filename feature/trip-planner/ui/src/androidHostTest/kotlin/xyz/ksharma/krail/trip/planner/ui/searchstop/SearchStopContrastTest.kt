@@ -13,6 +13,8 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.contrastRatio
 import xyz.ksharma.krail.trip.planner.ui.components.FloatingDark
+import xyz.ksharma.krail.trip.planner.ui.components.mapActiveChipColors
+import xyz.ksharma.krail.trip.planner.ui.components.mapCardColors
 import xyz.ksharma.krail.trip.planner.ui.components.softFieldColors
 import kotlin.test.assertTrue
 
@@ -45,6 +47,7 @@ class SearchStopContrastTest {
         val labelFill: Color,
         val labelInk: Color,
         val onSurface: Color,
+        val chipEdge: Color,
     )
 
     private lateinit var read: Read
@@ -53,8 +56,9 @@ class SearchStopContrastTest {
         composeRule.setContent {
             PreviewTheme {
                 val soft = softFieldColors()
-                val options = FloatingDark.buttonColors()
-                val active = FloatingDark.activeButtonColors()
+                val cardColors = mapCardColors()
+                val options = cardColors.chip
+                val active = mapActiveChipColors()
                 read = Read(
                     pillFill = soft.containerColor,
                     pillText = soft.contentColor,
@@ -67,6 +71,7 @@ class SearchStopContrastTest {
                     labelFill = KrailTheme.colors.stopLabelSurface,
                     labelInk = KrailTheme.colors.onStopLabelSurface,
                     onSurface = KrailTheme.colors.onSurface,
+                    chipEdge = cardColors.chipEdge,
                 )
             }
         }
@@ -84,6 +89,7 @@ class SearchStopContrastTest {
                 "optionsLabel=${r.optionsInk.contrastRatio(r.optionsFill)} " +
                 "optionsActiveLabel=${r.activeInk.contrastRatio(r.activeFill)} " +
                 "optionsOnMapGround=${r.optionsFill.contrastRatio(MAP_GROUND)} " +
+                "optionsHairlineOnMapGround=${r.chipEdge.contrastRatio(MAP_GROUND)} " +
                 "labelPillText=${r.labelInk.contrastRatio(r.labelFill)}",
         )
     }
@@ -99,7 +105,12 @@ class SearchStopContrastTest {
         assertTrue(r.activeInk.contrastRatio(r.activeFill) >= TEXT, "$mode: the Options label in its active look")
         assertTrue(r.labelInk.contrastRatio(r.labelFill) >= TEXT, "$mode: the label pill text on its fill")
         assertTrue(r.pillFill.contrastRatio(r.boxFill) >= PILL_SHAPE_FLOOR, "$mode: the pill is a visible step from the box")
-        assertTrue(r.optionsFill.contrastRatio(MAP_GROUND) >= EDGE, "$mode: the Options button against the map")
+        // The Options chip is the soft theme tint, which can sit close to the light map, so its edge is the hairline round it:
+        // either the fill or the hairline stands 3 to 1 off the map.
+        assertTrue(
+            maxOf(r.optionsFill.contrastRatio(MAP_GROUND), r.chipEdge.contrastRatio(MAP_GROUND)) >= EDGE,
+            "$mode: the Options button against the map",
+        )
     }
 
     @Test

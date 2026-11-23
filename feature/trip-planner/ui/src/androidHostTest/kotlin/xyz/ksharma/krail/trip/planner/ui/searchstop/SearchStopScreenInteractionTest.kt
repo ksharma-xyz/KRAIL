@@ -30,9 +30,11 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.core.transport.TransportMode
+import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
@@ -123,7 +125,15 @@ class SearchStopScreenInteractionTest {
     // region The map state and the list state
 
     /** A map the rider can open on, with the ground drawn as a stand-in because Robolectric has no GPU. */
+    // A fix in hand means the location is allowed, which is what puts the Options button on the map state.
     private fun withMap(state: SearchStopState = SearchStopFixtures.recentWithDefaults()) =
+        state.copy(
+            isMapsAvailable = true,
+            mapUiState = MapUiState.Ready(mapDisplay = MapDisplay(userLocation = LatLng(-33.8688, 151.2093))),
+        )
+
+    /** A map with no fix and no permission decision, as a fresh device has it. */
+    private fun withMapNoLocation(state: SearchStopState = SearchStopFixtures.recentWithDefaults()) =
         state.copy(isMapsAvailable = true, mapUiState = MapUiState.Ready())
 
     private fun setScreen(
@@ -457,12 +467,27 @@ class SearchStopScreenInteractionTest {
 
     // endregion
 
+    // region Options needs the location
+
+    @Test
+    fun theOptionsButtonIsNotDrawnWhileTheLocationIsNotAllowed_andIsDrawnOnceItIs() {
+        setScreen(withMapNoLocation())
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertDoesNotExist()
+        // The control line is the location control alone, and the box is where it always is.
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).assertIsDisplayed()
+    }
+
+    // endregion
+
     // region The location pill
 
     @Test
     fun theLocationPillIsOneItemUnderTheForm_onlyWhenPermissionIsNotGranted_andOnlyOnTheMapState() {
         // A fresh Robolectric device has no permission decision recorded, so the one pill shows on the map state.
-        setScreen(withMap())
+        setScreen(withMapNoLocation())
         composeRule.waitForIdle()
 
         composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertCountEquals(1)

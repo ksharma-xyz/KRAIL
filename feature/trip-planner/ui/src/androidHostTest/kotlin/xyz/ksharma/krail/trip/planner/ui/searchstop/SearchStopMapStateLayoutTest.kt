@@ -66,7 +66,8 @@ class SearchStopMapStateLayoutTest {
     private var windowHeight = 0.dp
     private var windowWidth = 0.dp
 
-    private fun setScreen(fontScale: Float? = null, locationAllowed: Boolean = false) {
+    // The location is allowed unless a test says otherwise: Options is only on the map state with it.
+    private fun setScreen(fontScale: Float? = null, locationAllowed: Boolean = true) {
         val display = if (locationAllowed) MapDisplay(userLocation = LatLng(-33.8688, 151.2093)) else MapDisplay()
         val state: SearchStopState = SearchStopFixtures.recentWithHomeSet()
             .copy(isMapsAvailable = true, mapUiState = MapUiState.Ready(mapDisplay = display))
@@ -135,7 +136,7 @@ class SearchStopMapStateLayoutTest {
     @Test
     @Config(qualifiers = W411)
     fun `the chip is its own button under the box, left aligned with it, one gap below and never inside it`() {
-        setScreen()
+        setScreen(locationAllowed = false)
 
         val box = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
         val chip = touchBoundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
@@ -335,19 +336,33 @@ class SearchStopMapStateLayoutTest {
         composeRule.waitForIdle()
 
         val box = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
-        val chip = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
         val card = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS)
         val options = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_PILL)
         val location = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_BUTTON)
-        assertTrue(chip.top >= box.bottom, "The chip $chip is under the box $box")
         assertTrue(box.bottom <= card.top, "The box $box is above the Options card $card")
         assertTrue(card.bottom <= options.top + 1.dp, "The card $card is above its button $options")
-        for (item in listOf(box, chip, card, options, location)) {
+        for (item in listOf(box, card, options, location)) {
             assertTrue(item.left >= 0.dp && item.right <= 320.dp, "$item stays inside the 320 dp window")
             assertTrue(item.top >= 0.dp && item.bottom <= windowHeight, "$item stays inside the window height")
         }
         assertNotEquals(0.dp, options.width, "Options is drawn.")
         assertEquals(48.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).height, "The pill stays one 48 dp line.")
+    }
+
+    @Test
+    @Config(qualifiers = W320)
+    fun `at 320 dp and 200 percent text with the location not allowed the chip is under the box and Options is not drawn`() {
+        setScreen(fontScale = 2f, locationAllowed = false)
+
+        val box = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
+        val chip = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
+        val location = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_BUTTON)
+        assertTrue(chip.top >= box.bottom, "The chip $chip is under the box $box")
+        for (item in listOf(box, chip, location)) {
+            assertTrue(item.left >= 0.dp && item.right <= 320.dp, "$item stays inside the 320 dp window")
+            assertTrue(item.top >= 0.dp && item.bottom <= windowHeight, "$item stays inside the window height")
+        }
+        composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertCountEquals(0)
     }
 
     // endregion

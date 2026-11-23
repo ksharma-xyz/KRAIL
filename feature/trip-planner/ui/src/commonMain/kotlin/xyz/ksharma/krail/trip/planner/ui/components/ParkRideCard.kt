@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -173,32 +174,39 @@ private fun ParkRideFacility(
     }
 }
 
-/** The reading of a car park when it has one, with its three lines staged when [reveal] is given, and the held room when it has not. */
+/**
+ * The room a reading takes, and the reading in it once there is one. The room is always the widest reading, drawn clear, so its
+ * height is the height of the card whatever the numbers turn out to be: the reading is drawn over it from the same corner, and can
+ * only be as tall as the room and never taller. A car park with no reading is the room and nothing over it.
+ */
 @Composable
 private fun ParkRideReadingRoom(
     facility: ParkRideUiState.ParkRideFacilityDetail,
     textWeight: FontWeight?,
     reveal: FigureReveal?,
 ) {
-    if (facility.spotsAvailable >= 0) {
-        ParkRideFigures(
-            spots = "${facility.spotsAvailable}",
-            percentFull = "${facility.percentageFull}%",
-            textWeight = textWeight,
-            spotsBeat = reveal?.beats?.get(SPOTS_BEAT) ?: Modifier,
-            percentBeat = reveal?.beats?.get(PERCENT_BEAT) ?: Modifier,
-        )
-
-        // Time Information
-        if (facility.timeText.isNotBlank()) {
-            ParkRideUpdatedAt(
-                timeText = facility.timeText,
-                textWeight = textWeight,
-                modifier = reveal?.beats?.get(UPDATED_BEAT) ?: Modifier,
-            )
-        }
-    } else {
+    Box {
         ParkRideReadingPlaceholder(textWeight = textWeight)
+        if (facility.spotsAvailable >= 0) {
+            Column(verticalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingXS)) {
+                ParkRideFigures(
+                    spots = "${facility.spotsAvailable}",
+                    percentFull = "${facility.percentageFull}%",
+                    textWeight = textWeight,
+                    spotsBeat = reveal?.beats?.get(SPOTS_BEAT) ?: Modifier,
+                    percentBeat = reveal?.beats?.get(PERCENT_BEAT) ?: Modifier,
+                )
+
+                // Time Information
+                if (facility.timeText.isNotBlank()) {
+                    ParkRideUpdatedAt(
+                        timeText = facility.timeText,
+                        textWeight = textWeight,
+                        modifier = reveal?.beats?.get(UPDATED_BEAT) ?: Modifier,
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -270,15 +278,21 @@ private fun ParkRideUpdatedAt(timeText: String, textWeight: FontWeight?, modifie
     )
 }
 
-/** The lines a reading takes, drawn with nothing in them and hidden from a screen reader. */
+// The widest reading a car park can have: four digits of spots, a full car park, and the longest time of day. The system font gives every
+// digit one width, and AM is at least as wide as PM, so a real reading is never wider than this and never wraps sooner.
+private const val WIDEST_SPOTS = "0000"
+private const val WIDEST_PERCENT = "100%"
+private const val WIDEST_TIME = "00:00\u00A0AM"
+
+/** The lines a reading takes at their widest, drawn with nothing in them and hidden from a screen reader. */
 @Composable
 private fun ParkRideReadingPlaceholder(textWeight: FontWeight?) {
     Column(
         modifier = Modifier.alpha(0f).clearAndSetSemantics {},
         verticalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingXS),
     ) {
-        ParkRideFigures(spots = "000", percentFull = "00%", textWeight = textWeight)
-        ParkRideUpdatedAt(timeText = "0:00\u00A0AM", textWeight = textWeight)
+        ParkRideFigures(spots = WIDEST_SPOTS, percentFull = WIDEST_PERCENT, textWeight = textWeight)
+        ParkRideUpdatedAt(timeText = WIDEST_TIME, textWeight = textWeight)
     }
 }
 

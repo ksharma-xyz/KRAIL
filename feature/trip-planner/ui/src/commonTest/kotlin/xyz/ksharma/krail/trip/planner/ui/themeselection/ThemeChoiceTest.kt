@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.themeselection
 
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.ThemeSelectedEvent.Source
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
@@ -32,15 +33,31 @@ class ThemeChoiceTest {
         assertEquals(0, analytics.getTrackedEvents("theme_selected").size)
 
         sandook.clearTheme()
-        choice.track(KrailThemeStyle.Metro.id)
+        choice.track(KrailThemeStyle.Metro.id, Source.SETTINGS)
         assertNull(sandook.getProductClass())
     }
 
     @Test
-    fun `reporting sends the one theme selected event with the id and nothing else`() {
-        choice.track(KrailThemeStyle.Metro.id)
+    fun `reporting sends the one theme selected event with the id and the source, and nothing else`() {
+        choice.track(KrailThemeStyle.Metro.id, Source.SETTINGS)
 
         val event = analytics.getTrackedEvents("theme_selected").single()
-        assertEquals(mapOf<String, Any>("themeId" to KrailThemeStyle.Metro.id.toString()), event.properties)
+        assertEquals(
+            mapOf<String, Any>("themeId" to KrailThemeStyle.Metro.id.toString(), "source" to "settings"),
+            event.properties,
+        )
+    }
+
+    @Test
+    fun `the source is whatever the caller says, and the id is unchanged by it`() {
+        choice.track(KrailThemeStyle.Ferry.id, Source.INTRO)
+        choice.track(KrailThemeStyle.Ferry.id, Source.SETTINGS)
+
+        val events = analytics.getTrackedEvents("theme_selected")
+        assertEquals(listOf<Any?>("intro", "settings"), events.map { it.properties?.get("source") })
+        assertEquals(
+            setOf<Any?>(KrailThemeStyle.Ferry.id.toString()),
+            events.map { it.properties?.get("themeId") }.toSet(),
+        )
     }
 }

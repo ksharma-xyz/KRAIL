@@ -58,9 +58,13 @@ class IntroLetsKrailThemeIdTest {
                 "${choice.name}: the two events say the colour in the same form",
             )
             assertEquals(
-                AnalyticsEvent.ThemeSelectedEvent(themeId = themeIdParam(choice.style.id)).properties?.get("themeId"),
+                AnalyticsEvent.ThemeSelectedEvent(
+                    themeId = themeIdParam(choice.style.id),
+                    source = AnalyticsEvent.ThemeSelectedEvent.Source.INTRO,
+                ).properties?.get("themeId"),
                 rig.outcomeEvent().properties?.get("themeId"),
             )
+            assertEquals("intro", reported?.properties?.get("source"), "${choice.name}: the Intro marks its own report")
         }
     }
 

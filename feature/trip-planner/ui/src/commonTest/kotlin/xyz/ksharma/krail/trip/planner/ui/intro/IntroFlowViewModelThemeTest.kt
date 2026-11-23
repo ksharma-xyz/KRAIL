@@ -101,7 +101,7 @@ class IntroFlowViewModelThemeTest {
     }
 
     @Test
-    fun `yes with a theme selected reports it once, with only its id, and finishes the Intro`() = krailRunTest {
+    fun `yes with a theme selected reports it once, with its id and source intro, and finishes`() = krailRunTest {
         val rig = IntroRig(this, handle = savedAt(onTheme))
         rig.send(IntroUiEvent.PickTheme(train), IntroUiEvent.PickTheme(metro), IntroUiEvent.PickTheme(bus))
         assertEquals(emptyList<Any?>(), rig.reported(), "three taps on badges report nothing")
@@ -113,7 +113,10 @@ class IntroFlowViewModelThemeTest {
         }
 
         assertEquals(listOf<Any?>(bus.toString()), rig.reported())
-        assertEquals(setOf("themeId"), rig.analytics.getTrackedEvents("theme_selected").single().properties?.keys)
+        assertEquals(
+            mapOf<String, Any>("themeId" to bus.toString(), "source" to "intro"),
+            rig.analytics.getTrackedEvents("theme_selected").single().properties,
+        )
         assertEquals(IntroStep.THEME, rig.state.step)
         assertEquals(bus, rig.state.selectedThemeId)
         assertEquals(1, rig.log.count("pref:KEY_HAS_SEEN_INTRO=true"))

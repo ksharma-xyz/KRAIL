@@ -9,6 +9,7 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.IntroLetsKrailClick
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.IntroLetsKrailClickEvent.StopsWait
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.ParkRideUserFacilityEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SaveTripClickEvent
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.ThemeSelectedEvent
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -119,7 +120,7 @@ class IntroEventsTest {
 
         assertEquals(mapOf("introVersion" to 2, "themeId" to "4"), event.properties)
         assertEquals(
-            AnalyticsEvent.ThemeSelectedEvent(themeId = "4").properties?.get("themeId"),
+            ThemeSelectedEvent(themeId = "4", source = ThemeSelectedEvent.Source.INTRO).properties?.get("themeId"),
             event.properties?.get("themeId"),
         )
     }

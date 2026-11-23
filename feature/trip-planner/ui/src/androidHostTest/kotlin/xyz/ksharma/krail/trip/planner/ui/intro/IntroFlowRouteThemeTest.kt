@@ -155,6 +155,10 @@ class IntroFlowRouteThemeTest {
             listOf<Any?>(KrailThemeStyle.Bus.id.toString()),
             analytics.getTrackedEvents("theme_selected").map { it.properties?.get("themeId") },
         )
+        assertEquals(
+            listOf<Any?>("intro"),
+            analytics.getTrackedEvents("theme_selected").map { it.properties?.get("source") },
+        )
         assertEquals(listOf<Any?>("IntroTheme"), screenViews())
     }
 }

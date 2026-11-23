@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.themeselection
 
 import xyz.ksharma.krail.core.analytics.Analytics
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.sandook.Sandook
 
 /**
@@ -21,8 +22,11 @@ internal class ThemeChoice(
         sandook.insertOrReplaceTheme(productClass.toLong())
     }
 
-    /** Reports that the rider chose the theme [productClass], through the one event Settings already sends. */
-    fun track(productClass: Int) {
-        analytics.trackThemeSelectionEvent(themeId = productClass)
+    /**
+     * Reports that the rider chose the theme [productClass], through the one `theme_selected` event. [source] is
+     * the screen the choice was made on, so the data can tell a first run colour from a rider changing theme.
+     */
+    fun track(productClass: Int, source: AnalyticsEvent.ThemeSelectedEvent.Source) {
+        analytics.trackThemeSelectionEvent(themeId = productClass, source = source)
     }
 }

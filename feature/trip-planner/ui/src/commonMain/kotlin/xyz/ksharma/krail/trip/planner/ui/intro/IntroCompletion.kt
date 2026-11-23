@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.SaveTripClickEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.sandook.Sandook
@@ -30,8 +31,8 @@ internal class IntroCompletion(
     /** Stores the theme the rider has picked, so the app starts in it. One small local write. */
     suspend fun saveTheme(themeId: Int) = withContext(ioDispatcher) { theme.save(themeId) }
 
-    /** Reports the rider's choice of [themeId], with no parameter beyond the id the Settings screen sends. */
-    fun trackTheme(themeId: Int) = theme.track(themeId)
+    /** Reports the rider's choice of [themeId], as the Settings screen does, marked as coming from the Intro. */
+    fun trackTheme(themeId: Int) = theme.track(themeId, AnalyticsEvent.ThemeSelectedEvent.Source.INTRO)
 
     /** Saved with the same id as every other path, [Trip.tripId]. */
     suspend fun saveTrip(trip: Trip) = withContext(ioDispatcher) {

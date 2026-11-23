@@ -551,10 +551,22 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
 
     // region Theme
 
-    data class ThemeSelectedEvent(val themeId: String) : AnalyticsEvent(
+    /**
+     * The rider chose a colour theme, from either screen that offers the choice.
+     *
+     * @param themeId The theme's number as text.
+     * @param source The screen the choice was made on: `intro` at the finish press of the Intro, `settings` on the
+     *   Settings theme screen. Builds from before this param carry none, which reads as unknown, never as either.
+     */
+    data class ThemeSelectedEvent(val themeId: String, val source: Source) : AnalyticsEvent(
         name = "theme_selected",
-        rawProperties = mapOf("themeId" to themeId),
-    )
+        rawProperties = mapOf("themeId" to themeId, PROP_SOURCE to source.value),
+    ) {
+        enum class Source(val value: String) {
+            INTRO("intro"),
+            SETTINGS(VALUE_SETTINGS),
+        }
+    }
 
     // endregion
 

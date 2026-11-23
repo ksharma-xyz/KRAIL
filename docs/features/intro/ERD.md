@@ -15,11 +15,12 @@ this repository. Everything a builder needs from it is restated here, so this fi
 - **Who has the problem.** A rider who has just installed KRAIL taps through a tour of features and lands on a home screen
   that shows nothing of theirs. Nothing they did in the tour is kept.
 - **What this does.** Replaces the seven-page carousel with a two-step first run that ends with something saved.
-  - Step 1 asks "Driving to the station?". Yes asks for location, shows the nearest Park & Ride car park with its live
+  - Step 1 asks "Show free parking at your nearest station?". Yes asks for location, shows the nearest Park & Ride car park with its live
     spots and an Add to home button. No, or a denied location, goes straight to step 2.
   - Step 2 saves a first trip. The rider picks a start and an end from suggested stops (or searches for another stop), sees
     the pair as one tile, and taps one button: Save and start, or Skip for now.
-  - The last button waits for the stops data to be ready, and the data layer reports readiness, failure and retry
+  - No button ever waits for the stops data. The last one starts the finale at once, and any wait for the stops runs under
+    the finale's solid colour, for at most 15 s. The data layer reports readiness, failure and retry
     (`DATA_READINESS` in section 3).
 - **What it deliberately does not do.**
   - No alerts, no departures and no trip planner call in the Intro. A trip is saved from two stop ids with no network.
@@ -192,32 +193,32 @@ internal fun parkRideStartPrefill(station: ParkRideStationPickerItem, stopNameLo
  * What the decision bar says and does, or null when the screen shows no bar. A table over the step, so a new step is a
  * compile error and not a screen with the wrong bar. Two buttons, never three: the negative answer on the
  * left (an outlined button) and the primary on the right (filled in the theme colour, test tag `intro.action.primary`).
- * Only the right one is ever disabled. The one exception is the THEME screen (owner's ruling, 2026-11-22), whose bar is
- * the primary alone and whose `left` is null: `IntroBarTest` pins that no other step can lose its left button.
- *   THEME (the last screen, unit U9): "Yes, this one" alone, a full width taj button, the same height as the two button
+ * No button is ever disabled (unit X1). A button is shown and live, or it is not shown at all: a hidden button keeps its room
+ * and takes no touch, and is never drawn greyed. The one exception to two buttons is the THEME screen (owner's ruling,
+ * 2026-11-22), whose bar is the primary alone and whose `left` is null: `IntroBarTest` pins that no other step can lose its
+ * left button.
+ *   THEME (the last screen, unit U9): "Let's KRAIL" alone, a full width taj button, the same height as the two button
  *                 bar so nothing moves when it appears. It confirms the theme on show and ENDS THE INTRO. It is NOT SHOWN
  *                 (not disabled) until a badge is tapped, when it fades in where the room for it was kept (`IntroBar.shown`).
- *                 There is no no, and no way to cycle: a theme is chosen only by tapping its badge. The whole phrase at every text size, and the
- *                 same words for a screen reader (the visible label is contained in the spoken one, so voice control works).
- *                 The finish waits for the stops data to be Ready or Failed, as it always has, but only when there is a trip
- *                 to write: the button is off while the stops are Unknown or Loading and the rider answered `Yes, save it`
- *                 on the confirm screen (`IntroState.tripDecision` is SAVED) and the trip is not already written. With
- *                 `Not now`, or no answer, nothing is written and the button is never held back.
+ *                 There is no no, and no way to cycle: a theme is chosen only by tapping its badge. It says "Let's KRAIL" at every
+ *                 text size, and a screen reader hears "Let's KRAIL, use this colour" (the visible label is the start of the
+ *                 spoken one, so voice control works). It is live whatever the stops data says: the press starts the finale
+ *                 at once and the finish waits for the stops, if it must, under the finale (section 5, finish order).
  *   PARK_RIDE:    asking is "No" and "Yes" at every text size, said as "No thanks" and "Yes, show me free spots" to a screen
  *                 reader. A card, or a station still being looked for, is
- *                 "Not now" and "Add to home". While the station is looked for, or its numbers are awaited, the bar keeps
- *                 both buttons and the right one is disabled, so the bar never changes size or jumps.
+ *                 "Not now" and "Add to home". While the station is looked for the bar keeps both buttons' room, with "Not now"
+ *                 live and "Add to home" not shown (`rightShown` false, never disabled), so the bar never changes size or jumps.
  *                 No station near, a denied or missing location and stops that are not usable show no bar, because the
  *                 flow has already moved on.
- *   DESTINATION, ORIGIN: "Yes, this one" alone, a full width taj button, like the theme screen. It is NOT SHOWN until the
+ *   DESTINATION, ORIGIN: "Yes, this one" alone (unchanged by unit X1), a full width taj button, like the theme screen. It is NOT SHOWN until the
  *                 rider has tapped a stop (`IntroState.selectedStop`), keeps its room, and then confirms that stop and moves on.
  *                 There is no "No, search": the field opens the keyboard itself when it is tapped.
  *   CONFIRM:      "Not now" and "Yes, save it". Both only RECORD the answer (`IntroUiEvent.AnswerSaveTrip`, kept as the
  *                 transient `IntroState.tripDecision`) and move on to the theme screen. Neither waits for anything,
  *                 and nothing is written here. Not now is the only way to leave without saving.
  */
-internal fun introBar(state: IntroState, readiness: StopsReadiness): IntroBar?
-internal data class IntroBar(val left: IntroBarAction?, val right: IntroBarAction, val rightEnabled: Boolean = true, val shown: Boolean = true) // left is null on the screens that ask for a pick; shown is false until there is a pick, and the room is kept
+internal fun introBar(state: IntroState): IntroBar?
+internal data class IntroBar(val left: IntroBarAction?, val right: IntroBarAction, val shown: Boolean = true, val rightShown: Boolean = true) // left is null on the screens that ask for a pick; shown and rightShown are false while there is nothing to answer, and the room is kept. There is no disabled state
 /** [label] is what shows, at every text size. [spokenLabel] is the screen reader description and what voice control matches, [label] unless the button shows a shorter word than it says. */
 internal data class IntroBarAction(val label: String, val event: IntroUiEvent, val spokenLabel: String = label)
 
@@ -291,7 +292,7 @@ sealed interface IntroUiEvent {
     data class QueryChanged(val text: String) : IntroUiEvent // the typed text, searched locally after a pause, never reported or saved
     data class AnswerSaveTrip(val yes: Boolean) : IntroUiEvent // the confirm screen's "Yes, save it" or "Not now": records the answer (TripDecision) and moves on to THEME, writes nothing
     data class PickTheme(val themeId: Int) : IntroUiEvent // a badge was tapped: selects the theme, does not move on
-    data object ConfirmTheme : IntroUiEvent            // "Yes, this one", the only button on THEME, the last screen: reports the choice once and FINISHES the Intro
+    data object ConfirmTheme : IntroUiEvent            // "Let's KRAIL", the only button on THEME, the last screen: reports the choice once and FINISHES the Intro
 }
 
 /** One shot, delivered once through a Channel and never replayed after rotation. */
@@ -434,7 +435,7 @@ fun IntroState.toOutcome(stopsWait: StopsWait, declined: Boolean = false): Intro
   left button, `No, search`) are deleted. `PickStart`, `PickEnd` and `StopPickedFromSearch` belonged to the earlier first trip screen
   and are deleted.
 - **The destination and origin screens, as built.** `IntroStopStepContent` draws both: `IntroHeadline` (destination "Where", "to?" with the pin, origin "Where", "from?" with the emoji `introEmojiFor` gives it, since unit U8), a taj `TextField` with
-  `invertedColors()` (the search-on-the-page treatment Add Park & Ride has, taj's default colours since unit W1), and the stops below it as `IntroStopRow`, which is
+  `introStopFieldColors()` (taj's default colours in unit W1, which had no fill on the page, so the shared `softFieldColors()` since unit X1), and the stops below it as `IntroStopRow`, which is
   `StopLabelAssignRow`, the row Search Stop draws, with a new `showLabelAssign` parameter (default on, so Search Stop is unchanged)
   turned off so there is no chevron. The selected row takes the app's activated row treatment (`themeBackgroundColor()` with a
   rounded shape, as `ManageStopLabelRow` does) and is announced as selected. The field's placeholder is Search Stop's own
@@ -521,7 +522,7 @@ three zone frame, and everything it decides is in pure functions with table test
   colour through the normal `KrailTheme`. It applies again each time the Intro is composed with a theme selected, such as after
   a turn of the screen. The colour does not jump: `IntroThemeBlend`
   wraps the Intro in `IntroFlowRoute` and re-provides `LocalThemeColor` as one `animateColorAsState` over 280 ms (`THEME_BLEND_MS`),
-  so the single `Yes, this one` button, and anything else the Intro draws in the theme colour, blends to the tapped theme, carries on
+  so the single `Let's KRAIL` button, and anything else the Intro draws in the theme colour, blends to the tapped theme, carries on
   from where it is when the next badge is tapped, and settles on exactly the theme's own hex. With reduced motion it is the new
   colour at once (`snap`). The taj theme transition animates light and dark only, so this is the one animated colour and no new
   component. Measured on the Pixel 6 Pro before it, the colour changed in a single frame.
@@ -531,7 +532,7 @@ three zone frame, and everything it decides is in pure functions with table test
   `ThemeChoice` is the write and the report that `ThemeSelectionViewModel` and the Intro both use, so the two cannot differ, and
   the Settings screen's behaviour and tests are unchanged. The Intro reaches it through `IntroCompletion`, which already holds
   Sandook, Analytics and the IO dispatcher, because the view model is at the constructor limit.
-- **Confirming.** `Yes, this one` is not shown until a theme is selected. It reports the choice once with the existing
+- **Confirming.** `Let's KRAIL` is not shown until a theme is selected. It reports the choice once with the existing
   `analytics.trackThemeSelectionEvent(themeId)` (event `theme_selected`, param `themeId` only, no new name and no new param,
   and the ledger has no Pending row for it), and, since unit U9, finishes the Intro (it used to move on to Park & Ride). Tapping
   a badge reports nothing. The choice is reported once.
@@ -565,7 +566,7 @@ that Park & Ride asks "No thanks" and "Yes, show me free spots" is superseded by
   DECLINED (and nothing was saved). Since unit U10 the decision is saved with the screen and with the progress on the device, so a rider
   who is killed on the theme screen finishes with the answer they gave. A finish with no decision recorded (a progress that has none) still
   writes no trip and is not skipped.
-- **The headlines.** Five complete plain questions, all drawn in capitals as before: Park & Ride `Do you drive` / `to the station?`,
+- **The headlines.** Five complete plain questions, all drawn in capitals as before: Park & Ride `Show free` / `parking at` / `your nearest` / `station?` (unit X1, a question that says what Yes does),
   destination `Where are` / `you going?`, origin `Where are you` / `leaving from?`, confirm `Save this` / `trip?`, and the theme
   screen before a pick `What's your` / `favourite` / `transport mode` / `in Sydney?` (after a pick the chosen theme's tagline replaces
   it, as before). The question mark is allowed on the last line of these five and nowhere else, and the apostrophe is allowed. Each
@@ -641,8 +642,8 @@ files are in `intro/finale/`, and everything it decides is a pure function with 
   the app is hidden from a screen reader (`clearAndSetSemantics` on the box that holds it, applied only then) and the layer swallows every
   touch.
 - **The hand-off.** `onIntroFinished(finale, themeHexColorCode, navigateToSavedTrips)` is still the one place the end of the Intro is
-  handed on from, and is called from the same effect after the same writes in the same order (the trip, both flags and
-  `intro_lets_krail`, then the effect). It starts the finale in the colour of `finaleThemeHex(state.selectedThemeId)` (the chosen theme, and
+  handed on from, and is called from the same effect, which since unit X1 is `NavigateToSavedTrips` after the writes (the trip, both
+  flags and `intro_lets_krail`), while `StartFinale` is sent at the press, before any of them. It starts the finale in the colour of `finaleThemeHex(state.selectedThemeId)` (the chosen theme, and
   the default theme when there is none). It navigates straight away only when no host is attached or a run is already playing, so a screen
   with no host (a test, a preview) never waits for a finale that is not there. Otherwise Saved Trips is opened when the finale asks, at full
   cover: the route collects `IntroFinaleSignal.navigateRequests` while it is started, calls the callback it has **now**, and says so with
@@ -707,7 +708,7 @@ where it changes something an earlier unit said, the earlier text is edited to m
   nothing, and `intro.action.primary` is absent), the click off, and still measured, so it keeps exactly the height the button takes at the
   rider's text size and nothing moves when it appears. When `shown` turns true it fades in over `BAR_REVEAL_MS` (250 ms, `introBarRevealMs`),
   and with reduced motion it appears at once (`snap`). In a preview or a screenshot the state it starts in is the state it is drawn in. On
-  the theme screen it is shown after the first pick. It is not a disabled button: `rightEnabled` is true for it. `introBar` stays null for
+  the theme screen it is shown after the first pick. It is not a disabled button, and no button is (unit X1). `introBar` stays null for
   a screen with no bar at all.
 - **Bigger badges, in a column.** `TransportModeIconSize` gains `XLarge` at 64 dp, twice `Large`, with `headlineLarge` as its letter style
   (the same share of the circle as the small title in the 32 dp one), chosen in a private `letterStyle()` whose `else` branch is the
@@ -917,6 +918,7 @@ sequenceDiagram
     participant DB as Sandook
     participant S as App stop search
     App->>R: retry (launch trigger: stops insert, then bus routes best effort)
+    VM->>R: retry (the view model warms the load when it is made, a no-op if one is running)
     UI->>VM: AnswerParkRide(yes)
     UI->>L: permission and one fix
     L-->>UI: Location or denied
@@ -935,25 +937,28 @@ sequenceDiagram
     UI->>VM: QueryChanged (local stop search after a pause, nothing reported)
     UI->>VM: AnswerSaveTrip(yes) (confirm screen only: records the answer, moves on to the theme screen, writes nothing)
     UI->>VM: PickTheme (each badge tap: selects, stores and recolours the app), then ConfirmTheme (theme screen only, a theme chosen)
-    VM->>R: awaitReady
+    VM-->>UI: StartFinale (at once, the finale covers the screen in the theme colour)
     VM->>DB: insertOrReplaceTrip, then flags
-    VM-->>UI: navigate to SavedTrips
+    VM->>R: awaitReady (at most 15 s, under the finale)
+    VM-->>UI: NavigateToSavedTrips (the finale releases it, or Saved Trips opens at once with no finale)
 ```
 
 Readiness is published when the stops are usable. The bus routes insert runs after that in the same run and does not
 hold the Intro back.
 
-Order at finish, which differs from today: wait for readiness, write the trip, write `KEY_PARK_RIDE_SUGGESTION_SHOWN` then
-`KEY_HAS_SEEN_INTRO`, track the outcome, then navigate. Today the screen navigates without waiting for the insert, so a
-fast rider can reach home before the stops are committed. The suggestion flag goes first, so a process killed between the
-two writes shows the Intro again, rather than showing home with the suggestion still to ask.
+Order at finish (unit X1): the press sends `StartFinale` at once, so the rider sees an answer in the same instant. Then the
+trip is written, then `KEY_PARK_RIDE_SUGGESTION_SHOWN` then `KEY_HAS_SEEN_INTRO`, then the finish waits for readiness
+(`awaitReady(15 s)`, nothing when already Ready), then the outcome is tracked, then `NavigateToSavedTrips` is sent. The
+finale holds at full cover until that effect releases it (20 s ceiling), so Saved Trips never opens before the writes are done
+and no rider sees the app half ready. The suggestion flag goes first, so a process killed between the two writes shows the
+Intro again, rather than showing home with the suggestion still to ask. A second press does nothing: from the finish press
+on, every event is dropped.
 
 Decisions the view model branch made where this document was silent:
 
-- **Waiting.** The finish calls `awaitReady(15 s)`. A press while the right button is disabled for the stops is not dropped by the
-  view model, it waits for the stops and then finishes (the button itself is disabled, so the screen never sends it).
-  Without that the `stopsWait` buckets could not be reached. The wait ends on Ready, on Failed, or at 15 s, and the finish
-  goes ahead whichever it was: the trip if there is one, both flags, tracking, then the effect. When the stops are not Ready
+- **Waiting.** The finish calls `awaitReady(15 s)` after the writes, under the finale, so the button is live whatever the stops
+  data says and a press is answered at once (unit X1). The wait ends on Ready, on Failed, or at 15 s, and the finish
+  goes ahead whichever it was: tracking, then the effect. When the stops are not Ready
   by then, `retry()` is called once so the load goes on in the background (a no-op from Loading). The tracked wait is
   `failed` for Failed and `over_5s` for a timeout. The wait is none when the stops were already Ready, because a real clock
   never reads exactly zero. A finish whose screen is no longer the theme screen is abandoned.
@@ -1160,12 +1165,14 @@ sequenceDiagram
     participant S as IntroFinaleSignal
     participant H as IntroFinaleHost (app root)
     participant N as Navigator
-    VM->>VM: trip, both flags, intro_lets_krail (as before)
-    VM-->>R: NavigateToSavedTrips
+    VM-->>R: StartFinale (the press, at once)
     R->>S: start(theme colour)
     S-->>H: run (a host is attached)
-    H->>H: frames: wordmark, glow, blend, flood
-    H->>S: requestNavigate (once, at full cover)
+    H->>H: frames: wordmark, glow, blend, flood, then holds at full cover
+    VM->>VM: trip, both flags, bounded wait for the stops, intro_lets_krail
+    VM-->>R: NavigateToSavedTrips
+    R->>S: release (no host or no run: navigate at once)
+    H->>S: requestNavigate (once, at full cover and released, or after the 20 s ceiling)
     S-->>R: navigate request
     R->>N: clearBackStackAndNavigate(SavedTrips)
     R->>S: onNavigated
@@ -1192,7 +1199,8 @@ settles into the theme colour in BLEND as before, and the letters rise by transl
 
 The real run differs from that table in three ways, all in `finaleStep`:
 
-- **The clock waits at NAVIGATE.** Until the colour covers the screen the clock is the real time. At 2500 ms it stops there, the
+- **The clock waits at NAVIGATE.** Until the colour covers the screen the clock is the real time. At 2500 ms it stops there and
+  waits, with no frame callbacks, until the Intro has released the run (`NavigateToSavedTrips`, or the 20 s ceiling), then the
   Intro is asked to navigate (once), and it carries on, from 2500, only when the destination has settled. So the fade is not a fixed
   700 ms after the cover: it is after the settle.
 - **Settling.** The fade starts when the destination has been drawn for at least two frames since the Intro said it navigated and
@@ -1212,8 +1220,8 @@ rule. The whole run with an instant navigation takes about 3.5 s (2.5 s to the c
 |---|---|---|
 | 1 | **API calls.** | None at open. Step 1 Yes path only: one `refreshIfNeeded` for the one nearest station, once per run, and a network call only for a car park whose last reading is older than the cooldown (a new install has none stored, so none are warm). The app runs with the BFF override off, so the loader asks NSW once per car park, one after another. In the default catalogue (32 stations, 37 car parks) that is 1 call for 28 stations, 2 for three (Penrith, Kellyville, Campbelltown) and 3 for Tallawong. A station that several stop ids share (Sutherland, Mona Vale, Hornsby) is still one call, because the second stop finds the car park inside its cooldown. No polling, no timer and no retry in the Intro. A process killed on step 1 asks the loader once more on restart, and the cooldown decides whether that is a call. Rotation makes none. Step 2: none. A rider who answers No makes none. The Intro makes no trip planner, alerts or departures call. |
 | 2 | **Payload.** | About 350 B gzip and 665 B decoded per availability call, from the snapshot of 2026-11-21. **Not re-measured here**: the endpoint needs the shared NSW key, so nothing was sent. The stops files (about 2.3 MB and 2.6 MB) are bundled and are not downloaded. The Intro reads the 42-row catalogue and groups it once per look (and once after a kill), on the IO dispatcher, plus one batched coordinates query, and reads the facility table (at most 37 rows) once. All of it is small and local. |
-| 3 | **Timing.** | The Intro opens with no network and no wait. The car park card needs a location fix (up to 10 s inside the location manager, **not measured**), then stops readiness (`awaitReady` up to 10 s, nothing when already Ready, and **assumed 3 to 5 seconds** on a fresh install, measured privately and not recorded here), then the station is picked in memory and the card shows at once with the car park names. The numbers follow after the calls. They run one after another at 0.09 to 0.31 s each in the snapshot, so about 0.1 to 0.3 s for most stations and about 0.3 to 0.9 s for Tallawong (arithmetic on the snapshot, a guess for a real phone). Nothing blocks: Not now and the last button work throughout, and the last button is the only forced wait, and only if the rider finishes before readiness. The `stopsWait` bucket in section 11 measures it in the field. |
-| 4 | **UX.** | Loading: skeleton in the card's space. Slow stops data: last button reads Getting ready, for at most 15 s. Failed stops data: no message and no error state, the button behaves as when ready and the load is retried in the background. Failed or offline availability: the station name and Add stay, the numbers are omitted. No station near: a plain line and the normal Next. Denied location: step 2. No layout shift between states (same slot). |
+| 3 | **Timing.** | The Intro opens with no network and no wait. The car park card needs a location fix (up to 10 s inside the location manager, **not measured**), then stops readiness (`awaitReady` up to 10 s, nothing when already Ready, and **assumed 3 to 5 seconds** on a fresh install, measured privately and not recorded here), then the station is picked in memory and the card shows at once with the car park names. The numbers follow after the calls. They run one after another at 0.09 to 0.31 s each in the snapshot, so about 0.1 to 0.3 s for most stations and about 0.3 to 0.9 s for Tallawong (arithmetic on the snapshot, a guess for a real phone). Nothing blocks: Not now and the last button work throughout, and the only wait is the finish's, under the finale and bounded at 15 s, and only if the rider finishes before readiness. The `stopsWait` bucket in section 11 measures it in the field. |
+| 4 | **UX.** | Loading: skeleton in the card's space. Slow stops data: no button waits or changes (unit X1), and a finish waits for them under the finale for at most 15 s. Failed stops data: no message and no error state, the button behaves as when ready and the load is retried in the background. Failed or offline availability: the station name and Add stay, the numbers are omitted. No station near: a plain line and the normal Next. Denied location: step 2. No layout shift between states (same slot). |
 | 5 | **Network efficiency.** | Availability goes through the existing `ParkRideAvailabilityLoader`, the one the Saved Trips card and the picker use, so its cooldown and cache apply. **Verified in the code and held by a test** (`a second intro inside the cooldown makes no second call`): the loader reads the cooldown from the `NSWParkRideFacilityDetail` table and writes the reading into the same table the Saved Trips card reads, so home finds the car park inside its cooldown (120 s from 05:00 to 10:00 and 600 s otherwise, the Remote Config defaults) and does not refetch. One thing it writes wrongly for a car park that is not saved yet is the stop name, which is the stop id until the station is saved. Add corrects it (section 5), keeping the time of the reading, and a test holds it. |
 | 6 | **Battery.** | One location fix, taken by the screen, not updates. No timer, no polling and no background work: the view model test lets an hour of virtual time pass and still finds one call. Everything the step starts runs in the view model's scope and is cancelled when it is cleared (two tests). Foreground only, so nothing needs lifecycle gating beyond collecting state with `collectAsStateWithLifecycle()`. |
 | 7 | **Shared limits.** | At most one to three availability calls (28, 3 and 1 stations of 32) per rider who answers Yes and has a station near, once, on the shared NSW key, and the same again only after a killed process that is off cooldown. Small next to the existing polling on home (a guess, label it as one). The BFF is not live, so nothing collapses. |
@@ -1371,7 +1379,7 @@ Every screen has three zones:
 
 - **Top, the headline.** Two to four short lines, left aligned, each a complete plain question ending in one question mark (unit U9), in `typography.introTagline`, with the key
   word on its own line, every line at the heaviest weight, drawn in capitals at 1.7 times the style (see section 3, Headline). The Park & Ride
-  headline is "Do you drive", "to the station?" (unit U9), drawn DO YOU DRIVE, TO THE STATION?. No colour is used for emphasis, so nothing competes with the theme colour on the primary button. Lines wrap
+  headline is "Show free", "parking at", "your nearest", "station?" (unit X1), drawn in capitals. No colour is used for emphasis, so nothing competes with the theme colour on the primary button. Lines wrap
   rather than shrink at a large text size.
 - **Middle, the thing to decide.** Centred in the room under the headline. When the text is large or the screen is short it
   scrolls with the headline, so nothing is clipped or out of reach.
@@ -1398,7 +1406,7 @@ Every screen has three zones:
 |---|---|
 | Opening | The headline "Save this" and "trip?" with the star, then the trip as the real saved trip tile in the middle, the two names stacked on the theme tint. The star pops, wobbles once and throws a burst of shapes in the theme colour, 800 ms in all, then rests. Bar: `Not now`, `Yes, save it` |
 | Reduced motion | The star fades in and rests. No burst |
-| Stops loading | `Yes, save it` is off and `Not now` is on |
+| Stops loading | Both buttons are live. The answer is only recorded, and the finish writes the trip from the two stops the rider picked |
 | `Yes, save it` | The trip is written and the Intro ends at Saved Trips, as before |
 | `Not now` | Nothing is written and the Intro ends at Saved Trips |
 
@@ -1408,7 +1416,7 @@ Every screen has three zones:
 |---|---|
 | Opened again after the app was swiped away or force stopped, mid Intro | The screen they were on, with the answers they gave. No message, no animation of its own. The headline and the bar are the screen's usual ones |
 | Resumed on the destination screen after Add to home | The origin screen is still passed over, because the start is that station |
-| Resumed on the theme screen | The theme they had tapped is selected and the app is in its colour, and `Yes, this one` finishes with the answer they gave on the confirm screen |
+| Resumed on the theme screen | The theme they had tapped is selected and the app is in its colour, and `Let's KRAIL` finishes with the answer they gave on the confirm screen |
 | Nothing saved, or the saved text cannot be read | The first screen, as on a first run |
 | The Intro was finished before (a replay from Settings) | The first screen. Nothing left over from before, and a kill during a replay opens Saved Trips |
 
@@ -1473,7 +1481,7 @@ make a row fit, except the one rule below. A screen with nothing to decide has n
 | State | The rider sees |
 |---|---|
 | None chosen | The headline `What's your`, `favourite`, `transport mode`, `in Sydney?` and the four badges, drifting. Bar: nothing, and its room is kept, so the button is neither visible nor disabled |
-| A theme selected | The whole app in that theme's colour, the headline now that theme's tagline, the selected badge dancing and the others drifting. Bar: the one button `Yes, this one` fades in over 250 ms in the kept room, in that theme's colour, and it ends the Intro. With reduced motion it appears at once. When the rider said yes to saving the trip and the stops are still loading, the button is off until they are Ready or Failed |
+| A theme selected | The whole app in that theme's colour, the headline now that theme's tagline, the selected badge dancing and the others drifting. Bar: the one button `Let's KRAIL` fades in over 250 ms in the kept room, in that theme's colour, and it ends the Intro. With reduced motion it appears at once. The button is live whatever the stops data says (unit X1): the press starts the finale, and a wait for the stops, at most 15 s, happens under it |
 | Reduced motion, preview or screenshot | The same, with nothing moving: the selected badge lifted 4 dp |
 | 320 dp at 200 percent text | The four badges in the loose grid of two columns, each the same 64 dp as at 100 percent and a full touch target, centred across the window. The bar, once there is a pick, is the one button across the window, whole. The middle zone scrolls with the headline |
 
@@ -1496,8 +1504,8 @@ make a row fit, except the one rule below. A screen with nothing to decide has n
 |---|---|
 | Ask | The headline and no card. Bar: "No" on the left, "Yes" on the right, said as "No thanks" and "Yes, show me free spots" to a screen reader |
 | Asking location | The system permission dialog |
-| Locating, or waiting for stops | A skeleton card in the final card's space. Bar: "Not now" and "Add to home", the right one disabled |
-| Card, numbers loading | The car park names and no numbers. The same bar, the right one still disabled |
+| Locating, or waiting for stops | A skeleton card in the final card's space. Bar: "Not now" live, and "Add to home" not shown, in its kept room |
+| Card, numbers loading | The car park names and no numbers. "Not now" and "Add to home", both live |
 | Card with numbers | The nearest station with spots, percent full and the age of the reading. Bar: "Not now" and "Add to home" |
 | Added | Add to home saves the station and moves on in one event, so the screen has no Added state |
 | No station near | Moves straight on. No bar, no message |
@@ -1512,7 +1520,7 @@ make a row fit, except the one rule below. A screen with nothing to decide has n
 | Start pre-filled | The Park & Ride station as a collapsed row, with the end list below |
 | Both chosen | One tile with the two stop names stacked on the theme tint (the shape of `SavedTripCard`), tap to change |
 | Searching | The app's own stop search, then back with the pick |
-| Stops not ready | The right button, "Yes, save it", is disabled |
+| Stops not ready | Both buttons are live. Nothing on this screen waits for the stops |
 | Stops failed | No error state. The button behaves as when the stops are ready, and a trip is saved from the picks |
 | Only one of start and end picked | Not reachable since unit R3: any two chosen stops reach the confirm screen |
 
@@ -1541,7 +1549,7 @@ The shell, as built (`IntroFlowScreen`, stateless, in `intro`):
 
 Step 1, as built (`IntroParkRideStepContent`), where this document was silent:
 
-- The headline is `IntroHeadline` with the lines "Do you drive", "to the station?" (unit U9), and a car emoji above it.
+- The headline is `IntroHeadline` with the lines "Show free", "parking at", "your nearest", "station?" (unit X1), and a car emoji above it.
   A heading stands alone, so nothing is written under it.
 - The two answers are the decision bar and nothing else on the screen is a button. The theme colour is on the right button
   only.
@@ -1551,7 +1559,7 @@ Step 1, as built (`IntroParkRideStepContent`), where this document was silent:
   car parks near you" is deleted. Loading and Unavailable are the car park names with the lines the numbers will take held empty.
   The held lines are invisible and hidden from a screen reader, so the card has one height from the skeleton to the numbers, and
   a test holds it at 411 dp and at 320 dp with text at 200%.
-- The bar keeps both buttons while the station is looked for or its numbers are awaited, with the right one disabled, so
+- The bar keeps both buttons' room while the station is looked for, with the right one not shown until there is a card (it keeps its room and takes no touch, and is never drawn disabled), so
   neither the bar nor the card moves. The left one stays live, so a rider can always say no while they wait.
 - `ParkRideCard` gained one parameter, `keepReadingSpace`, off by default, so the home card is drawn exactly as before. On, an
   open card lists every car park by name and holds the lines for any car park that has no reading yet. Its `onClick` may now
@@ -1575,7 +1583,7 @@ as a record), where this document was silent:
 - A list leaves out the stop chosen for the other end, so the rider cannot make a trip from a stop to itself. The suggestions
   are the shared answer buttons from step 1, the chosen one filled in neutral ink. The theme tint appears on the tile and the
   collapsed row, as it does on the saved trip card, and on the bottom button.
-- Stops loading shows the suggestions as usual and the right button is disabled. Stops that failed show no error and the
+- Stops loading shows the suggestions as usual and the button is shown and live once a stop is selected, as with any stops data. Stops that failed show no error and the
   button works. There is no Try again anywhere in the step.
 - A screen reader hears each row's stop and role: "Change start stop, now Tallawong Station", "Change stops, now Tallawong
   Station to Central Station" for the tile, "Pick Central Station as the end stop" for a suggestion, and "Search another stop
@@ -1971,7 +1979,7 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | R2-6 | A badge eases between drifting and dancing over 250 ms | Without it the chosen badge jumps from its drift to the first pose of the dance | Default, not yet seen by owner |
 | R2-7 | A badge is the component's largest size and grows only as the component does. Since unit U8 that size is a new `TransportModeIconSize.XLarge` of 64 dp, with the large headline as its letter style | No invented size outside the component and no scaled letter. A larger size on the component is approved for the badges, with the letter staying white and the other sizes as they were | Approved for the badges in unit U8. The 64 dp size and the letter style are defaults |
 | R2-8 | The badges are 24 dp apart, over the 16 dp the spec asked for, and since unit U8 that is the gap between rows of a column | The drift and the dance can bring neighbours about 17 dp closer at the larger size (6 dp of float, 8 dp of rise and 3 dp of growth on the chosen one), so 16 dp could touch at the worst moment | Default, not yet seen by owner |
-| R2-9 | The theme bar is the one button `Yes, this one`, with no left button, no cycle and no compact label | The owner asked for it: "just let the user pick a colour, that's it, no option button to say no". The whole phrase is kept at every text size, and it is the one screen with a single button | Decided by the owner, 2026-11-22 |
+| R2-9 | The theme bar is the one button, with no left button, no cycle and no compact label. It said `Yes, this one` until unit X1 and says `Let's KRAIL` now | The owner asked for it: "just let the user pick a colour, that's it, no option button to say no". The whole phrase is kept at every text size, and it is the one screen with a single button | Decided by the owner, 2026-11-22 |
 | R2-10 | The headline keeps the room of its longest version, measured as drawn (the emoji and the most lines any of its five versions takes at this width and text size) | Without it the badges move each time the words change. In capitals at 1.7 times the size a tagline takes up to three lines on its own, so a fixed three was replaced by a measurement. The cost is some empty room under a shorter version | Default, not yet seen by owner |
 | R2-12 | The headline is in capitals, at 1.7 times the display style since unit U8 (1.4 before), and stops growing with the text size above 1.05 (1.3 before) | The headline is meant to be big, bold and all upper case. At 1.7 CONCRETE fits 320 dp only up to 1.09 with a twelfth to spare, so the ceiling is 1.05. The cost is that a rider at 200 percent text sees the headline at 105 percent, while everything else follows 200 percent | Decided by the owner, 2026-11-22 (size and case); the factor and the ceiling are mine, to tune on the phone |
 | R2-11 | A tap on the badge already selected does nothing, and an id the Intro does not offer is ignored | Nothing to store or report again | Default, not yet seen by owner |
@@ -2062,7 +2070,7 @@ Each is a default taken to keep moving. None has been seen by the owner.
 
 | # | Decision | Why, and what changes if it is wrong | Decision |
 |---|---|---|---|
-| U9-1 | The wait for loading stops moved with the finish: the theme screen's button is off while the stops are Unknown or Loading, but only when the rider said yes to saving and the trip is not written. The confirm screen's two buttons never wait | The confirm screen no longer writes, and the old rule held the save back, never Not now. Holding the theme button for a rider who declined would be a new wait. If the button should never be off, drop `rightEnabled` from `themeBar` and let the 15 s finish wait carry it | Default, not yet seen by owner |
+| U9-1 | The wait for loading stops moved with the finish: the theme screen's button is off while the stops are Unknown or Loading, but only when the rider said yes to saving and the trip is not written. The confirm screen's two buttons never wait | The confirm screen no longer writes, and the old rule held the save back, never Not now. Holding the theme button for a rider who declined would be a new wait. If the button should never be off, drop `rightEnabled` from `themeBar` and let the 15 s finish wait carry it | Superseded by X1-2: no button is ever off, and the wait runs under the finale |
 | U9-2 | `tripDecision` is transient and not saved with the screen. A finish with none recorded (the process was killed on the theme screen) writes no trip and is not skipped | The spec called it transient and left saving to a later unit. Saving it is a one field change in `IntroSnapshot`. Until then a rider killed on the last screen gets no trip they said yes to. Superseded by U10: it is saved now, with the screen and with the progress on the device | Default, not yet seen by owner |
 | U9-3 | `finishedOn` is `first_trip` for the theme screen | The finish is after the trip screens, and `first_trip` is the value every finish has always had. Mapping it to `park_ride` would split the funnel at the change | Default, not yet seen by owner |
 | U9-4 | The theme screen keeps the analytics name `Intro`, so a run now sends `Intro`, `IntroFirstTrip`, `Intro` | The spec said keep the existing name. The cost is a second `Intro` view in a run, and the analytics side must read a run by its first view | Default, not yet seen by owner |
@@ -2157,9 +2165,28 @@ Each is a default taken to keep moving. None has been seen by the owner.
 | W1-3 | On focus the list scrolls at once, with no wait for the keyboard, and while the bar has the focus the list keeps one window's height of room at its end | The keyboard takes its room over a few hundred milliseconds and a list of five rows is shorter than a headline plus a window, so a scroll that waited would be cut short, and one that did not would end short of the top. The room means it always ends at the top, and typing a search that finds one row cannot bring the headline back. The cost is blank room under the last row while the field has the focus. If it is unwanted, drop the room and wait for the keyboard instead | Default, not yet seen by owner |
 | W1-4 | When the focus goes, the room goes with it, and the list clamps once | A tap on a row hides the keyboard, which gives the window its room back, and the list is short again. The headline and the field come back to where the list rests, once, as in U11-4. Keeping the room with no focus would put a hole under the list | Default, not yet seen by owner |
 | W1-5 | A bar that is already pinned is not scrolled on focus | A rider who scrolled to a row far down and taps the field would otherwise be taken back up to the first row. The bar is already where the scroll would put it | Default, not yet seen by owner |
-| W1-6 | The field's colours are taj's default, so it is the page's own surface, white in light mode and dark in dark mode, and the placeholder is the soft label | The brief asked for the default. The stop screens sit on the theme tint, so the field reads against it. With no theme chosen (a preview) the ground and the field are the same colour and the field has no edge. The light placeholder is 4.54 to 1, a hair over the 4.5 line | Default, not yet seen by owner |
+| W1-6 | The field's colours are taj's default, so it is the page's own surface, white in light mode and dark in dark mode, and the placeholder is the soft label. Superseded by X1-8, which gives the field a fill | The brief asked for the default. The stop screens sit on the theme tint, so the field reads against it. With no theme chosen (a preview) the ground and the field are the same colour and the field has no edge. The light placeholder is 4.54 to 1, a hair over the 4.5 line | Default, not yet seen by owner |
 | W1-7 | The stop screens no longer use `IntroStepFrame`, and `centreMiddle = false` has no caller | The frame is for a headline over a middle zone with a held height. The stop screens are now one list. The parameter and the `Under` placement are left, with their tests, so the other frames are not touched | Default, not yet seen by owner |
 | W1-8 | The rows are listed once by stop id | A lazy list throws on a key it has seen. The suggestions already never repeat a stop, and the search should not, so this is a guard and changes nothing on screen | Default, not yet seen by owner |
+
+### Unit X1, decisions where the spec was silent: liveness, tap safety, the finish, the soft fill and the copy
+
+Added after a rider reached the last screen with the stops data still Unknown or Loading and the one button disabled. The only
+thing that started the stops load at the finish was the press that button handled, so nothing could ever end it. Rows X1-1 to X1-5
+are the rules that make a dead end impossible, X1-6 and X1-7 make a quick second tap harmless, X1-8 and X1-9 are the soft field and
+the copy. Each is a default taken to keep moving unless it says the owner decided it.
+
+| # | Decision | Why, and what changes if it is wrong | Decision |
+|---|---|---|---|
+| X1-1 | Liveness invariant. In every place the Intro can be in, with the stops Unknown, Loading, Failed or Ready and, for the first three, never answering, and including a killed and reopened process: the screen has a bar with a live button, every shown button does something when pressed, and some path of presses, time and answers from the data ends in a finished Intro | A single place with no way out strands a rider for good. `IntroLivenessTest` searches every place breadth first through the real view model and holds all three, with each mutation (restore fix off, finish wait unbounded, confirm answer not advancing) checked to fail it. `IntroFinishNeverStuckTest` is the exact walk the rider took. `IntroNoDisabledButtonTest` finds no Intro button node with `enabled = false` on any screen | Default, not yet seen by owner |
+| X1-2 | No Intro button is ever disabled. A button is shown and live, or not shown: a hidden one keeps its room, takes no touch (`consumeTouches`), has no semantics and is never drawn greyed. `IntroBar.rightEnabled` and the `readiness` argument of `introBar` are gone | A disabled button waits on something, and if that thing never comes it is a dead end. The theme button was the case, and the same shape could come back on any screen. If a screen must wait, the wait goes under a response the rider can see (X1-4) | Default, not yet seen by owner |
+| X1-3 | A saved `Yes` to Park & Ride whose awaited location was not saved is restored as `Ask`, with the card not asked | The location result is not saved, so the restored screen had no bar and no event could arrive. Found by the search in X1-1 | Default, not yet seen by owner |
+| X1-4 | Finish order: the press sends `StartFinale` at once, then the trip and both flags are written, then the finish waits for the stops (`awaitReady(15 s)`, none when Ready), then the outcome is tracked, then `NavigateToSavedTrips` releases the finale. A second press does nothing. `stopsWait` and `intro_lets_krail` keep their names, params and buckets | The rider sees an answer in the same instant (a test holds it at 100 ms of virtual time, and the real cost is the frame after the tap), the writes never depend on the stops, and a wait for the stops that never come is bounded and hidden under the solid colour. The finale holds at full cover until released, with a 20 s ceiling, so home never opens before the writes are done. The alternative, waiting first and then starting the finale, is the silent 15 s this fixes. If 15 s under the colour is too long, shorten `FINISH_WAIT_TIMEOUT_MS` | Default, not yet seen by owner |
+| X1-5 | The stops load is warmed when the view model is made (`retry()`, which does nothing while one runs or when Ready, runs once from Unknown, and is one more attempt from Failed). The finish also calls it once when the stops are not Ready at the end of its wait | The stops are normally Ready by the last screen, so the bounded wait is the rare path. Cost: no new network call and no new payload (the app launch already makes this one), one state read when the view model is made, no timer, no extra radio wake-up beyond the load that was already due. Time to first response at the finish is the press frame, where it was up to 15 s of nothing, or for ever | Default, not yet seen by owner |
+| X1-6 | Every advancing event is valid on one step only (`IntroUiEvent.validSteps`) and the view model drops it anywhere else. Each event carries the step it was pressed on and a stale one is dropped. A selected stop is cleared whenever the step changes. From the finish press on every event is dropped | A quick double tap on `No` on Park & Ride skipped the destination screen, and a tap on a row of the screen that was leaving could select a stop on the next. `IntroTapSafetyTest` holds the table written out in the test, a stale event, and that no run of events without an answer leaves a screen | Default, not yet seen by owner |
+| X1-7 | While the slide between two screens runs, the decision bar and the screens take no touch, the leaving screen is hidden from a screen reader, and the buttons are drawn live. Presses are accepted again the moment the transition is at rest | The bar is one overlay whose buttons change in place, so a second tap landed on the next screen's button before the rider had seen it. A tap during the slide is dropped, never answered wrongly, and the rider taps again. `IntroTapSafetyUiTest` double taps `No`, taps rows and the bar during the slide, and taps after it | Default, not yet seen by owner |
+| X1-8 | The stop field has a soft fill from `softFieldColors()`, shared with other soft pill fields: container `pastDepartureRowSurface`, text and cursor `onSurface`, placeholder `labelPlaceholder`, set only through taj's `TextField` `colors` parameter (not `invertedColors()`). On the fill the text is 18.0 to 1 in light and 13.2 in dark, the placeholder 6.0 and 5.8, and the fill against the page 1.16 and 1.22 | Taj's default container is the page surface, so the field had no fill. `softLabel` as the placeholder is 3.9 to 1 on the fill in light mode, so the placeholder is taj's own `labelPlaceholder` token. `IntroStopFieldColorsTest` and `SoftFieldColorsTest` hold the tokens and 4.5 to 1 in both modes | Default, not yet seen by owner |
+| X1-9 | Copy. The theme button says `Let's KRAIL` and a screen reader hears `Let's KRAIL, use this colour`. The destination and origin buttons stay `Yes, this one`. The Park & Ride question is `Show free parking at your nearest station?`, in four lines (`Show free`, `parking at`, `your nearest`, `station?`), drawn in capitals, with the buttons and spoken phrases as before | The words of the buttons and the headline were set by the owner. The question says what Yes does. It is four lines at a phone width, and five at 320 dp at 200 percent text, where one line wraps at a word, no word is split, and the narrowest room still holds the headline at the 0.94 rule it already had | Decided by the owner, 2026-11-23 |
 
 ### Assumptions for approval (mandatory, no code until signed off)
 
@@ -2249,7 +2276,7 @@ The rebuild, in three units on the same branch, in focused commits, none pushed:
 | Direct | Skip rate, search rate | Share finishing with Skip, share using Search another stop | `intro_lets_krail` params. The search rate tells us whether the suggestions fit |
 | Lagging | Day one and day seven return, saved card opens in week one | Active again on a later day, and `saved_trip_card_click` | Existing events, by cohort |
 | Guardrail | Intro completion | Riders who see the Intro and finish | `view_screen` Intro and `intro_lets_krail` |
-| Guardrail | Stops wait | Bucket of time the rider waited on Getting ready | `intro_lets_krail` param `stopsWait` |
+| Guardrail | Stops wait | Bucket of time the rider waited for the stops after pressing the last button, under the finale | `intro_lets_krail` param `stopsWait` |
 | Guardrail | Stops failure | Finishes with a failed readiness | `stopsWait = failed` |
 
 Targets are the owner's to set. They are `Pending owner`. Baselines are read from KRAIL-Analytics when the targets are set. No figure is kept in this repository.
@@ -2272,7 +2299,7 @@ The 500 event-name budget is respected. Nothing here mints a name.
   the theme screen is last, so a run sends `Intro` when the Intro is entered, `IntroFirstTrip` once for the destination, origin and
   confirm screens, and `Intro` again on the theme screen (no new screen name). The analytics side reads a run by its first `Intro`
   view, and the second `Intro` view marks arrival on the colour screen, where the Intro ends. A rider who reaches the trip screens and
-  never finishes is the drop-off. `theme_selected` (existing) is sent once when the rider presses `Yes, this one` on the theme screen,
+  never finishes is the drop-off. `theme_selected` (existing) is sent once when the rider presses `Let's KRAIL` on the theme screen,
   with `themeId` only, as the Settings screen sends it, and that press is also the finish that sends `intro_lets_krail`.
 - `park_ride_user_facility` (existing) gains `source = intro`. `save_trip_click` (existing) gains `source = intro`. These make
   Intro-created saves countable without a second event and without double counting.

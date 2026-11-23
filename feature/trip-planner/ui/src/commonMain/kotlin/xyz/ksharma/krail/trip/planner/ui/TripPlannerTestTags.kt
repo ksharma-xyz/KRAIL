@@ -184,6 +184,7 @@ object TripPlannerTestTags {
         const val CLOSE_CIRCLE = "stopcard.close.circle"
         const val MODES = "stopcard.modes"
         const val BOARD_HEADING = "stopcard.board.heading"
+        const val CHEVRON = "stopcard.board.chevron"
         const val BOARD_BODY = "stopcard.board.body"
         const val ACTIONS = "stopcard.actions"
         const val PARK_RIDE_TOTAL = "stopcard.parkride.total"

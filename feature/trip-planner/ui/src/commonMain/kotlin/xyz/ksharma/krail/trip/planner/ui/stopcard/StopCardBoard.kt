@@ -21,8 +21,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -39,12 +40,12 @@ import xyz.ksharma.krail.departures.ui.state.DeparturesUiEvent
 import xyz.ksharma.krail.taj.components.AnimatedDots
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.klickable
+import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.DepartureBoardBody
 
 private const val BOARD_TITLE = "Departure Board"
-private const val CHEVRON_OPEN_DEGREES = 180f
 
 /**
  * The Departure Board on a stop card: a heading that holds the title and the chevron, then, once the
@@ -76,13 +77,17 @@ internal fun StopCardBoardSection(
 ) {
     var boardOpen by rememberSaveable { mutableStateOf(boardOpenAtStart) }
     val board = stopCardBoard(state, boardOpen)
+    val reduceMotion = isReduceMotionEnabled()
+    val motion = rememberBoardMotion(open = boardOpen, reduceMotion = reduceMotion)
 
     BoardPollingEffect(stopId = stopId, stopName = stopName, boardOpen = boardOpen, onEvent = onEvent)
 
+    // The width is locked to the card's before anything animates its height, so only the height moves.
     Column(modifier = modifier.fillMaxWidth()) {
         BoardHeading(
             board = board,
             boardOpen = boardOpen,
+            chevronDegrees = motion.chevronDegrees,
             onClick = {
                 boardOpen = !boardOpen
                 onEvent(
@@ -90,8 +95,16 @@ internal fun StopCardBoardSection(
                 )
             },
         )
-        if (boardOpen) {
-            BoardBody(stopId = stopId, state = state, board = board, onEvent = onEvent)
+        if (motion.composed) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clipToBounds()
+                    .revealHeight(progress = motion.reveal)
+                    .graphicsLayer { alpha = motion.rowsAlpha() },
+            ) {
+                BoardBody(stopId = stopId, state = state, board = board, onEvent = onEvent, reduceMotion = reduceMotion)
+            }
         }
     }
 }
@@ -131,6 +144,7 @@ private fun BoardPollingEffect(
 private fun BoardHeading(
     board: StopCardBoard,
     boardOpen: Boolean,
+    chevronDegrees: () -> Float,
     onClick: () -> Unit,
 ) {
     val dim = KrailTheme.dimensions
@@ -162,21 +176,28 @@ private fun BoardHeading(
                     color = KrailTheme.colors.onSurface,
                 )
             }
-            Chevron(open = boardOpen)
+            Chevron(degrees = chevronDegrees)
         }
     }
 }
 
-/** The chevron, the existing arrow icon in a 48 dp box, turned over while the board is open. A cue, not a control. */
+/**
+ * The chevron, the existing arrow icon in a 48 dp box, turned over while the board is open: [degrees] is read as it is drawn,
+ * so it turns with the height, in step, and costs no recomposition. A cue, not a control.
+ */
 @Composable
-private fun Chevron(open: Boolean) {
+private fun Chevron(degrees: () -> Float) {
     val dim = KrailTheme.dimensions
     Box(modifier = Modifier.size(dim.textFieldHeight), contentAlignment = Alignment.Center) {
         Image(
             painter = painterResource(Res.drawable.ic_arrow_down),
             contentDescription = null,
             colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
-            modifier = Modifier.size(dim.spacingXL).rotate(if (open) CHEVRON_OPEN_DEGREES else 0f),
+            modifier = Modifier
+                .size(dim.spacingXL)
+                .graphicsLayer { rotationZ = degrees() }
+                .semantics { chevronDegreesValue = degrees() }
+                .testTag(TripPlannerTestTags.StopCard.CHEVRON),
         )
     }
 }
@@ -192,6 +213,7 @@ private fun BoardBody(
     state: DeparturesState,
     board: StopCardBoard,
     onEvent: (DeparturesUiEvent) -> Unit,
+    reduceMotion: Boolean,
 ) {
     val floor = if (board.holdsBodyFloor) boardFloorHeight(LocalDensity.current.fontScale) else 0.dp
     Box(modifier = Modifier.testTag(TripPlannerTestTags.StopCard.BOARD_BODY).heightIn(min = floor)) {
@@ -210,6 +232,8 @@ private fun BoardBody(
                 )
             },
             onShowPreviousToggle = { show -> onEvent(DeparturesUiEvent.TogglePreviousDepartures(stopId, show)) },
+            crossfadePhases = true,
+            reduceMotion = reduceMotion,
         )
     }
 }

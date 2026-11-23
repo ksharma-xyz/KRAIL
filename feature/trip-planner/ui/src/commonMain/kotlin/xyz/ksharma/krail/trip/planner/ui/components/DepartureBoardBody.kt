@@ -2,6 +2,9 @@
 
 package xyz.ksharma.krail.trip.planner.ui.components
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -32,6 +35,9 @@ import xyz.ksharma.krail.trip.planner.ui.components.crowding.LocalExpandedDepart
 import xyz.ksharma.krail.trip.planner.ui.components.crowding.rememberExpandedDepartures
 
 private val LOADING_DOTS_WIDTH = 64.dp
+
+/** Which of its three faces the board body is showing, so a change from one to another can fade. */
+private enum class BoardBodyPhase { Loading, Error, Rows }
 
 /**
  * Shared departure board content area used by both [DepartureBoardStopCard] (bottom-sheet card)
@@ -64,6 +70,8 @@ internal fun DepartureBoardBody(
     onLineFilterChange: ((lineNumber: String?, transportMode: String?, selected: Boolean) -> Unit)? = null,
     onShowPreviousToggle: ((show: Boolean) -> Unit)? = null,
     maxItems: Int? = null,
+    crossfadePhases: Boolean = false,
+    reduceMotion: Boolean = false,
 ) {
     // Hoisted above every branch that draws rows, so opened rows survive the branch changing.
     CompositionLocalProvider(LocalExpandedDepartures provides rememberExpandedDepartures()) {
@@ -75,6 +83,8 @@ internal fun DepartureBoardBody(
             onLineFilterChange = onLineFilterChange,
             onShowPreviousToggle = onShowPreviousToggle,
             maxItems = maxItems,
+            crossfadePhases = crossfadePhases,
+            reduceMotion = reduceMotion,
         )
     }
 }
@@ -88,6 +98,8 @@ private fun DepartureBoardBodyContent(
     onLineFilterChange: ((lineNumber: String?, transportMode: String?, selected: Boolean) -> Unit)?,
     onShowPreviousToggle: ((show: Boolean) -> Unit)?,
     maxItems: Int?,
+    crossfadePhases: Boolean,
+    reduceMotion: Boolean,
 ) {
     val dim = KrailTheme.dimensions
     // Empty string = no filter. rememberSaveable round-trips safely as a String primitive.
@@ -119,43 +131,58 @@ private fun DepartureBoardBodyContent(
         }
     }
 
+    val phase = when {
+        state.isLoading -> BoardBodyPhase.Loading
+        state.isError -> BoardBodyPhase.Error
+        else -> BoardBodyPhase.Rows
+    }
     Column(modifier = modifier) {
-        when {
-            state.isLoading -> DepartureBoardLoadingContent()
+        // With [crossfadePhases] the loading dots, the failure and the rows fade into one another, so the board never pops
+        // from one to the next. Without it the phases swap as they always have, for the boards that never asked.
+        Crossfade(
+            targetState = phase,
+            animationSpec = if (crossfadePhases && !reduceMotion) tween(MapMotion.CROSSFADE_MS) else snap(),
+            label = "board-phase",
+        ) { shown ->
+            Column {
+                when (shown) {
+                    BoardBodyPhase.Loading -> DepartureBoardLoadingContent()
 
-            state.isError -> DeparturesErrorContent(onRetry = onRetry)
+                    BoardBodyPhase.Error -> DeparturesErrorContent(onRetry = onRetry)
 
-            else -> DepartureBoardSuccessContent(
-                state = state,
-                selectedLine = selectedLine,
-                showPrevious = showPrevious,
-                previousRequested = previousRequested,
-                filteredDepartures = filteredDepartures,
-                filteredPreviousDepartures = filteredPreviousDepartures,
-                maxItems = maxItems,
-                onLineSelect = { newLine ->
-                    // Capture the previously selected line BEFORE updating state so
-                    // we can report it when the filter is being cleared (deselected).
-                    val previousLine = selectedLine
-                    selectedLineKey = newLine ?: ""
-                    val affectedLine = newLine ?: previousLine
-                    val transportMode = affectedLine?.let { line ->
-                        state.departures.firstOrNull { it.lineNumber == line }?.transportModeName
-                    }
-                    onLineFilterChange?.invoke(affectedLine, transportMode, newLine != null)
-                },
-                onTogglePrevious = {
-                    showPrevious = !showPrevious
-                    onShowPreviousToggle?.invoke(showPrevious)
-                    if (showPrevious &&
-                        state.previousDepartures.isEmpty() &&
-                        !state.isPreviousLoading
-                    ) {
-                        previousRequested = true
-                        onLoadPreviousDepartures()
-                    }
-                },
-            )
+                    BoardBodyPhase.Rows -> DepartureBoardSuccessContent(
+                        state = state,
+                        selectedLine = selectedLine,
+                        showPrevious = showPrevious,
+                        previousRequested = previousRequested,
+                        filteredDepartures = filteredDepartures,
+                        filteredPreviousDepartures = filteredPreviousDepartures,
+                        maxItems = maxItems,
+                        onLineSelect = { newLine ->
+                            // Capture the previously selected line BEFORE updating state so
+                            // we can report it when the filter is being cleared (deselected).
+                            val previousLine = selectedLine
+                            selectedLineKey = newLine ?: ""
+                            val affectedLine = newLine ?: previousLine
+                            val transportMode = affectedLine?.let { line ->
+                                state.departures.firstOrNull { it.lineNumber == line }?.transportModeName
+                            }
+                            onLineFilterChange?.invoke(affectedLine, transportMode, newLine != null)
+                        },
+                        onTogglePrevious = {
+                            showPrevious = !showPrevious
+                            onShowPreviousToggle?.invoke(showPrevious)
+                            if (showPrevious &&
+                                state.previousDepartures.isEmpty() &&
+                                !state.isPreviousLoading
+                            ) {
+                                previousRequested = true
+                                onLoadPreviousDepartures()
+                            }
+                        },
+                    )
+                }
+            }
         }
         Spacer(modifier = Modifier.height(dim.spacingM))
     }

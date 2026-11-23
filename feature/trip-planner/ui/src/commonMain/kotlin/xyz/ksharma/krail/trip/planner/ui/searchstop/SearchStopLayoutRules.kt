@@ -93,10 +93,12 @@ internal val MAP_ATTRIBUTION_GLYPH_TOP = MAP_ORNAMENT_LIBRARY_MARGIN + MAP_ATTRI
 internal val MAP_CONTROL_ROW_HEIGHT = 48.dp
 
 /**
- * What the Options pill is drawn at 100 percent text, 20 dp tall, used until its real height is measured so the first
- * frame is already where it ends up at the usual text size. It grows with the text, to 29 at 150 and 34 at 200 percent.
+ * What the Options pill is drawn at 100 percent text, 32 dp tall (taj's medium button as shipped, measured by
+ * `SearchStopOptionsPillTest`: the 20 dp line of its bold label and 6 dp above and below), used until its real height is
+ * measured so the first frame is already where it ends up at the usual text size. It was 20 dp as an extra small button. It
+ * grows with the text.
  */
-internal val MAP_OPTIONS_PILL_REST_HEIGHT = 20.dp
+internal val MAP_OPTIONS_PILL_REST_HEIGHT = 32.dp
 
 /**
  * The bottom of the map state is two lines. The lower one is the map's own info icon alone, at the bottom most left,
@@ -134,12 +136,16 @@ internal fun optionsTargetHeight(gaps: SearchStopGaps, pillHeight: Dp): Dp =
     maxOf(MAP_CONTROL_ROW_HEIGHT, pillHeight + gaps.aboveIcon)
 
 /**
- * How far the Options card is pulled down over the invisible top of Options' finger target, so it stands
- * [SearchStopGaps.betweenCards] above the visible top of the control line (the location control's top, 24 dp over the
- * centre) and not above the finger target. The card's own bottom gap is the full [SearchStopGaps.betweenCards].
+ * How far the Options card is moved down (or up, when negative) so it stands [SearchStopGaps.betweenCards] above the visible top of
+ * the control line. The visible top is the taller of the two things on the line: the location control, whose top is 24 dp over the
+ * line's centre, and the Options pill, which is taller than the control once its text is large. The card's own bottom gap is
+ * the full [SearchStopGaps.betweenCards] above Options' finger target, so the card is moved down over the target's invisible top
+ * while the pill is the shorter, and up by what the control stands above the target when the pill and its gap are between 40
+ * and 48 dp.
  */
 internal fun optionsCardOverlap(gaps: SearchStopGaps, pillHeight: Dp): Dp =
-    maxOf(0.dp, optionsTargetHeight(gaps, pillHeight) - (gaps.aboveIcon + pillHeight / 2 + MAP_CONTROL_ROW_HEIGHT / 2))
+    optionsTargetHeight(gaps, pillHeight) -
+        (gaps.aboveIcon + maxOf(pillHeight / 2 + MAP_CONTROL_ROW_HEIGHT / 2, pillHeight))
 
 /**
  * The margin of the map's own ornaments in Search Stop's map state, so none of them is under the box and the info icon

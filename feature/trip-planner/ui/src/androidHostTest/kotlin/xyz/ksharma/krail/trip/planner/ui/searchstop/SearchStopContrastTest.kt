@@ -14,7 +14,14 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.theme.getForegroundColor
+import xyz.ksharma.krail.taj.theme.md_theme_light_onSurface
+import xyz.ksharma.krail.taj.theme.md_theme_light_softLabel
+import xyz.ksharma.krail.taj.theme.md_theme_light_surface
+import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.trip.planner.ui.components.mapCardColorsFor
 import xyz.ksharma.krail.taj.theme.contrastRatio
 import xyz.ksharma.krail.departures.ui.state.DeparturesState
 import xyz.ksharma.krail.trip.planner.ui.components.DepartureBoardBody
@@ -22,6 +29,7 @@ import xyz.ksharma.krail.trip.planner.ui.components.FloatingDark
 import xyz.ksharma.krail.trip.planner.ui.components.mapActiveChipColors
 import xyz.ksharma.krail.trip.planner.ui.components.mapCardColors
 import xyz.ksharma.krail.trip.planner.ui.components.softFieldColors
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
@@ -63,7 +71,7 @@ class SearchStopContrastTest {
             PreviewTheme {
                 val soft = softFieldColors()
                 val cardColors = mapCardColors()
-                val options = cardColors.chip
+                val options = cardColors.pill
                 val active = mapActiveChipColors()
                 read = Read(
                     pillFill = soft.containerColor,
@@ -160,6 +168,63 @@ class SearchStopContrastTest {
         assertTrue(placeholder >= TEXT, "$mode: the lone pill's placeholder on the surface fill is $placeholder to 1 (map $againstMap)")
     }
 
+    // region the fixed light look: the numbers of the approved picture, the same in both app modes
+
+    /**
+     * The Search Stop card, its swap glyph, its go circle and the Options pill are one fixed light look. The numbers are printed
+     * so a run puts them on record: the card text 17.5 to 18.3 to 1 on the four standard themes, the swap glyph the same ink on the
+     * card, the go circle's arrow on its fill 4.5 to 1 or better and its fill off the card about 2 to 3 to 1 (the arrow carries
+     * it), the pill's text 20.87 to 1 on white, and the 1 dp hairline 3.8 to 1 against the map ground for the card and the pill.
+     */
+    private fun assertFixedLightNumbers(mode: String) {
+        val text = md_theme_light_onSurface
+        val white = md_theme_light_surface
+        val hairline = md_theme_light_softLabel
+        val pillText = text.contrastRatio(white)
+        val pillOnMap = white.contrastRatio(MAP_GROUND)
+        val hairlineOnMap = hairline.contrastRatio(MAP_GROUND)
+        for (style in listOf(KrailThemeStyle.Train, KrailThemeStyle.Metro, KrailThemeStyle.Bus, KrailThemeStyle.Ferry)) {
+            val theme = style.hexColorCode.hexToComposeColor()
+            val card = mapCardColorsFor(theme, darkMode = false, surface = white, onSurface = text).chip
+            val goArrow = getForegroundColor(theme)
+            println(
+                "FIXEDLIGHT $mode ${style.name} cardText=${text.contrastRatio(card)} swapGlyphOnCard=${text.contrastRatio(card)} " +
+                    "hairlineOnMap=$hairlineOnMap goFillOnCard=${theme.contrastRatio(card)} goArrowOnFill=${goArrow.contrastRatio(theme)} " +
+                    "pillText=$pillText pillOnMapNoHairline=$pillOnMap",
+            )
+            assertTrue(text.contrastRatio(card) in CARD_TEXT_LOW..CARD_TEXT_HIGH, "$mode ${style.name}: the card text is ${text.contrastRatio(card)} to 1")
+            assertTrue(goArrow.contrastRatio(theme) >= TEXT, "$mode ${style.name}: the go circle's arrow on its fill")
+        }
+        assertTrue(pillText >= PILL_TEXT_FLOOR, "$mode: the pill's text on white is $pillText to 1")
+        assertTrue(hairlineOnMap >= HAIRLINE_FLOOR, "$mode: the hairline is $hairlineOnMap to 1 against the map ground")
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-notnight")
+    fun `in light mode the fixed light card, go circle and pill hold the picture's contrast numbers`() = assertFixedLightNumbers("light")
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-night")
+    fun `in dark mode the fixed light card, go circle and pill hold the very same contrast numbers`() = assertFixedLightNumbers("dark")
+
+    private fun assertOptionsPillIsWhite(mode: String) {
+        readTokens()
+
+        assertEquals(md_theme_light_surface, read.optionsFill, "$mode: the resting Options pill is the light palette's white")
+        assertEquals(md_theme_light_onSurface, read.optionsInk, "$mode: with the light palette's text")
+        assertTrue(read.optionsInk.contrastRatio(read.optionsFill) >= PILL_TEXT_FLOOR, "$mode: 20.87 to 1")
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-notnight")
+    fun `in light mode the Options pill is white and its label reads at 20_87 to 1`() = assertOptionsPillIsWhite("light")
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-night")
+    fun `in dark mode the Options pill is the very same white and its label reads at 20_87 to 1`() = assertOptionsPillIsWhite("dark")
+
+    // endregion
+
     // region the stop card's secondary text
 
     private class BoardSecondary(val body: Color, val header: Color, val softLabel: Color, val onSurface: Color)
@@ -253,6 +318,10 @@ class SearchStopContrastTest {
         const val LIGHT_HEADER_SOFT = 3.33f
         const val EDGE = 3f
         const val PILL_SHAPE_FLOOR = 1.1f
+        const val CARD_TEXT_LOW = 17.5f
+        const val CARD_TEXT_HIGH = 18.3f
+        const val PILL_TEXT_FLOOR = 20.8f
+        const val HAIRLINE_FLOOR = 3.8f
 
         /** The flat ground of the approved mock's map, a stand in for the real style. */
         val MAP_GROUND = Color(0xFFEDEBE4)

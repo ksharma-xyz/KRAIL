@@ -151,10 +151,11 @@ internal const val MODE_BLOCK_EXIT_MS = MapMotion.EXIT_MS
 internal const val MODE_BLOCK_START_SCALE = MapMotion.POP_START_SCALE
 
 /**
- * The button that opens and shuts the mode block: taj's [Button] at its extra small size reading [MODE_BUTTON_TEXT]
- * after the app's filter icon, in the soft theme tint with the page's text colour (the Timetable's own chip colours, from
- * [mapCardColors]) and a 1 dp hairline so it holds against the light map. While any mode is switched off it takes taj's
- * default button look, the solid theme colour, with no count beside it.
+ * The button that opens and shuts the mode block: taj's [Button] at its medium size, as shipped (32 dp at 100 percent text and
+ * growing with it), reading [MODE_BUTTON_TEXT] after the app's filter icon. At rest it is white with the light palette's text and
+ * a 1 dp light `softLabel` hairline so it holds against the light map, the same in both app modes ([MapCardColors.pill], through
+ * the button's own `colors`). While any mode is switched off it takes taj's default button look, the solid theme colour, with no
+ * count beside it.
  *
  * The finger target is the node tagged [TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON]: a real 48 dp box that is itself
  * the clickable, not the touch slop Compose adds around a small clickable, which loses to the map under it (a hit on
@@ -172,6 +173,7 @@ internal fun SearchStopModeButton(
     onPillHeight: (Dp) -> Unit = {},
 ) {
     val density = LocalDensity.current
+    val dimensions = ButtonDefaults.mediumButtonSize()
     Box(
         modifier = modifier
             .testTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON)
@@ -185,12 +187,12 @@ internal fun SearchStopModeButton(
     ) {
         Button(
             onClick = onClick,
-            colors = if (filtered) mapActiveChipColors() else mapCardColors().chip,
-            dimensions = ButtonDefaults.extraSmallButtonSize(),
+            colors = if (filtered) mapActiveChipColors() else mapCardColors().pill,
+            dimensions = dimensions,
             modifier = Modifier
                 .padding(bottom = pillBottomGap)
                 .onSizeChanged { onPillHeight(with(density) { it.height.toDp() }) }
-                .mapChipEdge(ButtonDefaults.extraSmallButtonSize().shape)
+                .mapChipEdge(dimensions.shape)
                 .testTag(TripPlannerTestTags.SEARCH_STOP_MODE_PILL),
         ) {
             Row(

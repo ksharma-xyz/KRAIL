@@ -66,6 +66,12 @@ internal class MapCardColors(
     val onTint: Color,
     /** A small chip on the map: [tint] with [onTint] on it. */
     val chip: ButtonColors,
+    /**
+     * The Options pill at rest: white (the light palette's `surface`) with [onTint] on it, whatever the app mode. White is neutral
+     * beside the pale card, the blue location control and the theme coloured go circle, and 20.87 to 1 under its text. It is
+     * the pill's resting look, and its solid theme colour ([mapActiveChipColors]) stays the look of an active filter.
+     */
+    val pill: ButtonColors,
     /** The hairline round every light card and chip: the light palette's `softLabel`, whatever the app mode. */
     val chipEdge: Color,
 )
@@ -131,6 +137,12 @@ internal fun mapCardColors(): MapCardColors {
             containerColor = tint,
             contentColor = onTint,
             disabledContainerColor = tint.copy(alpha = DISABLED_ALPHA),
+            disabledContentColor = onTint.copy(alpha = DISABLED_ALPHA),
+        ),
+        pill = ButtonColors(
+            containerColor = md_theme_light_surface,
+            contentColor = onTint,
+            disabledContainerColor = md_theme_light_surface.copy(alpha = DISABLED_ALPHA),
             disabledContentColor = onTint.copy(alpha = DISABLED_ALPHA),
         ),
         chipEdge = md_theme_light_softLabel,

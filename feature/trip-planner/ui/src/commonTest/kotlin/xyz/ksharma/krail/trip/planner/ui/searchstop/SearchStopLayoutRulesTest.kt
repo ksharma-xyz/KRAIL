@@ -99,7 +99,7 @@ class SearchStopLayoutRulesTest {
     @Test
     fun `the Options target is 48 tall, reaches over the icon's empty edge, and the card is pulled over its top`() {
         val gaps = searchStopGaps()
-        for (pill in listOf(20.dp, 29.dp, 34.dp)) {
+        for (pill in listOf(20.dp, 29.dp, 32.dp, 36.dp, 39.dp)) {
             assertEquals(48.dp, optionsTargetHeight(gaps, pill))
             // The target's bottom is the i's top, so it overlaps the 21 dp icon's top 1.75 dp and never the i itself.
             assertEquals(
@@ -110,6 +110,18 @@ class SearchStopLayoutRulesTest {
             val locationTop = controlLineCentre(gaps, pill) + 24.dp
             val targetTop = optionsBottomPadding(gaps, pill) + optionsTargetHeight(gaps, pill)
             assertEquals(targetTop - locationTop, optionsCardOverlap(gaps, pill), "pill $pill")
+        }
+    }
+
+    @Test
+    fun `when the pill outgrows the location control the card clears the pill's top, never the control's`() {
+        val gaps = searchStopGaps()
+        for (pill in listOf(54.dp, 70.dp)) {
+            val centre = controlLineCentre(gaps, pill)
+            val pillTop = centre + pill / 2
+            val targetTop = optionsBottomPadding(gaps, pill) + optionsTargetHeight(gaps, pill)
+            assertEquals(targetTop - pillTop, optionsCardOverlap(gaps, pill), "pill $pill")
+            assertTrue(pillTop > centre + 24.dp, "The pill is the taller thing on the line at $pill.")
         }
     }
 

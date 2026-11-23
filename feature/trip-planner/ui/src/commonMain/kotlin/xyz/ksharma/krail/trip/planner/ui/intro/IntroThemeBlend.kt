@@ -37,7 +37,7 @@ private fun ThemeBlendInputs.request(tapped: Int, origin: Offset): ThemeChangeRe
     return ThemeChangeRequest(
         reduceMotion = reduceMotion,
         target = ThemeChangeTarget(themeId, hex, colour),
-        toText = if (chosen) introTaglineInk(colour, ground, onSurface) else onSurface,
+        toText = if (chosen) introTaglineInk(colour, ground, onSurface, dark) else onSurface,
         toGround = if (chosen) ground else surface,
         headline = HeadlineContent(
             lines = headline.lines,

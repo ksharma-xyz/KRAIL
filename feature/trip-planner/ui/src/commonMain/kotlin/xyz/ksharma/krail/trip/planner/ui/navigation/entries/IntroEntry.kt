@@ -25,8 +25,7 @@ import kotlin.random.Random
  *
  * The entries have no view model store of their own, so a view model made here is the Activity's and
  * would outlive the Intro. A key made once for each visit and saved with the entry gives the Intro a
- * new view model every time it is opened, such as from Settings, and the same one through a turn of
- * the screen.
+ * new view model every time it is opened, and the same one through a turn of the screen.
  *
  * The finale's signal is the app's singleton, injected here at the entry as the other entries inject what they need, and
  * the Intro starts it when it finishes. The entry only says where Saved Trips is. The finale layer is at the app root.

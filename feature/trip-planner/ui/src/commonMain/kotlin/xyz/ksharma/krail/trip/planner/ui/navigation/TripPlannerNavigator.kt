@@ -46,7 +46,6 @@ interface TripPlannerNavigator {
     fun navigateToAddParkRide()
     fun navigateToThemeSelection()
     fun navigateToOurStory()
-    fun navigateToIntro()
     fun navigateToTrackTrip(encodedData: String? = null)
     fun navigateToDebugConfig()
     fun navigateToDebugConfigNetwork()

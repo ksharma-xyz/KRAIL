@@ -84,14 +84,12 @@ class SettingsViewModelTest {
         }
 
     @Test
-    fun `GIVEN settings WHEN the how-to and our-story rows are tapped THEN each is tracked separately`() =
+    fun `GIVEN settings WHEN the our-story row is tapped THEN it is tracked`() =
         krailRunTest {
             val viewModel = viewModel()
 
-            viewModel.onIntroClick()
             viewModel.onOurStoryClick()
 
-            assertTrue(analytics.isEventTracked("how_to_krail"))
             assertTrue(analytics.isEventTracked("our_story"))
         }
 

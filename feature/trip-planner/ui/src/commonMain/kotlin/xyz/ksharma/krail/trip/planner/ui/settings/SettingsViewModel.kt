@@ -49,10 +49,6 @@ class SettingsViewModel(
         )
     }
 
-    fun onIntroClick() {
-        analytics.track(AnalyticsEvent.SettingsHowToUseClickEvent)
-    }
-
     fun onOurStoryClick() {
         analytics.track(AnalyticsEvent.OurStoryClick)
     }

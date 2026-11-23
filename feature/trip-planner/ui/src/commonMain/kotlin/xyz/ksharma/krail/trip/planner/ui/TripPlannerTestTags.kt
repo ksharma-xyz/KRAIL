@@ -155,7 +155,6 @@ object TripPlannerTestTags {
     const val SETTINGS_SCREEN = "settings.screen"
     const val SETTINGS_ITEM_THEME = "settings.item.theme"
     const val SETTINGS_ITEM_INVITE = "settings.item.invite"
-    const val SETTINGS_ITEM_HOW_TO = "settings.item.howto"
     const val SETTINGS_ITEM_OUR_STORY = "settings.item.ourstory"
     const val SETTINGS_ITEM_RATE = "settings.item.rate"
     const val SETTINGS_ITEM_DEBUG_CONFIG = "settings.item.debugconfig"

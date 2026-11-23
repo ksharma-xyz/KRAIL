@@ -1315,10 +1315,6 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         }
     }
 
-    data object SettingsHowToUseClickEvent : AnalyticsEvent(
-        name = "how_to_krail",
-    )
-
     data object OurStoryClick : AnalyticsEvent(
         name = "our_story",
     )

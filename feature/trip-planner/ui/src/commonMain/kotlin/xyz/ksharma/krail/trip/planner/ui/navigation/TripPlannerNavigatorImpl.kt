@@ -85,10 +85,6 @@ internal class TripPlannerNavigatorImpl(
         baseNavigator.goTo(OurStoryRoute)
     }
 
-    override fun navigateToIntro() {
-        baseNavigator.goTo(IntroRoute)
-    }
-
     override fun navigateToTrackTrip(encodedData: String?) {
         baseNavigator.pushSingleInstance(TrackTripRoute(encodedData))
     }

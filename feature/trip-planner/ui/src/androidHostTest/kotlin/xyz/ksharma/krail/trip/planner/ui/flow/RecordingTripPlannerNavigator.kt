@@ -68,7 +68,6 @@ internal class RecordingTripPlannerNavigator : TripPlannerNavigator {
     override fun navigateToAddParkRide() = Unit
     override fun navigateToThemeSelection() = Unit
     override fun navigateToOurStory() = Unit
-    override fun navigateToIntro() = Unit
     override fun navigateToTrackTrip(encodedData: String?) = Unit
     override fun navigateToDebugConfig() = Unit
     override fun navigateToDebugConfigNetwork() = Unit

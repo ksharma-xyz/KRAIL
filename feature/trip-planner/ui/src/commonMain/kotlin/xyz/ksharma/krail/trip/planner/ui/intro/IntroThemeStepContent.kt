@@ -10,13 +10,16 @@ import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
@@ -45,22 +48,26 @@ internal fun IntroThemeStepContent(
     val change = LocalIntroThemeChange.current
     IntroStepFrame(
         headline = {
-            // The room is that of the longest headline at this width and text size, measured as it is drawn, so the
+            // The room is that of the tallest headline at this width and text size, measured as it is drawn, so the
             // badges below never move when a choice changes the words.
             BoxWithConstraints {
-                val minLines = rememberThemeHeadlineLines(maxWidth)
+                val linesHeight = rememberThemeHeadlineHeight(maxWidth)
                 if (change == null) {
                     IntroHeadline(
                         lines = headline.lines,
                         emphasisIndex = headline.emphasisIndex,
                         emoji = introEmojiFor(IntroStep.THEME, selectedThemeId),
-                        minLines = minLines,
+                        reservedLinesHeight = linesHeight,
                         spoken = headline.spoken,
-                        fitToRoom = headline.fitsRoom,
+                        heroLayout = headline.heroLayout,
                     )
                 } else {
                     // Inside the Intro's shell the words, the emoji and the colours are all played on the one clock of the sequence.
-                    IntroThemeSequenceHeadline(change = change, minLines = minLines)
+                    IntroThemeSequenceHeadline(
+                        change = change,
+                        reservedLinesHeight = linesHeight,
+                        accent = Color.Unspecified,
+                    )
                 }
             }
         },
@@ -147,26 +154,36 @@ private fun pressed(base: () -> BadgeFrame, change: IntroThemeChange?, index: In
 }
 
 /**
- * The lines of room the theme screen's headline keeps at [width]: the most any of its headlines takes, as drawn. The question
- * is measured at the size it is fitted to, in as many lines as that leaves, and each tagline at the ordinary headline size.
+ * The height of the room the theme screen's headline keeps for its lines at [width]: the most any of its headlines takes, as drawn.
+ * The question is planned for the room, its hero and whispers each at their own size, and each tagline is every line at the
+ * ordinary headline size, wrapping inside its own block as it does when it is drawn. It is measured once for the window and the text
+ * size, so nothing below the headline moves when a pick changes the words.
  */
 @Composable
-private fun rememberThemeHeadlineLines(width: Dp): Int {
-    val density = headlineDensity()
-    val fitted = fittedHeadlineDensity(PICK_THEME_HEADLINE, fit = true, room = width)
+private fun rememberThemeHeadlineHeight(width: Dp): Dp {
+    val density = LocalDensity.current
+    val normal = headlineFontScale(density.fontScale, width)
+    val question = rememberHeadlinePlan(introThemeHeadline(null).toContent(), room = width)
     val measurer = rememberTextMeasurer()
-    // The widest weight, because a lead line is lighter and never wider than the emphasised one.
     val style = KrailTheme.typography.introTagline.asHeadlineStyle()
-    return remember(width, density, fitted, style) {
-        fun linesOf(text: String, drawn: Density): Int = measurer.measure(
-            text = AnnotatedString(text),
+    val gap = headlineLineGap()
+    val heroPad = headlineHeroPad()
+    return remember(width, density, question, style, gap, heroPad) {
+        val drawn = Density(density.density, normal)
+        fun rowsOf(unit: HeadlineUnit): Int = measurer.measure(
+            text = AnnotatedString(introHeadlineDisplay(unit.rows.first())),
             style = style,
             constraints = Constraints(maxWidth = with(drawn) { width.roundToPx() }),
             density = drawn,
         ).lineCount
-        maxOf(
-            reservedHeadlineLines(listOf(PICK_THEME_HEADLINE)) { linesOf(it, fitted) },
-            reservedHeadlineLines(themeTaglineVariants()) { linesOf(it, density) },
-        )
+        // The style's line height in sp is its height in dp at font scale 1.0, and a unit draws at its own scale.
+        val rowDp = style.lineHeight.value
+        val heights = listOf(question) + themeTaglineVariants().map { planPlainHeadline(it, normal) }
+        // Only a tagline line can wrap. The question's lines are fitted, so each row of it is one row.
+        val rows = { unit: HeadlineUnit -> if (unit.role == HeadlineRole.Plain) rowsOf(unit) else unit.rows.size }
+        heights.maxOf { plan -> headlineHeightDp(plan, rowDp, gap.value, heroPad.value, rows) }.dp
     }
 }
+
+private fun IntroThemeHeadline.toContent() =
+    HeadlineContent(lines, emphasisIndex, emoji = "", spoken = spoken, heroLayout = heroLayout)

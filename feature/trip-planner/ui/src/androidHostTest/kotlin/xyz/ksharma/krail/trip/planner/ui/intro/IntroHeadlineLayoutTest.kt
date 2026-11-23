@@ -141,26 +141,6 @@ class IntroHeadlineLayoutTest {
     }
 
     @Test
-    fun `the Park and Ride question is four lines at a phone width and five at 320 dp and 200 percent, each line whole`() {
-        start(PHONE_ROOM_DP, 1.0f)
-        show(PARK_RIDE_HEADLINE)
-        assertEquals(
-            PARK_RIDE_HEADLINE.map { introHeadlineDisplay(it) },
-            drawnLayouts().map { it.layoutInput.text.text },
-        )
-        assertEquals(4, drawnLayouts().sumOf { it.lineCount }, "a phone draws each of its four lines on one line")
-    }
-
-    @Test
-    fun `at 320 dp and 200 percent the Park and Ride question wraps one line and takes five, with no word split`() {
-        start(NARROW_ROOM_DP, 2.0f)
-        show(PARK_RIDE_HEADLINE)
-
-        assertEquals(5, drawnLayouts().sumOf { it.lineCount })
-        assertTrue(drawnLayouts().first().layoutInput.density.fontScale < 1f, "the narrowest room holds the headline just under its style")
-    }
-
-    @Test
     fun `with text at 200 percent the headline is drawn at the ceiling, held lower only in the narrowest room`() {
         start(PHONE_ROOM_DP, 2.0f)
         show(PICK_THEME_HEADLINE)

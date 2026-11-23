@@ -6,14 +6,17 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 
 /**
- * The question, in four short lines, a complete plain question. It offers what a Yes does, which is to show the free parking at
- * the nearest station, and the rider answers it with No or Yes on the bar below. It is drawn in capitals by the Intro's own
- * display code, and a screen reader reads the sentence as it is written.
+ * The question, in four short lines, a complete plain question. It offers what a Yes does, which is to show the parking spots at
+ * the nearest station, and the rider answers it on the bar below. The hero is `parking spots` ([PARK_RIDE_HERO_INDEX]) and the
+ * other three lines are whispers. It is drawn in capitals by the Intro's own display code.
  */
-internal val PARK_RIDE_HEADLINE = listOf("Show free", "parking at", "your nearest", "station?")
+internal val PARK_RIDE_HEADLINE = listOf("Show", "parking spots", "at your", "nearest station?")
 
-/** The whole headline as one phrase, which a screen reader reads as the heading. */
-internal val PARK_RIDE_HEADING = introHeadlinePhrase(PARK_RIDE_HEADLINE)
+/** The line of [PARK_RIDE_HEADLINE] that is the hero. */
+internal const val PARK_RIDE_HERO_INDEX = 1
+
+/** The whole question as one phrase, which a screen reader reads as the heading. It is its own text, not the drawn lines joined. */
+internal const val PARK_RIDE_HEADING = "Show parking spots at your nearest station?"
 
 /**
  * The Park & Ride screen: the headline at the top and, in the middle, the card that the answer found.
@@ -26,8 +29,10 @@ internal fun IntroParkRideStepContent(state: IntroState, modifier: Modifier = Mo
         headline = {
             IntroHeadline(
                 lines = PARK_RIDE_HEADLINE,
-                emphasisIndex = PARK_RIDE_HEADLINE.lastIndex,
+                emphasisIndex = PARK_RIDE_HERO_INDEX,
                 emoji = introEmojiFor(IntroStep.PARK_RIDE),
+                spoken = PARK_RIDE_HEADING,
+                heroLayout = true,
             )
         },
         modifier = modifier,

@@ -26,7 +26,7 @@ class IntroBarTest {
         right = IntroBarAction(
             "Yes",
             IntroUiEvent.AnswerParkRide(yes = true),
-            spokenLabel = "Yes, show me free spots",
+            spokenLabel = "Yes, show me parking spots",
         ),
     )
 
@@ -96,7 +96,7 @@ class IntroBarTest {
         assertEquals("No", PARK_RIDE_NO)
         assertEquals("No thanks", PARK_RIDE_NO_SPOKEN)
         assertEquals("Yes", PARK_RIDE_YES)
-        assertEquals("Yes, show me free spots", PARK_RIDE_YES_SPOKEN)
+        assertEquals("Yes, show me parking spots", PARK_RIDE_YES_SPOKEN)
         assertEquals("Not now", PARK_RIDE_NOT_NOW)
         assertEquals("Add to home", PARK_RIDE_ADD)
         assertEquals(PARK_RIDE_NOT_NOW, decide(addShown = true).negative.spokenLabel)
@@ -310,7 +310,7 @@ class IntroBarTest {
     @Test
     fun `the Park and Ride answers show one word and say the longer phrase, and the word starts the phrase`() {
         assertEquals("Yes", ask.right.label)
-        assertEquals("Yes, show me free spots", ask.right.spokenLabel)
+        assertEquals("Yes, show me parking spots", ask.right.spokenLabel)
         assertEquals("No", ask.negative.label)
         assertEquals("No thanks", ask.negative.spokenLabel)
         assertTrue(ask.right.spokenLabel.startsWith(ask.right.label))

@@ -76,6 +76,8 @@ internal fun IntroStopStepContent(
                 lines = headline.lines,
                 emphasisIndex = headline.emphasisIndex,
                 emoji = introEmojiFor(state.step),
+                spoken = headline.spoken,
+                heroLayout = true,
             )
         },
         bar = {

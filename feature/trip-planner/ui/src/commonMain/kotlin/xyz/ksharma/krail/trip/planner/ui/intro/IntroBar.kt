@@ -13,7 +13,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
 internal const val PARK_RIDE_NO = "No"
 internal const val PARK_RIDE_NO_SPOKEN = "No thanks"
 internal const val PARK_RIDE_YES = "Yes"
-internal const val PARK_RIDE_YES_SPOKEN = "Yes, show me free spots"
+internal const val PARK_RIDE_YES_SPOKEN = "Yes, show me parking spots"
 internal const val PARK_RIDE_NOT_NOW = "Not now"
 internal const val PARK_RIDE_ADD = "Add to home"
 

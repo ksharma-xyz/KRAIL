@@ -12,16 +12,16 @@ internal const val EMPHASIS_BEAT_MS = 40L
 /**
  * What a headline says, as a value: its [lines], the one with the key word and the [emoji] above them. [spoken] is the text
  * a screen reader reads as the heading, which is the lines joined unless the drawn lines are a shortened form of what is said.
- * [fitsRoom] is for the question on the colour screen, whose lines are kept whole by choosing the size they are drawn at
- * ([fittedHeadlineDensity]). Two headlines are the same headline when all of these are equal, so the screen can tell a change
- * of words from a redraw.
+ * [heroLayout] is for a question, whose line at [emphasisIndex] is the hero and whose other lines are whispers ([planHeroHeadline]),
+ * and false for a tagline, whose lines are all the same. Two headlines are the same headline when all of these are equal, so the
+ * screen can tell a change of words from a redraw.
  */
 internal data class HeadlineContent(
     val lines: List<String>,
     val emphasisIndex: Int,
     val emoji: String,
     val spoken: String = introHeadlinePhrase(lines),
-    val fitsRoom: Boolean = false,
+    val heroLayout: Boolean = false,
 )
 
 /** The words of a headline as one phrase, which is what a screen reader reads and what a test finds. */
@@ -32,7 +32,7 @@ internal data class HeadlineTimeline(val lineDelaysMs: List<Long>, val emojiDela
 
 /**
  * The lines enter one after another, [LINE_STAGGER_MS] apart, in the order they read, and the line at
- * [emphasisIndex] takes [EMPHASIS_BEAT_MS] more so it arrives with weight. The emoji pops first, above them.
+ * [emphasisIndex], the hero of a question, takes [EMPHASIS_BEAT_MS] more so it arrives with weight. The emoji pops first, above them.
  * An [emphasisIndex] outside the lines gives the plain stagger.
  */
 internal fun headlineTimeline(lineCount: Int, emphasisIndex: Int): HeadlineTimeline = HeadlineTimeline(

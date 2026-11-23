@@ -54,7 +54,7 @@ class IntroCopyTest {
     fun `the bars are found, so this cannot pass by looking at nothing`() {
         val words = barWords()
 
-        assertTrue("Yes, show me free spots" in words && "Add to home" in words && "Not now" in words, "$words")
+        assertTrue("Yes, show me parking spots" in words && "Add to home" in words && "Not now" in words, "$words")
         assertTrue("Yes, this one" in words, "the stop screens' bar was not found: $words")
         assertTrue("OK" in words, "the no station message's button was not found: $words")
         assertTrue("No, search" !in words, "the left button of the stop screens is gone: $words")
@@ -94,10 +94,10 @@ class IntroCopyTest {
 
     @Test
     fun `the five headlines are questions, with one question mark at the end of the last line and no other banned glyph`() {
-        assertEquals(listOf("Show free", "parking at", "your nearest", "station?"), PARK_RIDE_HEADLINE)
-        assertEquals(listOf("Where are", "you going?"), DESTINATION_HEADLINE)
+        assertEquals(listOf("Show", "parking spots", "at your", "nearest station?"), PARK_RIDE_HEADLINE)
+        assertEquals(listOf("Where are you", "going?"), DESTINATION_HEADLINE)
         assertEquals(listOf("Where are you", "leaving from?"), ORIGIN_HEADLINE)
-        assertEquals(listOf("Save this", "trip?"), CONFIRM_HEADLINE)
+        assertEquals(listOf("Save", "this trip?"), CONFIRM_HEADLINE)
         assertEquals(listOf("Your favourite", "transport mode", "in Sydney?"), PICK_THEME_HEADLINE)
         listOf(PARK_RIDE_HEADING, DESTINATION_HEADING, ORIGIN_HEADING, CONFIRM_HEADING)
             .zip(headlines)
@@ -130,6 +130,30 @@ class IntroCopyTest {
             assertTrue(lines.all { it.isNotBlank() && it.length <= MAX_LINE_LENGTH }, "$lines")
         }
         assertTrue(wordingProblems("What's your").isEmpty())
+    }
+
+    @Test
+    fun `each screen says its whole question as one text of its own, with the hero marked, and the word free is gone`() {
+        assertEquals("Show parking spots at your nearest station?", PARK_RIDE_HEADING)
+        assertEquals("Where are you going?", DESTINATION_HEADING)
+        assertEquals("Where are you leaving from?", ORIGIN_HEADING)
+        assertEquals("Save this trip?", CONFIRM_HEADING)
+        assertEquals("What's your favourite transport mode in Sydney?", PICK_THEME_HEADING)
+        // The hero of each question, the line that is drawn large and in the accent: the question mark of a hero is its own.
+        assertEquals("parking spots", PARK_RIDE_HEADLINE[PARK_RIDE_HERO_INDEX])
+        assertEquals("going?", DESTINATION_HEADLINE[STOP_HERO_INDEX])
+        assertEquals("leaving from?", ORIGIN_HEADLINE[STOP_HERO_INDEX])
+        assertEquals("Save", CONFIRM_HEADLINE[CONFIRM_HERO_INDEX])
+        assertEquals("transport mode", PICK_THEME_HEADLINE[PICK_THEME_HERO_INDEX])
+        assertEquals(PICK_THEME_HERO_INDEX, introThemeHeadline(null).emphasisIndex)
+        assertEquals(STOP_HERO_INDEX, introStopHeadline(IntroStep.DESTINATION)?.emphasisIndex)
+        assertEquals(STOP_HERO_INDEX, introStopHeadline(IntroStep.ORIGIN)?.emphasisIndex)
+        assertEquals(DESTINATION_HEADING, introStopHeadline(IntroStep.DESTINATION)?.spoken)
+        assertEquals(ORIGIN_HEADING, introStopHeadline(IntroStep.ORIGIN)?.spoken)
+
+        val everything = barWords() + headlines.flatten() +
+            listOf(PARK_RIDE_HEADING, DESTINATION_HEADING, ORIGIN_HEADING, CONFIRM_HEADING, PICK_THEME_HEADING)
+        everything.forEach { assertTrue(!Regex("\\bfree\\b", RegexOption.IGNORE_CASE).containsMatchIn(it), "\"$it\" has the word free") }
     }
 
     private fun isTagline(text: String) = taglines.any { text == it || text in taglineLines(it) }

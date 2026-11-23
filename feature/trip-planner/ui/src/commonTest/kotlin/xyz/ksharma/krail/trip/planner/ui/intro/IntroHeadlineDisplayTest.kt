@@ -16,16 +16,15 @@ class IntroHeadlineDisplayTest {
     @Test
     fun `every line is drawn in capitals, from the words as they are written`() {
         val table = listOf(
-            Row("Show free", "SHOW FREE"),
-            Row("parking at", "PARKING AT"),
-            Row("your nearest", "YOUR NEAREST"),
-            Row("station?", "STATION?"),
-            Row("Where are", "WHERE ARE"),
-            Row("you going?", "YOU GOING?"),
+            Row("Show", "SHOW"),
+            Row("parking spots", "PARKING SPOTS"),
+            Row("at your", "AT YOUR"),
+            Row("nearest station?", "NEAREST STATION?"),
             Row("Where are you", "WHERE ARE YOU"),
+            Row("going?", "GOING?"),
             Row("leaving from?", "LEAVING FROM?"),
-            Row("Save this", "SAVE THIS"),
-            Row("trip?", "TRIP?"),
+            Row("Save", "SAVE"),
+            Row("this trip?", "THIS TRIP?"),
             Row("What's your", "WHAT'S YOUR"),
             Row("favourite", "FAVOURITE"),
             Row("transport mode", "TRANSPORT MODE"),

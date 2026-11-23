@@ -44,7 +44,7 @@ private fun ThemeBlendInputs.request(tapped: Int, origin: Offset): ThemeChangeRe
             emphasisIndex = headline.emphasisIndex,
             emoji = introEmojiFor(IntroStep.THEME, themeId),
             spoken = headline.spoken,
-            fitsRoom = headline.fitsRoom,
+            heroLayout = headline.heroLayout,
         ),
         tapped = tapped,
         origin = origin,

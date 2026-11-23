@@ -41,7 +41,7 @@ class IntroBannedWordsTest {
     fun `the Intro sources and their strings are found, so this guard cannot pass by looking at nothing`() {
         assertTrue(introSources.size >= MIN_SOURCES, "found only ${introSources.map { it.name }}")
         val literals = introSources.flatMap { stringLiterals(it.readText()) }
-        assertTrue("Yes, show me free spots" in literals && "Not now" in literals, "the bar words were not found")
+        assertTrue("Yes, show me parking spots" in literals && "Not now" in literals, "the bar words were not found")
         assertTrue(stringResources.isNotEmpty(), "no string resources were found")
     }
 
@@ -76,7 +76,7 @@ class IntroBannedWordsTest {
             assertTrue(problems("Plain${Char(codePoint)}words").isNotEmpty(), "U+${codePoint.toString(HEX)} not caught")
         }
         assertTrue(problems("Plain : words").isNotEmpty(), "a spaced colon was not caught")
-        listOf("What's your", "Yes, show me free spots", "skipped", "Nextdoor", "Not now").forEach {
+        listOf("What's your", "Yes, show me parking spots", "skipped", "Nextdoor", "Not now").forEach {
             assertEquals(emptyList(), problems(it), "plain copy $it was flagged")
         }
     }
@@ -106,8 +106,8 @@ class IntroBannedWordsTest {
 
     private fun stringLiterals(source: String): List<String> = LiteralReader(source).read()
 
-    // The last lines of the five headlines, which are questions, and the whole spoken question of the colour screen, whose drawn
-    // lines are a short form of it: the only strings that may have a question mark.
+    // The last lines of the five headlines, which are questions, and the whole spoken question of each screen, which is a text of its
+    // own and not the drawn lines joined: the only strings that may have a question mark.
     private val drawnQuestionLines: List<String> = listOf(
         PARK_RIDE_HEADLINE,
         DESTINATION_HEADLINE,
@@ -115,18 +115,19 @@ class IntroBannedWordsTest {
         CONFIRM_HEADLINE,
         PICK_THEME_HEADLINE,
     ).map { it.last() }
-    private val questionLines: List<String> = drawnQuestionLines + PICK_THEME_HEADING
+    private val questionLines: List<String> = drawnQuestionLines + PICK_THEME_HEADING +
+        listOf(PARK_RIDE_HEADING, DESTINATION_HEADING, ORIGIN_HEADING, CONFIRM_HEADING)
 
     @Test
     fun `a question mark is allowed at the end of the last line of the five headlines and nowhere else`() {
         assertEquals(
-            listOf("station?", "you going?", "leaving from?", "trip?", "in Sydney?"),
+            listOf("nearest station?", "going?", "leaving from?", "this trip?", "in Sydney?"),
             drawnQuestionLines,
         )
-        assertEquals("What's your favourite transport mode in Sydney?", questionLines.last(), "the spoken question is exempt too")
+        assertTrue(PICK_THEME_HEADING in questionLines, "the spoken question is exempt too")
         questionLines.forEach { assertEquals(emptyList(), problems(it), "$it") }
         // The exemption is the exact line, so the same words with more, or any other question, are caught.
-        listOf("trip? now", "Which one?", "trip??", "Save this trip?", "Pick a colour?").forEach {
+        listOf("trip? now", "Which one?", "trip??", "Save this trip? now", "Pick a colour?").forEach {
             assertTrue(problems(it).isNotEmpty(), "\"$it\" was not caught")
         }
         // The other banned characters are caught in those lines as everywhere.

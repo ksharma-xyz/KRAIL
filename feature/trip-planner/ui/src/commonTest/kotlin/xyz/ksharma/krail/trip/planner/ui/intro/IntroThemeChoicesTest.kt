@@ -123,10 +123,10 @@ class IntroThemeChoicesTest {
         val headline = introThemeHeadline(null)
 
         assertEquals(listOf("Your favourite", "transport mode", "in Sydney?"), headline.lines)
-        assertEquals("in Sydney?", headline.lines[headline.emphasisIndex])
+        assertEquals("transport mode", headline.lines[headline.emphasisIndex], "the hero is the middle line")
         assertEquals("What's your favourite transport mode in Sydney?", PICK_THEME_HEADING)
         assertEquals(PICK_THEME_HEADING, headline.spoken, "what is said is the whole question, not the drawn lines")
-        assertTrue(headline.fitsRoom, "the question is kept to its three lines by size")
+        assertTrue(headline.heroLayout, "the question is a hero and two whispers")
         assertEquals(headline, introThemeHeadline(NOT_A_THEME), "an id that is not offered is no choice")
     }
 
@@ -138,31 +138,14 @@ class IntroThemeChoicesTest {
             assertEquals(taglineLines(choice.style.tagLine), headline.lines, choice.name)
             assertEquals(headline.lines.lastIndex, headline.emphasisIndex, choice.name)
             assertEquals(taglineLines(choice.style.tagLine).joinToString(" "), headline.spoken, choice.name)
-            assertTrue(!headline.fitsRoom, "a tagline is drawn at the ordinary headline size: ${choice.name}")
+            assertTrue(!headline.heroLayout, "a tagline is drawn at the ordinary headline size: ${choice.name}")
             assertNotNull(headline.lines.getOrNull(headline.emphasisIndex), choice.name)
         }
     }
 
     @Test
-    fun `the headline variants are the question and each theme's tagline lines, and the room is the longest as drawn`() {
-        val variants = themeHeadlineVariants()
-
-        assertEquals(1 + choices.size, variants.size)
-        assertEquals(PICK_THEME_HEADLINE, variants.first())
-        assertEquals(choices.map { taglineLines(it.style.tagLine) }, variants.drop(1))
-
-        // Each line wraps by itself, so a variant takes the sum of its lines. The lines are measured in capitals.
-        val seen = mutableListOf<String>()
-        val room = reservedHeadlineLines(variants) { drawn ->
-            seen += drawn
-            if (drawn.length > TEN) 2 else 1
-        }
-
-        assertTrue(seen.all { it == it.uppercase() }, "a line was measured in lower case: $seen")
-        val expected = variants.maxOf { lines -> lines.sumOf { if (it.length > TEN) 2 else 1 } }
-        assertEquals(expected, room)
-        assertEquals(1, reservedHeadlineLines(emptyList()) { 1 })
-        assertEquals(1, reservedHeadlineLines(listOf(emptyList())) { 1 })
+    fun `the taglines the room is kept for are the lines of each theme's tagline, drawn at the ordinary size`() {
+        assertEquals(choices.map { taglineLines(it.style.tagLine) }, themeTaglineVariants())
     }
 
     @Test

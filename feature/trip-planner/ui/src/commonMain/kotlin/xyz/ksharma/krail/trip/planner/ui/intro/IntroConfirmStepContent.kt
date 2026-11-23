@@ -14,11 +14,14 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopDisplay
 
-/** The confirm screen's question, in two lines, a complete plain question. */
-internal val CONFIRM_HEADLINE = listOf("Save this", "trip?")
+/** The confirm screen's question, in two lines, a complete plain question. The hero is `save` ([CONFIRM_HERO_INDEX]). */
+internal val CONFIRM_HEADLINE = listOf("Save", "this trip?")
 
-/** The confirm headline as one phrase, which a screen reader reads as the heading. */
-internal val CONFIRM_HEADING = introHeadlinePhrase(CONFIRM_HEADLINE)
+/** The line of [CONFIRM_HEADLINE] that is the hero. */
+internal const val CONFIRM_HERO_INDEX = 0
+
+/** The confirm question as one phrase, which a screen reader reads as the heading. */
+internal const val CONFIRM_HEADING = "Save this trip?"
 
 /** What a screen reader says for the trip tile, which shows the two names stacked. */
 internal fun confirmTileDescription(startName: String, endName: String): String = "From $startName to $endName"
@@ -36,9 +39,11 @@ internal fun IntroConfirmStepContent(state: IntroState, modifier: Modifier = Mod
         headline = {
             IntroHeadline(
                 lines = CONFIRM_HEADLINE,
-                emphasisIndex = CONFIRM_HEADLINE.lastIndex,
+                emphasisIndex = CONFIRM_HERO_INDEX,
                 emoji = introEmojiFor(IntroStep.CONFIRM),
+                spoken = CONFIRM_HEADING,
                 celebrate = true,
+                heroLayout = true,
             )
         },
         modifier = modifier,

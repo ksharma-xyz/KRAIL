@@ -21,6 +21,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
@@ -134,15 +135,17 @@ private const val EMOJI_DAMPING = 0.5f
 private val LineRiseDistance = 24.dp
 
 /**
- * The big, bold headline at the top of an Intro screen. [lines] is two to four short lines, one idea on
- * each, and [emphasisIndex] is the line with the key word, which lands last in the entrance with a beat more. Every
- * line is at the same weight, the heaviest there is, and no colour competes with the theme colour on the primary
- * button. The lines are left aligned, wrap rather than shrink or truncate at a large text size, and use the app's own
- * boldest display style, drawn ALL UPPER CASE ([introHeadlineDisplay]), [HEADLINE_SIZE_FACTOR] times its size and at
- * [HEADLINE_WEIGHT]. The case is a display matter only: the lines passed in, the screen reader's heading and every test
- * that reads the copy keep the case the words are written in. The headline grows with the system text size only up to
- * [HEADLINE_FONT_SCALE_CEILING] (and, in the narrowest room, no more than keeps its widest word whole), so its longest word always fits. The emoji sits [introEmojiTitleGap] above the first
- * line, further as the text grows.
+ * The big, bold headline at the top of an Intro screen. [lines] is two to four short lines, one idea on each. Every line is at
+ * the same weight, the heaviest there is, and the lines are left aligned, drawn ALL UPPER CASE ([introHeadlineDisplay]) in the
+ * app's own boldest display style, [HEADLINE_SIZE_FACTOR] times its size and at [HEADLINE_WEIGHT]. The case is a display matter
+ * only: the lines passed in, the screen reader's heading and every test that reads the copy keep the case the words are written
+ * in. The emoji sits [introEmojiTitleGap] above the first line, further as the text grows.
+ *
+ * Without [heroLayout] every line is drawn at the same size, [headlineFontScale] (the system text size up to a ceiling and, in
+ * the narrowest room, no more than keeps the widest word whole), and a line that does not fit wraps at a word. With it the line at
+ * [emphasisIndex] is the hero, in [accent], drawn as large as the room lets it be and never above that size, and every other line
+ * is a whisper in the ink at 0.70 of the hero ([planHeroHeadline]). A hero too wide for the room at 0.75 of the normal size
+ * stacks word by word, and no line is ever wider than its room.
  *
  * The first time the screen shows its headline, each line is its own animated unit and enters one after another:
  * it rises with a small spring overshoot, grows a little and fades in, [LINE_STAGGER_MS] after the one before. The
@@ -152,22 +155,19 @@ private val LineRiseDistance = 24.dp
  *
  * When the words change after that, as the theme screen's do with each badge, nothing enters again line by line: the
  * old headline fades out while the new one fades in and rises [HeadlineChangeSpec.riseDp] to its place, in one smooth
- * move with no overshoot ([headlineChangeSpec]), and with reduced motion it is simply swapped. Both are the same
- * height, so nothing below the headline moves.
+ * move with no overshoot ([headlineChangeSpec]), and with reduced motion it is simply swapped. Both keep the same room, so
+ * nothing below the headline moves.
  *
  * [celebrate] is for the confirm screen's star. With it the star also throws a burst of plain shapes in the theme
  * colour, drawn behind it, which flies out and fades in [BURST_DURATION_MS]. With reduced motion the star fades in at
  * rest instead and nothing flies, and in a preview, a screenshot or after a turn of the screen it is simply there.
  *
- * [minLines] is the least number of lines of room to keep, for a screen whose headline changes length: with it
- * the headline takes the height of the emoji and that many lines whatever it says, so nothing below it moves.
- *
- * [fitToRoom] is for the colour screen's question, whose lines are kept whole by size: it is drawn at the largest size at
- * which its widest line fits the room, never larger than the other headlines and never below the floor
- * ([fittedHeadlineDensity]), and wraps a line at a word below that.
+ * [reservedLinesHeight] is the height of room to keep for the lines, for a screen whose headline changes: with it the headline
+ * takes the height of the emoji and that much for the lines whatever it says, so nothing below it moves.
  *
  * For a screen reader the whole headline is one heading whose text is [spoken], which is the full phrase, the lines joined,
- * unless the lines drawn are a shortened form of it, with no pause between lines, and the emoji is hidden from it.
+ * unless the lines drawn are a shortened form of it, with no pause between lines, and the emoji is hidden from it. The colour of
+ * the hero is never what says anything.
  */
 @Composable
 internal fun IntroHeadline(
@@ -175,10 +175,11 @@ internal fun IntroHeadline(
     emphasisIndex: Int,
     emoji: String,
     modifier: Modifier = Modifier,
-    minLines: Int = 0,
+    reservedLinesHeight: Dp = 0.dp,
     celebrate: Boolean = false,
     spoken: String = introHeadlinePhrase(lines),
-    fitToRoom: Boolean = false,
+    heroLayout: Boolean = false,
+    accent: Color = Color.Unspecified,
 ) {
     val reduceMotion = isReduceMotionEnabled()
     val inspection = LocalInspectionMode.current
@@ -187,7 +188,7 @@ internal fun IntroHeadline(
     val startsSettled = remember { headlineStartsSettled(reduceMotion, inspection, entered) }
     LaunchedEffect(Unit) { entered = true }
 
-    val content = HeadlineContent(lines, emphasisIndex, emoji, spoken, fitToRoom)
+    val content = HeadlineContent(lines, emphasisIndex, emoji, spoken, heroLayout)
     // The headline the screen opened with is the one that enters line by line. Every later one arrives by the change.
     val first = remember { content }
     val spec = headlineChangeSpec(reduceMotion)
@@ -202,19 +203,21 @@ internal fun IntroHeadline(
         IntroHeadlineBody(
             content = shown,
             kinetic = shown == first && !startsSettled,
-            minLines = minLines,
+            reservedLinesHeight = reservedLinesHeight,
             celebrate = celebrate,
+            accent = accent,
         )
     }
 }
 
-/** One headline as it is drawn: the words, the line with the key word, and the emoji above them. */
+/** One headline as it is drawn: the words, the hero line, and the emoji above them. */
 @Composable
 private fun IntroHeadlineBody(
     content: HeadlineContent,
     kinetic: Boolean,
-    minLines: Int,
+    reservedLinesHeight: Dp,
     celebrate: Boolean,
+    accent: Color,
 ) {
     val lines = content.lines
     val emphasisIndex = content.emphasisIndex
@@ -241,13 +244,14 @@ private fun IntroHeadlineBody(
         }
     }
 
-    // The headline grows with the system text size only up to the ceiling, so a word in capitals always fits.
-    val lineGap = KrailTheme.dimensions.spacingS
+    // The headline grows with the system text size only up to the ceiling, so a word in capitals always fits. The plan is read
+    // in the screen's own density, and so is the room kept, so a headline keeps the room of the others and nothing moves on a change.
+    val lineGap = headlineLineGap()
     val emojiGap = introEmojiTitleGap(KrailTheme.dimensions.spacingXXL, LocalDensity.current.fontScale)
-    val drawnDensity = fittedHeadlineDensity(content)
-    // Read here, in the screen's density, so a fitted headline keeps the room of the ordinary ones and nothing moves on a change.
-    val reservedHeight = reservedHeadlineHeight(minLines, hasEmoji = emoji.isNotEmpty(), emojiGap = emojiGap)
-    CompositionLocalProvider(LocalDensity provides drawnDensity) {
+    val plan = rememberHeadlinePlan(content)
+    val emojiDensity = headlineDensity()
+    val reservedHeight = reservedHeadlineHeight(reservedLinesHeight, hasEmoji = emoji.isNotEmpty(), emojiGap = emojiGap)
+    CompositionLocalProvider(LocalDensity provides emojiDensity) {
         Column(
             modifier = Modifier
                 .heightIn(min = reservedHeight)
@@ -274,40 +278,77 @@ private fun IntroHeadlineBody(
                         },
                 )
             }
-            val display = KrailTheme.typography.introTagline.asHeadlineStyle()
-            lines.forEachIndexed { index, line ->
-                Text(
-                    text = introHeadlineDisplay(line),
-                    style = display,
-                    color = KrailTheme.colors.onSurface,
-                    modifier = Modifier.graphicsLayer {
-                        val frame = lineFrame(progress[index].value)
-                        alpha = frame.alpha
-                        translationY = frame.rise * LineRiseDistance.toPx()
-                        scaleX = frame.scale
-                        scaleY = frame.scale
-                        transformOrigin = TransformOrigin(0f, 0.5f)
-                    },
-                )
+            HeadlineUnits(plan = plan, accent = accent, ink = KrailTheme.colors.onSurface) { index ->
+                Modifier.graphicsLayer {
+                    val frame = lineFrame(progress[index].value)
+                    alpha = frame.alpha
+                    translationY = frame.rise * LineRiseDistance.toPx()
+                    scaleX = frame.scale
+                    scaleY = frame.scale
+                    transformOrigin = TransformOrigin(0f, 0.5f)
+                }
+            }
+        }
+    }
+}
+
+/** The room between two lines of a headline, and between the words of a stacked hero. */
+@Composable
+internal fun headlineLineGap(): Dp = KrailTheme.dimensions.spacingS
+
+/** The extra room above and below the hero line, and only that line. */
+@Composable
+internal fun headlineHeroPad(): Dp = KrailTheme.dimensions.spacingNone
+
+/**
+ * The lines of [plan], each unit its own block drawn at its own font scale, in a column with [headlineLineGap] between them.
+ * The hero is in [accent] (the ink when it is unspecified) and every other line in [ink]. [unitModifier] is the modifier of unit
+ * [Int], where the entrance and the change of words animate it, through `graphicsLayer` only. It reads the screen's density, so
+ * it is called outside the headline's own [LocalDensity].
+ */
+@Composable
+internal fun HeadlineUnits(
+    plan: HeadlinePlan,
+    accent: Color,
+    ink: Color,
+    unitModifier: (Int) -> Modifier,
+) {
+    val display = KrailTheme.typography.introTagline.asHeadlineStyle()
+    val density = LocalDensity.current
+    val gap = headlineLineGap()
+    val heroPad = headlineHeroPad()
+    Column(verticalArrangement = Arrangement.spacedBy(gap), horizontalAlignment = Alignment.Start) {
+        plan.units.forEachIndexed { index, unit ->
+            val colour = if (unit.role == HeadlineRole.Hero && accent != Color.Unspecified) accent else ink
+            val unitDensity = remember(density, unit.scale) { Density(density.density, unit.scale) }
+            CompositionLocalProvider(LocalDensity provides unitDensity) {
+                Column(
+                    modifier = unitModifier(index)
+                        .padding(vertical = if (unit.role == HeadlineRole.Hero) heroPad else 0.dp),
+                    verticalArrangement = Arrangement.spacedBy(gap),
+                    horizontalAlignment = Alignment.Start,
+                ) {
+                    unit.rows.forEach { row ->
+                        Text(text = introHeadlineDisplay(row), style = display, color = colour)
+                    }
+                }
             }
         }
     }
 }
 
 /**
- * The height of the emoji, the [emojiGap] under it and [minLines] lines of the display style with the gaps between them,
- * all in the density the headline is drawn in, so the room is exactly what the lines take and no more. A headline that
- * can change between a few lines and fewer keeps this much room, so what sits under it never moves when the words
- * change. It grows with the text up to the ceiling, because the lines do.
+ * The height of the emoji, the [emojiGap] under it and [linesHeight] for the lines, all in the density the headline is drawn in, so
+ * the room is exactly what the lines take and no more. A headline that can change between a few lines and fewer keeps this much
+ * room, so what sits under it never moves when the words change. It grows with the text up to the ceiling, because the lines do.
  */
 @Composable
-internal fun reservedHeadlineHeight(minLines: Int, hasEmoji: Boolean, emojiGap: Dp): Dp {
-    if (minLines <= 0) return 0.dp
+internal fun reservedHeadlineHeight(linesHeight: Dp, hasEmoji: Boolean, emojiGap: Dp): Dp {
+    if (linesHeight <= 0.dp) return 0.dp
     val typography = KrailTheme.typography
-    val gap = KrailTheme.dimensions.spacingS
     return with(headlineDensity()) {
         val emojiHeight = if (hasEmoji) typography.emoji.lineHeight.toDp() + emojiGap else 0.dp
-        emojiHeight + (typography.introTagline.asHeadlineStyle().lineHeight.toDp() + gap) * minLines - gap
+        emojiHeight + linesHeight
     }
 }
 
@@ -363,8 +404,9 @@ private fun PreviewIntroHeadlineParkRide() {
     PreviewTheme {
         IntroHeadline(
             lines = PARK_RIDE_HEADLINE,
-            emphasisIndex = PARK_RIDE_HEADLINE.lastIndex,
+            emphasisIndex = PARK_RIDE_HERO_INDEX,
             emoji = introEmojiFor(IntroStep.PARK_RIDE),
+            heroLayout = true,
         )
     }
 }

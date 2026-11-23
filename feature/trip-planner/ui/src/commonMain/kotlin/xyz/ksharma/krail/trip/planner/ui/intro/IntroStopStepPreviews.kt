@@ -1,6 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import androidx.compose.runtime.Composable
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
@@ -23,7 +25,8 @@ private val StJames = IntroStop("200050", "St James Station")
 private val Chatswood = IntroStop("206710", "Chatswood Station")
 private val ChatswoodStandA = IntroStop("206720", "Chatswood Station, Stand A")
 
-private val PreviewModes = persistentMapOf(
+// Typed here, because Kotlin/Native infers the list's element type from the three mode objects as Any and not TransportMode.
+private val PreviewModes: ImmutableMap<String, ImmutableList<TransportMode>> = persistentMapOf(
     "200060" to persistentListOf(TransportMode.Train, TransportMode.Metro, TransportMode.LightRail),
     "200080" to persistentListOf(TransportMode.Train, TransportMode.Metro),
     "215020" to persistentListOf(TransportMode.Train, TransportMode.LightRail),

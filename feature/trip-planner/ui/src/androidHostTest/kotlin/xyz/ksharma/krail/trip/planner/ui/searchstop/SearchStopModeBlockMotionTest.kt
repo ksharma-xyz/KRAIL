@@ -59,6 +59,8 @@ class SearchStopModeBlockMotionTest {
                         selectedModes = allModes,
                         onButtonClick = { open = reduceModeBlock(open, ModeBlockEvent.ButtonTapped) },
                         onToggleMode = {},
+                        pillHeight = MAP_OPTIONS_PILL_REST_HEIGHT,
+                        onPillHeight = {},
                         reduceMotion = reduceMotion,
                     )
                 }

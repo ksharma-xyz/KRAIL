@@ -12,7 +12,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,10 +24,13 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -33,6 +38,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -60,11 +67,16 @@ import xyz.ksharma.krail.trip.planner.ui.components.FloatingDark
  * The mode filter's controls at the bottom left of the map state: the [SearchStopModeButton] and, while it is open, the
  * [SearchStopModeBlock] right above it. The rider asks for them, so the map is bare until they do.
  *
- * Where they stand (`docs/MAP_HOME_UX.md` rule 9): one column at the bottom left, left aligned on [SearchStopGaps.edge].
- * The Options button is directly above the map's own info icon, [SearchStopGaps.betweenCards] over it, and the icon is
- * the bottom most element at the left, resting on the system bar (see [modeControlsBottomPadding] and
- * [mapOrnamentPadding]). The block is one [SearchStopGaps.betweenCards] above the button and spans the same edges as the
- * group card. [clearance] lifts the whole stack above an open stop card the way it lifts the location control.
+ * Where they stand (`docs/MAP_HOME_UX.md` rule 9): the bottom of the map is two lines. The lower one is the map's own info
+ * icon alone, at the bottom most left. The upper one is the control line: Options here at the start and the location
+ * control at the end, on one centre line (see [controlLineCentre]). Options stands over the icon in z order: its finger
+ * target ends where the visible "i" begins, so it reaches over the icon's own empty edge and never over the "i", and the
+ * pill is [SearchStopGaps.aboveIcon] above the "i". The block is [SearchStopGaps.betweenCards] above the line's visible
+ * top and spans the same edges as the group card. [clearance] lifts the line above an open stop card the way it lifts
+ * the location control.
+ *
+ * [pillHeight] is the drawn height of the Options pill, which the screen holds because the location control stands on
+ * the same line, and [onPillHeight] reports it as it is measured.
  *
  * The block grows out of the button and goes back into it: it fades and scales from its bottom start corner, with its
  * layout final from the first frame, so its wrapped chips never reflow or clip while it moves, and it leaves the tree
@@ -77,6 +89,8 @@ internal fun BoxScope.SearchStopModeControls(
     selectedModes: ImmutableSet<Int>,
     onButtonClick: () -> Unit,
     onToggleMode: (TransportMode) -> Unit,
+    pillHeight: Dp,
+    onPillHeight: (Dp) -> Unit,
     modifier: Modifier = Modifier,
     clearance: Dp = 0.dp,
     reduceMotion: Boolean = isReduceMotionEnabled(),
@@ -91,16 +105,16 @@ internal fun BoxScope.SearchStopModeControls(
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal))
             .navigationBarsPadding()
-            .padding(start = gaps.edge, end = gaps.edge, bottom = modeControlsBottomPadding(gaps, clearance)),
+            .padding(start = gaps.edge, end = gaps.edge, bottom = optionsBottomPadding(gaps, pillHeight, clearance)),
         horizontalAlignment = Alignment.Start,
     ) {
         AnimatedVisibility(
             visible = open,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().offset(y = optionsCardOverlap(gaps, pillHeight)),
             enter = modeBlockEnter(reduceMotion),
             exit = modeBlockExit(reduceMotion),
         ) {
-            // The gap to the button is inside the animated content, so it grows and goes with the block.
+            // The gap to the line is inside the animated content, so it grows and goes with the block.
             Column {
                 SearchStopModeBlock(selectedModes = selectedModes, onToggle = onToggleMode)
                 Spacer(modifier = Modifier.height(gaps.betweenCards))
@@ -110,6 +124,8 @@ internal fun BoxScope.SearchStopModeControls(
             expanded = open,
             filtered = modeFilterActive(allClasses, selectedModes),
             onClick = onButtonClick,
+            pillBottomGap = gaps.aboveIcon,
+            onPillHeight = onPillHeight,
         )
     }
 }
@@ -149,10 +165,13 @@ private val MODE_BLOCK_ORIGIN = TransformOrigin(pivotFractionX = 0f, pivotFracti
  * The button that opens and shuts the mode block: taj's [Button] at its extra small size reading [MODE_BUTTON_TEXT]
  * after the app's filter icon, in the fixed dark with the fixed light, because it floats over an always light map
  * (the same pair the location notice uses). While any mode is switched off it takes the active look, the two colours
- * swapped, with no count beside it. Its finger target is 48 dp from the automatic minimum touch target and reserves no
- * layout space, so the button is drawn exactly [SearchStopGaps.betweenCards] above the info icon and the extra target
- * never wins a touch over a control it overlaps. A screen reader hears its text and whether the block is expanded or
- * collapsed.
+ * swapped, with no count beside it.
+ *
+ * The finger target is the node tagged [TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON]: a real 48 dp box that is itself
+ * the clickable, not the touch slop Compose adds around a small clickable, which loses to the map under it (a hit on
+ * the map outranks that slop). The pill, tagged [TripPlannerTestTags.SEARCH_STOP_MODE_PILL], sits in the box's bottom
+ * start corner, [pillBottomGap] above its bottom edge, and reports its own height through [onPillHeight]. A screen
+ * reader hears the one node: its text and whether the block is expanded or collapsed.
  */
 @Composable
 internal fun SearchStopModeButton(
@@ -160,29 +179,42 @@ internal fun SearchStopModeButton(
     filtered: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    pillBottomGap: Dp = 0.dp,
+    onPillHeight: (Dp) -> Unit = {},
 ) {
-    Button(
-        onClick = onClick,
-        colors = if (filtered) FloatingDark.activeButtonColors() else FloatingDark.buttonColors(),
-        dimensions = ButtonDefaults.extraSmallButtonSize(),
+    val density = LocalDensity.current
+    Box(
         modifier = modifier
             .testTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON)
-            .semantics {
-                role = Role.Button
+            .heightIn(min = MAP_CONTROL_ROW_HEIGHT)
+            .widthIn(min = MAP_CONTROL_ROW_HEIGHT)
+            .semantics(mergeDescendants = true) {
                 stateDescription = if (expanded) MODE_BUTTON_EXPANDED else MODE_BUTTON_COLLAPSED
-            },
+            }
+            .clickable(role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.BottomStart,
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingXS),
-            verticalAlignment = Alignment.CenterVertically,
+        Button(
+            onClick = onClick,
+            colors = if (filtered) FloatingDark.activeButtonColors() else FloatingDark.buttonColors(),
+            dimensions = ButtonDefaults.extraSmallButtonSize(),
+            modifier = Modifier
+                .padding(bottom = pillBottomGap)
+                .onSizeChanged { onPillHeight(with(density) { it.height.toDp() }) }
+                .testTag(TripPlannerTestTags.SEARCH_STOP_MODE_PILL),
         ) {
-            Image(
-                painter = painterResource(Res.drawable.ic_filter),
-                contentDescription = null,
-                colorFilter = ColorFilter.tint(LocalTextColor.current),
-                modifier = Modifier.size(KrailTheme.dimensions.iconXS),
-            )
-            Text(text = MODE_BUTTON_TEXT)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingXS),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Image(
+                    painter = painterResource(Res.drawable.ic_filter),
+                    contentDescription = null,
+                    colorFilter = ColorFilter.tint(LocalTextColor.current),
+                    modifier = Modifier.size(KrailTheme.dimensions.iconXS),
+                )
+                Text(text = MODE_BUTTON_TEXT)
+            }
         }
     }
 }

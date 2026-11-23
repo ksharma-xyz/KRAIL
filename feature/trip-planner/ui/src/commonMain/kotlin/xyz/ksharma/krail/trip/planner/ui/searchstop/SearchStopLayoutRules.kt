@@ -41,7 +41,8 @@ internal fun locationChipShownFor(pill: LocationPill): Boolean = pill != Locatio
  * - [cardCorner] is the corner of every card, the card's own radius token.
  * - [betweenRows] is the one gap between rows inside the group card and around its divider.
  * - [betweenCards] is the one gap between floating elements: group card to the location chip under it, and the mode
- *   block to the Options button under it.
+ *   block to the control line under it.
+ * - [aboveIcon] is the small gap between the Options pill and the visible "i" of the map's info icon under it.
  */
 internal data class SearchStopGaps(
     val edge: Dp,
@@ -49,6 +50,7 @@ internal data class SearchStopGaps(
     val cardCorner: Dp,
     val betweenRows: Dp,
     val betweenCards: Dp,
+    val aboveIcon: Dp,
 )
 
 internal fun searchStopGaps(dim: KrailDimensions = KrailDimensions()): SearchStopGaps = SearchStopGaps(
@@ -57,6 +59,7 @@ internal fun searchStopGaps(dim: KrailDimensions = KrailDimensions()): SearchSto
     cardCorner = dim.cardCornerRadius,
     betweenRows = dim.spacingM,
     betweenCards = dim.spacingM,
+    aboveIcon = dim.spacingXS,
 )
 
 @Composable
@@ -72,24 +75,71 @@ internal val MAP_ORNAMENT_LIBRARY_MARGIN = 8.dp
 /**
  * The size of the map's own info icon on Android (its attribution, a licence requirement that is never turned off): the
  * library's 21 dp vector, drawn at its own size with no padding and no larger touch box. Read from the library's
- * resources, not measured on a device, so it is a number to check on a phone. The Options button stands above it.
+ * resources, not measured on a device, so it is a number to check on a phone.
  */
 internal val MAP_ATTRIBUTION_ICON_SIZE = 21.dp
 
 /**
  * How far the visible "i" starts in from the edge of that 21 dp icon: the vector is 24 units wide and the circle starts
- * 2 units in. It is what puts the Options button's left edge on the "i" and not on the empty edge of its box.
+ * 2 units in. It is what puts the control row's left edge on the "i" and not on the empty edge of its box, and what makes
+ * the gap above the icon the visible 8 dp.
  */
 internal val MAP_ATTRIBUTION_GLYPH_INSET = 1.75.dp
 
+/** How far above the bottom of the map the visible "i" starts: the library's margin, the icon, less the icon's own inset. */
+internal val MAP_ATTRIBUTION_GLYPH_TOP = MAP_ORNAMENT_LIBRARY_MARGIN + MAP_ATTRIBUTION_ICON_SIZE - MAP_ATTRIBUTION_GLYPH_INSET
+
+/** The location control is one 48 dp target, and the finger target of Options is at least as tall. */
+internal val MAP_CONTROL_ROW_HEIGHT = 48.dp
+
 /**
- * How far above the system bottom inset the Options button stands: the info icon's own margin from the map's bottom edge
- * (the library's margin, with the padding at zero), the icon, and one [SearchStopGaps.betweenCards] gap, so Options is
- * directly above the icon and the icon is the bottom most element at the left. An open stop card lifts the stack above
- * itself instead, by [clearance], the same value that lifts the location control, once that is higher.
+ * What the Options pill is drawn at 100 percent text, 20 dp tall, used until its real height is measured so the first
+ * frame is already where it ends up at the usual text size. It grows with the text, to 29 at 150 and 34 at 200 percent.
  */
-internal fun modeControlsBottomPadding(gaps: SearchStopGaps, clearance: Dp = 0.dp): Dp =
-    maxOf(MAP_ORNAMENT_LIBRARY_MARGIN + MAP_ATTRIBUTION_ICON_SIZE + gaps.betweenCards, gaps.edge + clearance)
+internal val MAP_OPTIONS_PILL_REST_HEIGHT = 20.dp
+
+/**
+ * The bottom of the map state is two lines. The lower one is the map's own info icon alone, at the bottom most left,
+ * resting on the library's own margin with no padding of ours. The upper one, the control line, is Options at the
+ * start and the location control at the end on one centre line: the Options pill's bottom edge is
+ * [SearchStopGaps.aboveIcon] above the visible "i", so its centre is half its [pillHeight] higher, and the location control
+ * is centred on the same line, so the two never part at any text size.
+ */
+internal fun controlLineCentre(gaps: SearchStopGaps, pillHeight: Dp): Dp =
+    MAP_ATTRIBUTION_GLYPH_TOP + gaps.aboveIcon + pillHeight / 2
+
+/**
+ * How far an open stop card lifts the control line, the same value that lifts the location control above the card: nothing
+ * with no card ([clearance] zero) and otherwise what puts the location control one edge above [clearance]'s card.
+ */
+internal fun controlLineLift(gaps: SearchStopGaps, pillHeight: Dp, clearance: Dp): Dp = when {
+    clearance <= 0.dp -> 0.dp
+    else -> maxOf(0.dp, gaps.edge + clearance - (controlLineCentre(gaps, pillHeight) - MAP_CONTROL_ROW_HEIGHT / 2))
+}
+
+/** How far above the system bottom inset the location control stands, centred on [controlLineCentre]. */
+internal fun locationControlBottomPadding(gaps: SearchStopGaps, pillHeight: Dp, clearance: Dp = 0.dp): Dp =
+    controlLineCentre(gaps, pillHeight) - MAP_CONTROL_ROW_HEIGHT / 2 + controlLineLift(gaps, pillHeight, clearance)
+
+/**
+ * How far above the system bottom inset the Options finger target stands: its bottom edge is the visible "i"'s top, so it
+ * touches the "i" and never covers it, and it reaches 1.75 dp over the top of the icon's own empty edge. The pill is
+ * [SearchStopGaps.aboveIcon] above that bottom edge, which is what makes the visible gap that small and constant.
+ */
+internal fun optionsBottomPadding(gaps: SearchStopGaps, pillHeight: Dp, clearance: Dp = 0.dp): Dp =
+    MAP_ATTRIBUTION_GLYPH_TOP + controlLineLift(gaps, pillHeight, clearance)
+
+/** The finger target of Options: at least 48 dp tall, and the pill with its gap above the "i" if that is taller. */
+internal fun optionsTargetHeight(gaps: SearchStopGaps, pillHeight: Dp): Dp =
+    maxOf(MAP_CONTROL_ROW_HEIGHT, pillHeight + gaps.aboveIcon)
+
+/**
+ * How far the Options card is pulled down over the invisible top of Options' finger target, so it stands
+ * [SearchStopGaps.betweenCards] above the visible top of the control line (the location control's top, 24 dp over the
+ * centre) and not above the finger target. The card's own bottom gap is the full [SearchStopGaps.betweenCards].
+ */
+internal fun optionsCardOverlap(gaps: SearchStopGaps, pillHeight: Dp): Dp =
+    maxOf(0.dp, optionsTargetHeight(gaps, pillHeight) - (gaps.aboveIcon + pillHeight / 2 + MAP_CONTROL_ROW_HEIGHT / 2))
 
 /**
  * The margin of the map's own ornaments in Search Stop's map state, so none of them is under the box and the info icon

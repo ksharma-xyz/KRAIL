@@ -125,6 +125,7 @@ object TripPlannerTestTags {
 
     /** The Options button on the bottom row of the map state that opens and shuts that block. */
     const val SEARCH_STOP_MODE_BUTTON = "searchstop.modebutton"
+    const val SEARCH_STOP_MODE_PILL = "searchstop.modepill"
 
     // The map's location control at the bottom end of the map state.
     const val SEARCH_STOP_LOCATION_BUTTON = "searchstop.locationbutton"

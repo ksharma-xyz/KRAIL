@@ -101,6 +101,9 @@ fun SearchStopMap(
     // Controls a host draws over the map's bottom edge. They get the height that lifts them above an open stop card,
     // the same value that lifts the location button, so the card never covers them. Search Stop's mode button.
     bottomControls: @Composable BoxScope.(clearance: Dp) -> Unit = {},
+    // How far above the bottom inset the location button stands, given the clearance an open stop card asks for. Null keeps
+    // one edge and the clearance, as every other host has it. Search Stop stands it on the line Options is on.
+    locationBottomPadding: ((clearance: Dp) -> Dp)? = null,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         when (mapUiState) {
@@ -130,6 +133,7 @@ fun SearchStopMap(
                     extraLayers = extraLayers,
                     stopCardOptions = stopCardOptions,
                     bottomControls = bottomControls,
+                    locationBottomPadding = locationBottomPadding,
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -178,6 +182,7 @@ private fun MapContent(
     extraLayers: @Composable () -> Unit = {},
     stopCardOptions: StopCardOptions = StopCardOptions(),
     bottomControls: @Composable BoxScope.(clearance: Dp) -> Unit = {},
+    locationBottomPadding: ((clearance: Dp) -> Dp)? = null,
 ) {
     log(
         "[NEARBY_STOPS_UI] MapContent rendered: nearbyStops.size=${mapState.mapDisplay.nearbyStops.size}, " +
@@ -328,9 +333,10 @@ private fun MapContent(
                         }
                     },
                     // Rides above an open card, so the card never covers it.
-                    modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(bottom = if (selectedStop != null) controlsClearance(cardHeight) else 0.dp),
+                    modifier = Modifier.align(Alignment.BottomStart),
+                    bottomPadding = (if (selectedStop != null) controlsClearance(cardHeight) else 0.dp).let { clearance ->
+                        locationBottomPadding?.invoke(clearance) ?: (KrailTheme.dimensions.spacingXL + clearance)
+                    },
                 )
             }
 

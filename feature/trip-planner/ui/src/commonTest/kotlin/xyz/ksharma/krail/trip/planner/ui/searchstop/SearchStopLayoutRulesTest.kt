@@ -59,7 +59,8 @@ class SearchStopLayoutRulesTest {
         assertEquals(8.dp, gaps.betweenRows)
         assertEquals(8.dp, gaps.betweenCards)
         assertEquals(16.dp, gaps.cardPadding)
-        for (gap in listOf(gaps.edge, gaps.cardPadding, gaps.betweenRows, gaps.betweenCards)) {
+        assertEquals(4.dp, gaps.aboveIcon)
+        for (gap in listOf(gaps.edge, gaps.cardPadding, gaps.betweenRows, gaps.betweenCards, gaps.aboveIcon)) {
             assertTrue(gap in scale, "$gap is on the 4, 8, 12, 16 scale")
         }
     }
@@ -75,31 +76,57 @@ class SearchStopLayoutRulesTest {
     }
 
     @Test
-    fun `Options stands one gap above the info icon, which rests on the library's own margin over the inset`() {
+    fun `the Options pill is 4 dp above the visible i at every text size, and the control line is centred on it`() {
         val gaps = searchStopGaps()
         assertEquals(8.dp, MAP_ORNAMENT_LIBRARY_MARGIN, "The library puts every ornament 8 dp in even with no padding.")
         assertEquals(21.dp, MAP_ATTRIBUTION_ICON_SIZE)
-        assertEquals(
-            MAP_ORNAMENT_LIBRARY_MARGIN + MAP_ATTRIBUTION_ICON_SIZE + gaps.betweenCards,
-            modeControlsBottomPadding(gaps),
-            "Options is one gap above the icon's top.",
-        )
-        assertEquals(8.dp, gaps.betweenCards, "The gap is the one 8 dp gap between floating elements.")
-        assertEquals(37.dp, modeControlsBottomPadding(gaps))
+        assertEquals(1.75.dp, MAP_ATTRIBUTION_GLYPH_INSET)
+        assertEquals(27.25.dp, MAP_ATTRIBUTION_GLYPH_TOP, "8 + 21 - 1.75 above the bottom.")
+        assertEquals(4.dp, gaps.aboveIcon, "The smallest spacing token, spacingXS.")
+        // Pill heights at 100, 150 and 200 percent text: the pill's bottom stays 4 dp over the i, so the line rises.
+        for ((pill, centre) in listOf(20.dp to 41.25.dp, 29.dp to 45.75.dp, 34.dp to 48.25.dp)) {
+            assertEquals(centre, controlLineCentre(gaps, pill), "pill $pill")
+            assertEquals(
+                MAP_ATTRIBUTION_GLYPH_TOP + 4.dp,
+                controlLineCentre(gaps, pill) - pill / 2,
+                "the pill's bottom edge is 4 dp over the i at $pill",
+            )
+            assertEquals(centre - 24.dp, locationControlBottomPadding(gaps, pill), "the location control, centred on it")
+            assertEquals(MAP_ATTRIBUTION_GLYPH_TOP, optionsBottomPadding(gaps, pill), "Options' target ends at the i's top")
+        }
     }
 
     @Test
-    fun `an open stop card lifts the stack above itself, the way it lifts the location control`() {
+    fun `the Options target is 48 tall, reaches over the icon's empty edge, and the card is pulled over its top`() {
         val gaps = searchStopGaps()
+        for (pill in listOf(20.dp, 29.dp, 34.dp)) {
+            assertEquals(48.dp, optionsTargetHeight(gaps, pill))
+            // The target's bottom is the i's top, so it overlaps the 21 dp icon's top 1.75 dp and never the i itself.
+            assertEquals(
+                MAP_ATTRIBUTION_GLYPH_INSET,
+                MAP_ORNAMENT_LIBRARY_MARGIN + MAP_ATTRIBUTION_ICON_SIZE - optionsBottomPadding(gaps, pill),
+            )
+            // The card is 8 over the location control's top (centre + 24), and the target's top is higher than that.
+            val locationTop = controlLineCentre(gaps, pill) + 24.dp
+            val targetTop = optionsBottomPadding(gaps, pill) + optionsTargetHeight(gaps, pill)
+            assertEquals(targetTop - locationTop, optionsCardOverlap(gaps, pill), "pill $pill")
+        }
+    }
+
+    @Test
+    fun `an open stop card lifts the line above itself, the way it lifts the location control`() {
+        val gaps = searchStopGaps()
+        val pill = 20.dp
+        assertEquals(0.dp, controlLineLift(gaps, pill, clearance = 0.dp))
         assertEquals(
             gaps.edge + 120.dp,
-            modeControlsBottomPadding(gaps, clearance = 120.dp),
-            "The stack stands on the same line as the location control, above the card.",
+            locationControlBottomPadding(gaps, pill, clearance = 120.dp),
+            "The location control stands one edge over the card's clearance, as it always did.",
         )
         assertEquals(
-            modeControlsBottomPadding(gaps),
-            modeControlsBottomPadding(gaps, clearance = 0.dp),
-            "With no card the icon sets the height.",
+            optionsBottomPadding(gaps, pill) + controlLineLift(gaps, pill, 120.dp),
+            optionsBottomPadding(gaps, pill, clearance = 120.dp),
+            "Options lifts by the same amount, so the line stays one line.",
         )
     }
 

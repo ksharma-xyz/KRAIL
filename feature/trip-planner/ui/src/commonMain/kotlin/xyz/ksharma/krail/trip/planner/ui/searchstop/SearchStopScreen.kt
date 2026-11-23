@@ -560,6 +560,9 @@ private fun SearchStopScreenSinglePane(
         headerHeight = headerHeight,
     )
 
+    // The Options pill's drawn height, which the location control stands level with. It starts at the 100 percent height.
+    var optionsPillHeight by remember { mutableStateOf(MAP_OPTIONS_PILL_REST_HEIGHT) }
+
     // The mode block is open or shut for the map state only.
     var modeBlockOpen by rememberSaveable { mutableStateOf(false) }
     val controlsShown = modeControlsShown(flow.mode, mapReady = mapState is MapUiState.Ready)
@@ -589,6 +592,7 @@ private fun SearchStopScreenSinglePane(
                     onMapTap()
                 },
                 stopCardOptions = rows.stopCardOptions,
+                locationBottomPadding = { clearance -> locationControlBottomPadding(gaps, optionsPillHeight, clearance) },
                 bottomControls = { clearance ->
                     if (controlsShown && mapState is MapUiState.Ready) {
                         SearchStopModeControls(
@@ -598,6 +602,8 @@ private fun SearchStopScreenSinglePane(
                                 modeBlockOpen = reduceModeBlock(modeBlockOpen, ModeBlockEvent.ButtonTapped)
                             },
                             onToggleMode = { onEvent(SearchStopUiEvent.TransportModeFilterToggled(it)) },
+                            pillHeight = optionsPillHeight,
+                            onPillHeight = { optionsPillHeight = it },
                             clearance = clearance,
                         )
                     }

@@ -132,6 +132,9 @@ fun SearchStopScreen(
     // True when opened from the timetable header to replace one leg of the
     // current trip: scopes the copy to "Change origin" / "Change destination".
     editTripLeg: Boolean = false,
+    // The saved name of the label this screen is choosing a stop for, exactly as saved. Only the label field reads it,
+    // for its fixed prompt (Search and select Home).
+    labelName: String? = null,
     // Manage is a real nav destination (ManageStopLabelsRoute), not a sheet owned by
     // this screen. The caller (SearchStopEntry) wires this to actual navigation.
     onManageLabelsClick: () -> Unit = {},
@@ -186,7 +189,7 @@ fun SearchStopScreen(
     val form = SearchStopFormModel(
         shape = shape,
         editing = flow.editing,
-        toPlaceholder = barPlaceholderFor(ToFromField.To, fieldType, editTripLeg),
+        toPlaceholder = barPlaceholderFor(ToFromField.To, fieldType, editTripLeg, labelName),
         fromPlaceholder = barPlaceholderFor(ToFromField.From, fieldType, editTripLeg),
         toStop = trip.to,
         fromStop = fromStop,

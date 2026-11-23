@@ -35,16 +35,26 @@ internal fun barPlaceholderFor(
     field: ToFromField,
     fieldType: SearchStopFieldType,
     editTripLeg: Boolean,
+    labelName: String? = null,
 ): String = when (formShapeFor(fieldType, editTripLeg)) {
     FormShape.ToAndFrom -> if (field == ToFromField.From) FROM_PLACEHOLDER else TO_PLACEHOLDER
     FormShape.Single -> when {
-        fieldType == SearchStopFieldType.LABEL -> PLACEHOLDER_LABEL
+        fieldType == SearchStopFieldType.LABEL -> labelPromptFor(labelName)
         fieldType == SearchStopFieldType.FROM -> PLACEHOLDER_CHANGE_ORIGIN
         else -> PLACEHOLDER_CHANGE_DESTINATION
     }
 }
 
-private const val PLACEHOLDER_LABEL = "Choose a stop"
+/**
+ * The prompt of the field that picks a stop for a label: Search and select Home, Search and select Work, or Search and
+ * select followed by the label's saved name exactly as saved. A label with no name to read says a stop, so the prompt is
+ * never blank. It is fixed like the From and To prompts and never becomes a stop's name.
+ */
+internal fun labelPromptFor(labelName: String?): String =
+    if (labelName.isNullOrBlank()) PLACEHOLDER_LABEL_UNNAMED else "$PLACEHOLDER_LABEL_PREFIX$labelName"
+
+private const val PLACEHOLDER_LABEL_PREFIX = "Search and select "
+private const val PLACEHOLDER_LABEL_UNNAMED = "Search and select a stop"
 private const val PLACEHOLDER_CHANGE_ORIGIN = "Change origin"
 private const val PLACEHOLDER_CHANGE_DESTINATION = "Change destination"
 

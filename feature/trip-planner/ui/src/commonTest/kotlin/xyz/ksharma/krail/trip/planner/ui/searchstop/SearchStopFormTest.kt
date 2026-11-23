@@ -53,8 +53,19 @@ class SearchStopFormTest {
     }
 
     @Test
+    fun `the label field says Search and select with the label's saved name, exactly as saved`() {
+        fun prompt(name: String?) = barPlaceholderFor(ToFromField.To, SearchStopFieldType.LABEL, false, labelName = name)
+
+        assertEquals("Search and select Home", prompt("Home"))
+        assertEquals("Search and select Work", prompt("Work"))
+        assertEquals("Search and select Gym  Bay 2", prompt("Gym  Bay 2"), "A custom label is spelled as saved.")
+        assertEquals("Search and select a stop", prompt(null), "No name to read still gives a whole prompt.")
+        assertEquals("Search and select a stop", prompt("  "))
+        assertEquals("Search and select Home", labelPromptFor("Home"))
+    }
+
+    @Test
     fun `a single bar names what it is for`() {
-        assertEquals("Choose a stop", barPlaceholderFor(ToFromField.To, SearchStopFieldType.LABEL, false))
         assertEquals("Change origin", barPlaceholderFor(ToFromField.To, SearchStopFieldType.FROM, true))
         assertEquals("Change destination", barPlaceholderFor(ToFromField.To, SearchStopFieldType.TO, true))
     }

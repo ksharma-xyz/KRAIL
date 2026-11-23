@@ -69,6 +69,7 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
             searchStopState = searchStopState,
             fieldType = key.fieldType,
             editTripLeg = key.editTripLeg,
+            labelName = key.labelKey,
             presetFrom = presetFrom,
             presetTo = presetTo,
             // The To and From form stays on screen through every pick. Only its go circle leaves, and it opens the

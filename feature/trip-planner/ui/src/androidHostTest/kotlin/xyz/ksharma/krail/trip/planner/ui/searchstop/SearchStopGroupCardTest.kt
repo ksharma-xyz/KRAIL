@@ -8,7 +8,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
@@ -20,6 +23,7 @@ import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.DpRect
@@ -105,6 +109,49 @@ class SearchStopGroupCardTest {
         composeRule.waitForIdle()
     }
 
+    /** A single field, the shape a label is chosen in: one bar with a fixed [prompt] and no stop held. */
+    private fun setSingleBar(fontScale: Float? = null) {
+        composeRule.setContent {
+            val density = LocalDensity.current
+            CompositionLocalProvider(
+                LocalDensity provides if (fontScale != null) Density(density.density, fontScale) else density,
+            ) {
+                PreviewTheme {
+                    Box(modifier = Modifier.fillMaxSize().padding(gaps.edge)) {
+                        SearchStopGroupCard(
+                            form = SearchStopFormModel(
+                                shape = FormShape.Single,
+                                editing = singleEditing,
+                                toPlaceholder = singlePrompt,
+                                fromPlaceholder = FROM_PLACEHOLDER,
+                                toStop = null,
+                                fromStop = null,
+                                fieldState = rememberTextFieldState(),
+                                focusRequester = remember { FocusRequester() },
+                                onFlowEvent = {},
+                                onGoClick = {},
+                                onTextChange = {},
+                            ),
+                            onBack = {},
+                        )
+                    }
+                }
+            }
+        }
+        composeRule.waitForIdle()
+    }
+
+    private var singleEditing by mutableStateOf<ToFromField?>(null)
+    private var singlePrompt by mutableStateOf("")
+
+    private fun showSingle(editing: ToFromField?, prompt: String) {
+        composeRule.runOnIdle {
+            singleEditing = editing
+            singlePrompt = prompt
+        }
+        composeRule.waitForIdle()
+    }
+
     /** The pixels the window draws, read by drawing the compose view into a bitmap. */
     private fun drawnPixels(): Bitmap {
         var bitmap: Bitmap? = null
@@ -176,6 +223,35 @@ class SearchStopGroupCardTest {
             assertEquals(1, layout.lineCount, "A pill is one line, never two.")
         }
         assertTrue(layouts.any { it.isLineEllipsized(0) }, "A name that does not fit ends in an ellipsis.")
+    }
+
+    @Test
+    fun `a label field reads Search and select with its label, empty or focused, and never a stop name`() {
+        setSingleBar()
+        for (label in listOf("Home", "Work", "Gym")) {
+            for (editing in listOf<ToFromField?>(null, ToFromField.To)) {
+                showSingle(editing, labelPromptFor(label))
+                composeRule.onNodeWithText("Search and select $label").assertExists()
+                composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_FROM).assertDoesNotExist()
+            }
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "w320dp-h640dp-notnight")
+    fun `a long label prompt is one line with an ellipsis at 200 percent text, at rest and focused`() {
+        setSingleBar(fontScale = 2f)
+        for (editing in listOf<ToFromField?>(null, ToFromField.To)) {
+            showSingle(editing, labelPromptFor(LONG_LABEL))
+
+            assertNear("the pill stays 48 tall", 48.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).height)
+            val layouts = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_TO, useUnmergedTree = true)
+                .fetchSemanticsNode()
+                .collectTextLayouts()
+            assertTrue(layouts.isNotEmpty(), "The prompt is text that can be measured.")
+            for (layout in layouts) assertEquals(1, layout.lineCount, "The prompt is one line, never two.")
+            assertTrue(layouts.any { it.isLineEllipsized(0) }, "A prompt that does not fit ends in an ellipsis.")
+        }
     }
 
     private fun androidx.compose.ui.semantics.SemanticsNode.collectTextLayouts(): List<TextLayoutResult> {
@@ -262,6 +338,7 @@ class SearchStopGroupCardTest {
     private fun DpRect.width() = right - left
 
     private companion object {
+        const val LONG_LABEL = "Grandmother's house near the Parramatta River ferry wharf"
         val LONG = StopItem(
             stopName = "Wollongong Station Platform Two Via Sydenham And Central",
             stopId = "stop_long",

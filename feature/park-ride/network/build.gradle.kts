@@ -68,6 +68,7 @@ kotlin {
                 implementation(libs.test.kotlin)
                 implementation(libs.test.turbine)
                 implementation(libs.test.kotlinxCoroutineTest)
+                implementation(projects.core.testing)
             }
         }
     }

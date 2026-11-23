@@ -1,9 +1,9 @@
 package xyz.ksharma.krail.park.ride.network
 
 import xyz.ksharma.krail.core.remoteconfig.RemoteConfigDefaults
-import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
+import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -11,9 +11,7 @@ import kotlin.test.assertTrue
 class RealNswParkRideFacilityManagerTest {
 
     private fun managerReading(value: FlagValue) = RealNswParkRideFacilityManager(
-        flag = object : Flag {
-            override fun getFlagValue(key: String): FlagValue = value
-        },
+        flag = FakeFlag().apply { setFlagValue(FlagKeys.NSW_PARK_RIDE_FACILITIES.key, value) },
     )
 
     @Test

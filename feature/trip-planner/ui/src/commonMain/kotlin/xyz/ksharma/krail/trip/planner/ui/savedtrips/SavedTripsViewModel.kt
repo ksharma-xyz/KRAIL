@@ -174,7 +174,6 @@ class SavedTripsViewModel(
             // was never saved: the rider backgrounded the app mid edit, and that is a cancel.
             updateUiState { copy(labelChipTap = LabelChipTap.Idle, reorder = null) }
             updateInviteFriendsTileSeenState()
-            loadReorderTipSeenState()
             maybeRequestReview()
         }
         .onCompletion {
@@ -247,7 +246,6 @@ class SavedTripsViewModel(
             }
             SavedTripUiEvent.StopTracking -> trackingManager.stop()
             is SavedTripUiEvent.MoveSavedTripToIndex -> onMoveSavedTrip(event.tripId, event.targetIndex)
-            SavedTripUiEvent.MarkReorderTipSeen -> onMarkReorderTipSeen()
             is SavedTripUiEvent.EnterReorder -> updateReorder { it ?: beginReorder(event.liftedKey) }
             is SavedTripUiEvent.ReorderMove -> updateReorder { it?.move(event.fromKey, event.toKey) }
             is SavedTripUiEvent.ReorderRemove -> updateReorder { it?.remove(event.tripId) }
@@ -570,18 +568,6 @@ class SavedTripsViewModel(
                 fromStopId = savedTrip.fromStopId,
                 toStopId = savedTrip.toStopId,
             )
-        }
-    }
-
-    private suspend fun loadReorderTipSeenState() {
-        val hasSeen = preferences.getBoolean(SandookPreferences.KEY_HAS_SEEN_SAVED_TRIP_CARD_REORDER_TIP) ?: false
-        if (!hasSeen) updateUiState { copy(hasSeenReorderTip = false) }
-    }
-
-    private fun onMarkReorderTipSeen() {
-        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
-            preferences.setBoolean(SandookPreferences.KEY_HAS_SEEN_SAVED_TRIP_CARD_REORDER_TIP, true)
-            // No UI state update, the tip stays visible for the current session, hidden on next launch.
         }
     }
 

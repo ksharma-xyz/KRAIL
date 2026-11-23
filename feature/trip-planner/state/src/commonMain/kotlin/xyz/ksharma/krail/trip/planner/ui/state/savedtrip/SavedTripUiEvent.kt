@@ -64,8 +64,6 @@ sealed interface SavedTripUiEvent {
 
     data class MoveSavedTripToIndex(val tripId: String, val targetIndex: Int) : SavedTripUiEvent
 
-    data object MarkReorderTipSeen : SavedTripUiEvent
-
     /**
      * A long press on a card began reorder mode, with that card lifted: a trip's id, or
      * [PARK_RIDE_ROW_KEY] for the Park & Ride row. Nothing else begins it.

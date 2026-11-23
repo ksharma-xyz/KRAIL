@@ -45,7 +45,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -371,27 +370,6 @@ internal fun LazyListScope.savedTripsContent(
     stickyHeader(key = "saved_trips_title") {
         SavedTripsTitle {
             Text(text = "Saved Trips")
-        }
-    }
-
-    item(key = "onboarding_reorder_tip") {
-        val dim = KrailTheme.dimensions
-        AnimatedVisibility(
-            visible = !savedTripsState.hasSeenReorderTip && !editing,
-            enter = expandVertically(animationSpec = tween(durationMillis = 300)) +
-                fadeIn(animationSpec = tween(durationMillis = 250)),
-            exit = shrinkVertically(animationSpec = tween(durationMillis = 200)) +
-                fadeOut(animationSpec = tween(durationMillis = 150)),
-        ) {
-            LaunchedEffect(Unit) { onEvent(SavedTripUiEvent.MarkReorderTipSeen) }
-            Text(
-                text = "💡 Long press any trip to reorder or remove it.",
-                style = KrailTheme.typography.bodySmall,
-                color = KrailTheme.colors.softLabel,
-                modifier = Modifier
-                    .padding(horizontal = dim.pageHorizontalPadding)
-                    .padding(bottom = dim.spacingM),
-            )
         }
     }
 

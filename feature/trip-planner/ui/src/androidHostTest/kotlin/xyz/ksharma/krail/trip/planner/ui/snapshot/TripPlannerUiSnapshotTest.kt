@@ -58,6 +58,7 @@ class TripPlannerUiSnapshotTest : BaseSnapshotTest() {
         "PreviewIntroThemeNarrowBusChosen",
         "PreviewIntroParkRideWideCardContent",
         "PreviewIntroDestinationNarrowSuggestions",
+        "PreviewIntroDestinationNarrowSelected",
         "PreviewIntroDestinationNarrowTyped",
         "PreviewIntroDestinationNarrowNoMatch",
         "PreviewIntroOriginNarrowNearby",

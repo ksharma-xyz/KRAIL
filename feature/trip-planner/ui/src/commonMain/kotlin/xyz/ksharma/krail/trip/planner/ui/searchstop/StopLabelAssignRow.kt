@@ -55,10 +55,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
  *
  * [showLabelAssign] is on for Search Stop. A list that only picks a stop, such as the Intro's, turns it
  * off: the row is then the name and the mode icons, with no chevron and nothing to expand, and the
- * label arguments are unused.
- *
- * [tapAreaModifier] is applied to the tappable part of the row, after its click, so a test tag or a
- * semantic such as selected lands on the one node that has the click and the row's text.
+ * label arguments are unused. The Intro also leaves [onRowClick] null and puts the click, the ripple and the tint on a node of its
+ * own around the whole row (`IntroStopRow`), so its tap area is the row's whole height and not the part inside the padding.
  */
 @Composable
 internal fun StopLabelAssignRow(
@@ -73,7 +71,6 @@ internal fun StopLabelAssignRow(
     modifier: Modifier = Modifier,
     onRowClick: (() -> Unit)? = null,
     showLabelAssign: Boolean = true,
-    tapAreaModifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
 
@@ -90,7 +87,6 @@ internal fun StopLabelAssignRow(
                 modifier = Modifier
                     .weight(1f)
                     .then(if (onRowClick != null) Modifier.klickable(onClick = onRowClick) else Modifier)
-                    .then(tapAreaModifier)
                     // Vertical padding lives INSIDE the klickable chain (after it, not
                     // on the outer Column) so the ripple/touch target covers the row's
                     // full visual height — previously the padding sat outside the

@@ -65,7 +65,9 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.savers.parkRideExpansionSave
 import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionSlot
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.HomeChipRow
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.HomeSearchPill
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.HomeStackContext
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.ReorderTopRow
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripActions
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsTitleBarActions
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.columnGutterFor
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.homeChipsFor
@@ -403,15 +405,16 @@ private fun HomeCardStack(
             ),
         ) {
             homeStackListBody(
-                savedTripsState = savedTripsState,
+                context = HomeStackContext(
+                    state = savedTripsState,
+                    expandedMap = stack.expandedMap,
+                    reorderState = stack.reorderState,
+                    actions = SavedTripActions(onCardClick = actions.onSavedTripCardClick, onEvent = actions.onEvent),
+                    suggestion = stack.suggestion,
+                ),
                 trackedJourney = trackedJourney,
-                onEvent = actions.onEvent,
-                onSavedTripCardClick = actions.onSavedTripCardClick,
                 onTrackingCardClick = actions.onTrackingCardClick,
                 onStopTracking = actions.onStopTracking,
-                expandedMap = stack.expandedMap,
-                reorderState = stack.reorderState,
-                suggestion = stack.suggestion,
             )
         }
     }

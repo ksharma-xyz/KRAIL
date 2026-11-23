@@ -147,7 +147,7 @@ internal fun StopLabelAssignRow(
     }
 }
 
-/** The gap between a stop name and the row of mode icons under it. There is no 3 dp token, so this is 1.5 times the old XXS. */
+// There is no 3 dp spacing token, so this is 1.5 times the old XXS.
 private val StopNameToModeIconsGap = 3.dp
 
 @Composable

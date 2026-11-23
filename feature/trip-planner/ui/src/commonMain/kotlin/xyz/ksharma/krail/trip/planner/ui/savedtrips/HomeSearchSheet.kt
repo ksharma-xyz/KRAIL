@@ -27,10 +27,8 @@ import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 
-/** The sheet's rounded top corners, the radius `main` gave the search row. */
 private val SheetTopRadius = 36.dp
 
-/** The sheet's own vertical padding, the one `main` gave the search row: 20 dp above and below, and 8 dp more above. */
 private val SheetVerticalPadding = 20.dp
 
 /**

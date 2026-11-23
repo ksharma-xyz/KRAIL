@@ -208,20 +208,8 @@ class SavedTripsViewModel(
         when (event) {
             is SavedTripUiEvent.DeleteSavedTrip -> onDeleteSavedTrip(event.trip)
             is SavedTripUiEvent.AnalyticsSavedTripCardClick -> onSavedTripCardClick(event)
-            SavedTripUiEvent.ReverseStopClick -> {
-                stopResultsManager.reverseSelectedStops()
-                updateSelectedStops()
-                analytics.track(AnalyticsEvent.ReverseStopClickEvent)
-            }
-            is SavedTripUiEvent.AnalyticsLoadTimeTableClick ->
-                analytics.trackLoadTimeTableClick(
-                    fromStopId = event.fromStopId,
-                    toStopId = event.toStopId,
-                    searchSessionId = searchSessionStore.consumeFor(
-                        fromStopId = event.fromStopId,
-                        toStopId = event.toStopId,
-                    ),
-                )
+            SavedTripUiEvent.ReverseStopClick -> onReverseStopClick()
+            is SavedTripUiEvent.AnalyticsLoadTimeTableClick -> onLoadTimeTableClick(event)
             SavedTripUiEvent.AnalyticsSettingsButtonClick ->
                 analytics.track(AnalyticsEvent.SettingsClickEvent)
             SavedTripUiEvent.AnalyticsFromButtonClick ->
@@ -263,6 +251,23 @@ class SavedTripsViewModel(
             SavedTripUiEvent.LabelChipTapHandled -> updateUiState { copy(labelChipTap = LabelChipTap.Idle) }
             is SavedTripUiEvent.LabelStopAssigned -> onLabelStopAssigned(event)
         }
+    }
+
+    private fun onReverseStopClick() {
+        stopResultsManager.reverseSelectedStops()
+        updateSelectedStops()
+        analytics.track(AnalyticsEvent.ReverseStopClickEvent)
+    }
+
+    private fun onLoadTimeTableClick(event: SavedTripUiEvent.AnalyticsLoadTimeTableClick) {
+        analytics.trackLoadTimeTableClick(
+            fromStopId = event.fromStopId,
+            toStopId = event.toStopId,
+            searchSessionId = searchSessionStore.consumeFor(
+                fromStopId = event.fromStopId,
+                toStopId = event.toStopId,
+            ),
+        )
     }
 
     private fun onSavedTripCardClick(event: SavedTripUiEvent.AnalyticsSavedTripCardClick) {

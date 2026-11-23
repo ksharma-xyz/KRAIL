@@ -13,7 +13,6 @@ import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,10 +31,8 @@ import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.SavedTripCard
-import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionSlot
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ReorderSession
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
-import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.fromStopDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.toStopDisplay
@@ -52,19 +49,15 @@ import app.krail.taj.resources.Res as TajRes
  * row follows it, with none it comes first, and with no saved station there is no row.
  */
 internal fun LazyListScope.homeStackListBody(
-    savedTripsState: SavedTripsState,
+    context: HomeStackContext,
     trackedJourney: TrackedJourney?,
-    onEvent: (SavedTripUiEvent) -> Unit,
-    onSavedTripCardClick: (StopItem?, StopItem?) -> Unit,
     onTrackingCardClick: () -> Unit,
     onStopTracking: () -> Unit,
-    expandedMap: SnapshotStateMap<String, Boolean>,
-    reorderState: ReorderableLazyListState,
-    suggestion: ParkRideSuggestionSlot? = null,
 ) {
-    if (savedTripsState.isSavedTripsLoading) return
+    if (context.state.isSavedTripsLoading) return
 
-    savedTripsState.infoTiles?.let { infoTiles ->
+    val onEvent = context.actions.onEvent
+    context.state.infoTiles?.let { infoTiles ->
         infoTiles(
             infoTiles = infoTiles,
             onCtaClick = { tileData -> onEvent(SavedTripUiEvent.InfoTileCtaClick(tileData)) },
@@ -73,15 +66,7 @@ internal fun LazyListScope.homeStackListBody(
         )
     }
     trackingSection(trackedJourney, onTrackingCardClick, onStopTracking)
-    homeStackItems(
-        HomeStackContext(
-            state = savedTripsState,
-            expandedMap = expandedMap,
-            reorderState = reorderState,
-            actions = SavedTripActions(onCardClick = onSavedTripCardClick, onEvent = onEvent),
-            suggestion = suggestion,
-        ),
-    )
+    homeStackItems(context)
 }
 
 /**

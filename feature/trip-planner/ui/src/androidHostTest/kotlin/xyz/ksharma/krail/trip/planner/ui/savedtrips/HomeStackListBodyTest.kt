@@ -139,14 +139,15 @@ class HomeStackListBodyTest {
 
             LazyColumn(state = lazyListState) {
                 homeStackListBody(
-                    savedTripsState = state,
+                    context = HomeStackContext(
+                        state = state,
+                        expandedMap = expandedMap,
+                        reorderState = reorderState,
+                        actions = SavedTripActions(onCardClick = { _, _ -> }, onEvent = {}),
+                    ),
                     trackedJourney = null,
-                    onEvent = {},
-                    onSavedTripCardClick = { _, _ -> },
                     onTrackingCardClick = {},
                     onStopTracking = {},
-                    expandedMap = expandedMap,
-                    reorderState = reorderState,
                 )
             }
         }

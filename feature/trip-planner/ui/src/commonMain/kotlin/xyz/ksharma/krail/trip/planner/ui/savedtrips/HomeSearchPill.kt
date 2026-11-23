@@ -38,8 +38,7 @@ import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 /** What the home search bar says while it is waiting. */
 internal const val HOME_PILL_PLACEHOLDER = "Where are you going?"
 
-/** What a screen reader says for the microphone at the end of the bar. */
-private const val ASK_KRAIL_DESCRIPTION = "Ask KRAIL"
+private const val ASK_KRAIL_MICROPHONE_DESCRIPTION = "Ask KRAIL"
 
 /**
  * The one search bar at the bottom of the Saved Trips screen: a tap opens Search Stop for the destination,
@@ -117,7 +116,7 @@ private fun AskKrailMic(slot: Dp, onClick: () -> Unit) {
             .testTag(TripPlannerTestTags.SEARCH_ROW_ASK_KRAIL)
             .klickable(onClick = onClick)
             .semantics(mergeDescendants = true) {
-                contentDescription = ASK_KRAIL_DESCRIPTION
+                contentDescription = ASK_KRAIL_MICROPHONE_DESCRIPTION
                 role = Role.Button
             },
         contentAlignment = Alignment.Center,

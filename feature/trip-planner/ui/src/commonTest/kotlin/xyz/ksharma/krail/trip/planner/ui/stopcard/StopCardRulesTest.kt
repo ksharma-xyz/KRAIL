@@ -164,5 +164,12 @@ class StopCardRulesTest {
         assertEquals(308.dp, controlsClearance(300.dp))
     }
 
+    @Test
+    fun `a host that hides its controls is never given a clearance, and every other host keeps the lift`() {
+        assertEquals(0.dp, controlsClearanceFor(cardHeight = 300.dp, cardOpen = true, controlsHide = true))
+        assertEquals(0.dp, controlsClearanceFor(cardHeight = 300.dp, cardOpen = false, controlsHide = false))
+        assertEquals(308.dp, controlsClearanceFor(cardHeight = 300.dp, cardOpen = true, controlsHide = false))
+    }
+
     // endregion
 }

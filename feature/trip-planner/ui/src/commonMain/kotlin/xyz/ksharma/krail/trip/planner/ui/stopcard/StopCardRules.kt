@@ -99,6 +99,14 @@ internal fun controlsClearance(cardHeight: Dp): Dp =
     if (cardHeight > 0.dp) cardHeight + STOP_CARD_GAP else 0.dp
 
 /**
+ * The clearance the map's controls ride at: [controlsClearance] while a card is open and the controls stay
+ * ([controlsHide] false), and nothing while no card is open or while the host hides the controls instead of lifting
+ * them (Search Stop), so a hidden control never leaves a gap behind and comes back to where it was.
+ */
+internal fun controlsClearanceFor(cardHeight: Dp, cardOpen: Boolean, controlsHide: Boolean): Dp =
+    if (cardOpen && !controlsHide) controlsClearance(cardHeight) else 0.dp
+
+/**
  * Two cards are one card, with its state kept, only while they are for the same stop. The board's
  * open state, its lines chip and its filter are keyed on this, so tapping another pin starts that
  * stop's card closed and a rotation keeps this one as it was.

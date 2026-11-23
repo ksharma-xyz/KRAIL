@@ -593,10 +593,17 @@ private fun SearchStopScreenSinglePane(
                 },
                 stopCardOptions = rows.stopCardOptions,
                 locationBottomPadding = { clearance -> locationControlBottomPadding(gaps, optionsPillHeight, clearance) },
-                bottomControls = { clearance ->
+                // The controls get out of an open stop card's way by hiding, not by riding above it.
+                hidesControlsForCard = true,
+                bottomControls = { clearance, controlsHidden ->
+                    // A block that was open is shut as the button goes, and stays shut when it returns.
+                    LaunchedEffect(controlsHidden) {
+                        if (controlsHidden) modeBlockOpen = reduceModeBlock(modeBlockOpen, ModeBlockEvent.ControlsHidden)
+                    }
                     if (controlsShown && mapState is MapUiState.Ready) {
                         SearchStopModeControls(
                             open = modeBlockOpen,
+                            visible = !controlsHidden,
                             selectedModes = mapState.mapDisplay.selectedTransportModes,
                             onButtonClick = {
                                 modeBlockOpen = reduceModeBlock(modeBlockOpen, ModeBlockEvent.ButtonTapped)

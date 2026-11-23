@@ -66,7 +66,7 @@ import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardOptions
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardPickActions
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardPlacement
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardWithDepartures
-import xyz.ksharma.krail.trip.planner.ui.stopcard.controlsClearance
+import xyz.ksharma.krail.trip.planner.ui.stopcard.controlsClearanceFor
 import xyz.ksharma.krail.trip.planner.ui.stopcard.nearbyStopFor
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -99,11 +99,16 @@ fun SearchStopMap(
     // What the floating stop card offers besides the stop's board: Save as, and Go here or Start here.
     stopCardOptions: StopCardOptions = StopCardOptions(),
     // Controls a host draws over the map's bottom edge. They get the height that lifts them above an open stop card,
-    // the same value that lifts the location button, so the card never covers them. Search Stop's mode button.
-    bottomControls: @Composable BoxScope.(clearance: Dp) -> Unit = {},
+    // the same value that lifts the location button, so the card never covers them, and whether they are hidden for the
+    // card instead (see [hidesControlsForCard]). Search Stop's mode button.
+    bottomControls: @Composable BoxScope.(clearance: Dp, controlsHidden: Boolean) -> Unit = { _, _ -> },
     // How far above the bottom inset the location button stands, given the clearance an open stop card asks for. Null keeps
     // one edge and the clearance, as every other host has it. Search Stop stands it on the line Options is on.
     locationBottomPadding: ((clearance: Dp) -> Dp)? = null,
+    // True where the map's controls get out of the way of an open stop card by hiding (Search Stop): the location button
+    // shrinks away and back, the host's bottom controls are told, and no clearance lifts anything. False keeps the lift
+    // above the card, as the home map pane and every other host have it.
+    hidesControlsForCard: Boolean = false,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         when (mapUiState) {
@@ -134,6 +139,7 @@ fun SearchStopMap(
                     stopCardOptions = stopCardOptions,
                     bottomControls = bottomControls,
                     locationBottomPadding = locationBottomPadding,
+                    hidesControlsForCard = hidesControlsForCard,
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -181,8 +187,9 @@ private fun MapContent(
     showsLocationButton: Boolean = true,
     extraLayers: @Composable () -> Unit = {},
     stopCardOptions: StopCardOptions = StopCardOptions(),
-    bottomControls: @Composable BoxScope.(clearance: Dp) -> Unit = {},
+    bottomControls: @Composable BoxScope.(clearance: Dp, controlsHidden: Boolean) -> Unit = { _, _ -> },
     locationBottomPadding: ((clearance: Dp) -> Dp)? = null,
+    hidesControlsForCard: Boolean = false,
 ) {
     log(
         "[NEARBY_STOPS_UI] MapContent rendered: nearbyStops.size=${mapState.mapDisplay.nearbyStops.size}, " +
@@ -311,36 +318,33 @@ private fun MapContent(
                 onMapTap = { if (selectedStopId != null) selectedStopId = null else onMapTap() },
             )
 
-            // The location button, bottom end. All location business logic lives here, not inside
-            // MapActionButtons.
-            if (showsLocationButton) {
-                MapActionButtons(
-                    isLocationActive = mapState.mapDisplay.userLocation != null,
-                    onLocationButtonClick = {
-                        onEvent(
-                            SearchStopUiEvent.LocationButtonClicked(
-                                hadLocation = mapState.mapDisplay.userLocation != null,
-                            ),
+            // The location button, bottom end, and the host's own bottom controls. All location business logic lives
+            // here, not inside MapActionButtons.
+            MapControlsLayer(
+                showsLocationButton = showsLocationButton,
+                isLocationActive = mapState.mapDisplay.userLocation != null,
+                onLocationButtonClick = {
+                    onEvent(
+                        SearchStopUiEvent.LocationButtonClicked(
+                            hadLocation = mapState.mapDisplay.userLocation != null,
+                        ),
+                    )
+                    scope.launch {
+                        handleLocationButtonClick(
+                            userLoc = mapState.mapDisplay.userLocation,
+                            cameraState = cameraState,
+                            userLocationManager = userLocationManager,
+                            onPermissionDenied = onPermissionStatus,
+                            onRequestPermission = onRequestPermission,
                         )
-                        scope.launch {
-                            handleLocationButtonClick(
-                                userLoc = mapState.mapDisplay.userLocation,
-                                cameraState = cameraState,
-                                userLocationManager = userLocationManager,
-                                onPermissionDenied = onPermissionStatus,
-                                onRequestPermission = onRequestPermission,
-                            )
-                        }
-                    },
-                    // Rides above an open card, so the card never covers it.
-                    modifier = Modifier.align(Alignment.BottomStart),
-                    bottomPadding = (if (selectedStop != null) controlsClearance(cardHeight) else 0.dp).let { clearance ->
-                        locationBottomPadding?.invoke(clearance) ?: (KrailTheme.dimensions.spacingXL + clearance)
-                    },
-                )
-            }
-
-            bottomControls(if (selectedStop != null) controlsClearance(cardHeight) else 0.dp)
+                    }
+                },
+                cardOpen = selectedStop != null,
+                cardHeight = cardHeight,
+                hidesControlsForCard = hidesControlsForCard,
+                locationBottomPadding = locationBottomPadding,
+                bottomControls = bottomControls,
+            )
 
             // The floating stop card, over the map and never a sheet.
             selectedStop?.let { stop ->
@@ -387,6 +391,39 @@ private fun MapContent(
             }
         }
     }
+}
+
+/**
+ * The map's own controls over its bottom edge: the location button and whatever the host draws there ([bottomControls]).
+ *
+ * While a stop card is open ([cardOpen]) they do one of two things. Where [hidesControlsForCard] is set (Search Stop) they
+ * get out of the card's way by hiding: the location button shrinks to nothing about its own centre while it fades and
+ * grows back when the card is dismissed, the host is told through `controlsHidden`, and no clearance is given, so nothing
+ * is lifted. Everywhere else they stay and ride one gap above the card by [controlsClearanceFor].
+ */
+@Composable
+internal fun BoxScope.MapControlsLayer(
+    showsLocationButton: Boolean,
+    isLocationActive: Boolean,
+    onLocationButtonClick: () -> Unit,
+    cardOpen: Boolean,
+    cardHeight: Dp,
+    hidesControlsForCard: Boolean,
+    locationBottomPadding: ((clearance: Dp) -> Dp)?,
+    bottomControls: @Composable BoxScope.(clearance: Dp, controlsHidden: Boolean) -> Unit,
+) {
+    val clearance = controlsClearanceFor(cardHeight = cardHeight, cardOpen = cardOpen, controlsHide = hidesControlsForCard)
+    val controlsHidden = cardOpen && hidesControlsForCard
+    if (showsLocationButton) {
+        MapActionButtons(
+            isLocationActive = isLocationActive,
+            onLocationButtonClick = onLocationButtonClick,
+            modifier = Modifier.align(Alignment.BottomStart),
+            bottomPadding = locationBottomPadding?.invoke(clearance) ?: (KrailTheme.dimensions.spacingXL + clearance),
+            visible = !controlsHidden,
+        )
+    }
+    bottomControls(clearance, controlsHidden)
 }
 
 /**

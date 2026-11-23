@@ -3,14 +3,6 @@ package xyz.ksharma.krail.trip.planner.ui.searchstop
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -62,6 +53,10 @@ import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.FloatingDark
+import xyz.ksharma.krail.trip.planner.ui.components.MapControlVisibility
+import xyz.ksharma.krail.trip.planner.ui.components.MapMotion
+import xyz.ksharma.krail.trip.planner.ui.components.mapPopIn
+import xyz.ksharma.krail.trip.planner.ui.components.mapPopOut
 
 /**
  * The mode filter's controls at the bottom left of the map state: the [SearchStopModeButton] and, while it is open, the
@@ -74,6 +69,10 @@ import xyz.ksharma.krail.trip.planner.ui.components.FloatingDark
  * pill is [SearchStopGaps.aboveIcon] above the "i". The block is [SearchStopGaps.betweenCards] above the line's visible
  * top and spans the same edges as the group card. [clearance] lifts the line above an open stop card the way it lifts
  * the location control.
+ *
+ * While a stop card is open, or the location permission is not granted, [visible] is false and the button and its card
+ * are gone: the card is told to shut by the screen, and the button fades and scales away from its bottom start corner
+ * the way the card does, then comes back the same way. Neither takes a tap while it is on its way out or gone.
  *
  * [pillHeight] is the drawn height of the Options pill, which the screen holds because the location control stands on
  * the same line, and [onPillHeight] reports it as it is measured.
@@ -93,6 +92,7 @@ internal fun BoxScope.SearchStopModeControls(
     onPillHeight: (Dp) -> Unit,
     modifier: Modifier = Modifier,
     clearance: Dp = 0.dp,
+    visible: Boolean = true,
     reduceMotion: Boolean = isReduceMotionEnabled(),
 ) {
     val gaps = rememberSearchStopGaps()
@@ -109,7 +109,7 @@ internal fun BoxScope.SearchStopModeControls(
         horizontalAlignment = Alignment.Start,
     ) {
         AnimatedVisibility(
-            visible = open,
+            visible = open && visible,
             modifier = Modifier.fillMaxWidth().offset(y = optionsCardOverlap(gaps, pillHeight)),
             enter = modeBlockEnter(reduceMotion),
             exit = modeBlockExit(reduceMotion),
@@ -120,46 +120,33 @@ internal fun BoxScope.SearchStopModeControls(
                 Spacer(modifier = Modifier.height(gaps.betweenCards))
             }
         }
-        SearchStopModeButton(
-            expanded = open,
-            filtered = modeFilterActive(allClasses, selectedModes),
-            onClick = onButtonClick,
-            pillBottomGap = gaps.aboveIcon,
-            onPillHeight = onPillHeight,
-        )
+        MapControlVisibility(
+            visible = visible,
+            enter = mapPopIn(reduceMotion),
+            exit = mapPopOut(reduceMotion),
+        ) {
+            SearchStopModeButton(
+                expanded = open,
+                filtered = modeFilterActive(allClasses, selectedModes),
+                onClick = onButtonClick,
+                pillBottomGap = gaps.aboveIcon,
+                onPillHeight = onPillHeight,
+            )
+        }
     }
 }
 
 /** The block grows out of the button: it fades in while it scales up from its bottom start corner. */
-internal fun modeBlockEnter(reduceMotion: Boolean): EnterTransition = if (reduceMotion) {
-    EnterTransition.None
-} else {
-    fadeIn(animationSpec = tween(durationMillis = MODE_BLOCK_FADE_IN_MS, easing = LinearOutSlowInEasing)) +
-        scaleIn(
-            initialScale = MODE_BLOCK_START_SCALE,
-            transformOrigin = MODE_BLOCK_ORIGIN,
-            animationSpec = tween(durationMillis = MODE_BLOCK_ENTER_MS, easing = FastOutSlowInEasing),
-        )
-}
+internal fun modeBlockEnter(reduceMotion: Boolean): EnterTransition = mapPopIn(reduceMotion)
 
 /** And goes back into it, a little quicker: it fades out while it scales down to its bottom start corner. */
-internal fun modeBlockExit(reduceMotion: Boolean): ExitTransition = if (reduceMotion) {
-    ExitTransition.None
-} else {
-    fadeOut(animationSpec = tween(durationMillis = MODE_BLOCK_EXIT_MS, easing = FastOutLinearInEasing)) +
-        scaleOut(
-            targetScale = MODE_BLOCK_START_SCALE,
-            transformOrigin = MODE_BLOCK_ORIGIN,
-            animationSpec = tween(durationMillis = MODE_BLOCK_EXIT_MS, easing = FastOutSlowInEasing),
-        )
-}
+internal fun modeBlockExit(reduceMotion: Boolean): ExitTransition = mapPopOut(reduceMotion)
 
-// The same 200 ms in and 150 ms out the departure board's expanding content uses.
-internal const val MODE_BLOCK_ENTER_MS = 200
-internal const val MODE_BLOCK_FADE_IN_MS = 150
-internal const val MODE_BLOCK_EXIT_MS = 150
-internal const val MODE_BLOCK_START_SCALE = 0.8f
-private val MODE_BLOCK_ORIGIN = TransformOrigin(pivotFractionX = 0f, pivotFractionY = 1f)
+// The one motion spec's numbers (`MapMotion`), by the names the block's tests have always read.
+internal const val MODE_BLOCK_ENTER_MS = MapMotion.ENTER_MS
+internal const val MODE_BLOCK_FADE_IN_MS = MapMotion.FADE_IN_MS
+internal const val MODE_BLOCK_EXIT_MS = MapMotion.EXIT_MS
+internal const val MODE_BLOCK_START_SCALE = MapMotion.POP_START_SCALE
 
 /**
  * The button that opens and shuts the mode block: taj's [Button] at its extra small size reading [MODE_BUTTON_TEXT]

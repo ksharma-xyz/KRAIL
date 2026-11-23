@@ -170,10 +170,14 @@ internal fun modeFilterActive(allClasses: List<Int>, selected: Set<Int>): Boolea
     allClasses.any { it !in selected }
 
 /** What moves the mode block open or shut. */
-internal enum class ModeBlockEvent { ButtonTapped, MapTapped, LeftMapState }
+internal enum class ModeBlockEvent { ButtonTapped, MapTapped, LeftMapState, ControlsHidden }
 
-/** Open on a tap of the button when shut and shut by the button again, a tap on the map, or leaving the map state. */
+/**
+ * Open on a tap of the button when shut and shut by the button again, a tap on the map, leaving the map state, or the
+ * button going away because a stop card opened. A card that was open when the button went is shut and stays shut when the
+ * button comes back, so the rider returns to the map as they left it, with the block closed.
+ */
 internal fun reduceModeBlock(open: Boolean, event: ModeBlockEvent): Boolean = when (event) {
     ModeBlockEvent.ButtonTapped -> !open
-    ModeBlockEvent.MapTapped, ModeBlockEvent.LeftMapState -> false
+    ModeBlockEvent.MapTapped, ModeBlockEvent.LeftMapState, ModeBlockEvent.ControlsHidden -> false
 }

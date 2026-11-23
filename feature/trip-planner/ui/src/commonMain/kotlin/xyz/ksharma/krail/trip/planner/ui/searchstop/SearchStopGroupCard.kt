@@ -1,5 +1,12 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,8 +22,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.testTag
 import xyz.ksharma.krail.info.tiles.ui.infoTileGlow
+import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.components.MapMotion
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromBlockStyle
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
@@ -76,10 +85,24 @@ internal fun SearchStopGroupCard(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (groupCardShownFor(form.shape)) {
-        SearchStopCard(form = form, onBack = onBack, modifier = modifier)
-    } else {
-        SearchStopPill(form = form, onBack = onBack, modifier = modifier)
+    // The card and the pill fade into one another and the box takes the new size softly, with no jump, on the motion spec. The
+    // box is never clipped while it does, because its glow is drawn outside its shape.
+    val reduceMotion = isReduceMotionEnabled()
+    AnimatedContent(
+        targetState = groupCardShownFor(form.shape),
+        modifier = modifier,
+        transitionSpec = {
+            val fade = if (reduceMotion) snap<Float>() else tween(MapMotion.ENTER_MS, easing = MapMotion.ENTER_EASING)
+            (fadeIn(animationSpec = fade) togetherWith fadeOut(animationSpec = fade))
+                .using(SizeTransform(clip = false))
+        },
+        label = "search-stop-box",
+    ) { showsCard ->
+        if (showsCard) {
+            SearchStopCard(form = form, onBack = onBack)
+        } else {
+            SearchStopPill(form = form, onBack = onBack)
+        }
     }
 }
 

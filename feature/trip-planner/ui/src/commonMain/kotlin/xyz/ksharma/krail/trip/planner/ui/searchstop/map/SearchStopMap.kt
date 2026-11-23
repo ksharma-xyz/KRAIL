@@ -62,10 +62,10 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import xyz.ksharma.krail.trip.planner.ui.stopcard.AnimatedStopCardPlacement
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardBackHandlers
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardOptions
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardPickActions
-import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardPlacement
 import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardWithDepartures
 import xyz.ksharma.krail.trip.planner.ui.stopcard.controlsClearanceFor
 import xyz.ksharma.krail.trip.planner.ui.stopcard.nearbyStopFor
@@ -214,6 +214,10 @@ private fun MapContent(
     val nearbyStops = mapState.mapDisplay.nearbyStops
     val selectedStop = remember(selectedStopId, nearbyStops) { nearbyStopFor(selectedStopId, nearbyStops) }
     var cardHeight by remember { mutableStateOf(0.dp) }
+    // The stop the card was last open for, held so the card can slide away still showing it once it is dismissed.
+    var lastStop by remember { mutableStateOf<NearbyStopFeature?>(null) }
+    LaunchedEffect(selectedStop) { if (selectedStop != null) lastStop = selectedStop }
+    val shownStop = selectedStop ?: lastStop
 
     // Whether the open card's Departure Board is expanded, held here for the back order and for the host, which hides its box
     // while it is. Keyed on the stop, so another pin's card starts with its board shut.
@@ -367,9 +371,14 @@ private fun MapContent(
                 bottomControls = bottomControls,
             )
 
-            // The floating stop card, over the map and never a sheet.
-            selectedStop?.let { stop ->
-                StopCardPlacement(topReserve = stopCardTopReserve ?: ornamentTopPadding, onHeight = { cardHeight = it }) {
+            // The floating stop card, over the map and never a sheet. It slides up with a fade and back down as it is dismissed,
+            // so the stop it shows is held for the length of that exit.
+            AnimatedStopCardPlacement(
+                visible = selectedStop != null,
+                topReserve = stopCardTopReserve ?: ornamentTopPadding,
+                onHeight = { cardHeight = it },
+            ) {
+                shownStop?.let { stop ->
                     StopCardWithDepartures(
                         stop = stop,
                         onClose = { selectedStopId = null },

@@ -1,5 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.stopcard
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +29,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,11 +50,14 @@ import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.components.RoundIconButton
+import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.CloseCircleButton
 import xyz.ksharma.krail.trip.planner.ui.components.FloatingDark
 import xyz.ksharma.krail.trip.planner.ui.components.mapCardColors
+import xyz.ksharma.krail.trip.planner.ui.components.mapSlideDownOut
+import xyz.ksharma.krail.trip.planner.ui.components.mapSlideUpIn
 import xyz.ksharma.krail.trip.planner.ui.components.softCloseCircle
 import xyz.ksharma.krail.trip.planner.ui.searchstop.searchStopEdge
 import app.krail.taj.resources.Res as TajRes
@@ -93,6 +99,35 @@ internal fun StopCardPlacement(
                 .onSizeChanged { onHeight(with(density) { it.height.toDp() }) },
         ) {
             content()
+        }
+    }
+}
+
+/**
+ * A [StopCardPlacement] whose card slides up from the bottom of the pane with a fade as it arrives and slides back down as
+ * it is dismissed, on the motion spec (`MapMotion`), and plainly with reduced motion. Nothing is composed while the card is
+ * neither shown nor on its way out, so a closed card costs nothing and polls nothing.
+ */
+@Composable
+internal fun AnimatedStopCardPlacement(
+    visible: Boolean,
+    topReserve: Dp,
+    onHeight: (Dp) -> Unit,
+    modifier: Modifier = Modifier,
+    reduceMotion: Boolean = isReduceMotionEnabled(),
+    content: @Composable () -> Unit,
+) {
+    val state = remember { MutableTransitionState(false) }
+    state.targetState = visible
+    if (state.currentState || state.targetState) {
+        StopCardPlacement(topReserve = topReserve, onHeight = onHeight, modifier = modifier) {
+            AnimatedVisibility(
+                visibleState = state,
+                enter = mapSlideUpIn(reduceMotion),
+                exit = mapSlideDownOut(reduceMotion),
+            ) {
+                content()
+            }
         }
     }
 }

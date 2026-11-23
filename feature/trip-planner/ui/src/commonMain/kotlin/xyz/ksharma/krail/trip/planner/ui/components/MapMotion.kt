@@ -12,6 +12,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -118,6 +120,30 @@ internal fun mapVanishOut(reduceMotion: Boolean): ExitTransition =
                 targetScale = MapMotion.VANISH_SCALE,
                 transformOrigin = MapMotion.CENTRE,
                 animationSpec = tween(MapMotion.EXIT_MS, easing = MapMotion.ENTER_EASING),
+            )
+    }
+
+/** A card that arrives from below: it slides up by its own height while it fades in, on the arrival curve; plain with reduced motion. */
+internal fun mapSlideUpIn(reduceMotion: Boolean): EnterTransition =
+    if (reduceMotion) {
+        EnterTransition.None
+    } else {
+        fadeIn(animationSpec = tween(MapMotion.FADE_IN_MS, easing = MapMotion.FADE_IN_EASING)) +
+            slideInVertically(
+                animationSpec = tween(MapMotion.ENTER_MS, easing = MapMotion.ENTER_EASING),
+                initialOffsetY = { it },
+            )
+    }
+
+/** And leaves downward the way it came, a little quicker: it slides down by its own height while it fades out. */
+internal fun mapSlideDownOut(reduceMotion: Boolean): ExitTransition =
+    if (reduceMotion) {
+        ExitTransition.None
+    } else {
+        fadeOut(animationSpec = tween(MapMotion.EXIT_MS, easing = MapMotion.EXIT_EASING)) +
+            slideOutVertically(
+                animationSpec = tween(MapMotion.EXIT_MS, easing = MapMotion.EXIT_EASING),
+                targetOffsetY = { it },
             )
     }
 

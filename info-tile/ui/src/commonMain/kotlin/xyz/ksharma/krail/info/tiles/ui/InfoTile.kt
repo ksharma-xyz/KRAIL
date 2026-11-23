@@ -4,6 +4,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -36,6 +37,8 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+
+private val ACTIONS_GAP = 12.dp
 
 object InfoTileDefaults {
     val shape: RoundedCornerShape = RoundedCornerShape(size = 12.dp)
@@ -138,16 +141,17 @@ private fun InfoTileActions(
     onCtaClick: (InfoTileData) -> Unit,
     onDismissClick: (InfoTileData) -> Unit,
 ) {
-    Row(
-        horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.CenterVertically,
+    // Whole items wrap: when the dismiss and the call to action do not fit side by side (a narrow phone, large text) the
+    // call to action drops to its own line, still at the end, instead of being squeezed until its label breaks mid word.
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(ACTIONS_GAP, Alignment.End),
+        itemVerticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
     ) {
         if (infoTileData.showDismissButton) {
             TextButton(
                 onClick = { onDismissClick(infoTileData) },
                 dimensions = ButtonDefaults.mediumButtonSize(),
-                modifier = Modifier.padding(end = 12.dp),
             ) {
                 Text(text = infoTileData.dismissCtaText)
             }

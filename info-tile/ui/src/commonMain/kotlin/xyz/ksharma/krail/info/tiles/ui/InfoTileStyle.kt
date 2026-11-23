@@ -20,6 +20,7 @@ import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.taj.themeBackgroundColor
+import xyz.ksharma.krail.taj.themeSolidBackgroundColor
 import xyz.ksharma.krail.taj.tokens.AiThemeGradientTokens
 
 /** How an [InfoTile] is painted. Only the surface changes; layout and behaviour are shared. */
@@ -32,6 +33,13 @@ enum class InfoTileStyle {
      * before the title. For tips the app works out from live data.
      */
     AiFill,
+
+    /**
+     * The soft tint of the rider's theme colour as the fill (the Timetable's own tint, solid, so nothing shows through
+     * it), the tile's 1 dp themed border and no drop shadow. For a tile that sits on a card or over the map, where the
+     * glow is the wrong look. The layout, the padding and the behaviour are the other styles' own.
+     */
+    Plain,
 }
 
 private const val AI_FILL_STOP_SHARE_DARK = 0.4f
@@ -68,6 +76,8 @@ internal fun Modifier.infoTileOuter(style: InfoTileStyle): Modifier = when (styl
     InfoTileStyle.Standard -> infoTileGlow(shape)
 
     InfoTileStyle.AiFill -> this
+
+    InfoTileStyle.Plain -> border(width = borderWidth, color = themeBackgroundColor(), shape = shape)
 }
 
 /** The surface, applied after the click target and clip. */
@@ -76,6 +86,8 @@ internal fun Modifier.infoTileSurface(style: InfoTileStyle): Modifier = when (st
     InfoTileStyle.Standard -> standardSurface()
 
     InfoTileStyle.AiFill -> background(brush = aiFillBrush(), shape = shape)
+
+    InfoTileStyle.Plain -> background(color = themeSolidBackgroundColor(), shape = shape)
 }
 
 // The fill sits over the glow's shadow, so the shadow colour does not show through. The border is part of the glow.

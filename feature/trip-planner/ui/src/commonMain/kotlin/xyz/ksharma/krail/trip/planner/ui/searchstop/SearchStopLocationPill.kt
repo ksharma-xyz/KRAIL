@@ -8,11 +8,14 @@ import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.FloatingStatusButton
 
 /**
- * The location status as its own small button on Search Stop's map state, directly under the group card and
- * at the card's left edge (rule 24 of `docs/MAP_HOME_UX.md`), drawn only while [pill] is not
- * [LocationPill.Hidden]. It is the [FloatingStatusButton] the home notices use, so the two are one style: taj's
- * filled button at its extra small size, the normal weight text, the fixed dark through its colours parameter
- * and a 48 dp touch target. Its words wrap inside the button at large text and nothing beside it is squeezed.
+ * The location status as its own small button on the saved trips map pane at the map's top left corner (rule 24 of
+ * `docs/MAP_HOME_UX.md`), drawn only while [pill] is not [LocationPill.Hidden]. It is the [FloatingStatusButton] the home
+ * notices use, so the two are one style: taj's filled button at its extra small size, the normal weight text, the soft tint
+ * through its colours parameter and a 48 dp touch target. Its words wrap inside the button at large text and nothing beside it
+ * is squeezed.
+ *
+ * Search Stop no longer draws it: its notice is the [LocationNotice], the app's own info tile. This one is for the screens that
+ * have no room for a tile.
  *
  * It says what is wrong with the permission and nothing else. Tapping asks, or opens Settings when the rider
  * refused, and [onClick] does whichever [pill] names. The tag is the one a screen reader and a test find the

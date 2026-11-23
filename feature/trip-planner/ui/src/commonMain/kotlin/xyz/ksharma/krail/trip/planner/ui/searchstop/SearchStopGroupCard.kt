@@ -15,6 +15,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -52,10 +56,11 @@ internal data class SearchStopFormModel(
 
 /**
  * The top of Search Stop: the [SearchStopGroupCard] and, directly under it while the location is not allowed, the
- * [LocationStatusChip], one [SearchStopGaps.betweenCards] below the box and at its left edge. The chip is not part
+ * [LocationNotice], one [SearchStopGaps.betweenCards] below the box and at its left edge. The notice is not part
  * of the box, so the box holds only the two rows. On the map state this is everything that floats at the top. The
  * block stands [SearchStopGaps.edge] in from the start, top and end of where it is placed. [showLocationChip] is false
- * in the single pane list state, which is the box and the list and nothing between them. [onGradient] is whether the box
+ * in the single pane list state, which is the box and the list and nothing between them. The Not now of the notice is held
+ * here, so it lasts the visit through the list state and back, and is not saved anywhere. [onGradient] is whether the box
  * stands on the cloud gradient (the list state) and not on the map, which is what decides its edge ([searchStopEdge]).
  */
 @Composable
@@ -68,15 +73,18 @@ internal fun SearchStopTopBlock(
     onGradient: Boolean = false,
 ) {
     val gaps = rememberSearchStopGaps()
+    var noticeDismissed by rememberSaveable { mutableStateOf(false) }
     // The edge is this block's own, outside whatever [modifier] measures, so a caller that reads the block's size gets the
     // box and the chip and not the margin around them. There is none at the bottom: what comes next brings its own.
     Column(modifier = Modifier.padding(start = gaps.edge, top = gaps.edge, end = gaps.edge).then(modifier)) {
         SearchStopGroupCard(form = form, onBack = onBack, onGradient = onGradient)
-        if (showLocationChip && locationChipShownFor(location.pill)) {
-            LocationStatusChip(
+        if (showLocationChip) {
+            LocationNotice(
                 pill = location.pill,
-                onClick = location.onClick,
-                modifier = Modifier.padding(top = gaps.betweenCards),
+                dismissed = noticeDismissed,
+                onDismiss = { noticeDismissed = true },
+                onCtaClick = location.onClick,
+                onGradient = onGradient,
             )
         }
     }

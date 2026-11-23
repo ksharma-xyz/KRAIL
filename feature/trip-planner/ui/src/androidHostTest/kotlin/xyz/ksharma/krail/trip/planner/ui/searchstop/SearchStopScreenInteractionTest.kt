@@ -9,7 +9,6 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.assertTouchHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -20,7 +19,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.unit.dp
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -513,21 +511,40 @@ class SearchStopScreenInteractionTest {
 
     // endregion
 
-    // region The location pill
+    // region The location notice
 
     @Test
-    fun theLocationPillIsOneItemUnderTheForm_onlyWhenPermissionIsNotGranted_andOnlyOnTheMapState() {
+    fun theLocationNoticeIsOneItemUnderTheForm_onlyWhenPermissionIsNotGranted_andOnlyOnTheMapState() {
         // A fresh Robolectric device has no permission decision recorded, so the one pill shows on the map state.
         setScreen(withMapNoLocation())
         composeRule.waitForIdle()
 
         composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertCountEquals(1)
-        composeRule.onNodeWithText("Location permission required").assertIsDisplayed()
-        // The chip is taj's extra small button with a 48 dp touch target from the interactive size modifier (rule 24).
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertTouchHeightIsEqualTo(48.dp)
+        // The notice is the app's own info tile, expanded: its title, its words and its two buttons are all there.
+        composeRule.onNodeWithText(LOCATION_NOTICE_TITLE, useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithText(LOCATION_NOTICE_BODY, useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithText(LOCATION_NOTICE_DISMISS, useUnmergedTree = true).assertIsDisplayed()
 
         // The list state is the box and the list, with nothing between them.
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertCountEquals(0)
+    }
+
+    @Test
+    fun notNow_hidesTheNoticeForTheVisit_throughTheListStateAndBack_andItIsBackOnAFreshVisit() {
+        setScreen(withMapNoLocation())
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertCountEquals(1)
+
+        composeRule.onNodeWithText(LOCATION_NOTICE_DISMISS, useUnmergedTree = true).performClick()
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertCountEquals(0)
+
+        // The list state and back is still this visit, so it stays hidden.
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
+        composeRule.waitForIdle()
+        pressSystemBack()
         composeRule.waitForIdle()
         composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertCountEquals(0)
     }

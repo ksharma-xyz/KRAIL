@@ -135,20 +135,20 @@ class SearchStopMapStateLayoutTest {
 
     @Test
     @Config(qualifiers = W411)
-    fun `the chip is its own button under the box, left aligned with it, one gap below and never inside it`() {
+    fun `the notice is its own tile under the box, one gap below, left aligned and the box's width, never inside it`() {
         setScreen(locationAllowed = false)
 
         val box = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
-        val chip = touchBoundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
-        assertNear("one gap token under the box", box.bottom + gaps.betweenCards, chip.top)
-        assertNear("left aligned with the box", box.left, chip.left)
-        assertTrue(chip.height >= 48.dp - 1.dp, "The chip keeps its 48 dp touch target: $chip")
-        assertTrue(chip.right <= box.right, "The chip $chip stays within the box's right edge")
+        val notice = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
+        assertNear("one gap token under the box", box.bottom + gaps.betweenCards, notice.top)
+        assertNear("left aligned with the box", box.left, notice.left)
+        assertNear("as wide as the box", box.right, notice.right)
+        assertTrue(notice.height > 100.dp, "The tile is expanded, with its words and buttons: ${notice.height}")
     }
 
     @Test
     @Config(qualifiers = W411)
-    fun `the chip is not there while location is allowed`() {
+    fun `the notice is not there while location is allowed`() {
         setScreen(locationAllowed = true)
 
         composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertCountEquals(0)
@@ -353,7 +353,7 @@ class SearchStopMapStateLayoutTest {
 
     @Test
     @Config(qualifiers = W320)
-    fun `at 320 dp and 200 percent text with the location not allowed the chip is under the box and Options is not drawn`() {
+    fun `at 320 dp and 200 percent text with the location not allowed the notice is under the box and Options is not drawn`() {
         setScreen(fontScale = 2f, locationAllowed = false)
 
         val box = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)

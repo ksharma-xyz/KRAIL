@@ -91,8 +91,13 @@ internal class CardRowsContent(
  * only when both stops are chosen, the go circle in the To row. The swap rests at the divider level while at most one stop is
  * chosen and on the From row's centre line once both are, and it glides between the two in [MapMotion.SWAP_GLIDE_MS] as the go
  * circle arrives or leaves (Design Y). It is above the go circle in z order, so it wins any overlap. While the row being edited
- * holds text, an X takes that row's end slot and clears it, and the swap steps aside. The column is reserved in every state, so
- * the card is the same height with none, one or two stops chosen.
+ * holds text, a bare X takes that row's end slot and clears it, and the swap steps aside.
+ *
+ * The room the column takes follows what the card draws ([cardColumnInUse]). With no stop picked nothing stands in the column, so
+ * the text and the divider run to the card's right padding, [CardGrid.endPad] 16, the same as at the start, and a name never comes
+ * closer to the edge than that. Once a stop is picked the swap (and with both stops the go circle) belongs to the card, and the
+ * text and the divider stop 8 dp before the column. The room changes with the pick, in the frame the rows change, and never with
+ * the swap's own fade or glide, so the card does not reflow while it animates or while the rider types.
  */
 @Composable
 internal fun ToFromCardRows(rows: CardRowsContent, modifier: Modifier = Modifier) {
@@ -103,6 +108,10 @@ internal fun ToFromCardRows(rows: CardRowsContent, modifier: Modifier = Modifier
     val toClear = hasText && rows.editing == ToFromField.To
     val swapShown = rows.onSwap != null && !fromClear && !toClear
     val swap = rememberSwapMotion(shown = swapShown, lifted = rows.showGo)
+    // The room the right column takes follows what the card draws: the text and the divider run to the card's right padding while
+    // nothing is drawn there, and stop short of the column once the swap or the go circle belongs to the card. A row that holds
+    // the X keeps the room for it while it is typed in.
+    val columnInUse = cardColumnInUse(hasSwap = rows.onSwap != null, showGo = rows.showGo)
     CardLayout(grid = grid, swap = swap, modifier = modifier) {
         CardStopRow(
             row = rows.from,
@@ -110,6 +119,7 @@ internal fun ToFromCardRows(rows: CardRowsContent, modifier: Modifier = Modifier
             isEditing = rows.editing == ToFromField.From,
             editor = editor,
             grid = grid,
+            endRoom = grid.endRoom(columnInUse || fromClear),
             modifier = Modifier.layoutId(CardPart.From),
         ) { editorState ->
             if (editorState != null) ClearCross(editorState)
@@ -117,7 +127,7 @@ internal fun ToFromCardRows(rows: CardRowsContent, modifier: Modifier = Modifier
         Box(
             modifier = Modifier
                 .layoutId(CardPart.Divider)
-                .padding(start = grid.textStart, end = grid.endReserved),
+                .padding(start = grid.textStart, end = grid.endRoom(columnInUse)),
         ) {
             Divider(
                 modifier = Modifier.testTag(TripPlannerTestTags.SEARCH_ROW_DIVIDER),
@@ -130,6 +140,7 @@ internal fun ToFromCardRows(rows: CardRowsContent, modifier: Modifier = Modifier
             isEditing = rows.editing == ToFromField.To,
             editor = editor,
             grid = grid,
+            endRoom = grid.endRoom(columnInUse || toClear),
             modifier = Modifier.layoutId(CardPart.To),
         ) { editorState ->
             if (editorState != null) ClearCross(editorState)
@@ -191,9 +202,10 @@ private fun CardLayout(
 }
 
 /**
- * One row. [end] is its end slot, given the row's editor state while that row is being edited and holds text (the X clears
- * it), and null otherwise. The slot is a 48 dp target at the row's end, centred on the row, so a circle's right edge is
- * [CardGrid.endPad] from the card's edge and its centre is on the row's centre line.
+ * One row. [endRoom] is how far its text and its tap stop from the card's right edge ([CardGrid.endRoom]). [end] is its end slot,
+ * given the row's editor state while that row is being edited and holds text (the X clears it), and null otherwise. The slot is a
+ * 48 dp target at the row's end, centred on the row, so a circle's right edge is [CardGrid.endPad] from the card's edge and its
+ * centre is on the row's centre line.
  *
  * The row is [CardGrid.rowMin] tall or its text plus [CardGrid.rowChrome], and the text block is centred in it. The text block is
  * a marker column [CardGrid.marker] wide and one line tall beside the text column, so the marker is centred on the first line.
@@ -205,6 +217,7 @@ private fun CardStopRow(
     isEditing: Boolean,
     editor: ToFromEditor?,
     grid: CardGrid,
+    endRoom: Dp,
     modifier: Modifier = Modifier,
     end: @Composable (TextFieldState?) -> Unit,
 ) {
@@ -222,7 +235,7 @@ private fun CardStopRow(
             modifier = Modifier
                 .align(Alignment.CenterStart)
                 .fillMaxWidth()
-                .padding(start = grid.startPad, end = grid.endReserved, top = grid.rowVerticalPad, bottom = grid.rowVerticalPad),
+                .padding(start = grid.startPad, end = endRoom, top = grid.rowVerticalPad, bottom = grid.rowVerticalPad),
             horizontalArrangement = Arrangement.spacedBy(grid.markerGap),
             verticalAlignment = Alignment.Top,
         ) {
@@ -242,7 +255,7 @@ private fun CardStopRow(
             Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .padding(end = grid.endReserved)
+                    .padding(end = endRoom)
                     .klickable(onClick = bar.onClick)
                     .semantics { contentDescription = bar.label },
             )

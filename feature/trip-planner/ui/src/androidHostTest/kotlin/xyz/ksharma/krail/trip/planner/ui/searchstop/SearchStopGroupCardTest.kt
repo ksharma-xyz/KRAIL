@@ -129,6 +129,9 @@ class SearchStopGroupCardTest {
                                 onTextChange = {},
                                 fromLabel = fromLabelState,
                                 toLabel = toLabelState,
+                                // The screen offers the swap once the rider has picked a stop (`swapShown`), so the right column
+                                // is the card's while it holds one, with or without the go circle.
+                                onSwap = if (fromStopState != null || toStopState != null) ({}) else null,
                             ),
                             onBack = {},
                         )

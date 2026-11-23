@@ -1,11 +1,21 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.contrast.ContrastAnalyzer.Companion.TEXT_CONTRAST_AA
 import xyz.ksharma.krail.taj.contrast.ContrastAnalyzer.Companion.UI_COMPONENT_CONTRAST_AA
 import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.asThemeInk
@@ -132,4 +142,48 @@ internal fun introAccentColor(step: IntroStep): Color {
     val surface = KrailTheme.colors.surface
     val dark = isAppInDarkMode()
     return remember(theme, surface, dark) { introAccentInk(theme, surface, dark) }
+}
+
+/**
+ * Draws [content], the screen of [step], in that screen's own colour family and never in the app theme. taj's tints (the card
+ * fill, the selected row, the celebration burst) and the Park and Ride tile all read the app's theme colour, which on a first run
+ * is the default Train orange and sat beside a green, blue or pink hero. Here the one local they read, [LocalThemeColor], is the
+ * screen's accent theme ([introAccentStyle]), so each tint is that accent made translucent by taj's own function and no colour is
+ * typed. It wraps the content of a screen and nothing else: the page, the decision bar and the components outside the Intro
+ * still read the app's theme. The colour screen is not wrapped, because its colours are the themes the rider picks between.
+ */
+@Composable
+internal fun IntroScreenColours(step: IntroStep, content: @Composable () -> Unit) {
+    if (step == IntroStep.THEME) {
+        content()
+        return
+    }
+    val hex = introAccentStyle(step).hexColorCode
+    val screenColour = remember(hex) { mutableStateOf(hex) }
+    CompositionLocalProvider(LocalThemeColor provides screenColour) { content() }
+}
+
+/** How long the decision bar's fill takes to move from one screen's colour to the next: the length of the colour changes. */
+internal const val BAR_FILL_CROSSFADE_MS = 300
+
+/** The way the bar's fill changes colour: [BAR_FILL_CROSSFADE_MS] with the Intro's own easing, and a jump with reduced motion. */
+internal fun introBarFillSpec(reduceMotion: Boolean): AnimationSpec<Color> =
+    if (reduceMotion) snap() else tween(durationMillis = BAR_FILL_CROSSFADE_MS, easing = FastOutSlowInEasing)
+
+/**
+ * The fill of the decision bar's primary button of [step] as it is drawn: [introPrimaryFill] and, when the step changes, a
+ * crossfade from the last screen's fill to this one's ([introBarFillSpec]). The bar is one layer over every screen, so this is the
+ * only accent colour that is not part of a sliding screen, and without it the button jumped from green to blue to pink in one frame.
+ * It is null on the colour screen, whose button keeps the taj colours of the theme the rider picked, so that button does not move
+ * from a colour to another, and the first screen starts at its own fill and never fades from nothing.
+ */
+@Composable
+internal fun introAnimatedPrimaryFill(step: IntroStep): Color? {
+    val target = introPrimaryFill(step) ?: return null
+    val fill by animateColorAsState(
+        targetValue = target,
+        animationSpec = introBarFillSpec(isReduceMotionEnabled()),
+        label = "intro-bar-fill",
+    )
+    return fill
 }

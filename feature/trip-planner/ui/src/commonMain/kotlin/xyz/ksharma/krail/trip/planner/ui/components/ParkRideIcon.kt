@@ -25,9 +25,15 @@ import xyz.ksharma.krail.taj.themeGroundColor
 
 private val ParkRideIconCornerRadius = 6.dp // no token equivalent (between RadiusXS=4 and RadiusS=8)
 
+/**
+ * The `P` tile. Its fill is the theme colour, unadapted, and the letter is white. A surface that is not drawn in the app's theme,
+ * such as the Intro, whose screens each have their own colour, passes [backgroundColor], a fill the white letter reads on. It is
+ * the theme colour when it is null, so everywhere else the tile is as it was.
+ */
 @Composable
 internal fun ParkRideIcon(
     modifier: Modifier = Modifier,
+    backgroundColor: Color? = null,
 ) {
     val density = LocalDensity.current
     CompositionLocalProvider(
@@ -37,7 +43,7 @@ internal fun ParkRideIcon(
         ),
     ) {
         ParkRideIconContainer(
-            backgroundColor = themeGroundColor(),
+            backgroundColor = backgroundColor ?: themeGroundColor(),
             modifier = modifier,
         ) {
             Text(

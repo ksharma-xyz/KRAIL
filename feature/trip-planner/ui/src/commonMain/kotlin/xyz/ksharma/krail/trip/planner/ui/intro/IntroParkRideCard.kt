@@ -19,6 +19,7 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardStation
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
@@ -160,6 +161,9 @@ private fun IntroParkRideCard(card: ParkRideUiState, modifier: Modifier = Modifi
         isExpanded = true,
         keepReadingSpace = true,
         onClick = null,
+        // The tile is the screen's button fill, because the white letter is not legible on the raw theme colour. The tint of
+        // the card is the screen's colour family, which the screen provides as its theme (IntroScreenColours).
+        iconColor = introPrimaryFill(IntroStep.PARK_RIDE),
         modifier = modifier
             .padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding)
             .then(if (standIn) Modifier.clearAndSetSemantics {} else Modifier),

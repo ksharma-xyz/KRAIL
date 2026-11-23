@@ -96,7 +96,7 @@ internal fun IntroFlowScreen(
         contentAlignment = Alignment.TopCenter,
     ) {
         val bar = introBar(state)
-        val primaryFill = introPrimaryFill(state.step)
+        val primaryFill = introAnimatedPrimaryFill(state.step)
         // The step on screen is moving to the step in the state until the one transition that draws it has finished.
         val transition = updateTransition(targetState = state.step, label = "intro-step")
         val settled = transition.currentState == transition.targetState && !transition.isRunning
@@ -159,16 +159,19 @@ private fun IntroStepContent(
             .fillMaxSize()
             .then(if (leaving) Modifier.consumeTouches(true).clearAndSetSemantics {} else Modifier),
     ) {
-        when (step) {
-            IntroStep.THEME -> IntroThemeStepContent(selectedThemeId = state.selectedThemeId, onEvent = sendOnStep)
-            IntroStep.PARK_RIDE -> IntroParkRideStepContent(state = state)
-            IntroStep.DESTINATION, IntroStep.ORIGIN -> IntroStopStepContent(
-                state = state,
-                suggestedStops = suggestedStops,
-                onEvent = sendOnStep,
-                ground = ground,
-            )
-            IntroStep.CONFIRM -> IntroConfirmStepContent(state = state)
+        // Each screen is drawn in its own colour family, so a screen that is sliding out keeps its colours as it goes.
+        IntroScreenColours(step = step) {
+            when (step) {
+                IntroStep.THEME -> IntroThemeStepContent(selectedThemeId = state.selectedThemeId, onEvent = sendOnStep)
+                IntroStep.PARK_RIDE -> IntroParkRideStepContent(state = state)
+                IntroStep.DESTINATION, IntroStep.ORIGIN -> IntroStopStepContent(
+                    state = state,
+                    suggestedStops = suggestedStops,
+                    onEvent = sendOnStep,
+                    ground = ground,
+                )
+                IntroStep.CONFIRM -> IntroConfirmStepContent(state = state)
+            }
         }
     }
 }

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -44,6 +45,10 @@ private val ParkRideCardVerticalPadding = 20.dp // no token equivalent
  *
  * A null [onClick] draws a card that is not tappable, for a surface where the card only shows and the
  * action is somewhere else, such as the Intro, whose bottom bar adds the station.
+ *
+ * [iconColor] is the fill of the `P` tile, for a surface drawn in a colour of its own, such as the Intro. It is the theme colour
+ * when null, as it is on the home card. The tint of the card is always the theme's, so a surface that has its own colour gives
+ * the card that colour as the theme (`LocalThemeColor`) and not as a parameter.
  */
 @Composable
 fun ParkRideCard(
@@ -52,6 +57,7 @@ fun ParkRideCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = {},
     keepReadingSpace: Boolean = false,
+    iconColor: Color? = null,
 ) {
     val dim = KrailTheme.dimensions
     Row(
@@ -67,7 +73,7 @@ fun ParkRideCard(
             ),
         horizontalArrangement = Arrangement.spacedBy(dim.spacingXL),
     ) {
-        ParkRideIcon(modifier = Modifier.padding(top = dim.spacingXXS))
+        ParkRideIcon(modifier = Modifier.padding(top = dim.spacingXXS), backgroundColor = iconColor)
 
         Column(modifier = Modifier.fillMaxWidth()) {
             AnimatedVisibility(

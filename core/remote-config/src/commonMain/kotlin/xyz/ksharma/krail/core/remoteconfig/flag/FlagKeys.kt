@@ -117,4 +117,29 @@ enum class FlagKeys(val key: String) {
      * on-device availability check, not a disabled-looking button.
      */
     AI_SEARCH_INPUT_ENABLED("ai_search_input_enabled"),
+
+    /**
+     * The stops the Intro offers as a first trip's start and end, as
+     * `{"start":[{"stopId":"..","name":".."}],"end":[..]}`. The default is the empty string on
+     * purpose: the app then uses its bundled lists, so the stop ids live in one place only. Text
+     * that is not that shape also falls back to the bundled lists, as a whole.
+     */
+    INTRO_SUGGESTED_STOPS("intro_suggested_stops"),
+
+    /**
+     * How far from the map's centre, in kilometres, Search Stop looks for stops to draw. A number
+     * such as `3.0`; the default is 3.0. A value that is not a number, or is outside 0.5 to 10, is
+     * ignored and the default applies, as a whole, rather than being pulled into range. Nothing in
+     * the app lets a rider change it.
+     */
+    NEARBY_STOPS_RADIUS_KM("nearby_stops_radius_km"),
+
+    /**
+     * How far from the rider's Home, or from where they are before Home is set, in kilometres, the
+     * one-time Park & Ride suggestion on the map home looks for a station. A number such as `5.0`;
+     * the default is 5.0. A value that is not a number, or is outside 0.5 to 10, is ignored and the
+     * default applies, as a whole, rather than being pulled into range. Nothing in the app lets a
+     * rider change it.
+     */
+    PARK_RIDE_SUGGESTION_RADIUS_KM("park_ride_suggestion_radius_km"),
 }

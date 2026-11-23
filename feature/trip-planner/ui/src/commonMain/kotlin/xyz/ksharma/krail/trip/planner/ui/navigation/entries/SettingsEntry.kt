@@ -45,12 +45,6 @@ internal fun EntryProviderScope<NavKey>.SettingsEntry(
             onRateAppClick = {
                 viewModel.onRateAppClick()
             },
-            onIntroClick = {
-                scope.launch {
-                    viewModel.onIntroClick()
-                    tripPlannerNavigator.navigateToIntro()
-                }
-            },
             onAboutUsClick = {
                 scope.launch {
                     viewModel.onOurStoryClick()

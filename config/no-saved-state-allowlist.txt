@@ -25,9 +25,10 @@ DateTimeSelectorViewModel # its StateFlow carries Unit, so there is nothing to l
 DebugSettingsViewModel # debug-only surface; state comes from DebugNetworkConfigStore and a live flag re-read in init
 DeparturesViewModel # the stop id arrives from the screen as a LoadDepartures event, so a recreated VM is re-told what to show
 DiscoverViewModel # cards are refetched in onStart; the seen-card set is analytics-only and expendable
-IntroViewModel # one-shot onboarding whose state is the static page list; the work happens on Complete
+HomeMapViewModel # pins are re-derived from the labels and saved stations the screen sends again each time it is built, and the offline notice from the live connectivity flow
 MapStopSelectionViewModel # camera and nearby stops are re-derived from the next location update; deliberately per-nav-entry
 OurStoryViewModel # display-only text recomposed from Remote Config inside the presenter
+ParkRideSuggestionViewModel # the card is re-derived from the saved stations, Home and the position the screen sends again, and "shown" is a stored preference, so a killed process never offers it twice
 SavedTripsViewModel # every section is re-observed from Sandook in uiState.onStart; nothing is held that is not re-read
 SearchStopViewModel # searchQuery and searchResults are re-derived from SearchStopScreen's rememberSaveable field text
 ServiceAlertsViewModel # alerts are fetched per call from the journey id the screen passes in; nothing is retained

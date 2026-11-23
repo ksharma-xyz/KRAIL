@@ -72,7 +72,7 @@ Files:
   the window, then SearchStop's internal dual-pane halved it again,
   leaving ~25 % each. That is fixed.)
 - Dual-pane per `shouldShowDualPane` (≥ 840 dp wide, not compact height).
-  COMPACT widths keep the existing single-pane list/map toggle.
+  COMPACT widths keep the single pane, which opens as the map state with the list one tap away.
 - **Pane widths** come from the shared
   [`DualPaneScaffold`](../core/adaptive-ui/src/commonMain/kotlin/xyz/ksharma/krail/core/adaptiveui/DualPaneScaffold.kt):
   list pane = a **fixed** `DUAL_PANE_LIST_WIDTH` (480 dp); map pane =
@@ -92,9 +92,10 @@ Files:
   frame in one measure pass, and the map renders blank on iOS with no
   error anywhere. `DUAL_PANE_LIST_WIDTH` being a `Dp` and not a range is
   the fix, pinned by `DualPaneScaffoldTest`.
-- "Select on map" CTA stays hidden in dual-pane (map is always visible).
-  Already enforced via `isMapsAvailable = false` passed to
-  `SearchStopListContent`.
+- There is no "Select on map" button on any layout: single pane opens as the map state and dual-pane shows the
+  map in the right pane. The form (the To and From block with the search field in place), the location pill and the
+  recents card sit in the left pane. The two step back is single pane only. See
+  [`SEARCH_STOP_UX.md`](../feature/trip-planner/ui/SEARCH_STOP_UX.md).
 - Map and list selection stay synchronous (existing `onStopSelect`
   callback wired through `MapDisplay.selectedStop`).
 - Label / save-sheet / edit-mode / conflict behaviour is unchanged —
@@ -149,11 +150,45 @@ SearchStop). `TimeTableRoute` navigation still works via back-stack push.
   portrait, just width-capped.
 - **Right pane** (`weight(1f)`): a **read-only nearby-stops map** powered by
   `MapStopSelectionPane` (singleton `MapStopSelectionViewModel`). Users can
-  explore nearby stops and view stop details; tapping a stop has no
-  trip-planning side-effect. The right pane is purely contextual.
+  explore nearby stops and view stop details. A tapped stop opens the floating stop card,
+  whose Go here sets the destination and whose Save as pills give the stop a label.
 - Trip planning is done via the SearchStopRow at the bottom of the left pane.
   On tablet and foldable-unfolded the row is **always expanded**; only
   phone-landscape collapses it to a button (see compact-height rules below).
+- **One column** (rule 45 in [`MAP_HOME_UX.md`](MAP_HOME_UX.md)): the trip cards, the Park &
+  Ride section and the search row share one column, `min(pane width, 560 dp)` and centred
+  (`columnWidthFor` in `SavedTripsColumn.kt`). The Home, Work and Park & Ride chips sit directly above the
+  search row in that column, on the cards' edges, and wrap whole chips (one sideways line over 130% text).
+  A phone narrower than 560 dp keeps its whole width. The Park & Ride row is one block in that column,
+  after the second trip, and scrolls sideways inside it: it runs to the screen's edge on a phone and to the
+  column's edge in the wider windows and in the 480 dp pane, with the 16 dp inset at both ends of the scroll.
+  An open tile takes the row's width, so it is as wide as a card in every window.
+- **Reorder mode** (rule 31) draws in the same column. The Done button sits 16 dp from the top and the right
+  edge of the pane that holds the list, so in the dual pane it is at the list pane's right edge and never over the
+  map. A touch on the map pane cancels the mode (the pane stays a sibling of the list, so the iOS compositing
+  rule holds). The grips, the outlined Park & Ride block and the delete circles are measured in the column, so they
+  are as wide as the cards in every window.
+  A single-pane window of 560 to 839 dp centres a 560 dp column. In the 480 dp left pane the column
+  is the whole pane. The list stays the pane's full width so the gutter still scrolls.
+
+### The map home (maps flag on, branch 11)
+
+With the Search Stop maps flag on, `SavedTripsEntry` draws [`HomeMapScreen`](../feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/homemap/HomeMapScreen.kt)
+instead of `SavedTripsScreen`, and with it off nothing changes: today's home, with the read-only pane
+above. There is **one map** whatever the window:
+
+- **A phone, or any single pane window.** The map is full screen and everything floats on it: the top
+  row, the card stack in its one column, the chips and the pill. The map is a sibling of the cards and
+  of the blur Ask KRAIL pulls over them, never a child of either (`docs/MAPLIBRE_IOS_PITFALLS.md`
+  section 1).
+- **A wide window (dual pane).** The map is the right pane `DualPaneScaffold` always drew, the same
+  composable, never a second one. The 480 dp list pane holds the top row, the stack, the chips and the
+  pill, and the logo, the notices and the buttons share the pane's edges. A pin card floats over the
+  map pane, 448 dp wide in the 480 dp pane, so the chips and the pill stay where they are. The right
+  pane's ornaments (the compass) clear the corner, since the top row is in the other pane.
+- **Phone landscape (compact height).** The pill is 48 dp, so it stays as it is and the chips go, as the
+  search row's own collapse always took them away (`showPill`). The "Plan a trip" button is not used
+  with the map home.
 
 ### Compact-height rules (`isCompactHeight`, height < 480 dp)
 
@@ -196,22 +231,28 @@ Files:
   `getForegroundColor` so it stays legible on every theme in light and dark —
   the same contrast guard as `ParkRideAddToggle`, covered by
   `ThemeContrastTest`.
-- Marker tap opens the shared `StopDetailsBottomSheet` — the same sheet
-  SearchStop's map uses — with the primary action adding or removing the
-  station. Selecting from a map feels identical across both screens.
+- Marker tap opens the floating Park & Ride card (`stopcard/ParkRidePinCard.kt`), over the
+  map and never a bottom sheet: the station name with a close button, every car park stacked
+  with its numbers and its own Directions, and the action Add to home or Remove from home (on the Add Park & Ride
+  screen, which is not choosing a trip, and with Go here under it on the home map's `P` pin). It
+  is the stop card's shell, so selecting from a map feels identical across both screens. It
+  floats at the bottom of the map pane in the one column of rule 45 (at most 560 dp, 16 dp in
+  from each side, so 448 dp in the 480 dp pane), the location button rides above it, a tap on
+  the map or system back closes it, and the pane keeps its sibling place beside the list so the
+  iOS compositing rule still holds.
 - Marker hit target is a transparent 24 dp circle layered above the 14 dp
   visual, matching `NearbyStopsLayer`.
 
-### Known limitation: the detail sheet is dual-pane only
+### Known limitation: the detail card is dual-pane only
 
-The station detail sheet, and with it live availability and the **Directions**
+The station detail card, and with it live availability and the **Directions**
 action, is reachable only by tapping a map pin. Since the map exists only in
 dual-pane, a phone in portrait has no path to either: its Park & Ride surfaces
 are the home card (tap expands) and the picker rows (tap adds or removes),
-neither of which opens a sheet.
+neither of which opens a card.
 
 This is deliberate for now, not an oversight. Revisit by giving the picker row a
-way to open the sheet (row body opens details, trailing control keeps the quick
+way to open the card (row body opens details, trailing control keeps the quick
 add/remove) if directions turn out to matter on phones.
 
 ---
@@ -271,11 +312,12 @@ declarations don't change beyond the SearchStop fix.
 
 ## 6. First-launch experience
 
-File: [`IntroScreen.kt`](../feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/intro/IntroScreen.kt)
-(7-page carousel, gated on `SandookPreferences.KEY_HAS_SEEN_INTRO`).
+File: [`IntroFlowScreen.kt`](../feature/trip-planner/ui/src/commonMain/kotlin/xyz/ksharma/krail/trip/planner/ui/intro/IntroFlowScreen.kt)
+(two steps, the Park & Ride question and the first trip, gated on `SandookPreferences.KEY_HAS_SEEN_INTRO`).
 
-- Intro carousel stays single-pane on every form factor. It's a
-  one-shot onboarding flow; multi-pane layouts add noise.
+- The Intro stays single-pane on every form factor, capped to a phone
+  width and centred. It's a one-shot onboarding flow; multi-pane
+  layouts add noise.
 - After onboarding, the first impression on tablet lands on SavedTrips
   with the hero treatment described in §4. No additional seeding
   needed — the empty hero + curated `EMPTY_STATE_STOPS` from

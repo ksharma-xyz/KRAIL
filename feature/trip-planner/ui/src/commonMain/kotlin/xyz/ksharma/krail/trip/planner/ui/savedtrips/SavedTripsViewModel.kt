@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
@@ -35,6 +37,8 @@ import xyz.ksharma.krail.core.appreview.AppReviewManager
 import xyz.ksharma.krail.core.appreview.DelightMoment
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.log.logError
+import xyz.ksharma.krail.core.maps.data.repository.NearbyStopsRepository
+import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
@@ -50,15 +54,18 @@ import xyz.ksharma.krail.park.ride.network.service.ParkRideService
 import xyz.ksharma.krail.platform.ops.PlatformOps
 import xyz.ksharma.krail.sandook.NswParkRideSandook
 import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.SavedTrips
+import xyz.ksharma.krail.sandook.NswParkRideSandook.Companion.SavedParkRideSource.UserAdded
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.db.NSWParkRideFacilityDetail
-import xyz.ksharma.krail.sandook.db.SavedParkRide
 import xyz.ksharma.krail.sandook.db.SavedTrip
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchSessionStore
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapOpenTracker
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.LabelChipTap
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ReorderSession
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
@@ -88,11 +95,18 @@ class SavedTripsViewModel(
     private val inviteFriendsTileManager: InviteFriendsTileManager,
     private val trackingManager: TrackingManager,
     private val appReviewManager: AppReviewManager,
+    private val nearbyStopsRepository: NearbyStopsRepository,
 ) : ViewModel() {
 
     init {
         log("StopItem - SavedTripsViewModel created")
     }
+
+    /**
+     * Counts the opens of the map on the home screen's right pane, the `home` entry, for analytics. It lives as long
+     * as this ViewModel, so a rotation keeps the open and its id (see [MapOpenTracker]).
+     */
+    val mapOpen: MapOpenTracker = MapOpenTracker(analytics)
 
     private val nonPeakTimeCooldownSeconds: Long by lazy {
         flag.getFlagValue(FlagKeys.NSW_PARK_RIDE_NON_PEAK_TIME_COOLDOWN.key)
@@ -120,6 +134,14 @@ class SavedTripsViewModel(
 
     // Keeps the numbers on open Park & Ride cards moving. See pollExpandedParkRideStops.
     private var parkRidePollJob: Job? = null
+
+    // Asks for the numbers of every saved station once when home opens. See refreshSavedParkRidesOnOpen.
+    private var parkRideOpenRefreshJob: Job? = null
+
+    // One fetch pass at a time. Opening home and tapping a tile can land together, and the cooldown
+    // stamp is only written when a reading comes back, so without this both would see the same
+    // stale stamp and both would call the API for the same facility.
+    private val parkRideFetchMutex = Mutex()
 
     val trackedJourney: StateFlow<TrackedJourney?> = trackingManager.tracked
 
@@ -150,13 +172,15 @@ class SavedTripsViewModel(
             observeStopLabels()
             seedDefaultLabelsIfEmpty()
             observeFacilityDetailsFromDb()
-            refreshFacilityDetails()
+            refreshSavedParkRidesOnOpen()
             pollExpandedParkRideStops()
             updateDiscoverState()
             updateInfoTilesUiState()
             updateSelectedStops()
+            // A chip tap, or a reorder, left over from before the screen was last away is stale and
+            // was never saved: the rider backgrounded the app mid edit, and that is a cancel.
+            updateUiState { copy(labelChipTap = LabelChipTap.Idle, reorder = null) }
             updateInviteFriendsTileSeenState()
-            loadReorderTipSeenState()
             maybeRequestReview()
         }
         .onCompletion {
@@ -184,20 +208,8 @@ class SavedTripsViewModel(
         when (event) {
             is SavedTripUiEvent.DeleteSavedTrip -> onDeleteSavedTrip(event.trip)
             is SavedTripUiEvent.AnalyticsSavedTripCardClick -> onSavedTripCardClick(event)
-            SavedTripUiEvent.ReverseStopClick -> {
-                stopResultsManager.reverseSelectedStops()
-                updateSelectedStops()
-                analytics.track(AnalyticsEvent.ReverseStopClickEvent)
-            }
-            is SavedTripUiEvent.AnalyticsLoadTimeTableClick ->
-                analytics.trackLoadTimeTableClick(
-                    fromStopId = event.fromStopId,
-                    toStopId = event.toStopId,
-                    searchSessionId = searchSessionStore.consumeFor(
-                        fromStopId = event.fromStopId,
-                        toStopId = event.toStopId,
-                    ),
-                )
+            SavedTripUiEvent.ReverseStopClick -> onReverseStopClick()
+            is SavedTripUiEvent.AnalyticsLoadTimeTableClick -> onLoadTimeTableClick(event)
             SavedTripUiEvent.AnalyticsSettingsButtonClick ->
                 analytics.track(AnalyticsEvent.SettingsClickEvent)
             SavedTripUiEvent.AnalyticsFromButtonClick ->
@@ -207,6 +219,12 @@ class SavedTripsViewModel(
             is SavedTripUiEvent.ParkRideCardClick -> onParkRideCardClick(
                 parkRideState = event.parkRideState,
                 isExpanded = event.isExpanded,
+            )
+            is SavedTripUiEvent.RemoveParkRideStation -> removeParkRideStation(event.parkRideState)
+            is SavedTripUiEvent.ParkRideDirectionsClick -> platformOps.openMapDirections(
+                latitude = event.latitude,
+                longitude = event.longitude,
+                label = event.label,
             )
             SavedTripUiEvent.AnalyticsDiscoverButtonClick -> {
                 analytics.track(AnalyticsEvent.DiscoverButtonClick)
@@ -223,12 +241,103 @@ class SavedTripsViewModel(
             }
             SavedTripUiEvent.StopTracking -> trackingManager.stop()
             is SavedTripUiEvent.MoveSavedTripToIndex -> onMoveSavedTrip(event.tripId, event.targetIndex)
-            SavedTripUiEvent.MarkReorderTipSeen -> onMarkReorderTipSeen()
+            is SavedTripUiEvent.EnterReorder -> updateReorder { it ?: beginReorder(event.liftedKey) }
+            is SavedTripUiEvent.ReorderMove -> updateReorder { it?.move(event.fromKey, event.toKey) }
+            is SavedTripUiEvent.ReorderRemove -> updateReorder { it?.remove(event.tripId) }
+            SavedTripUiEvent.ReorderDone -> onReorderDone()
+            SavedTripUiEvent.ReorderCancel -> updateReorder { null }
+            is SavedTripUiEvent.LabelChipClick -> onLabelChipClick(event.labelKey)
+            is SavedTripUiEvent.LabelChipLocated -> onLabelChipLocated(event)
+            SavedTripUiEvent.LabelChipTapHandled -> updateUiState { copy(labelChipTap = LabelChipTap.Idle) }
+            is SavedTripUiEvent.LabelStopAssigned -> onLabelStopAssigned(event)
         }
+    }
+
+    private fun onReverseStopClick() {
+        stopResultsManager.reverseSelectedStops()
+        updateSelectedStops()
+        analytics.track(AnalyticsEvent.ReverseStopClickEvent)
+    }
+
+    private fun onLoadTimeTableClick(event: SavedTripUiEvent.AnalyticsLoadTimeTableClick) {
+        analytics.trackLoadTimeTableClick(
+            fromStopId = event.fromStopId,
+            toStopId = event.toStopId,
+            searchSessionId = searchSessionStore.consumeFor(
+                fromStopId = event.fromStopId,
+                toStopId = event.toStopId,
+            ),
+        )
     }
 
     private fun onSavedTripCardClick(event: SavedTripUiEvent.AnalyticsSavedTripCardClick) {
         analytics.trackSavedTripCardClick(event.fromStopId, event.toStopId)
+    }
+
+    /**
+     * A Home or Work chip was tapped. One tap at a time: while one is still being worked out a
+     * second changes nothing, which is also what keeps it to a single location fix.
+     */
+    private fun onLabelChipClick(labelKey: String) {
+        if (_uiState.value.labelChipTap != LabelChipTap.Idle) return
+        val label = homeLabelFor(labelKey, _uiState.value.stopLabels) ?: return
+        updateUiState { copy(labelChipTap = startLabelChipTap(label)) }
+    }
+
+    /**
+     * The one fix a set chip's tap asked for has come back, or there was none. Looks up the stops
+     * near it in the local database, once, and decides. Anything that goes wrong in the lookup is
+     * the same as no stop near, so the tap always ends in a decision and never stays pending.
+     */
+    private fun onLabelChipLocated(event: SavedTripUiEvent.LabelChipLocated) {
+        val tap = _uiState.value.labelChipTap
+        if (tap !is LabelChipTap.Locating || tap.labelKey != event.labelKey) return
+        val destination = homeLabelFor(event.labelKey, _uiState.value.stopLabels)?.toStopItem()
+        if (destination == null) {
+            updateUiState { copy(labelChipTap = LabelChipTap.Idle) }
+            return
+        }
+        val rider = event.latitude?.let { lat -> event.longitude?.let { lon -> LatLng(lat, lon) } }
+        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            val candidates = rider?.let { stopsNear(it) }.orEmpty()
+            updateUiState {
+                copy(labelChipTap = LabelChipTap.Decided(decideLabelTap(destination, rider, candidates)))
+            }
+        }
+    }
+
+    private suspend fun stopsNear(rider: LatLng) = runCatching {
+        nearbyStopsRepository.getStopsNearby(
+            centerLat = rider.latitude,
+            centerLon = rider.longitude,
+            radiusKm = LABEL_TAP_RADIUS_KM,
+            maxResults = LABEL_TAP_CANDIDATES,
+        )
+    }.onFailure { logError("Home chip stops lookup failed", it) }.getOrDefault(emptyList())
+
+    /**
+     * Stop search returned a stop for a label the rider is setting from the home chips. A stop is
+     * on one label only, so a stop another label already holds is left alone. A label with no row
+     * (Work, after it was deleted in Manage) is created by the assignment.
+     */
+    private fun onLabelStopAssigned(event: SavedTripUiEvent.LabelStopAssigned) {
+        val labels = _uiState.value.stopLabels
+        val row = labels.firstOrNull { it.label.equals(event.labelKey, ignoreCase = true) }
+        if (labels.any { it.stopId == event.stopId && it != row }) return
+        val builtIn = homeLabelFor(event.labelKey, labels) ?: return
+        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            if (row != null) {
+                sandook.updateStopLabelStop(row.label, event.stopId, event.stopName)
+            } else {
+                sandook.upsertStopLabel(
+                    label = builtIn.label,
+                    emoji = builtIn.emoji,
+                    stopId = event.stopId,
+                    stopName = event.stopName,
+                    sortOrder = labels.size.toLong(),
+                )
+            }
+        }
     }
 
     /**
@@ -282,6 +391,23 @@ class SavedTripsViewModel(
             updateUiState { copy(fromStop = stopResultsManager.selectedFromStop) }
         } ?: run {
             log("StopItem - Failed to parse fromStop from JSON: $fromJson")
+        }
+    }
+
+    /**
+     * Removes the car parks the rider added at this station, one row each, and nothing else. The home card
+     * and its `P` pin follow from the table the screen already observes, so nothing is set here by hand.
+     * A row a saved trip holds is left alone, because the delete names the source.
+     */
+    private fun removeParkRideStation(parkRideState: ParkRideUiState) {
+        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            parkRideState.facilities.forEach { facility ->
+                parkRideSandook.deleteSavedParkRide(
+                    stopId = facility.stopId,
+                    facilityId = facility.facilityId,
+                    source = UserAdded,
+                )
+            }
         }
     }
 
@@ -372,14 +498,7 @@ class SavedTripsViewModel(
             sandook.observeStopLabels()
                 .distinctUntilChanged()
                 .collect { rows ->
-                    val labels = rows.map { row ->
-                        StopLabel(
-                            emoji = row.emoji,
-                            label = row.label,
-                            stopId = row.stop_id,
-                            stopName = row.stop_name,
-                        )
-                    }.toImmutableList()
+                    val labels = rows.toStopLabels()
                     updateUiState { copy(stopLabels = labels) }
                 }
         }
@@ -402,7 +521,15 @@ class SavedTripsViewModel(
         observeSavedTripsJob?.cancel()
         observeSavedTripsJob =
             viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
-                updateUiState { copy(isSavedTripsLoading = true) }
+                // Read with the trips, before the first list is drawn, so the row never jumps.
+                val rowIndex = preferences.getLong(SandookPreferences.KEY_PARK_RIDE_ROW_INDEX)?.toInt()
+                // The labels are read with the trips for the same reason: a card draws a label whenever its
+                // stop is the labelled stop, so one drawn before the labels landed would grow when they did
+                // (`docs/MAP_HOME_UX.md` rules 22 and 37). The labels' own observer keeps them current after.
+                val labels = sandook.observeStopLabels().first().toStopLabels()
+                updateUiState {
+                    copy(isSavedTripsLoading = true, parkRideRowIndex = rowIndex, stopLabels = labels)
+                }
                 sandook.observeAllTrips()
                     .distinctUntilChanged()
                     .collectLatest { savedTrips ->
@@ -410,126 +537,15 @@ class SavedTripsViewModel(
                         val trips = savedTrips.map { it.toTrip() }.toImmutableList()
                         updateUiState { copy(savedTrips = trips, isSavedTripsLoading = false) }
 
-                        updateParkRideStopIdsInDb(savedTrips)
+                        syncSavedTripParkRides(
+                            savedTrips = savedTrips,
+                            facilityManager = nswParkRideFacilityManager,
+                            stopResultsManager = stopResultsManager,
+                            parkRideSandook = parkRideSandook,
+                            analytics = analytics,
+                        )
                     }
             }
-    }
-
-    /**
-     * Handles the logic for updating Park & Ride stop IDs in the database based on saved trips.
-     * Updates the database with (stopId, facilityId) pairs for all saved trips.
-     *
-     * For each unique stop ID found in the list of saved trips (from both `fromStopId` and `toStopId`),
-     * this method finds all associated Park & Ride facility IDs using the facility manager.
-     *
-     * Only stop IDs that have at least one facility are included.
-     * The resulting set of (stopId, facilityId) pairs is then inserted or replaced in the database.
-     *
-     * In short:
-     *      StopId -> FacilityId Mapping for StopIds in SavedTrips
-     *
-     * edge case solved, where multiple stop Ids have same facility Ids.
-     * {"stopId":"209325","parkRideFacilityId":"489","parkRideName":"Park&Ride - Manly Vale"},
-     * {"stopId":"209324","parkRideFacilityId":"489","parkRideName":"Park&Ride - Manly Vale"},
-     *
-     * @param savedTrips List of saved trips to extract stop IDs from.
-     */
-    @VisibleForTesting // TODO - write unit tests for this function.
-    suspend fun updateParkRideStopIdsInDb(savedTrips: List<SavedTrip>) {
-        // 1. Collect all unique stop IDs from the saved trips (both fromStopId and toStopId)
-        val uniqueStopIds: Set<String> = uniqueSavedTripStopIds(savedTrips)
-        log("Unique Stop IDs from Saved Trips: $uniqueStopIds")
-
-        // 2. Build a map from stopId to a list of associated park & ride facilities
-        val facilityDetailMap: Map<String, List<NswParkRideFacility>> = nswParkRideFacilityManager
-            .getParkRideFacilities()
-            .groupBy { it.stopId }
-        log("Facility Detail Map: $facilityDetailMap")
-
-        // 3. For each unique stopId, create SavedParkRide objects with all required data
-        val savedParkRideList: Set<SavedParkRide> = uniqueStopIds
-            .flatMap { stopId ->
-                // Try to resolve stopName for each stopId in priority order:
-                // 1. Use local DB (should always succeed for saved trips).
-                // 2. If not found, use Park & Ride facility name from facility mapping - remote config.
-                //    This can happen if the stopId in the saved trip is different from the one in
-                //    the park ride api call response. In that case, the remote config mapping
-                //    will provide the correct facility name for those stopId's.
-                // 3. If still not found, fallback to stopId itself (should rarely happen).
-                val stopName = stopResultsManager.fetchLocalStopName(stopId)
-                    ?: facilityDetailMap[stopId]?.firstOrNull()?.parkRideName
-                    ?: stopId
-
-                facilityDetailMap[stopId]?.map { facility ->
-                    SavedParkRide(
-                        stopId = stopId,
-                        facilityId = facility.parkRideFacilityId,
-                        stopName = stopName,
-                        facilityName = facility.parkRideName,
-                        source = SavedTrips.value,
-                    )
-                } ?: emptyList()
-            }
-            .toSet()
-
-        savedParkRideList.map {
-            it.stopId to it.facilityId + " (${it.stopName})"
-        }.let {
-            log("StopId -> FacilityId Mapping: \n${it.joinToString("\n")}")
-        }
-
-        // 4. Diff against the previously persisted set so add/remove can be tracked per facility.
-        val previousKeys = parkRideSandook.observeSavedParkRidesBySource(SavedTrips).first()
-            .map { it.stopId to it.facilityId }
-            .toSet()
-        val newKeys = savedParkRideList.map { it.stopId to it.facilityId }.toSet()
-        val addedKeys = newKeys - previousKeys
-        val removedKeys = previousKeys - newKeys
-
-        // Clear all existing saved park rides linked to saved trips for accuracy
-        parkRideSandook.clearAllSavedParkRidesBySource(source = SavedTrips)
-
-        if (savedParkRideList.isNotEmpty()) {
-            parkRideSandook.insertOrReplaceSavedParkRides(
-                parkRideInfoList = savedParkRideList,
-                source = SavedTrips,
-            )
-        }
-
-        trackParkRideAutoSync(addedKeys, removedKeys)
-    }
-
-    private fun trackParkRideAutoSync(
-        addedKeys: Set<Pair<String, String>>,
-        removedKeys: Set<Pair<String, String>>,
-    ) {
-        addedKeys.forEach { (stopId, facilityId) ->
-            analytics.track(
-                AnalyticsEvent.ParkRideUserFacilityEvent(
-                    facilityId = facilityId,
-                    stopId = stopId,
-                    action = AnalyticsEvent.ParkRideUserFacilityEvent.Action.ADD,
-                    source = AnalyticsEvent.ParkRideUserFacilityEvent.Source.SAVED_TRIPS_SCREEN,
-                ),
-            )
-        }
-        removedKeys.forEach { (stopId, facilityId) ->
-            analytics.track(
-                AnalyticsEvent.ParkRideUserFacilityEvent(
-                    facilityId = facilityId,
-                    stopId = stopId,
-                    action = AnalyticsEvent.ParkRideUserFacilityEvent.Action.REMOVE,
-                    source = AnalyticsEvent.ParkRideUserFacilityEvent.Source.SAVED_TRIPS_SCREEN,
-                ),
-            )
-        }
-    }
-
-    private fun uniqueSavedTripStopIds(savedTrips: List<SavedTrip>): Set<String> {
-        val uniqueSavedTripStopIds: Set<String> = savedTrips
-            .flatMap { listOf(it.fromStopId, it.toStopId) }
-            .toSet()
-        return uniqueSavedTripStopIds
     }
 
     private fun onMoveSavedTrip(tripId: String, targetIndex: Int) {
@@ -564,6 +580,24 @@ class SavedTripsViewModel(
                 fromStopId = savedTrip.fromStopId,
                 toStopId = savedTrip.toStopId,
             )
+        }
+    }
+
+    /** Changes the open reorder session, or starts or drops it. Nothing is written until Done. */
+    private fun updateReorder(change: SavedTripsState.(ReorderSession?) -> ReorderSession?) {
+        updateUiState { copy(reorder = change(reorder)) }
+    }
+
+    /**
+     * Done. The finished order is applied to the state at once and written once, off the main thread:
+     * the trips and the ones taken off in one transaction, the row's place in one preference.
+     */
+    private fun onReorderDone() {
+        val state = _uiState.value
+        val session = state.reorder ?: return
+        updateUiState { withReorderApplied(session.result()) }
+        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            persistReorder(sandook, preferences, analytics, session, state.savedTrips)
         }
     }
 
@@ -625,7 +659,7 @@ class SavedTripsViewModel(
                             latitude = 0.0,
                             longitude = 0.0,
                             // The mapping row already carries a resolved stop name, written
-                            // by the same priority chain updateParkRideStopIdsInDb uses. Fall
+                            // by the same priority chain syncSavedTripParkRides uses. Fall
                             // back to it before the raw stop ID, or a card whose stop is not
                             // in the local search index shows "2153478" instead of
                             // "Bella Vista" until its first availability fetch lands.
@@ -655,11 +689,11 @@ class SavedTripsViewModel(
     }
 
     @OptIn(ExperimentalTime::class)
-    suspend fun fetchAndSaveParkRideFacilityIfNeeded(stopId: String) {
+    suspend fun fetchAndSaveParkRideFacilityIfNeeded(stopId: String): Unit = parkRideFetchMutex.withLock {
         val facilityIds = convertStopIdListToFacilityIdList(setOf(stopId).toImmutableSet())
         if (facilityIds.isEmpty()) {
             logError("No Park Ride facilities found for stopId: $stopId")
-            return
+            return@withLock
         }
         val now = System.now().epochSeconds
         val refreshable = filterRefreshableFacilities(
@@ -668,7 +702,7 @@ class SavedTripsViewModel(
             cooldown = getApiCooldownDuration(),
             nowInstant = Instant.fromEpochSeconds(now),
         )
-        if (refreshable.isEmpty()) return
+        if (refreshable.isEmpty()) return@withLock
 
         // BFF batch path: one HTTP call resolves stop to facilities and returns
         // them all. NSW path returns null, the caller falls back to per-facility
@@ -693,6 +727,24 @@ class SavedTripsViewModel(
             .toSet()
 
         return facilityIdList
+    }
+
+    /**
+     * Asks for the numbers of every saved Park & Ride station when home opens or comes back to the
+     * front, so a tile has a current number without a tap. Cost: at most one call per saved
+     * facility, and only for the ones [isOffCooldown] lets through, which is the same decision the
+     * tap and the poll make. It runs beside the first frame and never ahead of it, a failure leaves
+     * the cached reading as it was, and nothing repeats: only an open tile is polled.
+     */
+    private fun refreshSavedParkRidesOnOpen() {
+        parkRideOpenRefreshJob?.cancel()
+        parkRideOpenRefreshJob = viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
+            val savedStopIds = parkRideSandook.observeSavedParkRides().first().map { it.stopId }
+            stopsToRefreshOnOpen(savedStopIds, _uiState.value.observeParkRideStopIdSet).forEach { stopId ->
+                log("Park & Ride on open for stopId: $stopId")
+                fetchAndSaveParkRideFacilityIfNeeded(stopId = stopId)
+            }
+        }
     }
 
     /** Keeps open Park & Ride cards fresh; the rules live on [pollWhileCardsAreOpen]. */
@@ -758,18 +810,6 @@ class SavedTripsViewModel(
         }
     }
 
-    private suspend fun loadReorderTipSeenState() {
-        val hasSeen = preferences.getBoolean(SandookPreferences.KEY_HAS_SEEN_SAVED_TRIP_CARD_REORDER_TIP) ?: false
-        if (!hasSeen) updateUiState { copy(hasSeenReorderTip = false) }
-    }
-
-    private fun onMarkReorderTipSeen() {
-        viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
-            preferences.setBoolean(SandookPreferences.KEY_HAS_SEEN_SAVED_TRIP_CARD_REORDER_TIP, true)
-            // No UI state update — tip stays visible for the current session, hidden on next launch.
-        }
-    }
-
     private suspend fun updateInviteFriendsTileSeenState() {
         log("onStart - updateInviteFriendsTileSeenState called")
         // Manager caches the value, so this will only read from preferences once
@@ -796,6 +836,8 @@ class SavedTripsViewModel(
         observeParkRideFacilityFromDatabaseJob = null
         parkRidePollJob?.cancel()
         parkRidePollJob = null
+        parkRideOpenRefreshJob?.cancel()
+        parkRideOpenRefreshJob = null
         log("Cleanup jobs in SavedTripsViewModel completed.")
     }
 }

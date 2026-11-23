@@ -1,5 +1,8 @@
 package xyz.ksharma.krail.io.gtfs.di
 
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import xyz.ksharma.krail.core.di.DispatchersComponent.Companion.IODispatcher
@@ -7,6 +10,8 @@ import xyz.ksharma.krail.io.gtfs.GtfsQualifiers
 import xyz.ksharma.krail.io.gtfs.nswbusroutes.NswBusRoutesManager
 import xyz.ksharma.krail.io.gtfs.nswstops.NswStopsManager
 import xyz.ksharma.krail.io.gtfs.nswstops.StopsManager
+import xyz.ksharma.krail.io.gtfs.readiness.AppDataReadiness
+import xyz.ksharma.krail.io.gtfs.readiness.RealAppDataReadiness
 
 val gtfsModule = module {
     // NSW Stops Manager
@@ -24,6 +29,20 @@ val gtfsModule = module {
             ioDispatcher = get(named(IODispatcher)),
             nswBusRoutesSandook = get(),
             preferences = get(),
+        )
+    }
+
+    // Combines both managers and says whether the stops data is usable. Process-wide, so every
+    // screen sees the same state and the insert runs once.
+    single<AppDataReadiness> {
+        val ioDispatcher = get<CoroutineDispatcher>(named(IODispatcher))
+        RealAppDataReadiness(
+            stopsManager = get(named(GtfsQualifiers.NSW_STOPS_MANAGER)),
+            busRoutesManager = get(named(GtfsQualifiers.NSW_BUS_ROUTES_MANAGER)),
+            sandook = get(),
+            preferences = get(),
+            ioDispatcher = ioDispatcher,
+            scope = CoroutineScope(SupervisorJob() + ioDispatcher),
         )
     }
 }

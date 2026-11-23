@@ -5,6 +5,7 @@ import xyz.ksharma.krail.core.navigation.NavigatorBase
 import xyz.ksharma.krail.feature.debug.settings.ui.navigation.DebugConfigHomeRoute
 import xyz.ksharma.krail.feature.debug.settings.ui.navigation.DebugConfigNetworkRoute
 import xyz.ksharma.krail.feature.track.ui.navigation.TrackTripRoute
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
  * Implementation of TripPlannerNavigator for the trip planner feature module.
@@ -24,12 +25,16 @@ internal class TripPlannerNavigatorImpl(
         fieldType: SearchStopFieldType,
         labelKey: String?,
         editTripLeg: Boolean,
+        presetFrom: StopItem?,
+        presetTo: StopItem?,
     ) {
         baseNavigator.goTo(
             SearchStopRoute(
                 fieldType = fieldType,
                 labelKey = labelKey,
                 editTripLeg = editTripLeg,
+                fromStopJson = presetFrom?.toJsonString(),
+                toStopJson = presetTo?.toJsonString(),
             ),
         )
     }
@@ -78,10 +83,6 @@ internal class TripPlannerNavigatorImpl(
 
     override fun navigateToOurStory() {
         baseNavigator.goTo(OurStoryRoute)
-    }
-
-    override fun navigateToIntro() {
-        baseNavigator.goTo(IntroRoute)
     }
 
     override fun navigateToTrackTrip(encodedData: String?) {

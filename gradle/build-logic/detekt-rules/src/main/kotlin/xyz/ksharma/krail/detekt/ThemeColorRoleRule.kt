@@ -114,6 +114,13 @@ class ThemeColorRoleRule(config: Config) : Rule(config) {
          * accessor is the right choice there, so flagging it would be a false positive with no
          * correct fix available at the call site.
          */
-        val FILL_TAKING_CALLEES = setOf("background", "drawRect", "drawCircle", "drawRoundRect")
+        val FILL_TAKING_CALLEES = setOf(
+            "background",
+            "drawRect",
+            "drawCircle",
+            "drawRoundRect",
+            // taj's round button: its `color` is the circle it paints, with the icon drawn on top.
+            "RoundIconButton",
+        )
     }
 }

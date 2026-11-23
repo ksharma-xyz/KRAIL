@@ -201,15 +201,7 @@ class AiSearchInputViewModel(
                 textBeforeSpeaking = ""
                 reporter.startSession()
                 val enabled = isAiSearchInputEnabled()
-                _uiState.update {
-                    AiSearchInputUiState(
-                        isInputOpen = enabled,
-                        isFeatureEnabled = enabled,
-                        isDeviceCapable = isDeviceCapable,
-                        isSpeechAvailable = it.isSpeechAvailable,
-                        listenOnOpenPending = enabled,
-                    )
-                }
+                _uiState.update { it.opened(enabled, isDeviceCapable) }
             }
             AiSearchInputEvent.CloseInput -> closeInput()
             AiSearchInputEvent.Submit -> submit()
@@ -217,17 +209,13 @@ class AiSearchInputViewModel(
             // is not, or starting over would hide the way back in.
             AiSearchInputEvent.StartOver -> {
                 textBeforeSpeaking = ""
-                _uiState.update {
-                    AiSearchInputUiState(
-                        isFeatureEnabled = it.isFeatureEnabled,
-                        isDeviceCapable = isDeviceCapable,
-                        isSpeechAvailable = it.isSpeechAvailable,
-                    )
-                }
+                _uiState.update { it.restarted(isDeviceCapable) }
             }
 
             AiSearchInputEvent.StartListening -> startListening()
             AiSearchInputEvent.StopListening -> stopListening()
+            AiSearchInputEvent.RefreshFeatureFlag ->
+                _uiState.update { it.copy(isFeatureEnabled = isAiSearchInputEnabled()) }
         }
     }
 
@@ -248,13 +236,7 @@ class AiSearchInputViewModel(
         listeningTimeoutJob = null
         textBeforeSpeaking = ""
         if (_uiState.value.isListening) speechToTextService.stopListening()
-        _uiState.update {
-            AiSearchInputUiState(
-                isFeatureEnabled = it.isFeatureEnabled,
-                isDeviceCapable = isDeviceCapable,
-                isSpeechAvailable = it.isSpeechAvailable,
-            )
-        }
+        _uiState.update { it.restarted(isDeviceCapable) }
     }
 
     /**

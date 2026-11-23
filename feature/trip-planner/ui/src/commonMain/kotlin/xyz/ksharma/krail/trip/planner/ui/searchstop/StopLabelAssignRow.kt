@@ -6,13 +6,11 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -20,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.core.transport.TransportMode
@@ -53,6 +52,11 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
  * Pills never show a tick — solid means "set here", outline means "not set". A stop
  * can only ever be assigned to ONE label (the same 1:1 invariant as today),
  * automatically satisfied here since the wall excludes labels that are already set.
+ *
+ * [showLabelAssign] is on for Search Stop. A list that only picks a stop, such as the Intro's, turns it
+ * off: the row is then the name and the mode icons, with no chevron and nothing to expand, and the
+ * label arguments are unused. The Intro also leaves [onRowClick] null and puts the click, the ripple and the tint on a node of its
+ * own around the whole row (`IntroStopRow`), so its tap area is the row's whole height and not the part inside the padding.
  */
 @Composable
 internal fun StopLabelAssignRow(
@@ -66,6 +70,7 @@ internal fun StopLabelAssignRow(
     onNewLabelClick: () -> Unit,
     modifier: Modifier = Modifier,
     onRowClick: (() -> Unit)? = null,
+    showLabelAssign: Boolean = true,
 ) {
     val dim = KrailTheme.dimensions
 
@@ -97,9 +102,7 @@ internal fun StopLabelAssignRow(
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
                     verticalAlignment = Alignment.CenterVertically,
-                    // A touch more breathing room between the stop name and the
-                    // mode-icon/pill row underneath it.
-                    modifier = Modifier.padding(top = dim.spacingXXS),
+                    modifier = Modifier.padding(top = StopNameToModeIconsGap),
                 ) {
                     transportModeSet.forEach { mode ->
                         TransportModeIcon(transportMode = mode, size = TransportModeIconSize.Small)
@@ -109,19 +112,22 @@ internal fun StopLabelAssignRow(
                     }
                 }
             }
-            if (assignedLabel == null) {
+            if (assignedLabel == null && showLabelAssign) {
                 AssignToLabelIcon(expanded = expanded, onClick = onExpandToggle)
             }
         }
 
-        if (expanded && assignedLabel == null) {
+        if (expanded && assignedLabel == null && showLabelAssign) {
             val unsetLabels = remember(stopLabels) { stopLabels.filterNot { it.isSet } }
 
-            LazyRow(
-                contentPadding = PaddingValues(top = dim.spacingM),
+            // Whole chips wrap onto the next line, never a row that scrolls off the edge: nothing on
+            // this screen scrolls sideways except the label row at the top of the card.
+            FlowRow(
+                modifier = Modifier.padding(top = dim.spacingM),
                 horizontalArrangement = Arrangement.spacedBy(dim.spacingS),
+                verticalArrangement = Arrangement.spacedBy(dim.spacingS),
             ) {
-                items(items = unsetLabels, key = { it.label }) { label ->
+                unsetLabels.forEach { label ->
                     UnsetLabelPill(
                         label = label,
                         showIcon = false,
@@ -130,9 +136,7 @@ internal fun StopLabelAssignRow(
                             .klickable { onLabelPillClick(label) },
                     )
                 }
-                item(key = "new-label") {
-                    NewLabelAssignChip(onClick = onNewLabelClick)
-                }
+                NewLabelAssignChip(onClick = onNewLabelClick)
             }
         }
 
@@ -142,6 +146,9 @@ internal fun StopLabelAssignRow(
         Spacer(modifier = Modifier.height(dim.spacingM))
     }
 }
+
+// There is no 3 dp spacing token, so this is 1.5 times the old XXS.
+private val StopNameToModeIconsGap = 3.dp
 
 @Composable
 private fun NewLabelAssignChip(onClick: () -> Unit) {

@@ -65,8 +65,10 @@ the sheet open.
 
 - [x] Sheet-visibility state on both maps is now a saveable stop id, re-resolved from the map
       state the ViewModel still holds (the same lookup the map layer does for a tap).
-- [x] `MapOptionsBottomSheet`'s pending edits are saveable, pinned by
-      `MapOptionsSheetRestoreTest` — verified to fail when the fix is reverted.
+- [ ] `MapOptionsBottomSheet`'s pending edits were saveable, pinned by a restore test that was
+      verified to fail when the fix was reverted. The sheet and its test were deleted with the
+      Search Stop map-first work (`docs/features/map-home/ERD.md`, branch 5): the mode filter is now
+      a row of chips on the map, with no pending edits to lose on recreation.
 - [x] The map/list switch ignores a text callback that carries unchanged text.
 - [x] `TimeTableStopSheetRestoreTest`'s KDoc no longer states the dismissal theory as fact.
 - [ ] **Open gap:** on a phone, rotating crosses single pane and dual pane, which are two

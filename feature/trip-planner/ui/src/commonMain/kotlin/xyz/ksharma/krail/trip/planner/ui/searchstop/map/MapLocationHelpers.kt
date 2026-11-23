@@ -60,3 +60,14 @@ internal fun initialCameraPosition(knownLocation: LatLng?): CameraPosition =
         ),
         zoom = NearbyStopsConfig.DEFAULT_ZOOM,
     )
+
+/**
+ * Whether the camera should glide to the rider now: once, when the first fix lands.
+ *
+ * The decision is made from a stable boolean, never from the position itself. A fix is a stream of
+ * slightly different positions, and keying the glide on them cancelled it on every jitter and left the
+ * camera frozen part way (`docs/MAPLIBRE_IOS_PITFALLS.md` section 5). [alreadyCentered] is saved across a
+ * rotation, so turning the phone never glides the camera back from where the rider panned it.
+ */
+internal fun shouldAutoCenter(hasUserLocation: Boolean, alreadyCentered: Boolean): Boolean =
+    hasUserLocation && !alreadyCentered

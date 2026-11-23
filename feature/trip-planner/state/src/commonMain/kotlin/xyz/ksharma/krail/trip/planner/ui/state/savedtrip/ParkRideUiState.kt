@@ -28,6 +28,16 @@ data class ParkRideUiState(
         val stopId: String,
         val timeText: String,
         val facilityId: String,
-        // TODO - add location details.
+        /**
+         * This car park's own position, from its availability reading. Null when the reading
+         * carried none (the stored column holds 0.0 then) or when there is no reading yet.
+         */
+        val latitude: Double? = null,
+        val longitude: Double? = null,
+        /**
+         * When the reading was stored, in epoch seconds. Orders readings by age so the tile can
+         * show the oldest time. Zero when there is no reading yet.
+         */
+        val readAtEpochSeconds: Long = 0L,
     )
 }

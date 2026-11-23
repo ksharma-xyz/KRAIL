@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.trackScreenViewEvent
 import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.sandook.Sandook
@@ -38,6 +39,8 @@ class ThemeSelectionViewModel(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(ANR_TIMEOUT), ThemeSelectionState())
 
+    private val themeChoice = ThemeChoice(sandook, analytics)
+
     private var transportSelectionJob: Job? = null
 
     fun onEvent(event: ThemeSelectionEvent) {
@@ -62,12 +65,11 @@ class ThemeSelectionViewModel(
         transportSelectionJob = viewModelScope.launchWithExceptionHandler<ThemeSelectionViewModel>(
             dispatcher = ioDispatcher,
         ) {
-            sandook.clearTheme() // Only one entry should exist at a time
-            sandook.insertOrReplaceTheme(productClass.toLong())
+            themeChoice.save(productClass)
             updateUiState {
                 copy(themeSelected = true)
             }
-            analytics.trackThemeSelectionEvent(themeId = productClass)
+            themeChoice.track(productClass, AnalyticsEvent.ThemeSelectedEvent.Source.SETTINGS)
         }
     }
 

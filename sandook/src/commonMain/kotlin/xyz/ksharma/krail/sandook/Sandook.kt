@@ -45,6 +45,19 @@ interface Sandook {
 
     fun selectTripById(tripId: String): SavedTrip?
     fun updateSavedTripSortOrder(tripId: String, sortOrder: Long)
+
+    /**
+     * Writes a reorder of the home screen's saved trips: deletes [removedTripIds] and gives
+     * [orderedTripIds] the sort orders 0, 1, 2 and so on, in that order.
+     *
+     * One call is one write. The real database does it in a single transaction, so the trips
+     * observer sees the finished order once and never a half moved list. The default is the
+     * same writes one by one, for a database that has no transaction to offer.
+     */
+    fun reorderSavedTrips(orderedTripIds: List<String>, removedTripIds: Set<String>) {
+        removedTripIds.forEach(::deleteTrip)
+        orderedTripIds.forEachIndexed { index, tripId -> updateSavedTripSortOrder(tripId, index.toLong()) }
+    }
     fun clearSavedTrips()
     // endregion
 

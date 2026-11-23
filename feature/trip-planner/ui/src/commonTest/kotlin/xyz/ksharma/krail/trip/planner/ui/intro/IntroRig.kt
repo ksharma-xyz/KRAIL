@@ -1,0 +1,261 @@
+package xyz.ksharma.krail.trip.planner.ui.intro
+
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import app.cash.turbine.ReceiveTurbine
+import app.cash.turbine.test
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.onEach
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.IntroLetsKrailClickEvent
+import xyz.ksharma.krail.core.remoteconfig.flag.Flag
+import xyz.ksharma.krail.core.testing.coroutines.KrailTestScope
+import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
+import xyz.ksharma.krail.core.testing.fakes.FakeAppDataReadiness
+import xyz.ksharma.krail.core.testing.fakes.FakeFlag
+import xyz.ksharma.krail.core.testing.fakes.FakeNswParkRideSandook
+import xyz.ksharma.krail.core.testing.fakes.FakeNswStopsSandook
+import xyz.ksharma.krail.core.testing.fakes.FakeSandook
+import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
+import xyz.ksharma.krail.core.testing.helpers.CallLog
+import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
+import xyz.ksharma.krail.sandook.NswParkRideSandook
+import xyz.ksharma.krail.sandook.NswStopsSandook
+import xyz.ksharma.krail.sandook.Sandook
+import xyz.ksharma.krail.sandook.SandookPreferences
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideAvailabilityLoader
+import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
+import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
+import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRideStationPickerItem
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeParkRideAvailabilityLoader
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeParkRideCatalogue
+import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.time.Duration
+import kotlin.time.TestTimeSource
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
+
+internal val TALLAWONG = SuggestedStop(stopId = "2155384", name = "Tallawong Station")
+internal val CENTRAL = SuggestedStop(stopId = "200060", name = "Central Station")
+internal val WYNYARD = SuggestedStop(stopId = "200080", name = "Wynyard Station")
+
+/**
+ * The Park & Ride question with nothing answered, which the rig opens on unless a test gives it a saved state of
+ * its own. It is the first screen of the flow, and most of these tests are about it and the screens after it.
+ */
+internal val ON_PARK_RIDE = IntroState(step = IntroStep.PARK_RIDE)
+
+/** Everything the Intro view model touches, as fakes that share one ordered [log]. */
+internal class IntroRig(
+    private val scope: KrailTestScope,
+    initialReadiness: StopsReadiness = StopsReadiness.Ready(stopCount = 100),
+    val handle: SavedStateHandle = savedAt(ON_PARK_RIDE),
+    timeSource: TimeSource? = null,
+    stations: List<ParkRideStationPickerItem> = INTRO_STATIONS,
+    availabilityLoader: ParkRideAvailabilityLoader? = null,
+    val parkRideSandook: NswParkRideSandook = FakeNswParkRideSandook(),
+    stopNames: Map<String, String> = INTRO_STOP_NAMES,
+    /**
+     * Where the Intro's saved progress goes. A store of its own, with no share in [log], so the order the finish is held
+     * to in so many tests is not about a write that is not part of it. Seed it before the view model is first used.
+     */
+    val progressPreferences: SandookPreferences = FakeSandookPreferences(),
+) {
+    val log = CallLog()
+    val readiness = FakeAppDataReadiness(initial = initialReadiness, callLog = log)
+    val sandook = FakeSandook(callLog = log)
+    val preferences = FakeSandookPreferences(callLog = log)
+    val analytics = FakeAnalytics(callLog = log)
+    val flag = FakeFlag()
+    val catalogue = FakeParkRideCatalogue(stations = stations)
+
+    /** What the stops table's nearby query returns, and every call made to it. */
+    val nswStops = FakeNswStopsSandook()
+
+    /** The local stop search the typed query runs. */
+    val stopResults = FakeStopResultsManager()
+
+    /** Records each refresh the Park & Ride step asks for. Unused when the rig was given a loader. */
+    val loader = FakeParkRideAvailabilityLoader()
+
+    /** Moves only when a test says so. Ignored when the rig was given its own [timeSource]. */
+    val testTime = TestTimeSource()
+
+    private val store = ViewModelStore()
+
+    /** Built on first use, so a test can set the flag before the view model reads it. */
+    val viewModel: IntroFlowViewModel by lazy {
+        val factory = viewModelFactory {
+            initializer {
+                IntroFlowViewModel(
+                    savedStateHandle = handle,
+                    appDataReadiness = readiness,
+                    completion = IntroCompletion(
+                        sandook = sandook,
+                        preferences = preferences,
+                        analytics = analytics,
+                        ioDispatcher = scope.ioDispatcher,
+                        progress = IntroProgressStore(progressPreferences, scope.ioDispatcher),
+                    ),
+                    timeSource = timeSource ?: testTime,
+                    parkRide = IntroParkRideGateway(
+                        catalogue = catalogue,
+                        availabilityLoader = availabilityLoader ?: loader,
+                        parkRideSandook = parkRideSandook,
+                        ioDispatcher = scope.ioDispatcher,
+                        stopNameLookup = stopNames::get,
+                        analytics = analytics,
+                    ),
+                    stops = fakeStopsGateway(
+                        ioDispatcher = scope.ioDispatcher,
+                        flag = flag,
+                        nswStops = nswStops,
+                        sandook = sandook,
+                        stopResults = stopResults,
+                    ),
+                )
+            }
+        }
+        ViewModelProvider.create(store, factory)[IntroFlowViewModel::class]
+    }
+
+    val state: IntroState get() = viewModel.state.value
+
+    fun send(vararg events: IntroUiEvent) {
+        events.forEach(viewModel::onEvent)
+        scope.runCurrent()
+    }
+
+    /** The station on the card, which the test expects to be showing. */
+    fun card() = assertIs<ParkRideCardPhase.Card>(state.parkRideCard).station
+
+    /** A rider who answered Yes and is shown the nearest station, Bella Vista here. */
+    fun showBellaVista() = send(
+        IntroUiEvent.AnswerParkRide(yes = true),
+        IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, FOUR_POINT_SIX_KM_FROM_BELLA_VISTA),
+    )
+
+    /**
+     * A rider who answered Yes from a place with no station within ten kilometres, was told so, and pressed OK, so the Intro is
+     * on the destination screen. Two sends, because the look runs after the first and the message has to be on screen to answer.
+     */
+    fun passNoStationNear() {
+        send(
+            IntroUiEvent.AnswerParkRide(yes = true),
+            IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, AT_CENTRAL),
+        )
+        send(IntroUiEvent.AcknowledgeNoStation)
+    }
+
+    fun showTallawong() = send(
+        IntroUiEvent.AnswerParkRide(yes = true),
+        IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, AT_TALLAWONG),
+    )
+
+    /**
+     * The way out of the Intro from the confirm screen: the answer, which only records it, then a theme and the theme
+     * screen's button, which is the finish.
+     */
+    fun answerAndFinish(yes: Boolean, themeId: Int = KrailThemeStyle.Train.id) = send(
+        IntroUiEvent.AnswerSaveTrip(yes = yes),
+        IntroUiEvent.PickTheme(themeId),
+        IntroUiEvent.ConfirmTheme,
+    )
+
+    /** Builds the view model if it is not built yet, then lets everything it started at this instant run. */
+    fun settle() = send()
+
+    /** The refresh a real loader does, as far as the Intro can tell: the rows it wrote. */
+    fun refreshWritesBellaVista(spots: Long = 120, percentFull: Long = 40, time: String = "8:05 AM") {
+        loader.onRefresh = {
+            parkRideSandook.insertOrReplaceAll(
+                listOf(
+                    reading(facilityId = "31", stopId = "2153478", spots = spots, percentFull = percentFull, time = time),
+                ),
+            )
+        }
+    }
+
+    /** What the system does when the screen is gone for good: the view model is cleared. */
+    fun clearViewModel() = store.clear()
+
+    /** Collects the finish effects, noting each one in [log] at the moment it is emitted. */
+    suspend fun withEffects(block: suspend ReceiveTurbine<IntroEffect>.() -> Unit) {
+        viewModel.effects.onEach { log.record("effect") }.test {
+            block()
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    fun outcomeEvent(): IntroLetsKrailClickEvent =
+        analytics.getTrackedEvents("intro_lets_krail").single() as IntroLetsKrailClickEvent
+}
+
+/** The stops gateway of the Intro over fakes, which a test that makes its own view model can use as it is. */
+internal fun fakeStopsGateway(
+    ioDispatcher: CoroutineDispatcher = Dispatchers.Unconfined,
+    flag: Flag = FakeFlag(),
+    nswStops: NswStopsSandook = FakeNswStopsSandook(),
+    sandook: Sandook = FakeSandook(),
+    stopResults: StopResultsManager = FakeStopResultsManager(),
+) = IntroStopsGateway(
+    flag = flag,
+    nswStops = nswStops,
+    sandook = sandook,
+    stopResults = stopResults,
+    ioDispatcher = ioDispatcher,
+)
+
+/** The saved state of a view model that had reached [state], as if recreated after process death. */
+internal fun savedAt(state: IntroState): SavedStateHandle =
+    SavedStateHandle().also { it.saveIntroState(state) }
+
+/**
+ * Every reading of elapsed time moves on by [tick], as a real monotonic clock does between two
+ * calls: it never reports exactly zero.
+ */
+internal class TickingTimeSource(private val tick: Duration) : TimeSource {
+    private var elapsed = Duration.ZERO
+
+    override fun markNow(): TimeMark = object : TimeMark {
+        override fun elapsedNow(): Duration {
+            elapsed += tick
+            return elapsed
+        }
+    }
+}
+
+/** The progress store's preferences, noting each write and each clear in [calls] in the order they happen. */
+internal class RecordingProgressPreferences(
+    private val inner: FakeSandookPreferences = FakeSandookPreferences(),
+    val calls: CallLog = CallLog(),
+) : SandookPreferences by inner {
+
+    override fun setString(key: String, value: String) {
+        inner.setString(key, value)
+        calls.record("write")
+    }
+
+    override fun deletePreference(key: String) {
+        inner.deletePreference(key)
+        calls.record("clear")
+    }
+}
+
+/**
+ * The two effects a finish sends, in order: the finale starts at once, with the press, and the app is shown once everything
+ * the finish writes is written and its bounded wait for the stops is over.
+ */
+internal suspend fun ReceiveTurbine<IntroEffect>.awaitFinish() {
+    assertEquals(IntroEffect.StartFinale, awaitItem())
+    assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+}

@@ -9,7 +9,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import xyz.ksharma.krail.core.analytics.Analytics
+import xyz.ksharma.krail.core.appreview.DelightMoment
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeFestivalManager
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
@@ -42,7 +42,8 @@ class AddParkRideViewModelTest {
     private val parkRideSandook: NswParkRideSandook = FakeNswParkRideSandook()
     private val facilityManager = FakeParkRideFacilityManager()
     private val sandook = FakeSandook()
-    private val analytics: Analytics = FakeAnalytics()
+    private val analytics = FakeAnalytics()
+    private val appReviewManager = FakeAppReviewManager()
     private val platformOps = FakePlatformOps()
     private lateinit var viewModel: AddParkRideViewModel
 
@@ -65,7 +66,7 @@ class AddParkRideViewModelTest {
             platformOps = platformOps,
             analytics = analytics,
             ioDispatcher = testDispatcher,
-            appReviewManager = FakeAppReviewManager(),
+            appReviewManager = appReviewManager,
         )
     }
 
@@ -124,6 +125,43 @@ class AddParkRideViewModelTest {
             val stored = parkRideSandook.observeSavedParkRidesBySource(UserAdded).first()
             assertEquals(setOf("26", "27", "28"), stored.map { it.facilityId }.toSet())
             assertTrue(expectMostRecentItem().stations.first().added)
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `adding from the picker is reported as an add from the picker and arms the review moment`() =
+        runTest(testDispatcher) {
+            facilityManager.facilities = TALLAWONG
+
+            viewModel.uiState.test {
+                advanceUntilIdle()
+                viewModel.onEvent(AddParkRideUiEvent.ToggleStation(expectMostRecentItem().stations.first()))
+                advanceUntilIdle()
+
+                val reported = analytics.getTrackedEvents("park_ride_user_facility").mapNotNull { it.properties }
+                assertEquals(listOf("add"), reported.map { it["action"] })
+                assertEquals(listOf("add_park_ride_screen"), reported.map { it["source"] })
+                assertEquals(listOf(DelightMoment.PARK_RIDE_ADDED), appReviewManager.armedMoments)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `removing from the picker is reported as a remove and arms no review moment`() = runTest(testDispatcher) {
+        facilityManager.facilities = TALLAWONG
+
+        viewModel.uiState.test {
+            advanceUntilIdle()
+            viewModel.onEvent(AddParkRideUiEvent.ToggleStation(expectMostRecentItem().stations.first()))
+            advanceUntilIdle()
+            viewModel.onEvent(AddParkRideUiEvent.ToggleStation(expectMostRecentItem().stations.first()))
+            advanceUntilIdle()
+
+            val reported = analytics.getTrackedEvents("park_ride_user_facility").mapNotNull { it.properties }
+            assertEquals(listOf("add", "remove"), reported.map { it["action"] })
+            assertEquals(1, appReviewManager.armedMoments.size)
+            assertTrue(parkRideSandook.observeSavedParkRidesBySource(UserAdded).first().isEmpty())
             cancelAndIgnoreRemainingEvents()
         }
     }

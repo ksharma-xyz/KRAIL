@@ -8,7 +8,6 @@
     <ID>ArgumentListWrapping:SavedTripsViewModel.kt$SavedTripsViewModel$("Park Ride card expanded for stopId: ${parkRideState.stopId} , facilities: ${parkRideState.facilities.joinToString()}")</ID>
     <ID>ArgumentListWrapping:ThemeSelectionRadioButton.kt$( controlX1, centerY, controlX2, endY, nextX, endY )</ID>
     <ID>CascadingCallWrapping:DateTimeSelectorViewModel.kt$DateTimeSelectorViewModel$stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Unit)</ID>
-    <ID>CascadingCallWrapping:IntroViewModel.kt$IntroViewModel$stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), IntroState.default())</ID>
     <ID>CascadingCallWrapping:RealStopResultsManager.kt$RealStopResultsManager$second</ID>
     <ID>CascadingCallWrapping:SavedTripCard.kt$primaryTransportMode?.colorCode ?.hexToComposeColor() ?: themeColor()</ID>
     <ID>CascadingCallWrapping:SavedTripsViewModel.kt$SavedTripsViewModel$stopName</ID>
@@ -29,10 +28,8 @@
     <ID>ComposableParamOrder:DiscoverScreen.kt$DiscoverScreenTablet</ID>
     <ID>ComposableParamOrder:HtmlText.kt$HtmlText</ID>
     <ID>ComposableParamOrder:JourneyTimeOptionsGroup.kt$JourneyTimeOptionsGroup</ID>
-    <ID>ComposableParamOrder:TagLineWithEmoji.kt$TagLineWithEmoji</ID>
     <ID>ComposableParamOrder:TimeTableScreen.kt$JourneyCardItem</ID>
     <ID>FinalNewline:DiscoverScreen.kt$xyz.ksharma.krail.trip.planner.ui.discover.DiscoverScreen.kt</ID>
-    <ID>FinalNewline:IntroContentPlanTrip.kt$xyz.ksharma.krail.trip.planner.ui.intro.IntroContentPlanTrip.kt</ID>
     <ID>FinalNewline:ParkRideCard.kt$xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard.kt</ID>
     <ID>FunctionNaming:AnimatedDots.kt$@Composable fun AnimatedDots(modifier: Modifier = Modifier, color: Color = KrailTheme.colors.onSurface)</ID>
     <ID>FunctionNaming:AppLogo.kt$@Composable fun AppLogo(modifier: Modifier = Modifier)</ID>
@@ -62,17 +59,6 @@
     <ID>FunctionNaming:HtmlText.kt$@Composable actual fun HtmlText( text: String, modifier: Modifier, onClick: () -&gt; Unit, color: Color, urlColor: Color, )</ID>
     <ID>FunctionNaming:HtmlText.kt$@Composable expect fun HtmlText( text: String, modifier: Modifier = Modifier, onClick: () -&gt; Unit, color: Color, urlColor: Color, )</ID>
     <ID>FunctionNaming:IconButton.kt$@Composable fun IconButton( painter: Painter, color: Color, modifier: Modifier = Modifier, onClick: () -&gt; Unit = {}, )</ID>
-    <ID>FunctionNaming:IntroContentAlerts.kt$@Composable fun AnimatedAlertsOneByOne( displayAlert: Boolean, delayMillis: Long = 300L // delay before starting second animation )</ID>
-    <ID>FunctionNaming:IntroContentAlerts.kt$@Composable fun IntroContentAlerts( tagline: String, style: String, // hexCode - // todo - see if it can be color instead. modifier: Modifier = Modifier, )</ID>
-    <ID>FunctionNaming:IntroContentInviteFriends.kt$@Composable fun IntroContentInviteFriends( tagline: String, style: String, onShareClick: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
-    <ID>FunctionNaming:IntroContentPlanTrip.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun IntroContentPlanTrip( tagline: String, style: String, // hexCode modifier: Modifier = Modifier, )</ID>
-    <ID>FunctionNaming:IntroContentRealTime.kt$@Composable fun IntroContentRealTime( tagline: String, style: String, modifier: Modifier = Modifier, )</ID>
-    <ID>FunctionNaming:IntroContentSaveTrips.kt$@Composable fun IntroContentSaveTrips( tagline: String, style: String, // hexCode - // todo - see if it can be color instead. modifier: Modifier = Modifier, )</ID>
-    <ID>FunctionNaming:IntroContentSelectTransportMode.kt$@Composable fun IntroContentSelectTransportMode( tagline: String, style: String, // hexCode - // todo - see if it can be color instead. modifier: Modifier = Modifier, )</ID>
-    <ID>FunctionNaming:IntroParkRide.kt$@Composable fun IntroParkRide(tagline: String, style: String, modifier: Modifier)</ID>
-    <ID>FunctionNaming:IntroScreen.kt$@Composable fun IntroScreen( state: IntroState, modifier: Modifier = Modifier, onIntroComplete: (pageType: IntroPageType, pageNumber: Int) -&gt; Unit = { _, _ -&gt; }, onEvent: (IntroUiEvent) -&gt; Unit = {}, )</ID>
-    <ID>FunctionNaming:IntroScreen.kt$@Composable private fun IntroPageContent( pageData: IntroState.IntroPage, modifier: Modifier = Modifier, onShareClick: () -&gt; Unit = {}, )</ID>
-    <ID>FunctionNaming:IntroScreen.kt$@Composable private fun IntroTitle( offsetFraction: Float, state: IntroState, startPage: Int, animatedButtonColor: Color, animatedAlpha: Float, targetPage: Int )</ID>
     <ID>FunctionNaming:JourneyCard.kt$@Composable fun DefaultJourneyCardContent( originTime: String, destinationTime: String, totalTravelTime: String, totalWalkTime: String?, modifier: Modifier = Modifier, departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null, )</ID>
     <ID>FunctionNaming:JourneyCard.kt$@Composable fun ExpandedJourneyCardContent( totalTravelTime: String, legList: ImmutableList&lt;TimeTableState.JourneyCardInfo.Leg&gt;, totalUniqueServiceAlerts: Int, onAlertClick: () -&gt; Unit, onLegClick: (Boolean) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
     <ID>FunctionNaming:JourneyCard.kt$@Composable fun JourneyCard( timeToDeparture: String, platformNumber: String?, platformText: String?, originTime: String, destinationTime: String, totalTravelTime: String, legList: ImmutableList&lt;TimeTableState.JourneyCardInfo.Leg&gt;, transportModeLineList: ImmutableList&lt;TransportModeLine&gt;, onClick: () -&gt; Unit, cardState: JourneyCardState, totalWalkTime: String?, totalUniqueServiceAlerts: Int, modifier: Modifier = Modifier, onAlertClick: () -&gt; Unit = {}, onLegClick: (Boolean) -&gt; Unit = {}, departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null, )</ID>
@@ -108,10 +94,6 @@
     <ID>FunctionNaming:OutlineRadioButton.kt$@Composable fun OutlineRadioButton( text: String, themeColor: Color, modifier: Modifier = Modifier, type: RadioButtonType = RadioButtonType.DEFAULT, selected: Boolean = false, enabled: Boolean = true, onClick: () -&gt; Unit = {}, )</ID>
     <ID>FunctionNaming:ParkRideCard.kt$@Composable fun ParkRideCard( parkRideUiState: ParkRideUiState, isExpanded: Boolean, modifier: Modifier = Modifier, onClick: () -&gt; Unit = {}, )</ID>
     <ID>FunctionNaming:ParkRideCard.kt$@Preview @Composable private fun ParkRideCardPreview()</ID>
-    <ID>FunctionNaming:ParkRideContent.kt$@Composable fun ParkRideLoadedContent( parkRideFacilityDetail: ParkRideFacilityDetail, modifier: Modifier = Modifier, )</ID>
-    <ID>FunctionNaming:ParkRideContent.kt$@Preview @Composable fun ParkRideLoadedContentPreview_Barbie()</ID>
-    <ID>FunctionNaming:ParkRideContent.kt$@Preview @Composable fun ParkRideLoadedContentPreview_Default()</ID>
-    <ID>FunctionNaming:ParkRideContent.kt$@Preview @Composable fun ParkRideLoadedContentPreview_Full()</ID>
     <ID>FunctionNaming:ParkRideIcon.kt$@Composable internal fun ParkRideIcon( modifier: Modifier = Modifier, )</ID>
     <ID>FunctionNaming:ParkRideIcon.kt$@Composable internal fun ParkRideIconContainer( backgroundColor: Color, modifier: Modifier = Modifier, content: @Composable BoxScope.() -&gt; Unit, )</ID>
     <ID>FunctionNaming:ParkRideIcon.kt$@Preview @Composable private fun ParkRideIconBusThemePreview()</ID>
@@ -140,12 +122,10 @@
     <ID>FunctionNaming:SearchStopScreen.kt$@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class, ExperimentalTime::class) @Composable fun SearchStopScreen( searchStopState: SearchStopState, modifier: Modifier = Modifier, searchQuery: String = "", goBack: () -&gt; Unit = {}, onStopSelect: (StopItem) -&gt; Unit = {}, onEvent: (SearchStopUiEvent) -&gt; Unit = {}, )</ID>
     <ID>FunctionNaming:ServiceAlertScreen.kt$@Composable fun ServiceAlertScreen( serviceAlerts: ImmutableSet&lt;ServiceAlert&gt;, modifier: Modifier = Modifier, onBackClick: () -&gt; Unit = {}, )</ID>
     <ID>FunctionNaming:ServiceAlertScreen.kt$@Composable private fun PreviewServiceAlertScreen()</ID>
-    <ID>FunctionNaming:SettingsScreen.kt$@Composable fun SettingsScreen( appVersion: String, modifier: Modifier = Modifier, onBackClick: () -&gt; Unit = {}, onChangeThemeClick: () -&gt; Unit = {}, onReferFriendClick: () -&gt; Unit = {}, onAboutUsClick: () -&gt; Unit = {}, onIntroClick: () -&gt; Unit = {}, onSocialLinkClick: (KrailSocialType) -&gt; Unit = {}, )</ID>
     <ID>FunctionNaming:SettingsScreen.kt$@Composable private fun SettingsItem( icon: Painter, text: String, modifier: Modifier = Modifier, showDivider: Boolean = true, detailContent: (@Composable () -&gt; Unit)? = null, onClick: (() -&gt; Unit)? = null, )</ID>
     <ID>FunctionNaming:StopSearchListItem.kt$@Composable fun StopSearchListItem( stopName: String, stopId: String, transportModeSet: ImmutableSet&lt;TransportMode&gt;, textColor: Color, modifier: Modifier = Modifier, onClick: (StopItem) -&gt; Unit = {}, )</ID>
     <ID>FunctionNaming:StopSearchListItem.kt$@Composable private fun StopSearchListItemLongNamePreview()</ID>
     <ID>FunctionNaming:StopSearchListItem.kt$@Composable private fun StopSearchListItemPreview()</ID>
-    <ID>FunctionNaming:TagLineWithEmoji.kt$@Composable internal fun TagLineWithEmoji( tagline: String, emoji: String, emojiColor: Color? = null, tagColor: Color? = null, modifier: Modifier = Modifier )</ID>
     <ID>FunctionNaming:ThemeSelectionRadioButton.kt$@Composable fun ThemeSelectionRadioButton( themeStyle: KrailThemeStyle, onClick: (KrailThemeStyle) -&gt; Unit, modifier: Modifier = Modifier, selected: Boolean = false, )</ID>
     <ID>FunctionNaming:ThemeSelectionRadioButton.kt$@Preview @Composable private fun ThemeSelectionRadioButtonPreview()</ID>
     <ID>FunctionNaming:ThemeSelectionRadioButton.kt$@Preview @Composable private fun ThemeSelectionRadioButtonUnselectedPreview()</ID>
@@ -181,7 +161,6 @@
     <ID>FunctionNaming:WalkingLeg.kt$@Composable fun WalkingLeg( duration: String, modifier: Modifier = Modifier, )</ID>
     <ID>FunctionNaming:WalkingLeg.kt$@Preview @Composable private fun PreviewWalkingLeg()</ID>
     <ID>ImportOrdering:DateTimeSelectorScreen.kt$import androidx.compose.foundation.background import androidx.compose.foundation.layout.Column import androidx.compose.foundation.layout.PaddingValues import androidx.compose.foundation.layout.fillMaxSize import androidx.compose.foundation.layout.padding import androidx.compose.foundation.layout.systemBarsPadding import androidx.compose.foundation.lazy.LazyColumn import androidx.compose.material3.ExperimentalMaterial3Api import androidx.compose.material3.rememberTimePickerState import androidx.compose.runtime.Composable import androidx.compose.runtime.LaunchedEffect import androidx.compose.runtime.getValue import androidx.compose.runtime.mutableStateOf import androidx.compose.runtime.remember import androidx.compose.runtime.saveable.rememberSaveable import androidx.compose.runtime.setValue import androidx.compose.ui.Alignment import androidx.compose.ui.Modifier import androidx.compose.ui.unit.dp import kotlin.time.Clock import kotlinx.datetime.DateTimeUnit import kotlinx.datetime.LocalDate import kotlinx.datetime.LocalDateTime import kotlinx.datetime.TimeZone import kotlinx.datetime.plus import kotlinx.datetime.toLocalDateTime import xyz.ksharma.krail.core.datetime.decrementDateByOneDay import xyz.ksharma.krail.core.datetime.incrementDateByOneDay import xyz.ksharma.krail.core.datetime.rememberCurrentDateTime import xyz.ksharma.krail.core.datetime.toReadableDate import xyz.ksharma.krail.taj.LocalThemeColor import xyz.ksharma.krail.taj.components.Button import xyz.ksharma.krail.taj.components.ButtonDefaults import xyz.ksharma.krail.taj.components.Text import xyz.ksharma.krail.taj.components.TextButton import xyz.ksharma.krail.taj.components.TitleBar import xyz.ksharma.krail.taj.hexToComposeColor import xyz.ksharma.krail.taj.theme.KrailTheme import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.JourneyTimeOptions import kotlin.time.ExperimentalTime</ID>
-    <ID>ImportOrdering:IntroContentInviteFriends.kt$import androidx.compose.foundation.Image import androidx.compose.foundation.background import androidx.compose.foundation.clickable import androidx.compose.foundation.interaction.MutableInteractionSource import androidx.compose.foundation.layout.Arrangement import androidx.compose.foundation.layout.Box import androidx.compose.foundation.layout.Column import androidx.compose.foundation.layout.fillMaxWidth import androidx.compose.foundation.layout.size import androidx.compose.foundation.rememberScrollState import androidx.compose.foundation.shape.CircleShape import androidx.compose.foundation.verticalScroll import androidx.compose.runtime.Composable import androidx.compose.runtime.remember import androidx.compose.ui.Alignment import androidx.compose.ui.Modifier import androidx.compose.ui.draw.clip import androidx.compose.ui.graphics.Color import androidx.compose.ui.graphics.ColorFilter import androidx.compose.ui.semantics.Role import androidx.compose.ui.unit.dp import app.krail.taj.resources.Res as TajRes import app.krail.taj.resources.ic_android_share import app.krail.taj.resources.ic_ios_share import org.jetbrains.compose.resources.painterResource import xyz.ksharma.krail.core.appinfo.DevicePlatformType import xyz.ksharma.krail.core.appinfo.getAppPlatformType import xyz.ksharma.krail.taj.components.Text import xyz.ksharma.krail.taj.hexToComposeColor import xyz.ksharma.krail.taj.theme.KrailTheme</ID>
     <ID>ImportOrdering:ParkRideMapper.kt$import androidx.annotation.VisibleForTesting import androidx.annotation.VisibleForTesting.Companion.PACKAGE_PRIVATE import kotlinx.collections.immutable.toImmutableSet import kotlin.time.Clock import xyz.ksharma.krail.core.datetime.DateTimeHelper.toSimple12HourTime import xyz.ksharma.krail.core.log.log import xyz.ksharma.krail.park.ride.network.model.CarParkFacilityDetailResponse import xyz.ksharma.krail.sandook.NSWParkRideFacilityDetail import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState.ParkRideFacilityDetail import kotlin.time.ExperimentalTime</ID>
     <ID>ImportOrdering:SearchStopRow.kt$import androidx.compose.animation.AnimatedContent import androidx.compose.animation.core.EaseOutBounce import androidx.compose.animation.core.animateFloatAsState import androidx.compose.animation.core.tween import androidx.compose.animation.fadeIn import androidx.compose.animation.fadeOut import androidx.compose.animation.slideInVertically import androidx.compose.animation.slideOutVertically import androidx.compose.animation.togetherWith import androidx.compose.foundation.Image import androidx.compose.foundation.background import androidx.compose.foundation.layout.Arrangement import androidx.compose.foundation.layout.Column import androidx.compose.foundation.layout.Row import androidx.compose.foundation.layout.WindowInsets import androidx.compose.foundation.layout.fillMaxWidth import androidx.compose.foundation.layout.navigationBars import androidx.compose.foundation.layout.padding import androidx.compose.foundation.layout.size import androidx.compose.foundation.shape.RoundedCornerShape import androidx.compose.runtime.Composable import androidx.compose.runtime.CompositionLocalProvider import androidx.compose.runtime.getValue import androidx.compose.runtime.mutableStateOf import androidx.compose.runtime.remember import androidx.compose.runtime.saveable.rememberSaveable import androidx.compose.runtime.setValue import androidx.compose.ui.Alignment import androidx.compose.ui.Modifier import androidx.compose.ui.graphics.ColorFilter import androidx.compose.ui.graphics.graphicsLayer import androidx.compose.ui.platform.LocalDensity import androidx.compose.ui.unit.dp import krail.feature.trip_planner.ui.generated.resources.Res import krail.feature.trip_planner.ui.generated.resources.ic_reverse import krail.feature.trip_planner.ui.generated.resources.ic_search import org.jetbrains.compose.resources.painterResource import xyz.ksharma.krail.taj.LocalContentColor import xyz.ksharma.krail.taj.LocalThemeColor import xyz.ksharma.krail.taj.components.ThemeTextFieldPlaceholderText import xyz.ksharma.krail.taj.components.RoundIconButton import xyz.ksharma.krail.taj.components.TextFieldButton import xyz.ksharma.krail.taj.hexToComposeColor import xyz.ksharma.krail.taj.theme.KrailTheme import xyz.ksharma.krail.trip.planner.ui.state.TransportMode import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem</ID>
     <ID>Indentation:DiscoverScreen.kt$ </ID>
@@ -201,10 +180,6 @@
     <ID>LongMethod:DiscoverChip.kt$@Composable fun DiscoverChip( type: DiscoverCardType, selected: Boolean, modifier: Modifier = Modifier, horizontalPadding: Dp = DiscoverChipDefaults.ChipHorizontalPadding, verticalPadding: Dp = DiscoverChipDefaults.ChipVerticalPadding, )</ID>
     <ID>LongMethod:DiscoverScreen.kt$@Composable fun DiscoverScreenCompact( modifier: Modifier = Modifier, state: DiscoverState, onBackClick: () -&gt; Unit, onAppSocialLinkClicked: (KrailSocialType) -&gt; Unit, onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink, String, DiscoverCardType) -&gt; Unit, onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -&gt; Unit, onShareClick: (cardId: String, cardType: DiscoverCardType) -&gt; Unit, onCardSeen: (cardId: String) -&gt; Unit, resetAllSeenCards: () -&gt; Unit, onChipSelected: (DiscoverCardType) -&gt; Unit, )</ID>
     <ID>LongMethod:DiscoverScreen.kt$@Composable fun DiscoverScreenTablet( modifier: Modifier = Modifier, state: DiscoverState, onBackClick: () -&gt; Unit, onAppSocialLinkClicked: (KrailSocialType) -&gt; Unit, onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink, String, DiscoverCardType) -&gt; Unit, onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -&gt; Unit, onShareClick: (cardId: String, cardType: DiscoverCardType) -&gt; Unit, onCardSeen: (cardId: String) -&gt; Unit, resetAllSeenCards: () -&gt; Unit, onChipSelected: (DiscoverCardType) -&gt; Unit, )</ID>
-    <ID>LongMethod:IntroContentPlanTrip.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun IntroContentPlanTrip( tagline: String, style: String, // hexCode modifier: Modifier = Modifier, )</ID>
-    <ID>LongMethod:IntroContentSaveTrips.kt$@Composable fun IntroContentSaveTrips( tagline: String, style: String, // hexCode - // todo - see if it can be color instead. modifier: Modifier = Modifier, )</ID>
-    <ID>LongMethod:IntroContentSelectTransportMode.kt$@Composable fun IntroContentSelectTransportMode( tagline: String, style: String, // hexCode - // todo - see if it can be color instead. modifier: Modifier = Modifier, )</ID>
-    <ID>LongMethod:IntroScreen.kt$@Composable fun IntroScreen( state: IntroState, modifier: Modifier = Modifier, onIntroComplete: (pageType: IntroPageType, pageNumber: Int) -&gt; Unit = { _, _ -&gt; }, onEvent: (IntroUiEvent) -&gt; Unit = {}, )</ID>
     <ID>LongMethod:JourneyCard.kt$@Composable fun ExpandedJourneyCardContent( totalTravelTime: String, legList: ImmutableList&lt;TimeTableState.JourneyCardInfo.Leg&gt;, totalUniqueServiceAlerts: Int, onAlertClick: () -&gt; Unit, onLegClick: (Boolean) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
     <ID>LongMethod:JourneyCard.kt$@Composable fun JourneyCard( timeToDeparture: String, platformNumber: String?, platformText: String?, originTime: String, destinationTime: String, totalTravelTime: String, legList: ImmutableList&lt;TimeTableState.JourneyCardInfo.Leg&gt;, transportModeLineList: ImmutableList&lt;TransportModeLine&gt;, onClick: () -&gt; Unit, cardState: JourneyCardState, totalWalkTime: String?, totalUniqueServiceAlerts: Int, modifier: Modifier = Modifier, onAlertClick: () -&gt; Unit = {}, onLegClick: (Boolean) -&gt; Unit = {}, departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null, )</ID>
     <ID>LongMethod:JourneyCard.kt$@Composable private fun JourneyCardHeader( transportModeLineList: ImmutableList&lt;TransportModeLine&gt;, platformText: String?, timeToDeparture: String, firstLegTransportModeColor: Color, modifier: Modifier = Modifier, onClick: () -&gt; Unit, )</ID>
@@ -212,18 +187,15 @@
     <ID>LongMethod:LegView.kt$@Composable fun LegView( routeText: String?, // AVC via XYZ transportModeLine: TransportModeLine, stops: ImmutableList&lt;TimeTableState.JourneyCardInfo.Stop&gt;, modifier: Modifier = Modifier, displayAllStops: Boolean = false, onClick: () -&gt; Unit = {}, )</ID>
     <ID>LongMethod:OriginDestination.kt$@Composable internal fun OriginDestination( trip: Trip, timeLineColor: Color, modifier: Modifier = Modifier, )</ID>
     <ID>LongMethod:ParkRideCard.kt$@Composable fun ParkRideCard( parkRideUiState: ParkRideUiState, isExpanded: Boolean, modifier: Modifier = Modifier, onClick: () -&gt; Unit = {}, )</ID>
-    <ID>LongMethod:ParkRideContent.kt$@Composable fun ParkRideLoadedContent( parkRideFacilityDetail: ParkRideFacilityDetail, modifier: Modifier = Modifier, )</ID>
     <ID>LongMethod:SavedTripsScreen.kt$@Composable fun SavedTripsScreen( savedTripsState: SavedTripsState, modifier: Modifier = Modifier, fromButtonClick: () -&gt; Unit = {}, toButtonClick: () -&gt; Unit = {}, onReverseButtonClick: () -&gt; Unit = {}, onSavedTripCardClick: (StopItem?, StopItem?) -&gt; Unit = { _, _ -&gt; }, onSearchButtonClick: () -&gt; Unit = {}, onSettingsButtonClick: () -&gt; Unit = {}, onDiscoverButtonClick: () -&gt; Unit = {}, onEvent: (SavedTripUiEvent) -&gt; Unit = {}, )</ID>
     <ID>LongMethod:SavedTripsScreen.kt$private fun LazyListScope.savedTripsContent( savedTripsState: SavedTripsState, onEvent: (SavedTripUiEvent) -&gt; Unit, onSavedTripCardClick: (StopItem?, StopItem?) -&gt; Unit = { _, _ -&gt; }, expandedMap: SnapshotStateMap&lt;String, Boolean&gt;, )</ID>
     <ID>LongMethod:SearchStopRow.kt$@Composable fun SearchStopRow( fromButtonClick: () -&gt; Unit, toButtonClick: () -&gt; Unit, modifier: Modifier = Modifier, fromStopItem: StopItem? = null, toStopItem: StopItem? = null, onReverseButtonClick: () -&gt; Unit = {}, onSearchButtonClick: () -&gt; Unit = {}, )</ID>
     <ID>LongMethod:SearchStopScreen.kt$@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class, ExperimentalTime::class) @Composable fun SearchStopScreen( searchStopState: SearchStopState, modifier: Modifier = Modifier, searchQuery: String = "", goBack: () -&gt; Unit = {}, onStopSelect: (StopItem) -&gt; Unit = {}, onEvent: (SearchStopUiEvent) -&gt; Unit = {}, )</ID>
-    <ID>LongMethod:SettingsScreen.kt$@Composable fun SettingsScreen( appVersion: String, modifier: Modifier = Modifier, onBackClick: () -&gt; Unit = {}, onChangeThemeClick: () -&gt; Unit = {}, onReferFriendClick: () -&gt; Unit = {}, onAboutUsClick: () -&gt; Unit = {}, onIntroClick: () -&gt; Unit = {}, onSocialLinkClick: (KrailSocialType) -&gt; Unit = {}, )</ID>
     <ID>LongMethod:ThemeSelectionRadioButton.kt$@Composable fun ThemeSelectionRadioButton( themeStyle: KrailThemeStyle, onClick: (KrailThemeStyle) -&gt; Unit, modifier: Modifier = Modifier, selected: Boolean = false, )</ID>
     <ID>LongMethod:ThemeSelectionScreen.kt$@Composable fun ThemeSelectionScreen( selectedThemeStyle: KrailThemeStyle?, onThemeSelected: (Int) -&gt; Unit, onBackClick: () -&gt; Unit, modifier: Modifier = Modifier, )</ID>
     <ID>LongMethod:TimeTableDestination.kt$internal fun NavGraphBuilder.timeTableDestination(navController: NavHostController)</ID>
     <ID>LongMethod:TimeTableScreen.kt$@Composable fun TimeTableScreen( timeTableState: TimeTableState, expandedJourneyId: String?, dateTimeSelectionItem: DateTimeSelectionItem?, onEvent: (TimeTableUiEvent) -&gt; Unit, onAlertClick: (String) -&gt; Unit, onBackClick: () -&gt; Unit, onJourneyLegClick: (Boolean) -&gt; Unit, modifier: Modifier = Modifier, dateTimeSelectorClicked: () -&gt; Unit = {}, onModeSelectionChanged: (Set&lt;Int&gt;) -&gt; Unit = {}, onModeClick: (Boolean) -&gt; Unit = {}, )</ID>
     <ID>LongParameterList:DiscoverScreen.kt$( modifier: Modifier = Modifier, state: DiscoverState, onBackClick: () -&gt; Unit, onAppSocialLinkClicked: (KrailSocialType) -&gt; Unit, onPartnerSocialLinkClicked: (Button.Social.PartnerSocial.PartnerSocialLink, String, DiscoverCardType) -&gt; Unit, onCtaClicked: (url: String, cardId: String, cardType: DiscoverCardType) -&gt; Unit, onShareClick: (cardId: String, cardType: DiscoverCardType) -&gt; Unit, onCardSeen: (cardId: String) -&gt; Unit, resetAllSeenCards: () -&gt; Unit, onChipSelected: (DiscoverCardType) -&gt; Unit, )</ID>
-    <ID>LongParameterList:IntroScreen.kt$( offsetFraction: Float, state: IntroState, startPage: Int, animatedButtonColor: Color, animatedAlpha: Float, targetPage: Int )</ID>
     <ID>LongParameterList:JourneyCard.kt$( originTime: String, destinationTime: String, totalTravelTime: String, totalWalkTime: String?, modifier: Modifier = Modifier, departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null, )</ID>
     <ID>LongParameterList:JourneyCard.kt$( timeToDeparture: String, platformNumber: String?, platformText: String?, originTime: String, destinationTime: String, totalTravelTime: String, legList: ImmutableList&lt;TimeTableState.JourneyCardInfo.Leg&gt;, transportModeLineList: ImmutableList&lt;TransportModeLine&gt;, onClick: () -&gt; Unit, cardState: JourneyCardState, totalWalkTime: String?, totalUniqueServiceAlerts: Int, modifier: Modifier = Modifier, onAlertClick: () -&gt; Unit = {}, onLegClick: (Boolean) -&gt; Unit = {}, departureDeviation: TimeTableState.JourneyCardInfo.DepartureDeviation? = null, )</ID>
     <ID>LongParameterList:JourneyCard.kt$( totalTravelTime: String, legList: ImmutableList&lt;TimeTableState.JourneyCardInfo.Leg&gt;, totalUniqueServiceAlerts: Int, onAlertClick: () -&gt; Unit, onLegClick: (Boolean) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
@@ -234,7 +206,6 @@
     <ID>LongParameterList:SavedTripsViewModel.kt$SavedTripsViewModel$( private val sandook: Sandook, private val analytics: Analytics, private val ioDispatcher: CoroutineDispatcher, private val nswParkRideFacilityManager: NswParkRideFacilityManager, private val parkRideService: ParkRideService, private val parkRideSandook: NswParkRideSandook, private val stopResultsManager: StopResultsManager, private val flag: Flag, private val preferences: SandookPreferences, private val infoTileManager: InfoTileManager, private val platformOps: PlatformOps, )</ID>
     <ID>LongParameterList:SearchStopRow.kt$( fromButtonClick: () -&gt; Unit, toButtonClick: () -&gt; Unit, modifier: Modifier = Modifier, fromStopItem: StopItem? = null, toStopItem: StopItem? = null, onReverseButtonClick: () -&gt; Unit = {}, onSearchButtonClick: () -&gt; Unit = {}, )</ID>
     <ID>LongParameterList:SearchStopScreen.kt$( searchStopState: SearchStopState, modifier: Modifier = Modifier, searchQuery: String = "", goBack: () -&gt; Unit = {}, onStopSelect: (StopItem) -&gt; Unit = {}, onEvent: (SearchStopUiEvent) -&gt; Unit = {}, )</ID>
-    <ID>LongParameterList:SettingsScreen.kt$( appVersion: String, modifier: Modifier = Modifier, onBackClick: () -&gt; Unit = {}, onChangeThemeClick: () -&gt; Unit = {}, onReferFriendClick: () -&gt; Unit = {}, onAboutUsClick: () -&gt; Unit = {}, onIntroClick: () -&gt; Unit = {}, onSocialLinkClick: (KrailSocialType) -&gt; Unit = {}, )</ID>
     <ID>LongParameterList:SettingsScreen.kt$( icon: Painter, text: String, modifier: Modifier = Modifier, showDivider: Boolean = true, detailContent: (@Composable () -&gt; Unit)? = null, onClick: (() -&gt; Unit)? = null, )</ID>
     <ID>LongParameterList:StopSearchListItem.kt$( stopName: String, stopId: String, transportModeSet: ImmutableSet&lt;TransportMode&gt;, textColor: Color, modifier: Modifier = Modifier, onClick: (StopItem) -&gt; Unit = {}, )</ID>
     <ID>LongParameterList:TimeTableScreen.kt$( timeTableState: TimeTableState, expandedJourneyId: String?, dateTimeSelectionItem: DateTimeSelectionItem?, onEvent: (TimeTableUiEvent) -&gt; Unit, onAlertClick: (String) -&gt; Unit, onBackClick: () -&gt; Unit, onJourneyLegClick: (Boolean) -&gt; Unit, modifier: Modifier = Modifier, dateTimeSelectorClicked: () -&gt; Unit = {}, onModeSelectionChanged: (Set&lt;Int&gt;) -&gt; Unit = {}, onModeClick: (Boolean) -&gt; Unit = {}, )</ID>
@@ -248,19 +219,6 @@
     <ID>MagicNumber:DiscoverChip.kt$50</ID>
     <ID>MagicNumber:DiscoverScreen.kt$3</ID>
     <ID>MagicNumber:DiscoverScreen.kt$4</ID>
-    <ID>MagicNumber:GradientBorder.kt$0xFF888888</ID>
-    <ID>MagicNumber:IntroContentAlerts.kt$2000</ID>
-    <ID>MagicNumber:IntroContentPlanTrip.kt$0.6f</ID>
-    <ID>MagicNumber:IntroContentPlanTrip.kt$1.5f</ID>
-    <ID>MagicNumber:IntroContentPlanTrip.kt$10</ID>
-    <ID>MagicNumber:IntroContentPlanTrip.kt$2.5f</ID>
-    <ID>MagicNumber:IntroContentPlanTrip.kt$2500</ID>
-    <ID>MagicNumber:IntroContentRealTime.kt$2000</ID>
-    <ID>MagicNumber:IntroContentSaveTrips.kt$200</ID>
-    <ID>MagicNumber:IntroParkRide.kt$2000</ID>
-    <ID>MagicNumber:IntroScreen.kt$0.5f</ID>
-    <ID>MagicNumber:IntroScreen.kt$0.6f</ID>
-    <ID>MagicNumber:IntroScreen.kt$0.75f</ID>
     <ID>MagicNumber:JourneyCard.kt$0.5f</ID>
     <ID>MagicNumber:LoadingEmojiAnim.kt$200</ID>
     <ID>MagicNumber:LoadingEmojiAnim.kt$2000</ID>
@@ -300,10 +258,8 @@
     <ID>MaximumLineLength:DiscoverChip.kt$ </ID>
     <ID>MaximumLineLength:SavedTripsViewModel.kt$SavedTripsViewModel$ </ID>
     <ID>MaximumLineLength:TimePicker.kt$ </ID>
-    <ID>ModifierMissing:IntroContentAlerts.kt$AnimatedAlertsOneByOne</ID>
     <ID>ModifierMissing:TimePicker.kt$KrailTimePicker</ID>
     <ID>ModifierNotUsedAtRoot:DiscoverScreen.kt$modifier = modifier.fillMaxSize()</ID>
-    <ID>ModifierWithoutDefault:IntroParkRide.kt$modifier</ID>
     <ID>ModifierWithoutDefault:SearchStopScreen.kt$modifier</ID>
     <ID>MultiLineIfElse:LegView.kt$KrailTheme.colors.onSurface</ID>
     <ID>MultiLineIfElse:LegView.kt$KrailTheme.colors.onSurface.copy( alpha = 0.75f )</ID>
@@ -311,8 +267,6 @@
     <ID>MultiLineIfElse:ParkRideMapper.kt$null</ID>
     <ID>MultiLineIfElse:ThemeSelectionRadioButton.kt$Modifier</ID>
     <ID>MultiLineIfElse:ThemeSelectionRadioButton.kt$Modifier.drawBehind { val color = themeStyle.hexColorCode.hexToComposeColor() withTransform({ scale(pulseScale, pulseScale, pivot = center) }) { drawCircle( color = color.copy(alpha = pulseAlpha), radius = size.minDimension / 2 ) } }</ID>
-    <ID>MutableStateAutoboxing:IntroContentPlanTrip.kt$mutableStateOf(0)</ID>
-    <ID>MutableStateAutoboxing:IntroContentSaveTrips.kt$mutableStateOf(1f)</ID>
     <ID>MutableStateAutoboxing:SearchStopScreen.kt$mutableStateOf(0)</ID>
     <ID>MutableStateAutoboxing:ThemeSelectionRadioButton.kt$mutableStateOf(0f)</ID>
     <ID>NoBlankLineBeforeRbrace:SavedTripsViewModel.kt$SavedTripsViewModel$ </ID>
@@ -323,9 +277,7 @@
     <ID>NoConsecutiveBlankLines:TransportModeIcon.kt$ </ID>
     <ID>NoEmptyFirstLineInMethodBlock:DiscoverScreen.kt$ </ID>
     <ID>NoEmptyFirstLineInMethodBlock:DiscoverViewModel.kt$ </ID>
-    <ID>NoEmptyFirstLineInMethodBlock:IntroContentSelectTransportMode.kt$ </ID>
     <ID>NoEmptyFirstLineInMethodBlock:JourneyCard.kt$ </ID>
-    <ID>NoEmptyFirstLineInMethodBlock:ParkRideContent.kt$ </ID>
     <ID>NoEmptyFirstLineInMethodBlock:SavedTripsScreen.kt$ </ID>
     <ID>NoEmptyFirstLineInMethodBlock:TimeTableScreen.kt$ </ID>
     <ID>NoUnusedImports:DiscoverChipRow.kt$xyz.ksharma.krail.trip.planner.ui.discover.DiscoverChipRow.kt</ID>
@@ -347,9 +299,6 @@
     <ID>ParameterNaming:JourneyTimeOptionsGroup.kt$onOptionSelected</ID>
     <ID>ParameterNaming:ThemeSelectionScreen.kt$onThemeSelected</ID>
     <ID>ParameterNaming:TimeTableScreen.kt$onModeSelectionChanged</ID>
-    <ID>PreviewPublic:ParkRideContent.kt$ParkRideLoadedContentPreview_Barbie</ID>
-    <ID>PreviewPublic:ParkRideContent.kt$ParkRideLoadedContentPreview_Default</ID>
-    <ID>PreviewPublic:ParkRideContent.kt$ParkRideLoadedContentPreview_Full</ID>
     <ID>ReturnCount:DiscoverViewModel.kt$fun DiscoverState.getCtaOrPartnerSocialLinkForCard(cardId: String): String?</ID>
     <ID>SpacingAroundColon:TripPlannerDestinations.kt$AppUpgradeRoute$:</ID>
     <ID>SpacingAroundColon:TripPlannerDestinations.kt$IntroRoute$:</ID>
@@ -393,7 +342,6 @@
     <ID>UnusedPrivateMember:DiscoverScreen.kt$@Preview( group = "Discover Card Tablet", showBackground = true, widthDp = 720, heightDp = 1024, ) @Composable private fun DiscoverScreenTabletDarkPreview()</ID>
     <ID>UnusedPrivateMember:DiscoverScreen.kt$@Preview( group = "Discover Card Tablet", showBackground = true, widthDp = 720, heightDp = 1024, ) @Composable private fun DiscoverScreenTabletLightPreview()</ID>
     <ID>UnusedPrivateMember:ErrorMessage.kt$@Composable private fun PreviewErrorMessage()</ID>
-    <ID>UnusedPrivateMember:IntroViewModel.kt$IntroViewModel$private fun updateUiState(block: IntroState.() -&gt; IntroState)</ID>
     <ID>UnusedPrivateMember:JourneyCard.kt$@Preview(name = "Default - Inline modes + platform (Dark)", group = "Collapsed") @Composable private fun Preview_Default_InlineModesAndPlatform_Dark()</ID>
     <ID>UnusedPrivateMember:JourneyCard.kt$@Preview(name = "Default - Inline modes + platform", group = "Collapsed") @Composable private fun Preview_Default_InlineModesAndPlatform()</ID>
     <ID>UnusedPrivateMember:JourneyCard.kt$@Preview(name = "Expanded - Journey card (Dark)", group = "Expanded") @Composable private fun Preview_JourneyCard_Expanded_Dark()</ID>

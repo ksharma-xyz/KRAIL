@@ -3,6 +3,8 @@ package xyz.ksharma.krail.core.testing.fakes
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+import xyz.ksharma.krail.core.testing.helpers.CallLog
 import xyz.ksharma.krail.sandook.RecentSearchLocation
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.db.NswStops
@@ -14,7 +16,7 @@ import xyz.ksharma.krail.sandook.db.StopLabels
 
 // Intrinsic to faking the production Sandook interface (33 methods). Not refactorable.
 @Suppress("TooManyFunctions")
-class FakeSandook : Sandook {
+class FakeSandook(private val callLog: CallLog? = null) : Sandook {
 
     private var productClass: Long? = null
     private val tripsFlow = MutableStateFlow<List<SavedTrip>>(emptyList())
@@ -23,6 +25,12 @@ class FakeSandook : Sandook {
     private val stopProductClasses = mutableMapOf<String, MutableList<Int>>()
     private val recentSearchLocations = mutableListOf<RecentSearchLocations>()
     private val stopLabelsFlow = MutableStateFlow<List<StopLabels>>(emptyList())
+
+    /** Makes [insertNswStop] throw for this stop id, to fail an insert part way through. */
+    var failInsertNswStopId: String? = null
+
+    /** Makes [stopsCount] throw, as a database that cannot be read would. */
+    var failStopsCount = false
 
     // region StopLabels
     override fun observeStopLabels(): Flow<List<StopLabels>> = stopLabelsFlow.asStateFlow()
@@ -99,6 +107,7 @@ class FakeSandook : Sandook {
         toStopId: String,
         toStopName: String,
     ) {
+        callLog?.record("trip:$fromStopId->$toStopId")
         val canonicalTripId = "$fromStopId->$toStopId"
         val existingSortOrder = tripsFlow.value
             .find {
@@ -135,8 +144,10 @@ class FakeSandook : Sandook {
         return tripsFlow.value
     }
 
+    // Ordered by sort_order as the real query is, and stable, so trips that were never moved keep the
+    // order they were saved in.
     override fun observeAllTrips(): Flow<List<SavedTrip>> {
-        return tripsFlow.asStateFlow()
+        return tripsFlow.asStateFlow().map { trips -> trips.sortedBy { it.sort_order } }
     }
 
     override fun selectTripById(tripId: String): SavedTrip? {
@@ -177,12 +188,14 @@ class FakeSandook : Sandook {
         stopLon: Double,
         isParent: Boolean?,
     ) {
+        check(stopId != failInsertNswStopId) { "FakeSandook: insert of stop $stopId failed" }
         // Only store when explicitly false (child stop)
         // NULL means parent stop (default)
         stops.add(NswStops(stopId, stopName, stopLat, stopLon, isParent = if (isParent == false) 0L else null))
     }
 
     override fun stopsCount(): Int {
+        check(!failStopsCount) { "FakeSandook: stopsCount failed" }
         return stops.size
     }
 
@@ -195,8 +208,21 @@ class FakeSandook : Sandook {
         productClasses.add(productClass)
     }
 
+    /** Like the real driver, a block that throws leaves the stops tables as they were before it. */
     override fun <R> insertTransaction(block: () -> R): R {
-        return block()
+        val stopsBefore = stops.toList()
+        val productClassesBefore = stopProductClasses.mapValues { it.value.toMutableList() }
+        var committed = false
+        try {
+            return block().also { committed = true }
+        } finally {
+            if (!committed) {
+                stops.clear()
+                stops.addAll(stopsBefore)
+                stopProductClasses.clear()
+                stopProductClasses.putAll(productClassesBefore)
+            }
+        }
     }
 
     override fun clearNswStopsTable() {

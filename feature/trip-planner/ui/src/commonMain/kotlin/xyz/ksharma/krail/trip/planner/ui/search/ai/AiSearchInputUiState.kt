@@ -128,6 +128,15 @@ sealed interface AiSearchInputEvent {
     data object StartListening : AiSearchInputEvent
     data object StopListening : AiSearchInputEvent
 
+    /**
+     * Read the feature flag again. The flag is read when the ViewModel is built, and the ViewModel
+     * outlives the screen it serves while Search Stop or Settings are open on top of it, so a flag
+     * that turned on in the meantime (a Remote Config activation, the debug override) would never
+     * bring the microphone back. The home asks each time it comes to the front. It is a local read,
+     * no network.
+     */
+    data object RefreshFeatureFlag : AiSearchInputEvent
+
     /** Refused just now, and the system will ask again next time the mic is tapped. */
     data object MicPermissionDenied : AiSearchInputEvent
 
@@ -137,3 +146,28 @@ sealed interface AiSearchInputEvent {
     /** No recogniser, or the microphone is restricted by the device. Speaking is off. */
     data object SpeechUnsupported : AiSearchInputEvent
 }
+
+/**
+ * A fresh state for the dialog opening: nothing the rider produced from before, open, and listening as soon as the
+ * permission allows when the feature is [enabled]. What the app knows about itself, [isDeviceCapable] and the speech
+ * availability this state already holds, is kept.
+ */
+internal fun AiSearchInputUiState.opened(enabled: Boolean, isDeviceCapable: Boolean): AiSearchInputUiState =
+    AiSearchInputUiState(
+        isInputOpen = enabled,
+        isFeatureEnabled = enabled,
+        isDeviceCapable = isDeviceCapable,
+        isSpeechAvailable = isSpeechAvailable,
+        listenOnOpenPending = enabled,
+    )
+
+/**
+ * Everything the rider produced is thrown away, and what the app knows about itself is not, or starting over would hide
+ * the way back in: the feature flag, [isDeviceCapable] and the speech availability.
+ */
+internal fun AiSearchInputUiState.restarted(isDeviceCapable: Boolean): AiSearchInputUiState =
+    AiSearchInputUiState(
+        isFeatureEnabled = isFeatureEnabled,
+        isDeviceCapable = isDeviceCapable,
+        isSpeechAvailable = isSpeechAvailable,
+    )

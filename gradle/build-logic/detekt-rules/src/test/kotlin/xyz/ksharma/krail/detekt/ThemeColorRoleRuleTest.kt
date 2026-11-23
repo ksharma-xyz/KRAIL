@@ -104,6 +104,29 @@ class ThemeColorRoleRuleTest {
         assertEquals(0, rule.lint(code).size)
     }
 
+    /**
+     * taj's `RoundIconButton` paints the circle with its `color` argument and draws the icon on
+     * top, so it is a fill like `Modifier.background()`. The Directions button passes the ground
+     * accessor to it, which the rule flagged wrongly at first.
+     */
+    @Test
+    fun `does not flag the ground colour in a round icon button fill`() {
+        val code = """
+            @Composable
+            fun Directions(onClick: () -> Unit) {
+                RoundIconButton(
+                    onClick = onClick,
+                    color = themeGroundColor(),
+                    onClickLabel = "Directions",
+                ) {
+                    Image(painter = painterResource(Glyph), contentDescription = null)
+                }
+            }
+        """.trimIndent()
+
+        assertEquals(0, rule.lint(code).size)
+    }
+
     /** The same argument name on a stroke still has to be caught. */
     @Test
     fun `still flags the ground colour in a border stroke`() {

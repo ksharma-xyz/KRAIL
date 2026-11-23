@@ -1,0 +1,558 @@
+package xyz.ksharma.krail.trip.planner.ui.components
+
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.test.junit4.createComposeRule
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
+import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.KrailThemeStyle
+import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.theme.contrastRatio
+import xyz.ksharma.krail.taj.theme.md_theme_dark_onSurface
+import xyz.ksharma.krail.taj.theme.md_theme_dark_onSurface_placeholder
+import xyz.ksharma.krail.taj.theme.md_theme_dark_outline_subtle
+import xyz.ksharma.krail.taj.theme.md_theme_dark_softLabel
+import xyz.ksharma.krail.taj.theme.md_theme_dark_surface
+import xyz.ksharma.krail.taj.theme.md_theme_light_onSurface
+import xyz.ksharma.krail.taj.theme.md_theme_light_onSurface_placeholder
+import xyz.ksharma.krail.taj.theme.md_theme_light_outline_subtle
+import xyz.ksharma.krail.taj.theme.md_theme_light_softLabel
+import xyz.ksharma.krail.taj.theme.md_theme_light_surface
+import xyz.ksharma.krail.taj.themeBackgroundColor
+import xyz.ksharma.krail.taj.themeDecorColor
+import xyz.ksharma.krail.taj.tokens.AiThemeGradientTokens
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
+
+/**
+ * The colours of every card that floats over the map, from the one accessor ([mapCardColors]). A card follows the app mode wherever it
+ * stands: in light mode the theme colour at 15 percent over white with the light palette's text and its `softLabel` hairline, and in
+ * dark mode the theme colour at 45 percent over the dark surface with cream text. Outside a [CardGroundScope] the card stands on the
+ * map, so in dark mode its hairline has no alpha, and under a scope with `onGradient` false it is the same. On the gradient the dark
+ * hairline is drawn. The white Options pill is a control, not a card, and keeps one look and one light hairline in both modes. The
+ * stop card keeps the older mode aware family (a body and a header band), which is held here as it was: the text on the body and on
+ * the header 4.5 to 1 or better, the header a visibly different step from the body at 1.15 to 1 or better. The table of every theme
+ * in both modes is printed, so the real figures are on record.
+ *
+ * The map ground is a stand in. The real tiles are not in a host test, so [MAP_GROUND] is the flat ground of the approved
+ * mock, not a value read from the style.
+ */
+@RunWith(RobolectricTestRunner::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(sdk = [34], manifest = Config.NONE)
+class MapCardColorsTest {
+
+    @get:Rule
+    val composeRule = createComposeRule()
+
+    private var surface = Color.Unspecified
+    private var onSurface = Color.Unspecified
+    private var softLabel = Color.Unspecified
+    private var darkSlab = Color.Unspecified
+    private lateinit var accessor: MapCardColors
+    private var timetableTint = Color.Unspecified
+    private var themeColor = Color.Unspecified
+    private val themes = listOf(
+        KrailThemeStyle.Train,
+        KrailThemeStyle.Metro,
+        KrailThemeStyle.Bus,
+        KrailThemeStyle.Ferry,
+    )
+    private val allThemes = KrailThemeStyle.entries
+
+    private fun readTokens() {
+        composeRule.setContent {
+            PreviewTheme(themeStyle = KrailThemeStyle.Train) {
+                surface = KrailTheme.colors.surface
+                onSurface = KrailTheme.colors.onSurface
+                softLabel = KrailTheme.colors.softLabel
+                darkSlab = FloatingDark.container
+                accessor = mapCardColors()
+                timetableTint = themeBackgroundColor().compositeOver(KrailTheme.colors.surface)
+                themeColor = themeDecorColor()
+            }
+        }
+        composeRule.waitForIdle()
+    }
+
+    private fun assertFamily(mode: String, dark: Boolean) {
+        readTokens()
+        for (style in themes) {
+            val theme = style.hexColorCode.hexToComposeColor()
+            val tints = mapCardColorsFor(theme, darkMode = dark, surface = surface, onSurface = onSurface)
+            val onBody = onSurface.contrastRatio(tints.body)
+            val onHeader = onSurface.contrastRatio(tints.header)
+            val onChip = onSurface.contrastRatio(tints.chip)
+            val step = tints.header.contrastRatio(tints.body)
+            println(
+                "PALETTE $mode ${style.name} " +
+                    "textOnBody=$onBody textOnHeader=$onHeader textOnChip=$onChip " +
+                    "headerOverBody=$step bodyOnSurface=${tints.body.contrastRatio(surface)} " +
+                    "bodyOnMap=${tints.body.contrastRatio(MAP_GROUND)} headerOnMap=${tints.header.contrastRatio(MAP_GROUND)} " +
+                    "chipOnMap=${tints.chip.contrastRatio(MAP_GROUND)} hairlineOnMap=${softLabel.contrastRatio(MAP_GROUND)} " +
+                    "hairlineOnChip=${softLabel.contrastRatio(tints.chip)}",
+            )
+            assertTrue(onBody >= TEXT, "$mode ${style.name}: text on the body is $onBody to 1")
+            assertTrue(onHeader >= TEXT, "$mode ${style.name}: text on the header is $onHeader to 1")
+            assertTrue(onChip >= TEXT, "$mode ${style.name}: text on a chip is $onChip to 1")
+            assertTrue(step >= HEADER_STEP, "$mode ${style.name}: the header is only $step to 1 from the body")
+        }
+    }
+
+    /**
+     * In light mode the accessor is the look it always was: the Timetable's light tint over white with the light palette's text, and
+     * the light palette's `softLabel` as its hairline. The numbers are printed for every theme and held to the floors of the approved
+     * picture: the text 4.5 to 1 on every theme and 17.5 to 18.3 on the four standard ones, and the hairline 3.8 to 1 against the map
+     * ground. The constants are the old ones, spelled out here and not read from the code under test.
+     */
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-notnight")
+    fun `in light mode the accessor is the light look it was and reads at 17_5 to 18_3 on the standard themes`() {
+        readTokens()
+        val lightSurface = md_theme_light_surface
+        val lightText = md_theme_light_onSurface
+        assertEquals(lightText, accessor.onTint, "the text is the light palette's onSurface")
+        assertEquals(md_theme_light_softLabel, accessor.chipEdge, "the edge is the light palette's softLabel, drawn")
+        assertEquals(md_theme_light_softLabel, accessor.pillEdge, "and the pill's edge is the same")
+        assertEquals(lightText, accessor.chip.contentColor, "a chip carries the same text")
+        val expected = themeColor.copy(alpha = TIMETABLE_ALPHA_LIGHT).compositeOver(lightSurface)
+        assertEquals(expected, accessor.tint, "the card is the theme at 15 percent over white")
+        assertEquals(expected, accessor.chip.containerColor, "a chip is the card's tint")
+        assertEquals(md_theme_light_onSurface_placeholder, accessor.placeholder, "the prompt is the light placeholder")
+        assertEquals(md_theme_light_outline_subtle, accessor.divider, "the divider is the light outlineSubtle")
+        assertTrue(
+            accessor.chipEdge.contrastRatio(MAP_GROUND) >= HAIRLINE,
+            "the hairline is ${accessor.chipEdge.contrastRatio(MAP_GROUND)} to 1 against the map",
+        )
+        for (style in allThemes) {
+            val tint = mapCardColorsFor(
+                style.hexColorCode.hexToComposeColor(),
+                darkMode = false,
+                surface = lightSurface,
+                onSurface = lightText,
+            ).chip
+            val text = lightText.contrastRatio(tint)
+            println(
+                "SEARCHCARD light ${style.name} textOnTint=$text hairlineOnMap=${accessor.chipEdge.contrastRatio(
+                    MAP_GROUND,
+                )} hairlineOnTint=${accessor.chipEdge.contrastRatio(tint)}",
+            )
+            assertTrue(
+                text >= TEXT,
+                "light ${style.name}: the stop name, prompt, dot and pin on the card are $text to 1",
+            )
+        }
+        for (style in themes) {
+            val tint = mapCardColorsFor(
+                style.hexColorCode.hexToComposeColor(),
+                darkMode = false,
+                surface = lightSurface,
+                onSurface = lightText,
+            ).chip
+            val text = lightText.contrastRatio(tint)
+            assertTrue(
+                text in CARD_TEXT_LOW..CARD_TEXT_HIGH,
+                "light ${style.name}: the card text is $text to 1, the picture's 17.51 to 18.26",
+            )
+        }
+    }
+
+    /**
+     * In dark mode the accessor is the Timetable's dark tint with cream text. A card outside a scope stands on the map, so its
+     * hairline has no alpha, and the white Options pill is the very same white with the very same light hairline as in light mode.
+     */
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-night")
+    fun `in dark mode the accessor is the dark look with no hairline on the map, and the Options pill is the same white as in light mode`() {
+        readTokens()
+        val expected = themeColor.copy(alpha = TIMETABLE_ALPHA_DARK).compositeOver(md_theme_dark_surface)
+        assertEquals(expected, accessor.tint, "the card is the theme at 45 percent over the dark surface")
+        assertEquals(expected, accessor.chip.containerColor, "a chip is the card's tint")
+        assertEquals(md_theme_dark_onSurface, accessor.onTint, "the text is cream")
+        assertEquals(md_theme_dark_onSurface, accessor.chip.contentColor, "a chip carries the same text")
+        assertEquals(
+            md_theme_dark_onSurface,
+            accessor.placeholder,
+            "the prompt is the ink, the placeholder token is under 4.5 to 1 on the dark tint",
+        )
+        assertEquals(md_theme_dark_outline_subtle, accessor.divider, "the divider is the dark outlineSubtle")
+        assertEquals(
+            md_theme_dark_softLabel.copy(alpha = 0f),
+            accessor.chipEdge,
+            "on the map the hairline has no alpha",
+        )
+        assertEquals(md_theme_light_softLabel, accessor.pillEdge, "the pill's hairline is the light softLabel, drawn")
+        assertEquals(md_theme_light_surface, accessor.pill.containerColor, "the Options pill is white")
+        assertEquals(md_theme_light_onSurface, accessor.pill.contentColor, "with the light palette's text")
+        assertTrue(
+            accessor.pillEdge.contrastRatio(MAP_GROUND) >= HAIRLINE,
+            "and its hairline is ${accessor.pillEdge.contrastRatio(MAP_GROUND)} to 1 against the map",
+        )
+        for (style in allThemes) {
+            val tint = mapCardColorsFor(
+                style.hexColorCode.hexToComposeColor(),
+                darkMode = true,
+                surface = md_theme_dark_surface,
+                onSurface = md_theme_dark_onSurface,
+            ).chip
+            val text = md_theme_dark_onSurface.contrastRatio(tint)
+            println(
+                "SEARCHCARD dark ${style.name} textOnTint=$text tintOnMap=${tint.contrastRatio(
+                    MAP_GROUND,
+                )} softLabelOnMap=${md_theme_dark_softLabel.contrastRatio(MAP_GROUND)}",
+            )
+            assertTrue(text >= TEXT, "dark ${style.name}: the text on the dark card is $text to 1")
+        }
+        for (style in themes) {
+            val tint = mapCardColorsFor(
+                style.hexColorCode.hexToComposeColor(),
+                darkMode = true,
+                surface = md_theme_dark_surface,
+                onSurface = md_theme_dark_onSurface,
+            ).chip
+            assertTrue(
+                tint.contrastRatio(MAP_GROUND) >= EDGE,
+                "dark ${style.name}: the dark card stands ${tint.contrastRatio(
+                    MAP_GROUND,
+                )} to 1 off the map, so it needs no hairline there",
+            )
+        }
+        assertTrue(
+            md_theme_dark_softLabel.contrastRatio(MAP_GROUND) < EDGE,
+            "where the dark softLabel would be only ${md_theme_dark_softLabel.contrastRatio(MAP_GROUND)} to 1",
+        )
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-notnight")
+    fun `in light mode every theme reads at 4_5 to 1 and the header is a visible step from the body`() = assertFamily(
+        "light",
+        dark = false,
+    )
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-night")
+    fun `in dark mode every theme reads at 4_5 to 1 and the header is a visible step from the body`() = assertFamily(
+        "dark",
+        dark = true,
+    )
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-notnight")
+    fun `in light mode the card is a light tint, not the dark slab and not pure white`() {
+        readTokens()
+
+        assertNotEquals(darkSlab, accessor.body, "The body is not the fixed dark container")
+        assertNotEquals(darkSlab, accessor.header)
+        assertNotEquals(Color.White, accessor.body, "and not pure white")
+        assertNotEquals(surface, accessor.body, "nor the plain surface")
+        assertTrue(accessor.body.luminance() > 0.5f, "The body is light, ${accessor.body.luminance()}")
+        assertTrue(accessor.header.luminance() > 0.4f, "and so is the header, ${accessor.header.luminance()}")
+        assertTrue(accessor.body.contrastRatio(darkSlab) > 8f, "far from the near black it was")
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-night")
+    fun `in dark mode the card is a tint of the theme, a visible step above the page and not the near black slab`() {
+        readTokens()
+
+        assertNotEquals(darkSlab, accessor.body, "The body is not the fixed dark container")
+        assertNotEquals(surface, accessor.body, "nor the page's own surface")
+        assertNotEquals(darkSlab, accessor.header)
+        assertTrue(
+            accessor.body.contrastRatio(surface) >= DARK_STEP_OVER_PAGE,
+            "The body stands ${accessor.body.contrastRatio(surface)} to 1 above the page",
+        )
+        assertTrue(accessor.body.contrastRatio(darkSlab) >= DARK_STEP_OVER_PAGE, "and above the slab it replaces")
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-notnight")
+    fun `in light mode the card tint is exactly taj's themeBackgroundColor over the surface, so it has not drifted`() {
+        readTokens()
+
+        assertEquals(timetableTint, accessor.tint, "The card is exactly the Timetable's tint over the surface")
+        assertEquals(timetableTint, accessor.chip.containerColor)
+        val pure = mapCardColorsFor(themeColor, darkMode = false, surface = surface, onSurface = onSurface)
+        assertEquals(timetableTint, pure.chip, "and the pure family has not drifted from taj's themeBackgroundColor")
+        assertEquals(pure.body, accessor.body)
+        assertEquals(pure.header, accessor.header)
+        assertEquals(onSurface, accessor.onCard)
+        assertEquals(onSurface, accessor.onTint)
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-night")
+    fun `in dark mode the stop card keeps its mode aware family, whose header is the same Timetable tint the cards wear`() {
+        readTokens()
+
+        assertEquals(timetableTint, accessor.header, "the stop card's dark header is the Timetable's dark tint")
+        assertEquals(timetableTint, accessor.tint, "and the cards wear that very tint")
+        assertEquals(onSurface, accessor.onCard, "the stop card's text is the dark mode text")
+        assertEquals(onSurface, accessor.onTint, "and so is the cards'")
+    }
+
+    // region the list state's look, on the cloud gradient
+
+    private fun darkListLook(theme: Color): CardLook = modeCardLook(
+        themeColor = theme,
+        darkMode = true,
+        tokens = ModeTokens(
+            surface = md_theme_dark_surface,
+            onSurface = md_theme_dark_onSurface,
+            softLabel = md_theme_dark_softLabel,
+            labelPlaceholder = md_theme_dark_onSurface_placeholder,
+            outlineSubtle = md_theme_dark_outline_subtle,
+        ),
+    )
+
+    private fun lightListLook(theme: Color): CardLook = modeCardLook(
+        themeColor = theme,
+        darkMode = false,
+        tokens = ModeTokens(
+            surface = md_theme_light_surface,
+            onSurface = md_theme_light_onSurface,
+            softLabel = md_theme_light_softLabel,
+            labelPlaceholder = md_theme_light_onSurface_placeholder,
+            outlineSubtle = md_theme_light_outline_subtle,
+        ),
+    )
+
+    /**
+     * The dark cloud gradient's darkest point is the bare surface, where no blob reaches. Its lightest point is bounded by laying
+     * all three blobs at their peak over the surface, which the gradient never does at one spot, since their centres differ. The
+     * peak is the gradient's own 0.32 dark peak times the pair's 0.85, and the third blob is 0.85 of that. The constants are
+     * private in taj, so they are restated here as a stand in and the lightest figure is an upper bound.
+     */
+    private fun darkGradientLightest(style: KrailThemeStyle): Color {
+        val stops = AiThemeGradientTokens.stopsFor(style)
+        val peak = 0.32f * 0.85f
+        return stops[2].copy(alpha = peak * 0.85f)
+            .compositeOver(
+                stops[1].copy(
+                    alpha = peak,
+                ).compositeOver(stops[0].copy(alpha = peak).compositeOver(md_theme_dark_surface)),
+            )
+    }
+
+    @Test
+    fun `the list state's dark look reads on the four offered themes, and its hairline stands off the dark gradient`() {
+        var placeholderTokenFails = false
+        for (style in themes) {
+            val theme = style.hexColorCode.hexToComposeColor()
+            val look = darkListLook(theme)
+            val darkest = md_theme_dark_surface
+            val lightest = darkGradientLightest(style)
+            val text = look.onTint.contrastRatio(look.tint)
+            val placeholder = look.placeholder.contrastRatio(look.tint)
+            val edgeOnDarkest = look.edge.contrastRatio(darkest)
+            val edgeOnLightest = look.edge.contrastRatio(lightest)
+            val tokenPlaceholder = md_theme_dark_onSurface_placeholder.contrastRatio(look.tint)
+            println(
+                "LISTGROUND dark ${style.name} textOnTint=$text placeholderOnTint=$placeholder edgeOnGradientDarkest=$edgeOnDarkest " +
+                    "edgeOnGradientLightestBound=$edgeOnLightest tintOnGradientDarkest=${look.tint.contrastRatio(darkest)} " +
+                    "tintOnGradientLightestBound=${look.tint.contrastRatio(lightest)} edgeOnTint=${look.edge.contrastRatio(look.tint)} " +
+                    "placeholderTokenOnTint=$tokenPlaceholder",
+            )
+            assertTrue(text >= TEXT, "dark ${style.name}: the text on the dark tint is $text to 1")
+            assertTrue(placeholder >= TEXT, "dark ${style.name}: the prompt on the dark tint is $placeholder to 1")
+            assertTrue(
+                edgeOnDarkest >= EDGE_ON_DARKEST,
+                "dark ${style.name}: the hairline against the darkest gradient is $edgeOnDarkest to 1",
+            )
+            assertTrue(
+                edgeOnLightest >= EDGE_ON_LIGHTEST_BOUND,
+                "dark ${style.name}: the hairline against the lightest gradient bound is $edgeOnLightest to 1",
+            )
+            if (tokenPlaceholder < TEXT) placeholderTokenFails = true
+        }
+        assertTrue(
+            placeholderTokenFails,
+            "the placeholder token alone is under 4.5 on the dark tint of a theme, which is why the prompt is the ink",
+        )
+    }
+
+    @Test
+    fun `the list state's dark tint is the Timetable's own 45 percent over the dark surface, and the ink, edge and divider are the dark palette's`() {
+        for (style in themes) {
+            val theme = style.hexColorCode.hexToComposeColor()
+            val look = darkListLook(theme)
+            assertEquals(
+                theme.copy(alpha = 0.45f).compositeOver(md_theme_dark_surface),
+                look.tint,
+                "${style.name}: the tint",
+            )
+            assertEquals(md_theme_dark_onSurface, look.onTint, "${style.name}: the ink")
+            assertEquals(md_theme_dark_softLabel, look.edge, "${style.name}: the hairline")
+            assertEquals(md_theme_dark_outline_subtle, look.divider, "${style.name}: the divider")
+            assertEquals(md_theme_dark_onSurface, look.placeholder, "${style.name}: the prompt is the ink")
+        }
+    }
+
+    @Test
+    fun `the light look is the old constants on every theme, so light mode shows no change`() {
+        for (style in allThemes) {
+            val theme = style.hexColorCode.hexToComposeColor()
+            val look = lightListLook(theme)
+            assertEquals(theme.copy(alpha = 0.15f).compositeOver(Color.White), look.tint, "${style.name}: the tint")
+            assertEquals(Color(0xFF010101), look.onTint, "${style.name}: the ink")
+            assertEquals(Color(0xFF767676), look.edge, "${style.name}: the hairline")
+            assertEquals(Color(0xFF595959), look.placeholder, "${style.name}: the prompt")
+            assertEquals(Color(0x6E010101), look.divider, "${style.name}: the divider")
+        }
+        for (style in themes) {
+            val look = lightListLook(style.hexColorCode.hexToComposeColor())
+            val text = look.onTint.contrastRatio(look.tint)
+            println(
+                "LISTGROUND light ${style.name} textOnTint=$text hairlineOnMap=${look.edge.contrastRatio(MAP_GROUND)}",
+            )
+            assertTrue(
+                text in CARD_TEXT_LOW..CARD_TEXT_HIGH,
+                "light ${style.name}: the text is $text to 1, 17.51 to 18.27 as before",
+            )
+            assertTrue(
+                look.edge.contrastRatio(MAP_GROUND) >= HAIRLINE,
+                "light ${style.name}: the hairline is 3.81 to 1 as before",
+            )
+        }
+    }
+
+    @Test
+    fun `the hairline is drawn in light mode on both grounds, and in dark mode on the gradient only`() {
+        assertTrue(cardEdgeShown(darkMode = false, onGradient = false), "light, on the map")
+        assertTrue(cardEdgeShown(darkMode = false, onGradient = true), "light, on the gradient")
+        assertTrue(
+            !cardEdgeShown(darkMode = true, onGradient = false),
+            "dark, on the map: the dark box is clear of the light map",
+        )
+        assertTrue(
+            cardEdgeShown(darkMode = true, onGradient = true),
+            "dark, on the gradient, where it separates the box from the page",
+        )
+    }
+
+    @Test
+    fun `the edge share changes the hairline's alpha and nothing else, and is exact at both ends`() {
+        val look = darkListLook(KrailThemeStyle.Train.hexColorCode.hexToComposeColor())
+
+        assertEquals(
+            look,
+            look.withEdgeShare(1f),
+            "1 is this very look, so light mode is the same value at every frame",
+        )
+        val gone = look.withEdgeShare(0f)
+        assertEquals(0f, gone.edge.alpha, "0 draws no hairline")
+        assertEquals(look.edge.copy(alpha = 0f), gone.edge)
+        val half = look.withEdgeShare(0.5f)
+        // A colour keeps its alpha in 8 bits, so half is 128 in 255.
+        assertEquals(0.5f * look.edge.alpha, half.edge.alpha, 0.01f)
+        for (shared in listOf(gone, half)) {
+            assertEquals(look.tint, shared.tint, "the fill never moves")
+            assertEquals(look.onTint, shared.onTint, "the ink never moves")
+            assertEquals(look.placeholder, shared.placeholder, "the prompt never moves")
+            assertEquals(look.divider, shared.divider, "the divider never moves")
+        }
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-night")
+    fun `under a ground scope in dark mode the accessor gives the very same dark look on the gradient and on the map bar the hairline, and outside one it is the map's`() {
+        var onGradient: MapCardColors? = null
+        var onMap: MapCardColors? = null
+        var outside: MapCardColors? = null
+        var theme = Color.Unspecified
+        composeRule.setContent {
+            PreviewTheme(themeStyle = KrailThemeStyle.Train) {
+                theme = themeDecorColor()
+                outside = mapCardColors()
+                CardGroundScope(onGradient = true) { onGradient = mapCardColors() }
+                CardGroundScope(onGradient = false) { onMap = mapCardColors() }
+            }
+        }
+        composeRule.waitForIdle()
+
+        val dark = darkListLook(theme)
+        for ((ground, card) in listOf("gradient" to checkNotNull(onGradient), "map" to checkNotNull(onMap))) {
+            assertEquals(dark.tint, card.tint, "$ground: the fill is the dark tint")
+            assertEquals(dark.onTint, card.onTint, "$ground: the ink is cream")
+            assertEquals(dark.placeholder, card.placeholder, "$ground: the prompt")
+            assertEquals(dark.divider, card.divider, "$ground: the divider")
+            assertEquals(dark.tint, card.chip.containerColor, "$ground: a chip wears it too")
+            assertEquals(dark.onTint, card.chip.contentColor, "$ground: with the same ink")
+            assertEquals(
+                md_theme_light_surface,
+                card.pill.containerColor,
+                "$ground: the Options pill is white on either ground",
+            )
+            assertEquals(md_theme_light_onSurface, card.pill.contentColor)
+        }
+        assertEquals(dark.edge, checkNotNull(onGradient).chipEdge, "on the gradient the hairline is the dark softLabel")
+        assertEquals(
+            dark.edge.copy(alpha = 0f),
+            checkNotNull(onMap).chipEdge,
+            "on the map there is none, the same colour with no alpha",
+        )
+        val card = checkNotNull(outside)
+        val map = checkNotNull(onMap)
+        assertEquals(
+            map.tint,
+            card.tint,
+            "outside any scope a card stands on the map, so it is the scope's map look: the fill",
+        )
+        assertEquals(map.onTint, card.onTint, "the ink")
+        assertEquals(map.chipEdge, card.chipEdge, "the hairline, with no alpha")
+        assertEquals(map.placeholder, card.placeholder, "the prompt")
+        assertEquals(map.divider, card.divider, "the divider")
+    }
+
+    @Test
+    fun `under a ground scope in light mode the map and the gradient are the very same look, hairline included`() {
+        var onGradient: MapCardColors? = null
+        var onMap: MapCardColors? = null
+        var theme = Color.Unspecified
+        composeRule.setContent {
+            PreviewTheme(themeStyle = KrailThemeStyle.Train) {
+                theme = themeDecorColor()
+                CardGroundScope(onGradient = true) { onGradient = mapCardColors() }
+                CardGroundScope(onGradient = false) { onMap = mapCardColors() }
+            }
+        }
+        composeRule.waitForIdle()
+
+        val light = lightListLook(theme)
+        for ((ground, card) in listOf("gradient" to checkNotNull(onGradient), "map" to checkNotNull(onMap))) {
+            assertEquals(light.tint, card.tint, "$ground: the fill is the light tint it was")
+            assertEquals(light.onTint, card.onTint, "$ground: the ink")
+            assertEquals(light.edge, card.chipEdge, "$ground: the hairline is the light softLabel, with full alpha")
+            assertEquals(light.placeholder, card.placeholder, "$ground: the prompt")
+            assertEquals(light.divider, card.divider, "$ground: the divider")
+        }
+    }
+
+    // endregion
+
+    private companion object {
+        const val TEXT = 4.5f
+        const val EDGE = 3f
+
+        /** The hairline against the bare dark surface, where the gradient is darkest: 7.93 to 1 as printed. */
+        const val EDGE_ON_DARKEST = 7f
+
+        /** The hairline against the stacked peak bound of the gradient, never reached at one spot: 2.00 to 1 on Bus as printed. */
+        const val EDGE_ON_LIGHTEST_BOUND = 1.9f
+        const val HAIRLINE = 3.8f
+        const val CARD_TEXT_LOW = 17.5f
+        const val CARD_TEXT_HIGH = 18.3f
+        const val HEADER_STEP = 1.15f
+        const val DARK_STEP_OVER_PAGE = 1.3f
+        val MAP_GROUND = Color(0xFFEDEBE4)
+    }
+}

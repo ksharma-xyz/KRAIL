@@ -13,9 +13,9 @@
 # tests the timing of the rotate call rather than whether the screen came back.
 #
 # `onFlowComplete` restores portrait even when the flow fails. Without it a
-# failure here leaves the device in landscape, where the search row collapses to
-# a single pill, and every later flow in the run fails looking for fields that
-# are not on screen. That is exactly how this file was first written, and the
+# failure here leaves the device in landscape, where the home is a different
+# layout, and every later flow in the run fails looking for nodes that are not
+# on screen. That is exactly how this file was first written, and the
 # two cascading failures it caused are the reason for the hook.
 appId: ${APP_ID}
 # Android only, and excluded from the iOS leg by tag.
@@ -56,11 +56,15 @@ onFlowComplete:
     visible:
       id: "savedtrips.screen"
     timeout: 60000
-# In landscape the search row collapses to a pill, so assert the row's root,
-# which is present in both layouts, rather than the portrait-only fields.
+# The one search bar is the same one row in landscape, so assert its root and the
+# pills, which are the first row of the list.
 - extendedWaitUntil:
     visible:
       id: "searchrow.root"
+    timeout: 20000
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.pills"
     timeout: 20000
 
 - setOrientation: PORTRAIT
@@ -70,25 +74,26 @@ onFlowComplete:
     timeout: 60000
 
 # --- Search stop ---
+# The destination first, from `searchrow.to`, the home's one search bar. It opens Search Stop, whose To and From
+# form stays on screen through both picks. The origin follows from `searchrow.from` on that form, and the go
+# circle takes the trip out.
 - tapOn:
-    id: "searchrow.from"
+    id: "searchrow.to"
 
-# The list, not the map — same invariant 02-plan-trip pins, asserted here too because
-# this flow reaches the screen by a different route. It used to depend on 02 having
-# dismissed the first-run map options sheet earlier in the same run; now that the map
-# is opt-in that sheet cannot appear here at all, and the order dependency is gone.
-- extendedWaitUntil:
-    visible:
-      id: "searchstop.recents"
-    timeout: 15000
-
+# Opens on the map state with the recents card showing, and the list state grows from it once the bar is
+# tapped. Same steps as 02-plan-trip, because this flow reaches the screen by a different route. There is
+# no map options sheet to dismiss any more, so no order dependency on 02 either.
 - extendedWaitUntil:
     visible:
       id: "searchstop.query"
     timeout: 15000
 - tapOn:
     id: "searchstop.query"
-- inputText: "Central"
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.recents"
+    timeout: 15000
+- inputText: "Town Hall"
 - extendedWaitUntil:
     visible:
       id: "searchstop.result..*"
@@ -115,21 +120,23 @@ onFlowComplete:
 - tapOn:
     id: "searchstop.result..*"
     index: 0
+
+# --- Origin ---
+# The pick stays on Search Stop with the destination filled in. The From bar is tapped whether or not it
+# filled itself with the nearest stop, so the flow is the same with and without a location fix.
 - extendedWaitUntil:
     visible:
-      id: "searchrow.root"
+      id: "searchrow.from"
     timeout: 15000
-
-# --- Timetable ---
 - tapOn:
-    id: "searchrow.to"
+    id: "searchrow.from"
 - extendedWaitUntil:
     visible:
       id: "searchstop.query"
     timeout: 15000
 - tapOn:
     id: "searchstop.query"
-- inputText: "Town Hall"
+- inputText: "Central"
 - extendedWaitUntil:
     visible:
       id: "searchstop.result..*"
@@ -137,11 +144,13 @@ onFlowComplete:
 - tapOn:
     id: "searchstop.result..*"
     index: 0
+
+# --- Timetable ---
+# Both bars hold a stop, so the go circle shows and takes the trip out of Search Stop.
 - extendedWaitUntil:
     visible:
-      id: "searchrow.root"
+      id: "searchrow.search"
     timeout: 15000
-
 - tapOn:
     id: "searchrow.search"
 - extendedWaitUntil:
@@ -181,3 +190,24 @@ onFlowComplete:
       id: "timetable.journey..*"
     direction: DOWN
     timeout: 45000
+
+# --- Back from the results ---
+# After the rotation round trip on the timetable, back must still land on Search Stop with both bars filled
+# and the go circle shown: the back stack is Saved Trips, Search Stop, Timetable, and it is restored whole
+# when the Activity is recreated. Back again leaves for home.
+- back
+- extendedWaitUntil:
+    visible:
+      id: "searchrow.search"
+    timeout: 20000
+- assertVisible:
+    id: "searchrow.to"
+- assertVisible:
+    id: "searchrow.from"
+- assertNotVisible:
+    id: "savedtrips.screen"
+- back
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
+    timeout: 20000

@@ -1,21 +1,58 @@
-# Gets past the first-run intro carousel, and is safe to call on a device that
-# has already been through it.
+# Gets past the first-run Intro, and is safe to call on a device that has
+# already been through it.
 #
 # Callers invoke this unconditionally, immediately after `launchApp`. It used to
 # be guarded by the caller on `intro.screen` being visible, which is what broke
 # the lane on CI: `launchApp` returns once the process is in the foreground, not
 # once Compose has drawn, so on a freshly booted emulator the guard was evaluated
-# against a hierarchy that had nothing in it yet. It skipped, the carousel stayed
+# against a hierarchy that had nothing in it yet. It skipped, the Intro stayed
 # up, and the caller's next wait counted down against a screen that was never
 # going to arrive. Every flow failed on its first assertion for that reason and
-# no other. Settling here, inside the one file that knows about the carousel, is
+# no other. Settling here, inside the one file that knows about the Intro, is
 # what makes the check meaningful, and it keeps the six callers identical.
 #
-# The carousel is driven by a single button whose label changes per page
-# ("Next", then "Let's KRAIL" on the last one). `intro.action.primary` is the
-# same node throughout, so looping on the tag walks the whole thing without this
-# flow knowing how many pages there are or what any of them say. Adding a page
-# does not require touching this file.
+# The Intro is five screens with one question each: Park & Ride, where you go, where you start,
+# save this trip, and the theme colour, in that order. The right button is
+# `intro.action.primary`, the positive answer, and the left one is `intro.action.secondary`. The
+# loop runs for as long as the Intro is on screen, `intro.screen`, and each pass answers the screen
+# it finds, so this flow does not need to know how many screens there are.
+#
+# Park & Ride is the first screen and has two buttons and no trip tile: it is answered with the
+# left button, No, so a cold run adds no car park station and needs no location permission. That
+# button is found by `intro.action.secondary` with no `intro.confirm.tile` on screen. The destination
+# and origin screens have one button, and the theme screen has one too, so none of them has a
+# secondary button.
+#
+# Three screens do not show their button until the rider has picked something: the theme
+# screen until a badge is tapped, and the destination and origin screens until a stop is
+# tapped. On those the button is not on screen at all, so a pass first picks, the first listed
+# stop, `intro.stop.first`, or the Train badge, `intro.theme.train`, and then taps the primary
+# button. On the destination and origin screens that selects a stop and confirms it, so a cold run
+# reaches the confirm screen with two stops chosen. The confirm screen, found by its trip tile
+# `intro.confirm.tile`, is answered with the left button, Not now, which only records the answer and
+# moves on to the theme screen, the last, where the Train badge and then the primary button end the
+# Intro. Not now means the Intro ends with nothing saved, so a cold run starts the app with no
+# saved trip, as it always has. Typing in the search field is never needed.
+#
+# The badges on the theme screen drift and the chosen one dances for as long as the
+# screen is up, so that screen never stops moving, and a wait for the animation to end
+# there only ever runs to its timeout. So the first wait below is for the Intro screen itself,
+# `intro.screen`, which ends the moment it is drawn, and the one wait after a
+# tap is short and its timeout is never what the run depends on.
+#
+# On a cold install the stops can still be loading when the last screen opens. The theme screen's
+# primary button is off while they load only when a trip is to be saved, and this flow says Not now,
+# so it is never held back. The wait for the button to be enabled stays on the screens that show one
+# because a tap on a disabled button does nothing, and without it the taps are spent and the cap
+# below runs out before the app is ready.
+#
+# After the theme screen's button, the Intro hands over to the finale: the wordmark, the theme colour
+# flooding the screen, Saved Trips opening underneath it, and the colour fading out. It takes about 3.5 s,
+# and while it is up the app behind it is hidden from the accessibility tree, so none of the Intro's
+# tags are visible, the loop above ends, and `savedtrips.screen` is not there until the colour
+# has lifted. So the last step waits for Saved Trips, with room for a slow device, instead of
+# racing the overlay. A tap on the screen would skip the finale, but this flow never taps it,
+# because the wait is the one thing that is certain to work on both platforms.
 #
 # `times` is a safety net, not the exit condition: `while` is what ends the
 # loop. Without the cap a button that stops responding would hang the run
@@ -25,31 +62,98 @@
 # because `.maestro/shared/` sits outside both `smoke/` and `nightly/`.
 appId: ${APP_ID}
 ---
-# Wait for the app to stop drawing before looking at anything. Cheap on a warm
-# device, and on a cold one it is the difference between seeing the carousel and
-# seeing an empty window.
-- waitForAnimationToEnd:
-    timeout: 30000
-
-# `optional`, because a device that has already been through the carousel never
-# shows this button. There it warns, costs the timeout below, and the repeat that
-# follows then does nothing. On a clean device it is what absorbs the rest of a
-# slow cold start.
+# Wait for the first screen to be drawn, which is the Intro itself. Cheap on a warm device,
+# and on a cold one it is the difference between seeing the Intro and seeing an empty window.
+# `optional`, because a device that has already been through the Intro never shows it: there it
+# warns, costs the timeout once, and the repeat that follows then does nothing. The wait ends as
+# soon as the screen is there, unlike a wait for the animation to end, which the badges keep
+# running for the full timeout.
 - extendedWaitUntil:
     visible:
-      id: "intro.action.primary"
-    timeout: 15000
+      id: "intro.screen"
+    timeout: 30000
     optional: true
 
 - repeat:
     times: 12
     while:
       visible:
-        id: "intro.action.primary"
+        id: "intro.screen"
     commands:
-      - tapOn:
-          id: "intro.action.primary"
-      # The pager animates between pages. Tapping through that animation lands
-      # the second tap on the page that is still sliding in.
-      - waitForAnimationToEnd:
-          timeout: 5000
+      # Park & Ride, the first screen: No, the left button. It is the only screen with a left button
+      # and no trip tile, so a screen with a secondary button and no tile is this one. The left button
+      # is never disabled, so there is nothing to wait for.
+      - runFlow:
+          when:
+            notVisible:
+              id: "intro.confirm.tile"
+            visible:
+              id: "intro.action.secondary"
+          commands:
+            - tapOn:
+                id: "intro.action.secondary"
+            # The screen slides into the next. Tapping through that lands the
+            # second tap on the screen that is still moving in.
+            - waitForAnimationToEnd:
+                timeout: 5000
+      # The destination and origin screens: select the first listed stop, which brings the button
+      # in, then the positive answer.
+      - runFlow:
+          when:
+            visible:
+              id: "intro.stop.first"
+          commands:
+            - tapOn:
+                id: "intro.stop.first"
+            # Optional, so a device that never reports the state costs the timeout
+            # once for each pass and then taps as before.
+            - extendedWaitUntil:
+                visible:
+                  id: "intro.action.primary"
+                  enabled: true
+                timeout: 30000
+                optional: true
+            - tapOn:
+                id: "intro.action.primary"
+            - waitForAnimationToEnd:
+                timeout: 5000
+      # The confirm screen: Not now, so nothing is saved. Its trip tile is what says it is this
+      # screen. It only records the answer and moves on to the theme screen.
+      - runFlow:
+          when:
+            visible:
+              id: "intro.confirm.tile"
+          commands:
+            - tapOn:
+                id: "intro.action.secondary"
+            - waitForAnimationToEnd:
+                timeout: 5000
+      # The theme screen, the last: pick the Train badge, which brings the button in, then the
+      # positive answer, which ends the Intro. Once this is tapped the Intro leaves, so the rest of
+      # the pass does not run for it.
+      - runFlow:
+          when:
+            visible:
+              id: "intro.theme.train"
+          commands:
+            - tapOn:
+                id: "intro.theme.train"
+            - extendedWaitUntil:
+                visible:
+                  id: "intro.action.primary"
+                  enabled: true
+                timeout: 30000
+                optional: true
+            - tapOn:
+                id: "intro.action.primary"
+            - waitForAnimationToEnd:
+                timeout: 5000
+
+# The finale has to end before Saved Trips can be used. `optional`, like the first wait, because
+# a device that has already been through the Intro is on Saved Trips at once, and because the
+# callers each wait for the screen themselves and are what fails the run if it never comes.
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
+    timeout: 15000
+    optional: true

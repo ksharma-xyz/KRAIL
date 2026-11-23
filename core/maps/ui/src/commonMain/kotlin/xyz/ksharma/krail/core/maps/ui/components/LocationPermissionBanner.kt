@@ -18,9 +18,8 @@ import xyz.ksharma.krail.taj.theme.PreviewTheme
 /**
  * Pill shown on the map when location permission has been permanently denied.
  *
- * Visual style and interaction match [MapTimetableDataBadge] so the permission state
- * reads as "yet another map status pill", not as a separate modal:
- *   - Surface background, onSurface text — same colour treatment as the badge.
+ * The permission state reads as a map status pill, not as a separate modal:
+ *   - Surface background, onSurface text.
  *   - Entire pill is a single tap target; no nested buttons, no dismiss.
  *   - One short label, no separators or em dashes.
  *

@@ -56,10 +56,18 @@ internal class FakeStopResultsManager : StopResultsManager {
     override val selectedToStop: StopItem?
         get() = _selectedToStop
 
+    /** Every search asked for: the query and whether routes were to be searched too. */
+    val searches = mutableListOf<Pair<String, Boolean>>()
+
+    /** When set, replaces the canned stops for every non blank query, so a test can give the search its own answer. */
+    var answer: List<SearchStopState.SearchResult>? = null
+
     override suspend fun fetchStopResults(
         query: String,
         searchRoutesEnabled: Boolean,
     ): List<SearchStopState.SearchResult> {
+        searches += query to searchRoutesEnabled
+        answer?.let { if (query.isNotBlank()) return it }
         // Throw an exception if shouldThrowError is true
         if (shouldThrowError) {
             error("Error fetching stop results")

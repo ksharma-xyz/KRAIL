@@ -47,6 +47,8 @@ class SplashViewModel(
                 loadKrailThemeStyle()
                 loadThemeMode()
                 displayIntroScreen()
+                // Everything the logo's colour depends on has been read, so it may now be drawn in the theme colour.
+                updateUiState { copy(loaded = true) }
                 appStart.start()
                 trackAppStartEvent()
             }
@@ -80,6 +82,7 @@ class SplashViewModel(
         updateUiState {
             copy(
                 themeStyle = themeStyle ?: DEFAULT_THEME_STYLE,
+                hasSavedTheme = themeId != null,
             )
         }
     }.onFailure {

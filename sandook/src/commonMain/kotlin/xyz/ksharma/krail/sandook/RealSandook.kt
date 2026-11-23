@@ -87,6 +87,15 @@ internal class RealSandook(
         query.updateSavedTripSortOrder(sort_order = sortOrder, tripId = tripId)
     }
 
+    override fun reorderSavedTrips(orderedTripIds: List<String>, removedTripIds: Set<String>) {
+        query.transaction {
+            removedTripIds.forEach { query.deleteTrip(it) }
+            orderedTripIds.forEachIndexed { index, tripId ->
+                query.updateSavedTripSortOrder(sort_order = index.toLong(), tripId = tripId)
+            }
+        }
+    }
+
     override fun clearSavedTrips() {
         query.clearSavedTrips()
     }

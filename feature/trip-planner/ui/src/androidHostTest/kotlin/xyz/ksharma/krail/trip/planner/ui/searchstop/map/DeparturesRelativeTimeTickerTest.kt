@@ -33,6 +33,7 @@ import xyz.ksharma.krail.departures.ui.DeparturesViewModel
 import xyz.ksharma.krail.departures.ui.state.DeparturesUiEvent
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
+import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardWithDepartures
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -47,7 +48,7 @@ import kotlin.time.Instant
  * [DeparturesViewModel.isActive] is the 10-second ticker that recomputes "in X mins" for every
  * row on screen. It is a `SharingStarted.WhileSubscribed` flow, so it runs only while something
  * collects it — and the surfaces that show a departure board are the only things that can.
- * This test opens the real map stop sheet and checks the number still moves once the sheet has
+ * This test opens the real floating stop card and checks the number still moves once the card has
  * been sitting there a while, which is the whole point of the ticker and is invisible to every
  * ViewModel-level test (they subscribe to the flow themselves and so can never see it unwired).
  *
@@ -104,10 +105,10 @@ class DeparturesRelativeTimeTickerTest {
     }
 
     @Test
-    fun `the countdown keeps ticking while the stop sheet stays open`() {
+    fun `the countdown keeps ticking while the stop card stays open`() {
         composeRule.setContent {
             PreviewTheme {
-                StopDetailsBottomSheet(stop = CENTRAL, onDismiss = {})
+                StopCardWithDepartures(stop = CENTRAL, onClose = {})
             }
         }
         composeRule.waitForIdle()
@@ -123,10 +124,10 @@ class DeparturesRelativeTimeTickerTest {
 
         assertTrue(
             departuresViewModel.uiState.value.departures.isNotEmpty(),
-            "The sheet's own uiState collection should have started the poll and loaded a row",
+            "The card's own uiState collection should have started the poll and loaded a row",
         )
 
-        // The rider keeps the sheet open and the departure draws nearer.
+        // The rider keeps the card open and the departure draws nearer.
         clockTheRiderIsWatching = departureAt - CLOSE_IN
         letTimePass(TICKER_INTERVAL_MILLIS)
 

@@ -3,6 +3,8 @@ package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
@@ -11,14 +13,18 @@ import org.koin.core.parameter.parametersOf
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.navigation.ResultEffect
-import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionPane
+import xyz.ksharma.krail.trip.planner.ui.homemap.AskKrailHandoffEffect
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.navigation.SavedTripsRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.LabelChipTapEffect
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsScreen
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.currentLatLng
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.onLabelStopSelected
+import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputViewModel
 import xyz.ksharma.krail.trip.planner.ui.search.ai.isHandoffActionable
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
@@ -37,7 +43,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
 ) {
     entry<SavedTripsRoute> {
         // Scoped ViewModel that survives navigation
-        val viewModel: SavedTripsViewModel = koinViewModel(key = "SavedTripsNav")
+        val viewModel: SavedTripsViewModel = koinViewModel(key = SAVED_TRIPS_VIEW_MODEL_KEY)
         val mapStopSelectionViewModel: MapStopSelectionViewModel = koinViewModel()
         val mapUiState by mapStopSelectionViewModel.mapUiState.collectAsStateWithLifecycle()
         val savedTripState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -67,6 +73,11 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             },
         )
         val aiSearchInputState by aiSearchInputViewModel.uiState.collectAsStateWithLifecycle()
+        // The microphone follows the flag. This ViewModel outlives the home while Search Stop or Settings sit on
+        // top of it, so the flag is read again each time the home comes to the front.
+        LifecycleEventEffect(Lifecycle.Event.ON_START) {
+            aiSearchInputViewModel.onEvent(AiSearchInputEvent.RefreshFeatureFlag)
+        }
 
         // Whatever the AI resolved is written into SavedTripsState the same way a manual
         // SearchStop pick does (FromStopChanged/ToStopChanged) — per field, so a half-resolved
@@ -122,8 +133,27 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                     viewModel.onEvent(SavedTripUiEvent.FromStopChanged(stopItem.toJsonString()))
                 SearchStopFieldType.TO ->
                     viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stopItem.toJsonString()))
-                SearchStopFieldType.LABEL -> Unit
+                SearchStopFieldType.LABEL -> onLabelStopSelected(result, viewModel::onEvent)
             }
+        }
+
+        // A Home or Work chip tap, played out from the ViewModel's state so a rotation mid tap
+        // loses nothing. The location manager is built here because it needs the screen.
+        LabelChipTapEffect(
+            tap = savedTripState.labelChipTap,
+            locate = userLocationManager::currentLatLng,
+            onEvent = viewModel::onEvent,
+            tripPlannerNavigator = tripPlannerNavigator,
+        )
+
+        // An Ask KRAIL answer has no bars to land in, because the home has one search bar. Search Stop opens holding
+        // whatever stops it found, and the rider chooses the rest and goes.
+        AskKrailHandoffEffect(aiState = aiSearchInputState) { from, to ->
+            tripPlannerNavigator.navigateToSearchStop(
+                fieldType = if (to == null) SearchStopFieldType.TO else SearchStopFieldType.FROM,
+                presetFrom = from,
+                presetTo = to,
+            )
         }
 
         SavedTripsScreen(
@@ -132,10 +162,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             onTrackingCardClick = { tripPlannerNavigator.navigateToTrackTrip() },
             onStopTracking = { viewModel.onEvent(SavedTripUiEvent.StopTracking) },
             onAddParkRideClick = { tripPlannerNavigator.navigateToAddParkRide() },
-            fromButtonClick = {
-                viewModel.onEvent(SavedTripUiEvent.AnalyticsFromButtonClick)
-                tripPlannerNavigator.navigateToSearchStop(SearchStopFieldType.FROM)
-            },
+            // The one search bar opens Search Stop on the destination field.
             toButtonClick = {
                 viewModel.onEvent(SavedTripUiEvent.AnalyticsToButtonClick)
                 tripPlannerNavigator.navigateToSearchStop(SearchStopFieldType.TO)
@@ -156,15 +183,6 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                     )
                 }
             },
-            onSearchButtonClick = {
-                triggerTripSearch(
-                    fromStop = savedTripState.fromStop,
-                    toStop = savedTripState.toStop,
-                    viewModel = viewModel,
-                    tripPlannerNavigator = tripPlannerNavigator,
-                    dateTimeSelectionJson = savedTripState.dateTimeSelectionItem?.toJsonString(),
-                )
-            },
             aiState = aiSearchInputState,
             onAiEvent = aiSearchInputViewModel::onEvent,
             aiVoiceLevel = { aiSearchInputViewModel.voiceLevel.value },
@@ -178,38 +196,18 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
             },
             onEvent = { event -> viewModel.onEvent(event) },
             rightPane = {
-                MapStopSelectionPane(
+                SavedTripsMapPane(
                     mapUiState = mapUiState,
-                    onEvent = mapStopSelectionViewModel::onEvent,
+                    userLocationManager = userLocationManager,
+                    onMapEvent = mapStopSelectionViewModel::onEvent,
                     onStopSelected = { stop ->
                         viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stop.toJsonString()))
                     },
+                    labels = savedTripState.stopLabels,
+                    onEvent = viewModel::onEvent,
+                    mapOpen = viewModel.mapOpen,
                 )
             },
-        )
-    }
-}
-
-private fun triggerTripSearch(
-    fromStop: StopItem?,
-    toStop: StopItem?,
-    viewModel: SavedTripsViewModel,
-    tripPlannerNavigator: TripPlannerNavigator,
-    dateTimeSelectionJson: String? = null,
-) {
-    if (fromStop != null && toStop != null && fromStop.stopId != toStop.stopId) {
-        viewModel.onEvent(
-            SavedTripUiEvent.AnalyticsLoadTimeTableClick(
-                fromStopId = fromStop.stopId,
-                toStopId = toStop.stopId,
-            ),
-        )
-        tripPlannerNavigator.navigateToTimeTable(
-            fromStopId = fromStop.stopId,
-            fromStopName = fromStop.stopName,
-            toStopId = toStop.stopId,
-            toStopName = toStop.stopName,
-            dateTimeSelectionJson = dateTimeSelectionJson,
         )
     }
 }

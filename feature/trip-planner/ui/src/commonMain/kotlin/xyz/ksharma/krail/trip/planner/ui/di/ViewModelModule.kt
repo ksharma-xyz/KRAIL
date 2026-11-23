@@ -17,18 +17,24 @@ import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
 import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.feature.debug.settings.store.DebugNetworkConfigStore
 import xyz.ksharma.krail.feature.track.TrackingManager
-import xyz.ksharma.krail.io.gtfs.GtfsQualifiers
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.trip.planner.ui.alerts.ServiceAlertsViewModel
 import xyz.ksharma.krail.trip.planner.ui.alerts.summary.AlertSummaryViewModel
 import xyz.ksharma.krail.trip.planner.ui.alerts.summary.isAlertSummaryEnabled
 import xyz.ksharma.krail.trip.planner.ui.datetimeselector.DateTimeSelectorViewModel
 import xyz.ksharma.krail.trip.planner.ui.discover.DiscoverViewModel
-import xyz.ksharma.krail.trip.planner.ui.intro.IntroViewModel
+import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapViewModel
+import xyz.ksharma.krail.trip.planner.ui.intro.IntroCompletion
+import xyz.ksharma.krail.trip.planner.ui.intro.IntroFlowViewModel
+import xyz.ksharma.krail.trip.planner.ui.intro.IntroParkRideGateway
+import xyz.ksharma.krail.trip.planner.ui.intro.IntroStopsGateway
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.parkride.AddParkRideViewModel
+import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideStationAdder
 import xyz.ksharma.krail.trip.planner.ui.parkride.RealParkRideAvailabilityLoader
 import xyz.ksharma.krail.trip.planner.ui.parkride.RealParkRideCatalogue
+import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionSources
+import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionViewModel
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.InviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.RealInviteFriendsTileManager
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
@@ -53,10 +59,12 @@ import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.DefaultFuzzyStopRanker
 import xyz.ksharma.krail.trip.planner.ui.searchstop.fuzzy.FuzzyStopRanker
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.NearbyStopsManager
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.createNearbyStopsManager
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.resolveNearbyStopsRadiusKm
 import xyz.ksharma.krail.trip.planner.ui.settings.SettingsViewModel
 import xyz.ksharma.krail.trip.planner.ui.settings.story.OurStoryViewModel
 import xyz.ksharma.krail.trip.planner.ui.themeselection.ThemeSelectionViewModel
 import xyz.ksharma.krail.trip.planner.ui.timetable.TimeTableViewModel
+import kotlin.time.TimeSource
 
 val viewModelsModule = module {
     viewModelOf(::ServiceAlertsViewModel)
@@ -130,13 +138,42 @@ val viewModelsModule = module {
         )
     }
 
-    viewModel {
-        IntroViewModel(
-            analytics = get(),
-            platformOps = get(),
-            preferences = get(),
-            nswStopsManager = get(named(GtfsQualifiers.NSW_STOPS_MANAGER)),
-            nswBusRoutesManager = get(named(GtfsQualifiers.NSW_BUS_ROUTES_MANAGER)),
+    // The two step Intro. It takes a SavedStateHandle from Koin's view model parameters.
+    viewModel { params ->
+        IntroFlowViewModel(
+            savedStateHandle = params.get(),
+            appDataReadiness = get(),
+            completion = IntroCompletion(
+                sandook = get(),
+                preferences = get(),
+                analytics = get(),
+                ioDispatcher = get(named(IODispatcher)),
+            ),
+            timeSource = TimeSource.Monotonic,
+            parkRide = IntroParkRideGateway(
+                catalogue = RealParkRideCatalogue(
+                    nswParkRideFacilityManager = get(),
+                    stopResultsManager = get(),
+                    sandook = get(),
+                    festivalManager = get(),
+                ),
+                availabilityLoader = RealParkRideAvailabilityLoader(
+                    parkRideSandook = get(),
+                    parkRideService = get(),
+                    flag = get(),
+                ),
+                parkRideSandook = get(),
+                ioDispatcher = get(named(IODispatcher)),
+                stopNameLookup = get<StopResultsManager>()::fetchLocalStopName,
+                analytics = get(),
+            ),
+            stops = IntroStopsGateway(
+                flag = get(),
+                nswStops = get(),
+                sandook = get(),
+                stopResults = get(),
+                ioDispatcher = get(named(IODispatcher)),
+            ),
         )
     }
 
@@ -165,6 +202,7 @@ val viewModelsModule = module {
             inviteFriendsTileManager = get(),
             trackingManager = get<TrackingManager>(),
             appReviewManager = get(),
+            nearbyStopsRepository = get(),
         )
     }
 
@@ -266,7 +304,44 @@ val viewModelsModule = module {
     // instance so screens never share state or compete for NearbyStopsManager queries.
     // NearbyStopsManager itself is a single so network/cache work is still deduplicated.
     viewModel {
-        MapStopSelectionViewModel(nearbyStopsManager = get())
+        MapStopSelectionViewModel(
+            nearbyStopsManager = get(),
+            searchRadiusKm = resolveNearbyStopsRadiusKm(get()),
+        )
+    }
+
+    // The home map's pins and its offline notice, built from state the saved trips screen already holds.
+    viewModel {
+        HomeMapViewModel(
+            sandook = get(),
+            connectivity = get(),
+            flag = get(),
+            ioDispatcher = get(named(IODispatcher)),
+        )
+    }
+
+    // The one-time Park & Ride suggestion on the map home. It reads only local data and adds through the picker's own add.
+    viewModel {
+        ParkRideSuggestionViewModel(
+            preferences = get(),
+            sources = ParkRideSuggestionSources(
+                catalogue = RealParkRideCatalogue(
+                    nswParkRideFacilityManager = get(),
+                    stopResultsManager = get(),
+                    sandook = get(),
+                    festivalManager = get(),
+                ),
+                sandook = get(),
+                parkRideSandook = get(),
+            ),
+            adder = ParkRideStationAdder(
+                parkRideSandook = get(),
+                analytics = get(),
+                appReviewManager = get(),
+            ),
+            flag = get(),
+            ioDispatcher = get(named(IODispatcher)),
+        )
     }
 
     single<InviteFriendsTileManager> { RealInviteFriendsTileManager(get()) }
@@ -295,7 +370,6 @@ val viewModelsModule = module {
             nearbyStopsManager = get(),
             flag = flag,
             ioDispatcher = get(named(IODispatcher)),
-            preferences = get(),
             sandook = get(),
             searchSessionStore = get(),
             isAddressSearchEnabled = isAddressSearchEnabled,

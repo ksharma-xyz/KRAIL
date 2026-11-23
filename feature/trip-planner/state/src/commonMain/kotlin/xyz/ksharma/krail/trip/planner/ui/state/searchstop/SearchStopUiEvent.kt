@@ -30,20 +30,6 @@ sealed interface SearchStopUiEvent {
 
     data class NearbyStopClicked(val stop: NearbyStopFeature) : SearchStopUiEvent
 
-    data object MapOptionsClicked : SearchStopUiEvent
-
-    data class SearchRadiusChanged(val radiusKm: Double) : SearchStopUiEvent
-
-    data class ShowDistanceScaleToggled(val enabled: Boolean) : SearchStopUiEvent
-
-    data class ShowCompassToggled(val enabled: Boolean) : SearchStopUiEvent
-
-    /** Fired when the user taps the "Select on map" button in the stop list. Analytics-only. */
-    data object SelectOnMapButtonClicked : SearchStopUiEvent
-
-    /** Fired when the user taps the Options button on the SearchStopMap. Analytics-only. */
-    data object MapOptionsButtonClicked : SearchStopUiEvent
-
     /**
      * Fired when the user taps the User Location button on the SearchStopMap. Analytics-only.
      * [hadLocation] is true if location was already active at tap time (re-centering).
@@ -55,22 +41,6 @@ sealed interface SearchStopUiEvent {
      * Analytics-only.
      */
     data object LocationPermissionSettingsClicked : SearchStopUiEvent
-
-    /**
-     * Fired once when the user taps Save in MapOptionsBottomSheet. Analytics-only —
-     * the individual state-change events (SearchRadiusChanged etc.) still fire separately.
-     */
-    data class MapOptionsSaved(
-        val radiusKm: Double,
-        val transportModes: String,
-        val showDistanceScale: Boolean,
-        val showCompass: Boolean,
-        val radiusChanged: Boolean,
-        val modesChanged: Boolean,
-    ) : SearchStopUiEvent
-
-    /** Fired once when the map options sheet auto-pops for the first time. Marks it seen in prefs. */
-    data object MapOptionsFirstTimeShown : SearchStopUiEvent
 
     /** Fired when a stop is selected via the map's StopDetailsBottomSheet. Analytics-only. */
     data class TrackStopSelectedFromMap(
@@ -137,11 +107,14 @@ sealed interface SearchStopUiEvent {
  * The row kind hosting a label assign/create action. UI-boundary enum; the ViewModel
  * maps it to the registered analytics values (`search_result` etc.). ADDRESS_RESULT
  * is reserved for when address rows gain a label assign affordance - nothing sends
- * it yet.
+ * it yet. MAP_CARD is the stop card's Save as.
  */
 enum class LabelAssignSurface {
     SEARCH_RESULT,
     RECENT,
     EMPTY_STATE,
     ADDRESS_RESULT,
+
+    /** The Save as pills on the floating stop card a map pin opens. */
+    MAP_CARD,
 }

@@ -1,15 +1,13 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop.map
 
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,48 +20,52 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
-import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
 import org.maplibre.compose.map.MapOptions
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.map.OrnamentOptions
 import org.maplibre.compose.style.BaseStyle
+import org.maplibre.compose.util.ClickResult
 import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.state.NearbyStopsConfig
-import xyz.ksharma.krail.core.maps.state.UserLocationConfig
-import xyz.ksharma.krail.core.maps.ui.components.LocationPermissionBanner
-import xyz.ksharma.krail.core.maps.ui.components.MapTimetableDataBadge
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.ATTRIBUTION_ALIGNMENT
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.ATTRIBUTION_ENABLED
+import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.COMPASS_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.LOGO_ENABLED
+import xyz.ksharma.krail.core.maps.ui.config.MapConfig.Ornaments.SCALE_BAR_ENABLED
 import xyz.ksharma.krail.core.maps.ui.config.MapTileProvider.OPEN_FREE_MAP_LIBERTY
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
+import xyz.ksharma.krail.taj.components.LoadingDotsPill
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.trip.planner.ui.components.map.StopActionButton
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
-import kotlin.time.Duration.Companion.milliseconds
+import xyz.ksharma.krail.trip.planner.ui.stopcard.AnimatedStopCardPlacement
+import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardBackHandlers
+import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardOptions
+import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardPickActions
+import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardWithDepartures
+import xyz.ksharma.krail.trip.planner.ui.stopcard.controlsClearanceFor
+import xyz.ksharma.krail.trip.planner.ui.stopcard.nearbyStopFor
 
 @Composable
 fun SearchStopMap(
@@ -72,16 +74,53 @@ fun SearchStopMap(
     keyboard: SoftwareKeyboardController? = null,
     focusRequester: FocusRequester? = null,
     ornamentTopPadding: Dp = 0.dp,
-    autoShowOptionsSheet: Boolean = false,
-    onShowOptionsSheet: () -> Unit = {},
+    // The whole margin of the map's own ornaments (compass, scale bar, info icon), for a host that stands controls
+    // in the same corners. Null keeps just [ornamentTopPadding] at the top.
+    ornamentPadding: PaddingValues? = null,
+    // True while a host covers the map and keeps it composed (Search Stop's list state): an open stop card is closed and
+    // system back is the host's, so it never closes a card the rider cannot see.
+    isCovered: Boolean = false,
     onEvent: (SearchStopUiEvent) -> Unit = {},
     onStopSelect: (StopItem) -> Unit = {},
-    onPermissionBannerVisibilityChanged: (Boolean) -> Unit = {},
+    allowPermissionRequest: Boolean = false,
+    onPermissionStatus: (PermissionStatus) -> Unit = {},
+    onRequestPermission: () -> Unit = {},
+    onMapTap: () -> Unit = {},
+    // A host that draws the stop card itself, above everything else, takes the pin taps here and the map
+    // opens none of its own. Null keeps the card on the map, as Search Stop draws it.
+    onStopPinTap: ((NearbyStopFeature) -> Unit)? = null,
+    // False where the rider's dot is the locate control and there is no button (`docs/MAP_HOME_UX.md` rule 20).
+    showsLocationButton: Boolean = true,
+    // More pins to draw between the stops and the rider's dot, such as the Park & Ride `P` and the labels.
+    extraLayers: @Composable () -> Unit = {},
+    // What the floating stop card offers besides the stop's board: Save as, and Go here or Start here.
+    stopCardOptions: StopCardOptions = StopCardOptions(),
+    // Controls a host draws over the map's bottom edge. They get the height that lifts them above an open stop card,
+    // the same value that lifts the location button, so the card never covers them, and whether they are hidden for the
+    // card instead (see [hidesControlsForCard]). Search Stop's mode button.
+    bottomControls: @Composable BoxScope.(clearance: Dp, controlsHidden: Boolean) -> Unit = { _, _ -> },
+    // How far above the bottom inset the location button stands, given the clearance an open stop card asks for. Null keeps
+    // one edge and the clearance, as every other host has it. Search Stop stands it on the line Options is on.
+    locationBottomPadding: ((clearance: Dp) -> Dp)? = null,
+    // True where the map's controls get out of the way of an open stop card by hiding (Search Stop): the location button
+    // shrinks away and back, the host's bottom controls are told, and no clearance lifts anything. False keeps the lift
+    // above the card, as the home map pane and every other host have it.
+    hidesControlsForCard: Boolean = false,
+    // How much room the stop card keeps clear at its top. Null keeps [ornamentTopPadding], the form's height. Search Stop
+    // shrinks it to nothing as it slides its box away while the Departure Board is expanded.
+    stopCardTopReserve: Dp? = null,
+    // Told whether the open card's Departure Board is expanded, so a host can hand its own room to the card.
+    onBoardExpandedChange: (Boolean) -> Unit = {},
+    // Counts each stretch of this map being on screen for analytics (`map_viewed`, `map_dismissed`) under [mapEntry].
+    // Null counts nothing, as in a preview.
+    mapOpen: MapOpenTracker? = null,
+    mapEntry: MapEntry = MapEntry.SEARCH_STOP,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         when (mapUiState) {
             is MapUiState.Loading -> {
-                CircularProgressIndicator(
+                LoadingDotsPill(
+                    isLoading = true,
                     modifier = Modifier.align(Alignment.Center),
                 )
             }
@@ -92,11 +131,25 @@ fun SearchStopMap(
                     keyboard = keyboard,
                     focusRequester = focusRequester,
                     ornamentTopPadding = ornamentTopPadding,
-                    autoShowOptionsSheet = autoShowOptionsSheet,
-                    onShowOptionsSheet = onShowOptionsSheet,
+                    ornamentPadding = ornamentPadding,
+                    isCovered = isCovered,
                     onEvent = onEvent,
                     onStopSelect = onStopSelect,
-                    onPermissionBannerVisibilityChanged = onPermissionBannerVisibilityChanged,
+                    allowPermissionRequest = allowPermissionRequest,
+                    onPermissionStatus = onPermissionStatus,
+                    onRequestPermission = onRequestPermission,
+                    onMapTap = onMapTap,
+                    onStopPinTap = onStopPinTap,
+                    showsLocationButton = showsLocationButton,
+                    extraLayers = extraLayers,
+                    stopCardOptions = stopCardOptions,
+                    bottomControls = bottomControls,
+                    locationBottomPadding = locationBottomPadding,
+                    hidesControlsForCard = hidesControlsForCard,
+                    stopCardTopReserve = stopCardTopReserve,
+                    onBoardExpandedChange = onBoardExpandedChange,
+                    mapOpen = mapOpen,
+                    mapEntry = mapEntry,
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -124,17 +177,6 @@ private fun ErrorMessage(
     )
 }
 
-// Resolves the open sheet's stop id back to the stop the map is drawing, which is where the
-// tap that opened it came from in the first place. A stop that has since left the nearby set
-// leaves the sheet closed.
-@Composable
-private fun rememberStopForSheet(
-    selectedStopId: String?,
-    nearbyStops: ImmutableList<NearbyStopFeature>,
-): NearbyStopFeature? = remember(selectedStopId, nearbyStops) {
-    selectedStopId?.let { stopId -> nearbyStops.firstOrNull { it.stopId == stopId } }
-}
-
 @Composable
 private fun MapContent(
     mapState: MapUiState.Ready,
@@ -144,9 +186,23 @@ private fun MapContent(
     keyboard: SoftwareKeyboardController? = null,
     focusRequester: FocusRequester? = null,
     ornamentTopPadding: Dp = 0.dp,
-    autoShowOptionsSheet: Boolean = false,
-    onShowOptionsSheet: () -> Unit = {},
-    onPermissionBannerVisibilityChanged: (Boolean) -> Unit = {},
+    ornamentPadding: PaddingValues? = null,
+    isCovered: Boolean = false,
+    allowPermissionRequest: Boolean = false,
+    onPermissionStatus: (PermissionStatus) -> Unit = {},
+    onRequestPermission: () -> Unit = {},
+    onMapTap: () -> Unit = {},
+    onStopPinTap: ((NearbyStopFeature) -> Unit)? = null,
+    showsLocationButton: Boolean = true,
+    extraLayers: @Composable () -> Unit = {},
+    stopCardOptions: StopCardOptions = StopCardOptions(),
+    bottomControls: @Composable BoxScope.(clearance: Dp, controlsHidden: Boolean) -> Unit = { _, _ -> },
+    locationBottomPadding: ((clearance: Dp) -> Dp)? = null,
+    hidesControlsForCard: Boolean = false,
+    stopCardTopReserve: Dp? = null,
+    onBoardExpandedChange: (Boolean) -> Unit = {},
+    mapOpen: MapOpenTracker? = null,
+    mapEntry: MapEntry = MapEntry.SEARCH_STOP,
 ) {
     log(
         "[NEARBY_STOPS_UI] MapContent rendered: nearbyStops.size=${mapState.mapDisplay.nearbyStops.size}, " +
@@ -154,42 +210,54 @@ private fun MapContent(
             "selectedModes=${mapState.mapDisplay.selectedTransportModes}",
     )
 
-    var showOptionsBottomSheet by rememberSaveable { mutableStateOf(false) }
-
-    LaunchedEffect(autoShowOptionsSheet) {
-        if (autoShowOptionsSheet && !showOptionsBottomSheet) {
-            showOptionsBottomSheet = true
-            onShowOptionsSheet()
-        }
-    }
-    // Which stop's details sheet is open, held as the stop id because that is the part worth
-    // saving: the feature itself is map-rendering data the ViewModel still holds after the
-    // Activity is recreated, so it can be looked up again rather than serialised. Held in a
-    // plain `remember` this closed the sheet on every rotation, theme switch and font-size
-    // change (see SearchStopMapSheetRestoreTest).
+    // Which stop's card is open, held as the stop id because that is the part worth saving: the
+    // feature itself is map-rendering data the ViewModel still holds after the Activity is recreated,
+    // so it can be looked up again rather than serialised. Held in a plain `remember` this closed the
+    // card on every rotation, theme switch and font-size change. A stop that has since left the nearby
+    // set leaves the card closed.
     var selectedStopId by rememberSaveable { mutableStateOf<String?>(null) }
-    val selectedStop = rememberStopForSheet(selectedStopId, mapState.mapDisplay.nearbyStops)
+    val nearbyStops = mapState.mapDisplay.nearbyStops
+    val selectedStop = remember(selectedStopId, nearbyStops) { nearbyStopFor(selectedStopId, nearbyStops) }
+    var cardHeight by remember { mutableStateOf(0.dp) }
+    // The stop the card was last open for, held so the card can slide away still showing it once it is dismissed.
+    var lastStop by remember { mutableStateOf<NearbyStopFeature?>(null) }
+    LaunchedEffect(selectedStop) { if (selectedStop != null) lastStop = selectedStop }
+    val shownStop = selectedStop ?: lastStop
 
-    // User location state
-    var permissionStatus by remember { mutableStateOf<PermissionStatus>(PermissionStatus.NotDetermined) }
-    var showPermissionBanner by remember { mutableStateOf(false) }
-    LaunchedEffect(showPermissionBanner) {
-        onPermissionBannerVisibilityChanged(showPermissionBanner)
-    }
-    // False until the user explicitly taps the location button.
-    // When true, TrackUserLocation is allowed to trigger the system permission dialog.
-    var allowPermissionRequest by remember { mutableStateOf(false) }
+    // Whether the open card's Departure Board is expanded, held here for the back order and for the host, which hides its box
+    // while it is. Keyed on the stop, so another pin's card starts with its board shut.
+    var boardExpanded by rememberSaveable(selectedStopId) { mutableStateOf(false) }
+    val cardOpen = selectedStop != null
+    LaunchedEffect(cardOpen, boardExpanded) { onBoardExpandedChange(cardOpen && boardExpanded) }
+    DisposableEffect(Unit) { onDispose { onBoardExpandedChange(false) } }
 
-    // Badge expand animation — rememberSaveable so rotation doesn't replay it.
-    var badgeExpanded by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        if (!badgeExpanded) {
-            delay(500)
-            badgeExpanded = true
-        }
-    }
+    // System back, one step at a time while a card is up: an expanded board shuts first, then the card is dismissed, then it
+    // is the screen's own two step back. These are registered after the screen's, so while a card is open they answer, and
+    // with none they are off and the screen's is. While the host covers the map the card is closed and back is the host's.
+    LaunchedEffect(isCovered) { if (isCovered) selectedStopId = null }
+    StopCardBackHandlers(
+        cardOpen = cardOpen,
+        boardExpanded = boardExpanded,
+        covered = isCovered,
+        onCollapseBoard = { boardExpanded = false },
+        onDismissCard = { selectedStopId = null },
+    )
+
+    // The permission is the screen's now: the location pill under the form says what is wrong and
+    // asks or opens Settings, and [allowPermissionRequest] is false until the rider taps it (or the
+    // location button), the only moments tracking may raise the system dialog.
     val userLocationManager = rememberUserLocationManager()
     val scope = rememberCoroutineScope()
+
+    // One open for each stretch this map is on screen and not covered, for `map_viewed` and `map_dismissed`.
+    MapOpenEffect(
+        mapOpen = mapOpen,
+        entry = mapEntry,
+        covered = isCovered,
+        hadUserLocation = mapState.mapDisplay.userLocation != null,
+        stopCount = mapState.mapDisplay.nearbyStops.size,
+        userLocationManager = userLocationManager,
+    )
 
     Box(modifier = modifier.fillMaxSize()) {
         // Seed from known user location so re-entry after a composition bounce
@@ -214,46 +282,13 @@ private fun MapContent(
             userLocationManager = userLocationManager,
             allowPermissionRequest = allowPermissionRequest,
             onLocationUpdate = { latLng ->
-                permissionStatus = PermissionStatus.Granted
-                showPermissionBanner = false
+                onPermissionStatus(PermissionStatus.Granted)
                 onEvent(SearchStopUiEvent.UserLocationUpdated(latLng))
             },
-            onPermissionDeny = { status ->
-                permissionStatus = status
-                showPermissionBanner = true
-            },
+            onPermissionDeny = onPermissionStatus,
         )
 
-        // Auto-center on first user location, exactly once, smoothly.
-        //
-        // CRITICAL: key the effect on a STABLE boolean (hasUserLocation), NOT on the changing
-        // LatLng. GPS emits a stream of slightly-different fixes; keying on the value re-launched
-        // this effect on every jitter, which CANCELLED the in-flight animateTo. Because
-        // hasAutoCentered had already flipped true, it never re-fired — so the camera was left
-        // frozen wherever the cancelled animation stopped: at the Sydney seed, or (on iOS) at an
-        // intermediate zoomed-all-the-way-out frame. Rotating "fixed" it only because
-        // rememberCameraState re-seeded firstPosition at the now-known location (the seed path,
-        // not this animate path). hasUserLocation flips false→true once and then stays true, so
-        // subsequent jitter no longer re-keys the effect and the animation runs to completion.
-        //
-        // If location permission is absent, userLocation stays null → no animation → the camera
-        // stays at the Sydney default seed. Only when a real fix arrives do we move to it.
-        val userLocation = mapState.mapDisplay.userLocation
-        val hasUserLocation = userLocation != null
-        var hasAutoCentered by remember { mutableStateOf(false) }
-        LaunchedEffect(hasUserLocation) {
-            val target = userLocation
-            if (target != null && !hasAutoCentered) {
-                hasAutoCentered = true
-                cameraState.animateTo(
-                    CameraPosition(
-                        target = target.toPosition(),
-                        zoom = UserLocationConfig.AUTO_CENTER_ZOOM,
-                    ),
-                    duration = UserLocationConfig.AUTO_CENTER_ANIMATION_MS.milliseconds,
-                )
-            }
-        }
+        AutoCenterOnFirstFix(userLocation = mapState.mapDisplay.userLocation, cameraState = cameraState)
 
         // Track camera moves to update map center and reload stops
         @OptIn(FlowPreview::class)
@@ -278,132 +313,141 @@ private fun MapContent(
             MapSurface(
                 mapState = mapState,
                 cameraState = cameraState,
-                ornamentTopPadding = ornamentTopPadding,
+                ornamentPadding = ornamentPadding ?: PaddingValues(top = ornamentTopPadding),
                 onStopSelected = { stop ->
-                    selectedStopId = stop.stopId
-                    onEvent(SearchStopUiEvent.NearbyStopClicked(stop))
+                    if (onStopPinTap != null) {
+                        onStopPinTap(stop)
+                    } else {
+                        selectedStopId = stop.stopId
+                        onEvent(SearchStopUiEvent.NearbyStopClicked(stop))
+                    }
                 },
+                extraLayers = extraLayers,
+                // A tap on the map closes an open card and is the whole of that tap. With none open it
+                // is the screen's first step back to the map state.
+                onMapTap = { if (selectedStopId != null) selectedStopId = null else onMapTap() },
             )
 
-            // Bottom left action buttons (Options and Location).
-            // All location business logic lives here, not inside MapActionButtons.
-            MapActionButtons(
-                onOptionsClick = {
-                    onEvent(SearchStopUiEvent.MapOptionsButtonClicked)
-                    showOptionsBottomSheet = true
-                },
+            // The location button, bottom end, and the host's own bottom controls. All location business logic lives
+            // here, not inside MapActionButtons.
+            MapControlsLayer(
+                showsLocationButton = showsLocationButton,
                 isLocationActive = mapState.mapDisplay.userLocation != null,
                 onLocationButtonClick = {
                     onEvent(
-                        SearchStopUiEvent.LocationButtonClicked(hadLocation = mapState.mapDisplay.userLocation != null),
+                        SearchStopUiEvent.LocationButtonClicked(
+                            hadLocation = mapState.mapDisplay.userLocation != null,
+                        ),
                     )
                     scope.launch {
                         handleLocationButtonClick(
                             userLoc = mapState.mapDisplay.userLocation,
                             cameraState = cameraState,
                             userLocationManager = userLocationManager,
-                            onPermissionDenied = { status ->
-                                permissionStatus = status
-                                showPermissionBanner = true
-                            },
-                            onRequestPermission = { allowPermissionRequest = true },
+                            onPermissionDenied = onPermissionStatus,
+                            onRequestPermission = onRequestPermission,
                         )
                     }
                 },
-                modifier = Modifier.align(Alignment.BottomStart),
+                cardOpen = selectedStop != null,
+                cardHeight = cardHeight,
+                hidesControlsForCard = hidesControlsForCard,
+                locationBottomPadding = locationBottomPadding,
+                bottomControls = bottomControls,
             )
 
-            // Permission badge — shown when permission is not yet determined.
-            // Gives users a visible entry point to grant location access beyond the
-            // small location button. Disappears once the request is in-flight or
-            // a location fix arrives. Mutually exclusive with the banner (denied state).
-            if (permissionStatus is PermissionStatus.NotDetermined) {
-                MapTimetableDataBadge(
-                    text = if (badgeExpanded) "Location Permission Required" else "",
-                    onClick = { allowPermissionRequest = true },
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = ornamentTopPadding)
-                        .defaultMinSize(minWidth = 36.dp, minHeight = 36.dp)
-                        .animateContentSize(
-                            animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
-                        ),
-                )
-            }
+            // The floating stop card, over the map and never a sheet. It slides up with a fade and back down as it is dismissed,
+            // so the stop it shows is held for the length of that exit.
+            AnimatedStopCardPlacement(
+                visible = selectedStop != null,
+                topReserve = stopCardTopReserve ?: ornamentTopPadding,
+                onHeight = { cardHeight = it },
+            ) {
+                shownStop?.let { stop ->
+                    StopCardWithDepartures(
+                        stop = stop,
+                        onClose = { selectedStopId = null },
+                        boardExpanded = boardExpanded,
+                        onBoardExpandedChange = { boardExpanded = it },
+                        // Save as, then Go here or Start here by the field being filled in.
+                        actions = {
+                            StopCardPickActions(
+                                stop = StopItem(stopId = stop.stopId, stopName = stop.stopName),
+                                options = stopCardOptions,
+                                onPick = {
+                                    // Dismiss keyboard and clear focus - IMPORTANT: Order matters!
+                                    keyboard?.hide()
+                                    focusRequester?.freeFocus()
 
-            // Permission banner (shown when permission is denied).
-            // Top padding matches ornamentTopPadding so it clears the floating search bar
-            // (single-pane) or the status bar (dual-pane). Horizontal padding gives the
-            // rounded card visual some breathing room from screen edges.
-            if (showPermissionBanner) {
-                LocationPermissionBanner(
-                    onGoToSettings = {
-                        onEvent(SearchStopUiEvent.LocationPermissionSettingsClicked)
-                        userLocationManager.openAppSettings()
-                    },
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = ornamentTopPadding)
-                        .padding(horizontal = 16.dp),
-                )
-            }
+                                    val stopItem = StopItem(stopId = stop.stopId, stopName = stop.stopName)
+                                    onStopSelect(stopItem)
 
-            // Options Bottom Sheet
-            if (showOptionsBottomSheet) {
-                MapOptionsBottomSheet(
-                    searchRadiusKm = mapState.mapDisplay.searchRadiusKm,
-                    selectedTransportModes = mapState.mapDisplay.selectedTransportModes,
-                    showDistanceScale = mapState.mapDisplay.showDistanceScale,
-                    showCompass = mapState.mapDisplay.showCompass,
-                    onDismiss = { showOptionsBottomSheet = false },
-                    onEvent = onEvent,
-                )
-            }
+                                    onEvent(
+                                        SearchStopUiEvent.TrackStopSelected(
+                                            stopItem = stopItem,
+                                            isRecentSearch = false,
+                                        ),
+                                    )
 
-            // Stop Details Bottom Sheet
-            selectedStop?.let { stop ->
-                StopDetailsBottomSheet(
-                    stop = stop,
-                    onDismiss = { selectedStopId = null },
-                    actionContent = {
-                        StopActionButton(
-                            text = "Select Stop",
-                            onClick = {
-                                // Dismiss keyboard and clear focus - IMPORTANT: Order matters!
-                                keyboard?.hide()
-                                focusRequester?.freeFocus()
+                                    onEvent(
+                                        SearchStopUiEvent.TrackStopSelectedFromMap(
+                                            stopId = stop.stopId,
+                                            searchRadiusKm = mapState.mapDisplay.searchRadiusKm,
+                                            enabledModesCount = mapState.mapDisplay.selectedTransportModes.size,
+                                            nearbyStopsCount = mapState.mapDisplay.nearbyStops.size,
+                                            hadUserLocation = mapState.mapDisplay.userLocation != null,
+                                        ),
+                                    )
+                                    // After the pick event, which is stamped with this open's id, so the pick
+                                    // joins the open it ends.
+                                    mapOpen?.stopPicked()
 
-                                val stopItem = StopItem(
-                                    stopId = stop.stopId,
-                                    stopName = stop.stopName,
-                                )
-                                onStopSelect(stopItem)
-
-                                onEvent(
-                                    SearchStopUiEvent.TrackStopSelected(
-                                        stopItem = stopItem,
-                                        isRecentSearch = false,
-                                    ),
-                                )
-
-                                onEvent(
-                                    SearchStopUiEvent.TrackStopSelectedFromMap(
-                                        stopId = stop.stopId,
-                                        searchRadiusKm = mapState.mapDisplay.searchRadiusKm,
-                                        enabledModesCount = mapState.mapDisplay.selectedTransportModes.size,
-                                        nearbyStopsCount = mapState.mapDisplay.nearbyStops.size,
-                                        hadUserLocation = mapState.mapDisplay.userLocation != null,
-                                    ),
-                                )
-
-                                selectedStopId = null
-                            },
-                        )
-                    },
-                )
+                                    selectedStopId = null
+                                },
+                            )
+                        },
+                    )
+                }
             }
         }
     }
+}
+
+/**
+ * The map's own controls over its bottom edge: the location button and whatever the host draws there ([bottomControls]).
+ *
+ * While a stop card is open ([cardOpen]) they do one of two things. Where [hidesControlsForCard] is set (Search Stop) they
+ * get out of the card's way by hiding: the location button shrinks to nothing about its own centre while it fades and
+ * grows back when the card is dismissed, the host is told through `controlsHidden`, and no clearance is given, so nothing
+ * is lifted. Everywhere else they stay and ride one gap above the card by [controlsClearanceFor].
+ */
+@Composable
+internal fun BoxScope.MapControlsLayer(
+    showsLocationButton: Boolean,
+    isLocationActive: Boolean,
+    onLocationButtonClick: () -> Unit,
+    cardOpen: Boolean,
+    cardHeight: Dp,
+    hidesControlsForCard: Boolean,
+    locationBottomPadding: ((clearance: Dp) -> Dp)?,
+    bottomControls: @Composable BoxScope.(clearance: Dp, controlsHidden: Boolean) -> Unit,
+) {
+    val clearance = controlsClearanceFor(
+        cardHeight = cardHeight,
+        cardOpen = cardOpen,
+        controlsHide = hidesControlsForCard,
+    )
+    val controlsHidden = cardOpen && hidesControlsForCard
+    if (showsLocationButton) {
+        MapActionButtons(
+            isLocationActive = isLocationActive,
+            onLocationButtonClick = onLocationButtonClick,
+            modifier = Modifier.align(Alignment.BottomStart),
+            bottomPadding = locationBottomPadding?.invoke(clearance) ?: (KrailTheme.dimensions.spacingXL + clearance),
+            visible = !controlsHidden,
+        )
+    }
+    bottomControls(clearance, controlsHidden)
 }
 
 /**
@@ -425,9 +469,11 @@ private fun MapContent(
 private fun MapSurface(
     mapState: MapUiState.Ready,
     cameraState: org.maplibre.compose.camera.CameraState,
-    ornamentTopPadding: Dp,
+    ornamentPadding: PaddingValues,
     onStopSelected: (NearbyStopFeature) -> Unit,
+    onMapTap: () -> Unit,
     modifier: Modifier = Modifier,
+    extraLayers: @Composable () -> Unit = {},
 ) {
     // LATCH the "has had a real size" flag — never reset it to false. During a rotation the
     // container momentarily reports a 0 axis (the adaptive window flips through 840×0dp);
@@ -442,20 +488,30 @@ private fun MapSurface(
                 if (it.width > 0 && it.height > 0) hasHadValidSize = true
             },
     ) {
-        if (hasHadValidSize) {
+        // Previews and snapshot tests run with no GPU and no native MapLibre, so they draw a flat
+        // stand-in for the ground and keep everything that floats over it.
+        if (LocalInspectionMode.current) {
+            Box(modifier = Modifier.fillMaxSize().background(KrailTheme.colors.onSurface.copy(alpha = 0.08f)))
+        } else if (hasHadValidSize) {
             MaplibreMap(
                 modifier = Modifier.fillMaxSize(),
                 cameraState = cameraState,
                 baseStyle = BaseStyle.Uri(OPEN_FREE_MAP_LIBERTY),
+                // A tap on the map itself, not on a stop (the stop layer consumes its own taps),
+                // is the first step back to the map state. Passed on so nothing else loses it.
+                onMapClick = { _, _ ->
+                    onMapTap()
+                    ClickResult.Pass
+                },
                 options = MapOptions(
                     ornamentOptions = OrnamentOptions(
-                        padding = PaddingValues(top = ornamentTopPadding),
+                        padding = ornamentPadding,
                         isLogoEnabled = LOGO_ENABLED,
                         isAttributionEnabled = ATTRIBUTION_ENABLED,
                         attributionAlignment = ATTRIBUTION_ALIGNMENT,
-                        isCompassEnabled = mapState.mapDisplay.showCompass,
+                        isCompassEnabled = COMPASS_ENABLED,
                         compassAlignment = Alignment.TopEnd,
-                        isScaleBarEnabled = mapState.mapDisplay.showDistanceScale,
+                        isScaleBarEnabled = SCALE_BAR_ENABLED,
                         scaleBarAlignment = Alignment.TopStart,
                     ),
                 ),
@@ -473,6 +529,8 @@ private fun MapSurface(
                         },
                     )
                 }
+
+                extraLayers()
 
                 // Render user location as red circle (always on top)
                 UserLocationLayer(
@@ -524,8 +582,6 @@ private fun PreviewSearchStopMapReady() {
                 NswTransportMode.Train.productClass,
                 NswTransportMode.Metro.productClass,
             ),
-            showCompass = true,
-            showDistanceScale = true,
         )
 
         SearchStopMap(

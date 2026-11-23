@@ -39,7 +39,7 @@ import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
  * resolver chain (in the same order [xyz.ksharma.krail.trip.planner.ui.di.viewModelsModule]
  * builds it), the real screen.
  *
- * The three ViewModels are built here rather than by Koin so a flow test can drive them with
+ * The ViewModels are built here rather than by Koin so a flow test can drive them with
  * the same events the surface sends. Koin hands out these instances, so the ones under test
  * and the ones on screen are the same objects. Reading state off them is not how a flow test
  * asserts — that is what the semantics tree is for — but sending them an event is how a rider
@@ -95,6 +95,7 @@ internal class HomeFlowFakes {
         inviteFriendsTileManager = FakeInviteFriendsTileManager(),
         trackingManager = TrackingManager(),
         appReviewManager = FakeAppReviewManager(),
+        nearbyStopsRepository = nearbyStopsRepository,
     )
 
     val mapStopSelectionViewModel = MapStopSelectionViewModel(
@@ -102,7 +103,7 @@ internal class HomeFlowFakes {
     )
 
     /**
-     * What the entry resolves through `koinViewModel()`. Only the three ViewModels the home
+     * What the entry resolves through `koinViewModel()`. The ViewModels the home
      * entry asks for — everything else it needs is already inside them.
      */
     val koinModule: Module = module {

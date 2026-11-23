@@ -226,8 +226,6 @@ Modified (across PRs):
   `StopDisplay`s.
 - `feature/trip-planner/ui/src/commonMain/kotlin/.../tracktrip/TrackTripScreen.kt` — 3 call sites
   pass unlabelled `StopDisplay`s.
-- `feature/trip-planner/ui/src/commonMain/kotlin/.../intro/IntroContentSaveTrips.kt` — 1 call site
-  passes unlabelled `StopDisplay`s.
 - `feature/trip-planner/state/src/commonMain/.../timetable/TimeTableState.kt` — add
   `stopLabels: ImmutableList<StopLabel>` (or pre-built `from`/`to` `StopDisplay`s — see "Decision:
   state shape", below).

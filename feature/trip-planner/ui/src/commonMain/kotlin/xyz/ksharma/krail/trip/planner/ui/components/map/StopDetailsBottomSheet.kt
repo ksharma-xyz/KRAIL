@@ -20,8 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import kotlinx.collections.immutable.ImmutableList
 import xyz.ksharma.krail.core.transport.TransportMode
-import xyz.ksharma.krail.taj.components.Button
-import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.ModalBottomSheet
 import xyz.ksharma.krail.taj.components.Text
@@ -189,29 +187,5 @@ fun StopInfoRow(
             style = KrailTheme.typography.bodyLarge,
             color = KrailTheme.colors.softLabel,
         )
-    }
-}
-
-/**
- * Helper component for action buttons
- */
-@Composable
-fun StopActionButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = KrailTheme.dimensions.spacingXL),
-        horizontalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingL),
-    ) {
-        Button(
-            onClick = onClick,
-            dimensions = ButtonDefaults.largeButtonSize(),
-        ) {
-            Text(text = text)
-        }
     }
 }

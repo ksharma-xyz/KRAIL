@@ -39,6 +39,40 @@ class RemoteConfigDefaultsTest {
     }
 
     @Test
+    fun theIntroSuggestedStopsDefaultIsEmptySoTheBundledListsApply() {
+        val default = RemoteConfigDefaults.getDefaults()
+            .single { it.first == FlagKeys.INTRO_SUGGESTED_STOPS.key }
+            .second
+
+        // A non-empty default here would be a second copy of the stop ids, which the Intro
+        // keeps in one place only, as its bundled lists.
+        assertEquals("", default)
+    }
+
+    @Test
+    fun theNearbyStopsRadiusDefaultIsThreeKilometresAsADouble() {
+        val default = RemoteConfigDefaults.getDefaults()
+            .single { it.first == FlagKeys.NEARBY_STOPS_RADIUS_KM.key }
+            .second
+
+        // A Double on purpose: an Int here would arrive as the whole number 3 and a Double as the
+        // text "3.0", and the reader accepts both, but the default is the one a rider who has not
+        // fetched yet gets, so it is pinned as what it is.
+        assertEquals(3.0, default)
+    }
+
+    @Test
+    fun theParkRideSuggestionRadiusDefaultIsFiveKilometresAsADouble() {
+        val default = RemoteConfigDefaults.getDefaults()
+            .single { it.first == FlagKeys.PARK_RIDE_SUGGESTION_RADIUS_KM.key }
+            .second
+
+        // A Double on purpose, as the nearby stops radius is: a rider who has not fetched yet gets
+        // this value, and the reader accepts it as the text "5.0" or as a whole number from a console.
+        assertEquals(5.0, default)
+    }
+
+    @Test
     fun noDefaultIsForAKeyThatNoLongerExists() {
         val flagKeys = FlagKeys.entries.map { it.key }.toSet()
         val orphans = RemoteConfigDefaults.getDefaults()

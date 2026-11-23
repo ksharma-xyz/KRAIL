@@ -13,7 +13,6 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
-import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import xyz.ksharma.krail.trip.planner.ui.components.LABEL_NAME_MAX_LENGTH
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.LabelAssignSurface
@@ -63,7 +62,6 @@ class SearchStopViewModelLabelHandlersTest {
     private val fakeRemoteAddressResultsManager = FakeRemoteAddressResultsManager()
     private val fakeFlag = FakeFlag()
     private val fakeNearbyStopsManager = FakeNearbyStopsManagerForMap()
-    private val fakePreferences = FakeSandookPreferences()
     private val fakeSandook = FakeSandook()
     private val searchSessionStore = RealSearchSessionStore()
 
@@ -85,7 +83,6 @@ class SearchStopViewModelLabelHandlersTest {
             flag = fakeFlag,
             nearbyStopsManager = fakeNearbyStopsManager,
             ioDispatcher = testDispatcher,
-            preferences = fakePreferences,
             sandook = fakeSandook,
             searchSessionStore = searchSessionStore,
         )
@@ -554,7 +551,6 @@ class SearchStopViewModelLabelHandlersTest {
             flag = FakeFlag(),
             nearbyStopsManager = FakeNearbyStopsManagerForMap(),
             ioDispatcher = testDispatcher,
-            preferences = FakeSandookPreferences(),
             sandook = freshSandook,
             searchSessionStore = RealSearchSessionStore(),
         )
@@ -700,6 +696,25 @@ class SearchStopViewModelLabelHandlersTest {
                     },
                     "assigned event must not carry raw label or stop identity",
                 )
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `Given a Save as on the stop card When AssignLabelStop fires Then the surface is map_card`() =
+        runTest {
+            viewModel.uiState.test {
+                advanceUntilIdle()
+
+                val central = StopItem(stopId = "stop_central", stopName = "Central Station")
+                viewModel.onEvent(SearchStopUiEvent.AssignLabelStop("Home", central, LabelAssignSurface.MAP_CARD))
+                advanceUntilIdle()
+
+                val event = assertIs<AnalyticsEvent.StopLabelStopAssignedEvent>(
+                    fakeAnalytics.getTrackedEvent("stop_label_stop_assigned"),
+                )
+                assertEquals(AnalyticsEvent.StopLabelSurface.MAP_CARD, event.assignmentSurface)
+                assertEquals("map_card", event.assignmentSurface.value)
                 cancelAndIgnoreRemainingEvents()
             }
         }

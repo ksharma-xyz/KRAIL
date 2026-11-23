@@ -1,27 +1,44 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
+import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.SoftwareKeyboardController
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
+import kotlin.test.assertEquals
 
 /**
  * Compose UI tests for [SearchStopScreen]. These are deliberately scoped to behaviors
@@ -53,7 +70,17 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 class SearchStopScreenInteractionTest {
 
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createAndroidComposeRule<ComponentActivity>()
+
+    private val quietKeyboard = object : SoftwareKeyboardController {
+        override fun show() = Unit
+        override fun hide() = Unit
+    }
+
+    /** System back, the one step back there is now that the box has no back arrow. */
+    private fun pressSystemBack() {
+        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
+    }
 
     // region Pill row visibility
 
@@ -69,7 +96,7 @@ class SearchStopScreenInteractionTest {
         }
 
         // Home + Work pills should NOT be in the tree because there are no
-        // recents below to interact with — see shouldShowPillRow().
+        // recents below to interact with, see shouldShowLabelRow().
         composeRule.onNodeWithText("Home").assertDoesNotExist()
         composeRule.onNodeWithText("Work").assertDoesNotExist()
     }
@@ -89,7 +116,7 @@ class SearchStopScreenInteractionTest {
             }
         }
 
-        // The pill row should be visible because we have recent stops, showing the
+        // The label row leads the card because a label is set, showing the
         // one set label (Home) plus the trailing Manage button. Work stays hidden
         // because it's unset. "Home" renders twice total (pill row + Central
         // Station's own inline pill) — see assignedStop_showsLabelPillInline.
@@ -99,74 +126,431 @@ class SearchStopScreenInteractionTest {
 
     // endregion
 
-    // region Landing surface
+    // region The map state and the list state
 
-    @Test
-    fun singlePane_opensOnTheList_evenWhenAMapIsAlreadyInitialised() {
-        // An initialised map is the case that matters: while `mapUiState` is null the list
-        // renders regardless of the map/list flag, so a fixture without one cannot tell the
-        // two apart. This is how the flag was flipped to map-first in an unrelated commit
-        // and no test noticed.
+    /** A map the rider can open on, with the ground drawn as a stand-in because Robolectric has no GPU. */
+    // A fix in hand means the location is allowed, which is what puts the Options button on the map state.
+    private fun withMap(state: SearchStopState = SearchStopFixtures.recentWithDefaults()) =
+        state.copy(
+            isMapsAvailable = true,
+            mapUiState = MapUiState.Ready(mapDisplay = MapDisplay(userLocation = LatLng(-33.8688, 151.2093))),
+        )
+
+    /** A map with no fix and no permission decision, as a fresh device has it. */
+    private fun withMapNoLocation(state: SearchStopState = SearchStopFixtures.recentWithDefaults()) =
+        state.copy(isMapsAvailable = true, mapUiState = MapUiState.Ready())
+
+    private fun setScreen(
+        state: SearchStopState,
+        keyboard: SoftwareKeyboardController = quietKeyboard,
+        onEvent: (SearchStopUiEvent) -> Unit = {},
+        goBack: () -> Unit = {},
+    ) {
         composeRule.setContent {
             PreviewTheme {
-                SearchStopScreen(
-                    searchStopState = SearchStopFixtures.recentWithDefaults().copy(
-                        isMapsAvailable = true,
-                        mapUiState = MapUiState.Ready(),
-                    ),
-                    onEvent = {},
-                )
+                CompositionLocalProvider(
+                    LocalInspectionMode provides true,
+                    LocalSoftwareKeyboardController provides keyboard,
+                ) {
+                    SearchStopScreen(searchStopState = state, onEvent = onEvent, goBack = goBack)
+                }
             }
         }
-
-        // The rider's recents, not a map. The map is reached from the button in this list.
-        composeRule.onNodeWithText("Central Station").assertIsDisplayed()
-        composeRule.onNodeWithText("Town Hall").assertIsDisplayed()
     }
 
     @Test
-    fun selectOnMap_isOfferedInTheList_whenMapsAreAvailable() {
-        composeRule.setContent {
-            PreviewTheme {
-                SearchStopScreen(
-                    searchStopState = SearchStopFixtures.recentWithDefaults()
-                        .copy(isMapsAvailable = true),
-                    onEvent = {},
-                )
+    fun singlePane_opensOnTheCleanMapState_withTheBoxTheOptionsButtonAndNoListOrKeyboard() {
+        val shown = mutableListOf<String>()
+        val keyboard = object : SoftwareKeyboardController {
+            override fun show() {
+                shown += "show"
             }
-        }
 
-        // The only way into the map: the top-bar map pill was removed, so if this row
-        // stops rendering the map becomes unreachable rather than merely opt-in.
+            override fun hide() = Unit
+        }
+        setScreen(withMap(), keyboard = keyboard)
+
+        // Rules 9 and 39: the map, the box with the two pills and the Options button, with no list, no recents and no
+        // keyboard. The Options card is shut until asked for.
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_FROM).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertDoesNotExist()
+        composeRule.onNodeWithText("Central Station").assertDoesNotExist()
+        assert(shown.isEmpty()) { "the map state raises no keyboard, got $shown" }
+    }
+
+    @Test
+    fun theModeBlockOpensFromTheButtonInTheMapStateOnly_andATapTogglesThatMode() {
+        val events = mutableListOf<SearchStopUiEvent>()
+        setScreen(withMap(), onEvent = { events += it })
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).performClick()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertIsDisplayed()
+        composeRule.onNodeWithTag(
+            TripPlannerTestTags.searchStopModeChip(TransportMode.Ferry.productClass),
+        ).performClick()
+        assertEquals(
+            listOf<SearchStopUiEvent>(SearchStopUiEvent.TransportModeFilterToggled(TransportMode.Ferry)),
+            events.filterIsInstance<SearchStopUiEvent.TransportModeFilterToggled>(),
+        )
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertDoesNotExist()
+    }
+
+    @Test
+    fun theModeButton_opensAndShutsTheBlock_andSaysWhichItIs() {
+        setScreen(withMap())
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON)
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, MODE_BUTTON_COLLAPSED))
+            .performClick()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON)
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, MODE_BUTTON_EXPANDED))
+            .performClick()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertDoesNotExist()
+    }
+
+    @Test
+    fun withNoMap_thereIsNoModeFilterBecauseThereIsNothingToFilter() {
+        setScreen(SearchStopFixtures.recentWithDefaults())
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertDoesNotExist()
+    }
+
+    @Test
+    fun tappingTheBar_raisesTheListState_andTheCardGrowsIntoIt() {
+        setScreen(withMap())
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertIsDisplayed()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertIsDisplayed()
+        composeRule.onNodeWithText("Central Station").assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertDoesNotExist()
+    }
+
+    @Test
+    fun systemBackIsTwoSteps_listToMapToHome() {
+        var wentBack = 0
+        setScreen(withMap(), goBack = { wentBack++ })
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertIsDisplayed()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertDoesNotExist()
+
+        pressSystemBack()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertIsDisplayed()
+        assert(wentBack == 0) { "the first back returns to the map state and does not leave" }
+
+        pressSystemBack()
+        composeRule.waitForIdle()
+
+        assert(wentBack == 1) { "the second back goes home, got $wentBack" }
+    }
+
+    @Test
+    fun theX_showsOnlyWithText_clearsItAndKeepsTheRecents() {
+        var wentBack = 0
+        setScreen(withMap(), goBack = { wentBack++ })
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_CLEAR).assertDoesNotExist()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performTextInput("Cen")
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_CLEAR).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_CLEAR).performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_CLEAR).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertIsDisplayed()
+        assert(wentBack == 0) { "the X never dismisses the screen" }
+    }
+
+    @Test
+    fun withNoMapToOpenOn_theListIsTheScreen() {
+        // Maps are off for this rider: there is no map state to start in, so the list shows at once.
+        setScreen(SearchStopFixtures.recentWithDefaults())
+
+        composeRule.onNodeWithText("Central Station").assertIsDisplayed()
+    }
+
+    @Test
+    fun theMapStateAsksForTheMapOnOpen() {
+        val events = mutableListOf<SearchStopUiEvent>()
+        setScreen(SearchStopFixtures.recentWithDefaults().copy(isMapsAvailable = true), onEvent = { events += it })
+
+        assert(events.contains(SearchStopUiEvent.InitializeMap)) { "expected InitializeMap, got $events" }
+    }
+
+    @Test
+    fun selectOnMap_isInTheListStateOfAMapScreen_andNeverOnTheMapState() {
+        setScreen(withMap())
+        composeRule.onNodeWithText("Select on map").assertDoesNotExist()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
+
         composeRule.onNodeWithText("Select on map").assertIsDisplayed()
     }
 
+    // endregion
+
+    // region The recents card
+
     @Test
-    fun selectOnMap_asksForTheMap_whenTapped() {
-        val events = mutableListOf<SearchStopUiEvent>()
+    fun theCardShowsAtMostFiveRecents() {
+        val many = (1..8).map { SearchStopState.StopResult("Stop $it", "id_$it") }
+        setScreen(SearchStopFixtures.recentWithDefaults().copy(recentStops = many.toImmutableList()))
+
+        for (shown in 1..5) composeRule.onNodeWithText("Stop $shown").assertIsDisplayed()
+        for (hidden in 6..8) composeRule.onNodeWithText("Stop $hidden").assertDoesNotExist()
+    }
+
+    @Test
+    fun withNoRecentsAndNoLocation_theSuggestedStopsShowAsRows() {
+        val suggested = persistentListOf(SearchStopState.StopResult("Town Hall Station", "200070"))
+        setScreen(
+            SearchStopFixtures.freshInstall().copy(
+                curatedStartStops = suggested,
+                curatedEndStops = suggested,
+            ),
+        )
+
+        composeRule.onNodeWithText("Town Hall Station").assertIsDisplayed()
+        composeRule.onNodeWithText("Recent").assertDoesNotExist()
+    }
+
+    @Test
+    fun theLabelRowScrollsAndLeadsTheCard() {
+        setScreen(SearchStopFixtures.recentWithHomeSet())
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_LABEL_ROW).assertIsDisplayed()
+    }
+
+    // endregion
+
+    // region Stay in place after a pick
+
+    private fun setForm(
+        state: SearchStopState,
+        onTripChosen: (StopItem, StopItem) -> Unit = { _, _ -> },
+        onStopSelect: (StopItem) -> Unit = {},
+        goBack: () -> Unit = {},
+    ) {
         composeRule.setContent {
             PreviewTheme {
-                SearchStopScreen(
-                    // mapUiState stays null so the map never composes here — this test is
-                    // about the request, and MapLibre does not belong in Robolectric.
-                    searchStopState = SearchStopFixtures.recentWithDefaults()
-                        .copy(isMapsAvailable = true),
-                    onEvent = { events += it },
-                )
+                CompositionLocalProvider(
+                    LocalInspectionMode provides true,
+                    LocalSoftwareKeyboardController provides quietKeyboard,
+                ) {
+                    SearchStopScreen(
+                        searchStopState = state,
+                        fieldType = SearchStopFieldType.TO,
+                        onStopSelect = onStopSelect,
+                        onTripChosen = onTripChosen,
+                        goBack = goBack,
+                        onEvent = {},
+                    )
+                }
             }
         }
+    }
 
-        composeRule.onNodeWithText("Select on map").performClick()
+    @Test
+    fun aPickOnTheForm_fillsItsBarAndStays_andGoLeavesWithBothStops() {
+        var chosen: Pair<StopItem, StopItem>? = null
+        var selected = 0
+        setForm(
+            state = SearchStopFixtures.recentWithDefaults(),
+            onTripChosen = { from, to -> chosen = from to to },
+            onStopSelect = { selected++ },
+        )
 
-        // Both halves matter: the analytics event says a rider asked for the map, and
-        // InitializeMap is what actually builds it, since nothing initialises it on open
-        // any more.
-        assert(events.contains(SearchStopUiEvent.SelectOnMapButtonClicked)) {
-            "expected SelectOnMapButtonClicked, got $events"
+        // The destination first: the bar fills, the screen stays and the start is now the bar being edited.
+        composeRule.onNodeWithText("Central Station").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_TO).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE, useUnmergedTree = true).assertDoesNotExist()
+        assert(selected == 0 && chosen == null) { "a pick on the form never leaves the screen" }
+
+        // The start: both bars hold a stop, so nothing is edited, the go circle shows and the list is gone.
+        composeRule.onNodeWithText("Town Hall").performClick()
+        composeRule.waitForIdle()
+        // The go circle is in the From field's own end column, so it is reached in the unmerged tree.
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE, useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertDoesNotExist()
+        assert(chosen == null) { "the go circle is the only way out with a trip" }
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_SEARCH, useUnmergedTree = true).performClick()
+
+        val trip = checkNotNull(chosen) { "expected the trip to leave with go" }
+        assertEquals("stop_town_hall", trip.first.stopId, "The start is the stop picked second.")
+        assertEquals("stop_central", trip.second.stopId, "The destination is the stop picked first.")
+        assert(selected == 0)
+    }
+
+    @Test
+    fun theSwap_isAbsentUntilAStopIsPicked_thenTradesFromAndTo_andGoLeavesWithThemTraded() {
+        var chosen: Pair<StopItem, StopItem>? = null
+        setForm(
+            state = SearchStopFixtures.recentWithDefaults(),
+            onTripChosen = { from, to -> chosen = from to to },
+        )
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_REVERSE, useUnmergedTree = true).assertDoesNotExist()
+
+        // The destination, then the start: Town Hall to Central.
+        composeRule.onNodeWithText("Central Station").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_REVERSE, useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithText("Town Hall").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_REVERSE, useUnmergedTree = true).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_SEARCH, useUnmergedTree = true).performClick()
+
+        val trip = checkNotNull(chosen) { "expected the trip to leave with go" }
+        assertEquals(
+            "stop_central",
+            trip.first.stopId,
+            "After the swap the start is the stop that was the destination.",
+        )
+        assertEquals("stop_town_hall", trip.second.stopId, "and the destination is the stop that was the start.")
+    }
+
+    @Test
+    fun goWhileABarIsBeingEdited_savesTheScreenAsTheMapStateWithBothBarsSet() {
+        var chosen: Pair<StopItem, StopItem>? = null
+        setForm(
+            state = SearchStopFixtures.recentWithDefaults(),
+            onTripChosen = { from, to -> chosen = from to to },
+        )
+        composeRule.onNodeWithText("Central Station").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Town Hall").performClick()
+        composeRule.waitForIdle()
+
+        // The rider taps the destination bar to change it, which raises the list state, then goes anyway.
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_TO).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_SEARCH, useUnmergedTree = true).performClick()
+        composeRule.waitForIdle()
+
+        // The trip results open over this screen, so what stays behind is what back from them lands on: no list,
+        // no bar being edited, and the go circle on both stops.
+        checkNotNull(chosen) { "expected the trip to leave with go" }
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE, useUnmergedTree = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun backBeforeGo_leavesWithNoTrip_soAHalfPickIsDropped() {
+        var chosen: Pair<StopItem, StopItem>? = null
+        var wentBack = 0
+        setForm(
+            state = withMap(),
+            onTripChosen = { from, to -> chosen = from to to },
+            goBack = { wentBack++ },
+        )
+        // A tap on the pill is the list state, where the pick is made. The first back returns to the map state and the
+        // second leaves, so the half pick is dropped.
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
+        composeRule.onNodeWithText("Central Station").performClick()
+        composeRule.waitForIdle()
+
+        pressSystemBack()
+        composeRule.waitForIdle()
+        assert(wentBack == 0) { "the first back returns to the map state, got $wentBack" }
+        pressSystemBack()
+        composeRule.waitForIdle()
+
+        assert(wentBack == 1) { "back leaves, got $wentBack" }
+        assert(chosen == null) { "a half pick leaves nothing behind" }
+    }
+
+    @Test
+    fun aPickFromTheList_staysOnTheScreen_andTheKeyboardFollowsTheOtherPill() {
+        val shown = mutableListOf<String>()
+        val keyboard = object : SoftwareKeyboardController {
+            override fun show() {
+                shown += "show"
+            }
+
+            override fun hide() = Unit
         }
-        assert(events.contains(SearchStopUiEvent.InitializeMap)) {
-            "expected InitializeMap, got $events"
-        }
+        setScreen(withMap(), keyboard = keyboard)
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
+        composeRule.waitForIdle()
+        shown.clear()
+
+        composeRule.onNodeWithText("Central Station").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_TO).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertIsDisplayed()
+    }
+
+    // endregion
+
+    // region Options needs the location
+
+    @Test
+    fun theOptionsButtonIsNotDrawnWhileTheLocationIsNotAllowed_andIsDrawnOnceItIs() {
+        setScreen(withMapNoLocation())
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertDoesNotExist()
+        // The control line is the location control alone, and the box is where it always is.
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).assertIsDisplayed()
+    }
+
+    // endregion
+
+    // region The location notice
+
+    @Test
+    fun theLocationNoticeIsOneItemUnderTheForm_onlyWhenPermissionIsNotGranted_andOnlyOnTheMapState() {
+        // A fresh Robolectric device has no permission decision recorded, so the one pill shows on the map state.
+        setScreen(withMapNoLocation())
+        composeRule.waitForIdle()
+
+        composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertCountEquals(1)
+        // The notice is the app's own info tile, expanded: its title, its words and its two buttons are all there.
+        composeRule.onNodeWithText(LOCATION_NOTICE_TITLE, useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithText(LOCATION_NOTICE_BODY, useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithText(LOCATION_NOTICE_DISMISS, useUnmergedTree = true).assertIsDisplayed()
+
+        // The list state is the box and the list, with nothing between them.
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertCountEquals(0)
+    }
+
+    @Test
+    fun notNow_hidesTheNoticeForTheVisit_throughTheListStateAndBack_andItIsBackOnAFreshVisit() {
+        setScreen(withMapNoLocation())
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertCountEquals(1)
+
+        composeRule.onNodeWithText(LOCATION_NOTICE_DISMISS, useUnmergedTree = true).performClick()
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertCountEquals(0)
+
+        // The list state and back is still this visit, so it stays hidden.
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
+        composeRule.waitForIdle()
+        pressSystemBack()
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertCountEquals(0)
     }
 
     // endregion
@@ -174,7 +558,7 @@ class SearchStopScreenInteractionTest {
     // region StopLabelAssignRow icon state
 
     @Test
-    fun assignedStop_hidesAssignIcon() {
+    fun aPlainRecentRow_hasAChevron_andAStopWithALabelHasItsPillAndNone() {
         composeRule.setContent {
             PreviewTheme {
                 SearchStopScreen(
@@ -184,10 +568,8 @@ class SearchStopScreenInteractionTest {
             }
         }
 
-        // Central Station is saved as Home; Town Hall isn't. v4: once a stop is
-        // assigned its row shows no icon at all (not even a tick) — only the unset
-        // Town Hall row gets the "+". recentWithHomeSet has exactly one unset recent
-        // stop, so exactly one icon should exist.
+        // Central Station is saved as Home and shows its label pill, with no chevron. Town Hall is a plain recent row,
+        // so it has the one chevron at its end that opens the label wall, as the Search Stop list always drew it.
         composeRule.onAllNodesWithContentDescription("Assign to a label")
             .assertCountEquals(1)
     }
@@ -214,12 +596,14 @@ class SearchStopScreenInteractionTest {
     // region Direct-action callbacks
 
     @Test
-    fun tappingSetPill_invokesOnStopSelectWithUnderlyingStop() {
+    fun tappingSetPill_forASingleField_invokesOnStopSelectWithUnderlyingStop() {
         var selected: StopItem? = null
         composeRule.setContent {
             PreviewTheme {
                 SearchStopScreen(
                     searchStopState = SearchStopFixtures.recentWithHomeSet(),
+                    // A label is a single field, so its pick leaves at once with the stop.
+                    fieldType = SearchStopFieldType.LABEL,
                     onStopSelect = { selected = it },
                     onEvent = {},
                 )
@@ -231,8 +615,8 @@ class SearchStopScreenInteractionTest {
         // LazyColumn (pillRowSection is added before recentSearchStopsList).
         composeRule.onAllNodesWithText("Home").onFirst().performClick()
 
-        // Tapping the set Home pill is the fast-path for "use this saved stop as
-        // From/To" — onStopSelect should fire with Home's underlying stop.
+        // Tapping the set Home pill is the fast-path for "use this saved stop", so onStopSelect should fire with
+        // Home's underlying stop.
         val result = checkNotNull(selected) { "expected onStopSelect to fire" }
         assert(result.stopId == "stop_central") { "expected stop_central, got ${result.stopId}" }
         assert(result.stopName == "Central Station")
@@ -386,7 +770,7 @@ class SearchStopScreenInteractionTest {
         }
 
         // Same "close keyboard before navigating" order as the back button
-        // (SearchTopBar's NavActionButton) — the keyboard must hide before the nav
+        // (the back arrow in the bar): the keyboard must hide before the nav
         // callback fires, otherwise it stays up mid-navigation.
         composeRule.onNodeWithText("Manage").performClick()
 

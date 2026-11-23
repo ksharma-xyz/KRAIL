@@ -45,7 +45,6 @@ data class SearchStopState(
     val searchQuery: String = "",
     val searchResults: ImmutableList<SearchResult> = persistentListOf(),
     val recentStops: ImmutableList<StopResult> = persistentListOf(),
-    val showMapOptionsOnOpen: Boolean = false,
     val stopLabels: ImmutableList<StopLabel> = persistentListOf(),
     /**
      * Address/POI hits from the NSW `stop_finder` API (`type_sf=any`, `stop`-typed
@@ -56,6 +55,12 @@ data class SearchStopState(
      */
     val addressResults: ImmutableList<SearchResult.Address> = persistentListOf(),
     val isAddressSearchLoading: Boolean = false,
+    /**
+     * The Intro's suggested starts and ends as rows, for a rider with no recents and no location.
+     * Each carries its own stop id and name, so a tap works before the stops table has loaded.
+     */
+    val curatedStartStops: ImmutableList<StopResult> = persistentListOf(),
+    val curatedEndStops: ImmutableList<StopResult> = persistentListOf(),
 ) {
     /**
      * Internal sealed classes describing results / recent items.

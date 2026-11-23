@@ -20,27 +20,36 @@ appId: ${APP_ID}
       id: "savedtrips.screen"
     timeout: 60000
 
-- assertVisible:
-    id: "savedtrips.list"
 
-# The bottom search row is the app's primary action. If it is missing, the home
+# The bottom search bar is the app's primary action. If it is missing, the home
 # screen rendered but is useless.
 #
-# The row's own root appears with the screen, but its fields animate in and are
-# briefly replaced by a collapsed "Plan a trip" pill, so they are waited for
-# rather than asserted. Asserting them in place passes on a warm device and
-# fails on a cold one, which is the worst kind of flake: green locally, red in
-# CI, and only on the first run.
-- assertVisible:
-    id: "searchrow.root"
+# The bar slides in once the saved trips have loaded, so it is waited for rather
+# than asserted. Asserting it in place passes on a warm device and fails on a
+# cold one, which is the worst kind of flake: green locally, red in CI, and only
+# on the first run. The home has this one bar in every posture and no From bar
+# or go circle, which belong to Search Stop.
+- extendedWaitUntil:
+    visible:
+      id: "searchrow.root"
+    timeout: 20000
 - extendedWaitUntil:
     visible:
       id: "searchrow.to"
     timeout: 20000
+
+# The list, and the Set Home and Set Work pills that are its first row. The pills
+# draw with the first list, once the labels have loaded.
+- assertVisible:
+    id: "savedtrips.list"
 - extendedWaitUntil:
     visible:
-      id: "searchrow.search"
+      id: "savedtrips.pills"
     timeout: 20000
+
+# The location notice is on Search Stop only, never on a phone home.
+- assertNotVisible:
+    id: "searchstop.locationpill"
 
 # Settings is the only always-present title-bar action (Discover is flagged off
 # by default), so it stands in for "the title bar rendered".

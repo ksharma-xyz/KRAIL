@@ -1,16 +1,10 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.InfiniteRepeatableSpec
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -18,14 +12,13 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.displayCutout
@@ -54,7 +47,6 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_reverse
-import krail.feature.trip_planner.ui.generated.resources.ic_search
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalThemeColor
@@ -63,8 +55,6 @@ import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
-import xyz.ksharma.krail.taj.components.TextFieldButton
-import xyz.ksharma.krail.taj.components.ThemeTextFieldPlaceholderText
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.tokens.AiThemeGradientTokens
@@ -74,7 +64,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 private val SearchRowTopRadius = 36.dp
 private val SearchRowVerticalPadding = 20.dp
-private val SearchFieldSpacing = 20.dp
 
 @Composable
 fun SearchStopRow(
@@ -306,152 +295,82 @@ private fun ExpandedSearchRow(
             }
 
             val navBarPaddingDp = with(LocalDensity.current) { navBarPadding.dp }
-            Row(
+            var isReverseRotated by rememberSaveable { mutableStateOf(false) }
+            BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        top = if (onCollapseRequest != null) 0.dp else SearchRowVerticalPadding + dim.spacingM,
+                        top = if (onCollapseRequest != null) {
+                            0.dp
+                        } else {
+                            SearchRowVerticalPadding + dim.spacingM
+                        },
                         bottom = SearchRowVerticalPadding + navBarPaddingDp,
                         start = dim.pageHorizontalPadding,
                         end = dim.pageHorizontalPadding,
                     ),
-                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(SearchFieldSpacing),
-                ) {
-                    FromToFields(
-                        fromStopItem = fromStopItem,
+                // To on top, From under it, and the go circle inside the From bar.
+                val block: @Composable (Modifier) -> Unit = { blockModifier ->
+                    ToFromBlock(
                         toStopItem = toStopItem,
-                        showFromField = showFromField,
+                        fromStopItem = fromStopItem,
+                        onToClick = toButtonClick,
+                        onFromClick = fromButtonClick,
+                        onGoClick = onSearchButtonClick,
+                        showFrom = showFromField,
                         isFromHighlighted = isFromHighlighted,
-                        fromButtonClick = fromButtonClick,
-                        toButtonClick = toButtonClick,
+                        modifier = blockModifier,
                     )
                 }
 
-                // Action buttons - same RoundIconButton, same size, for both so the column
-                // stays visually symmetric.
-                //
-                // The top slot is always filled: Ask KRAIL where on-device AI can run,
-                // reverse where it cannot. Leaving it empty let Search rise into the slot,
-                // which put the one button that commits the trip next to the From field
-                // instead of beside To, and made the row a different shape on devices that
-                // differ only in a capability the rider never chose.
-                Column(
-                    modifier = Modifier.padding(start = dim.spacingXL),
-                    verticalArrangement = Arrangement.spacedBy(SearchFieldSpacing),
-                ) {
+                // The one action. The slot is always filled: Ask KRAIL where on-device AI can run,
+                // reverse where it cannot, so the row is the same shape on devices that differ
+                // only in a capability the rider never chose.
+                val action: @Composable () -> Unit = {
                     if (isAiSearchAvailable) {
                         AiSheetEntryButton(
                             onAiEvent = onAiEvent,
                             spinning = isAiHandoffSettling,
                         )
                     } else {
-                        ReverseButton(onReverseButtonClick = onReverseButtonClick)
+                        ReverseButton(
+                            isRotated = isReverseRotated,
+                            onClick = {
+                                isReverseRotated = !isReverseRotated
+                                onReverseButtonClick()
+                            },
+                        )
+                    }
+                }
+
+                val placement = actionPlacementFor(
+                    contentWidth = maxWidth,
+                    fontScale = LocalDensity.current.fontScale,
+                    besideCost = dim.iconXXXL + dim.spacingXL,
+                    barReserved = toFromBarInsets().reserved,
+                )
+                when (placement) {
+                    // Centred on the two bars so it sits between the stops it acts on.
+                    ActionPlacement.Beside -> Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        block(Modifier.weight(1f))
+                        Box(modifier = Modifier.padding(start = dim.spacingXL)) { action() }
                     }
 
-                    SearchButton(onSearchButtonClick = onSearchButtonClick)
+                    // Where width is short it goes under the From bar, in line with the go circle, so
+                    // neither stop name gives up its room for it.
+                    ActionPlacement.Under -> Column(modifier = Modifier.fillMaxWidth()) {
+                        block(Modifier)
+                        Box(modifier = Modifier.align(Alignment.End).padding(top = dim.spacingM)) { action() }
+                    }
                 }
             }
         }
     } // closes cutout Box
-}
-
-@Composable
-private fun FromToFields(
-    fromStopItem: StopItem?,
-    toStopItem: StopItem?,
-    showFromField: Boolean,
-    isFromHighlighted: Boolean,
-    fromButtonClick: () -> Unit,
-    toButtonClick: () -> Unit,
-) {
-    val dim = KrailTheme.dimensions
-
-    // Pulsing border alpha for the highlighted From field
-    val infiniteTransition = rememberInfiniteTransition(label = "fromHighlight")
-    val borderAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.4f,
-        targetValue = 1.0f,
-        animationSpec = InfiniteRepeatableSpec(
-            animation = tween(800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "fromBorderAlpha",
-    )
-
-    // From field — animates in when opened via a label pill tap
-    AnimatedVisibility(
-        visible = showFromField,
-        enter = expandVertically(
-            expandFrom = Alignment.Top,
-            animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing),
-        ) + fadeIn(animationSpec = tween(350)),
-    ) {
-        TextFieldButton(
-            onClick = fromButtonClick,
-            modifier = Modifier.testTag(TripPlannerTestTags.SEARCH_ROW_FROM).then(
-                if (isFromHighlighted) {
-                    Modifier.border(
-                        width = dim.strokeRegular,
-                        color = KrailTheme.colors.surface.copy(alpha = borderAlpha),
-                        shape = RoundedCornerShape(50),
-                    )
-                } else {
-                    Modifier
-                },
-            ),
-        ) {
-            StopFieldText(
-                text = fromStopItem?.stopName ?: "Starting from",
-                isActive = fromStopItem != null,
-                slideUp = true,
-                label = "startingFromText",
-            )
-        }
-    }
-
-    // A small spacer replaces the From field gap when From is hidden,
-    // so the To field doesn't jump when From animates in.
-    if (!showFromField) {
-        Spacer(modifier = Modifier.height(0.dp))
-    }
-
-    // To field — always visible when expanded
-    TextFieldButton(
-        onClick = toButtonClick,
-        modifier = Modifier.testTag(TripPlannerTestTags.SEARCH_ROW_TO),
-    ) {
-        StopFieldText(
-            text = toStopItem?.stopName ?: "Destination",
-            isActive = toStopItem != null,
-            slideUp = false,
-            label = "destinationText",
-        )
-    }
-}
-
-@Composable
-private fun StopFieldText(text: String, isActive: Boolean, slideUp: Boolean, label: String) {
-    val enterOffset: (Int) -> Int = if (slideUp) ({ it / 2 }) else ({ -it / 2 })
-    val exitOffset: (Int) -> Int = if (slideUp) ({ -it / 2 }) else ({ it / 2 })
-    AnimatedContent(
-        targetState = text,
-        transitionSpec = {
-            fadeIn(animationSpec = tween(200)) +
-                slideInVertically(
-                    initialOffsetY = enterOffset,
-                    animationSpec = tween(500, easing = FastOutSlowInEasing),
-                ) togetherWith fadeOut(animationSpec = tween(200)) +
-                slideOutVertically(targetOffsetY = exitOffset, animationSpec = tween(500))
-        },
-        contentAlignment = Alignment.CenterStart,
-        label = label,
-    ) { targetText ->
-        ThemeTextFieldPlaceholderText(text = targetText, isActive = isActive)
-    }
 }
 
 /**
@@ -470,7 +389,7 @@ private fun StopFieldText(text: String, isActive: Boolean, slideUp: Boolean, lab
  * nothing.
  */
 @Composable
-private fun AiSheetEntryButton(
+internal fun AiSheetEntryButton(
     onAiEvent: (AiSearchInputEvent) -> Unit,
     spinning: Boolean = false,
 ) {
@@ -492,18 +411,18 @@ private fun AiSheetEntryButton(
 }
 
 /**
- * Swaps From and To. Shown in the top action slot only when on-device AI is unavailable, so
- * the slot is never empty and Search never moves.
+ * Swaps From and To. Shown in the action slot only when on-device AI is unavailable, so the slot
+ * is never empty.
  *
  * The icon half-turns on every tap and stays where it lands: the arrow ends up pointing the
  * way the stops now run, so the button reads as the state it produced rather than as an
- * animation that played. `rememberSaveable` keeps that resting angle across rotation, which a
- * plain `remember` would snap back to zero.
+ * animation that played. [isRotated] is the row's own `rememberSaveable`, so that resting angle
+ * survives both rotation and the button moving between beside and under the bars, which a state
+ * remembered in here would lose.
  */
 @Composable
-private fun ReverseButton(onReverseButtonClick: () -> Unit) {
+private fun ReverseButton(isRotated: Boolean, onClick: () -> Unit) {
     val dim = KrailTheme.dimensions
-    var isRotated by rememberSaveable { mutableStateOf(false) }
     val rotation by animateFloatAsState(
         targetValue = if (isRotated) REVERSE_ICON_ROTATED_DEGREES else 0f,
         animationSpec = tween(durationMillis = REVERSE_ROTATION_DURATION_MILLIS),
@@ -519,10 +438,7 @@ private fun ReverseButton(onReverseButtonClick: () -> Unit) {
                 modifier = Modifier.size(dim.iconDefault),
             )
         },
-        onClick = {
-            isRotated = !isRotated
-            onReverseButtonClick()
-        },
+        onClick = onClick,
         modifier = Modifier
             .testTag(TripPlannerTestTags.SEARCH_ROW_REVERSE)
             .graphicsLayer { rotationZ = rotation },
@@ -531,24 +447,6 @@ private fun ReverseButton(onReverseButtonClick: () -> Unit) {
 
 private const val REVERSE_ICON_ROTATED_DEGREES = 180f
 private const val REVERSE_ROTATION_DURATION_MILLIS = 300
-
-@Composable
-private fun SearchButton(onSearchButtonClick: () -> Unit) {
-    val dim = KrailTheme.dimensions
-
-    RoundIconButton(
-        content = {
-            Image(
-                painter = painterResource(Res.drawable.ic_search),
-                contentDescription = "Search",
-                colorFilter = ColorFilter.tint(LocalContentColor.current),
-                modifier = Modifier.size(dim.iconDefault),
-            )
-        },
-        onClick = onSearchButtonClick,
-        modifier = Modifier.testTag(TripPlannerTestTags.SEARCH_ROW_SEARCH),
-    )
-}
 
 @Composable
 private fun CollapseHandle(onClick: () -> Unit) {

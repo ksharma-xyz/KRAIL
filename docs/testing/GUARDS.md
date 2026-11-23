@@ -322,7 +322,9 @@ assumptions** CI step. Exits non-zero on a violation. Enforces the mechanical pa
    In-file allowlist: `SavedTripsScreen.kt`, `AskKrailScreen.kt`.
 3. No `*LayoutTest.kt` uses `getUnclippedBoundsInRoot()` — it reports where a node was laid out,
    not where it was drawn, which is exactly the distinction those tests exist to make. Kotlin
-   comments are stripped first, so a KDoc explaining the ban is fine.
+   comments are stripped first, so a KDoc explaining the ban is fine. Measure with
+   `getVisibleBoundsInRoot()` (`feature/trip-planner/ui/src/androidHostTest/.../ui/VisibleBounds.kt`)
+   instead: it asserts the node is displayed and returns bounds clipped to its ancestors.
 
 The sibling `check_stale_assumptions.py` in the same CI step is **warning-only**: an analytics
 assumption falling due is not a reason to block an unrelated PR. A scheduled job runs it

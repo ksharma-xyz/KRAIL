@@ -4,6 +4,7 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
@@ -24,8 +26,8 @@ import xyz.ksharma.krail.info.tile.state.InfoTileCta
 import xyz.ksharma.krail.info.tile.state.InfoTileData
 import xyz.ksharma.krail.info.tile.state.InfoTileState
 import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.horizontalPadding
-import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shape
 import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.verticalPadding
+import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.components.AiWheelMark
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
@@ -36,6 +38,8 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+
+private val ACTIONS_GAP = 12.dp
 
 object InfoTileDefaults {
     val shape: RoundedCornerShape = RoundedCornerShape(size = 12.dp)
@@ -65,6 +69,11 @@ fun InfoTile(
     leadingIcon: (@Composable () -> Unit)? = null,
     // Replaces the plain description when the caller needs more than a string, such as bold runs.
     expandedContent: (@Composable () -> Unit)? = null,
+    // False for a tile with nothing more to say: a tap then does nothing, instead of opening a repeat of the title.
+    expandable: Boolean = true,
+    // The tile's corner: its clip, its border and its surface. A caller that paints the surface itself ([InfoTileStyle.Bare])
+    // passes the corner of the card it matches.
+    shape: Shape = InfoTileDefaults.shape,
 ) {
     var state by rememberSaveable { mutableStateOf(initialState) }
 
@@ -72,10 +81,11 @@ fun InfoTile(
         modifier = modifier
             .fillMaxWidth()
             // Shadow must be applied before clickable modifier
-            .infoTileOuter(style)
+            .infoTileOuter(style, shape)
             // clip shape added before clickable so that ripple indication is bounded within shape
             .clip(shape)
             .klickable(
+                enabled = expandable,
                 onClick = {
                     state = when (state) {
                         InfoTileState.COLLAPSED -> {
@@ -87,7 +97,7 @@ fun InfoTile(
                     }
                 },
             )
-            .infoTileSurface(style)
+            .infoTileSurface(style, shape)
             .padding(vertical = verticalPadding, horizontal = horizontalPadding)
             .animateContentSize()
             .semantics(mergeDescendants = true) {},
@@ -106,7 +116,12 @@ fun InfoTile(
             }
 
             if (infoTileData.showDismissButton || infoTileData.primaryCta != null) {
-                InfoTileActions(infoTileData = infoTileData, onCtaClick = onCtaClick, onDismissClick = onDismissClick)
+                InfoTileActions(
+                    infoTileData = infoTileData,
+                    style = style,
+                    onCtaClick = onCtaClick,
+                    onDismissClick = onDismissClick,
+                )
             }
         }
     }
@@ -132,21 +147,26 @@ private fun InfoTileTitle(title: String, style: InfoTileStyle, leadingIcon: (@Co
 @Composable
 private fun InfoTileActions(
     infoTileData: InfoTileData,
+    style: InfoTileStyle,
     onCtaClick: (InfoTileData) -> Unit,
     onDismissClick: (InfoTileData) -> Unit,
 ) {
-    Row(
-        horizontalArrangement = Arrangement.End,
-        verticalAlignment = Alignment.CenterVertically,
+    // Whole items wrap: when the dismiss and the call to action do not fit side by side (a narrow phone, large text) the
+    // call to action drops to its own line, still at the end, instead of being squeezed until its label breaks mid word.
+    // A text button sets its own ink for its label, so the caller's text colour is read here, above it, for a tile whose surface
+    // the caller paints.
+    val callerInk = if (style == InfoTileStyle.Bare) LocalTextColor.current else null
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(ACTIONS_GAP, Alignment.End),
+        itemVerticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
     ) {
         if (infoTileData.showDismissButton) {
             TextButton(
                 onClick = { onDismissClick(infoTileData) },
                 dimensions = ButtonDefaults.mediumButtonSize(),
-                modifier = Modifier.padding(end = 12.dp),
             ) {
-                Text(text = infoTileData.dismissCtaText)
+                Text(text = infoTileData.dismissCtaText, color = callerInk)
             }
         }
 

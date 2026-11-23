@@ -23,6 +23,7 @@ import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 
+/** A mode as a chip: filled in the mode's colour while [selected], and with its colour as an outline on the app's `surface` while not. */
 @Composable
 fun TransportModeChip(
     transportMode: TransportMode,

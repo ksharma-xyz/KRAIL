@@ -13,14 +13,16 @@ import kotlinx.coroutines.test.setMain
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
+import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
-import xyz.ksharma.krail.core.testing.fakes.FakeSandookPreferences
 import xyz.ksharma.krail.core.testing.fakes.FakeTripPlanningService
 import xyz.ksharma.krail.core.testing.helpers.AnalyticsTestHelper.assertScreenViewEventTracked
 import xyz.ksharma.krail.core.transport.nsw.NswTransportMode
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
@@ -49,7 +51,6 @@ class SearchStopViewModelTest {
     private val fakeRemoteAddressResultsManager = FakeRemoteAddressResultsManager()
     private val fakeFlag = FakeFlag()
     private val fakeNearbyStopsManager = FakeNearbyStopsManagerForMap()
-    private val fakePreferences = FakeSandookPreferences()
     private val fakeSandook = FakeSandook()
     private val searchSessionStore = RealSearchSessionStore()
 
@@ -65,7 +66,6 @@ class SearchStopViewModelTest {
             flag = fakeFlag,
             nearbyStopsManager = fakeNearbyStopsManager,
             ioDispatcher = testDispatcher,
-            preferences = fakePreferences,
             sandook = fakeSandook,
             searchSessionStore = searchSessionStore,
         )
@@ -75,6 +75,51 @@ class SearchStopViewModelTest {
     fun tearDown() {
         Dispatchers.resetMain()
     }
+
+    /** A second view model on the same fakes, built after a flag was set, since the flag is read as it is built. */
+    private fun newViewModel() = SearchStopViewModel(
+        analytics = fakeAnalytics,
+        stopResultsManager = fakeStopResultsManager,
+        remoteAddressResultsManager = fakeRemoteAddressResultsManager,
+        flag = fakeFlag,
+        nearbyStopsManager = fakeNearbyStopsManager,
+        ioDispatcher = testDispatcher,
+        sandook = fakeSandook,
+        searchSessionStore = searchSessionStore,
+    )
+
+    @Test
+    fun `GIVEN maps are available WHEN the map starts THEN it looks within the Remote Config radius`() =
+        runTest {
+            fakeFlag.setFlagValue(FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key, FlagValue.BooleanValue(true))
+            fakeFlag.setFlagValue(FlagKeys.NEARBY_STOPS_RADIUS_KM.key, FlagValue.StringValue("2.5"))
+            val mapViewModel = newViewModel()
+
+            mapViewModel.uiState.test {
+                awaitItem()
+                mapViewModel.onEvent(SearchStopUiEvent.InitializeMap)
+                advanceUntilIdle()
+                val ready = expectMostRecentItem().mapUiState as MapUiState.Ready
+                assertEquals(2.5, ready.mapDisplay.searchRadiusKm)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `GIVEN no usable radius WHEN the map starts THEN it looks within three kilometres`() =
+        runTest {
+            fakeFlag.setFlagValue(FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key, FlagValue.BooleanValue(true))
+            val mapViewModel = newViewModel()
+
+            mapViewModel.uiState.test {
+                awaitItem()
+                mapViewModel.onEvent(SearchStopUiEvent.InitializeMap)
+                advanceUntilIdle()
+                val ready = expectMostRecentItem().mapUiState as MapUiState.Ready
+                assertEquals(3.0, ready.mapDisplay.searchRadiusKm)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
 
     @Test
     fun `GIVEN SearchStopViewModel WHEN uiState is collected THEN analytics event is tracked`() =
@@ -344,7 +389,6 @@ class SearchStopViewModelTest {
                 flag = fakeFlag,
                 nearbyStopsManager = fakeNearbyStopsManager,
                 ioDispatcher = testDispatcher,
-                preferences = fakePreferences,
                 sandook = fakeSandook,
                 searchSessionStore = searchSessionStore,
             )
@@ -451,23 +495,6 @@ class SearchStopViewModelTest {
         }
 
     // endregion RecentSearchStops
-
-    // region SelectOnMapButtonClicked
-
-    @Test
-    fun `GIVEN SelectOnMapButtonClicked WHEN sent to ViewModel THEN select_on_map_button_click event is tracked`() =
-        runTest {
-            viewModel.onEvent(SearchStopUiEvent.SelectOnMapButtonClicked)
-            advanceUntilIdle()
-
-            assertTrue(fakeAnalytics is FakeAnalytics)
-            assertTrue(fakeAnalytics.isEventTracked("select_on_map_button_click"))
-            assertIs<AnalyticsEvent.SelectOnMapButtonClickEvent>(
-                fakeAnalytics.getTrackedEvent("select_on_map_button_click"),
-            )
-        }
-
-    // endregion SelectOnMapButtonClicked
 
     // region Search query analytics redaction
 
@@ -1094,7 +1121,6 @@ class SearchStopViewModelTest {
         flag = fakeFlag,
         nearbyStopsManager = fakeNearbyStopsManager,
         ioDispatcher = testDispatcher,
-        preferences = fakePreferences,
         sandook = fakeSandook,
         searchSessionStore = searchSessionStore,
         isAddressSearchEnabled = { true },

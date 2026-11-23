@@ -1,4 +1,6 @@
-# The core journey: pick an origin, pick a destination, get a timetable.
+# The core journey: pick a destination, pick an origin, tap the go circle, get a timetable. The home's one
+# search bar opens Search Stop from `searchrow.to`, and the To and From form there stays on screen through both
+# picks, so the trip leaves only with the go circle.
 #
 # Every selector is a testTag, and results are chosen by index rather than by
 # name, so the flow does not break when NSW renames a stop or reorders results.
@@ -30,26 +32,21 @@ appId: ${APP_ID}
       id: "savedtrips.screen"
     timeout: 60000
 
-# --- Origin ---
+# --- Destination ---
+# The destination comes first because `searchrow.to` is the home's one search bar, and it opens Search Stop on the
+# destination field. The trip is Central to Town Hall.
 - tapOn:
-    id: "searchrow.from"
+    id: "searchrow.to"
 
-# Stop search lands on the LIST, never the map. Asserted rather than assumed: the
-# flag behind it (`showMap` in SearchStopScreen) was once flipped to map-first in an
-# unrelated commit and shipped, because while the map is uninitialised the list
-# renders either way and nothing here noticed. See SEARCH_STOP_UX.md.
+# Stop search opens on the MAP state: the map, the bars and the recents card, with no keyboard
+# (rules 9 and 39 of docs/MAP_HOME_UX.md). Tapping the bar raises the list state, where the card
+# grows into the list, so `searchstop.recents` is asserted after that tap, the same as before.
 #
-# `searchstop.recents` is the Recent-mode list itself, so it is present on a fresh
-# device with no recents at all — it still holds the "Select on map" row.
+# `searchstop.recents` is the Recent-mode list itself, so it is present on a fresh device
+# with no recents at all.
 #
-# This also replaces the dismiss-map-options.yaml call that used to sit here. That
-# sheet is opened by the map, and the map is now opt-in, so it cannot appear on the
-# way in any more. The shared flow stays for any flow that does open the map.
-- extendedWaitUntil:
-    visible:
-      id: "searchstop.recents"
-    timeout: 30000
-
+# There is no map options sheet to dismiss on the way in any more: it was deleted with the
+# map options. The shared dismiss-map-options.yaml has no callers.
 - extendedWaitUntil:
     visible:
       id: "searchstop.query"
@@ -57,7 +54,12 @@ appId: ${APP_ID}
 
 - tapOn:
     id: "searchstop.query"
-- inputText: "Central"
+
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.recents"
+    timeout: 30000
+- inputText: "Town Hall"
 
 # Search is a network call, so give it real time rather than a fixed sleep.
 - extendedWaitUntil:
@@ -69,22 +71,20 @@ appId: ${APP_ID}
     id: "searchstop.result..*"
     index: 0
 
+# A pick never leaves Search Stop: the destination fills its bar and the screen stays. The From bar is
+# on screen with it, filled with the nearest stop when the device has a fix and empty when it has none.
 - extendedWaitUntil:
     visible:
-      id: "searchrow.root"
+      id: "searchrow.from"
     timeout: 30000
 
-# --- Destination ---
+# --- Origin ---
+# Tapped whether or not it filled itself, so the flow is the same on a device with a fix and one without,
+# and an origin that did fill itself is replaced by the one chosen here, which is what makes it editable.
 - tapOn:
-    id: "searchrow.to"
+    id: "searchrow.from"
 
-# Same assertion on the second entry: this one arrives with a recent stop already
-# saved, which is a different branch of the list from the first-open one above.
-- extendedWaitUntil:
-    visible:
-      id: "searchstop.recents"
-    timeout: 30000
-
+# Same steps for the origin: the bar being edited moved to From, so the query field is there again.
 - extendedWaitUntil:
     visible:
       id: "searchstop.query"
@@ -92,7 +92,12 @@ appId: ${APP_ID}
 
 - tapOn:
     id: "searchstop.query"
-- inputText: "Town Hall"
+
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.recents"
+    timeout: 30000
+- inputText: "Central"
 
 - extendedWaitUntil:
     visible:
@@ -103,12 +108,12 @@ appId: ${APP_ID}
     id: "searchstop.result..*"
     index: 0
 
+# --- Timetable ---
+# Both bars hold a stop now, so the go circle shows. It is the only way out of Search Stop with a trip.
 - extendedWaitUntil:
     visible:
-      id: "searchrow.root"
+      id: "searchrow.search"
     timeout: 30000
-
-# --- Timetable ---
 - tapOn:
     id: "searchrow.search"
 
@@ -137,3 +142,29 @@ appId: ${APP_ID}
       id: "timetable.journey..*"
     direction: DOWN
     timeout: 90000
+
+# --- Back from the results ---
+# The go circle opens the results on top of Search Stop, so back from the timetable lands on Search Stop with
+# the To and From bars still filled and the go circle still shown, and not on home. Back again leaves for
+# home with nothing. The hardware back key exists on Android only, so iOS (a swipe from the edge that
+# Maestro cannot be asked for portably) skips this part.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+      - extendedWaitUntil:
+          visible:
+            id: "searchrow.search"
+          timeout: 30000
+      - assertVisible:
+          id: "searchrow.to"
+      - assertVisible:
+          id: "searchrow.from"
+      - assertNotVisible:
+          id: "savedtrips.screen"
+      - back
+      - extendedWaitUntil:
+          visible:
+            id: "savedtrips.screen"
+          timeout: 30000

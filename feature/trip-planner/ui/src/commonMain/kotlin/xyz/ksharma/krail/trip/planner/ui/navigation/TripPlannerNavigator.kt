@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.navigation
 
 import androidx.navigation3.runtime.NavKey
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.LocationKind
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
  * Navigation events for Trip Planner feature.
@@ -12,10 +13,17 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.LocationKind
 @Suppress("ComplexInterface", "TooManyFunctions")
 interface TripPlannerNavigator {
 
+    /**
+     * Opens Search Stop. [presetFrom] and [presetTo] open the To and From form already holding a stop, so
+     * a caller that knows one end (a pin card, a label chip, an Ask KRAIL answer) hands it over and the
+     * rider only chooses the other and goes.
+     */
     fun navigateToSearchStop(
         fieldType: SearchStopFieldType,
         labelKey: String? = null,
         editTripLeg: Boolean = false,
+        presetFrom: StopItem? = null,
+        presetTo: StopItem? = null,
     )
 
     /**
@@ -38,7 +46,6 @@ interface TripPlannerNavigator {
     fun navigateToAddParkRide()
     fun navigateToThemeSelection()
     fun navigateToOurStory()
-    fun navigateToIntro()
     fun navigateToTrackTrip(encodedData: String? = null)
     fun navigateToDebugConfig()
     fun navigateToDebugConfigNetwork()
@@ -50,7 +57,9 @@ interface TripPlannerNavigator {
 }
 
 /**
- * Result when a stop is selected
+ * Result when a stop is selected for one field. Search Stop sends it for a label. The To and From form
+ * sends no result at all: its go circle opens the trip results itself, so a pick on it never reaches the
+ * caller on its own.
  */
 data class StopSelectedResult(
     val fieldType: SearchStopFieldType,

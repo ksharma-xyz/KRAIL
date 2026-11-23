@@ -7,6 +7,7 @@ import kotlin.time.ExperimentalTime
 private const val PROP_STOP_ID = "stopId"
 private const val PROP_ACTION = "action"
 private const val VALUE_SETTINGS = "settings"
+private const val VALUE_INTRO = "intro"
 private const val PROP_VARIANT = "variant"
 private const val PROP_SOURCE = "source"
 private const val PROP_EXPAND = "expand"
@@ -23,10 +24,13 @@ private const val PROP_LEG_COUNT = "legCount"
 private const val PROP_TRANSPORT_MODES = "transportModes"
 private const val PROP_SEARCH_SESSION_ID = "searchSessionId"
 private const val PROP_PANE_MODE = "paneMode"
+private const val PROP_MAP_SESSION_ID = "mapSessionId"
+private const val PROP_HAD_USER_LOCATION = "hadUserLocation"
 private const val PROP_ERROR_KIND = "errorKind"
 private const val PROP_TRANSPORT_UP = "transportUp"
 private const val PROP_UPSTREAM = "upstream"
 private const val PROP_ENDPOINT = "endpoint"
+private const val PROP_THEME_ID = "themeId"
 
 // Shared across the Ask KRAIL surfaces on purpose: GA4 registers an event-scoped dimension per
 // PARAMETER NAME, so one registration covers every event that sends it. Divergent vocabulary is
@@ -34,6 +38,9 @@ private const val PROP_ENDPOINT = "endpoint"
 private const val PROP_REASON = "reason"
 private const val PROP_TRANSPORT_MODE = "transportMode"
 private const val PROP_VISIBLE_JOURNEY_COUNT = "visibleJourneyCount"
+
+/** A flag the registry reads as `1` or `0`, sent as a number and never as text. */
+private fun Boolean.asFlag(): Int = if (this) 1 else 0
 
 /**
  * Every event's [properties] pass through [AnalyticsParamSanitizer] before they are
@@ -360,6 +367,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         RECENT("recent"),
         EMPTY_STATE("empty_state"),
         ADDRESS_RESULT("address_result"),
+        MAP_CARD("map_card"),
     }
 
     /** How many labels the user has, bucketed - splits casual (1-2) from power users. */
@@ -545,10 +553,22 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
 
     // region Theme
 
-    data class ThemeSelectedEvent(val themeId: String) : AnalyticsEvent(
+    /**
+     * The rider chose a colour theme, from either screen that offers the choice.
+     *
+     * @param themeId The theme's number as text.
+     * @param source The screen the choice was made on: `intro` at the finish press of the Intro, `settings` on the
+     *   Settings theme screen. Builds from before this param carry none, which reads as unknown, never as either.
+     */
+    data class ThemeSelectedEvent(val themeId: String, val source: Source) : AnalyticsEvent(
         name = "theme_selected",
-        rawProperties = mapOf("themeId" to themeId),
-    )
+        rawProperties = mapOf(PROP_THEME_ID to themeId, PROP_SOURCE to source.value),
+    ) {
+        enum class Source(val value: String) {
+            INTRO(VALUE_INTRO),
+            SETTINGS(VALUE_SETTINGS),
+        }
+    }
 
     // endregion
 
@@ -568,7 +588,8 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
 
     /**
      * @param source Where the save was triggered from: [SOURCE_STAR] for the
-     * title-bar star button, [SOURCE_PROMPT] for the "Save this trip?" prompt.
+     * title-bar star button, [SOURCE_PROMPT] for the "Save this trip?" prompt,
+     * [SOURCE_INTRO] for the first trip step of the Intro.
      * Historical events (pre-prompt) carry no `source` — treat null as star.
      */
     data class SaveTripClickEvent(
@@ -586,6 +607,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         companion object {
             const val SOURCE_STAR = "star"
             const val SOURCE_PROMPT = "prompt"
+            const val SOURCE_INTRO = VALUE_INTRO
         }
     }
 
@@ -851,7 +873,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
 
     /**
      * @param transportModes Sorted comma-separated product-class integers of modes in this journey
-     *                       (e.g. "1,5" = Train + Bus). Matches the encoding used by [MapOptionsSavedEvent].
+     *                       (e.g. "1,5" = Train + Bus).
      * @param crowding       What seat data the first service boarded had: [CROWDING_CARS] (a level per
      *                       carriage), [CROWDING_LEVEL] (one level for the whole service) or
      *                       [CROWDING_NONE].
@@ -1230,30 +1252,93 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
     }
 
     /**
-     * Analytics event for the refer friend button click in the intro screen.
+     * The rider finished the Intro. One event name, two shapes, and a caller sends only its own
+     * set. A param that is null is left out of the event.
      *
-     * @param pageType The page number of the intro screen from which the user clicked Let's KRAIL button.
-     * @param interactionPages Represents pages list where interaction was performed. with the
-     * content inside the intro pages.
+     * Carousel Intro: [pageType] and [pageNumber], sent as `completedOnPage` and
+     * `completedOnPageNumber`. They describe the carousel and are removed with it.
+     *
+     * Two step Intro: the nine outcome params from [introVersion] to [stopsWait], sent together, and
+     * [themeId] with them when a colour was chosen. [introVersion] is on every firing of the two step
+     * Intro, the skipped outcome included. Each is a flag or one of a short list of values. None
+     * carries a coordinate, a stop name or text.
+     *
+     * @param pageType The carousel page the Intro was finished on.
+     * @param pageNumber The number of that carousel page.
+     * @param introVersion `2` for the two step Intro.
+     * @param finishedOn The step the Intro was finished on.
+     * @param parkRideAnswer The answer to the Park & Ride question, `skipped` when unanswered.
+     * @param locationResult What the location permission came to, `not_asked` when never asked.
+     * @param addedParkRide Whether a Park & Ride station was added during the Intro.
+     * @param savedTrip Whether a trip was saved during the Intro.
+     * @param usedSearch Whether the search for another stop was used.
+     * @param skipped Whether the Intro finished with no complete trip picked.
+     * @param stopsWait How long the Intro waited on the stops data.
+     * @param themeId The colour the rider chose on the last step, in the form `theme_selected` sends it (the
+     *   theme's number as text). Left out when no colour was chosen. The Intro also sends `theme_selected`,
+     *   so this is the same choice on the one event the funnel reads.
      */
     data class IntroLetsKrailClickEvent(
-        val pageType: InteractionPage,
-        val pageNumber: Int,
+        val pageType: InteractionPage? = null,
+        val pageNumber: Int? = null,
+        val introVersion: Int? = null,
+        val finishedOn: FinishedOn? = null,
+        val parkRideAnswer: ParkRideAnswer? = null,
+        val locationResult: LocationResult? = null,
+        val addedParkRide: Boolean? = null,
+        val savedTrip: Boolean? = null,
+        val usedSearch: Boolean? = null,
+        val skipped: Boolean? = null,
+        val stopsWait: StopsWait? = null,
+        val themeId: String? = null,
     ) : AnalyticsEvent(
         name = "intro_lets_krail",
-        rawProperties = mapOf(
-            "completedOnPage" to pageType.name,
-            "completedOnPageNumber" to pageNumber,
-        ),
+        rawProperties = buildMap {
+            pageType?.let { put("completedOnPage", it.name) }
+            pageNumber?.let { put("completedOnPageNumber", it) }
+            introVersion?.let { put("introVersion", it) }
+            finishedOn?.let { put("finishedOn", it.value) }
+            parkRideAnswer?.let { put("parkRideAnswer", it.value) }
+            locationResult?.let { put("locationResult", it.value) }
+            addedParkRide?.let { put("addedParkRide", it) }
+            savedTrip?.let { put("savedTrip", it) }
+            usedSearch?.let { put("usedSearch", it) }
+            skipped?.let { put("skipped", it) }
+            stopsWait?.let { put("stopsWait", it.value) }
+            themeId?.let { put(PROP_THEME_ID, it) }
+        },
     ) {
+        /** Carousel pages. Removed with the carousel. */
         enum class InteractionPage {
             SAVE_TRIPS, REAL_TIME_ROUTES, ALERTS, PLAN_TRIP, SELECT_MODE, INVITE_FRIENDS, PARK_RIDE,
         }
-    }
 
-    data object SettingsHowToUseClickEvent : AnalyticsEvent(
-        name = "how_to_krail",
-    )
+        enum class FinishedOn(val value: String) {
+            PARK_RIDE("park_ride"),
+            FIRST_TRIP("first_trip"),
+        }
+
+        enum class ParkRideAnswer(val value: String) {
+            YES("yes"),
+            NO("no"),
+            SKIPPED("skipped"),
+        }
+
+        enum class LocationResult(val value: String) {
+            GRANTED("granted"),
+            DENIED("denied"),
+            UNAVAILABLE("unavailable"),
+            NOT_ASKED("not_asked"),
+        }
+
+        enum class StopsWait(val value: String) {
+            NONE("none"),
+            UNDER_2S("under_2s"),
+            TWO_TO_FIVE_S("2_to_5s"),
+            OVER_5S("over_5s"),
+            FAILED("failed"),
+        }
+    }
 
     data object OurStoryClick : AnalyticsEvent(
         name = "our_story",
@@ -1375,6 +1460,12 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
              * mapping. See [SavedTripsViewModel.updateParkRideStopIdsInDb].
              */
             SAVED_TRIPS_SCREEN("saved_trips_screen"),
+
+            /** Rider toggled the nearest station on the Park & Ride step of the Intro. */
+            INTRO(VALUE_INTRO),
+
+            /** Rider added the nearby station the one-time suggestion card on home offered. */
+            HOME_SUGGESTION("home_suggestion"),
         }
     }
     // endregion
@@ -1450,49 +1541,6 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
     // region SearchStopMap
 
     /**
-     * Fired when the user taps the "Select on map" button in the SearchStop list.
-     * Use to measure how many users discover and use the map entry point.
-     */
-    data object SelectOnMapButtonClickEvent : AnalyticsEvent(name = "select_on_map_button_click")
-
-    /**
-     * Fired when the user taps "Save" on the MapOptionsBottomSheet.
-     *
-     * This single event is the source of truth for all map-options analysis. One rich snapshot
-     * replaces what would otherwise be 4+ separate events. Use it to answer:
-     *  - "What % of users prefer 5km radius?" → aggregate on [radiusKm]
-     *  - "What transport mode filter combos are most common?" → aggregate on [transportModes]
-     *  - "Do users actually change the radius or just leave it at default?" → filter [radiusChanged]
-     *  - "Do map control toggles matter?" → look at [showDistanceScale] / [showCompass] distributions
-     *
-     * @param radiusKm          The saved search radius: 1.0, 3.0, or 5.0.
-     * @param transportModes    Sorted, comma-separated product-class integers of all *enabled* modes
-     *                          (e.g. "1,2,5,9").
-     * @param showDistanceScale Whether the distance scale overlay is enabled after saving.
-     * @param showCompass       Whether the compass overlay is enabled after saving.
-     * @param radiusChanged     Whether [radiusKm] differs from the value before the sheet opened.
-     * @param modesChanged      Whether any transport mode filter changed from the previous state.
-     */
-    data class MapOptionsSavedEvent(
-        val radiusKm: Double,
-        val transportModes: String,
-        val showDistanceScale: Boolean,
-        val showCompass: Boolean,
-        val radiusChanged: Boolean,
-        val modesChanged: Boolean,
-    ) : AnalyticsEvent(
-        name = "search_stop_map_options_saved",
-        rawProperties = mapOf(
-            "radiusKm" to radiusKm,
-            PROP_TRANSPORT_MODES to transportModes,
-            "showDistanceScale" to showDistanceScale,
-            "showCompass" to showCompass,
-            "radiusChanged" to radiusChanged,
-            "modesChanged" to modesChanged,
-        ),
-    )
-
-    /**
      * Fired when the user selects a stop via the map's StopDetailsBottomSheet.
      *
      * Captures the map configuration context at the moment of selection, so you can correlate
@@ -1507,12 +1555,22 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      * [hadUserLocation] flag instead, which carries no privacy obligations.
      *
      * @param stopId             The ID of the stop the user selected.
-     * @param searchRadiusKm     The active search radius at the moment of selection.
-     * @param enabledModesCount  Number of transport modes currently enabled (not which ones —
-     *                           use [MapOptionsSavedEvent.transportModes] for mode-level detail).
+     * @param searchRadiusKm     The active search radius at the moment of selection. It is the value of
+     *                           Remote Config `nearby_stops_radius_km`, since nothing in the app changes it.
+     *                           It used to be a rider's choice of 1, 3 or 5 under the same name, so read it
+     *                           with [radiusSource]: only a row that carries `radiusSource` is the config value.
+     * @param enabledModesCount  Number of transport modes currently enabled on the map's mode chips
+     *                           (not which ones). This is the only place the mode filter is reported
+     *                           now that the Options sheet and its save event are gone.
      * @param nearbyStopsCount   Number of stop markers visible on the map at time of selection.
      * @param hadUserLocation    Whether the device location was available (permission granted +
      *                           location resolved). Does NOT include coordinates.
+     * @param mapSessionId       The id of the map open this pick belongs to, the same value `map_viewed` and
+     *                           `map_dismissed` carry, so a pick joins the open it came from. Left out when no
+     *                           open was in progress, so rows from older builds and a pick with no open carry none.
+     * @param radiusSource       Which regime [searchRadiusKm] is from. A version number cannot say, so this build
+     *                           always sends `remote_config`, and a row with no `radiusSource` is from an older
+     *                           build where the number was the rider's own choice.
      */
     data class StopSelectedFromMapEvent(
         val stopId: String,
@@ -1520,16 +1578,29 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         val enabledModesCount: Int,
         val nearbyStopsCount: Int,
         val hadUserLocation: Boolean,
+        val mapSessionId: String? = null,
+        val radiusSource: RadiusSource = RadiusSource.REMOTE_CONFIG,
     ) : AnalyticsEvent(
         name = "stop_selected_from_map",
-        rawProperties = mapOf(
-            PROP_STOP_ID to stopId,
-            "searchRadiusKm" to searchRadiusKm,
-            "enabledModesCount" to enabledModesCount,
-            "nearbyStopsCount" to nearbyStopsCount,
-            "hadUserLocation" to hadUserLocation,
-        ),
-    )
+        rawProperties = buildMap {
+            put(PROP_STOP_ID, stopId)
+            put("searchRadiusKm", searchRadiusKm)
+            put("radiusSource", radiusSource.value)
+            put("enabledModesCount", enabledModesCount)
+            put("nearbyStopsCount", nearbyStopsCount)
+            put(PROP_HAD_USER_LOCATION, hadUserLocation)
+            mapSessionId?.let { put(PROP_MAP_SESSION_ID, it) }
+        },
+    ) {
+        /**
+         * Where the radius came from. [FIXED] is the rider's own choice of 1, 3 or 5, which older builds sent
+         * without saying so, so no build sends it now and it exists so the value set is the one the registry reads.
+         */
+        enum class RadiusSource(val value: String) {
+            FIXED("fixed"),
+            REMOTE_CONFIG("remote_config"),
+        }
+    }
 
     /**
      * Fired when the user taps a stop marker on the SearchStopMap (the bottom sheet opens).
@@ -1543,23 +1614,116 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      * @param stopId             The stop that was tapped.
      * @param transportModesCount Number of transport modes served at this stop.
      *                            Stops with more modes may attract more exploratory taps.
+     * @param mapSessionId        The id of the map open the tap belongs to, as on [StopSelectedFromMapEvent].
+     *                            Left out when no open was in progress.
      */
     data class NearbyStopClickEvent(
         val stopId: String,
         val transportModesCount: Int,
+        val mapSessionId: String? = null,
     ) : AnalyticsEvent(
         name = "nearby_stop_click",
-        rawProperties = mapOf(
-            PROP_STOP_ID to stopId,
-            "transportModesCount" to transportModesCount,
-        ),
+        rawProperties = buildMap {
+            put(PROP_STOP_ID, stopId)
+            put("transportModesCount", transportModesCount)
+            mapSessionId?.let { put(PROP_MAP_SESSION_ID, it) }
+        },
     )
 
     /**
-     * Fired when the user taps the Options button on the map (SearchStopMap only).
-     * Use to measure how often users discover and open map configuration.
+     * The stop map became visible: once per map open, on the first frame the rider can see it.
+     *
+     * An open is one stretch of the map being on screen. It ends, and `map_dismissed` is sent for it, when the
+     * app leaves the foreground, when the rider goes back, when the map is covered by the list state or another
+     * screen, or when a stop is picked. Showing the map again after any of those is a NEW open with a new
+     * [mapSessionId] and a new `map_viewed`. Turning the phone is not an end: the open carries on through it.
+     * This event is the denominator for the map funnel (`nearby_stop_click`, `stop_selected_from_map` and
+     * `map_dismissed` all carry the same [mapSessionId]).
+     *
+     * `pane` is not a param of this class: [AnalyticsPaneTracker] adds it to every event as it is sent, with the
+     * existing `SINGLE | LIST | DETAIL` values.
+     *
+     * @param entry              Where the map is shown: `home` or `search_stop`. Search Stop covers its wide window
+     *                           map pane too. The Intro has no map.
+     * @param hadUserLocation    Whether a location fix was already in hand when the map became visible, sent as
+     *                           `1` or `0`. A fix that lands after that is not counted. No coordinates.
+     * @param locationPermission What the location permission was when the map became visible, with the same
+     *                           values as the Intro's `locationResult`: `granted`, `denied`, `not_asked` or
+     *                           `unavailable` (the system forbids it).
+     * @param mapSessionId       16 lowercase hex characters from a random 64 bit value. Never derived from a user
+     *                           id or a time.
      */
-    data object MapOptionsOpenedEvent : AnalyticsEvent(name = "search_stop_map_options_opened")
+    data class MapViewedEvent(
+        val entry: Entry,
+        val hadUserLocation: Boolean,
+        val locationPermission: IntroLetsKrailClickEvent.LocationResult,
+        val mapSessionId: String,
+    ) : AnalyticsEvent(
+        name = "map_viewed",
+        rawProperties = mapOf(
+            "entry" to entry.value,
+            PROP_HAD_USER_LOCATION to hadUserLocation.asFlag(),
+            "locationPermission" to locationPermission.value,
+            PROP_MAP_SESSION_ID to mapSessionId,
+        ),
+    ) {
+        enum class Entry(val value: String) {
+            HOME("home"),
+            SEARCH_STOP("search_stop"),
+        }
+    }
+
+    /**
+     * A map open ended. Sent exactly once for each `map_viewed`, on whichever comes first: the app leaving the
+     * foreground (so a rider who quits on an empty map is counted), back, the map being covered by the list state
+     * or another screen, or a stop being picked from it. A map with no `map_viewed` sends none.
+     *
+     * @param mapSessionId   The id the open's `map_viewed` carried.
+     * @param selected       Whether a stop was picked from the map during this open, sent as `1` or `0`.
+     * @param durationBucket How long the map was open, from a monotonic clock difference taken as the open
+     *                       ended. There is no timer.
+     * @param hadStops       Whether at least one stop marker was on the map at any point in the open, sent as `1`
+     *                       or `0`. It stands in for a separate empty map event.
+     */
+    data class MapDismissedEvent(
+        val mapSessionId: String,
+        val selected: Boolean,
+        val durationBucket: DurationBucket,
+        val hadStops: Boolean,
+    ) : AnalyticsEvent(
+        name = "map_dismissed",
+        rawProperties = mapOf(
+            PROP_MAP_SESSION_ID to mapSessionId,
+            "selected" to selected.asFlag(),
+            "durationBucket" to durationBucket.value,
+            "hadStops" to hadStops.asFlag(),
+        ),
+    ) {
+        /**
+         * Under 5000 ms, 5000 up to but not including 15000, 15000 up to but not including 60000, and 60000
+         * and over.
+         */
+        enum class DurationBucket(val value: String) {
+            UNDER_5S("under_5s"),
+            FIVE_TO_15S("5_to_15s"),
+            FIFTEEN_TO_60S("15_to_60s"),
+            OVER_60S("over_60s"),
+            ;
+
+            companion object {
+                private const val FIVE_SECONDS_MS = 5_000L
+                private const val FIFTEEN_SECONDS_MS = 15_000L
+                private const val SIXTY_SECONDS_MS = 60_000L
+
+                fun from(durationMs: Long): DurationBucket = when {
+                    durationMs < FIVE_SECONDS_MS -> UNDER_5S
+                    durationMs < FIFTEEN_SECONDS_MS -> FIVE_TO_15S
+                    durationMs < SIXTY_SECONDS_MS -> FIFTEEN_TO_60S
+                    else -> OVER_60S
+                }
+            }
+        }
+    }
 
     /**
      * Fired when the user taps "Go to Settings" on the location permission denied banner.

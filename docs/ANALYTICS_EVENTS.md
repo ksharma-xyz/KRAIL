@@ -7,10 +7,17 @@ Read this before adding or modifying any event in
 
 Firebase Analytics hard-caps the app at **500 unique event names, forever**. GA never
 lets a name be reclaimed from history — a shipped event name is a permanently spent
-slot, even if the code stops sending it. Budget as of 2026-11-20: 62 events defined in
-code (the 61 already counted plus `disruption_status`) plus ~10 historical names, roughly 428 slots
-left. The 2026-09-11 figure of 53 had drifted; this is a recount of `name = "..."` in `AnalyticsEvent.kt`. Update this count when adding
-or removing events.
+slot, even if the code stops sending it. Budget as of 2026-11-24, on the analytics owner's count
+(their figure, not a recount of `AnalyticsEvent.kt` here): 72 custom names ever seen before `map_viewed`
+and `map_dismissed`, so 74 after them, about 426 slots left if the automatic events do not count. The
+recount of 2026-11-23 found 61 events defined in code (`how_to_krail` is retired, its name stays spent)
+plus ~11 historical names, which is the same 72. The 2026-09-11 figure of 53 had drifted; a recount is a
+count of `name = "..."` in `AnalyticsEvent.kt`. Update this count when adding or removing events.
+
+A count of those lines on 2026-11-24 found 66 at the head of this branch and 68 on `main`: the branch
+removes four classes (`how_to_krail`, `search_stop_map_options_opened`, `search_stop_map_options_saved`
+and `select_on_map_button_click`) and adds two (`map_viewed` and `map_dismissed`). The code count leaves
+out the four retired names, which stay spent, so it is not the budget. The owner's figure above is.
 
 ### The other three caps, and which one actually bites
 
@@ -53,7 +60,7 @@ param name competes for a registerable dimension slot, see the caps section abov
 |---|---|---|
 | Different gesture, same surface, same params | `action` value on the existing event | Departures icon fires `timetable_stop_header_click` with `action = open_departures` — not a separate `timetable_departures_icon_click` |
 | Outcomes of one interaction (accept/dismiss, on/off, success/failure) | ONE event with a boolean or enum param | `save_trip_prompt_action(accepted: Boolean, dismissCount)` — not `_accepted` + `_dismissed` |
-| Same event fired from several surfaces | `source` param | `DepartureBoardSource` enum, `SaveTripClickEvent.source = star \| prompt` |
+| Same event fired from several surfaces | `source` param | `DepartureBoardSource` enum, `SaveTripClickEvent.source = star \| prompt`, `ThemeSelectedEvent.source = intro \| settings` (the Intro's finish press and the Settings theme screen both send `theme_selected`; a build from before the param sends none, read as unknown) |
 | Feature state changes (error/retry/loading) | `{feature}_status(action)` | `dep_board_status(action: error \| retry)` — not one event per state |
 
 ## Double-counting check
@@ -148,6 +155,37 @@ whole facility objects instead of their ids, which is a call-site bug, not a len
 
 When adding a param that can carry a location id or a user-visible place name, add its key
 to the relevant set in `AnalyticsParamSanitizer` rather than sanitizing at the call site.
+
+## Retired names: where the question went
+
+Deleting the code that fires an event does not free its name. Firebase counts a name for the life of
+the app, so a retired class is removed from `AnalyticsEvent.kt` and its row stays in the ledger as
+retired, not deleted. Nothing re-uses a spent name for a different meaning.
+
+The map Options sheet was deleted with the Search Stop map-first work (`docs/features/map-home/ERD.md`,
+branch 5). Two names went quiet with it, and the questions they answered went to an event that was already
+there, so no new name was added:
+
+- `search_stop_map_options_opened` (the Options button was tapped) has no successor. The button is gone.
+- `search_stop_map_options_saved` (a snapshot of radius, modes and map chrome at Save) has no successor
+  as a snapshot. The radius is now one Remote Config number (`nearby_stops_radius_km`) the rider cannot
+  change, and the chrome toggles are gone. What survives is on `stop_selected_from_map`: `searchRadiusKm`
+  is that number, and `enabledModesCount` is how many mode chips were on at the pick. Which modes were on,
+  and every toggle on the way there, is not reported: the chips are a filter on the rider's own map, not a
+  setting, and a name for each tap would spend the budget on a control whose result the pick already shows.
+- `select_on_map_button_click` (from the earlier branch) goes the same way: the button is gone and there
+  is no successor.
+
+A fourth name went quiet with the Intro rebuild, not the map: `how_to_krail` (the How to KRAIL? row in
+Settings was tapped, `SettingsHowToUseClickEvent`). The row is gone (`docs/features/intro/ERD.md`, unit X5),
+the class is removed from `AnalyticsEvent.kt` and the name stays spent. It has no successor. Its ledger
+row is in `docs/ANALYTICS_REGISTRY_HANDOFF.md` with the three above.
+
+Rows from before the change keep their old shape. A `stop_selected_from_map` row from an older build
+carries a `searchRadiusKm` the rider chose (1, 3 or 5), and a newer one carries the config value, so the
+param is only comparable within one side of the release. The newer rows also carry `radiusSource`
+(`remote_config`), and an older row has none, so the side a row is on is read from `radiusSource` and
+not from the app version.
 
 ## Window, fold and pane reporting: how to read it
 

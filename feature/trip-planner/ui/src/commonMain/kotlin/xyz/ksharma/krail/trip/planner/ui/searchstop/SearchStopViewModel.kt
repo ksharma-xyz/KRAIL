@@ -37,16 +37,20 @@ import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
 import xyz.ksharma.krail.coroutines.ext.suspendSafeResult
 import xyz.ksharma.krail.sandook.RecentSearchLocation
 import xyz.ksharma.krail.sandook.Sandook
-import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.trip.planner.ui.components.normaliseLabelName
+import xyz.ksharma.krail.trip.planner.ui.intro.introSuggestedStops
+import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.AddressSearchEligibility
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.AddressSearchGate
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.DEFAULT_ADDRESS_SEARCH_MIN_QUERY_LENGTH
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.normalizeAddressQuery
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapOpenTracker
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapStateHelper
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.NearbyStopsManager
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.resolveNearbyStopsRadiusKm
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
@@ -64,35 +68,37 @@ class SearchStopViewModel(
     private val nearbyStopsManager: NearbyStopsManager,
     val flag: Flag,
     private val ioDispatcher: CoroutineDispatcher,
-    private val preferences: SandookPreferences,
     private val sandook: Sandook,
     private val searchSessionStore: SearchSessionStore,
     private val isAddressSearchEnabled: () -> Boolean = { false },
     private val addressSearchMinQueryLength: () -> Int = { DEFAULT_ADDRESS_SEARCH_MIN_QUERY_LENGTH },
 ) : ViewModel() {
 
-    private val _uiState: MutableStateFlow<SearchStopState> = MutableStateFlow(SearchStopState())
+    private val isMapsAvailable: Boolean by lazy {
+        flag.getFlagValue(FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key)
+            .asBoolean(fallback = false)
+    }
+
+    // Starts with the flag already read, so the first frame knows whether there is a map to open on
+    // and a rider without one never sees the list for a frame before the map state takes over.
+    private val _uiState: MutableStateFlow<SearchStopState> =
+        MutableStateFlow(SearchStopState(isMapsAvailable = isMapsAvailable))
     val uiState: StateFlow<SearchStopState> = _uiState
         .onStart {
             analytics.trackScreenViewEvent(screen = AnalyticsScreen.SearchStop)
             checkMapsAvailability()
-            val hasSeenOptions = preferences.getBoolean(
-                SandookPreferences.KEY_HAS_SEEN_MAP_OPTIONS_SHEET,
-            ) == true
-            if (!hasSeenOptions) {
-                updateUiState { copy(showMapOptionsOnOpen = true) }
-            }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SearchStopState())
+        }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            SearchStopState(isMapsAvailable = isMapsAvailable),
+        )
 
     init {
         // Single VM-lifetime observer so DB updates always reach the UI even if
         // the screen briefly unsubscribes (e.g. across config changes).
         observeStopLabels()
-    }
-
-    private val isMapsAvailable: Boolean by lazy {
-        flag.getFlagValue(FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key)
-            .asBoolean(fallback = false)
+        loadCuratedStops()
     }
 
     private var searchJob: Job? = null
@@ -114,6 +120,13 @@ class SearchStopViewModel(
     // report without also giving a burst its own key: an id that changes per keystroke, on an
     // event that fires per keystroke, makes every rate derived from it count keystrokes.
     private var currentSearchSessionId: String = newSearchSessionId()
+
+    /**
+     * Counts the map's opens for analytics. The map composables report into it, and the map's two existing events
+     * below are stamped with the id of the open in progress. It lives as long as this ViewModel, so a rotation keeps
+     * the open and its id (see [MapOpenTracker]). Both the phone's map state and the wide window's map pane use it.
+     */
+    val mapOpen: MapOpenTracker = MapOpenTracker(analytics)
 
     @Suppress("LongMethod", "ReturnCount")
     fun onEvent(event: SearchStopUiEvent) {
@@ -182,8 +195,11 @@ class SearchStopViewModel(
             SearchStopUiEvent.InitializeMap -> {
                 if (isMapsAvailable && _uiState.value.mapUiState == null) {
                     log("[NEARBY_STOPS] Initializing map state")
+                    // The radius is Remote Config's, read once as the map starts. Nothing in the app
+                    // changes it any more.
+                    val display = MapDisplay(searchRadiusKm = resolveNearbyStopsRadiusKm(flag))
                     updateUiState {
-                        copy(mapUiState = MapUiState.Ready())
+                        copy(mapUiState = MapUiState.Ready(mapDisplay = display))
                     }
                     // Note: Auto-fetch of user location happens in UI layer
                     // via LaunchedEffect observing permission status
@@ -207,38 +223,6 @@ class SearchStopViewModel(
                 onNearbyStopClicked(event.stop)
             }
 
-            SearchStopUiEvent.MapOptionsClicked -> {
-                // No-op: Bottom sheet visibility is handled in UI layer
-            }
-
-            SearchStopUiEvent.MapOptionsFirstTimeShown -> {
-                preferences.setBoolean(SandookPreferences.KEY_HAS_SEEN_MAP_OPTIONS_SHEET, true)
-                updateUiState { copy(showMapOptionsOnOpen = false) }
-            }
-
-            is SearchStopUiEvent.SearchRadiusChanged -> {
-                log("[NEARBY_STOPS] SearchRadiusChanged: ${event.radiusKm}km")
-                onSearchRadiusChanged(event.radiusKm)
-            }
-
-            is SearchStopUiEvent.ShowDistanceScaleToggled -> {
-                log("[NEARBY_STOPS] ShowDistanceScaleToggled: ${event.enabled}")
-                onShowDistanceScaleToggled(event.enabled)
-            }
-
-            is SearchStopUiEvent.ShowCompassToggled -> {
-                log("[NEARBY_STOPS] ShowCompassToggled: ${event.enabled}")
-                onShowCompassToggled(event.enabled)
-            }
-
-            SearchStopUiEvent.SelectOnMapButtonClicked -> {
-                analytics.track(AnalyticsEvent.SelectOnMapButtonClickEvent)
-            }
-
-            SearchStopUiEvent.MapOptionsButtonClicked -> {
-                analytics.track(AnalyticsEvent.MapOptionsOpenedEvent)
-            }
-
             is SearchStopUiEvent.LocationButtonClicked -> {
                 analytics.track(
                     AnalyticsEvent.MapLocationButtonClickEvent(
@@ -256,19 +240,6 @@ class SearchStopViewModel(
                 )
             }
 
-            is SearchStopUiEvent.MapOptionsSaved -> {
-                analytics.track(
-                    AnalyticsEvent.MapOptionsSavedEvent(
-                        radiusKm = event.radiusKm,
-                        transportModes = event.transportModes,
-                        showDistanceScale = event.showDistanceScale,
-                        showCompass = event.showCompass,
-                        radiusChanged = event.radiusChanged,
-                        modesChanged = event.modesChanged,
-                    ),
-                )
-            }
-
             is SearchStopUiEvent.TrackStopSelectedFromMap -> {
                 // A map pick belongs to no query. Recording null clears any session left
                 // pending by an earlier search so the trip that follows is not credited
@@ -281,6 +252,7 @@ class SearchStopViewModel(
                         enabledModesCount = event.enabledModesCount,
                         nearbyStopsCount = event.nearbyStopsCount,
                         hadUserLocation = event.hadUserLocation,
+                        mapSessionId = mapOpen.sessionId,
                     ),
                 )
             }
@@ -662,6 +634,20 @@ class SearchStopViewModel(
         updateUiState { copy(recentStops = recentStops) }
     }
 
+    /**
+     * The Intro's suggested stops as rows, for a rider with no recents and no location. Read once,
+     * from Remote Config or the bundled lists, with no query: each row carries its own id and name.
+     */
+    private fun loadCuratedStops() {
+        val suggested = flag.introSuggestedStops()
+        updateUiState {
+            copy(
+                curatedStartStops = curatedStopRows(SearchStopFieldType.FROM, suggested),
+                curatedEndStops = curatedStopRows(SearchStopFieldType.TO, suggested),
+            )
+        }
+    }
+
     private fun checkMapsAvailability() {
         updateUiState { copy(isMapsAvailable = this@SearchStopViewModel.isMapsAvailable) }
     }
@@ -775,6 +761,7 @@ class SearchStopViewModel(
             AnalyticsEvent.NearbyStopClickEvent(
                 stopId = stop.stopId,
                 transportModesCount = stop.transportModes.size,
+                mapSessionId = mapOpen.sessionId,
             ),
         )
     }
@@ -783,29 +770,13 @@ class SearchStopViewModel(
         updateUiState { MapStateHelper.updateUserLocation(this, location) }
     }
 
-    private fun onSearchRadiusChanged(radiusKm: Double) {
-        updateUiState { MapStateHelper.updateSearchRadius(this, radiusKm) }
-
-        // Invalidate cache and reload with new radius
-        nearbyStopsManager.invalidateCache()
-        loadNearbyStops()
-    }
-
-    private fun onShowDistanceScaleToggled(enabled: Boolean) {
-        updateUiState { MapStateHelper.toggleDistanceScale(this, enabled) }
-    }
-
-    private fun onShowCompassToggled(enabled: Boolean) {
-        updateUiState { MapStateHelper.toggleCompass(this, enabled) }
-    }
-
     // endregion
 
     private fun updateUiState(block: SearchStopState.() -> SearchStopState) {
         _uiState.update(block)
     }
 
-    private companion object {
+    internal companion object {
         /** How long typing must pause before the local stop list is refreshed. */
         const val SEARCH_DEBOUNCE_MS = 100L
 

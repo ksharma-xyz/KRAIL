@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.navigation.entries
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
@@ -14,9 +15,11 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopRoute
 import xyz.ksharma.krail.trip.planner.ui.navigation.StopSelectedResult
 import xyz.ksharma.krail.trip.planner.ui.navigation.TimetableStopChangedResult
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.SavedTripsViewModel
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopScreen
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
  * Renders full-width on every form factor. SearchStopScreen owns its own
@@ -49,18 +52,44 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
             viewModel.onEvent(SearchStopUiEvent.RefreshRecentStopsList)
         }
 
+        // The home's ViewModel, the one the go circle writes the trip and reads the held time from. It is the same
+        // instance Saved Trips holds (see SAVED_TRIPS_VIEW_MODEL_KEY), so nothing is copied across the screens.
+        val savedTripsViewModel: SavedTripsViewModel = koinViewModel(key = SAVED_TRIPS_VIEW_MODEL_KEY)
+
         // Capture ResultEventBus in composable scope for use in callbacks
         // This uses the singleton instance to ensure results reach SavedTrips
         // even in two-pane layouts where screens are in different composition scopes
         val resultEventBus = LocalResultEventBusObj.current
 
+        // A stop the To and From form opens already holding, read once from the route.
+        val presetFrom = remember(key.fromStopJson) { key.fromStopJson?.let(StopItem::fromJsonString) }
+        val presetTo = remember(key.toStopJson) { key.toStopJson?.let(StopItem::fromJsonString) }
+
         SearchStopScreen(
             searchStopState = searchStopState,
             fieldType = key.fieldType,
             editTripLeg = key.editTripLeg,
-            onStopSelect = { stopItem ->
+            labelName = key.labelKey,
+            mapOpen = viewModel.mapOpen,
+            presetFrom = presetFrom,
+            presetTo = presetTo,
+            // The To and From form stays on screen through every pick. Only its go circle leaves, and it opens the
+            // trip results ON TOP of this screen, so back from the results lands here with both stops still
+            // filled. Back from here before the go leaves with nothing, so a half pick is dropped.
+            onTripChosen = { from, to ->
+                startTripFromSearchStop(
+                    from = from,
+                    to = to,
+                    dateTimeSelectionJson = savedTripsViewModel.uiState.value.dateTimeSelectionItem?.toJsonString(),
+                    onEvent = savedTripsViewModel::onEvent,
+                    tripPlannerNavigator = tripPlannerNavigator,
+                )
+            },
+            // A single field (a label, or one leg of a trip) leaves at once with its stop.
+            onStopPicked = { pick ->
+                val stopItem = pick.stop
                 if (key.editTripLeg) {
-                    // Leg-scoped edit from the timetable header — deliver on a
+                    // Leg-scoped edit from the timetable header: deliver on a
                     // dedicated channel so SavedTrips' StopSelectedResult
                     // listener never consumes it.
                     resultEventBus.sendResult(
@@ -71,10 +100,9 @@ internal fun EntryProviderScope<NavKey>.SearchStopEntry(
                         ),
                     )
                 } else {
-                    // Send result using captured bus reference
                     resultEventBus.sendResult(
                         result = StopSelectedResult(
-                            fieldType = key.fieldType,
+                            fieldType = pick.field,
                             stopId = stopItem.stopId,
                             stopName = stopItem.stopName,
                             labelKey = key.labelKey,

@@ -45,8 +45,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,9 +60,9 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_close
 import kotlinx.collections.immutable.ImmutableList
 import org.jetbrains.compose.resources.painterResource
@@ -94,18 +94,15 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import app.krail.taj.resources.Res as TajRes
 
-private const val LAZY_COLUMN_BOTTOM_PADDING = 300
-
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SavedTripsScreen(
     savedTripsState: SavedTripsState,
     modifier: Modifier = Modifier,
     trackedJourney: TrackedJourney? = null,
-    fromButtonClick: () -> Unit = {},
+    // The search bar was tapped: Search Stop opens on the destination field.
     toButtonClick: () -> Unit = {},
     onSavedTripCardClick: (StopItem?, StopItem?) -> Unit = { _, _ -> },
-    onSearchButtonClick: () -> Unit = {},
     aiState: AiSearchInputUiState = AiSearchInputUiState(),
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
     // Read while drawing, not collected: it changes many times a second while a rider speaks.
@@ -120,28 +117,12 @@ fun SavedTripsScreen(
     // entry passes a MapStopSelectionPane (or anything else). Empty slot = blank pane.
     rightPane: @Composable BoxScope.() -> Unit = {},
 ) {
-    // Adaptive search-row presentation:
-    //   - Phone portrait, tablet, foldable-unfolded: SearchStopRow is ALWAYS expanded —
-    //     these form factors have the vertical room, so the full search affordance stays
-    //     front-and-centre.
-    //   - Phone landscape (compact height): vertical space is scarce, so the row collapses
-    //     to a "Plan a trip" button. Tapping it expands the full SearchStopRow; the
-    //     collapse handle returns to the button.
+    // The bottom search bar is one row in every posture, so there is no collapsed form to switch to.
     // See docs/TABLET_FOLDABLE_UX.md §4.
     val adaptiveLayoutInfo = rememberAdaptiveLayoutInfo()
     val dualPane = adaptiveLayoutInfo.shouldShowDualPane
     val isPhoneLandscape = adaptiveLayoutInfo.isPhoneLandscape
     val isTablet = adaptiveLayoutInfo.isTablet
-
-    // Collapse to the button only in phone-landscape; everything else stays expanded.
-    val showPill = isPhoneLandscape
-
-    // Search row expand / from-highlight state — rememberSaveable survives rotation.
-    var isSearchExpanded by rememberSaveable { mutableStateOf(false) }
-    var isFromHighlighted by rememberSaveable { mutableStateOf(false) }
-
-    // When the pill condition isn't met, always show the expanded row.
-    val effectiveIsExpanded = if (showPill) isSearchExpanded else true
 
     // Edit mode for trip cards — long-press enters, Done button exits.
     var editing by rememberSaveable { mutableStateOf(false) }
@@ -167,6 +148,12 @@ fun SavedTripsScreen(
     val expandedMap = rememberSaveable(saver = parkRideExpansionSaver()) {
         mutableStateMapOf<String, Boolean>()
     }
+
+    // The sheet's height as it was last measured, in pixels. The end of the list keeps this much clear so the last card
+    // scrolls fully into view above the sheet, whatever the text size and however many lines the pills wrap onto. It is
+    // kept while the sheet is hidden for reorder mode, so the list does not move when that mode starts. Declared here,
+    // above `body`, for the same reason as the expansion map.
+    var sheetHeightPx by remember { mutableIntStateOf(0) }
 
     val lazyListState = rememberLazyListState()
     val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
@@ -232,7 +219,10 @@ fun SavedTripsScreen(
                     LazyColumn(
                         state = lazyListState,
                         modifier = Modifier.testTag(TripPlannerTestTags.SAVED_TRIPS_LIST),
-                        contentPadding = PaddingValues(bottom = LAZY_COLUMN_BOTTOM_PADDING.dp),
+                        contentPadding = PaddingValues(
+                            bottom = with(LocalDensity.current) { sheetHeightPx.toDp() } +
+                                KrailTheme.dimensions.spacingM,
+                        ),
                     ) {
                         savedTripsListBody(
                             savedTripsState = savedTripsState,
@@ -250,42 +240,17 @@ fun SavedTripsScreen(
                     }
                 }
 
-                // Hold the bottom row off-screen until the saved-trips load has emitted at
-                // least once. Without this gate, the row renders against an empty
-                // savedTrips list (pill condition false → expanded), then flips to the
-                // pill once the DB lands — a visible flash of the wrong UI.
-                //
-                // Reveal is a plain slide-up + fade for both the collapsed pill and the
-                // expanded search row. The pill's "alive" pulse lives inside CollapsedPill
-                // itself — keeping the row-level reveal calm avoids stacking two bouncy
-                // animations (parent scale + child pulse) on top of each other.
+                // Hold the sheet off-screen until the saved-trips load has emitted at least once, so it
+                // slides in with the list and not ahead of it. It holds the Home and Work pills above the
+                // search bar and goes, pills and all, while the cards are being reordered.
                 SavedTripsBottomSearchRow(
                     visible = !savedTripsState.isSavedTripsLoading && !editing,
-                    fromStopItem = savedTripsState.fromStop,
-                    toStopItem = savedTripsState.toStop,
-                    isExpanded = effectiveIsExpanded,
-                    isFromHighlighted = isFromHighlighted,
-                    showPill = showPill,
-                    onExpandRequest = {
-                        isSearchExpanded = true
-                        isFromHighlighted = false
-                    },
-                    onCollapseRequest = {
-                        isSearchExpanded = false
-                        isFromHighlighted = false
-                    },
-                    fromButtonClick = {
-                        isFromHighlighted = false
-                        fromButtonClick()
-                    },
-                    toButtonClick = toButtonClick,
-                    onSearchButtonClick = { onSearchButtonClick() },
-                    onReverseButtonClick = { onEvent(SavedTripUiEvent.ReverseStopClick) },
+                    stopLabels = savedTripsState.stopLabels,
+                    onLabelClick = { labelKey -> onEvent(SavedTripUiEvent.LabelChipClick(labelKey)) },
+                    onSearchBarClick = toButtonClick,
+                    onSheetHeightChanged = { sheetHeightPx = it },
                     onAiEvent = onAiEvent,
                     isAiSearchAvailable = aiState.isWayInAvailable,
-                    isAiHandoffSettling = askKrailFocus.handoffSpin,
-                    dateTimeSelectionText = savedTripsState.dateTimeSelectionItem?.toDateTimeText(),
-                    onDateTimeSelectionClear = { onEvent(SavedTripUiEvent.DateTimeSelectionChanged(null)) },
                     modifier = Modifier.align(Alignment.BottomCenter),
                 )
             }
@@ -405,27 +370,6 @@ internal fun LazyListScope.savedTripsContent(
     stickyHeader(key = "saved_trips_title") {
         SavedTripsTitle {
             Text(text = "Saved Trips")
-        }
-    }
-
-    item(key = "onboarding_reorder_tip") {
-        val dim = KrailTheme.dimensions
-        AnimatedVisibility(
-            visible = !savedTripsState.hasSeenReorderTip && !editing,
-            enter = expandVertically(animationSpec = tween(durationMillis = 300)) +
-                fadeIn(animationSpec = tween(durationMillis = 250)),
-            exit = shrinkVertically(animationSpec = tween(durationMillis = 200)) +
-                fadeOut(animationSpec = tween(durationMillis = 150)),
-        ) {
-            LaunchedEffect(Unit) { onEvent(SavedTripUiEvent.MarkReorderTipSeen) }
-            Text(
-                text = "💡 Long press any trip to reorder or remove it.",
-                style = KrailTheme.typography.bodySmall,
-                color = KrailTheme.colors.softLabel,
-                modifier = Modifier
-                    .padding(horizontal = dim.pageHorizontalPadding)
-                    .padding(bottom = dim.spacingM),
-            )
         }
     }
 

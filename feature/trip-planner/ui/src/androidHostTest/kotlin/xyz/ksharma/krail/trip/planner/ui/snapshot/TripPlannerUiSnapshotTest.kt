@@ -40,9 +40,31 @@ class TripPlannerUiSnapshotTest : BaseSnapshotTest() {
         "PreviewDisruptionBannerListPane",
         "PreviewDisruptionBannerDuo",
         "PreviewDisruptionBannerTablet",
+        "PreviewSavedTripsColumnWide",
+        "PreviewToFromBlockWide",
+        "PreviewHomeChipRowWide",
         // Recorded on a 320dp canvas by TripPlannerUiSnapshotTestNarrow.
         "PreviewDisruptionBannerNarrow",
         "PreviewDisruptionBannerNarrowLongText",
+        "PreviewSavedTripsColumnNarrow",
+        "PreviewToFromBlockNarrow",
+        "PreviewHomeChipRowNarrow",
+        // Recorded on a 320dp canvas and on a tablet sized canvas by the two Intro snapshot classes.
+        "PreviewIntroParkRideNarrowAsk",
+        "PreviewIntroParkRideNarrowCardContent",
+        "PreviewIntroParkRideNarrowAdded",
+        "PreviewIntroThemeNarrowNoneChosen",
+        "PreviewIntroThemeNarrowMetroChosen",
+        "PreviewIntroThemeNarrowBusChosen",
+        "PreviewIntroParkRideWideCardContent",
+        "PreviewIntroDestinationNarrowSuggestions",
+        "PreviewIntroDestinationNarrowSelected",
+        "PreviewIntroDestinationNarrowTyped",
+        "PreviewIntroDestinationNarrowNoMatch",
+        "PreviewIntroOriginNarrowNearby",
+        "PreviewIntroConfirmNarrowLongNames",
+        "PreviewFinaleNarrowEntering",
+        "PreviewFinaleNarrowHold",
     )
 
     @Test

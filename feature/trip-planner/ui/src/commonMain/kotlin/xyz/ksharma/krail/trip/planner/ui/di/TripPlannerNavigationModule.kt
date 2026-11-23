@@ -4,6 +4,7 @@ import org.koin.dsl.module
 import xyz.ksharma.krail.core.navigation.EntryBuilderDescriptor
 import xyz.ksharma.krail.core.navigation.EntryBuilderQualifiers
 import xyz.ksharma.krail.core.navigation.NavigatorBase
+import xyz.ksharma.krail.trip.planner.ui.intro.finale.IntroFinaleSignal
 import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigatorImpl
 import xyz.ksharma.krail.trip.planner.ui.navigation.entries.TripPlannerEntries
 
@@ -17,6 +18,9 @@ import xyz.ksharma.krail.trip.planner.ui.navigation.entries.TripPlannerEntries
  * It only depends on NavigatorBase from core:navigation, avoiding circular dependencies.
  */
 val tripPlannerNavigationModule = module {
+    // The finale's signal between the Intro and the host at the app root. In memory, one for the app.
+    single { IntroFinaleSignal() }
+
     // Provide Trip Planner entry builder
     factory<EntryBuilderDescriptor>(qualifier = EntryBuilderQualifiers.TRIP_PLANNER) {
         EntryBuilderDescriptor(

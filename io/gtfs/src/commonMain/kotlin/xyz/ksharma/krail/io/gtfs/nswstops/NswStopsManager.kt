@@ -12,16 +12,18 @@ import xyz.ksharma.krail.io.gtfs.nswstops.StopsManager.Companion.MINIMUM_REQUIRE
 import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.sandook.SandookPreferences
 import xyz.ksharma.krail.sandook.SandookPreferences.Companion.NSW_STOPS_VERSION
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.TimeSource
 
 internal class NswStopsManager(
     private val ioDispatcher: CoroutineDispatcher,
     private val sandook: Sandook,
     private val preferences: SandookPreferences,
+    // The bundled file is the only thing a test cannot reach, so it is the one seam.
+    private val readStopsBytes: suspend () -> ByteArray = { Res.readBytes("files/NSW_STOPS.pb") },
 ) : StopsManager {
 
-    // insertStops() is invoked from both RealAppStart and IntroViewModel and they can run
+    // insertStops() is invoked from both RealAppStart and AppDataReadiness and they can run
     // concurrently on first launch. Without this lock both pass shouldInsertNswStops() (the stored
     // version is only written after the transaction commits) and each runs the full ~37k-row
     // insert, doubling the work and the time the DB write lock is held. Serialising here means the
@@ -32,7 +34,7 @@ internal class NswStopsManager(
         log("NswStopsManager Initialized with NSW Stops version: $NSW_STOPS_VERSION: $this")
     }
 
-    override suspend fun insertStops() = runCatching {
+    override suspend fun insertStops(): Result<Unit> = runCatching {
         insertMutex.withLock {
             log("NswStopsManager Inserting NSW Stops data if not already inserted: $this")
             if (shouldInsertNswStops()) {
@@ -41,24 +43,19 @@ internal class NswStopsManager(
                 log("NswStopsManager Stops already inserted in the database.")
             }
         }
-    }.getOrElse { error ->
-        log("NswStopsManager Error inserting stops: $error")
+    }.onFailure { error ->
+        if (error is CancellationException) throw error
+        logError("NswStopsManager Error inserting stops: ${error.message}")
     }
 
     private suspend fun insertNswStops() {
-        val insertResult = parseAndInsertStops()
-        if (insertResult) {
-            log("[NswStopsManager] NswStops parsed and inserted successfully.")
-            preferences.setLong(
-                key = SandookPreferences.KEY_NSW_STOPS_VERSION,
-                value = NSW_STOPS_VERSION,
-            )
-            log("NswStopsManager NswStops inserted in the database, new version: $NSW_STOPS_VERSION.")
-        } else {
-            logError(
-                message = "NswStopsManager Failed to insert NSW Stops into the database.",
-            )
-        }
+        parseAndInsertStops()
+        log("[NswStopsManager] NswStops parsed and inserted successfully.")
+        preferences.setLong(
+            key = SandookPreferences.KEY_NSW_STOPS_VERSION,
+            value = NSW_STOPS_VERSION,
+        )
+        log("NswStopsManager NswStops inserted in the database, new version: $NSW_STOPS_VERSION.")
     }
 
     private fun shouldInsertNswStops(): Boolean {
@@ -69,40 +66,39 @@ internal class NswStopsManager(
     }
 
     /**
-     * Reads and decodes the NSW stops from a protobuf file, then inserts the stops into the database.
+     * Reads and decodes the NSW stops from a protobuf file, then replaces the stored rows in one
+     * transaction. The file is read and decoded first so the write lock is held only for the insert.
      */
-    @OptIn(ExperimentalTime::class)
-    private suspend fun parseAndInsertStops(): Boolean = withContext(ioDispatcher) {
-        val totalStartTime = Clock.System.now().toEpochMilliseconds()
+    private suspend fun parseAndInsertStops() = withContext(ioDispatcher) {
+        val totalMark = TimeSource.Monotonic.markNow()
 
-        sandook.clearNswStopsTable()
-        sandook.clearNswProductClassTable()
+        val readMark = TimeSource.Monotonic.markNow()
+        val byteArray = readStopsBytes()
+        log("NswStopsManager ⏱️ File read time: ${readMark.elapsedNow().inWholeMilliseconds}ms")
 
-        val readStartTime = Clock.System.now().toEpochMilliseconds()
-        val byteArray = Res.readBytes("files/NSW_STOPS.pb")
-        val readTime = Clock.System.now().toEpochMilliseconds() - readStartTime
-        log("NswStopsManager ⏱️ File read time: ${readTime}ms")
-
-        val decodeStartTime = Clock.System.now().toEpochMilliseconds()
+        val decodeMark = TimeSource.Monotonic.markNow()
         val decodedStops = NswStopList.ADAPTER.decode(byteArray)
-        val decodeTime = Clock.System.now().toEpochMilliseconds() - decodeStartTime
-        log("NswStopsManager ⏱️ Proto decode time: ${decodeTime}ms")
+        log("NswStopsManager ⏱️ Proto decode time: ${decodeMark.elapsedNow().inWholeMilliseconds}ms")
 
         log("Start inserting stops. Currently ${sandook.stopsCount()} stops in the database")
 
-        val insertStartTime = Clock.System.now().toEpochMilliseconds()
-        val result = insertStopsInTransaction(decodedStops)
-        val insertTime = Clock.System.now().toEpochMilliseconds() - insertStartTime
-
-        val totalTime = Clock.System.now().toEpochMilliseconds() - totalStartTime
-        log("NswStopsManager ⏱️ Insert time: ${insertTime}ms")
-        log("NswStopsManager ⏱️ TOTAL time: ${totalTime}ms (${decodedStops.nswStops.size} stops)")
-
-        result
+        val insertMark = TimeSource.Monotonic.markNow()
+        replaceStopsInTransaction(decodedStops)
+        log("NswStopsManager ⏱️ Insert time: ${insertMark.elapsedNow().inWholeMilliseconds}ms")
+        log(
+            "NswStopsManager ⏱️ TOTAL time: ${totalMark.elapsedNow().inWholeMilliseconds}ms " +
+                "(${decodedStops.nswStops.size} stops)",
+        )
     }
 
-    private suspend fun insertStopsInTransaction(decoded: NswStopList) = withContext(ioDispatcher) {
+    /**
+     * The clear is inside the transaction on purpose: committed on its own it empties the table
+     * for the whole insert, and a failed insert would leave it empty for good.
+     */
+    private fun replaceStopsInTransaction(decoded: NswStopList) {
         sandook.insertTransaction {
+            sandook.clearNswStopsTable()
+            sandook.clearNswProductClassTable()
             decoded.nswStops.forEach { nswStop ->
                 sandook.insertNswStop(
                     stopId = nswStop.stopId,
@@ -119,7 +115,6 @@ internal class NswStopsManager(
                 }
             }
             log("Inserted ${decoded.nswStops.size} stops into the database.")
-            true
         }
     }
 }

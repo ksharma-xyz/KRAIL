@@ -23,9 +23,13 @@ internal class RealRemoteConfig(
 
     override fun setup() {
         coroutineScope.launchWithExceptionHandler<RealRemoteConfig>(defaultDispatcher) {
+            // The bundled defaults go in before the fetch. A flag read while the fetch is still running, or after it
+            // has failed (a first launch with no network), then gets its bundled default and not an empty string. With
+            // the defaults after the fetch, a fresh install read every flag as empty until the fetch finished, and a
+            // failed fetch skipped the defaults altogether.
+            setDefaultConfig()
             remoteConfig.fetchAndActivate()
             setDebugFetchInterval()
-            setDefaultConfig()
         }
     }
 

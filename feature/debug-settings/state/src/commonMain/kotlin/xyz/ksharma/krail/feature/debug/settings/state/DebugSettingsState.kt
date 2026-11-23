@@ -32,9 +32,9 @@ data class DebugSettingsState(
         // like production until a developer flips this row.
         const val DEFAULT_ALERT_SUMMARY_ENABLED: Boolean = false
 
-        // Matches AI_SEARCH_INPUT_ENABLED's RC default (off) so debug builds behave
-        // like production until a developer flips this row.
-        const val DEFAULT_AI_SEARCH_INPUT_ENABLED: Boolean = false
+        // On by default in debug builds so Ask KRAIL is always testable on a capable phone.
+        // Release builds still follow the AI_SEARCH_INPUT_ENABLED Remote Config flag.
+        const val DEFAULT_AI_SEARCH_INPUT_ENABLED: Boolean = true
 
         // Matches CROWDING_CARRIAGES_IN_RESULTS_ENABLED's RC default so debug builds behave like production
         // until a developer flips this row.

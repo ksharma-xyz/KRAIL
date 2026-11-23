@@ -32,7 +32,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_heart
-import krail.feature.trip_planner.ui.generated.resources.ic_info
 import krail.feature.trip_planner.ui.generated.resources.ic_paint
 import krail.feature.trip_planner.ui.generated.resources.ic_pen
 import krail.feature.trip_planner.ui.generated.resources.ic_star
@@ -57,7 +56,6 @@ fun SettingsScreen(
     onReferFriendClick: () -> Unit = {},
     onRateAppClick: () -> Unit = {},
     onAboutUsClick: () -> Unit = {},
-    onIntroClick: () -> Unit = {},
     onDebugConfigClick: () -> Unit = {},
 ) {
     val dim = KrailTheme.dimensions
@@ -121,15 +119,6 @@ fun SettingsScreen(
                         modifier = Modifier
                             .padding(top = dim.spacingXXXL, bottom = dim.spacingXL)
                             .padding(horizontal = SECTION_TITLE_HORIZONTAL_PADDING),
-                    )
-                }
-
-                item(key = "settings-how-to") {
-                    SettingsItem(
-                        icon = painterResource(Res.drawable.ic_info),
-                        text = "How to KRAIL?",
-                        modifier = Modifier.testTag(TripPlannerTestTags.SETTINGS_ITEM_HOW_TO),
-                        onClick = onIntroClick,
                     )
                 }
 

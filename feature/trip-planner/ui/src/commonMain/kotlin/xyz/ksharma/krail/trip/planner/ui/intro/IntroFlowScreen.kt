@@ -87,6 +87,8 @@ internal fun IntroFlowScreen(
 
     Box(
         modifier = modifier
+            // A focus the host hands to the screen stays on the screen, and never falls to the first control (F3).
+            .introFocusHome()
             .testTag(TripPlannerTestTags.INTRO_SCREEN)
             .fillMaxSize()
             .background(KrailTheme.colors.surface)

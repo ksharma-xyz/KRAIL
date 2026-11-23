@@ -1,22 +1,16 @@
 package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -25,6 +19,7 @@ import xyz.ksharma.krail.taj.components.OutlinedButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.SetLabelPill
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
@@ -34,35 +29,13 @@ internal fun labelPillsFor(stopLabels: List<StopLabel>): ImmutableList<HomeChip.
     homeChipsFor(stopLabels).filterIsInstance<HomeChip.Label>().toImmutableList()
 
 /**
- * The first row of the Saved Trips list, directly under the title bar. It scrolls away with the list, and it is
- * gone while the cards are being reordered, so a tap cannot leave that mode.
- */
-internal fun LazyListScope.labelPillsItem(
-    stopLabels: List<StopLabel>,
-    visible: Boolean,
-    onLabelClick: (labelKey: String) -> Unit,
-) {
-    val pills = labelPillsFor(stopLabels)
-    if (pills.isEmpty()) return
-    item(key = "label_pills") {
-        AnimatedVisibility(
-            visible = visible,
-            enter = expandVertically(animationSpec = tween(durationMillis = 250)) +
-                fadeIn(animationSpec = tween(durationMillis = 200)),
-            exit = shrinkVertically(animationSpec = tween(durationMillis = 200)) +
-                fadeOut(animationSpec = tween(durationMillis = 150)),
-        ) {
-            HomeLabelPills(pills = pills, onLabelClick = onLabelClick)
-        }
-    }
-}
-
-/**
- * Home and Work as a wrapping row of whole pills. A label with no stop is taj's [OutlinedButton] at its chip size,
- * in taj's own default colours, reading "+ Home" ("+ Work", or "+ " and the name for a label the rider made). A
- * label with a stop is the in-app [SetLabelPill], the near black one with its icon and name, so the rider sees
- * the pill change when a label is saved. Both are the same height at every text size, so the row does not
- * jump when a label is saved, and each has a 48 dp touch target.
+ * Home and Work as a wrapping row of whole pills, drawn inside [HomeSearchSheet] directly above the search bar, so
+ * the row is as wide as the sheet's content and the sheet gives the page's side inset. A label with no stop is taj's
+ * [OutlinedButton] at its chip size, reading "+ Home" ("+ Work", or "+ " and the name for a label the rider made),
+ * in colours that read on the sheet ([homeUnsetPillColors]). A label with a stop is the in-app [SetLabelPill], the near
+ * black one with its icon and name and its hairline, so the rider sees the pill change when a label is saved. Both
+ * are the same height at every text size, so the row does not jump when a label is saved, and each has a 48 dp touch
+ * target.
  *
  * Pills are whole items in a [FlowRow], 8 dp apart: when the line is full the next pill goes onto the next line.
  * Nothing scrolls sideways and nothing is shrunk or clipped. A pill's text is one line, and if one pill alone is
@@ -79,8 +52,7 @@ internal fun HomeLabelPills(
     FlowRow(
         modifier = modifier
             .testTag(TripPlannerTestTags.SAVED_TRIPS_LABEL_PILLS)
-            .fillMaxWidth()
-            .padding(horizontal = dim.pageHorizontalPadding),
+            .fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
         verticalArrangement = Arrangement.spacedBy(dim.spacingM),
         itemVerticalAlignment = Alignment.CenterVertically,
@@ -111,9 +83,23 @@ private fun HomeLabelPill(label: StopLabel, onClick: () -> Unit) {
         OutlinedButton(
             onClick = onClick,
             modifier = Modifier.chipTarget(tag = tag, onClickLabel = "Set ${label.label}"),
+            colors = homeUnsetPillColors(),
             dimensions = ButtonDefaults.chipButtonSize(),
         ) {
             Text(text = "+ ${label.label}", maxLines = 1)
         }
     }
 }
+
+/**
+ * The unset pill's colours on the theme coloured sheet, passed through [OutlinedButton]'s own `colors` parameter and
+ * nothing else: no fill, and the text and the outline in [getForegroundColor] of the sheet's colour, which is near
+ * black on all four transport themes. taj's default outlined colours are the page's text colour, which is near black
+ * in light mode and cream in dark mode, and the cream is only 2.21 to 2.55 to 1 on the Bus, Train and Ferry sheets
+ * and 3.29 on Metro. This pair is 5.92 to 8.80 to 1 in both modes (`HomeLabelPillColorsTest`).
+ */
+@Composable
+internal fun homeUnsetPillColors(): ButtonColors = ButtonDefaults.buttonColors(
+    customContainerColor = Color.Transparent,
+    customContentColor = getForegroundColor(homeSheetColor()),
+)

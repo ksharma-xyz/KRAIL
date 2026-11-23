@@ -47,6 +47,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,9 +61,9 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_close
 import kotlinx.collections.immutable.ImmutableList
 import org.jetbrains.compose.resources.painterResource
@@ -93,13 +94,6 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import app.krail.taj.resources.Res as TajRes
-
-// The bottom of the list is clear of the sheet that holds the search bar, so the last card scrolls fully into view.
-// The sheet is 96 dp tall (28 above the 48 dp bar, 20 below) plus the navigation bar inset, which is 24 dp or less
-// with gesture navigation and 48 dp with the three button bar. 96 + 48 = 144 is the smallest figure that clears
-// the sheet on both, and `main` used 300 for the taller two row sheet. The bar is a fixed 48 dp, so none of this
-// moves with the text size: at 320 dp and 200 percent the sheet is the same height.
-internal const val LAZY_COLUMN_BOTTOM_PADDING = 144
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -155,6 +149,12 @@ fun SavedTripsScreen(
     val expandedMap = rememberSaveable(saver = parkRideExpansionSaver()) {
         mutableStateMapOf<String, Boolean>()
     }
+
+    // The sheet's height as it was last measured, in pixels. The end of the list keeps this much clear so the last card
+    // scrolls fully into view above the sheet, whatever the text size and however many lines the pills wrap onto. It is
+    // kept while the sheet is hidden for reorder mode, so the list does not move when that mode starts. Declared here,
+    // above `body`, for the same reason as the expansion map.
+    var sheetHeightPx by remember { mutableIntStateOf(0) }
 
     val lazyListState = rememberLazyListState()
     val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
@@ -220,7 +220,10 @@ fun SavedTripsScreen(
                     LazyColumn(
                         state = lazyListState,
                         modifier = Modifier.testTag(TripPlannerTestTags.SAVED_TRIPS_LIST),
-                        contentPadding = PaddingValues(bottom = LAZY_COLUMN_BOTTOM_PADDING.dp),
+                        contentPadding = PaddingValues(
+                            bottom = with(LocalDensity.current) { sheetHeightPx.toDp() } +
+                                KrailTheme.dimensions.spacingM,
+                        ),
                     ) {
                         savedTripsListBody(
                             savedTripsState = savedTripsState,
@@ -238,11 +241,15 @@ fun SavedTripsScreen(
                     }
                 }
 
-                // Hold the bottom bar off-screen until the saved-trips load has emitted at
-                // least once, so it slides in with the list and not ahead of it.
+                // Hold the sheet off-screen until the saved-trips load has emitted at least once, so it
+                // slides in with the list and not ahead of it. It holds the Home and Work pills above the
+                // search bar and goes, pills and all, while the cards are being reordered.
                 SavedTripsBottomSearchRow(
                     visible = !savedTripsState.isSavedTripsLoading && !editing,
+                    stopLabels = savedTripsState.stopLabels,
+                    onLabelClick = { labelKey -> onEvent(SavedTripUiEvent.LabelChipClick(labelKey)) },
                     onSearchBarClick = toButtonClick,
+                    onSheetHeightChanged = { sheetHeightPx = it },
                     onAiEvent = onAiEvent,
                     isAiSearchAvailable = aiState.isWayInAvailable,
                     modifier = Modifier.align(Alignment.BottomCenter),

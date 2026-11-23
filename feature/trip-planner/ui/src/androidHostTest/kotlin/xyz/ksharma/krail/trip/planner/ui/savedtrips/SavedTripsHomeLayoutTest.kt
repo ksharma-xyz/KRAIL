@@ -5,8 +5,11 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -22,7 +25,9 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -57,9 +62,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * The Saved Trips screen as the classic home: the Home and Work pills are the first row of the list, the one
- * search bar is pinned at the bottom with the microphone inside it, in the theme coloured sheet `main` drew the
- * search row in, and the map, the Park & Ride tiles, the notices and the suggestion are not on it.
+ * The Saved Trips screen as the classic home: the theme coloured sheet `main` drew the search row in is pinned at the
+ * bottom and holds, from the top, the Home and Work pills, an 8 dp gap and the one search bar with the microphone
+ * inside it. The list is main's list with no pills in it, and the map, the Park & Ride tiles, the notices and the
+ * suggestion are not on the screen.
  *
  * Each test runs in a window of its own size (density 1, so a dp is a pixel) and reads where the real nodes
  * landed.
@@ -77,37 +83,78 @@ class SavedTripsHomeLayoutTest {
     private val aiEvents = mutableListOf<AiSearchInputEvent>()
     private var toClicks = 0
 
-    // region the pills, the first row of the list
+    // region the pills, in the sheet above the bar
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `the pills are the first row of the list, directly under the title bar`() {
+    fun `the pills are in the sheet directly above the bar, 8 dp apart, on the sheet's own side inset`() {
         setScreen()
 
-        val list = bounds(TripPlannerTestTags.SAVED_TRIPS_LIST)
+        val sheet = bounds(TripPlannerTestTags.SAVED_TRIPS_BOTTOM_SHEET)
         val pills = bounds(TripPlannerTestTags.SAVED_TRIPS_LABEL_PILLS)
-        val settings = bounds(TripPlannerTestTags.SAVED_TRIPS_ACTION_SETTINGS)
+        val bar = bounds(TripPlannerTestTags.SEARCH_ROW_TO)
 
-        assertNear("the pill row starts where the list starts", list.top, pills.top)
-        assertTrue(settings.bottom <= pills.top + 1.dp, "The title bar $settings ends above the pills $pills.")
+        assertNear("the pill row starts 28 dp under the sheet's top, as the bar did", SHEET_TOP_PADDING, pills.top - sheet.top)
         assertNear("the pill row is one 48 dp row", 48.dp, pills.height)
-        assertTrue(
-            bounds(TripPlannerTestTags.savedTripCard(TRIPS.first().tripId)).top >= pills.bottom,
-            "The first trip is under the pills.",
-        )
+        assertNear("the gap from the pill row to the bar", PILLS_GAP, bar.top - pills.bottom)
+        assertNear("the pill row starts on the page inset", PAGE_PADDING, pills.left)
+        assertNear("the pill row ends on the page inset", PHONE_WIDTH - PAGE_PADDING, pills.right)
+        assertNear("the bar is as wide as the pill row", pills.width, bar.width)
     }
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `the pills scroll away with the list and the title bar stays`() {
-        setScreen(trips = manyTrips())
+    fun `the pills are not in the list, and the list is main's, its first row the Saved Trips title`() {
+        setScreen()
 
-        composeRule.onNodeWithTag(TripPlannerTestTags.SAVED_TRIPS_LABEL_PILLS).assertIsDisplayed()
+        composeRule.onNode(
+            hasTestTag(TripPlannerTestTags.SAVED_TRIPS_LABEL_PILLS) and
+                hasAnyAncestor(hasTestTag(TripPlannerTestTags.SAVED_TRIPS_LIST)),
+            useUnmergedTree = true,
+        ).assertDoesNotExist()
+        composeRule.onNode(
+            hasTestTag(TripPlannerTestTags.homeLabelChip("Home")) and
+                hasAnyAncestor(hasTestTag(TripPlannerTestTags.SAVED_TRIPS_LIST)),
+            useUnmergedTree = true,
+        ).assertDoesNotExist()
+        val list = bounds(TripPlannerTestTags.SAVED_TRIPS_LIST)
+        val title = textBounds("Saved Trips")
+        assertTrue(title.top >= list.top && title.top < list.top + 48.dp, "The list opens with its title $title in $list.")
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `the pills stay in the sheet while the list scrolls and the title bar stays`() {
+        setScreen(trips = manyTrips())
+        val before = bounds(TripPlannerTestTags.SAVED_TRIPS_LABEL_PILLS)
+
         composeRule.onNodeWithTag(TripPlannerTestTags.SAVED_TRIPS_LIST).performScrollToIndex(MANY - 1)
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag(TripPlannerTestTags.SAVED_TRIPS_LABEL_PILLS).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SAVED_TRIPS_LABEL_PILLS).assertIsDisplayed()
+        assertNear("the pills did not move", before.top, bounds(TripPlannerTestTags.SAVED_TRIPS_LABEL_PILLS).top)
         composeRule.onNodeWithTag(TripPlannerTestTags.SAVED_TRIPS_ACTION_SETTINGS).assertIsDisplayed()
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `while the cards are reordered the sheet goes, pills with it, and the list keeps its end clearance`() {
+        setScreen(trips = manyTrips())
+        composeRule.onNodeWithTag(TripPlannerTestTags.SAVED_TRIPS_LABEL_PILLS).assertIsDisplayed()
+        val sheetHeight = bounds(TripPlannerTestTags.SAVED_TRIPS_BOTTOM_SHEET).height
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.savedTripCard(manyTrips().first().tripId))
+            .performTouchInput { longClick() }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SAVED_TRIPS_ACTION_DONE).assertExists()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SAVED_TRIPS_LABEL_PILLS).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SAVED_TRIPS_BOTTOM_SHEET).assertDoesNotExist()
+        scrollToTheEnd()
+        assertTrue(
+            textBounds(PARK_RIDE_EMPTY_LINE).bottom <= PHONE_HEIGHT - sheetHeight,
+            "The end of the list keeps the $sheetHeight the sheet had, so it does not jump when reorder starts.",
+        )
     }
 
     @Test
@@ -286,44 +333,118 @@ class SavedTripsHomeLayoutTest {
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `the bar sits in a 96 dp sheet at the bottom, full width, with 28 dp above the bar and 20 dp below`() {
+    fun `the sheet is 152 dp, 28 above the pills, the 48 dp pill row, 8, the 48 dp bar and 20 below`() {
         setScreen()
 
         val sheet = bounds(TripPlannerTestTags.SAVED_TRIPS_BOTTOM_SHEET)
         val bar = bounds(TripPlannerTestTags.SEARCH_ROW_TO)
-        assertNear("sheet height", SHEET_HEIGHT, sheet.height)
+        assertNear("sheet height", SHEET_HEIGHT_WITH_PILLS, sheet.height)
         assertNear("sheet left", 0.dp, sheet.left)
         assertNear("sheet width", PHONE_WIDTH, sheet.width)
         assertNear("sheet bottom", PHONE_HEIGHT, sheet.bottom)
+        assertNear("space below the bar", SHEET_BOTTOM_PADDING, sheet.bottom - bar.bottom)
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `until the labels have loaded the sheet is main's 96 dp with the bar 28 dp from its top and no gap above it`() {
+        setScreen(labels = persistentListOf())
+
+        val sheet = bounds(TripPlannerTestTags.SAVED_TRIPS_BOTTOM_SHEET)
+        val bar = bounds(TripPlannerTestTags.SEARCH_ROW_TO)
+        assertNear("sheet height", SHEET_HEIGHT, sheet.height)
         assertNear("space above the bar", SHEET_TOP_PADDING, bar.top - sheet.top)
         assertNear("space below the bar", SHEET_BOTTOM_PADDING, sheet.bottom - bar.bottom)
     }
 
     @Test
     @Config(qualifiers = NARROW)
-    fun `at 320 dp and 200 percent the sheet is the same 96 dp, because the bar is a fixed 48 dp`() {
+    fun `at 320 dp and 200 percent the sheet is as tall as its parts, however many lines the pills take`() {
         setScreen(fontScale = 2f)
 
-        assertNear("sheet height", SHEET_HEIGHT, bounds(TripPlannerTestTags.SAVED_TRIPS_BOTTOM_SHEET).height)
+        val sheet = bounds(TripPlannerTestTags.SAVED_TRIPS_BOTTOM_SHEET)
+        val pills = bounds(TripPlannerTestTags.SAVED_TRIPS_LABEL_PILLS)
+        val bar = bounds(TripPlannerTestTags.SEARCH_ROW_TO)
+        assertNear("the bar is still 48 dp", 48.dp, bar.height)
+        assertNear("the sheet is its padding, the pills, the gap and the bar", SHEET_TOP_PADDING + pills.height + PILLS_GAP + 48.dp + SHEET_BOTTOM_PADDING, sheet.height)
+        assertNear("the gap from the pills to the bar", PILLS_GAP, bar.top - pills.bottom)
     }
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `the list's bottom padding clears the sheet and the tallest navigation bar, so the last card scrolls fully into view`() {
-        assertTrue(
-            LAZY_COLUMN_BOTTOM_PADDING.dp >= SHEET_HEIGHT + THREE_BUTTON_NAV_BAR,
-            "$LAZY_COLUMN_BOTTOM_PADDING dp clears a $SHEET_HEIGHT sheet and a $THREE_BUTTON_NAV_BAR navigation bar.",
-        )
+    fun `the end of the list clears the sheet at 100 percent, so the last card scrolls fully into view`() {
         setScreen(trips = manyTrips())
 
+        assertLastRowClearsSheet()
+    }
+
+    @Test
+    @Config(qualifiers = NARROW)
+    fun `the end of the list clears the sheet at 320 dp and 200 percent`() {
+        setScreen(fontScale = 2f, trips = manyTrips(), ai = AiSearchInputUiState(isFeatureEnabled = true))
+
+        assertLastRowClearsSheet()
+    }
+
+    @Test
+    @Config(qualifiers = NARROW)
+    fun `the end of the list clears the sheet at 320 dp and 200 percent when the pills have not loaded`() {
+        setScreen(fontScale = 2f, trips = manyTrips(), labels = persistentListOf())
+
+        assertLastRowClearsSheet()
+    }
+
+    @Test
+    @Config(qualifiers = NARROW)
+    fun `when the text grows past what the pills fit on one line the sheet grows and the end of the list follows`() {
+        val fontScale = mutableFloatStateOf(1f)
+        setScreen(trips = manyTrips(), fontScaleState = fontScale)
+        val sheetAt100 = bounds(TripPlannerTestTags.SAVED_TRIPS_BOTTOM_SHEET).height
+        assertLastRowClearsSheet()
+
+        fontScale.floatValue = LARGEST_TEXT
+        composeRule.waitForIdle()
+        val sheetAtLargest = bounds(TripPlannerTestTags.SAVED_TRIPS_BOTTOM_SHEET).height
+
+        assertTrue(
+            sheetAtLargest >= sheetAt100 + 48.dp,
+            "The pills wrap onto a second line at $LARGEST_TEXT times text: the sheet is $sheetAtLargest, it was $sheetAt100.",
+        )
+        assertLastRowClearsSheet()
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `when the labels load after the sheet is up the sheet grows by the pill row and the end of the list follows`() {
+        val labels = mutableStateOf<ImmutableList<StopLabel>>(persistentListOf())
+        setScreen(trips = manyTrips(), labelsState = labels)
+        assertNear("sheet height before the labels", SHEET_HEIGHT, bounds(TripPlannerTestTags.SAVED_TRIPS_BOTTOM_SHEET).height)
+        assertLastRowClearsSheet()
+
+        labels.value = LABELS
+        composeRule.waitForIdle()
+
+        assertNear("sheet height with the pills", SHEET_HEIGHT_WITH_PILLS, bounds(TripPlannerTestTags.SAVED_TRIPS_BOTTOM_SHEET).height)
+        assertLastRowClearsSheet()
+    }
+
+    private fun scrollToTheEnd() {
         val list = composeRule.onNodeWithTag(TripPlannerTestTags.SAVED_TRIPS_LIST)
         val itemCount = list.fetchSemanticsNode().config[SemanticsProperties.CollectionInfo].rowCount
         list.performScrollToIndex(itemCount - 1)
         composeRule.waitForIdle()
+    }
+
+    /** The last row of the list, scrolled to, ends above the top of the sheet, whatever the sheet is made of. */
+    private fun assertLastRowClearsSheet() {
+        scrollToTheEnd()
 
         val last = textBounds(PARK_RIDE_EMPTY_LINE)
         val sheet = bounds(TripPlannerTestTags.SAVED_TRIPS_BOTTOM_SHEET)
         assertTrue(last.bottom <= sheet.top, "The last row $last ends above the sheet $sheet.")
+        // Exactly the sheet's measured height and the 8 dp gap are kept, under the item's own 16 dp of trailing space:
+        // not a constant that happens to fit this sheet, and not a blank band left under the last card.
+        assertNear("the end of the list is the sheet's height and the gap", PILLS_GAP + LAST_ITEM_TRAILING_SPACE, sheet.top - last.bottom)
     }
 
     // endregion
@@ -445,15 +566,18 @@ class SavedTripsHomeLayoutTest {
         labels: ImmutableList<StopLabel> = LABELS,
         ai: AiSearchInputUiState = AiSearchInputUiState(),
         rightPane: @Composable BoxScope.() -> Unit = {},
+        // A text size and labels that change while the screen is up, in place of [fontScale] and [labels].
+        fontScaleState: State<Float>? = null,
+        labelsState: State<ImmutableList<StopLabel>>? = null,
     ) {
         composeRule.setContent {
-            WithFontScale(fontScale) {
+            WithFontScale(fontScaleState?.value ?: fontScale) {
                 PreviewTheme {
                     SavedTripsScreen(
                         savedTripsState = SavedTripsState(
                             isSavedTripsLoading = false,
                             savedTrips = trips.toImmutableList(),
-                            stopLabels = labels,
+                            stopLabels = labelsState?.value ?: labels,
                         ),
                         toButtonClick = {
                             toClicks++
@@ -515,15 +639,23 @@ class SavedTripsHomeLayoutTest {
         composeRule.waitForIdle()
     }
 
-    /** Just the pill row, in a window of its own, so a pill can be made wider than the row. */
+    /**
+     * The sheet with just the pills and the bar in it, in a window of its own, so a pill can be made wider than the
+     * row, which the real home never does because its pills are only Home and Work.
+     */
     private fun setPills(fontScale: Float, pills: List<HomeChip.Label>) {
         composeRule.setContent {
             WithFontScale(fontScale) {
                 PreviewTheme {
-                    HomeLabelPills(
-                        pills = pills.toImmutableList(),
-                        onLabelClick = { events += SavedTripUiEvent.LabelChipClick(it) },
-                    )
+                    Box(Modifier.fillMaxSize()) {
+                        HomeSearchSheet(modifier = Modifier.align(Alignment.BottomCenter)) {
+                            HomeLabelPills(
+                                pills = pills.toImmutableList(),
+                                onLabelClick = { events += SavedTripUiEvent.LabelChipClick(it) },
+                            )
+                            HomeSearchPill(onClick = {}, isAiAvailable = false, onAiEvent = {})
+                        }
+                    }
                 }
             }
         }
@@ -591,6 +723,7 @@ class SavedTripsHomeLayoutTest {
         const val NARROW = "w320dp-h1280dp"
         const val MAP_TAG = "test.map"
         const val MANY = 14
+        const val LARGEST_TEXT = 3f
         const val TOLERANCE_DP = 1.5f
         const val LONG_NAME = "Grandparents house far away"
         const val LONG_SET_NAME = "Weekend place by the lake"
@@ -601,7 +734,9 @@ class SavedTripsHomeLayoutTest {
         val SHEET_BOTTOM_PADDING = 20.dp
         val SHEET_TOP_PADDING = 28.dp
         val SHEET_HEIGHT = 96.dp
-        val THREE_BUTTON_NAV_BAR = 48.dp
+        val PILLS_GAP = 8.dp
+        val LAST_ITEM_TRAILING_SPACE = 16.dp
+        val SHEET_HEIGHT_WITH_PILLS = SHEET_HEIGHT + 48.dp + PILLS_GAP
         val PHONE_WIDTH = 411.dp
         val PHONE_HEIGHT = 891.dp
         val NARROW_WIDTH = 320.dp

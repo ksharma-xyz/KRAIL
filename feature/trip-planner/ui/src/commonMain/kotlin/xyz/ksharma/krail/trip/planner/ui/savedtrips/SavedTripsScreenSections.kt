@@ -19,12 +19,14 @@ import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import kotlinx.collections.immutable.ImmutableList
@@ -55,8 +57,9 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 /**
- * Full LazyColumn body for [SavedTripsScreen]. The Set Home and Set Work pills, info tiles, then the Saved
- * Trips section only when there is something saved, then Park & Ride which always renders.
+ * Full LazyColumn body for [SavedTripsScreen]. Info tiles, then the Saved Trips section only when there is
+ * something saved, then Park & Ride which always renders. The Home and Work pills are not in the list: they are in
+ * the sheet at the bottom, above the search bar ([SavedTripsBottomSearchRow]).
  */
 internal fun LazyListScope.savedTripsListBody(
     savedTripsState: SavedTripsState,
@@ -73,11 +76,6 @@ internal fun LazyListScope.savedTripsListBody(
 ) {
     if (savedTripsState.isSavedTripsLoading) return
 
-    labelPillsItem(
-        stopLabels = savedTripsState.stopLabels,
-        visible = !editing,
-        onLabelClick = { labelKey -> onEvent(SavedTripUiEvent.LabelChipClick(labelKey)) },
-    )
     savedTripsInfoTiles(savedTripsState, onEvent)
 
     // Nothing saved means no Saved Trips section at all — not a heading over an empty space.
@@ -312,18 +310,27 @@ internal fun SavedTripsTitleBarActions(
 }
 
 /**
- * The one search bar pinned to the bottom of the screen, inside the theme coloured sheet `main` drew the search row
- * in ([HomeSearchSheet]), above the navigation bar. The sheet slides up and fades in once the saved trips have loaded,
- * as `main` revealed the search row, and is gone while the cards are being reordered.
+ * The sheet pinned to the bottom of the screen, in the theme colour `main` drew the search row in ([HomeSearchSheet]),
+ * above the navigation bar. From the top it holds the Home and Work pills ([HomeLabelPills], none until the labels
+ * have loaded), an 8 dp gap, and the one search bar. The sheet slides up and fades in once the saved trips have
+ * loaded, as `main` revealed the search row, and is gone, pills with it, while the cards are being reordered.
+ *
+ * A pill tap is [onLabelClick] with the label's key. The sheet's height depends on the text size and on how many
+ * lines the pills wrap onto, so it is reported, as measured, through [onSheetHeightChanged] and the caller keeps the
+ * end of the list clear by it. The sheet never reads the list, so nothing here depends on the list's size.
  */
 @Composable
 internal fun BoxScope.SavedTripsBottomSearchRow(
     visible: Boolean,
+    stopLabels: List<StopLabel>,
+    onLabelClick: (labelKey: String) -> Unit,
     onSearchBarClick: () -> Unit,
+    onSheetHeightChanged: (heightPx: Int) -> Unit,
     modifier: Modifier = Modifier,
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
     isAiSearchAvailable: Boolean = false,
 ) {
+    val pills = remember(stopLabels) { labelPillsFor(stopLabels) }
     AnimatedVisibility(
         visible = visible,
         enter = slideInVertically(
@@ -332,7 +339,10 @@ internal fun BoxScope.SavedTripsBottomSearchRow(
         ) + fadeIn(animationSpec = tween(durationMillis = 200)),
         modifier = modifier,
     ) {
-        HomeSearchSheet {
+        HomeSearchSheet(modifier = Modifier.onSizeChanged { onSheetHeightChanged(it.height) }) {
+            if (pills.isNotEmpty()) {
+                HomeLabelPills(pills = pills, onLabelClick = onLabelClick)
+            }
             HomeSearchPill(
                 onClick = onSearchBarClick,
                 isAiAvailable = isAiSearchAvailable,

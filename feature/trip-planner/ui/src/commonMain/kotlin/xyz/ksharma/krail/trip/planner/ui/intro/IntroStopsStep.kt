@@ -10,6 +10,7 @@ import xyz.ksharma.krail.io.gtfs.readiness.AppDataReadiness
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopViewModel
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
+import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStop
 
 /**
  * How long typing must pause before the stop list is searched again. It is Search Stop's own pause, so the two
@@ -87,6 +88,25 @@ internal class IntroStopsStep(
             val found = if (answered is StopsReadiness.Ready) attempt { gateway.search(text) } else null
             write { withSearchResult(text, found) }
         }
+    }
+
+    /**
+     * A tap on a row selects the stop and nothing more: it is highlighted, the button appears, and a tap on another row
+     * moves the selection. The Intro stays where it is.
+     */
+    fun select(stop: IntroStop) {
+        if (!read().step.isStopScreen()) return
+        write { withStopSelected(stop) }
+    }
+
+    /**
+     * The right button ends here: the selected stop is the end or the start, whichever screen it is, what was typed is
+     * dropped, and the Intro moves on in the flow as it stands after the pick.
+     */
+    fun choose(stop: IntroStop) {
+        if (!read().step.isStopScreen()) return
+        cancelSearch()
+        write { withStopChosen(stop) }
     }
 
     /** The rider has left the screen they were typing on, so a search still waiting or running is not wanted. */

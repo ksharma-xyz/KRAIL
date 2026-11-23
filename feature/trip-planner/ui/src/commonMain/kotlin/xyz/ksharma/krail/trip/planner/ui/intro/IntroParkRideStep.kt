@@ -158,22 +158,21 @@ internal class IntroParkRideStep(
                     onLeftQuestion()
                 }
                 looked.isEmpty() -> write { copy(parkRideCard = ParkRideCardPhase.NoStationNear) }
-                else -> show(looked.single())
+                else -> {
+                    // The card shows at once with names only, then settles when the one availability call is back.
+                    val found = looked.single()
+                    station = found
+                    val card = ParkRideCardStation(
+                        stationId = found.stationId,
+                        stationName = found.stationName,
+                        carParks = found.carParksWithoutReadings(),
+                    )
+                    write { copy(parkRideCard = ParkRideCardPhase.Card(card)) }
+                    val carParks = attempt { gateway.carParks(found) }
+                    write { withReadings(found.stationId, carParks) }
+                }
             }
         }
-    }
-
-    // The card shows at once with names only, then settles when the one availability call is back.
-    private suspend fun show(found: ParkRideStationPickerItem) {
-        station = found
-        val card = ParkRideCardStation(
-            stationId = found.stationId,
-            stationName = found.stationName,
-            carParks = found.carParksWithoutReadings(),
-        )
-        write { copy(parkRideCard = ParkRideCardPhase.Card(card)) }
-        val carParks = attempt { gateway.carParks(found) }
-        write { withReadings(found.stationId, carParks) }
     }
 
     // Added at once, without waiting for the network. The availability call may still be running, and

@@ -16,7 +16,6 @@ import xyz.ksharma.krail.io.gtfs.readiness.AppDataReadiness
 import xyz.ksharma.krail.io.gtfs.readiness.StopsReadiness
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
-import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStop
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
@@ -107,22 +106,7 @@ internal class IntroFlowViewModel(
         // After a killed process the saved station id is worked out into a card again.
         parkRideStep.restore()
         stopsStep.loadModes(suggestedStops)
-        warmStops()
-    }
-
-    /**
-     * Gets the stops load going now, on the first screen, so it is normally Ready long before the last one and nothing at
-     * the end has to wait for it. The load is the app launch's own job and is usually already running or done, and this
-     * is the same call, [AppDataReadiness.retry]: a no-op while Loading or Ready, the first run (with its automatic
-     * retries) from Unknown, and one more attempt from Failed. So it adds no network call, because the stops are bundled
-     * and the load is a local insert, and no second run, because the claim is atomic. It costs one call when the Intro opens
-     * and nothing at all when the load is under way, and it never suspends.
-     */
-    private fun warmStops() {
-        when (appDataReadiness.state.value) {
-            StopsReadiness.Unknown, is StopsReadiness.Failed -> appDataReadiness.retry()
-            StopsReadiness.Loading, is StopsReadiness.Ready -> Unit
-        }
+        appDataReadiness.warmStops()
     }
 
     /**
@@ -132,10 +116,7 @@ internal class IntroFlowViewModel(
      * rider is not looking at, and the Intro only moves on with the answer on the screen it is on.
      */
     fun onEvent(event: IntroUiEvent, pressedOn: IntroStep? = null) {
-        if (finishStarted) return
-        val step = _state.value.step
-        if (pressedOn != null && pressedOn != step) return
-        if (step !in event.validSteps()) return
+        if (!introEventAccepted(finishStarted, _state.value.step, event, pressedOn)) return
         when (event) {
             is IntroUiEvent.PickTheme -> themeStep.pick(event.themeId)
             IntroUiEvent.ConfirmTheme -> if (themeStep.confirm()) finish()
@@ -144,8 +125,8 @@ internal class IntroFlowViewModel(
             IntroUiEvent.AddParkRideAndContinue -> parkRideStep.addAndContinue()
             IntroUiEvent.DeclineParkRide -> parkRideStep.decline()
             IntroUiEvent.AcknowledgeNoStation -> parkRideStep.acknowledgeNoStation()
-            is IntroUiEvent.SelectStop -> selectStop(event.stop)
-            IntroUiEvent.ConfirmStop -> _state.value.selectedStop?.let(::chooseStop)
+            is IntroUiEvent.SelectStop -> stopsStep.select(event.stop)
+            IntroUiEvent.ConfirmStop -> _state.value.selectedStop?.let(stopsStep::choose)
             is IntroUiEvent.QueryChanged -> stopsStep.onQueryChanged(event.text)
             is IntroUiEvent.AnswerSaveTrip -> answerSaveTrip(event.yes)
         }
@@ -160,21 +141,6 @@ internal class IntroFlowViewModel(
         if (!shouldTrackScreenView(stepsShown, step)) return
         stepsShown += step
         completion.trackStepView(step)
-    }
-
-    // A tap on a row selects the stop and nothing more: it is highlighted, the button appears, and a tap on another row
-    // moves the selection. The Intro stays where it is.
-    private fun selectStop(stop: IntroStop) {
-        if (!_state.value.step.isStopScreen()) return
-        update { withStopSelected(stop) }
-    }
-
-    // The right button ends here: the selected stop is the end or the start, whichever screen it is, what was typed is
-    // dropped, and the Intro moves on in the flow as it stands after the pick.
-    private fun chooseStop(stop: IntroStop) {
-        if (!_state.value.step.isStopScreen()) return
-        stopsStep.cancelSearch()
-        update { withStopChosen(stop) }
     }
 
     // The fix the Park & Ride question took is the only one, and the stations near the rider come from it too. It is
@@ -277,5 +243,20 @@ internal class IntroFlowViewModel(
         savedStateHandle.saveIntroState(_state.value)
         // One small write when the progress changed, none on a replay and none once the finish has completed.
         if (!replay && !finished) progressSaver.save(_state.value)
+    }
+}
+
+/**
+ * Gets the stops load going now, on the first screen, so it is normally Ready long before the last one and nothing at
+ * the end has to wait for it. The load is the app launch's own job and is usually already running or done, and this
+ * is the same call, [AppDataReadiness.retry]: a no-op while Loading or Ready, the first run (with its automatic
+ * retries) from Unknown, and one more attempt from Failed. So it adds no network call, because the stops are bundled
+ * and the load is a local insert, and no second run, because the claim is atomic. It costs one call when the Intro opens
+ * and nothing at all when the load is under way, and it never suspends.
+ */
+private fun AppDataReadiness.warmStops() {
+    when (state.value) {
+        StopsReadiness.Unknown, is StopsReadiness.Failed -> retry()
+        StopsReadiness.Loading, is StopsReadiness.Ready -> Unit
     }
 }

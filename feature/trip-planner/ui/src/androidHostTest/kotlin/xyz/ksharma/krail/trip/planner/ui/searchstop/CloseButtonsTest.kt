@@ -40,12 +40,10 @@ import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.departures.ui.state.DeparturesState
-import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.contrastRatio
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.mapCardColors
-import xyz.ksharma.krail.trip.planner.ui.components.softFieldColors
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
@@ -54,10 +52,11 @@ import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardPlacement
 import xyz.ksharma.krail.trip.planner.ui.stopcard.stopCardPalette
 
 /**
- * Every X on Search Stop and its stop card is a circle with a cross in it, never a bare glyph: taj's round icon button
- * 40 dp across inside a real 48 dp box that is itself the clickable, tagged for the screen reader as `Close` or `Clear`. The
- * 48 dp box takes the tap in the 4 dp around the circle, which the map under a control that floats over it would otherwise
- * win. The cross is 4.5 to 1 or better on its circle, and the circle shows on what it sits on.
+ * The close X of the stop card is a circle with a cross in it: taj's round icon button 40 dp across inside a real 48 dp box
+ * that is itself the clickable, tagged for the screen reader as `Close`. The 48 dp box takes the tap in the 4 dp around the
+ * circle, which the map under a control that floats over it would otherwise win. The cross is 4.5 to 1 or better on its circle,
+ * and the circle shows on what it sits on. The clear X of a search field is the one exception: a bare cross with no circle
+ * (`SearchStopClearCrossTest`), and the test here that it is not a circle keeps the two apart.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -207,17 +206,17 @@ class CloseButtonsTest {
     // region the search field's X
 
     @Test
-    fun `the search field's X is a 40 dp circle in a 48 dp target, reads Clear, and clears the text`() {
+    fun `the search field's X is a bare 24 dp cross in a 48 dp target, reads Clear, and clears the text`() {
         showScreen()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performTextInput("Cen")
 
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_CLEAR).assertIsDisplayed()
         val target = bounds(TripPlannerTestTags.SEARCH_STOP_CLEAR)
-        val circle = bounds(TripPlannerTestTags.SEARCH_STOP_CLEAR_CIRCLE)
+        val glyph = bounds(TripPlannerTestTags.SEARCH_STOP_CLEAR_GLYPH)
         near("target width", 48.dp, target.width)
         near("target height", 48.dp, target.height)
-        near("circle", 40.dp, circle.width)
+        near("the cross", 24.dp, glyph.width)
         assertEquals("Clear", description(TripPlannerTestTags.SEARCH_STOP_CLEAR))
 
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_CLEAR).performClick()
@@ -226,23 +225,10 @@ class CloseButtonsTest {
     }
 
     @Test
-    fun `the clear cross reads on its circle on the soft pill and on the lone pill's surface fill`() {
-        var text = Color.Unspecified
-        var soft = Color.Unspecified
-        var surface = Color.Unspecified
-        composeRule.setContent {
-            PreviewTheme {
-                text = softFieldColors().contentColor
-                soft = softFieldColors().containerColor
-                surface = KrailTheme.colors.surface
-            }
-        }
-        composeRule.waitForIdle()
-
-        // The circle is the text colour and the cross the pill's fill, whichever of the two fills the pill has.
-        println("CLEAR light crossOnCircleSoft=${soft.contrastRatio(text)} crossOnCircleSurface=${surface.contrastRatio(text)}")
-        assertTrue(soft.contrastRatio(text) >= 4.5f)
-        assertTrue(surface.contrastRatio(text) >= 4.5f)
+    fun `the stop card's X is still a 40 dp circle while the search field's has none`() {
+        showCard()
+        near("the stop card's circle", 40.dp, bounds(TripPlannerTestTags.StopCard.CLOSE_CIRCLE).width)
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_CLEAR_GLYPH, useUnmergedTree = true).assertDoesNotExist()
     }
 
     // endregion

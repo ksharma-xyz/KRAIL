@@ -27,10 +27,13 @@ import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.components.CloseIcon
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.krailRipple
+import xyz.ksharma.krail.taj.themeDecorColor
 
 /**
  * The close X of the map screens: taj's [RoundIconButton] drawn as a [CIRCLE_DIAMETER] circle in [circle] with the cross in
- * [glyph] inside it, so an X is never a bare glyph. The caller picks the two colours from existing tokens so the circle shows
+ * [glyph] inside it, so these X buttons are never a bare glyph. The one exception is the clear X of a search field, which is
+ * [ClearGlyphButton]. The caller picks the two colours from existing tokens so the circle shows
  * on whatever it sits on, and the cross is 4.5 to 1 or better on the circle.
  *
  * The finger target is a real [TARGET] box around the circle that is itself the clickable, not the touch slop Compose adds
@@ -139,6 +142,48 @@ internal fun TargetBox(
         content = content,
     )
 }
+
+/**
+ * The clear X of a search field: a plain cross, no circle, no fill and no ring, [glyphSize] across (the size of the field's back
+ * arrow, `KrailTheme.dimensions.iconM`) and drawn in [glyph], the field's own text colour. It is the one X on Search Stop that
+ * is bare, because it sits inside a field that already has a shape. Every other X (the stop card, the Departure Board, a notice,
+ * the Options card, a sheet) keeps the circle of [CloseCircleButton].
+ *
+ * It stands in a real [TARGET] box that is itself the clickable and consumes the touch, the pattern of [CloseCircleButton], so a
+ * tap in the 48 dp reaches the X and never the map under it. The press feedback is a round ripple the glyph's own size, not the
+ * square box. [tag] is on the box and [glyphTag] on the cross. A screen reader hears one button, [contentDescription].
+ */
+@Composable
+internal fun ClearGlyphButton(
+    contentDescription: String,
+    onClick: () -> Unit,
+    glyph: Color,
+    glyphSize: Dp,
+    modifier: Modifier = Modifier,
+    tag: String? = null,
+    glyphTag: String? = null,
+) {
+    TargetBox(
+        contentDescription = contentDescription,
+        onClick = onClick,
+        modifier = modifier,
+        tag = tag,
+        indication = krailRippleOnGlyph(glyphSize),
+    ) {
+        Image(
+            imageVector = CloseIcon,
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(glyph),
+            modifier = Modifier
+                .size(glyphSize)
+                .then(if (glyphTag != null) Modifier.testTag(glyphTag) else Modifier),
+        )
+    }
+}
+
+/** The press feedback of a bare glyph: a round ripple the glyph's own size, in the theme's decor colour, not the 48 dp square. */
+@Composable
+internal fun krailRippleOnGlyph(radius: Dp) = krailRipple(bounded = false, radius = radius, color = themeDecorColor())
 
 /** The circle of an X, the same size as the go circle beside it in a search pill. */
 internal val CIRCLE_DIAMETER = 40.dp

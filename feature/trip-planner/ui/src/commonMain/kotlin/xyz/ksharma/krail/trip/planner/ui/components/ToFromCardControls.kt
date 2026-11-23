@@ -24,7 +24,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.unit.Dp
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_reverse
 import kotlinx.coroutines.coroutineScope
@@ -33,9 +32,6 @@ import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
-import xyz.ksharma.krail.taj.theme.krailRipple
-import xyz.ksharma.krail.taj.theme.md_theme_light_softLabel
-import xyz.ksharma.krail.taj.themeDecorColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 
 // The controls of the Search Stop card's right column (`docs/MAP_HOME_UX.md`, The box): the bare swap glyph, the go circle and the
@@ -128,10 +124,6 @@ internal fun SwapControl(onSwap: () -> Unit, shown: Boolean, motion: SwapMotion,
 
 private const val SWAP_HALF_TURN = 180f
 
-/** The press feedback of the bare glyph: a round ripple the glyph's own size, in the theme's decor colour, not the 48 dp square. */
-@Composable
-private fun krailRippleOnGlyph(radius: Dp) = krailRipple(bounded = false, radius = radius, color = themeDecorColor())
-
 /**
  * The go circle: the theme colour with the app's arrow in the colour taj gives that fill. It is there only while [shown] (both
  * stops chosen), absent and not disabled otherwise. It arrives scaling from nothing to [MapMotion.GO_PEAK_SCALE] by
@@ -202,17 +194,19 @@ internal fun GoCircleSlot(shown: Boolean, onClick: () -> Unit) {
     }
 }
 
-/** The X in a row's end slot while its field holds text: it clears the field and does nothing else. */
+/**
+ * The X in a row's end slot while its field holds text: a bare cross, no circle, `iconM` (24 dp) across like the back arrow
+ * of a field and in the card's text colour, in a 48 dp target that consumes the touch (see [ClearGlyphButton]). It clears the field
+ * and does nothing else.
+ */
 @Composable
-internal fun ClearCircle(state: TextFieldState) {
-    val fill = md_theme_light_softLabel
-    CloseCircleButton(
+internal fun ClearCross(state: TextFieldState) {
+    ClearGlyphButton(
         contentDescription = "Clear",
         onClick = { state.clearText() },
-        circle = fill,
-        glyph = getForegroundColor(fill),
-        glyphSize = KrailTheme.dimensions.iconL,
+        glyph = mapCardColors().onTint,
+        glyphSize = KrailTheme.dimensions.iconM,
         tag = TripPlannerTestTags.SEARCH_STOP_CLEAR,
-        circleTag = TripPlannerTestTags.SEARCH_STOP_CLEAR_CIRCLE,
+        glyphTag = TripPlannerTestTags.SEARCH_STOP_CLEAR_GLYPH,
     )
 }

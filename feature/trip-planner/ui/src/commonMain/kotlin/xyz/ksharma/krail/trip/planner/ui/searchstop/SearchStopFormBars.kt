@@ -23,7 +23,7 @@ import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
-import xyz.ksharma.krail.trip.planner.ui.components.CloseCircleButton
+import xyz.ksharma.krail.trip.planner.ui.components.ClearGlyphButton
 import xyz.ksharma.krail.trip.planner.ui.components.FloatingGoCircle
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromBlock
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromBlockStyle
@@ -44,7 +44,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
  *   button. No row moves either way.
  * - From is the top bar and To is the bar below it. The back arrow stays at the start of the first (top) bar in
  *   every state, which is From, or the one bar of a single field. To has the destination pin at its start.
- * - The X shows only while the field has text, and only clears it. It never leaves the screen, so
+ * - The X is a bare cross with no circle. It shows only while the field has text, and only clears it. It never leaves the screen, so
  *   the recents stay where they are.
  * - With [ToFromBlockStyle.CardRows], the From and To card of the Timetable's style, there is no back arrow and the go circle
  *   and the swap are the card's own right column (see `ToFromCardRows`); [fromLabel] and [toLabel] are the saved labels of the
@@ -175,21 +175,19 @@ private fun BackArrowButton(onClick: () -> Unit) {
 }
 
 /**
- * The X in the end column: it clears the field and does nothing else. It is a circle with a cross in it, the fixed light card's
- * text colour for the circle and its tint for the cross, so it reads on the lone pill, which is the fixed light look in both
- * app modes.
+ * The X in the end column: it clears the field and does nothing else. It is a bare cross the size of the back arrow, in the fixed
+ * light card's text colour, with no circle and no fill (see [ClearGlyphButton]), so it reads on the lone pill, which is the fixed
+ * light look in both app modes.
  */
 @Composable
 private fun ClearTextButton(onClick: () -> Unit) {
-    val card = mapCardColors()
-    CloseCircleButton(
+    ClearGlyphButton(
         contentDescription = "Clear",
         onClick = onClick,
-        circle = card.onTint,
-        glyph = card.tint,
-        glyphSize = KrailTheme.dimensions.iconL,
+        glyph = mapCardColors().onTint,
+        glyphSize = KrailTheme.dimensions.iconM,
         tag = TripPlannerTestTags.SEARCH_STOP_CLEAR,
-        circleTag = TripPlannerTestTags.SEARCH_STOP_CLEAR_CIRCLE,
+        glyphTag = TripPlannerTestTags.SEARCH_STOP_CLEAR_GLYPH,
     )
 }
 

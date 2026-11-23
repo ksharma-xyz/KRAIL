@@ -112,7 +112,7 @@ internal fun ToFromCardRows(rows: CardRowsContent, modifier: Modifier = Modifier
             grid = grid,
             modifier = Modifier.layoutId(CardPart.From),
         ) { editorState ->
-            if (editorState != null) ClearCircle(editorState)
+            if (editorState != null) ClearCross(editorState)
         }
         Box(
             modifier = Modifier
@@ -132,7 +132,7 @@ internal fun ToFromCardRows(rows: CardRowsContent, modifier: Modifier = Modifier
             grid = grid,
             modifier = Modifier.layoutId(CardPart.To),
         ) { editorState ->
-            if (editorState != null) ClearCircle(editorState)
+            if (editorState != null) ClearCross(editorState)
             GoCircleSlot(shown = rows.showGo && editorState == null, onClick = rows.onGoClick)
         }
         if (swap.present) {

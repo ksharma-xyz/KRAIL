@@ -168,6 +168,20 @@ class SearchStopLayoutRulesTest {
     }
 
     @Test
+    fun `the mode controls are shown only with the location allowed, hidden with it not or with a stop card open`() {
+        assertEquals(ModeControls.Shown, modeControlsFor(SearchStopMode.Map, mapReady = true, locationGranted = true))
+        assertEquals(ModeControls.Hidden, modeControlsFor(SearchStopMode.Map, mapReady = true, locationGranted = false))
+        assertEquals(
+            ModeControls.Hidden,
+            modeControlsFor(SearchStopMode.Map, mapReady = true, locationGranted = true, stopCardOpen = true),
+        )
+        // Absent wins: the list state and a map that is not ready compose nothing, whatever the permission says.
+        assertEquals(ModeControls.Absent, modeControlsFor(SearchStopMode.List, mapReady = true, locationGranted = true))
+        assertEquals(ModeControls.Absent, modeControlsFor(SearchStopMode.Map, mapReady = false, locationGranted = false))
+        assertEquals(false, modeControlsShown(SearchStopMode.Map, mapReady = true, locationGranted = false))
+    }
+
+    @Test
     fun `the button is active while any mode is switched off and not otherwise`() {
         val all = listOf(1, 2, 4, 5, 7, 9)
         assertEquals(false, modeFilterActive(all, all.toSet()))

@@ -279,6 +279,7 @@ private fun previewFormModel(): SearchStopFormModel = SearchStopFormModel(
 @Composable
 private fun previewLocationState(pill: LocationPill): LocationPillState = LocationPillState(
     pill = pill,
+    granted = pill == LocationPill.Hidden,
     allowPermissionRequest = false,
     onPermissionStatus = {},
     onRequestPermission = {},

@@ -447,6 +447,9 @@ private val NewLabelTargetSaver: Saver<NewLabelTarget?, Any> = Saver(
 /** The permission and what the pill does with it, shared by both layouts. */
 internal class LocationPillState(
     val pill: LocationPill,
+    // The permission is granted, or the rider's position is already known. Not the same as the pill being hidden, which
+    // it also is while the permission has not been looked up yet.
+    val granted: Boolean,
     val allowPermissionRequest: Boolean,
     val onPermissionStatus: (PermissionStatus) -> Unit,
     val onRequestPermission: () -> Unit,
@@ -476,6 +479,7 @@ private fun rememberLocationPillState(
 
     return LocationPillState(
         pill = pill,
+        granted = locationGrantedFor(status, hasUserLocation),
         allowPermissionRequest = allowPermissionRequest,
         onPermissionStatus = { status = it },
         onRequestPermission = { allowPermissionRequest = true },
@@ -565,7 +569,6 @@ private fun SearchStopScreenSinglePane(
 
     // The mode block is open or shut for the map state only.
     var modeBlockOpen by rememberSaveable { mutableStateOf(false) }
-    val controlsShown = modeControlsShown(flow.mode, mapReady = mapState is MapUiState.Ready)
     LaunchedEffect(flow.mode) {
         if (flow.mode != SearchStopMode.Map) {
             modeBlockOpen = reduceModeBlock(modeBlockOpen, ModeBlockEvent.LeftMapState)
@@ -596,14 +599,23 @@ private fun SearchStopScreenSinglePane(
                 // The controls get out of an open stop card's way by hiding, not by riding above it.
                 hidesControlsForCard = true,
                 bottomControls = { clearance, controlsHidden ->
+                    // One rule for where Options is: shown only with the location allowed and no stop card open.
+                    val controls = modeControlsFor(
+                        mode = flow.mode,
+                        mapReady = mapState is MapUiState.Ready,
+                        locationGranted = location.granted,
+                        stopCardOpen = controlsHidden,
+                    )
                     // A block that was open is shut as the button goes, and stays shut when it returns.
-                    LaunchedEffect(controlsHidden) {
-                        if (controlsHidden) modeBlockOpen = reduceModeBlock(modeBlockOpen, ModeBlockEvent.ControlsHidden)
+                    LaunchedEffect(controls) {
+                        if (controls == ModeControls.Hidden) {
+                            modeBlockOpen = reduceModeBlock(modeBlockOpen, ModeBlockEvent.ControlsHidden)
+                        }
                     }
-                    if (controlsShown && mapState is MapUiState.Ready) {
+                    if (controls != ModeControls.Absent && mapState is MapUiState.Ready) {
                         SearchStopModeControls(
                             open = modeBlockOpen,
-                            visible = !controlsHidden,
+                            visible = controls == ModeControls.Shown,
                             selectedModes = mapState.mapDisplay.selectedTransportModes,
                             onButtonClick = {
                                 modeBlockOpen = reduceModeBlock(modeBlockOpen, ModeBlockEvent.ButtonTapped)

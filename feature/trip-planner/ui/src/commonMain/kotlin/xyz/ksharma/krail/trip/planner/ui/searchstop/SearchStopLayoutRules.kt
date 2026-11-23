@@ -161,9 +161,43 @@ internal fun mapOrnamentPadding(
     bottom = navigationBarBottom,
 )
 
-/** The mode button and its block are drawn in the map state of a map that is ready, never with the keyboard up. */
-internal fun modeControlsShown(mode: SearchStopMode, mapReady: Boolean): Boolean =
-    mode == SearchStopMode.Map && mapReady
+/** Whether the mode button and its block are drawn at all, drawn and hidden for now, or not part of the screen. */
+internal enum class ModeControls {
+    /** Not there: the list state, or a map that is not ready. Nothing is composed. */
+    Absent,
+
+    /** Composed, but hidden with a short fade and scale: a stop card is open, or the location permission is not granted. */
+    Hidden,
+
+    /** Drawn. */
+    Shown,
+}
+
+/**
+ * Where the mode controls are, in one place. They belong to the map state of a map that is ready ([ModeControls.Absent]
+ * otherwise, never with the keyboard up). Within it they are shown only while the location permission is granted
+ * ([locationGranted], whether the pill under the box asks or sends the rider to Settings), and are hidden while a stop
+ * card is open ([stopCardOpen]). The rider's mode selection is not part of this: it is the map's and is kept while the
+ * button is hidden.
+ */
+internal fun modeControlsFor(
+    mode: SearchStopMode,
+    mapReady: Boolean,
+    locationGranted: Boolean = true,
+    stopCardOpen: Boolean = false,
+): ModeControls = when {
+    mode != SearchStopMode.Map || !mapReady -> ModeControls.Absent
+    !locationGranted || stopCardOpen -> ModeControls.Hidden
+    else -> ModeControls.Shown
+}
+
+/** The mode button and its block are drawn: the map state of a ready map, with the location allowed and no card open. */
+internal fun modeControlsShown(
+    mode: SearchStopMode,
+    mapReady: Boolean,
+    locationGranted: Boolean = true,
+    stopCardOpen: Boolean = false,
+): Boolean = modeControlsFor(mode, mapReady, locationGranted, stopCardOpen) == ModeControls.Shown
 
 /** The button shows its active look while any mode is switched off ([allClasses] is every mode the filter offers). */
 internal fun modeFilterActive(allClasses: List<Int>, selected: Set<Int>): Boolean =

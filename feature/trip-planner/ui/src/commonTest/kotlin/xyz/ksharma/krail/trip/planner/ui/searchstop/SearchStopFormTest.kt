@@ -168,4 +168,14 @@ class SearchStopFormTest {
     }
 
     // endregion
+
+    @Test
+    fun `the location is granted only by a granted permission or a fix in hand, never by not knowing yet`() {
+        assertEquals(true, locationGrantedFor(PermissionStatus.Granted, hasUserLocation = false))
+        assertEquals(true, locationGrantedFor(null, hasUserLocation = true))
+        assertEquals(false, locationGrantedFor(null, hasUserLocation = false))
+        assertEquals(false, locationGrantedFor(PermissionStatus.NotDetermined, hasUserLocation = false))
+        assertEquals(false, locationGrantedFor(PermissionStatus.Denied(canAskAgain = false), hasUserLocation = false))
+        assertEquals(false, locationGrantedFor(PermissionStatus.Denied(canAskAgain = true), hasUserLocation = false))
+    }
 }

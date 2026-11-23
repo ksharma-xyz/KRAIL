@@ -113,3 +113,11 @@ internal fun locationPillFor(status: PermissionStatus?, hasUserLocation: Boolean
     status is PermissionStatus.Denied || status is PermissionStatus.Restricted -> LocationPill.OpenSettings
     else -> LocationPill.Ask
 }
+
+/**
+ * Whether the location is allowed, for the controls that only make sense with it (the Options button): the permission is
+ * granted, or a fix is already in hand. Not looked up yet ([status] null) is not granted, so the button never flashes in
+ * for a rider who has refused, and it is not the same as the pill being [LocationPill.Hidden], which it also is then.
+ */
+internal fun locationGrantedFor(status: PermissionStatus?, hasUserLocation: Boolean): Boolean =
+    hasUserLocation || status is PermissionStatus.Granted

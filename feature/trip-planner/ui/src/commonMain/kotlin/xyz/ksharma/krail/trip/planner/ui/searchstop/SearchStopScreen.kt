@@ -216,6 +216,17 @@ fun SearchStopScreen(
         },
         fromLabel = stopLabelNameFor(fromStop, searchStopState.stopLabels),
         toLabel = stopLabelNameFor(trip.to, searchStopState.stopLabels),
+        onSwap = if (swapShown(trip)) {
+            {
+                // From and To trade places. What was typed searched for the old bar, so it is cleared for the new one.
+                val step = reduceTripSwap(trip, savedFlow, autoFrom)
+                trip = step.trip
+                savedFlow = step.flow
+                fieldState.clearText()
+            }
+        } else {
+            null
+        },
     )
     val onLabelPillClick = labels.onLabelPillClick(onEvent)
     val rows = StopRowActions(

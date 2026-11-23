@@ -7,11 +7,14 @@ import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
@@ -59,6 +62,21 @@ internal object MapMotion {
 
     /** The top box slides away and back in this long. */
     const val SLIDE_MS = 250
+
+    /** The go circle arrives in this long: it grows past full size and settles back, see [mapGoCircleIn]. */
+    const val GO_ENTER_MS = 300
+
+    /** When the go circle is at its peak, [GO_PEAK_SCALE], on the way in. */
+    const val GO_PEAK_MS = 180
+
+    /** How big the go circle grows before it settles to its own size: 48 dp from 40 dp, still inside its 48 dp target. */
+    const val GO_PEAK_SCALE = 1.2f
+
+    /** The go circle's fade in is quick, so it is solid long before it has grown. */
+    const val GO_FADE_IN_MS = 80
+
+    /** The half turn of the swap glyph, the Timetable's own reverse button turn. */
+    const val SWAP_TURN_MS = 300
 
     val ENTER_EASING = FastOutSlowInEasing
     val FADE_IN_EASING = LinearOutSlowInEasing
@@ -121,6 +139,46 @@ internal fun mapVanishOut(reduceMotion: Boolean): ExitTransition =
                 transformOrigin = MapMotion.CENTRE,
                 animationSpec = tween(MapMotion.EXIT_MS, easing = MapMotion.ENTER_EASING),
             )
+    }
+
+/**
+ * The go circle arriving: it fades in over [MapMotion.GO_FADE_IN_MS] while it grows from nothing to [MapMotion.GO_PEAK_SCALE]
+ * in [MapMotion.GO_PEAK_MS] and then settles back to full size by [MapMotion.GO_ENTER_MS]. It is one keyframes spec of two
+ * tween segments (grow on the arrival curve, settle on the deceleration curve), so the soft overshoot is two plain eases and
+ * not a spring. Plain, with no frame between, if [reduceMotion]. It leaves as [mapVanishOut] does.
+ */
+internal fun mapGoCircleIn(reduceMotion: Boolean): EnterTransition =
+    if (reduceMotion) {
+        EnterTransition.None
+    } else {
+        fadeIn(animationSpec = tween(MapMotion.GO_FADE_IN_MS, easing = MapMotion.FADE_IN_EASING)) +
+            scaleIn(
+                initialScale = MapMotion.VANISH_SCALE,
+                transformOrigin = MapMotion.CENTRE,
+                animationSpec = keyframes {
+                    durationMillis = MapMotion.GO_ENTER_MS
+                    MapMotion.GO_PEAK_SCALE at MapMotion.GO_PEAK_MS using MapMotion.ENTER_EASING
+                    1f at MapMotion.GO_ENTER_MS using MapMotion.FADE_IN_EASING
+                },
+            )
+    }
+
+/** A notice that comes and goes in place: it fades while its height grows or shrinks, on the arrival and leaving curves; plain with reduced motion. */
+internal fun mapSizeFadeIn(reduceMotion: Boolean): EnterTransition =
+    if (reduceMotion) {
+        EnterTransition.None
+    } else {
+        fadeIn(animationSpec = tween(MapMotion.FADE_IN_MS, easing = MapMotion.FADE_IN_EASING)) +
+            expandVertically(animationSpec = tween(MapMotion.ENTER_MS, easing = MapMotion.ENTER_EASING))
+    }
+
+/** And leaves in place: it fades while its height shrinks to nothing, a little quicker than it came. */
+internal fun mapSizeFadeOut(reduceMotion: Boolean): ExitTransition =
+    if (reduceMotion) {
+        ExitTransition.None
+    } else {
+        fadeOut(animationSpec = tween(MapMotion.EXIT_MS, easing = MapMotion.EXIT_EASING)) +
+            shrinkVertically(animationSpec = tween(MapMotion.EXIT_MS, easing = MapMotion.EXIT_EASING))
     }
 
 /** A card that arrives from below: it slides up by its own height while it fades in, on the arrival curve; plain with reduced motion. */

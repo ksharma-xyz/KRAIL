@@ -99,9 +99,10 @@ internal fun ToFromBlock(
     fromPlaceholder: String = FROM_PLACEHOLDER,
     showGo: Boolean = true,
     fromTrailing: (@Composable () -> Unit)? = null,
-    // Only the card style reads these: the saved label of each stop (Home, Work).
+    // Only the card style reads these: the saved label of each stop (Home, Work) and what the swap circle does.
     fromLabel: String? = null,
     toLabel: String? = null,
+    onSwap: (() -> Unit)? = null,
     style: ToFromBlockStyle = ToFromBlockStyle.Classic,
 ) {
     val dim = KrailTheme.dimensions
@@ -141,6 +142,7 @@ internal fun ToFromBlock(
                 editor = editor,
                 showGo = showGo,
                 onGoClick = onGoClick,
+                onSwap = onSwap,
             ),
             modifier = modifier,
         )

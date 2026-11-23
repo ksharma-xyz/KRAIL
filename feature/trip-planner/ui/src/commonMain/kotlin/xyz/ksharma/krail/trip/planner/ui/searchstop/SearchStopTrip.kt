@@ -56,6 +56,25 @@ internal fun reduceTripPick(
     return TripPick(trip = next, flow = flow.copy(mode = mode, editing = editing))
 }
 
+/**
+ * The swap circle: From becomes To and To becomes From. A start that filled itself in ([autoFrom]) counts as the From the rider
+ * sees, so it moves to To like any other. Whatever bar is left empty by it is the one edited next (To first), the typed text
+ * that searched for the old bar is the screen's to clear, and with both bars held there is nothing to edit, so the screen is
+ * the map state with no keyboard, as after any pick that fills the last bar.
+ *
+ * The swap is offered only once the rider has picked a stop ([swapShown]), so with only an auto start there is nothing to move.
+ */
+internal fun reduceTripSwap(trip: SearchStopTrip, flow: SearchStopFlow, autoFrom: StopItem?): TripPick {
+    val swapped = SearchStopTrip(from = trip.to, to = trip.from ?: autoFrom)
+    val filled = swapped.filled(autoFrom)
+    val editing = listOf(ToFromField.To, ToFromField.From).firstOrNull { it !in filled }
+    val mode = if (editing == null) SearchStopMode.Map else flow.mode
+    return TripPick(trip = swapped, flow = flow.copy(mode = mode, editing = editing))
+}
+
+/** Whether the swap circle is drawn: the rider has picked at least one stop. An auto filled start alone is nothing to swap. */
+internal fun swapShown(trip: SearchStopTrip): Boolean = trip.from != null || trip.to != null
+
 /** The bar editing moves to once [picked] is filled: the other bar if it is empty, else nothing. */
 internal fun nextEditingAfter(picked: ToFromField, filled: Set<ToFromField>): ToFromField? =
     picked.other().takeIf { it !in filled }

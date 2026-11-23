@@ -400,6 +400,31 @@ class SearchStopScreenInteractionTest {
     }
 
     @Test
+    fun theSwapCircle_isAbsentUntilAStopIsPicked_thenTradesFromAndTo_andGoLeavesWithThemTraded() {
+        var chosen: Pair<StopItem, StopItem>? = null
+        setForm(
+            state = SearchStopFixtures.recentWithDefaults(),
+            onTripChosen = { from, to -> chosen = from to to },
+        )
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_REVERSE, useUnmergedTree = true).assertDoesNotExist()
+
+        // The destination, then the start: Town Hall to Central.
+        composeRule.onNodeWithText("Central Station").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_REVERSE, useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithText("Town Hall").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_REVERSE, useUnmergedTree = true).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_SEARCH, useUnmergedTree = true).performClick()
+
+        val trip = checkNotNull(chosen) { "expected the trip to leave with go" }
+        assertEquals("stop_central", trip.first.stopId, "After the swap the start is the stop that was the destination.")
+        assertEquals("stop_town_hall", trip.second.stopId, "and the destination is the stop that was the start.")
+    }
+
+    @Test
     fun goWhileABarIsBeingEdited_savesTheScreenAsTheMapStateWithBothBarsSet() {
         var chosen: Pair<StopItem, StopItem>? = null
         setForm(

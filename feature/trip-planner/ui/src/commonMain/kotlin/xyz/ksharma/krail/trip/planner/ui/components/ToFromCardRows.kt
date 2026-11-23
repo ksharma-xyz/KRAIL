@@ -1,5 +1,9 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -24,12 +28,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
@@ -42,6 +51,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_location_on
+import krail.feature.trip_planner.ui.generated.resources.ic_reverse
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.Text
@@ -49,6 +59,7 @@ import xyz.ksharma.krail.taj.components.TextField
 import xyz.ksharma.krail.taj.components.TextFieldColors
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.modifier.klickable
+import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 
@@ -71,6 +82,8 @@ internal class CardRowsContent(
     val editor: ToFromEditor?,
     val showGo: Boolean,
     val onGoClick: () -> Unit,
+    /** Reverses From and To. Null draws no swap circle: no stop has been picked yet, so there is nothing to reverse. */
+    val onSwap: (() -> Unit)?,
 )
 
 /**
@@ -85,9 +98,9 @@ internal class CardRowsContent(
  * it does not (a narrow phone, large text), where the text takes the full width and wraps onto lines of its own. Nothing is
  * truncated or squeezed, so the card grows instead.
  *
- * On the right, a column reserved in every state ([CardGrid]) holding the go circle at the end of the To row, centred on the
- * row, so the card is the same height with and without it. While the row being edited holds text, an X takes its row's slot
- * and clears it.
+ * On the right, one column of two round controls on one axis ([CardGrid]): the swap at the end of the From row and the go
+ * circle at the end of the To row, each centred on its row. The column is reserved in every state, so the card is the same
+ * height with and without the go circle. While the row being edited holds text, an X takes its row's circle and clears it.
  */
 @Composable
 internal fun ToFromCardRows(rows: CardRowsContent, modifier: Modifier = Modifier) {
@@ -104,7 +117,11 @@ internal fun ToFromCardRows(rows: CardRowsContent, modifier: Modifier = Modifier
                 beside = fromBeside,
                 grid = grid,
             ) { editorState ->
-                if (editorState != null) ClearCircle(editorState)
+                if (editorState != null) {
+                    ClearCircle(editorState)
+                } else if (rows.onSwap != null) {
+                    SwapCircle(onSwap = rows.onSwap)
+                }
             }
             Box(
                 modifier = Modifier.padding(
@@ -325,26 +342,73 @@ private fun rememberNaturalWidth(row: CardRowContent, editing: Boolean): Dp {
 }
 
 /**
+ * The swap: a 40 dp circle in `softLabel` (grey on the soft tint, 3 to 1 or better against it in every theme and mode) with
+ * the reverse glyph in the colour taj gives its fill. A tap reverses From and To, and the glyph makes a half turn
+ * while the circle stays still: 180 degrees in [MapMotion.SWAP_TURN_MS], plain with reduced motion. The glyph looks the same
+ * at 0 and at 180 degrees, so the turn is a gesture and not a state.
+ */
+@Composable
+private fun SwapCircle(onSwap: () -> Unit) {
+    val fill = KrailTheme.colors.softLabel
+    var turned by rememberSaveable { mutableStateOf(false) }
+    val reduceMotion = isReduceMotionEnabled()
+    val angle by animateFloatAsState(
+        targetValue = if (turned) SWAP_HALF_TURN else 0f,
+        animationSpec = if (reduceMotion) snap() else tween(MapMotion.SWAP_TURN_MS, easing = FastOutSlowInEasing),
+        label = "swapGlyphTurn",
+    )
+    CircleTargetButton(
+        contentDescription = "Swap From and To",
+        onClick = {
+            turned = !turned
+            onSwap()
+        },
+        circle = fill,
+        tag = TripPlannerTestTags.SEARCH_ROW_REVERSE,
+        circleTag = TripPlannerTestTags.SEARCH_ROW_SWAP_CIRCLE,
+    ) {
+        Image(
+            painter = painterResource(Res.drawable.ic_reverse),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(getForegroundColor(fill)),
+            modifier = Modifier
+                .size(KrailTheme.dimensions.iconM)
+                .graphicsLayer { rotationZ = angle }
+                .testTag(TripPlannerTestTags.SEARCH_ROW_SWAP_GLYPH),
+        )
+    }
+}
+
+private const val SWAP_HALF_TURN = 180f
+
+/**
  * The go circle: the theme colour with the app's arrow in the colour taj gives that fill. It is there only while both stops are
- * chosen (absent, not disabled). The slot is reserved, so the card is the same height with it and without it.
+ * chosen (absent, not disabled), arriving by [mapGoCircleIn] and leaving by [mapVanishOut], and it takes no touch while it is
+ * on its way out. The slot is reserved, so the card is the same height with it and without it.
  */
 @Composable
 private fun GoCircle(visible: Boolean, onClick: () -> Unit) {
-    if (!visible) return
-    val fill = mapActiveChipColors().containerColor
-    CircleTargetButton(
-        contentDescription = "Show trips",
-        onClick = onClick,
-        circle = fill,
-        tag = TripPlannerTestTags.SEARCH_ROW_SEARCH,
-        circleTag = TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE,
+    val reduceMotion = isReduceMotionEnabled()
+    MapControlVisibility(
+        visible = visible,
+        enter = mapGoCircleIn(reduceMotion),
+        exit = mapVanishOut(reduceMotion),
     ) {
-        Image(
-            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(getForegroundColor(fill)),
-            modifier = Modifier.size(KrailTheme.dimensions.iconM),
-        )
+        val fill = mapActiveChipColors().containerColor
+        CircleTargetButton(
+            contentDescription = "Show trips",
+            onClick = onClick,
+            circle = fill,
+            tag = TripPlannerTestTags.SEARCH_ROW_SEARCH,
+            circleTag = TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE,
+        ) {
+            Image(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(getForegroundColor(fill)),
+                modifier = Modifier.size(KrailTheme.dimensions.iconM),
+            )
+        }
     }
 }
 

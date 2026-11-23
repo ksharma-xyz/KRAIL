@@ -47,8 +47,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
  * - The X shows only while the field has text, and only clears it. It never leaves the screen, so
  *   the recents stay where they are.
  * - With [ToFromBlockStyle.CardRows], the From and To card of the Timetable's style, there is no back arrow and the go circle
- *   is the card's own right column (see `ToFromCardRows`); [fromLabel] and [toLabel] are the saved labels of the stops the
- *   rows hold.
+ *   and the swap are the card's own right column (see `ToFromCardRows`); [fromLabel] and [toLabel] are the saved labels of the
+ *   stops the rows hold, and [onSwap] is what the swap circle does (null draws none).
  * - The go circle is drawn on the To bar, the last one, as soon as [goVisible] says the trip can start, and it is the
  *   only way out of the screen with a trip.
  * - Each bar shows its stop as its text while it is at rest. From shows [fromStop], which is the stop the rider
@@ -73,6 +73,7 @@ internal fun SearchStopForm(
     modifier: Modifier = Modifier,
     fromLabel: String? = null,
     toLabel: String? = null,
+    onSwap: (() -> Unit)? = null,
     style: ToFromBlockStyle = ToFromBlockStyle.Classic,
 ) {
     val hasText by remember(fieldState) { derivedStateOf { fieldState.text.isNotEmpty() } }
@@ -119,6 +120,7 @@ internal fun SearchStopForm(
         fromTrailing = if (editing == ToFromField.From) clear else null,
         fromLabel = fromLabel,
         toLabel = toLabel,
+        onSwap = onSwap,
         style = style,
     )
 }

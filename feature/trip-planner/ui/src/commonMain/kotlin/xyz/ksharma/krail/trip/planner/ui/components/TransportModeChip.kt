@@ -23,24 +23,19 @@ import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
 
-/**
- * A mode as a chip: filled in the mode's colour while [selected], and with its colour as an outline on [unselectedFill] while
- * not. [unselectedFill] is the app's `surface` unless a caller that stands on a fixed light card passes the palette's own.
- */
+/** A mode as a chip: filled in the mode's colour while [selected], and with its colour as an outline on the app's `surface` while not. */
 @Composable
 fun TransportModeChip(
     transportMode: TransportMode,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    unselectedFill: Color? = null,
 ) {
-    val unselected = unselectedFill ?: KrailTheme.colors.surface
     val backgroundColor by animateColorAsState(
         targetValue = if (selected) {
             NswTransportConfig.colorFor(transportMode).hexToComposeColor()
         } else {
-            unselected
+            KrailTheme.colors.surface
         },
         animationSpec = tween(200),
     )

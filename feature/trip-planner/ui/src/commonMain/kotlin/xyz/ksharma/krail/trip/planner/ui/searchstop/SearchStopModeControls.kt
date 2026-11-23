@@ -152,9 +152,9 @@ internal const val MODE_BLOCK_START_SCALE = MapMotion.POP_START_SCALE
 
 /**
  * The button that opens and shuts the mode block: taj's [Button] at its medium size, as shipped (32 dp at 100 percent text and
- * growing with it), reading [MODE_BUTTON_TEXT] after the app's filter icon. At rest it is white with the light palette's text and
- * a 1 dp light `softLabel` hairline so it holds against the light map, the same in both app modes ([MapCardColors.pill], through
- * the button's own `colors`). While any mode is switched off it takes taj's default button look, the solid theme colour, with no
+ * growing with it), reading [MODE_BUTTON_TEXT] after the app's filter icon. It is a control on the always light map, not a card, so
+ * it keeps one look in both app modes. At rest it is white with the light palette's text and a 1 dp light `softLabel` hairline
+ * ([MapCardColors.pillEdge]) so it holds against the light map ([MapCardColors.pill], through the button's own `colors`). While any mode is switched off it takes taj's default button look, the solid theme colour, with no
  * count beside it.
  *
  * The finger target is the node tagged [TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON]: a real 48 dp box that is itself
@@ -192,7 +192,7 @@ internal fun SearchStopModeButton(
             modifier = Modifier
                 .padding(bottom = pillBottomGap)
                 .onSizeChanged { onPillHeight(with(density) { it.height.toDp() }) }
-                .mapChipEdge(dimensions.shape)
+                .mapChipEdge(dimensions.shape, mapCardColors().pillEdge)
                 .testTag(TripPlannerTestTags.SEARCH_STOP_MODE_PILL),
         ) {
             Row(

@@ -22,8 +22,8 @@ internal const val MAP_OFFLINE_TEXT = "Map offline"
 /**
  * The notices of the map home, rule 24 of `docs/MAP_HOME_UX.md`: the location status and the Map offline
  * status. Each is one [FloatingStatusButton], taj's own [xyz.ksharma.krail.taj.components.Button] at its extra small
- * size (the normal weight text) in the one fixed dark. They are whole items emitted into the flow of
- * the chips, so they sit at the same left edge as the chips and the search pill and wrap onto the next line
+ * size (the normal weight text) in the soft theme tint of the app mode, the same colours as the Search Stop box. They are whole
+ * items emitted into the flow of the chips, so they sit at the same left edge as the chips and the search pill and wrap onto the next line
  * with the chips when the line is full. Nothing is squeezed, clipped or hidden to make the other fit.
  *
  * The location notice asks for the permission or opens Settings, whichever [pill] names. The Map offline

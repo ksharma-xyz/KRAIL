@@ -47,6 +47,7 @@ import xyz.ksharma.krail.taj.theme.md_theme_dark_onSurface
 import xyz.ksharma.krail.taj.theme.md_theme_dark_softLabel
 import xyz.ksharma.krail.taj.theme.md_theme_dark_surface
 import xyz.ksharma.krail.taj.theme.md_theme_light_softLabel
+import xyz.ksharma.krail.taj.theme.md_theme_light_surface
 import xyz.ksharma.krail.taj.themeDecorColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.mapCardColors
@@ -321,7 +322,8 @@ class SearchStopLocationNoticeTest {
         val tile = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
         val image = drawn()
         assertTrue(close(dark, pixelAt(image, tile.right - 8.dp, tile.top + 8.dp)), "the fill is the theme at 45 percent over the dark surface")
-        assertTrue(!close(tint, pixelAt(image, tile.right - 8.dp, tile.top + 8.dp)), "and it is not the light tint it was")
+        val light = themeColor.copy(alpha = 0.15f).compositeOver(md_theme_light_surface)
+        assertTrue(!close(light, pixelAt(image, tile.right - 8.dp, tile.top + 8.dp)), "and it is not the light tint it was")
         assertNotEquals(surface, dark)
         for (text in listOf(LOCATION_NOTICE_TITLE, LOCATION_NOTICE_BODY, LOCATION_NOTICE_DISMISS)) {
             val results = mutableListOf<TextLayoutResult>()

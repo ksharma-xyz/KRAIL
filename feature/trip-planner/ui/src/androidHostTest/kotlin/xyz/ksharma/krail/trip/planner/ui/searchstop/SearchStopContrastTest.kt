@@ -87,7 +87,7 @@ class SearchStopContrastTest {
                     labelFill = KrailTheme.colors.stopLabelSurface,
                     labelInk = KrailTheme.colors.onStopLabelSurface,
                     onSurface = KrailTheme.colors.onSurface,
-                    chipEdge = cardColors.chipEdge,
+                    chipEdge = cardColors.pillEdge,
                 )
             }
         }
@@ -121,8 +121,8 @@ class SearchStopContrastTest {
         assertTrue(r.activeInk.contrastRatio(r.activeFill) >= TEXT, "$mode: the Options label in its active look")
         assertTrue(r.labelInk.contrastRatio(r.labelFill) >= TEXT, "$mode: the label pill text on its fill")
         assertTrue(r.pillFill.contrastRatio(r.boxFill) >= PILL_SHAPE_FLOOR, "$mode: the pill is a visible step from the box")
-        // The Options chip is the soft theme tint, which can sit close to the light map, so its edge is the hairline round it:
-        // either the fill or the hairline stands 3 to 1 off the map.
+        // The Options pill is white, which sits close to the light map, so its edge is the hairline round it, the light softLabel in
+        // both app modes: either the fill or the hairline stands 3 to 1 off the map.
         assertTrue(
             maxOf(r.optionsFill.contrastRatio(MAP_GROUND), r.chipEdge.contrastRatio(MAP_GROUND)) >= EDGE,
             "$mode: the Options button against the map",

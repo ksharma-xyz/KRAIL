@@ -19,8 +19,9 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
  * The one small status button that floats on the map: the location notice on home and the location chip on
  * Search Stop. It is taj's filled [Button] as it ships, at [ButtonDefaults.extraSmallButtonSize] (the smaller of
  * taj's sizes, whose text is the normal weight), in the soft theme tint with the page's text colour that the Timetable's
- * own chips wear ([mapCardColors]) and a 1 dp hairline ([mapChipEdge]) so a pale chip holds against the light map. It
- * has no look of its own, and its text wraps inside the button, never beside it.
+ * own chips wear ([mapCardColors], which follows the app mode) and a 1 dp hairline ([mapChipEdge]) in light mode so a pale chip
+ * holds against the light map. The dark tint is clear of the map on its own and has none. It has no look of its own, and its text
+ * wraps inside the button, never beside it.
  *
  * The finger target is the node tagged [tag]: a real 48 dp box that is itself the clickable, not the touch slop
  * Compose adds around a small clickable, which loses to the map under it (a tap on the map outranks that slop). The pill

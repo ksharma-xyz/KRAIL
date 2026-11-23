@@ -43,7 +43,6 @@ import xyz.ksharma.krail.taj.theme.md_theme_light_onSurface
 import xyz.ksharma.krail.taj.theme.md_theme_light_surface
 import xyz.ksharma.krail.taj.themeDecorColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
-import xyz.ksharma.krail.trip.planner.ui.components.mapCardColors
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
@@ -54,10 +53,11 @@ import kotlin.test.assertTrue
 /**
  * The card look of each state of the real Search Stop screen. The box and the location notice follow the app mode in the map state
  * and in the list state alike: the same light look in light mode and the Timetable's dark tint with cream text in dark mode, in both
- * states, so a rider who taps the box and leaves the map sees no change of colour. The white Options pill and the Options card
- * are not the box and keep their own look. Each is read from the pixels the screen draws, against the expected tint built from the
- * taj tokens, and the screen is taken from the map state to the list state and back in dark mode. This replaces the S7 rule that
- * the map state is fixed light in both modes, and the S9 rule that the list state alone follows the app mode.
+ * states, so a rider who taps the box and leaves the map sees no change of colour. The Options card follows the app mode the same
+ * way, and the white Options pill is a control and keeps its own look. Each is read from the pixels the screen draws, against the
+ * expected tint built from the taj tokens, and the screen is taken from the map state to the list state and back in dark mode.
+ * This replaces the S7 rule that the map state is fixed light in both modes, and the S9 rule that the list state alone follows
+ * the app mode.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -72,7 +72,7 @@ class SearchStopScreenCardLookTest {
         override fun hide() = Unit
     }
     private var composeView: View? = null
-    private var tint = Color.Unspecified
+    private var lightTint = Color.Unspecified
     private var listTint = Color.Unspecified
     private var cream = Color.Unspecified
     private var pageSurface = Color.Unspecified
@@ -90,7 +90,8 @@ class SearchStopScreenCardLookTest {
             ) {
                 PreviewTheme {
                     composeView = LocalView.current
-                    tint = mapCardColors().tint
+                    // The light tint, built from the taj tokens: the Timetable's 15 percent over white, the colour light mode always was.
+                    lightTint = themeDecorColor().copy(alpha = 0.15f).compositeOver(md_theme_light_surface)
                     // The list state's tint, built from the taj tokens: the Timetable's 45 percent over the dark surface in dark mode and
                     // 15 percent over white in light mode.
                     listTint = if (isAppInDarkMode()) {
@@ -129,13 +130,6 @@ class SearchStopScreenCardLookTest {
 
     private fun DpRect.cy() = top + (bottom - top) / 2f
 
-    /** The card's own fill, 3 dp inside its left edge (clear of the 1 dp hairline and of the marker column), at its middle. */
-    private fun assertFilledWithTint(what: String, tag: String, image: Bitmap) {
-        val block = boundsOf(tag)
-        val at = pixel(image, block.left + 3.dp, block.cy())
-        assertTrue(close(tint, at), "$what is the fixed light tint $tint, drawn as $at")
-    }
-
     /** The box's and the notice's fill, on the map and on the gradient: the tint of the app mode, the light tint in light mode. */
     private fun assertFilledWithListTint(what: String, tag: String, image: Bitmap) {
         val block = boundsOf(tag)
@@ -169,19 +163,19 @@ class SearchStopScreenCardLookTest {
 
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).performClick()
         composeRule.waitForIdle()
-        assertFilledWithTint("$mode, the Options card", TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS, drawn())
+        assertFilledWithListTint("$mode, the Options card", TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS, drawn())
     }
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-notnight-xxhdpi")
-    fun `in light mode the map state's box is the light tint, the Options pill white and the Options card the light tint`() = assertMapState("light")
+    fun `in light mode the map state's box and Options card are the light tint and the Options pill is white`() = assertMapState("light")
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
-    fun `in dark mode the map state's box is the dark tint, the Options pill white and the Options card still the light tint`() {
+    fun `in dark mode the map state's box and Options card are the dark tint and the Options pill is still white`() {
         assertMapState("dark")
         assertNotEquals(pageSurface, listTint, "the box is not the page's own surface")
-        assertTrue(!close(tint, listTint), "the box on the map is the dark tint $listTint, not the light tint $tint")
+        assertTrue(!close(lightTint, listTint), "the box on the map is the dark tint $listTint, not the light tint $lightTint")
     }
 
     private fun assertNotice(mode: String) {
@@ -231,14 +225,14 @@ class SearchStopScreenCardLookTest {
     @Config(qualifiers = "w411dp-h891dp-notnight-xxhdpi")
     fun `in light mode the list state's box is the light tint it was`() {
         assertListState("light")
-        assertTrue(close(tint, listTint), "in light mode the list state's tint is the very same as the map state's")
+        assertTrue(close(lightTint, listTint), "in light mode the list state's tint is the light tint it was")
     }
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
     fun `in dark mode the list state's box is the Timetable's dark tint with cream text, not the light tint`() {
         assertListState("dark")
-        assertTrue(!close(tint, listTint), "the dark tint $listTint is not the map state's light tint $tint")
+        assertTrue(!close(lightTint, listTint), "the dark tint $listTint is not the light tint $lightTint")
     }
 
     @Test
@@ -275,7 +269,7 @@ class SearchStopScreenCardLookTest {
     @Config(qualifiers = "w900dp-h700dp-night-xxhdpi")
     fun `in dark mode the box in a wide window, which stands on the gradient, is the dark tint with cream text`() {
         assertWideWindow("dark")
-        assertTrue(!close(tint, listTint), "the dark tint $listTint is not the light tint $tint")
+        assertTrue(!close(lightTint, listTint), "the dark tint $listTint is not the light tint $lightTint")
     }
 
     // endregion

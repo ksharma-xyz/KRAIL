@@ -119,4 +119,39 @@ class IntroFinaleSignalTest {
 
         assertNull(withTimeoutOrNull(1) { signal.navigateRequests.first() }, "a stale ask was kept")
     }
+
+    @Test
+    fun `a run is not released when it starts, and is released by the Intro once it has written and waited`() {
+        signal.attachHost()
+        signal.start("#FF123456")
+        assertFalse(signal.navigationReleased.value)
+
+        assertTrue(signal.release(), "a run is being played, so the finale holds for this")
+
+        assertTrue(signal.navigationReleased.value)
+    }
+
+    @Test
+    fun `releasing with no run being played says so, so the caller navigates now, and releases nothing`() {
+        assertFalse(signal.release())
+        assertFalse(signal.navigationReleased.value)
+
+        signal.attachHost()
+        signal.start("#FF123456")
+        signal.end(signal.request.value!!.id)
+        assertFalse(signal.release())
+    }
+
+    @Test
+    fun `a run that ends, and the next one that starts, are each held until their own release`() {
+        signal.attachHost()
+        signal.start("#FF000001")
+        signal.release()
+        signal.end(signal.request.value!!.id)
+        assertFalse(signal.navigationReleased.value)
+
+        signal.start("#FF000002")
+
+        assertFalse(signal.navigationReleased.value, "the second run inherited the first one's release")
+    }
 }

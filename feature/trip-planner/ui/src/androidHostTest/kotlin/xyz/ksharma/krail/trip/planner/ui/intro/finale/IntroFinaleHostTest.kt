@@ -102,10 +102,17 @@ class IntroFinaleHostTest {
 
     private fun advance(ms: Long) = composeRule.mainClock.advanceTimeBy(ms)
 
-    private fun start() {
-        composeRule.runOnUiThread { assertEquals(true, signal.start(KrailThemeStyle.Metro.hexColorCode)) }
+    // The Intro releases the run when it has written everything and its wait for the stops is over, which the tests that are
+    // not about the hold do at once, so the app is asked to navigate at full cover as it always has been.
+    private fun start(release: Boolean = true) {
+        composeRule.runOnUiThread {
+            assertEquals(true, signal.start(KrailThemeStyle.Metro.hexColorCode))
+            if (release) signal.release()
+        }
         advance(FRAME_MS * 2)
     }
+
+    private fun release() = composeRule.runOnUiThread { signal.release() }
 
     private fun theFinaleIsUp() = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_FINALE).assertIsDisplayed()
 
@@ -185,6 +192,72 @@ class IntroFinaleHostTest {
 
         theFinaleIsGone()
         composeRule.onNodeWithTag(APP).assertIsDisplayed()
+    }
+
+    @Test
+    fun `a run the Intro has not released holds the solid colour and never asks to navigate, until it does`() {
+        show()
+        start(release = false)
+
+        advance(FINALE_COVER_MS + 6000)
+        assertEquals(0, asks, "the app was asked to navigate before the Intro had finished writing")
+        theFinaleIsUp()
+        composeRule.onNodeWithTag(APP).assertDoesNotExist()
+
+        release()
+        advance(200)
+
+        assertEquals(1, asks)
+        composeRule.runOnUiThread { signal.onNavigated() }
+        advance(SETTLE_MAX_MS + FINALE_FADE_MS + 400)
+        theFinaleIsGone()
+        composeRule.onNodeWithTag(APP).assertIsDisplayed()
+    }
+
+    @Test
+    fun `a tap while the run is held skips the animation but still waits for the Intro`() {
+        show()
+        start(release = false)
+        advance(500)
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_FINALE).performTouchInput { click(center) }
+        advance(2000)
+        assertEquals(0, asks)
+        theFinaleIsUp()
+
+        release()
+        advance(200)
+        assertEquals(1, asks)
+    }
+
+    @Test
+    fun `a turn of the screen while the run is held keeps the colour up and does not reveal the Intro again`() {
+        show()
+        start(release = false)
+        advance(1000)
+
+        turnTheScreen()
+        advance(3000)
+
+        assertEquals(0, asks)
+        theFinaleIsUp()
+
+        release()
+        advance(200)
+        assertEquals(1, asks)
+        composeRule.runOnUiThread { signal.onNavigated() }
+        advance(200)
+        theFinaleIsGone()
+    }
+
+    @Test
+    fun `a run that is never released still asks to navigate at the ceiling, so the colour can never hang`() {
+        show()
+        start(release = false)
+
+        advance(FINALE_COVER_MS + FINALE_RELEASE_CEILING_MS + 500)
+
+        assertEquals(1, asks)
     }
 
     @Test

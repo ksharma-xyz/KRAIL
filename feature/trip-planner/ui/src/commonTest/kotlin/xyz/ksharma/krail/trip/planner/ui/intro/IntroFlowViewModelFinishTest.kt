@@ -50,7 +50,7 @@ class IntroFlowViewModelFinishTest {
         rig.withEffects {
             rig.answerAndFinish(yes = true)
 
-            assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+            awaitFinish()
         }
 
         val trip = rig.sandook.selectAllTrips().single()
@@ -70,7 +70,7 @@ class IntroFlowViewModelFinishTest {
         rig.withEffects {
             rig.answerAndFinish(yes = false)
 
-            assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+            awaitFinish()
         }
 
         assertTrue(rig.sandook.selectAllTrips().isEmpty())
@@ -92,7 +92,7 @@ class IntroFlowViewModelFinishTest {
             rig.withEffects {
                 rig.answerAndFinish(yes = true)
 
-                assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+                awaitFinish()
             }
 
             assertTrue(rig.sandook.selectAllTrips().isEmpty(), "picks $picks")
@@ -117,21 +117,32 @@ class IntroFlowViewModelFinishTest {
     }
 
     @Test
-    fun `finishing before the stops are ready waits and then writes`() = krailRunTest {
-        val rig = rigAt(tripPicked, readiness = StopsReadiness.Loading)
+    fun `finishing before the stops are ready starts the finale and writes at once, then waits for the stops and reveals`() =
+        krailRunTest {
+            val rig = rigAt(tripPicked, readiness = StopsReadiness.Loading)
 
-        rig.answerAndFinish(yes = true)
+            rig.withEffects {
+                rig.answerAndFinish(yes = true)
 
-        assertEquals(listOf(THEME_REPORTED, "awaitReady"), rig.log.entries)
-        assertTrue(rig.sandook.selectAllTrips().isEmpty())
+                assertEquals(IntroEffect.StartFinale, awaitItem())
+                expectNoEvents()
+                // The trip and both flags are written before the wait, from the rider's own picks.
+                assertEquals(
+                    listOf(THEME_REPORTED, "effect", SAVED_TRIP, SUGGESTION_SHOWN, SEEN_INTRO, "awaitReady"),
+                    rig.log.entries,
+                )
+                assertEquals(1, rig.sandook.selectAllTrips().size)
 
-        rig.testTime += 3.seconds
-        rig.readiness.emit(StopsReadiness.Ready(stopCount = 100))
-        rig.send()
+                rig.testTime += 3.seconds
+                rig.readiness.emit(StopsReadiness.Ready(stopCount = 100))
+                rig.send()
 
-        assertEquals(1, rig.log.count(SAVED_TRIP))
-        assertEquals("2_to_5s", rig.outcomeEvent().properties?.get("stopsWait"))
-    }
+                assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+            }
+
+            assertEquals(1, rig.log.count(SAVED_TRIP))
+            assertEquals("2_to_5s", rig.outcomeEvent().properties?.get("stopsWait"))
+        }
 
     @Test
     fun `a trip is saved while the stops failed, the stops load goes on in the background and the wait is failed`() =
@@ -141,7 +152,7 @@ class IntroFlowViewModelFinishTest {
             rig.withEffects {
                 rig.answerAndFinish(yes = true)
 
-                assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+                awaitFinish()
             }
 
             assertEquals(1, rig.sandook.selectAllTrips().size)
@@ -160,7 +171,7 @@ class IntroFlowViewModelFinishTest {
         rig.withEffects {
             rig.answerAndFinish(yes = false)
 
-            assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+            awaitFinish()
         }
 
         assertTrue(rig.sandook.selectAllTrips().isEmpty())
@@ -173,7 +184,7 @@ class IntroFlowViewModelFinishTest {
             val rig = rigAt(tripPicked, readiness = StopsReadiness.Loading)
 
             rig.answerAndFinish(yes = true)
-            assertEquals(listOf(THEME_REPORTED, "awaitReady"), rig.log.entries)
+            assertEquals(listOf(THEME_REPORTED, SAVED_TRIP, SUGGESTION_SHOWN, SEEN_INTRO, "awaitReady"), rig.log.entries)
             rig.readiness.emit(StopsReadiness.Failed(attempt = 4, reason = "disk"))
             rig.send()
 
@@ -191,7 +202,11 @@ class IntroFlowViewModelFinishTest {
                 rig.answerAndFinish(yes = true)
                 // From Unknown the Intro opening asked the load to start, and that is the only difference.
                 val opened = if (stillNotReady == StopsReadiness.Unknown) listOf("retry") else emptyList()
-                assertEquals(opened + listOf(THEME_REPORTED, "awaitReady"), rig.log.entries, "readiness $stillNotReady")
+                assertEquals(
+                    opened + listOf(THEME_REPORTED, SAVED_TRIP, SUGGESTION_SHOWN, SEEN_INTRO, "awaitReady"),
+                    rig.log.entries,
+                    "readiness $stillNotReady",
+                )
                 rig.testTime += FINISH_WAIT_TIMEOUT_MS.milliseconds
                 pumpOnce(FINISH_WAIT_TIMEOUT_MS)
 
@@ -207,22 +222,23 @@ class IntroFlowViewModelFinishTest {
     }
 
     @Test
-    fun `the finish happens in order theme, readiness, trip, both flags, tracking, then the effect`() =
+    fun `the finish happens in order theme, finale, trip, both flags, readiness, tracking, then the reveal`() =
         krailRunTest {
             val rig = rigAt(tripPicked)
 
             rig.withEffects {
                 rig.answerAndFinish(yes = true)
-                awaitItem()
+                awaitFinish()
             }
 
             assertEquals(
                 listOf(
                     THEME_REPORTED,
-                    "awaitReady",
+                    "effect",
                     SAVED_TRIP,
                     SUGGESTION_SHOWN,
                     SEEN_INTRO,
+                    "awaitReady",
                     "track:save_trip_click",
                     "track:intro_lets_krail",
                     "effect",
@@ -330,20 +346,37 @@ class IntroFlowViewModelFinishTest {
     }
 
     @Test
-    fun `pressing finish repeatedly writes one trip tracks once and leaves once`() = krailRunTest {
+    fun `pressing finish repeatedly writes one trip tracks once, starts one finale and leaves once`() = krailRunTest {
         val rig = rigAt(tripPicked)
 
         rig.withEffects {
             rig.answerAndFinish(yes = true)
             rig.send(IntroUiEvent.ConfirmTheme)
-            awaitItem()
+            awaitFinish()
             rig.send(IntroUiEvent.ConfirmTheme)
             expectNoEvents()
         }
 
         assertEquals(1, rig.log.count(SAVED_TRIP))
         assertEquals(1, rig.log.count("track:intro_lets_krail"))
+        assertEquals(2, rig.log.count("effect"), "one to start the finale and one to reveal the app")
+    }
+
+    @Test
+    fun `a second press while the first is still waiting for the stops does nothing more`() = krailRunTest {
+        val rig = rigAt(tripPicked, readiness = StopsReadiness.Loading)
+
+        rig.withEffects {
+            rig.answerAndFinish(yes = true)
+            assertEquals(IntroEffect.StartFinale, awaitItem())
+            rig.send(IntroUiEvent.ConfirmTheme, IntroUiEvent.ConfirmTheme, IntroUiEvent.PickTheme(KrailThemeStyle.Bus.id))
+            expectNoEvents()
+        }
+
+        assertEquals(1, rig.log.count(SAVED_TRIP))
+        assertEquals(1, rig.log.count(SEEN_INTRO))
         assertEquals(1, rig.log.count("effect"))
+        assertEquals(KrailThemeStyle.Train.id, rig.state.selectedThemeId, "a pick after the press changes nothing")
     }
 
     @Test
@@ -418,7 +451,7 @@ class IntroFlowViewModelFinishTest {
             rig.withEffects {
                 rig.send(IntroUiEvent.ConfirmTheme)
 
-                assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+                awaitFinish()
             }
 
             assertTrue(rig.sandook.selectAllTrips().isEmpty())
@@ -444,7 +477,7 @@ class IntroFlowViewModelFinishTest {
         rig.answerAndFinish(yes = true)
 
         rig.viewModel.effects.test {
-            assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+            awaitFinish()
             cancelAndIgnoreRemainingEvents()
         }
         rig.viewModel.effects.test {

@@ -73,6 +73,16 @@ internal sealed interface IntroUiEvent {
 
 /** One shot instructions for the screen. Each is delivered once and never replayed. */
 internal sealed interface IntroEffect {
-    /** The Intro is finished and everything it writes is written. */
+    /**
+     * The press that finishes the Intro was accepted. Sent at once, in the same step as the press and before anything is
+     * written or waited for, so the finale starts and the rider sees an answer to the tap straight away, never a button
+     * that does nothing while the stops data loads. A second press after it does nothing.
+     */
+    data object StartFinale : IntroEffect
+
+    /**
+     * The Intro is finished and everything it writes is written: the trip, both flags and the outcome, and the wait for the
+     * stops, which is bounded, is over. It follows [StartFinale], and it lets the app under the finale's colour be shown.
+     */
     data object NavigateToSavedTrips : IntroEffect
 }

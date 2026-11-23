@@ -31,11 +31,12 @@ import xyz.ksharma.krail.trip.planner.ui.intro.finale.IntroFinaleSignal
  *   runs in the app's current theme, the default on a first run. The theme is also stored when it is selected,
  *   so the app starts in it however the Intro ends.
  *
- * [onNavigateToSavedTrips] is where the finish goes, through [onIntroFinished]. The finish starts the finale on
- * [finale] and Saved Trips is opened only when the finale asks, at full cover, so the app is composed under a
- * solid colour. This route is the one that navigates, with the callback it has now, and says so to the finale, so a
- * turn of the screen in the middle of it never leaves a callback for a screen that is gone. With no finale host
- * attached, as in a test, the finish goes straight to Saved Trips. The finish is the theme screen's button, the last.
+ * [onNavigateToSavedTrips] is where the finish goes, through [onIntroFinished]. The press starts the finale on
+ * [finale] at once ([onFinishStarted]), and Saved Trips is opened only when the Intro has finished writing and the finale
+ * asks, at full cover, so the app is composed under a solid colour. This route is the one that navigates, with the
+ * callback it has now, and says so to the finale, so a turn of the screen in the middle of it never leaves a callback
+ * for a screen that is gone. With no finale host attached, as in a test, the finish goes straight to Saved Trips once
+ * it has written. The finish is the theme screen's button, the last.
  */
 @Composable
 internal fun IntroFlowRoute(
@@ -83,18 +84,22 @@ internal fun IntroFlowRoute(
 }
 
 /**
- * What happens once the Intro has saved or declined the trip, written everything it writes and reported its outcome:
- * it starts the finale on [finale] in the colour [themeHexColorCode], and Saved Trips is opened later, when the finale
- * asks (see [FinaleNavigationEffect]). Nothing is lost if the process is killed meanwhile, because the Intro is already
- * marked seen. With no finale host attached it goes to Saved Trips straight away through [navigateToSavedTrips]. It
- * is the one place the end of the Intro is handed on from.
+ * The rider pressed the finish button: starts the finale on [finale] in the colour [themeHexColorCode], at once, before the
+ * Intro has written or waited for anything. It starts nothing when no host is attached, as in a test.
  */
-internal fun onIntroFinished(
-    finale: IntroFinaleSignal,
-    themeHexColorCode: String,
-    navigateToSavedTrips: () -> Unit,
-) {
-    if (!finale.start(themeHexColorCode)) navigateToSavedTrips()
+internal fun onFinishStarted(finale: IntroFinaleSignal, themeHexColorCode: String) {
+    finale.start(themeHexColorCode)
+}
+
+/**
+ * The Intro has written everything it writes, reported its outcome and ended its bounded wait for the stops. It lets the
+ * finale go on, which then asks to navigate at full cover (see [FinaleNavigationEffect]), so Saved Trips is opened under a
+ * solid colour and only after this. Nothing is lost if the process is killed meanwhile, because the trip and the seen flag
+ * are written before the wait. With no finale being played, as when no host is attached, it goes to Saved Trips straight
+ * away through [navigateToSavedTrips]. It is the one place the end of the Intro is handed on from.
+ */
+internal fun onIntroFinished(finale: IntroFinaleSignal, navigateToSavedTrips: () -> Unit) {
+    if (!finale.release()) navigateToSavedTrips()
 }
 
 @Composable
@@ -111,7 +116,8 @@ private fun IntroEffectsCollector(
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             viewModel.effects.collect { effect ->
                 when (effect) {
-                    IntroEffect.NavigateToSavedTrips -> onIntroFinished(finale, themeHex, navigate)
+                    IntroEffect.StartFinale -> onFinishStarted(finale, themeHex)
+                    IntroEffect.NavigateToSavedTrips -> onIntroFinished(finale, navigate)
                 }
             }
         }

@@ -18,12 +18,16 @@ internal class FinaleRequest(val id: Long, val themeHexColorCode: String)
  * only, and it holds nothing that must survive the process: the Intro is already marked seen before it is used, so a
  * killed process starts the next launch on Saved Trips with no finale.
  *
- * - The Intro [start]s a run once it has written everything it writes. The run is only started when a host is
- *   attached, so a screen with no host (a test, a preview) goes straight on to Saved Trips and nothing waits for a
- *   finale that is not there.
- * - The host plays the run and, at full cover, asks the Intro to navigate ([requestNavigate]). The Intro navigates
- *   with the callback it has now, and says so ([onNavigated]). Going through the Intro and not holding its callback
- *   means a turn of the screen never leaves a callback for a screen that is gone.
+ * - The Intro [start]s a run the moment the rider presses the finish button, before it writes anything or waits for the
+ *   stops, so the rider sees the finale at once. The run is only started when a host is attached, so a screen with no host
+ *   (a test, a preview) goes straight on to Saved Trips and nothing waits for a finale that is not there.
+ * - The Intro [release]s the run when everything it writes is written and its bounded wait for the stops is over. Until then
+ *   the host holds the colour at full cover and does not ask to navigate, so the app is never shown before then, and the
+ *   Intro is never seen again under a colour that has faded. The hold is bounded by the Intro's own wait, and by a ceiling in
+ *   the player as a last resort.
+ * - The host plays the run and, at full cover and once released, asks the Intro to navigate ([requestNavigate]). The Intro
+ *   navigates with the callback it has now, and says so ([onNavigated]). Going through the Intro and not holding its
+ *   callback means a turn of the screen never leaves a callback for a screen that is gone.
  * - A run is [claim]ed by the host that plays it. A host that finds a run it did not start, after a turn of the
  *   screen or after the app was stopped, does not play it again: it asks for the navigation if it has not happened
  *   and ends the run, so the finale jumps to its end and can never leave a layer over the app.
@@ -37,6 +41,7 @@ class IntroFinaleSignal {
     private val hosts = MutableStateFlow(0)
     private val lastId = MutableStateFlow(0L)
     private val claimedId = MutableStateFlow(NO_RUN)
+    private val releasedState = MutableStateFlow(false)
 
     /** The run being played, or null when there is none, which is nearly always. */
     internal val request: StateFlow<FinaleRequest?> = requestState.asStateFlow()
@@ -44,11 +49,14 @@ class IntroFinaleSignal {
     /** Whether the Intro has navigated for the run being played. */
     internal val navigated: StateFlow<Boolean> = navigatedState.asStateFlow()
 
+    /** Whether the Intro has finished writing and waiting for the run being played, so the app may be shown. */
+    internal val navigationReleased: StateFlow<Boolean> = releasedState.asStateFlow()
+
     /** The asks to navigate, once each. One nobody has taken yet waits, and a second before it is taken is the same. */
     internal val navigateRequests: Flow<Unit> = navigateChannel.receiveAsFlow()
 
     /**
-     * Starts a run in the theme [themeHexColorCode], and returns true. It returns false, and starts nothing, when no
+     * Starts a run in the theme [themeHexColorCode], held at full cover until [release], and returns true. It returns false, and starts nothing, when no
      * host is attached or a run is already being played, which tells the caller to navigate now.
      */
     internal fun start(themeHexColorCode: String): Boolean {
@@ -56,9 +64,20 @@ class IntroFinaleSignal {
         if (free) {
             navigateChannel.tryReceive()
             navigatedState.value = false
+            releasedState.value = false
             requestState.value = FinaleRequest(lastId.updateAndGet { it + 1 }, themeHexColorCode)
         }
         return free
+    }
+
+    /**
+     * The Intro has written everything and its wait is over: the host may now ask it to navigate. Returns true when a run
+     * is being played and holds for this, and false when there is none, which tells the caller to navigate now.
+     */
+    internal fun release(): Boolean {
+        val playing = requestState.value != null
+        if (playing) releasedState.value = true
+        return playing
     }
 
     /** The host asks the Intro to navigate. */
@@ -79,6 +98,7 @@ class IntroFinaleSignal {
         if (requestState.value?.id == id) {
             requestState.value = null
             navigatedState.value = false
+            releasedState.value = false
             navigateChannel.tryReceive()
         }
     }

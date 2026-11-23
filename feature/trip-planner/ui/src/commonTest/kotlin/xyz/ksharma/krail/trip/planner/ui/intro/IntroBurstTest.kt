@@ -130,36 +130,42 @@ class IntroBurstTest {
         val finale = IntroFinaleSignal()
         var calls = 0
 
-        onIntroFinished(finale, themeHexColorCode = KrailThemeStyle.Metro.hexColorCode) { calls++ }
+        onFinishStarted(finale, themeHexColorCode = KrailThemeStyle.Metro.hexColorCode)
+        assertNull(finale.request.value)
+        onIntroFinished(finale) { calls++ }
 
         assertEquals(1, calls)
         assertNull(finale.request.value)
     }
 
     @Test
-    fun `with a finale host the end of the Intro starts the finale in the theme colour and does not navigate yet`() {
+    fun `with a finale host the press starts the finale in the theme colour, and the end of the Intro releases it and does not navigate itself`() {
         val finale = IntroFinaleSignal()
         finale.attachHost()
         var calls = 0
 
-        onIntroFinished(finale, themeHexColorCode = KrailThemeStyle.Metro.hexColorCode) { calls++ }
+        onFinishStarted(finale, themeHexColorCode = KrailThemeStyle.Metro.hexColorCode)
 
-        assertEquals(0, calls)
         assertEquals(KrailThemeStyle.Metro.hexColorCode, finale.request.value?.themeHexColorCode)
+        assertEquals(false, finale.navigationReleased.value, "the app is not to be shown yet")
+
+        onIntroFinished(finale) { calls++ }
+
+        assertEquals(0, calls, "the finale asks for the navigation at full cover, the Intro does not do it")
+        assertEquals(true, finale.navigationReleased.value)
     }
 
     @Test
-    fun `a second finish while a finale is playing goes straight to Saved Trips and starts no second finale`() {
+    fun `a second start while a finale is playing starts no second finale`() {
         val finale = IntroFinaleSignal()
         finale.attachHost()
-        var calls = 0
-        onIntroFinished(finale, themeHexColorCode = KrailThemeStyle.Train.hexColorCode) { calls++ }
+        onFinishStarted(finale, themeHexColorCode = KrailThemeStyle.Train.hexColorCode)
         val first = finale.request.value
 
-        onIntroFinished(finale, themeHexColorCode = KrailThemeStyle.Bus.hexColorCode) { calls++ }
+        onFinishStarted(finale, themeHexColorCode = KrailThemeStyle.Bus.hexColorCode)
 
-        assertEquals(1, calls)
         assertEquals(first?.id, finale.request.value?.id)
+        assertEquals(KrailThemeStyle.Train.hexColorCode, finale.request.value?.themeHexColorCode)
     }
 
     // endregion

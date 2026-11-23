@@ -130,7 +130,7 @@ class IntroFlowViewModelResumeTest {
         rig.withEffects {
             rig.answerAndFinish(yes = true)
 
-            assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+            awaitFinish()
         }
 
         assertEquals(1, rig.sandook.selectAllTrips().size)
@@ -148,7 +148,7 @@ class IntroFlowViewModelResumeTest {
         rig.withEffects {
             rig.send(IntroUiEvent.ConfirmTheme)
 
-            assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+            awaitFinish()
         }
 
         val trip = rig.sandook.selectAllTrips().single()
@@ -166,7 +166,7 @@ class IntroFlowViewModelResumeTest {
         rig.withEffects {
             rig.send(IntroUiEvent.ConfirmTheme)
 
-            assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+            awaitFinish()
         }
 
         assertTrue(rig.sandook.selectAllTrips().isEmpty())
@@ -180,7 +180,7 @@ class IntroFlowViewModelResumeTest {
         rig.withEffects {
             rig.send(IntroUiEvent.ConfirmTheme)
 
-            assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+            awaitFinish()
         }
 
         assertTrue(rig.sandook.selectAllTrips().isEmpty())
@@ -205,7 +205,7 @@ class IntroFlowViewModelResumeTest {
         rig.withEffects {
             rig.send(IntroUiEvent.ConfirmTheme)
 
-            assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+            awaitFinish()
         }
 
         val reported = rig.outcomeEvent().properties.orEmpty()
@@ -386,7 +386,7 @@ class IntroFlowViewModelResumeTest {
 
         rig.viewModel.effects.onEach { order.record("finale") }.test {
             rig.answerAndFinish(yes = true)
-            assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+            awaitFinish()
             cancelAndIgnoreRemainingEvents()
         }
 

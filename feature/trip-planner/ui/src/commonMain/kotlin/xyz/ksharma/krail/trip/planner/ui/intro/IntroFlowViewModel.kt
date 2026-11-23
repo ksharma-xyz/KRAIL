@@ -3,7 +3,6 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,8 +25,8 @@ import kotlin.time.Duration
 import kotlin.time.TimeSource
 
 /**
- * The longest a finish waits for the stops, an operator decision. Past it the finish goes ahead
- * without them and the wait is reported as over five seconds.
+ * The longest a finish waits for the stops, an operator decision. The wait happens under the finale's colour and never on
+ * a button. Past it the finish goes ahead without them and the wait is reported as over five seconds.
  */
 internal const val FINISH_WAIT_TIMEOUT_MS = 15_000L
 
@@ -69,7 +68,10 @@ internal class IntroFlowViewModel(
 
     private var lastStepShown: IntroStep? = null
     private var suggestionShownWritten = false
-    private var finishJob: Job? = null
+    // The finish press was accepted. From here no event changes anything.
+    private var finishStarted = false
+
+    // Everything the finish writes is written and the outcome is reported.
     private var finished = false
 
     private val parkRideStep = IntroParkRideStep(
@@ -122,6 +124,7 @@ internal class IntroFlowViewModel(
     }
 
     fun onEvent(event: IntroUiEvent) {
+        if (finishStarted) return
         when (event) {
             is IntroUiEvent.PickTheme -> themeStep.pick(event.themeId)
             IntroUiEvent.ConfirmTheme -> if (themeStep.confirm()) finish()
@@ -196,34 +199,35 @@ internal class IntroFlowViewModel(
         update { copy(tripDecision = decision).movedOn() }
     }
 
-    // A press before the stops are ready is not dropped: the finish waits for them, up to
-    // FINISH_WAIT_TIMEOUT_MS, and then goes ahead. A press on any screen but the theme screen, or with no theme
-    // chosen, does nothing.
+    // The press that ends the Intro. It is never held back and never silent: the finale starts in this same step, before
+    // anything is written or waited for, and a second press, or any other event, does nothing from then on. A press on any
+    // screen but the theme screen, or with no theme chosen, does nothing.
     private fun finish() {
-        if (!_state.value.canFinish()) return
-        if (finished || finishJob?.isActive == true) return
-        finishJob = viewModelScope.launch { runFinish() }
+        if (!_state.value.canFinish() || finishStarted) return
+        finishStarted = true
+        effectChannel.trySend(IntroEffect.StartFinale)
+        viewModelScope.launch { runFinish() }
     }
 
     /**
-     * Waits for the stops, writes the trip if there is one, marks the Intro seen, reports the
-     * outcome and only then tells the screen to leave. The wait ends on Ready, on Failed, or after
-     * FINISH_WAIT_TIMEOUT_MS, and the finish goes ahead whichever it was. When the stops are not
-     * Ready by then the load is asked to carry on in the background, once. A press that no longer has
-     * a screen to finish, because the rider is no longer on the theme screen, is abandoned. The trip is
-     * written when the rider said yes to saving it on the confirm screen and there is a complete pair. With
-     * Not now, or no answer, none is.
+     * Everything the finish does after the press, in this order, with the finale already playing over the screen:
+     *
+     * 1. The trip, when the rider said yes to saving it and there is a complete pair, and the two flags. They come from the
+     *    rider's own picks, ids and names, and need no stops table, so they are local writes and wait for nothing. They are
+     *    first so that a process killed during the finale, however long it holds, finds the Intro already seen and the trip
+     *    already saved. Until they are written a kill only means the rider presses once more, which writes the same trip
+     *    again with the same id.
+     * 2. The wait for the stops, at most [FINISH_WAIT_TIMEOUT_MS], under the colour the finale holds at full cover. It ends on
+     *    Ready, on Failed, or at the bound, and the finish goes ahead whichever it was. Past the bound the load is asked to
+     *    carry on in the background, once. A stops load that was warmed when the Intro opened is normally Ready by now and
+     *    the wait is nothing.
+     * 3. The outcome is reported, and only then does [IntroEffect.NavigateToSavedTrips] let the app be shown. The wait that
+     *    is reported is the time from the press until the stops were Ready, Failed or the bound, so it keeps its meaning,
+     *    though the first seconds of it now play out under the finale's own animation and not on a dead button.
      */
     private suspend fun runFinish() {
         val wasReady = appDataReadiness.state.value is StopsReadiness.Ready
-        val waitStarted = timeSource.markNow()
-        val readiness = appDataReadiness.awaitReady(FINISH_WAIT_TIMEOUT_MS)
-        // A real clock never reads exactly zero, so no wait is decided here, not by the bucket.
-        val waited = if (wasReady) Duration.ZERO else waitStarted.elapsedNow()
-
-        if (!_state.value.canFinish()) return
-        // A no-op while Loading. From Failed it is one more attempt, from Unknown the launch trigger.
-        if (readiness !is StopsReadiness.Ready) appDataReadiness.retry()
+        val pressed = timeSource.markNow()
 
         val trip = _state.value.tripToWrite(save = _state.value.tripDecision == TripDecision.SAVED)
         if (trip != null) {
@@ -232,6 +236,13 @@ internal class IntroFlowViewModel(
         }
         ensureSuggestionShown()
         completion.writeIntroSeen()
+
+        val readiness = appDataReadiness.awaitReady(FINISH_WAIT_TIMEOUT_MS)
+        // A real clock never reads exactly zero, so no wait is decided here, not by the bucket.
+        val waited = if (wasReady) Duration.ZERO else pressed.elapsedNow()
+        // A no-op while Loading. From Failed it is one more attempt, from Unknown the launch trigger.
+        if (readiness !is StopsReadiness.Ready) appDataReadiness.retry()
+
         completion.track(_state.value.toOutcome(stopsWaitBucket(waited, readiness)), savedTrip = trip)
         finished = true
         effectChannel.send(IntroEffect.NavigateToSavedTrips)

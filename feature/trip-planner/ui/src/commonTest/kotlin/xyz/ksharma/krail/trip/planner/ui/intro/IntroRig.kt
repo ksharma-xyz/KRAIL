@@ -37,6 +37,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRi
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeParkRideAvailabilityLoader
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeParkRideCatalogue
 import xyz.ksharma.krail.trip.planner.ui.testfakes.FakeStopResultsManager
+import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.time.Duration
 import kotlin.time.TestTimeSource
@@ -236,4 +237,13 @@ internal class RecordingProgressPreferences(
         inner.deletePreference(key)
         calls.record("clear")
     }
+}
+
+/**
+ * The two effects a finish sends, in order: the finale starts at once, with the press, and the app is shown once everything
+ * the finish writes is written and its bounded wait for the stops is over.
+ */
+internal suspend fun ReceiveTurbine<IntroEffect>.awaitFinish() {
+    assertEquals(IntroEffect.StartFinale, awaitItem())
+    assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
 }

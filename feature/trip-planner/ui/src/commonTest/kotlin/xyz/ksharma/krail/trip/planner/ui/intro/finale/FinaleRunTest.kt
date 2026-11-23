@@ -24,13 +24,15 @@ class FinaleRunTest {
 
     /**
      * Runs until the finale finishes or [limitMs]. [tapAtMs] is when the rider taps, if ever, and [navigateAfterMs] is
-     * how long after being asked the Intro says it has navigated, or null for never.
+     * how long after being asked the Intro says it has navigated, or null for never. [releaseAtMs] is when the Intro
+     * releases the run, after the writes and the wait for the stops, or null for never.
      */
     private fun simulate(
         reduceMotion: Boolean = false,
         tapAtMs: Long? = null,
         navigateAfterMs: Long? = 0L,
         limitMs: Long = LIMIT_MS,
+        releaseAtMs: Long? = 0L,
     ): Run {
         var state = FinaleRunState()
         val frames = mutableListOf<FinaleStep>()
@@ -43,6 +45,7 @@ class FinaleRunTest {
                 elapsedMs = elapsed,
                 navigated = askedAt != null && navigateAfterMs != null && elapsed >= askedAt + navigateAfterMs,
                 tapped = tapAtMs != null && elapsed >= tapAtMs && elapsed < tapAtMs + FRAME_MS,
+                navigationReady = releaseAtMs != null && elapsed >= releaseAtMs,
             )
             val step = finaleStep(state, tick, reduceMotion)
             state = step.state
@@ -53,6 +56,67 @@ class FinaleRunTest {
         }
         return Run(frames, asked, state.fadeStartedAtMs, finishedAt)
     }
+
+    // region the hold for the Intro
+
+    @Test
+    fun `a run that is not released covers the screen and holds there, never asking to navigate and never fading`() {
+        val run = simulate(releaseAtMs = null, limitMs = 15_000L)
+
+        assertEquals(emptyList(), run.navigateAskedAt, "the app was asked to navigate before the Intro released the run")
+        assertNull(run.fadeStartedAt)
+        assertNull(run.finishedAt)
+        val held = run.frames.filter { it.frame.phase == FinalePhase.NAVIGATE }
+        assertTrue(held.size > 100, "the clock did not wait at the cover")
+        held.forEach { assertEquals(1f, it.frame.floodRadius, "the screen is not fully covered while it waits") }
+    }
+
+    @Test
+    fun `the app is asked to navigate on the first frame after the release, and the fade counts from there`() {
+        val run = simulate(releaseAtMs = 9000L, limitMs = 13_000L)
+
+        assertEquals(1, run.navigateAskedAt.size)
+        assertTrue(run.navigateAskedAt.single() in 9000L..(9000L + FRAME_MS), "asked at ${run.navigateAskedAt}")
+        assertNotNull(run.finishedAt)
+        assertTrue(
+            run.fadeStartedAt!! - run.navigateAskedAt.single() <= SETTLE_MAX_MS + FRAME_MS,
+            "the fade started ${run.fadeStartedAt} after the ask at ${run.navigateAskedAt}",
+        )
+    }
+
+    @Test
+    fun `a release before the cover changes nothing, the run is as it always was`() {
+        val held = simulate(releaseAtMs = 0L)
+        val early = simulate(releaseAtMs = 1000L)
+
+        assertEquals(held.navigateAskedAt, early.navigateAskedAt)
+        assertEquals(held.finishedAt, early.finishedAt)
+    }
+
+    @Test
+    fun `a tap while held skips the animation to full cover but the app still waits for the release`() {
+        val run = simulate(tapAtMs = 400L, releaseAtMs = 7000L, limitMs = 12_000L)
+
+        assertEquals(1, run.navigateAskedAt.size)
+        assertTrue(run.navigateAskedAt.single() >= 7000L, "asked at ${run.navigateAskedAt} before the release")
+    }
+
+    @Test
+    fun `the navigation is ready on the release, and at the ceiling whatever the Intro has done`() {
+        assertEquals(true, navigationReadyAt(released = true, elapsedMs = 0L, coverMs = FINALE_COVER_MS))
+        assertEquals(false, navigationReadyAt(released = false, elapsedMs = FINALE_COVER_MS + 1000L, coverMs = FINALE_COVER_MS))
+        assertEquals(
+            false,
+            navigationReadyAt(released = false, elapsedMs = FINALE_COVER_MS + FINALE_RELEASE_CEILING_MS - 1, coverMs = FINALE_COVER_MS),
+        )
+        assertEquals(
+            true,
+            navigationReadyAt(released = false, elapsedMs = FINALE_COVER_MS + FINALE_RELEASE_CEILING_MS, coverMs = FINALE_COVER_MS),
+        )
+        assertTrue(FINALE_RELEASE_CEILING_MS > 15_000L, "the ceiling must be past the Intro's own 15 s wait")
+    }
+
+    // endregion
 
     // region navigating
 

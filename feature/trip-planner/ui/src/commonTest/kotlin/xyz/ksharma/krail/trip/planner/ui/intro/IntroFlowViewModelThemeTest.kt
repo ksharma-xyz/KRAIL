@@ -109,7 +109,7 @@ class IntroFlowViewModelThemeTest {
         rig.withEffects {
             rig.send(IntroUiEvent.ConfirmTheme)
 
-            assertEquals(IntroEffect.NavigateToSavedTrips, awaitItem())
+            awaitFinish()
         }
 
         assertEquals(listOf<Any?>(bus.toString()), rig.reported())

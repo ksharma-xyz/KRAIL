@@ -8,6 +8,17 @@ internal const val SETTLE_MIN_FRAMES = 2
 internal const val SETTLE_MIN_HOLD_MS = 300L
 internal const val SETTLE_MAX_MS = 1500L
 
+/**
+ * The longest the colour is held at full cover for the Intro to finish writing and waiting for the stops. The Intro's own wait
+ * is 15 s, so this is only a last resort, and past it the app is asked to navigate whatever the Intro has done, because a
+ * colour that never lifts is worse than a trip that was not yet written.
+ */
+internal const val FINALE_RELEASE_CEILING_MS = 20_000L
+
+/** Whether the app may be asked to navigate: the Intro released the run, or it has been held [FINALE_RELEASE_CEILING_MS]. */
+internal fun navigationReadyAt(released: Boolean, elapsedMs: Long, coverMs: Long): Boolean =
+    released || elapsedMs - coverMs >= FINALE_RELEASE_CEILING_MS
+
 /** What the run remembers between frames. Everything in it is a time in milliseconds since the first frame. */
 internal data class FinaleRunState(
     val skipped: Boolean = false,
@@ -20,12 +31,15 @@ internal data class FinaleRunState(
 
 /**
  * What a frame is told: how long since the first frame, whether the navigation has been carried out (the Intro says
- * so after it navigates), and whether the rider tapped since the last frame.
+ * so after it navigates), whether the rider tapped since the last frame, and whether the Intro has released the run
+ * ([navigationReady], see [navigationReadyAt]). Until it is ready the app is not asked to navigate, and the clock waits at
+ * full cover under the solid colour.
  */
 internal data class FinaleTick(
     val elapsedMs: Long,
     val navigated: Boolean = false,
     val tapped: Boolean = false,
+    val navigationReady: Boolean = true,
 )
 
 /** The result of a frame: what to remember, what to draw, and whether to ask the app to navigate now. */
@@ -42,8 +56,8 @@ internal data class FinaleStep(
  * One frame of the run, as a pure function, so every rule below is a table and no clock is needed.
  *
  * The clock the frame is drawn at is the real one until the colour covers the screen, and then it waits there,
- * at [FINALE_COVER_MS], while the app is asked to navigate (once) and draws. It starts again, from the covered
- * moment, when the destination has settled, see [isSettled]. A tap moves the clock to the covered moment at once
+ * at [FINALE_COVER_MS], while the app is asked to navigate (once, and only once [FinaleTick.navigationReady]) and draws. It
+ * starts again, from the covered moment, when the destination has settled, see [isSettled]. A tap moves the clock to the covered moment at once
  * and shortens the fade, which is the only gesture and is never a button.
  *
  * Reduced motion covers at 0, so the app is asked to navigate on the first frame and the colour cross-fades away.
@@ -56,7 +70,7 @@ internal fun finaleStep(state: FinaleRunState, tick: FinaleTick, reduceMotion: B
         reduceMotion = reduceMotion,
         fadeMs = fadeMs,
     )
-    val navigateNow = frame.phase >= FinalePhase.NAVIGATE && state.navigateIssuedAtMs == null
+    val navigateNow = frame.phase >= FinalePhase.NAVIGATE && state.navigateIssuedAtMs == null && tick.navigationReady
     val issuedAt = if (navigateNow) tick.elapsedMs else state.navigateIssuedAtMs
     var next = observed(state.copy(skipped = skipped, navigateIssuedAtMs = issuedAt), tick)
     if (state.fadeStartedAtMs == null && isSettled(next, tick.elapsedMs)) {

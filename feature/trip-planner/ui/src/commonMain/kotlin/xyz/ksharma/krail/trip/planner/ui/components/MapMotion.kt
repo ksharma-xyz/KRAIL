@@ -184,9 +184,10 @@ internal fun goLeaveFadeSpec(): AnimationSpec<Float> = tween(MapMotion.GO_LEAVE_
 private val GO_LEAVE_EASING = Easing { fraction -> fraction * fraction }
 
 /**
- * The card spec: how the Search Stop box and the notice change their colours between the map state and the list state, the same
- * [MapMotion.ENTER_MS] on the arrival curve the box and the lone pill fade into one another in. A snap with reduced motion, so
- * the colours jump in one frame.
+ * The card spec: how the box and the lone pill fade into one another, and how the hairline of the box and the notice fades in and
+ * out when the ground changes between the map state and the list state, the same [MapMotion.ENTER_MS] on the arrival curve. The
+ * fill, text and glyphs do not change between the two states, so they are not on it. A snap with reduced motion, so the hairline
+ * jumps in one frame.
  */
 internal fun <T> mapCardFadeSpec(reduceMotion: Boolean): FiniteAnimationSpec<T> =
     if (reduceMotion) snap() else tween(MapMotion.ENTER_MS, easing = MapMotion.ENTER_EASING)

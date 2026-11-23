@@ -175,9 +175,8 @@ private fun BackArrowButton(onClick: () -> Unit) {
 }
 
 /**
- * The X in the end column: it clears the field and does nothing else. It is a bare cross the size of the back arrow, in the fixed
- * light card's text colour, with no circle and no fill (see [ClearGlyphButton]), so it reads on the lone pill, which is the fixed
- * light look in both app modes.
+ * The X in the end column: it clears the field and does nothing else. It is a bare cross the size of the back arrow, in the box's
+ * text colour, with no circle and no fill (see [ClearGlyphButton]), so it reads on the lone pill in light and in dark app mode.
  */
 @Composable
 private fun ClearTextButton(onClick: () -> Unit) {

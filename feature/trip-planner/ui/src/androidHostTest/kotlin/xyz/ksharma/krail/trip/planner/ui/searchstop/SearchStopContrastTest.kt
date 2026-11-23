@@ -17,6 +17,8 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.getForegroundColor
+import xyz.ksharma.krail.taj.theme.md_theme_dark_onSurface
+import xyz.ksharma.krail.taj.theme.md_theme_dark_surface
 import xyz.ksharma.krail.taj.theme.md_theme_light_onSurface
 import xyz.ksharma.krail.taj.theme.md_theme_light_softLabel
 import xyz.ksharma.krail.taj.theme.md_theme_light_surface
@@ -168,44 +170,52 @@ class SearchStopContrastTest {
         assertTrue(placeholder >= TEXT, "$mode: the lone pill's placeholder on the surface fill is $placeholder to 1 (map $againstMap)")
     }
 
-    // region the fixed light look: the numbers of the approved picture, the same in both app modes
+    // region the box's numbers: the light look of the approved picture, and the dark tint the box follows in dark mode
 
     /**
-     * The Search Stop card, its swap glyph, its go circle and the Options pill are one fixed light look. The numbers are printed
-     * so a run puts them on record: the card text 17.5 to 18.3 to 1 on the four standard themes, the swap glyph the same ink on the
-     * card, the go circle's arrow on its fill 4.5 to 1 or better and its fill off the card about 2 to 3 to 1 (the arrow carries
-     * it), the pill's text 20.87 to 1 on white, and the 1 dp hairline 3.8 to 1 against the map ground for the card and the pill.
+     * The Search Stop box follows the app mode. In light mode it is the Timetable's light tint with the light palette's text: the card
+     * text 17.5 to 18.3 to 1 on the four standard themes and the 1 dp hairline 3.8 to 1 against the map ground. In dark mode it is the
+     * Timetable's dark tint with cream text, which reads 6.5 to 8.3 to 1 and stands 5.9 to 7.4 to 1 off the light map on its own, so
+     * the map state draws it with no hairline, where the dark `softLabel` would be only 1.8 to 1. The go circle's arrow on its fill
+     * and the Options pill do not follow the mode and hold the same numbers in both. Every number is printed.
      */
-    private fun assertFixedLightNumbers(mode: String) {
-        val text = md_theme_light_onSurface
+    private fun assertBoxNumbers(mode: String, dark: Boolean) {
+        val text = if (dark) md_theme_dark_onSurface else md_theme_light_onSurface
+        val ground = if (dark) md_theme_dark_surface else md_theme_light_surface
         val white = md_theme_light_surface
         val hairline = md_theme_light_softLabel
-        val pillText = text.contrastRatio(white)
+        val pillText = md_theme_light_onSurface.contrastRatio(white)
         val pillOnMap = white.contrastRatio(MAP_GROUND)
         val hairlineOnMap = hairline.contrastRatio(MAP_GROUND)
         for (style in listOf(KrailThemeStyle.Train, KrailThemeStyle.Metro, KrailThemeStyle.Bus, KrailThemeStyle.Ferry)) {
             val theme = style.hexColorCode.hexToComposeColor()
-            val card = mapCardColorsFor(theme, darkMode = false, surface = white, onSurface = text).chip
+            val card = mapCardColorsFor(theme, darkMode = dark, surface = ground, onSurface = text).chip
             val goArrow = getForegroundColor(theme)
             println(
-                "FIXEDLIGHT $mode ${style.name} cardText=${text.contrastRatio(card)} swapGlyphOnCard=${text.contrastRatio(card)} " +
-                    "hairlineOnMap=$hairlineOnMap goFillOnCard=${theme.contrastRatio(card)} goArrowOnFill=${goArrow.contrastRatio(theme)} " +
-                    "pillText=$pillText pillOnMapNoHairline=$pillOnMap",
+                "BOXNUMBERS $mode ${style.name} cardText=${text.contrastRatio(card)} swapGlyphOnCard=${text.contrastRatio(card)} " +
+                    "cardOnMap=${card.contrastRatio(MAP_GROUND)} hairlineOnMap=$hairlineOnMap goFillOnCard=${theme.contrastRatio(card)} " +
+                    "goArrowOnFill=${goArrow.contrastRatio(theme)} pillText=$pillText pillOnMapNoHairline=$pillOnMap",
             )
-            assertTrue(text.contrastRatio(card) in CARD_TEXT_LOW..CARD_TEXT_HIGH, "$mode ${style.name}: the card text is ${text.contrastRatio(card)} to 1")
+            if (dark) {
+                assertTrue(text.contrastRatio(card) in DARK_CARD_TEXT_LOW..DARK_CARD_TEXT_HIGH, "$mode ${style.name}: the card text is ${text.contrastRatio(card)} to 1")
+                assertTrue(card.contrastRatio(MAP_GROUND) >= EDGE, "$mode ${style.name}: the dark box is ${card.contrastRatio(MAP_GROUND)} to 1 off the map with no hairline")
+            } else {
+                assertTrue(text.contrastRatio(card) in CARD_TEXT_LOW..CARD_TEXT_HIGH, "$mode ${style.name}: the card text is ${text.contrastRatio(card)} to 1")
+            }
             assertTrue(goArrow.contrastRatio(theme) >= TEXT, "$mode ${style.name}: the go circle's arrow on its fill")
         }
         assertTrue(pillText >= PILL_TEXT_FLOOR, "$mode: the pill's text on white is $pillText to 1")
-        assertTrue(hairlineOnMap >= HAIRLINE_FLOOR, "$mode: the hairline is $hairlineOnMap to 1 against the map ground")
+        assertTrue(hairlineOnMap >= HAIRLINE_FLOOR, "$mode: the light hairline is $hairlineOnMap to 1 against the map ground")
     }
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-notnight")
-    fun `in light mode the fixed light card, go circle and pill hold the picture's contrast numbers`() = assertFixedLightNumbers("light")
+    fun `in light mode the box, go circle and pill hold the picture's contrast numbers`() = assertBoxNumbers("light", dark = false)
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night")
-    fun `in dark mode the fixed light card, go circle and pill hold the very same contrast numbers`() = assertFixedLightNumbers("dark")
+    fun `in dark mode the box is the dark tint with cream text at 6_5 to 8_3 to 1, and the go circle and pill hold their numbers`() =
+        assertBoxNumbers("dark", dark = true)
 
     private fun assertOptionsPillIsWhite(mode: String) {
         readTokens()
@@ -320,6 +330,8 @@ class SearchStopContrastTest {
         const val PILL_SHAPE_FLOOR = 1.1f
         const val CARD_TEXT_LOW = 17.5f
         const val CARD_TEXT_HIGH = 18.3f
+        const val DARK_CARD_TEXT_LOW = 6.5f
+        const val DARK_CARD_TEXT_HIGH = 8.3f
         const val PILL_TEXT_FLOOR = 20.8f
         const val HAIRLINE_FLOOR = 3.8f
 

@@ -122,6 +122,9 @@ object TripPlannerTestTags {
     /** The one status pill under the form while location permission is not granted. */
     const val SEARCH_STOP_LOCATION_PILL = "searchstop.locationpill"
 
+    /** The pin at the start of the location notice's title. */
+    const val SEARCH_STOP_LOCATION_PIN = "searchstop.locationpin"
+
     /** The row of labels at the top of the list. It scrolls sideways. */
     const val SEARCH_STOP_LABEL_ROW = "searchstop.labelrow"
 

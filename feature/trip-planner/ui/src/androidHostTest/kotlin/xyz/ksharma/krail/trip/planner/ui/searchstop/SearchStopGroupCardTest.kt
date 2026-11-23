@@ -43,6 +43,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.theme.md_theme_dark_softLabel
 import xyz.ksharma.krail.taj.theme.md_theme_light_softLabel
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.FROM_PLACEHOLDER
@@ -438,7 +439,7 @@ class SearchStopGroupCardTest {
     }
 
     @Test
-    fun `a single field is one bare pill with no card, 16 dp in on both sides and filled with the card's fixed light tint`() {
+    fun `a single field is one bare pill with no card, 16 dp in on both sides and filled with the box's tint`() {
         setSingleBar()
         showSingle(ToFromField.To, labelPromptFor("Home"))
 
@@ -453,7 +454,7 @@ class SearchStopGroupCardTest {
         val density = composeRule.density
         // A point in the pill clear of its text and icons: its right end, where nothing is drawn.
         val inPill = image.at(with(density) { (pill.right - 24.dp).roundToPx() }, with(density) { (pill.top + 24.dp).roundToPx() })
-        assertClose(tint, inPill, "the pill, the box's own fixed light tint and not the soft one")
+        assertClose(tint, inPill, "the pill, the box's own tint and not the soft one")
         assertNotEquals(pillFill, tint)
     }
 
@@ -530,14 +531,13 @@ class SearchStopGroupCardTest {
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
-    fun `in dark mode the card wears the same light softLabel hairline, never the mode aware one, and no glow`() {
+    fun `in dark mode the card on the map wears no hairline and no glow, the dark tint is clear of the light map on its own`() {
         setBox(toStop = TOWN_HALL, fromStop = CENTRAL, editing = null)
 
-        val (outside, onEdge) = pixelsOutsideAndOnEdge(edge)
+        val (outside, onEdge) = pixelsOutsideAndOnEdge(md_theme_dark_softLabel)
         assertClose(surface, outside, "just outside the card is the page's own colour, no glow")
-        assertClose(edge, onEdge, "across the card's edge there is a pixel of the light softLabel hairline in dark mode too")
-        assertEquals(md_theme_light_softLabel, edge)
-        assertNotEquals(modeSoftLabel, edge, "the dark mode softLabel (B0B0B0, 1.82 to 1 against the map) is not what the edge uses")
+        assertTrue(!isClose(md_theme_dark_softLabel, onEdge, 0.05f), "no pixel across the card's edge is the softLabel: $onEdge")
+        assertNotEquals(modeSoftLabel, md_theme_light_softLabel, "the mode aware softLabel is the dark one")
     }
 
     @Test

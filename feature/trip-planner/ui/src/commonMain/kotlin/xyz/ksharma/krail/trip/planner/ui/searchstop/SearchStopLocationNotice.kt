@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -21,22 +22,21 @@ import xyz.ksharma.krail.info.tile.state.InfoTileCta
 import xyz.ksharma.krail.info.tile.state.InfoTileData
 import xyz.ksharma.krail.info.tile.state.InfoTileState
 import xyz.ksharma.krail.info.tiles.ui.InfoTile
-import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults
 import xyz.ksharma.krail.info.tiles.ui.InfoTileStyle
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.CardGroundScope
 import xyz.ksharma.krail.trip.planner.ui.components.mapCardColors
-import xyz.ksharma.krail.trip.planner.ui.components.mapChipEdge
 import xyz.ksharma.krail.trip.planner.ui.components.mapSizeFadeIn
 import xyz.ksharma.krail.trip.planner.ui.components.mapSizeFadeOut
+import xyz.ksharma.krail.trip.planner.ui.components.searchStopCardSurface
 
 /**
- * The location notice under the Search Stop box while location is not allowed: the app's own [InfoTile] in its `Plain`
- * style (the soft theme tint, no glow), read in the box's own ground ([CardGroundScope], [onGradient]: the fixed light tint and
- * text on the always light map, and the app mode's own on the gradient), expanded, left aligned and the box's width,
- * [SearchStopGaps.betweenCards] under it. It
+ * The location notice under the Search Stop box while location is not allowed: the app's own [InfoTile] in its `Bare` style, which
+ * paints nothing of its own, so the notice wears the box's surface ([searchStopCardSurface]: the very same fill, hairline and
+ * corner, from one source) and the box's text colour ([CardGroundScope], [onGradient]: the app mode's look on the map and on the
+ * gradient alike). It is expanded, left aligned and the box's width, [SearchStopGaps.betweenCards] under it. It
  * says what is wrong and what to do ([LOCATION_NOTICE_TITLE], [LOCATION_NOTICE_BODY]), with one call to action that does what
  * the old chip did, ask or open Settings ([onCtaClick]), and the tile's own text button Not now ([onDismiss]).
  *
@@ -45,8 +45,8 @@ import xyz.ksharma.krail.trip.planner.ui.components.mapSizeFadeOut
  * with the shared fade and size change when the permission is granted or it is dismissed, and arrives the same way.
  *
  * The tile does not collapse on a tap (there is nothing more to say), and it takes every touch over it, so a tap that misses
- * its buttons never reaches the map under it. It wears the same 1 dp hairline as the box ([mapChipEdge]) in both modes: its own
- * themed border is the tint over the tint and is no edge against the map.
+ * its buttons never reaches the map under it. Its Not now takes the box's text colour like the pin and the words; the call to action
+ * stays taj's filled button as it ships, the theme colour with its own foreground.
  */
 @Composable
 internal fun LocationNotice(
@@ -59,6 +59,7 @@ internal fun LocationNotice(
 ) {
     val reduceMotion = isReduceMotionEnabled()
     val gaps = rememberSearchStopGaps()
+    val shape = RoundedCornerShape(gaps.cardCorner)
     // The call to action keeps its words while the notice is leaving, when the pill has already gone back to Hidden.
     val lastPill = remember { mutableStateOf(pill) }
     if (pill != LocationPill.Hidden) lastPill.value = pill
@@ -80,12 +81,13 @@ internal fun LocationNotice(
                     ),
                     modifier = Modifier
                         .testTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
-                        .mapChipEdge(InfoTileDefaults.shape)
+                        .searchStopCardSurface(shape)
                         .pointerInput(Unit) {},
                     initialState = InfoTileState.EXPANDED,
                     onCtaClick = { onCtaClick() },
                     onDismissClick = { onDismiss() },
-                    style = InfoTileStyle.Plain,
+                    style = InfoTileStyle.Bare,
+                    shape = shape,
                     leadingIcon = { LocationPin() },
                     expandable = false,
                 )
@@ -104,7 +106,10 @@ private fun LocationPin() {
         painter = painterResource(Res.drawable.ic_location_on),
         contentDescription = null,
         colorFilter = ColorFilter.tint(mapCardColors().onTint),
-        modifier = Modifier.padding(top = maxOf(0.dp, (firstLine - iconSize) / 2f)).size(iconSize),
+        modifier = Modifier
+            .padding(top = maxOf(0.dp, (firstLine - iconSize) / 2f))
+            .size(iconSize)
+            .testTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PIN),
     )
 }
 

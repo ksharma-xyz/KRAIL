@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.material3.ButtonColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -9,13 +10,13 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.LocalTextColor
@@ -35,19 +36,20 @@ import xyz.ksharma.krail.taj.themeDecorColor
 
 /**
  * Where every card that floats over the map takes its colours from. The map is always light, in both app modes, so there are
- * two families here and which one a surface wears is decided by what it is, not by the app mode.
+ * two families here and which one a surface wears is decided by what it is.
  *
- * The cards that hold the rider's own content on the map are one fixed light look ([tint], [onTint], [chip], [chipEdge]): the
- * Search Stop box, the bare single pill, the location notice, the Options card and the Options pill. The fill is the theme
- * colour at [TIMETABLE_ALPHA_LIGHT] over white (the Timetable's own tint function, evaluated with the light palette even in dark
- * mode), the text is the light palette's `onSurface`, and the edge is a 1 dp hairline in the light palette's `softLabel` (3.81 to
- * 1 against the map ground, where the dark mode `softLabel` would be 1.82). Every colour is a taj token, none is typed here.
- * `MapCardColorsTest` pins them equal in light and dark app mode.
+ * The Search Stop box, the bare single pill and the location notice follow the app mode on the map and in the list state alike,
+ * so they are one colour in both states ([CardGroundScope]). Light mode is the Timetable's tint, [TIMETABLE_ALPHA_LIGHT] of the
+ * theme colour over white, with the light palette's `onSurface` for text and a 1 dp hairline in its `softLabel` (3.81 to 1 against
+ * the map ground). Dark mode is the Timetable's own dark tint, [TIMETABLE_ALPHA_DARK] of the theme colour over the dark surface,
+ * with the dark palette's `onSurface` (cream) for text, markers and glyphs, its `outlineSubtle` for the divider and its
+ * `softLabel` for the hairline. The hairline is the one thing that differs between the states: the dark box on the light map is
+ * already well clear of it and wears none there, and on the cloud gradient it wears the hairline, which it needs. Every colour
+ * is a taj token, none is typed here. `MapCardColorsTest` pins them.
  *
- * That is the map state. The list state has no map: the Search Stop box and the notice stand on the cloud gradient, which follows
- * the app mode, so there they follow it too ([CardGroundScope]): light mode is the very same look, and dark mode is the Timetable's
- * own dark tint, [TIMETABLE_ALPHA_DARK] of the theme colour over the dark surface, with the dark palette's text and its
- * `softLabel` hairline. Outside a [CardGroundScope] every accessor here gives the map state's fixed light look.
+ * Outside a [CardGroundScope] every accessor here still gives the older fixed light look ([tint], [onTint], [chip], [chipEdge]):
+ * the theme colour at [TIMETABLE_ALPHA_LIGHT] over white, the light palette's `onSurface` and the light `softLabel`, in light and in
+ * dark app mode. That is what the Options card and the home map's notices wear until they follow the app mode as the box does.
  *
  * The stop card is not part of that look and is not changed: its [body], [header] and [onCard] are the older mode aware family,
  * the theme colour at a few strengths laid over the page's own surface, which makes each step an opaque colour (over the
@@ -70,11 +72,11 @@ internal class MapCardColors(
     /** Text and icons on [body] and [header]: the page's own text colour, in the mode the app is in. */
     val onCard: Color,
     /**
-     * The fill of the Search Stop card and of every surface that wears its look: the theme colour at 15 percent over white, the
-     * same in light and dark app mode, opaque.
+     * The fill of the Search Stop box and of every surface that wears its look. Under a [CardGroundScope] it is the Timetable's
+     * tint of the app mode, opaque. Outside one it is the theme colour at 15 percent over white, the same in light and dark app mode.
      */
     val tint: Color,
-    /** Text, markers and icons on [tint]: the light palette's `onSurface`, whatever the app mode. */
+    /** Text, markers and icons on [tint]: the app mode's `onSurface` under a [CardGroundScope], the light palette's outside one. */
     val onTint: Color,
     /** A small chip on the map: [tint] with [onTint] on it. */
     val chip: ButtonColors,
@@ -84,11 +86,14 @@ internal class MapCardColors(
      * the pill's resting look, and its solid theme colour ([mapActiveChipColors]) stays the look of an active filter.
      */
     val pill: ButtonColors,
-    /** The hairline round every card and chip: the light palette's `softLabel` on the map, the app mode's own on the gradient. */
+    /**
+     * The hairline round every card and chip: the app mode's `softLabel` under a [CardGroundScope], where in dark mode it is drawn on
+     * the gradient and has no alpha on the map, and the light palette's outside one.
+     */
     val chipEdge: Color,
-    /** The prompt of a field on the box: the light palette's placeholder on the map, the box's own text colour in dark mode. */
+    /** The prompt of a field on the box: the mode's placeholder in light mode and the box's own text colour in dark mode. */
     val placeholder: Color,
-    /** The 1 dp line between the From and To rows: the light palette's `outlineSubtle` on the map, the app mode's own on the gradient. */
+    /** The 1 dp line between the From and To rows: the app mode's `outlineSubtle` under a [CardGroundScope], the light palette's outside one. */
     val divider: Color,
 )
 
@@ -134,22 +139,21 @@ internal fun fixedLightCardLook(themeColor: Color): CardLook = modeCardLook(
 )
 
 /**
- * [map] at 0 and [list] at 1, and a crossfade in between. The two ends are the exact colours, not a blend of a colour with
- * itself, so a box that is at rest is the very same value in light mode, where the two looks are equal.
+ * Whether a box draws its hairline. In light mode it always does, on the map and on the gradient. In dark mode it does on the
+ * cloud gradient, where it separates the box from the page, and not on the map: the dark box is already well clear of the light map
+ * (5.9 to 7.4 to 1 on the four offered themes) and the dark `softLabel` would be only 1.8 to 1 against it.
  */
-internal fun blendCardLook(map: CardLook, list: CardLook, listShare: Float): CardLook = when {
-    listShare <= 0f -> map
-    listShare >= 1f -> list
-    else -> CardLook(
-        tint = lerp(map.tint, list.tint, listShare),
-        onTint = lerp(map.onTint, list.onTint, listShare),
-        edge = lerp(map.edge, list.edge, listShare),
-        placeholder = lerp(map.placeholder, list.placeholder, listShare),
-        divider = lerp(map.divider, list.divider, listShare),
-    )
-}
+internal fun cardEdgeShown(darkMode: Boolean, onGradient: Boolean): Boolean = !darkMode || onGradient
 
-/** The look a [CardGroundScope] gives the boxes under it, or null outside one, which is the map state's fixed light look. */
+/**
+ * This look with its hairline drawn at [share] of its own alpha, 1 for fully drawn and 0 for not at all. At 1 it is this very look,
+ * so light mode, where the hairline is always drawn, is the same value at every frame. Only the hairline moves, never the fill,
+ * the text or the glyphs.
+ */
+internal fun CardLook.withEdgeShare(share: Float): CardLook =
+    if (share >= 1f) this else copy(edge = edge.copy(alpha = edge.alpha * share.coerceAtLeast(0f)))
+
+/** The look a [CardGroundScope] gives the boxes under it, or null outside one, which is the fixed light look. */
 internal val LocalCardLook = compositionLocalOf<CardLook?> { null }
 
 internal const val TIMETABLE_ALPHA_LIGHT = 0.15f
@@ -185,8 +189,8 @@ internal data class MapCardTints(val header: Color, val body: Color, val chip: C
 
 /**
  * The one accessor of the card colours, for the current theme and mode. [MapCardColors.tint], [MapCardColors.onTint],
- * [MapCardColors.chipEdge], [MapCardColors.placeholder] and [MapCardColors.divider] are the box's look: the map state's fixed light
- * one, or, under a [CardGroundScope], the one that scope is showing.
+ * [MapCardColors.chipEdge], [MapCardColors.placeholder] and [MapCardColors.divider] are the box's look: the one a
+ * [CardGroundScope] is showing, which follows the app mode, or, outside a scope, the fixed light one.
  */
 @Composable
 internal fun mapCardColors(): MapCardColors {
@@ -197,8 +201,8 @@ internal fun mapCardColors(): MapCardColors {
         surface = KrailTheme.colors.surface,
         onSurface = KrailTheme.colors.onSurface,
     )
-    // The map state's fixed light look unless a scope says the box stands on the gradient: the same family function with the light
-    // palette's own tokens, so it is the Timetable's light tint over white and the light text colour even in dark app mode.
+    // Outside a scope the fixed light look: the same family function with the light palette's own tokens, so it is the Timetable's
+    // light tint over white and the light text colour even in dark app mode. A scope gives the app mode's look instead.
     val look = LocalCardLook.current ?: fixedLightCardLook(theme)
     val tint = look.tint
     val onTint = look.onTint
@@ -245,41 +249,37 @@ internal fun MapLightScope(content: @Composable () -> Unit) {
 }
 
 /**
- * What a box on Search Stop stands on, which is the one thing that decides its colours. [onGradient] is true in the list state, where
- * the cloud gradient covers the map and follows the app mode, and false in the map state, where the map is always light. On the map
- * this is [MapLightScope]'s fixed light look. On the gradient the boxes under it follow the app mode: the same light look in light
- * mode, and in dark mode the Timetable's dark tint with the dark palette's text, hairline and divider ([modeCardLook]).
+ * What a box on Search Stop stands on. The box, the bare pill and the notice follow the app mode on both grounds: the Timetable's
+ * tint of the theme colour over the app mode's surface, the mode's `onSurface` for text, markers, glyphs and the prompt, and its
+ * `outlineSubtle` for the divider ([modeCardLook]), so the map state and the list state draw the very same fill, text and glyphs.
+ * The theme controller is the real one and the text and content colours are the box's ink, so a taj component inside reads the
+ * app mode as well.
  *
- * The colours are read here, above the pinned light palette, so the dark look is the real app mode's even while the map state is
- * leaving, and they move between the two looks on the card spec ([mapCardFadeSpec]), a crossfade that is a jump with reduced
- * motion. It starts at where the ground is on first composition, so a screen that opens on the gradient in dark mode is dark from
- * its first frame. Under the scope [mapCardColors] gives the look shown, the text and content colours are its ink, and the app
- * mode the theme reads is the real one on the gradient and light on the map. A box outside every scope stays the map look.
+ * [onGradient] is true in the list state, where the cloud gradient covers the map, and false in the map state, where the map is
+ * always light. It decides one thing, the hairline ([cardEdgeShown]): always drawn in light mode, and in dark mode drawn on the
+ * gradient and not on the map. The hairline fades in and out on the card spec ([mapCardFadeSpec]) when the ground changes, and
+ * jumps with reduced motion; nothing else moves. A scope that opens on the gradient has its hairline from its first frame. A box
+ * outside every scope keeps the fixed light look.
  */
 @Composable
 internal fun CardGroundScope(onGradient: Boolean, content: @Composable () -> Unit) {
-    val realController = LocalThemeController.current
-    val theme = themeDecorColor()
-    val mapLook = fixedLightCardLook(theme)
-    val listLook = modeCardLook(
-        themeColor = theme,
-        darkMode = isAppInDarkMode(),
+    val darkMode = isAppInDarkMode()
+    val look = modeCardLook(
+        themeColor = themeDecorColor(),
+        darkMode = darkMode,
         surface = KrailTheme.colors.surface,
         onSurface = KrailTheme.colors.onSurface,
         softLabel = KrailTheme.colors.softLabel,
         labelPlaceholder = KrailTheme.colors.labelPlaceholder,
         outlineSubtle = KrailTheme.colors.outlineSubtle,
     )
-    val listShare by animateFloatAsState(
-        targetValue = if (onGradient) 1f else 0f,
+    val edgeShare by animateFloatAsState(
+        targetValue = if (cardEdgeShown(darkMode, onGradient)) 1f else 0f,
         animationSpec = mapCardFadeSpec(isReduceMotionEnabled()),
-        label = "search-stop-card-ground",
+        label = "search-stop-card-edge",
     )
-    val look = blendCardLook(map = mapLook, list = listLook, listShare = listShare)
-    val lightController = remember { ThemeController(currentMode = ThemeMode.LIGHT, setThemeMode = {}) }
     CompositionLocalProvider(
-        LocalCardLook provides look,
-        LocalThemeController provides if (onGradient) realController else lightController,
+        LocalCardLook provides look.withEdgeShare(edgeShare),
         LocalTextColor provides look.onTint,
         LocalContentColor provides look.onTint,
         content = content,
@@ -296,13 +296,26 @@ private const val DISABLED_ALPHA = 0.38f
 internal fun mapActiveChipColors(): ButtonColors = ButtonDefaults.buttonColors()
 
 /**
- * The 1 dp hairline round a chip or card that floats over the map, in [MapCardColors.chipEdge] (the light palette's `softLabel`,
- * or the app mode's own under a [CardGroundScope] on the gradient), drawn over the fill so the edge shows even where its tint is
- * close to the ground. It is drawn in both app modes.
+ * The 1 dp hairline round a chip or card that floats over the map, in [MapCardColors.chipEdge] (the app mode's `softLabel` under a
+ * [CardGroundScope], the light palette's outside one), drawn over the fill so the edge shows even where its tint is close to the
+ * ground. Nothing is drawn while the colour has no alpha, which is the dark box on the map.
  */
 @Composable
 internal fun Modifier.mapChipEdge(shape: Shape, color: Color = mapCardColors().chipEdge): Modifier =
     drawWithContent {
         drawContent()
-        drawOutline(outline = shape.createOutline(size, layoutDirection, this), color = color, style = Stroke(width = 1.dp.toPx()))
+        if (color.alpha > 0f) {
+            drawOutline(outline = shape.createOutline(size, layoutDirection, this), color = color, style = Stroke(width = 1.dp.toPx()))
+        }
     }
+
+/**
+ * The surface of a card on Search Stop: [shape] with the hairline ([mapChipEdge]) over it, its content clipped to it and its fill,
+ * all from the look [mapCardColors] gives. The From and To box and the location notice both take their surface from here, so the
+ * fill, the hairline and the corner of the two are one source and cannot drift apart.
+ */
+@Composable
+internal fun Modifier.searchStopCardSurface(shape: Shape): Modifier {
+    val card = mapCardColors()
+    return mapChipEdge(shape, card.chipEdge).clip(shape).background(card.tint)
+}

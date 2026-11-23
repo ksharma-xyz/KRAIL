@@ -68,9 +68,9 @@ internal fun ToFromFloatingRows(
     insets: ToFromBarInsets,
     rowGap: Dp,
     modifier: Modifier = Modifier,
-    fixedLight: Boolean = false,
+    boxLook: Boolean = false,
 ) {
-    val colors = floatingFieldColors(fixedLight)
+    val colors = floatingFieldColors(boxLook)
     Column(modifier = modifier.fillMaxWidth()) {
         // The gap belongs to the From row, so a hidden From leaves nothing above To.
         AnimatedVisibility(
@@ -113,13 +113,13 @@ internal fun ToFromFloatingRows(
 }
 
 /**
- * The bars' colours: the shared [softFieldColors], or, when [fixedLight] is set, the Search Stop box's own look from
- * [mapCardColors]: its tint for the fill, its ink for the text and caret and its placeholder. On the map that is the light palette
- * in both app modes, and on the gradient of the list state it is the app mode's own (see `CardGroundScope`).
+ * The bars' colours: the shared [softFieldColors], or, when [boxLook] is set, the Search Stop box's own look from
+ * [mapCardColors]: its tint for the fill, its ink for the text and caret and its placeholder. Under a `CardGroundScope` that is the
+ * app mode's own, on the map and on the gradient of the list state alike.
  */
 @Composable
-private fun floatingFieldColors(fixedLight: Boolean): TextFieldColors {
-    if (!fixedLight) return softFieldColors()
+private fun floatingFieldColors(boxLook: Boolean): TextFieldColors {
+    if (!boxLook) return softFieldColors()
     val card = mapCardColors()
     return TextFieldColors(
         containerColor = card.tint,

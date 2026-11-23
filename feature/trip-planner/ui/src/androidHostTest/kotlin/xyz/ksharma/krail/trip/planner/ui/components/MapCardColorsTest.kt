@@ -33,10 +33,12 @@ import xyz.ksharma.krail.taj.themeDecorColor
 import xyz.ksharma.krail.taj.tokens.AiThemeGradientTokens
 
 /**
- * The colours of every card that floats over the map, from the one accessor ([mapCardColors]). The Search Stop card, the bare
- * pill, the notice, the Options card and the Options pill are one fixed light look in both app modes: the theme colour at
- * 15 percent over white with the light palette's text and its `softLabel` hairline, never a dark tint and never the mode aware
- * `softLabel`. The stop card keeps the older mode aware family (a body and a header band), which is held here as it was: the text
+ * The colours of every card that floats over the map, from the one accessor ([mapCardColors]). Outside a [CardGroundScope] the
+ * accessor gives the fixed light look in both app modes: the theme colour at 15 percent over white with the light palette's text
+ * and its `softLabel` hairline, never a dark tint and never the mode aware `softLabel`. That is what the Options card and the
+ * home map's notices wear. Under a [CardGroundScope], which the Search Stop box, the bare pill and the location notice stand in,
+ * the accessor gives the app mode's look on the map and on the gradient alike, and only the hairline differs between the two
+ * grounds. The stop card keeps the older mode aware family (a body and a header band), which is held here as it was: the text
  * on the body and on the header 4.5 to 1 or better, the header a visibly different step from the body at 1.15 to 1 or better.
  * The table of every theme in both modes is printed, so the real figures are on record.
  *
@@ -103,7 +105,7 @@ class MapCardColorsTest {
     private val allThemes = KrailThemeStyle.entries
 
     /**
-     * The Search Stop card is one fixed light look in both app modes: the Timetable's light tint over white with the light
+     * Outside a scope the accessor is one fixed light look in both app modes: the Timetable's light tint over white with the light
      * palette's text, and the light palette's `softLabel` as its hairline. The numbers are printed for every theme and held to the
      * floors of the approved picture: the text 4.5 to 1 on every theme and 17.5 to 18.3 on the four standard ones, the hairline
      * 3.8 to 1 against the map ground, and the fill, the text and the edge the very same in light and dark app mode.
@@ -134,12 +136,12 @@ class MapCardColorsTest {
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-notnight")
-    fun `in light mode the Search Stop card is the fixed light look and reads at 17_5 to 18_3 on the standard themes`() =
+    fun `in light mode the accessor outside a scope is the fixed light look and reads at 17_5 to 18_3 on the standard themes`() =
         assertSearchStopCard("light")
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night")
-    fun `in dark mode the Search Stop card is the very same fixed light look, not a dark tint`() = assertSearchStopCard("dark")
+    fun `in dark mode the accessor outside a scope is the very same fixed light look, not a dark tint`() = assertSearchStopCard("dark")
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night")
@@ -304,23 +306,35 @@ class MapCardColorsTest {
     }
 
     @Test
-    fun `the blend of the two looks is exact at both ends and part way between`() {
-        val theme = KrailThemeStyle.Train.hexColorCode.hexToComposeColor()
-        val map = fixedLightCardLook(theme)
-        val list = darkListLook(theme)
+    fun `the hairline is drawn in light mode on both grounds, and in dark mode on the gradient only`() {
+        assertTrue(cardEdgeShown(darkMode = false, onGradient = false), "light, on the map")
+        assertTrue(cardEdgeShown(darkMode = false, onGradient = true), "light, on the gradient")
+        assertTrue(!cardEdgeShown(darkMode = true, onGradient = false), "dark, on the map: the dark box is clear of the light map")
+        assertTrue(cardEdgeShown(darkMode = true, onGradient = true), "dark, on the gradient, where it separates the box from the page")
+    }
 
-        assertEquals(map, blendCardLook(map, list, 0f), "0 is the map look, exactly")
-        assertEquals(list, blendCardLook(map, list, 1f), "1 is the list look, exactly")
-        val mid = blendCardLook(map, list, 0.5f)
-        assertNotEquals(map.tint, mid.tint)
-        assertNotEquals(list.tint, mid.tint)
-        assertTrue(mid.tint.luminance() < map.tint.luminance() && mid.tint.luminance() > list.tint.luminance(), "the middle fill lies between the two")
-        assertTrue(mid.onTint.luminance() > map.onTint.luminance() && mid.onTint.luminance() < list.onTint.luminance(), "and so does the ink")
+    @Test
+    fun `the edge share changes the hairline's alpha and nothing else, and is exact at both ends`() {
+        val look = darkListLook(KrailThemeStyle.Train.hexColorCode.hexToComposeColor())
+
+        assertEquals(look, look.withEdgeShare(1f), "1 is this very look, so light mode is the same value at every frame")
+        val gone = look.withEdgeShare(0f)
+        assertEquals(0f, gone.edge.alpha, "0 draws no hairline")
+        assertEquals(look.edge.copy(alpha = 0f), gone.edge)
+        val half = look.withEdgeShare(0.5f)
+        // A colour keeps its alpha in 8 bits, so half is 128 in 255.
+        assertEquals(0.5f * look.edge.alpha, half.edge.alpha, 0.01f)
+        for (shared in listOf(gone, half)) {
+            assertEquals(look.tint, shared.tint, "the fill never moves")
+            assertEquals(look.onTint, shared.onTint, "the ink never moves")
+            assertEquals(look.placeholder, shared.placeholder, "the prompt never moves")
+            assertEquals(look.divider, shared.divider, "the divider never moves")
+        }
     }
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night")
-    fun `under a ground scope in dark mode the accessor gives the dark look on the gradient and the fixed light look on the map`() {
+    fun `under a ground scope in dark mode the accessor gives the very same dark look on the gradient and on the map, bar the hairline`() {
         var onGradient: MapCardColors? = null
         var onMap: MapCardColors? = null
         var outside: MapCardColors? = null
@@ -336,23 +350,49 @@ class MapCardColorsTest {
         composeRule.waitForIdle()
 
         val dark = darkListLook(theme)
-        val fixed = fixedLightCardLook(theme)
-        val g = checkNotNull(onGradient)
-        assertEquals(dark.tint, g.tint, "on the gradient the fill is the dark tint")
-        assertEquals(dark.onTint, g.onTint, "the ink is cream")
-        assertEquals(dark.edge, g.chipEdge, "the hairline is the dark softLabel")
-        assertEquals(dark.placeholder, g.placeholder)
-        assertEquals(dark.divider, g.divider)
-        assertEquals(dark.tint, g.chip.containerColor, "a chip on the gradient wears it too")
-        for (card in listOf(checkNotNull(onMap), checkNotNull(outside))) {
-            assertEquals(fixed.tint, card.tint, "on the map, or outside any scope, the fill is the fixed light tint")
-            assertEquals(fixed.onTint, card.onTint)
-            assertEquals(fixed.edge, card.chipEdge)
-            assertEquals(fixed.placeholder, card.placeholder)
-            assertEquals(fixed.divider, card.divider)
+        for ((ground, card) in listOf("gradient" to checkNotNull(onGradient), "map" to checkNotNull(onMap))) {
+            assertEquals(dark.tint, card.tint, "$ground: the fill is the dark tint")
+            assertEquals(dark.onTint, card.onTint, "$ground: the ink is cream")
+            assertEquals(dark.placeholder, card.placeholder, "$ground: the prompt")
+            assertEquals(dark.divider, card.divider, "$ground: the divider")
+            assertEquals(dark.tint, card.chip.containerColor, "$ground: a chip wears it too")
+            assertEquals(dark.onTint, card.chip.contentColor, "$ground: with the same ink")
+            assertEquals(md_theme_light_surface, card.pill.containerColor, "$ground: the Options pill is white on either ground")
+            assertEquals(md_theme_light_onSurface, card.pill.contentColor)
         }
-        assertEquals(md_theme_light_surface, g.pill.containerColor, "the Options pill is white on either ground")
-        assertEquals(md_theme_light_onSurface, g.pill.contentColor)
+        assertEquals(dark.edge, checkNotNull(onGradient).chipEdge, "on the gradient the hairline is the dark softLabel")
+        assertEquals(dark.edge.copy(alpha = 0f), checkNotNull(onMap).chipEdge, "on the map there is none, the same colour with no alpha")
+        val fixed = fixedLightCardLook(theme)
+        val card = checkNotNull(outside)
+        assertEquals(fixed.tint, card.tint, "outside any scope the fill is the fixed light tint")
+        assertEquals(fixed.onTint, card.onTint)
+        assertEquals(fixed.edge, card.chipEdge)
+        assertEquals(fixed.placeholder, card.placeholder)
+        assertEquals(fixed.divider, card.divider)
+    }
+
+    @Test
+    fun `under a ground scope in light mode the map and the gradient are the very same look, hairline included`() {
+        var onGradient: MapCardColors? = null
+        var onMap: MapCardColors? = null
+        var theme = Color.Unspecified
+        composeRule.setContent {
+            PreviewTheme(themeStyle = KrailThemeStyle.Train) {
+                theme = themeDecorColor()
+                CardGroundScope(onGradient = true) { onGradient = mapCardColors() }
+                CardGroundScope(onGradient = false) { onMap = mapCardColors() }
+            }
+        }
+        composeRule.waitForIdle()
+
+        val fixed = fixedLightCardLook(theme)
+        for ((ground, card) in listOf("gradient" to checkNotNull(onGradient), "map" to checkNotNull(onMap))) {
+            assertEquals(fixed.tint, card.tint, "$ground: the fill is the light tint it was")
+            assertEquals(fixed.onTint, card.onTint, "$ground: the ink")
+            assertEquals(fixed.edge, card.chipEdge, "$ground: the hairline is the light softLabel, with full alpha")
+            assertEquals(fixed.placeholder, card.placeholder, "$ground: the prompt")
+            assertEquals(fixed.divider, card.divider, "$ground: the divider")
+        }
     }
 
     // endregion

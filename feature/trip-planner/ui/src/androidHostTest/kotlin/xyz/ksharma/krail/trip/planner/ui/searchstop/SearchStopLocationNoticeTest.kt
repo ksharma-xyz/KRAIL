@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.SemanticsActions
@@ -42,8 +43,11 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.theme.md_theme_dark_onSurface
+import xyz.ksharma.krail.taj.theme.md_theme_dark_softLabel
+import xyz.ksharma.krail.taj.theme.md_theme_dark_surface
 import xyz.ksharma.krail.taj.theme.md_theme_light_softLabel
-import androidx.compose.ui.graphics.luminance
+import xyz.ksharma.krail.taj.themeDecorColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.mapCardColors
 import kotlin.math.abs
@@ -53,8 +57,9 @@ import kotlin.test.assertTrue
 
 /**
  * The location notice under the Search Stop box, read from the real tile (`docs/MAP_HOME_UX.md`, The box): the app's own info
- * tile in its Plain style, expanded, with Allow or Settings and its own Not now. Copy, calls, the leave and the return, the
- * heights, the hairline and the touch it swallows.
+ * tile in its Bare style, wearing the box's surface, expanded, with Allow or Settings and its own Not now. Copy, calls, the leave
+ * and the return, the heights, the hairline and the touch it swallows. The notice against the box, pixel for pixel, is read in
+ * `SearchStopCardLookTest`.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -76,8 +81,9 @@ class SearchStopLocationNoticeTest {
     private var tint = Color.Unspecified
     private var edge = Color.Unspecified
     private var modeSoftLabel = Color.Unspecified
+    private var themeColor = Color.Unspecified
 
-    private fun setNotice(fontScale: Float = 1f) {
+    private fun setNotice(fontScale: Float = 1f, onGradient: Boolean = false) {
         composeRule.setContent {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
@@ -87,6 +93,7 @@ class SearchStopLocationNoticeTest {
                     tint = mapCardColors().tint
                     edge = mapCardColors().chipEdge
                     modeSoftLabel = KrailTheme.colors.softLabel
+                    themeColor = themeDecorColor()
                     // The map under the notice: a tap that reaches it is counted.
                     Box(modifier = Modifier.fillMaxSize().background(surface).clickable { mapTaps++ }.padding(16.dp)) {
                         LocationNotice(
@@ -97,6 +104,7 @@ class SearchStopLocationNoticeTest {
                                 dismisses++
                             },
                             onCtaClick = { ctas++ },
+                            onGradient = onGradient,
                         )
                     }
                 }
@@ -289,24 +297,38 @@ class SearchStopLocationNoticeTest {
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
-    fun `in dark mode the tile wears the same light softLabel hairline, not the mode aware one`() {
+    fun `in dark mode the tile wears no hairline on the map, and the dark softLabel one on the gradient`() {
         setNotice()
 
-        assertTrue(close(edge, edgeAcross(edge)), "a pixel across the tile's edge is the light hairline in dark mode too")
-        assertNotEquals(modeSoftLabel, edge)
-        assertEquals(md_theme_light_softLabel, edge)
+        assertTrue(!close(md_theme_dark_softLabel, edgeAcross(md_theme_dark_softLabel)), "no pixel across the tile's edge on the map is a hairline")
+        assertNotEquals(modeSoftLabel, md_theme_light_softLabel, "the mode aware softLabel is the dark one")
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
+    fun `in dark mode on the gradient the tile wears the dark softLabel hairline`() {
+        setNotice(onGradient = true)
+
+        assertTrue(close(md_theme_dark_softLabel, edgeAcross(md_theme_dark_softLabel)), "a pixel across the tile's edge is the dark hairline")
     }
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night")
-    fun `in dark mode the tile is the card's own fixed light tint, with the card's text colour on it`() {
+    fun `in dark mode the tile is the Timetable's dark tint, with the box's cream text on it`() {
         setNotice()
 
+        val dark = themeColor.copy(alpha = 0.45f).compositeOver(md_theme_dark_surface)
         val tile = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
         val image = drawn()
-        assertTrue(close(tint, pixelAt(image, tile.right - 8.dp, tile.top + 8.dp)), "the fill is the card's tint, not a dark tint of it")
-        assertTrue(tint.luminance() > 0.5f, "and it is light: ${tint.luminance()}")
-        assertNotEquals(surface, tint)
+        assertTrue(close(dark, pixelAt(image, tile.right - 8.dp, tile.top + 8.dp)), "the fill is the theme at 45 percent over the dark surface")
+        assertTrue(!close(tint, pixelAt(image, tile.right - 8.dp, tile.top + 8.dp)), "and it is not the light tint it was")
+        assertNotEquals(surface, dark)
+        for (text in listOf(LOCATION_NOTICE_TITLE, LOCATION_NOTICE_BODY, LOCATION_NOTICE_DISMISS)) {
+            val results = mutableListOf<TextLayoutResult>()
+            composeRule.onNodeWithText(text, useUnmergedTree = true).fetchSemanticsNode()
+                .config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(results)
+            assertEquals(md_theme_dark_onSurface, results.first().layoutInput.style.color.copy(alpha = 1f), "$text is the box's cream")
+        }
     }
 
     @Test

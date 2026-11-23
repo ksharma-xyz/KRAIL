@@ -75,7 +75,7 @@ internal class CardRowsContent(
 
 /**
  * The To and From block as the Timetable's own card (`docs/MAP_HOME_UX.md`, The box): two plain rows, From above To, on the
- * card the caller draws in the fixed light tint, with the 1 dp divider between them and no fill of their own. The rows are the
+ * card the caller draws in the box's tint, with the 1 dp divider between them and no fill of their own. The rows are the
  * editable fields: taj's [TextField] with no container, the card's text colour for text, prompt and caret, so the card's tint is
  * all that shows.
  *

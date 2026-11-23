@@ -17,7 +17,6 @@ import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.SHADOW_ALPHA
 import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.borderWidth
 import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shadowRadius
 import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shadowSpread
-import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shape
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
@@ -44,6 +43,15 @@ enum class InfoTileStyle {
      * (the always light map) gets the light tint in dark mode. The layout, the padding and the behaviour are the other styles' own.
      */
     Plain,
+
+    /**
+     * Paints nothing of its own: no fill, no border and no shadow, so the surface is the caller's, drawn by the modifier it passes
+     * in. It is for a tile that has to wear exactly the surface of another card, so the two take their fill, hairline and corner
+     * from one source. The dismiss label takes the caller's text colour ([xyz.ksharma.krail.taj.LocalTextColor]) rather than the
+     * theme ink a text button reads, so it is the same colour as the rest of the card's text. The layout, the padding and the
+     * behaviour are the other styles' own.
+     */
+    Bare,
 }
 
 private const val AI_FILL_STOP_SHARE_DARK = 0.4f
@@ -76,22 +84,24 @@ fun Modifier.infoTileGlow(shape: Shape = InfoTileDefaults.shape): Modifier {
 
 /** The glow and border, applied before the click target so the shadow sits outside it. */
 @Composable
-internal fun Modifier.infoTileOuter(style: InfoTileStyle): Modifier = when (style) {
+internal fun Modifier.infoTileOuter(style: InfoTileStyle, shape: Shape): Modifier = when (style) {
     InfoTileStyle.Standard -> infoTileGlow(shape)
 
-    InfoTileStyle.AiFill -> this
+    InfoTileStyle.AiFill, InfoTileStyle.Bare -> this
 
     InfoTileStyle.Plain -> border(width = borderWidth, color = themeBackgroundColor(), shape = shape)
 }
 
 /** The surface, applied after the click target and clip. */
 @Composable
-internal fun Modifier.infoTileSurface(style: InfoTileStyle): Modifier = when (style) {
-    InfoTileStyle.Standard -> standardSurface()
+internal fun Modifier.infoTileSurface(style: InfoTileStyle, shape: Shape): Modifier = when (style) {
+    InfoTileStyle.Standard -> standardSurface(shape)
 
     InfoTileStyle.AiFill -> background(brush = aiFillBrush(), shape = shape)
 
     InfoTileStyle.Plain -> background(color = plainFill(), shape = shape)
+
+    InfoTileStyle.Bare -> this
 }
 
 /** The Timetable's tint laid over the page surface of the mode the tile is read in, so it is opaque and follows [isAppInDarkMode]. */
@@ -101,7 +111,7 @@ private fun plainFill(): Color =
 
 // The fill sits over the glow's shadow, so the shadow colour does not show through. The border is part of the glow.
 @Composable
-private fun Modifier.standardSurface(): Modifier = background(color = KrailTheme.colors.surface, shape = shape)
+private fun Modifier.standardSurface(shape: Shape): Modifier = background(color = KrailTheme.colors.surface, shape = shape)
 
 @Composable
 private fun aiFillBrush(): Brush {

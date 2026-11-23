@@ -56,22 +56,20 @@ import xyz.ksharma.krail.taj.theme.md_theme_light_surface
 import xyz.ksharma.krail.taj.themeDecorColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.FROM_PLACEHOLDER
-import xyz.ksharma.krail.trip.planner.ui.components.MapMotion
 import xyz.ksharma.krail.trip.planner.ui.components.TO_PLACEHOLDER
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import kotlin.math.abs
 import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 /**
- * What the Search Stop box and the location notice stand on decides their colours, read from the real components. On the map, which
- * is always light, they are one fixed light look in both app modes. On the cloud gradient of the list state, which follows the app
- * mode, they follow it: light mode is that same fixed light look, and dark mode is the Timetable's own dark tint (45 percent of the
- * theme colour over the dark surface) with the dark palette's cream text, its `softLabel` hairline and its divider. The clear X, the
- * swap glyph, the markers, the back arrow and the prompts take the box's text colour, so they read in dark mode. Moving between the
- * two grounds is a crossfade on the card spec and a jump with reduced motion.
+ * The Search Stop box and the location notice follow the app mode on the map and on the cloud gradient of the list state alike, read
+ * from the real components: light mode is the Timetable's light tint with the light palette's text, hairline and divider, and dark
+ * mode is the Timetable's own dark tint (45 percent of the theme colour over the dark surface) with the dark palette's cream text,
+ * its `softLabel` hairline and its divider. The clear X, the swap glyph, the markers, the back arrow and the prompts take the box's
+ * text colour, so they read in dark mode. The one thing that differs between the grounds is the dark mode hairline, which is not
+ * drawn on the map. `SearchStopCardLookTest` holds the map against the list state theme by theme and frame by frame.
  *
  * The expected colours are built here from the taj tokens and the 45 and 15 percent of the Timetable's tint, not from the code
  * under test, so a drift in either shows.
@@ -294,31 +292,48 @@ class SearchStopListGroundTest {
 
     // endregion
 
-    // region the map state is the fixed light look in both app modes
+    // region the map state follows the app mode too
 
-    private fun assertMapLook(mode: String) {
+    @Test
+    fun `map state in light mode is the light look it was`() {
         editing = ToFromField.To
         setCard(gradient = false, withNotice = true)
 
-        assertClose(lightTint, cardFill(), "$mode: the box on the map is the theme at 15 percent over white")
+        assertClose(lightTint, cardFill(), "light: the box on the map is the theme at 15 percent over white")
         for (color in textColorsIn(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)) {
-            assertEquals(md_theme_light_onSurface, color.copy(alpha = 1f), "$mode: the text on the map is the light palette's onSurface")
+            assertEquals(md_theme_light_onSurface, color.copy(alpha = 1f), "light: the text on the map is the light palette's onSurface")
         }
-        assertClose(md_theme_light_softLabel, edgePixel(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, md_theme_light_softLabel), "$mode: the hairline on the map is the light softLabel")
+        assertClose(md_theme_light_softLabel, edgePixel(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, md_theme_light_softLabel), "light: the hairline on the map is the light softLabel")
         val divider = boundsOf(TripPlannerTestTags.SEARCH_ROW_DIVIDER)
-        assertClose(md_theme_light_outline_subtle.compositeOver(lightTint), drawn().at(divider.cx(), divider.cy()), "$mode: the divider on the map is the light one")
+        assertClose(md_theme_light_outline_subtle.compositeOver(lightTint), drawn().at(divider.cx(), divider.cy()), "light: the divider on the map is the light one")
         val dot = boundsOf(TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT)
-        assertClose(md_theme_light_onSurface, drawn().at(dot.cx(), dot.cy()), "$mode: the dot on the map is the light text colour")
+        assertClose(md_theme_light_onSurface, drawn().at(dot.cx(), dot.cy()), "light: the dot on the map is the light text colour")
         val notice = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
-        assertClose(lightTint, drawn().at(notice.left + 3.dp, notice.cy()), "$mode: the notice on the map is the very same light tint")
+        assertClose(lightTint, drawn().at(notice.left + 3.dp, notice.cy()), "light: the notice on the map is the very same light tint")
     }
 
     @Test
-    fun `map state in light mode is the fixed light look`() = assertMapLook("light")
-
-    @Test
     @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
-    fun `map state in dark mode is the very same fixed light look, not the dark tint`() = assertMapLook("dark")
+    fun `map state in dark mode is the very same dark look as the list state, with cream text and the dark divider and no hairline`() {
+        editing = ToFromField.To
+        setCard(gradient = false, withNotice = true)
+
+        assertClose(darkTint, cardFill(), "dark: the box on the map is the theme at 45 percent over the dark surface")
+        assertTrue(!close(lightTint, cardFill()), "dark: and it is not the light tint it was")
+        val colors = textColorsIn(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
+        assertTrue(colors.isNotEmpty(), "the box holds text")
+        for (color in colors) assertEquals(md_theme_dark_onSurface, color.copy(alpha = 1f), "dark: the text on the map is the dark palette's cream")
+        val divider = boundsOf(TripPlannerTestTags.SEARCH_ROW_DIVIDER)
+        assertClose(md_theme_dark_outline_subtle.compositeOver(darkTint), drawn().at(divider.cx(), divider.cy()), "dark: the divider on the map is the dark outlineSubtle")
+        val dot = boundsOf(TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT)
+        assertClose(md_theme_dark_onSurface, drawn().at(dot.cx(), dot.cy()), "dark: the dot on the map is the cream text colour")
+        val notice = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
+        assertClose(darkTint, drawn().at(notice.left + 3.dp, notice.cy()), "dark: the notice on the map is the very same dark tint")
+        assertTrue(
+            !close(md_theme_dark_softLabel, edgePixel(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, md_theme_dark_softLabel), 0.05f),
+            "dark: the box wears no hairline on the map",
+        )
+    }
 
     // endregion
 
@@ -369,7 +384,7 @@ class SearchStopListGroundTest {
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
-    fun `list state in dark mode, the clear X, the swap glyph and the markers follow the box's text colour, and on the map they stay the light ink`() {
+    fun `in dark mode the clear X, the swap glyph and the markers follow the box's text colour on the gradient and on the map`() {
         editing = ToFromField.To
         setCard(gradient = true)
 
@@ -391,9 +406,9 @@ class SearchStopListGroundTest {
         }
         composeRule.waitForIdle()
         assertClose(
-            md_theme_light_onSurface,
-            nearestInk(boundsOf(TripPlannerTestTags.SEARCH_STOP_CLEAR_GLYPH), md_theme_light_onSurface),
-            "back on the map the clear X is the light ink again",
+            md_theme_dark_onSurface,
+            nearestInk(boundsOf(TripPlannerTestTags.SEARCH_STOP_CLEAR_GLYPH), md_theme_dark_onSurface),
+            "back on the map the clear X is still cream, the same ink",
         )
     }
 
@@ -411,71 +426,7 @@ class SearchStopListGroundTest {
 
     // endregion
 
-    // region the move between the two grounds
-
-    private fun flipTo(gradient: Boolean) {
-        composeRule.runOnUiThread {
-            onGradient = gradient
-            Snapshot.sendApplyNotifications()
-        }
-    }
-
-    private fun darkestAndLightest(a: Color, b: Color): Pair<Color, Color> =
-        if (a.red + a.green + a.blue < b.red + b.green + b.blue) a to b else b to a
-
-    private fun isBetween(low: Color, high: Color, c: Color, slack: Float = 0.01f) =
-        c.red in (low.red - slack)..(high.red + slack) &&
-            c.green in (low.green - slack)..(high.green + slack) &&
-            c.blue in (low.blue - slack)..(high.blue + slack)
-
-    @Test
-    @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
-    fun `in dark mode the box crossfades between the map's light tint and the list's dark tint on the card spec, both ways`() {
-        editing = ToFromField.To
-        setCard(gradient = false)
-        composeRule.mainClock.autoAdvance = false
-        val dot = boundsOf(TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT)
-        assertClose(lightTint, cardFill(), "starts on the map, light")
-
-        flipTo(true)
-        composeRule.mainClock.advanceTimeBy(MapMotion.ENTER_MS / 2L)
-        val mid = cardFill()
-        val (dark, light) = darkestAndLightest(darkTint, lightTint)
-        assertTrue(!close(light, mid, 0.04f) && !close(dark, mid, 0.04f), "halfway through, the fill is neither end: $mid")
-        assertTrue(isBetween(dark, light, mid), "and it lies between the two tints: $mid")
-        val inkMid = drawn().at(dot.cx(), dot.cy())
-        assertTrue(isBetween(md_theme_light_onSurface, md_theme_dark_onSurface, inkMid), "the ink is part way too: $inkMid")
-
-        composeRule.mainClock.advanceTimeBy(MapMotion.ENTER_MS.toLong())
-        assertClose(darkTint, cardFill(), "after the card spec's ${MapMotion.ENTER_MS} ms it is the dark tint")
-        assertClose(md_theme_dark_onSurface, drawn().at(dot.cx(), dot.cy()), "and the ink is cream")
-
-        flipTo(false)
-        composeRule.mainClock.advanceTimeBy(MapMotion.ENTER_MS / 2L)
-        val back = cardFill()
-        assertTrue(!close(light, back, 0.04f) && !close(dark, back, 0.04f) && isBetween(dark, light, back), "going back it is part way again: $back")
-        composeRule.mainClock.advanceTimeBy(MapMotion.ENTER_MS.toLong())
-        assertClose(lightTint, cardFill(), "and ends on the map's light tint")
-    }
-
-    @Test
-    @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
-    fun `with reduced motion the colours jump in one frame, both ways`() {
-        editing = ToFromField.To
-        setCard(gradient = false, reduceMotion = true)
-        composeRule.mainClock.autoAdvance = false
-        assertClose(lightTint, cardFill(), "starts light on the map")
-
-        flipTo(true)
-        composeRule.mainClock.advanceTimeByFrame()
-        composeRule.mainClock.advanceTimeByFrame()
-        assertClose(darkTint, cardFill(), "one frame later it is the dark tint, with no step between")
-
-        flipTo(false)
-        composeRule.mainClock.advanceTimeByFrame()
-        composeRule.mainClock.advanceTimeByFrame()
-        assertClose(lightTint, cardFill(), "and one frame after going back it is the light tint")
-    }
+    // region a screen that opens on the gradient
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
@@ -487,21 +438,6 @@ class SearchStopListGroundTest {
     }
 
     // endregion
-
-    // region another theme
-
-    @Test
-    @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
-    fun `on the Ferry theme the dark list state's box is the dark tint of that theme, and the map state the light tint`() {
-        editing = ToFromField.To
-        setCard(gradient = true, themeStyle = KrailThemeStyle.Ferry)
-
-        assertClose(darkTint, cardFill(), "Ferry: the dark list state's box")
-        assertNotEquals(lightTint, cardFill(), "Ferry: and not the light tint")
-        flipTo(false)
-        composeRule.waitForIdle()
-        assertClose(lightTint, cardFill(), "Ferry: the map state's box")
-    }
 
     // endregion
 

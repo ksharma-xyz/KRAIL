@@ -155,7 +155,7 @@ private fun ChipLabel(icon: DrawableResource?, text: String) {
  * label alone does not say it, and the 48 dp touch target from the interactive size modifier.
  */
 @Composable
-private fun Modifier.chipTarget(tag: String, onClickLabel: String?): Modifier = this
+internal fun Modifier.chipTarget(tag: String, onClickLabel: String?): Modifier = this
     // The tag and the semantics come before the size, so the node a screen reader and a test find is the whole
     // 48 dp target and not the button inside it.
     .testTag(tag)

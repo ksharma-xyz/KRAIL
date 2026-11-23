@@ -10,7 +10,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
@@ -21,6 +23,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpRect
@@ -54,8 +57,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * The Saved Trips screen as the classic home: the Set Home and Set Work pills are the first row of the list,
- * the one search bar is pinned at the bottom with the microphone inside it, in the theme coloured sheet `main` drew the
+ * The Saved Trips screen as the classic home: the Home and Work pills are the first row of the list, the one
+ * search bar is pinned at the bottom with the microphone inside it, in the theme coloured sheet `main` drew the
  * search row in, and the map, the Park & Ride tiles, the notices and the suggestion are not on it.
  *
  * Each test runs in a window of its own size (density 1, so a dp is a pixel) and reads where the real nodes
@@ -128,24 +131,36 @@ class SavedTripsHomeLayoutTest {
 
     @Test
     @Config(qualifiers = NARROW)
-    fun `at 320 dp and 200 percent the pills stay one row and scroll sideways, whole pills only`() {
-        setScreen(fontScale = 2f, labels = UNSET_LABELS)
+    fun `when the pills do not fit one line the whole pill wraps to the next line and nothing scrolls sideways`() {
+        // Three whole pills at 200 percent text cannot share a 320 dp line, so the last one goes onto the next.
+        setPills(fontScale = 2f, pills = listOf(unset("Home"), unset("Work"), unset("Gym")))
 
         val home = bounds(TripPlannerTestTags.homeLabelChip("Home"))
         val work = bounds(TripPlannerTestTags.homeLabelChip("Work"))
-        assertNear("Work stays on Home's row", home.top, work.top)
-        assertTrue(home.left >= PAGE_PADDING - 1.dp && home.right <= NARROW_WIDTH, "Home is whole in the window: $home")
-        assertTrue(work.right > NARROW_WIDTH, "Work does not fit, so it peeks in and the row scrolls: $work")
+        val gym = bounds(TripPlannerTestTags.homeLabelChip("Gym"))
+        assertNear("Work stays on Home's line", home.top, work.top)
+        assertTrue(gym.top >= home.bottom, "Gym wraps onto a line of its own: $home $gym")
+        assertNear("the wrapped pill starts at the page inset", PAGE_PADDING, gym.left)
+        listOf(home, work, gym).forEach { pill ->
+            assertTrue(pill.left >= PAGE_PADDING - 1.dp && pill.right <= NARROW_WIDTH - PAGE_PADDING + 1.dp, "$pill is whole in the row")
+        }
+        listOf("Home", "Work", "Gym").forEach { name -> assertEquals(1, pillLineCount(name), "$name is one line") }
+    }
 
-        composeRule.onNodeWithTag(TripPlannerTestTags.SAVED_TRIPS_LABEL_PILLS).performScrollToIndex(1)
-        composeRule.waitForIdle()
+    @Test
+    @Config(qualifiers = NARROW)
+    fun `a pill wider than the row stays one line and ends in an ellipsis, for a set pill and an unset one`() {
+        setPills(fontScale = 2f, pills = listOf(unset(LONG_NAME), set(LONG_SET_NAME)))
 
-        val scrolled = bounds(TripPlannerTestTags.homeLabelChip("Work"))
-        assertTrue(
-            scrolled.left >= 0.dp && scrolled.right <= NARROW_WIDTH + 1.dp,
-            "Scrolled, the whole Work pill is in the window: $scrolled",
-        )
-        assertNear("Work is still on the one row", home.top, scrolled.top)
+        listOf(LONG_NAME, LONG_SET_NAME).forEach { name ->
+            val pill = bounds(TripPlannerTestTags.homeLabelChip(name))
+            assertTrue(
+                pill.left >= PAGE_PADDING - 1.dp && pill.right <= NARROW_WIDTH - PAGE_PADDING + 1.dp,
+                "The pill for $name is not wider than the row: $pill",
+            )
+            assertEquals(1, pillLineCount(name), "$name is one line")
+            assertTrue(pillTextOverflows(name), "$name ends in an ellipsis")
+        }
     }
 
     @Test
@@ -161,14 +176,25 @@ class SavedTripsHomeLayoutTest {
 
     @Test
     @Config(qualifiers = PHONE)
-    fun `a set label keeps its pill and reads Home, an unset one reads Set Work`() {
+    fun `a set label is the near black pill reading Home, an unset one is the outlined button reading plus Work`() {
         setScreen()
 
         // A trip card that starts at the Home stop draws the label too, so the text is found inside the pill.
         fun inPill(label: String, text: String) =
             hasText(text) and hasAnyAncestor(hasTestTag(TripPlannerTestTags.homeLabelChip(label)))
         composeRule.onNode(inPill("Home", "Home"), useUnmergedTree = true).assertExists()
-        composeRule.onNode(inPill("Work", "Set Work"), useUnmergedTree = true).assertExists()
+        composeRule.onNode(inPill("Work", "+ Work"), useUnmergedTree = true).assertExists()
+        composeRule.onNode(hasText("Set Work"), useUnmergedTree = true).assertDoesNotExist()
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `a set pill and an unset pill are the same height, so the row does not jump when a label is saved`() {
+        setScreen(labels = LABELS)
+        val unsetHeight = bounds(TripPlannerTestTags.homeLabelChip("Work")).height
+        val setHeight = bounds(TripPlannerTestTags.homeLabelChip("Home")).height
+
+        assertNear("set and unset pill heights", setHeight, unsetHeight)
     }
 
     @Test
@@ -489,6 +515,39 @@ class SavedTripsHomeLayoutTest {
         composeRule.waitForIdle()
     }
 
+    /** Just the pill row, in a window of its own, so a pill can be made wider than the row. */
+    private fun setPills(fontScale: Float, pills: List<HomeChip.Label>) {
+        composeRule.setContent {
+            WithFontScale(fontScale) {
+                PreviewTheme {
+                    HomeLabelPills(
+                        pills = pills.toImmutableList(),
+                        onLabelClick = { events += SavedTripUiEvent.LabelChipClick(it) },
+                    )
+                }
+            }
+        }
+        composeRule.waitForIdle()
+    }
+
+    private fun unset(name: String) = HomeChip.Label(StopLabel(emoji = "x", label = name))
+
+    private fun set(name: String) =
+        HomeChip.Label(StopLabel(emoji = "x", label = name, stopId = "1", stopName = "Some Station"))
+
+    /** The text layout of the one text inside the pill for [name], where its lines and ellipsis can be read. */
+    private fun pillText(name: String): TextLayoutResult {
+        val inPill = hasAnyAncestor(hasTestTag(TripPlannerTestTags.homeLabelChip(name))) and hasText(name, substring = true)
+        val layouts = mutableListOf<TextLayoutResult>()
+        composeRule.onNode(inPill, useUnmergedTree = true).fetchSemanticsNode().config
+            .getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(layouts)
+        return layouts.first()
+    }
+
+    private fun pillLineCount(name: String): Int = pillText(name).lineCount
+
+    private fun pillTextOverflows(name: String): Boolean = pillText(name).isLineEllipsized(0)
+
     @Composable
     private fun WithFontScale(fontScale: Float, content: @Composable () -> Unit) {
         CompositionLocalProvider(
@@ -533,6 +592,8 @@ class SavedTripsHomeLayoutTest {
         const val MAP_TAG = "test.map"
         const val MANY = 14
         const val TOLERANCE_DP = 1.5f
+        const val LONG_NAME = "Grandparents house far away"
+        const val LONG_SET_NAME = "Weekend place by the lake"
         const val PARK_RIDE_EMPTY_LINE = "Save a trip and its station's parking shows here automatically."
         const val HOME_STOP_ID = "200080"
         const val HOME_STOP_NAME = "Wynyard Station"

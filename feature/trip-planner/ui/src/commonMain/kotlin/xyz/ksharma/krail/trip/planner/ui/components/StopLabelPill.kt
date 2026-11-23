@@ -36,8 +36,15 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
  * composition locals, so callers cannot override the typography or colours from
  * the outside — by design.
  *
+ * The pill has a 1 dp hairline in `outlineSubtle` drawn over its own fill. The fill is the same near black as a dark
+ * page, so without the hairline the pill's edge disappears there; in light mode the hairline is darker than the fill
+ * and does not show. It is drawn here, inside the pill, because a border a caller passes in is painted under the fill.
+ *
  * [showIcon] is false for `StopLabelAssignRow`'s pills, which sit right next to a
  * `TransportModeIcon` already — a second icon there would be redundant.
+ *
+ * [maxLines] is for a caller that has a row of its own to keep, such as the home label pills: with 1 the name stays
+ * on one line and ends in an ellipsis when the pill is wider than the room it has.
  */
 @Composable
 internal fun SetLabelPill(
@@ -45,6 +52,7 @@ internal fun SetLabelPill(
     modifier: Modifier = Modifier,
     size: LabelPillSize = LabelPillSize.Normal,
     showIcon: Boolean = true,
+    maxLines: Int = Int.MAX_VALUE,
 ) {
     val dim = KrailTheme.dimensions
     val shape = RoundedCornerShape(dim.radiusFull)
@@ -75,6 +83,7 @@ internal fun SetLabelPill(
                 )
                 .clip(shape)
                 .background(pillBackground, shape)
+                .border(width = dim.strokeThin, color = KrailTheme.colors.outlineSubtle, shape = shape)
                 .padding(
                     horizontal = if (size == LabelPillSize.Small) dim.spacingS else dim.chipHorizontalPadding,
                     // Normal pills size to their own padding; Small pills size to the
@@ -93,7 +102,7 @@ internal fun SetLabelPill(
                     modifier = Modifier.size(dim.spacingXL),
                 )
             }
-            Text(text = label.label)
+            Text(text = label.label, maxLines = maxLines)
         }
     }
 }

@@ -16,6 +16,7 @@ import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionS
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.toTile
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapOpenTracker
 import xyz.ksharma.krail.trip.planner.ui.state.mapstopselection.MapStopSelectionEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
@@ -50,6 +51,7 @@ internal fun HomeMapEntryContent(
     aiVoiceLevel: () -> Float = { 0f },
     actions: HomeMapActions = HomeMapActions(),
     suggestion: ParkRideSuggestionSlot? = null,
+    mapOpen: MapOpenTracker? = null,
 ) {
     var cardKey by rememberSaveable { mutableStateOf<String?>(null) }
     val ready = mapUiState as? MapUiState.Ready
@@ -76,6 +78,7 @@ internal fun HomeMapEntryContent(
                 onMapEvent = onMapEvent,
                 onCardKey = { cardKey = it },
                 ornamentTopPadding = ornamentTopPadding,
+                mapOpen = mapOpen,
             )
         },
         notices = notices,
@@ -85,7 +88,11 @@ internal fun HomeMapEntryContent(
             card = homeCardFor(cardKey, pins),
             state = savedTripsState,
             onEvent = actions.onEvent,
-            onGoTo = actions.onGoTo,
+            // This host draws its own card, so a pick is made here and not inside the map.
+            onGoTo = { stop ->
+                mapOpen?.stopPicked()
+                actions.onGoTo(stop)
+            },
             onClose = closeCard,
         ),
         onCardClose = closeCard,

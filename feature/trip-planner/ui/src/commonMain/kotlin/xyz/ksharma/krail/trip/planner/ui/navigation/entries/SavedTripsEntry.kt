@@ -205,6 +205,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                     },
                     labels = savedTripState.stopLabels,
                     onEvent = viewModel::onEvent,
+                    mapOpen = viewModel.mapOpen,
                 )
             },
         )

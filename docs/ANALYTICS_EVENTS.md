@@ -7,10 +7,12 @@ Read this before adding or modifying any event in
 
 Firebase Analytics hard-caps the app at **500 unique event names, forever**. GA never
 lets a name be reclaimed from history — a shipped event name is a permanently spent
-slot, even if the code stops sending it. Budget as of 2026-11-23: 61 events defined in
-code (`how_to_krail` is retired, its name stays spent) plus ~11 historical names, roughly 428 slots
-left. The 2026-09-11 figure of 53 had drifted; this is a recount of `name = "..."` in `AnalyticsEvent.kt`. Update this count when adding
-or removing events.
+slot, even if the code stops sending it. Budget as of 2026-11-24, on the analytics owner's count
+(their figure, not a recount of `AnalyticsEvent.kt` here): 72 custom names ever seen before `map_viewed`
+and `map_dismissed`, so 74 after them, about 426 slots left if the automatic events do not count. The
+recount of 2026-11-23 found 61 events defined in code (`how_to_krail` is retired, its name stays spent)
+plus ~11 historical names, which is the same 72. The 2026-09-11 figure of 53 had drifted; a recount is a
+count of `name = "..."` in `AnalyticsEvent.kt`. Update this count when adding or removing events.
 
 ### The other three caps, and which one actually bites
 

@@ -114,6 +114,10 @@ fun SearchStopMap(
     stopCardTopReserve: Dp? = null,
     // Told whether the open card's Departure Board is expanded, so a host can hand its own room to the card.
     onBoardExpandedChange: (Boolean) -> Unit = {},
+    // Counts each stretch of this map being on screen for analytics (`map_viewed`, `map_dismissed`) under [mapEntry].
+    // Null counts nothing, as in a preview.
+    mapOpen: MapOpenTracker? = null,
+    mapEntry: MapEntry = MapEntry.SEARCH_STOP,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         when (mapUiState) {
@@ -147,6 +151,8 @@ fun SearchStopMap(
                     hidesControlsForCard = hidesControlsForCard,
                     stopCardTopReserve = stopCardTopReserve,
                     onBoardExpandedChange = onBoardExpandedChange,
+                    mapOpen = mapOpen,
+                    mapEntry = mapEntry,
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -198,6 +204,8 @@ private fun MapContent(
     hidesControlsForCard: Boolean = false,
     stopCardTopReserve: Dp? = null,
     onBoardExpandedChange: (Boolean) -> Unit = {},
+    mapOpen: MapOpenTracker? = null,
+    mapEntry: MapEntry = MapEntry.SEARCH_STOP,
 ) {
     log(
         "[NEARBY_STOPS_UI] MapContent rendered: nearbyStops.size=${mapState.mapDisplay.nearbyStops.size}, " +
@@ -243,6 +251,16 @@ private fun MapContent(
     // location button), the only moments tracking may raise the system dialog.
     val userLocationManager = rememberUserLocationManager()
     val scope = rememberCoroutineScope()
+
+    // One open for each stretch this map is on screen and not covered, for `map_viewed` and `map_dismissed`.
+    MapOpenEffect(
+        mapOpen = mapOpen,
+        entry = mapEntry,
+        covered = isCovered,
+        hadUserLocation = mapState.mapDisplay.userLocation != null,
+        stopCount = mapState.mapDisplay.nearbyStops.size,
+        userLocationManager = userLocationManager,
+    )
 
     Box(modifier = modifier.fillMaxSize()) {
         // Seed from known user location so re-entry after a composition bounce
@@ -413,6 +431,9 @@ private fun MapContent(
                                             hadUserLocation = mapState.mapDisplay.userLocation != null,
                                         ),
                                     )
+                                    // After the pick event, which is stamped with this open's id, so the pick
+                                    // joins the open it ends.
+                                    mapOpen?.stopPicked()
 
                                     selectedStopId = null
                                 },

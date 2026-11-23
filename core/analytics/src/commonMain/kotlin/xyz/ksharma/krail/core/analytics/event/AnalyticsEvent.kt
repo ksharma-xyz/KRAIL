@@ -23,6 +23,8 @@ private const val PROP_LEG_COUNT = "legCount"
 private const val PROP_TRANSPORT_MODES = "transportModes"
 private const val PROP_SEARCH_SESSION_ID = "searchSessionId"
 private const val PROP_PANE_MODE = "paneMode"
+private const val PROP_MAP_SESSION_ID = "mapSessionId"
+private const val PROP_HAD_USER_LOCATION = "hadUserLocation"
 private const val PROP_ERROR_KIND = "errorKind"
 private const val PROP_TRANSPORT_UP = "transportUp"
 private const val PROP_UPSTREAM = "upstream"
@@ -34,6 +36,9 @@ private const val PROP_ENDPOINT = "endpoint"
 private const val PROP_REASON = "reason"
 private const val PROP_TRANSPORT_MODE = "transportMode"
 private const val PROP_VISIBLE_JOURNEY_COUNT = "visibleJourneyCount"
+
+/** A flag the registry reads as `1` or `0`, sent as a number and never as text. */
+private fun Boolean.asFlag(): Int = if (this) 1 else 0
 
 /**
  * Every event's [properties] pass through [AnalyticsParamSanitizer] before they are
@@ -1538,6 +1543,9 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      * @param nearbyStopsCount   Number of stop markers visible on the map at time of selection.
      * @param hadUserLocation    Whether the device location was available (permission granted +
      *                           location resolved). Does NOT include coordinates.
+     * @param mapSessionId       The id of the map open this pick belongs to, the same value `map_viewed` and
+     *                           `map_dismissed` carry, so a pick joins the open it came from. Left out when no
+     *                           open was in progress, so rows from older builds and a pick with no open carry none.
      */
     data class StopSelectedFromMapEvent(
         val stopId: String,
@@ -1545,15 +1553,17 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         val enabledModesCount: Int,
         val nearbyStopsCount: Int,
         val hadUserLocation: Boolean,
+        val mapSessionId: String? = null,
     ) : AnalyticsEvent(
         name = "stop_selected_from_map",
-        rawProperties = mapOf(
-            PROP_STOP_ID to stopId,
-            "searchRadiusKm" to searchRadiusKm,
-            "enabledModesCount" to enabledModesCount,
-            "nearbyStopsCount" to nearbyStopsCount,
-            "hadUserLocation" to hadUserLocation,
-        ),
+        rawProperties = buildMap {
+            put(PROP_STOP_ID, stopId)
+            put("searchRadiusKm", searchRadiusKm)
+            put("enabledModesCount", enabledModesCount)
+            put("nearbyStopsCount", nearbyStopsCount)
+            put(PROP_HAD_USER_LOCATION, hadUserLocation)
+            mapSessionId?.let { put(PROP_MAP_SESSION_ID, it) }
+        },
     )
 
     /**
@@ -1568,17 +1578,116 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      * @param stopId             The stop that was tapped.
      * @param transportModesCount Number of transport modes served at this stop.
      *                            Stops with more modes may attract more exploratory taps.
+     * @param mapSessionId        The id of the map open the tap belongs to, as on [StopSelectedFromMapEvent].
+     *                            Left out when no open was in progress.
      */
     data class NearbyStopClickEvent(
         val stopId: String,
         val transportModesCount: Int,
+        val mapSessionId: String? = null,
     ) : AnalyticsEvent(
         name = "nearby_stop_click",
-        rawProperties = mapOf(
-            PROP_STOP_ID to stopId,
-            "transportModesCount" to transportModesCount,
-        ),
+        rawProperties = buildMap {
+            put(PROP_STOP_ID, stopId)
+            put("transportModesCount", transportModesCount)
+            mapSessionId?.let { put(PROP_MAP_SESSION_ID, it) }
+        },
     )
+
+    /**
+     * The stop map became visible: once per map open, on the first frame the rider can see it.
+     *
+     * An open is one stretch of the map being on screen. It ends, and `map_dismissed` is sent for it, when the
+     * app leaves the foreground, when the rider goes back, when the map is covered by the list state or another
+     * screen, or when a stop is picked. Showing the map again after any of those is a NEW open with a new
+     * [mapSessionId] and a new `map_viewed`. Turning the phone is not an end: the open carries on through it.
+     * This event is the denominator for the map funnel (`nearby_stop_click`, `stop_selected_from_map` and
+     * `map_dismissed` all carry the same [mapSessionId]).
+     *
+     * `pane` is not a param of this class: [AnalyticsPaneTracker] adds it to every event as it is sent, with the
+     * existing `SINGLE | LIST | DETAIL` values.
+     *
+     * @param entry              Where the map is shown: `home` or `search_stop`. Search Stop covers its wide window
+     *                           map pane too. The Intro has no map.
+     * @param hadUserLocation    Whether a location fix was already in hand when the map became visible, sent as
+     *                           `1` or `0`. A fix that lands after that is not counted. No coordinates.
+     * @param locationPermission What the location permission was when the map became visible, with the same
+     *                           values as the Intro's `locationResult`: `granted`, `denied`, `not_asked` or
+     *                           `unavailable` (the system forbids it).
+     * @param mapSessionId       16 lowercase hex characters from a random 64 bit value. Never derived from a user
+     *                           id or a time.
+     */
+    data class MapViewedEvent(
+        val entry: Entry,
+        val hadUserLocation: Boolean,
+        val locationPermission: IntroLetsKrailClickEvent.LocationResult,
+        val mapSessionId: String,
+    ) : AnalyticsEvent(
+        name = "map_viewed",
+        rawProperties = mapOf(
+            "entry" to entry.value,
+            PROP_HAD_USER_LOCATION to hadUserLocation.asFlag(),
+            "locationPermission" to locationPermission.value,
+            PROP_MAP_SESSION_ID to mapSessionId,
+        ),
+    ) {
+        enum class Entry(val value: String) {
+            HOME("home"),
+            SEARCH_STOP("search_stop"),
+        }
+    }
+
+    /**
+     * A map open ended. Sent exactly once for each `map_viewed`, on whichever comes first: the app leaving the
+     * foreground (so a rider who quits on an empty map is counted), back, the map being covered by the list state
+     * or another screen, or a stop being picked from it. A map with no `map_viewed` sends none.
+     *
+     * @param mapSessionId   The id the open's `map_viewed` carried.
+     * @param selected       Whether a stop was picked from the map during this open, sent as `1` or `0`.
+     * @param durationBucket How long the map was open, from a monotonic clock difference taken as the open
+     *                       ended. There is no timer.
+     * @param hadStops       Whether at least one stop marker was on the map at any point in the open, sent as `1`
+     *                       or `0`. It stands in for a separate empty map event.
+     */
+    data class MapDismissedEvent(
+        val mapSessionId: String,
+        val selected: Boolean,
+        val durationBucket: DurationBucket,
+        val hadStops: Boolean,
+    ) : AnalyticsEvent(
+        name = "map_dismissed",
+        rawProperties = mapOf(
+            PROP_MAP_SESSION_ID to mapSessionId,
+            "selected" to selected.asFlag(),
+            "durationBucket" to durationBucket.value,
+            "hadStops" to hadStops.asFlag(),
+        ),
+    ) {
+        /**
+         * Under 5000 ms, 5000 up to but not including 15000, 15000 up to but not including 60000, and 60000
+         * and over.
+         */
+        enum class DurationBucket(val value: String) {
+            UNDER_5S("under_5s"),
+            FIVE_TO_15S("5_to_15s"),
+            FIFTEEN_TO_60S("15_to_60s"),
+            OVER_60S("over_60s"),
+            ;
+
+            companion object {
+                private const val FIVE_SECONDS_MS = 5_000L
+                private const val FIFTEEN_SECONDS_MS = 15_000L
+                private const val SIXTY_SECONDS_MS = 60_000L
+
+                fun from(durationMs: Long): DurationBucket = when {
+                    durationMs < FIVE_SECONDS_MS -> UNDER_5S
+                    durationMs < FIFTEEN_SECONDS_MS -> FIVE_TO_15S
+                    durationMs < SIXTY_SECONDS_MS -> FIFTEEN_TO_60S
+                    else -> OVER_60S
+                }
+            }
+        }
+    }
 
     /**
      * Fired when the user taps "Go to Settings" on the location permission denied banner.

@@ -14,6 +14,8 @@ import xyz.ksharma.krail.trip.planner.ui.homemap.homeStopCardOptions
 import xyz.ksharma.krail.trip.planner.ui.homemap.rememberHomeLocationState
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionPane
 import xyz.ksharma.krail.trip.planner.ui.searchstop.LocationStatusChip
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapEntry
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapOpenTracker
 import xyz.ksharma.krail.trip.planner.ui.state.mapstopselection.MapStopSelectionEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
@@ -29,6 +31,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
  * phone, which has no map.
  *
  * The chip is a sibling drawn over the map, never a parent of it, so the native map still renders on iOS.
+ *
+ * [mapOpen] counts each stretch of this map being on screen for analytics, as the `home` entry. Null counts nothing.
  */
 @Composable
 internal fun SavedTripsMapPane(
@@ -38,6 +42,7 @@ internal fun SavedTripsMapPane(
     onStopSelected: (StopItem) -> Unit,
     labels: ImmutableList<StopLabel>,
     onEvent: (SavedTripUiEvent) -> Unit,
+    mapOpen: MapOpenTracker? = null,
 ) {
     val dim = KrailTheme.dimensions
     val location = rememberHomeLocationState(
@@ -52,6 +57,8 @@ internal fun SavedTripsMapPane(
             stopCardOptions = homeStopCardOptions(labels = labels, onEvent = onEvent),
             allowPermissionRequest = location.allowPermissionRequest,
             onPermissionStatus = location.onPermissionStatus,
+            mapOpen = mapOpen,
+            mapEntry = MapEntry.HOME,
         )
         LocationStatusChip(
             pill = location.pill,

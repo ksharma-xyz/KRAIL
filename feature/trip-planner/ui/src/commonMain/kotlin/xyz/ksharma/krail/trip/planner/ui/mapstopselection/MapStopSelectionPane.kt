@@ -9,6 +9,8 @@ import xyz.ksharma.krail.taj.modifier.cornerSafeTopPadding
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapEntry
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapOpenTracker
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.SearchStopMap
 import xyz.ksharma.krail.trip.planner.ui.state.mapstopselection.MapStopSelectionEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
@@ -27,6 +29,8 @@ import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardOptions
  * - [stopCardOptions] is what the card offers besides the board: Save as, and Go here or Start here.
  * - [allowPermissionRequest] and [onPermissionStatus] are the host's say over the location permission: the map
  *   never raises the system dialog until the host allows it, and reports what the permission turned out to be.
+ * - [mapOpen] and [mapEntry] count each stretch of this map being on screen for analytics, under the entry that
+ *   hosts it. Null counts nothing.
  *
  * See docs/TABLET_FOLDABLE_UX.md §4.
  */
@@ -39,6 +43,8 @@ fun MapStopSelectionPane(
     stopCardOptions: StopCardOptions = StopCardOptions(),
     allowPermissionRequest: Boolean = false,
     onPermissionStatus: (PermissionStatus) -> Unit = {},
+    mapOpen: MapOpenTracker? = null,
+    mapEntry: MapEntry = MapEntry.SEARCH_STOP,
 ) {
     // Corner-safe rather than the status bar's height: on iPhone Duo's inner display the
     // status bar sits on the side, the top inset is zero, and the location pill touched the top.
@@ -61,6 +67,8 @@ fun MapStopSelectionPane(
         stopCardOptions = stopCardOptions,
         allowPermissionRequest = allowPermissionRequest,
         onPermissionStatus = onPermissionStatus,
+        mapOpen = mapOpen,
+        mapEntry = mapEntry,
     )
 }
 

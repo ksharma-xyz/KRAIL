@@ -61,6 +61,7 @@ import xyz.ksharma.krail.sandook.db.NSWParkRideFacilityDetail
 import xyz.ksharma.krail.sandook.db.SavedTrip
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchSessionStore
 import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapOpenTracker
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.LabelChipTap
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
@@ -100,6 +101,12 @@ class SavedTripsViewModel(
     init {
         log("StopItem - SavedTripsViewModel created")
     }
+
+    /**
+     * Counts the opens of the map on the home screen's right pane, the `home` entry, for analytics. It lives as long
+     * as this ViewModel, so a rotation keeps the open and its id (see [MapOpenTracker]).
+     */
+    val mapOpen: MapOpenTracker = MapOpenTracker(analytics)
 
     private val nonPeakTimeCooldownSeconds: Long by lazy {
         flag.getFlagValue(FlagKeys.NSW_PARK_RIDE_NON_PEAK_TIME_COOLDOWN.key)

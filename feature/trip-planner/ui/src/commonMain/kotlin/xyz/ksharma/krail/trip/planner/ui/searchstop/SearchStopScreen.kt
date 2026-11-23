@@ -70,6 +70,8 @@ import xyz.ksharma.krail.trip.planner.ui.components.AssignNewLabelSheet
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionPane
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapEntry
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapOpenTracker
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.SearchStopMap
 import xyz.ksharma.krail.trip.planner.ui.state.mapstopselection.MapStopSelectionEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
@@ -140,6 +142,8 @@ fun SearchStopScreen(
     // Manage is a real nav destination (ManageStopLabelsRoute), not a sheet owned by
     // this screen. The caller (SearchStopEntry) wires this to actual navigation.
     onManageLabelsClick: () -> Unit = {},
+    // Counts each stretch of the map being on screen, in either layout, for analytics. Null counts nothing.
+    mapOpen: MapOpenTracker? = null,
 ) {
     SideEffect { log("[SEARCH_STOP_SCREEN] recomposed") }
 
@@ -298,6 +302,7 @@ fun SearchStopScreen(
                 onStopSelect = onPick,
                 onEvent = onEvent,
                 fieldType = fieldType,
+                mapOpen = mapOpen,
             )
         },
         dualPaneContent = {
@@ -314,6 +319,7 @@ fun SearchStopScreen(
                 dualPaneMapUiState = dualPaneMapUiState,
                 onDualPaneMapEvent = onDualPaneMapEvent,
                 onStopSelect = onPick,
+                mapOpen = mapOpen,
             )
         },
     )
@@ -543,6 +549,7 @@ private fun SearchStopScreenSinglePane(
     onStopSelect: (StopItem) -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
     modifier: Modifier = Modifier,
+    mapOpen: MapOpenTracker? = null,
 ) {
     val mapState = searchStopState.mapUiState
     val keyboard = rows.keyboard
@@ -613,6 +620,8 @@ private fun SearchStopScreenSinglePane(
                 ornamentTopPadding = headerHeight,
                 ornamentPadding = ornamentPadding,
                 isCovered = showGradient,
+                mapOpen = mapOpen,
+                mapEntry = MapEntry.SEARCH_STOP,
                 onEvent = onEvent,
                 onStopSelect = onStopSelect,
                 allowPermissionRequest = location.allowPermissionRequest,
@@ -787,6 +796,7 @@ private fun SearchStopScreenDualPane(
     modifier: Modifier = Modifier,
     dualPaneMapUiState: MapUiState? = null,
     onDualPaneMapEvent: (MapStopSelectionEvent) -> Unit = {},
+    mapOpen: MapOpenTracker? = null,
 ) {
     // This layout has no map of its own to track the rider, so a tap that asks for permission asks here.
     LaunchedEffect(location.allowPermissionRequest) {
@@ -826,6 +836,8 @@ private fun SearchStopScreenDualPane(
                     onEvent = onDualPaneMapEvent,
                     onStopSelected = onStopSelect,
                     stopCardOptions = rows.stopCardOptions,
+                    mapOpen = mapOpen,
+                    mapEntry = MapEntry.SEARCH_STOP,
                 )
             }
         },

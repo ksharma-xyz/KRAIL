@@ -12,6 +12,8 @@ import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.parkride.map.ParkRideStationsLayer
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapEntry
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapOpenTracker
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.SearchStopMap
 import xyz.ksharma.krail.trip.planner.ui.state.mapstopselection.MapStopSelectionEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRideStationPickerItem
@@ -43,6 +45,7 @@ internal fun HomeMapPane(
     onCardKey: (String?) -> Unit,
     modifier: Modifier = Modifier,
     ornamentTopPadding: Dp = 0.dp,
+    mapOpen: MapOpenTracker? = null,
 ) {
     val stationItems = remember(pins.parkRide) { pins.parkRide.map { it.toPickerItem() } }
     val drawn = remember(mapUiState, pins.stops) { mapUiState.withNearbyStops(pins.stops) }
@@ -65,6 +68,8 @@ internal fun HomeMapPane(
             onMapTap = { onCardKey(null) },
             onStopPinTap = { stop -> onCardKey(stopCardKey(stop.stopId)) },
             showsLocationButton = false,
+            mapOpen = mapOpen,
+            mapEntry = MapEntry.HOME,
             extraLayers = {
                 ParkRideStationsLayer(
                     stations = stationItems,

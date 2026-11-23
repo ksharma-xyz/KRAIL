@@ -44,6 +44,7 @@ import xyz.ksharma.krail.trip.planner.ui.searchstop.address.AddressSearchEligibi
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.AddressSearchGate
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.DEFAULT_ADDRESS_SEARCH_MIN_QUERY_LENGTH
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.normalizeAddressQuery
+import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapOpenTracker
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapStateHelper
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.NearbyStopsManager
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.resolveNearbyStopsRadiusKm
@@ -119,6 +120,13 @@ class SearchStopViewModel(
     // report without also giving a burst its own key: an id that changes per keystroke, on an
     // event that fires per keystroke, makes every rate derived from it count keystrokes.
     private var currentSearchSessionId: String = newSearchSessionId()
+
+    /**
+     * Counts the map's opens for analytics. The map composables report into it, and the map's two existing events
+     * below are stamped with the id of the open in progress. It lives as long as this ViewModel, so a rotation keeps
+     * the open and its id (see [MapOpenTracker]). Both the phone's map state and the wide window's map pane use it.
+     */
+    val mapOpen: MapOpenTracker = MapOpenTracker(analytics)
 
     @Suppress("LongMethod", "ReturnCount")
     fun onEvent(event: SearchStopUiEvent) {
@@ -244,6 +252,7 @@ class SearchStopViewModel(
                         enabledModesCount = event.enabledModesCount,
                         nearbyStopsCount = event.nearbyStopsCount,
                         hadUserLocation = event.hadUserLocation,
+                        mapSessionId = mapOpen.sessionId,
                     ),
                 )
             }
@@ -752,6 +761,7 @@ class SearchStopViewModel(
             AnalyticsEvent.NearbyStopClickEvent(
                 stopId = stop.stopId,
                 transportModesCount = stop.transportModes.size,
+                mapSessionId = mapOpen.sessionId,
             ),
         )
     }

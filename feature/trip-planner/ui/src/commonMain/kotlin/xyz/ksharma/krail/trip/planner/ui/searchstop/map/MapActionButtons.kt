@@ -17,7 +17,7 @@ import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 
 /**
  * The location button at the bottom end of the map, one 48 dp touch target one edge above the system bottom inset.
- * Search Stop's Options button stands in this same row at the start, centred in it, so the two share a centre line.
+ * Search Stop's Options button and the map's info icon are stacked at the bottom start, so nothing else shares its row.
  * All business logic (location fetch, permission handling) is delegated to the caller via callbacks.
  *
  * @param onLocationButtonClick Callback when location button is tapped, the caller handles the rest

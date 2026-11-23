@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
@@ -44,10 +45,10 @@ import kotlin.test.assertTrue
 
 /**
  * The layout of Search Stop's clean map state, read from the real bounds of the real screen. Only four things float
- * on the map: the box with the two pills at the top, the location chip under it while location is not allowed, and on
- * the one bottom row the Options button with the map's own location control, with the Options card right above that row
- * while it is open. There is no list card, no recents and no near you in this state. Run at 411 dp, and at 320 dp with
- * 200 percent text.
+ * on the map: the box with the two pills at the top, the location chip under it while location is not allowed, at the
+ * bottom left the Options button directly above the map's own info icon, and at the bottom right the location control,
+ * with the Options card right above Options while it is open. There is no list card, no recents and no near you in
+ * this state. Run at 411 dp, and at 320 dp with 200 percent text.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -187,53 +188,64 @@ class SearchStopMapStateLayoutTest {
 
     // endregion
 
-    // region the bottom row
+    // region the bottom left stack
 
     @Test
     @Config(qualifiers = W411)
-    fun `at 411 dp and 100 percent text Options and the location control share a centre line`() = assertBottomRow(null)
+    fun `at 411 dp and 100 percent text Options is one gap above the info icon, left aligned`() = assertStack(null)
 
     @Test
     @Config(qualifiers = W411)
-    fun `at 411 dp and 150 percent text Options and the location control share a centre line`() = assertBottomRow(1.5f)
+    fun `at 411 dp and 150 percent text Options is one gap above the info icon, left aligned`() = assertStack(1.5f)
 
     @Test
     @Config(qualifiers = W411)
-    fun `at 411 dp and 200 percent text Options and the location control share a centre line`() = assertBottomRow(2f)
+    fun `at 411 dp and 200 percent text Options is one gap above the info icon, left aligned`() = assertStack(2f)
 
     @Test
     @Config(qualifiers = W320)
-    fun `at 320 dp and 100 percent text Options and the location control share a centre line`() = assertBottomRow(null)
+    fun `at 320 dp and 100 percent text Options is one gap above the info icon, left aligned`() = assertStack(null)
 
     @Test
     @Config(qualifiers = W320)
-    fun `at 320 dp and 150 percent text Options and the location control share a centre line`() = assertBottomRow(1.5f)
+    fun `at 320 dp and 150 percent text Options is one gap above the info icon, left aligned`() = assertStack(1.5f)
 
     @Test
     @Config(qualifiers = W320)
-    fun `at 320 dp and 200 percent text Options and the location control share a centre line`() = assertBottomRow(2f)
+    fun `at 320 dp and 200 percent text Options is one gap above the info icon, left aligned`() = assertStack(2f)
 
     /**
-     * The row is one [MAP_CONTROL_ROW_HEIGHT] row one edge above the inset. Options stands right after the info icon's
-     * 48 dp slot, the location control ends one edge in, and both are centred on the row, so their centre lines are the
-     * row's, which is where the info icon is centred too. The native info icon is not drawn here.
+     * The info icon is the library's own native view, which a host test does not draw, so its slot is worked out from the
+     * ornament padding the screen passes (zero over the bottom inset, which is zero here) and the library's 8 dp margin:
+     * 21 dp square, 8 dp above the bottom. Options stands 8 dp above that slot, on the same left edge as the box and the
+     * visible i, and the location control is not touched.
      */
-    private fun assertBottomRow(fontScale: Float?) {
+    private fun assertStack(fontScale: Float?) {
         setScreen(fontScale = fontScale)
 
-        val rowCentre = windowHeight - gaps.edge - MAP_CONTROL_ROW_HEIGHT / 2f
+        val padding = mapOrnamentPadding(gaps, statusBarTop = 0.dp, navigationBarBottom = 0.dp, headerHeight = 0.dp)
+        assertEquals(0.dp, padding.calculateBottomPadding(), "The icon's own bottom padding is zero over the inset.")
+        val iconBottom = windowHeight - padding.calculateBottomPadding() - MAP_ORNAMENT_LIBRARY_MARGIN
+        val iconTop = iconBottom - MAP_ATTRIBUTION_ICON_SIZE
+        val iconGlyphLeft = padding.calculateLeftPadding(LayoutDirection.Ltr) + MAP_ORNAMENT_LIBRARY_MARGIN +
+            MAP_ATTRIBUTION_GLYPH_INSET
         val options = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON)
         val location = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_BUTTON)
-        assertNear("Options centre line", rowCentre, options.centreY())
-        assertNear("location control centre line", rowCentre, location.centreY())
-        assertNear("Options and the location control share a centre line", options.centreY(), location.centreY())
-        assertNear("Options starts after the info icon's slot", gaps.edge + MAP_ATTRIBUTION_SLOT, options.left)
+
+        assertNear("Options is 8 dp above the info icon", iconTop - 8.dp, options.bottom)
+        assertNear("Options left edge is the visible i's left edge", iconGlyphLeft, options.left)
+        assertNear("and the box's left edge", boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).left, options.left)
+        val touch = touchBoundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON)
+        assertTrue(touch.height >= 47.dp && touch.width >= 47.dp, "Options keeps its 48 dp finger target: $touch")
+        assertTrue(options.bottom <= iconTop, "Options $options does not reach the icon's slot, which starts at $iconTop")
         assertNear("the location control is 48 wide", 48.dp, location.width)
         assertNear("the location control ends one edge in", windowWidth - gaps.edge, location.right)
-        assertTrue(options.right <= location.left, "Options $options never reaches the location control $location")
-        // The visible button is centred in its touch target, so the drawn button shares the line too.
-        val drawn = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON)
-        assertNear("the drawn button centre", rowCentre, drawn.centreY())
+        assertNear("the location control stays one edge above the bottom", windowHeight - gaps.edge, location.bottom)
+        assertTrue(
+            options.right <= location.left || options.bottom <= location.top,
+            "Options $options never overlaps the location control $location",
+        )
+        assertNear("the control is 8 dp above the icon's bottom", iconBottom - 8.dp, location.bottom)
     }
 
     // endregion
@@ -242,15 +254,15 @@ class SearchStopMapStateLayoutTest {
 
     @Test
     @Config(qualifiers = W411)
-    fun `the open Options card is 8 dp above the row, on the box's edges, and the map is still clean`() {
+    fun `the open Options card is 8 dp above Options, on the box's edges, and the map is still clean`() {
         setScreen()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).performClick()
         composeRule.waitForIdle()
 
         val card = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS)
-        val rowTop = windowHeight - gaps.edge - MAP_CONTROL_ROW_HEIGHT
+        val options = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON)
         val box = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
-        assertNear("8 dp between the card and the row", rowTop - 8.dp, card.bottom)
+        assertNear("8 dp between the card and Options", options.top - 8.dp, card.bottom)
         assertEquals(8.dp, gaps.betweenCards)
         assertNear("card left edge", box.left, card.left)
         assertNear("card right edge", box.right, card.right)
@@ -280,8 +292,8 @@ class SearchStopMapStateLayoutTest {
             hasScrollAction() and hasAnyAncestor(hasTestTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS)),
             useUnmergedTree = true,
         ).assertCountEquals(0)
-        val row = windowHeight - gaps.edge - MAP_CONTROL_ROW_HEIGHT
-        assertNear("8 dp above the row", row - 8.dp, card.bottom)
+        val options = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON)
+        assertNear("8 dp above Options", options.top - 8.dp, card.bottom)
         assertTrue(card.top > boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).bottom, "The card stays under the box.")
     }
 

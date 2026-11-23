@@ -64,20 +64,36 @@ class SearchStopLayoutRulesTest {
     }
 
     @Test
-    fun `the Options row stands one edge above the inset, the row the location control is on`() {
+    fun `Options stands one gap above the info icon, which rests on the library's own margin over the inset`() {
         val gaps = searchStopGaps()
-        assertEquals(16.dp, modeControlsBottomPadding(gaps))
+        assertEquals(8.dp, MAP_ORNAMENT_LIBRARY_MARGIN, "The library puts every ornament 8 dp in even with no padding.")
+        assertEquals(21.dp, MAP_ATTRIBUTION_ICON_SIZE)
         assertEquals(
-            modeControlsBottomPadding(gaps) + 120.dp,
-            modeControlsBottomPadding(gaps, clearance = 120.dp),
-            "An open stop card lifts the row by its own height and gap.",
+            MAP_ORNAMENT_LIBRARY_MARGIN + MAP_ATTRIBUTION_ICON_SIZE + gaps.betweenCards,
+            modeControlsBottomPadding(gaps),
+            "Options is one gap above the icon's top.",
         )
-        assertEquals(48.dp, MAP_CONTROL_ROW_HEIGHT, "The row is the location control's one 48 dp target.")
-        assertEquals(48.dp, MAP_ATTRIBUTION_SLOT, "Options stands after the info icon's 48 dp slot.")
+        assertEquals(8.dp, gaps.betweenCards, "The gap is the one 8 dp gap between floating elements.")
+        assertEquals(37.dp, modeControlsBottomPadding(gaps))
     }
 
     @Test
-    fun `the ornaments start under the box and the chip, one edge in at the sides, and the info icon is on the row`() {
+    fun `an open stop card lifts the stack above itself, the way it lifts the location control`() {
+        val gaps = searchStopGaps()
+        assertEquals(
+            gaps.edge + 120.dp,
+            modeControlsBottomPadding(gaps, clearance = 120.dp),
+            "The stack stands on the same line as the location control, above the card.",
+        )
+        assertEquals(
+            modeControlsBottomPadding(gaps),
+            modeControlsBottomPadding(gaps, clearance = 0.dp),
+            "With no card the icon sets the height.",
+        )
+    }
+
+    @Test
+    fun `the info icon has no extra bottom padding, only the inset, and its glyph is one edge in`() {
         val gaps = searchStopGaps()
         val padding = mapOrnamentPadding(
             gaps = gaps,
@@ -87,12 +103,17 @@ class SearchStopLayoutRulesTest {
         )
 
         assertEquals(24.dp + 16.dp + 136.dp + 8.dp, padding.calculateTopPadding(), "Under the box, one gap clear.")
-        assertEquals(16.dp, padding.calculateLeftPadding(LayoutDirection.Ltr))
-        assertEquals(16.dp, padding.calculateRightPadding(LayoutDirection.Ltr))
+        assertEquals(16.dp, padding.calculateRightPadding(LayoutDirection.Ltr), "The compass is one edge in.")
+        assertEquals(24.dp, padding.calculateBottomPadding(), "Zero above the navigation bar inset, nothing extra.")
         assertEquals(
-            24.dp + modeControlsBottomPadding(gaps),
-            padding.calculateBottomPadding(),
-            "The info icon is above the inset by the same edge the Options row is.",
+            gaps.edge,
+            padding.calculateLeftPadding(LayoutDirection.Ltr) + MAP_ORNAMENT_LIBRARY_MARGIN + MAP_ATTRIBUTION_GLYPH_INSET,
+            "The library adds its margin and the icon its own inset, so the visible i is one edge in.",
+        )
+        assertEquals(
+            0.dp,
+            mapOrnamentPadding(gaps, 0.dp, 0.dp, 0.dp).calculateBottomPadding(),
+            "With no navigation bar the bottom padding is exactly zero.",
         )
     }
 

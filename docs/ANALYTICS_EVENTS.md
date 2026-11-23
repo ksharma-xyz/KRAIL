@@ -14,6 +14,11 @@ recount of 2026-11-23 found 61 events defined in code (`how_to_krail` is retired
 plus ~11 historical names, which is the same 72. The 2026-09-11 figure of 53 had drifted; a recount is a
 count of `name = "..."` in `AnalyticsEvent.kt`. Update this count when adding or removing events.
 
+A count of those lines on 2026-11-24 found 66 at the head of this branch and 68 on `main`: the branch
+removes four classes (`how_to_krail`, `search_stop_map_options_opened`, `search_stop_map_options_saved`
+and `select_on_map_button_click`) and adds two (`map_viewed` and `map_dismissed`). The code count leaves
+out the four retired names, which stay spent, so it is not the budget. The owner's figure above is.
+
 ### The other three caps, and which one actually bites
 
 The 500 event names are the famous limit. Three more exist, and the one that constrains
@@ -170,6 +175,11 @@ there, so no new name was added:
   setting, and a name for each tap would spend the budget on a control whose result the pick already shows.
 - `select_on_map_button_click` (from the earlier branch) goes the same way: the button is gone and there
   is no successor.
+
+A fourth name went quiet with the Intro rebuild, not the map: `how_to_krail` (the How to KRAIL? row in
+Settings was tapped, `SettingsHowToUseClickEvent`). The row is gone (`docs/features/intro/ERD.md`, unit X5),
+the class is removed from `AnalyticsEvent.kt` and the name stays spent. It has no successor. Its ledger
+row is in `docs/ANALYTICS_REGISTRY_HANDOFF.md` with the three above.
 
 Rows from before the change keep their old shape. A `stop_selected_from_map` row from an older build
 carries a `searchRadiusKm` the rider chose (1, 3 or 5), and a newer one carries the config value, so the

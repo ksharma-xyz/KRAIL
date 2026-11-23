@@ -130,7 +130,7 @@ fails the analytics build, so this class of gap cannot silently reopen.
 | 2026-05-03 | `saved_trip_card_reordered` | `fromStopId`, `toStopId`, `previousIndex`, `newIndex`, `totalCount` | Stop IDs; Ints | Saved-trip card reordered by drag in edit mode | Registered |
 | 2026-05-03 | `timetable_stop_header_click` | `stopId`, `stopName`, `isOrigin`, `tripFromStopId`, `tripToStopId`, `action` | `action` = `edit_search｜open_departures`; historical rows carry no `action` and were departures opens, so the sheet's full timeline is `action IS NULL OR action = 'open_departures'` | Stop header tapped inside a timetable | Registered |
 | 2026-04-19 | `dep_board_show_previous` | `stopId`, `show`, `source` | Bool `show` (`true` = opened); `DepartureBoardSource` | "Show / hide previous departures" panel toggled | Registered |
-| 2026-02-22 | `search_stop_map_options_opened` | — | — | Options button tapped on the map (SearchStopMap only) | Registered |
+| 2026-02-22 | `search_stop_map_options_opened` | none | none | Options button tapped on the map (SearchStopMap only). **Retired on this branch**: the button is gone and the class is removed, see its retired row in the table above. The name stays spent | Registered |
 | 2025-09-20 | `clear_recent_search_stops` | `recentSearchCount` | Int | Recent-searches list cleared | Registered |
 | 2025-08-31 | `info_tile_interaction` | `key`, `expand`, `dismiss`, `cta_click` | Tile key; optional bools; CTA URL. Each optional param present only when that interaction happened | Info tile expanded, dismissed, or its CTA tapped | Registered |
 | 2024-12-24 | `from_field_click` | — | — | From field tapped on the Save Trips screen | Registered |

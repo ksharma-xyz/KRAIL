@@ -146,3 +146,28 @@ sealed interface AiSearchInputEvent {
     /** No recogniser, or the microphone is restricted by the device. Speaking is off. */
     data object SpeechUnsupported : AiSearchInputEvent
 }
+
+/**
+ * A fresh state for the dialog opening: nothing the rider produced from before, open, and listening as soon as the
+ * permission allows when the feature is [enabled]. What the app knows about itself, [isDeviceCapable] and the speech
+ * availability this state already holds, is kept.
+ */
+internal fun AiSearchInputUiState.opened(enabled: Boolean, isDeviceCapable: Boolean): AiSearchInputUiState =
+    AiSearchInputUiState(
+        isInputOpen = enabled,
+        isFeatureEnabled = enabled,
+        isDeviceCapable = isDeviceCapable,
+        isSpeechAvailable = isSpeechAvailable,
+        listenOnOpenPending = enabled,
+    )
+
+/**
+ * Everything the rider produced is thrown away, and what the app knows about itself is not, or starting over would hide
+ * the way back in: the feature flag, [isDeviceCapable] and the speech availability.
+ */
+internal fun AiSearchInputUiState.restarted(isDeviceCapable: Boolean): AiSearchInputUiState =
+    AiSearchInputUiState(
+        isFeatureEnabled = isFeatureEnabled,
+        isDeviceCapable = isDeviceCapable,
+        isSpeechAvailable = isSpeechAvailable,
+    )

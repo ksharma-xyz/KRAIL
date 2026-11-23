@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
-import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith

@@ -246,7 +246,7 @@ private fun PreviewSearchStopScreen_Error() {
 @PreviewScreen
 @Composable
 private fun PreviewSearchStopScreen_Map() {
-    // The map state, how the screen opens: the map and one dark pill, no list and no keyboard.
+    // The clean map state, how the screen opens: the map, the box and the Options button, no list and no keyboard.
     // PurpleDrip style.
     PreviewTheme(themeStyle = KrailThemeStyle.PurpleDrip) {
         SearchStopScreen(
@@ -300,8 +300,7 @@ private fun PreviewGround(content: @Composable () -> Unit) {
 @PreviewScreen
 @Composable
 private fun PreviewSearchStopGroupCard_WithStatusChip() {
-    // The top group card, then the location status chip as its own small button under it at the card's left
-    // edge. Same in light and dark.
+    // The box, then the location status chip as its own small button under it at the box's left edge.
     PreviewTheme(themeStyle = KrailThemeStyle.Train) {
         PreviewGround {
             SearchStopTopBlock(
@@ -341,7 +340,7 @@ private fun PreviewSearchStopModeBlock_Closed() {
 @PreviewScreen
 @Composable
 private fun PreviewSearchStopModeBlock_Open() {
-    // Two modes switched off, so the button shows its active look, with the block open above it.
+    // Two modes switched off, so the Options button shows its active look, with the card open above it.
     PreviewTheme(themeStyle = KrailThemeStyle.Ferry) {
         PreviewGround {
             Column(verticalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingM)) {

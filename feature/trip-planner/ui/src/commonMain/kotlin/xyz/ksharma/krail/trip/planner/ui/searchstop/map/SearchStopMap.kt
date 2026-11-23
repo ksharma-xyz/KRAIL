@@ -80,6 +80,9 @@ fun SearchStopMap(
     // The whole margin of the map's own ornaments (compass, scale bar, info icon), for a host that stands controls
     // in the same corners. Null keeps just [ornamentTopPadding] at the top.
     ornamentPadding: PaddingValues? = null,
+    // True while a host covers the map and keeps it composed (Search Stop's list state): an open stop card is closed and
+    // system back is the host's, so it never closes a card the rider cannot see.
+    isCovered: Boolean = false,
     onEvent: (SearchStopUiEvent) -> Unit = {},
     onStopSelect: (StopItem) -> Unit = {},
     allowPermissionRequest: Boolean = false,
@@ -115,6 +118,7 @@ fun SearchStopMap(
                     focusRequester = focusRequester,
                     ornamentTopPadding = ornamentTopPadding,
                     ornamentPadding = ornamentPadding,
+                    isCovered = isCovered,
                     onEvent = onEvent,
                     onStopSelect = onStopSelect,
                     allowPermissionRequest = allowPermissionRequest,
@@ -164,6 +168,7 @@ private fun MapContent(
     focusRequester: FocusRequester? = null,
     ornamentTopPadding: Dp = 0.dp,
     ornamentPadding: PaddingValues? = null,
+    isCovered: Boolean = false,
     allowPermissionRequest: Boolean = false,
     onPermissionStatus: (PermissionStatus) -> Unit = {},
     onRequestPermission: () -> Unit = {},
@@ -191,8 +196,10 @@ private fun MapContent(
     var cardHeight by remember { mutableStateOf(0.dp) }
 
     // System back closes the card first. It is registered after the screen's own two step back, so
-    // while a card is open it is the one that answers, and with none it is off and the screen's is.
-    BackHandler(enabled = selectedStop != null) { selectedStopId = null }
+    // while a card is open it is the one that answers, and with none it is off and the screen's is. While the
+    // host covers the map the card is closed and back is the host's.
+    LaunchedEffect(isCovered) { if (isCovered) selectedStopId = null }
+    BackHandler(enabled = selectedStop != null && !isCovered) { selectedStopId = null }
 
     // The permission is the screen's now: the location pill under the form says what is wrong and
     // asks or opens Settings, and [allowPermissionRequest] is false until the rider taps it (or the

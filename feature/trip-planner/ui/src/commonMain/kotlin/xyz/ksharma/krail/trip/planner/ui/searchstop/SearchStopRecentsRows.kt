@@ -26,17 +26,15 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.LocationKind
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
- * The rows under the label row: the rider's recents under "Recent", the nearest stops under "Near
+ * The rows under Select on map: the rider's recents under "Recent", the nearest stops under "Near
  * you", or the Intro's suggested stops with no heading at all. A row is the stop's name and its mode
- * badges in the list's own row type. It has no chevron, because a plain recent or suggested stop has
- * nothing to expand; only a result row that opens its label wall draws one. [afterLabelRow] is true when the
- * label row sits above, so the heading leaves a gap under it and none above itself otherwise.
+ * badges in the list's own row type, as the Search Stop list always drew it: a chevron at the end that opens
+ * the label wall, a divider under it, and for a stop that already has a label the small label pill and no chevron.
  */
 internal fun LazyListScope.recentsCardSection(
     card: RecentsCard?,
     recentCount: Int,
     actions: StopRowActions,
-    afterLabelRow: Boolean = false,
 ) {
     if (card == null) return
     when (card.source) {
@@ -44,7 +42,6 @@ internal fun LazyListScope.recentsCardSection(
             item(key = "recent_stops_title") {
                 RecentsHeader(
                     title = "Recent",
-                    afterLabelRow = afterLabelRow,
                     // The count is every recent stop the rider has, not the five the card shows.
                     onClearAll = {
                         actions.onEvent(SearchStopUiEvent.ClearRecentSearchStops(recentSearchCount = recentCount))
@@ -56,7 +53,7 @@ internal fun LazyListScope.recentsCardSection(
 
         RecentsSource.Nearest -> {
             item(key = "near_you_title") {
-                RecentsHeader(title = "Near you", onClearAll = null, afterLabelRow = afterLabelRow)
+                RecentsHeader(title = "Near you", onClearAll = null)
             }
             items(items = card.rows, key = { "near_${it.stopId}" }) { stop ->
                 SuggestedStopRow(stop, actions)
@@ -77,7 +74,6 @@ internal fun LazyListScope.recentsCardSection(
 private fun RecentsHeader(
     title: String,
     onClearAll: (() -> Unit)?,
-    afterLabelRow: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
@@ -87,7 +83,7 @@ private fun RecentsHeader(
             .padding(
                 start = dim.pageHorizontalPadding,
                 end = dim.pageHorizontalPadding,
-                top = if (afterLabelRow) dim.spacingM else dim.spacingNone,
+                top = dim.spacingXL,
                 bottom = dim.spacingS,
             ),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -127,7 +123,9 @@ private fun RecentStopRow(stop: SearchStopState.StopResult, actions: StopRowActi
         )
 
         LocationKind.TRANSIT_STOP -> AssignableStopRow(
-            stop = stop,
+            stopId = stop.stopId,
+            stopName = stop.stopName,
+            modes = stop.transportModeType,
             surface = LabelAssignSurface.RECENT,
             isRecentSearch = true,
             actions = actions,
@@ -144,33 +142,14 @@ private fun RecentStopRow(stop: SearchStopState.StopResult, actions: StopRowActi
 @Composable
 private fun SuggestedStopRow(stop: SearchStopState.StopResult, actions: StopRowActions) {
     AssignableStopRow(
-        stop = stop,
+        stopId = stop.stopId,
+        stopName = stop.stopName,
+        modes = stop.transportModeType,
         surface = LabelAssignSurface.EMPTY_STATE,
         isRecentSearch = false,
         actions = actions,
     )
     Divider(modifier = Modifier.padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding))
-}
-
-/** One stop as the app draws it in a list: name, mode badges, and a plus that expands to labels. */
-@Composable
-private fun AssignableStopRow(
-    stop: SearchStopState.StopResult,
-    surface: LabelAssignSurface,
-    isRecentSearch: Boolean,
-    actions: StopRowActions,
-    modifier: Modifier = Modifier,
-) {
-    AssignableStopRow(
-        stopId = stop.stopId,
-        stopName = stop.stopName,
-        modes = stop.transportModeType,
-        surface = surface,
-        isRecentSearch = isRecentSearch,
-        actions = actions,
-        modifier = modifier,
-        showLabelAssign = false,
-    )
 }
 
 @Composable
@@ -182,7 +161,6 @@ internal fun AssignableStopRow(
     isRecentSearch: Boolean,
     actions: StopRowActions,
     modifier: Modifier = Modifier,
-    showLabelAssign: Boolean = true,
 ) {
     val stopItem = StopItem(stopId = stopId, stopName = stopName)
     StopLabelAssignRow(
@@ -196,6 +174,5 @@ internal fun AssignableStopRow(
         onLabelPillClick = { label -> actions.onLabelPillClick(stopItem, label, surface) },
         onNewLabelClick = { actions.onNewLabelClick(stopItem, modes, surface) },
         modifier = modifier.fillMaxWidth(),
-        showLabelAssign = showLabelAssign,
     )
 }

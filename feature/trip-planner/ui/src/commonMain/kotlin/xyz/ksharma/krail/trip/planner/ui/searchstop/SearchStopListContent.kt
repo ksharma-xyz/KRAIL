@@ -1,30 +1,26 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.trip.planner.ui.components.FloatingDark
-import xyz.ksharma.krail.trip.planner.ui.components.FloatingDarkTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.ErrorMessage
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 
 /**
- * The card the list and the results share (rule 9 of `docs/MAP_HOME_UX.md`): one vertical floating
- * card under the group card, never inside it, with the map visible around it. A fixed dark surface with
- * fixed light content in both app modes, the group card's corner and padding, as tall as its rows up to the
- * room the caller gives it, and then it scrolls inside.
+ * The list of Search Stop's list state (rule 9 of `docs/MAP_HOME_UX.md`), drawn the way the Search Stop list always was:
+ * straight on the cloud gradient, with no card behind it, under the box. In order: the label chips row, Select on map,
+ * then the recents (or the nearest or suggested stops) or the results, each stop a [StopLabelAssignRow] with a divider
+ * under it. It is as tall as the room allows and scrolls inside. [onOpenMap] is what Select on map does, and null leaves
+ * the row out where there is no map to go to.
  */
 @Composable
 internal fun SearchStopListContent(
@@ -33,41 +29,26 @@ internal fun SearchStopListContent(
     recentsCard: RecentsCard?,
     actions: StopRowActions,
     onManageClick: () -> Unit,
+    onOpenMap: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     val showLabelRow = shouldShowLabelRow(listState, searchStopState.stopLabels)
-    val hasNothingToShow = listState == ListState.Recent && recentsCard == null && !showLabelRow
-    if (hasNothingToShow) return
-
-    val gaps = rememberSearchStopGaps()
-    FloatingDarkTheme {
-        Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(gaps.cardCorner))
-                .background(FloatingDark.container),
-        ) {
-            when (listState) {
-                ListState.Recent -> RecentsList(showLabelRow, recentsCard, searchStopState, actions, onManageClick)
-                is ListState.Results ->
-                    ResultsList(listState, showLabelRow, searchStopState, actions, onManageClick)
-                ListState.NoMatch -> NoMatchContent(searchStopState, actions)
-                ListState.Error -> ErrorMessage(
-                    title = "Something went wrong!",
-                    message = "Let's try searching again.",
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-        }
+    when (listState) {
+        ListState.Recent -> RecentsList(showLabelRow, recentsCard, searchStopState, actions, onManageClick, onOpenMap, modifier)
+        is ListState.Results ->
+            ResultsList(listState, showLabelRow, searchStopState, actions, onManageClick, onOpenMap, modifier)
+        ListState.NoMatch -> NoMatchContent(searchStopState, actions, modifier)
+        ListState.Error -> ErrorMessage(
+            title = "Something went wrong!",
+            message = "Let's try searching again.",
+            modifier = modifier.fillMaxWidth(),
+        )
     }
 }
 
-/** The card's inner padding above its first row and under its last, the same token as the group card's. */
+/** What the list keeps under its last row, so the last stop clears the keyboard and the screen's edge. */
 @Composable
-private fun cardListPadding(): PaddingValues {
-    val padding = rememberSearchStopGaps().cardPadding
-    return PaddingValues(top = padding, bottom = padding)
-}
+private fun listPadding(): PaddingValues = PaddingValues(bottom = KrailTheme.dimensions.spacingXXXXL)
 
 @Composable
 private fun RecentsList(
@@ -76,12 +57,14 @@ private fun RecentsList(
     searchStopState: SearchStopState,
     actions: StopRowActions,
     onManageClick: () -> Unit,
+    onOpenMap: (() -> Unit)?,
+    modifier: Modifier = Modifier,
 ) {
     LazyColumn(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .testTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST),
-        contentPadding = cardListPadding(),
+        contentPadding = listPadding(),
     ) {
         labelRowSection(
             show = showLabelRow,
@@ -89,11 +72,11 @@ private fun RecentsList(
             actions = actions,
             onManageClick = onManageClick,
         )
+        selectOnMapItem(onOpenMap)
         recentsCardSection(
             card = recentsCard,
             recentCount = searchStopState.recentStops.size,
             actions = actions,
-            afterLabelRow = showLabelRow,
         )
     }
 }
@@ -105,13 +88,16 @@ private fun ResultsList(
     searchStopState: SearchStopState,
     actions: StopRowActions,
     onManageClick: () -> Unit,
+    onOpenMap: (() -> Unit)?,
+    modifier: Modifier = Modifier,
 ) {
-    Box {
+    // The searching dots float over the list, so loading does not claim a row of its own.
+    Box(modifier = modifier) {
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
                 .testTag(TripPlannerTestTags.SEARCH_STOP_RESULTS_LIST),
-            contentPadding = cardListPadding(),
+            contentPadding = listPadding(),
         ) {
             labelRowSection(
                 show = showLabelRow,
@@ -119,6 +105,7 @@ private fun ResultsList(
                 actions = actions,
                 onManageClick = onManageClick,
             )
+            selectOnMapItem(onOpenMap)
             searchResultsList(searchResults = listState.results, actions = actions)
             addressResultsSection(
                 addressResults = searchStopState.addressResults,
@@ -142,13 +129,13 @@ private fun ResultsList(
  * sitting above real results.
  */
 @Composable
-private fun NoMatchContent(searchStopState: SearchStopState, actions: StopRowActions) {
+private fun NoMatchContent(searchStopState: SearchStopState, actions: StopRowActions, modifier: Modifier = Modifier) {
     val hasAddressContent = searchStopState.addressResults.isNotEmpty() ||
         searchStopState.isAddressSearchLoading
     if (hasAddressContent) {
         LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            contentPadding = cardListPadding(),
+            modifier = modifier.fillMaxWidth(),
+            contentPadding = listPadding(),
         ) {
             addressResultsSection(
                 addressResults = searchStopState.addressResults,
@@ -160,7 +147,7 @@ private fun NoMatchContent(searchStopState: SearchStopState, actions: StopRowAct
         ErrorMessage(
             title = "No match found!",
             message = "Try something else. 🔍✨",
-            modifier = Modifier.fillMaxWidth(),
+            modifier = modifier.fillMaxWidth(),
         )
     }
 }

@@ -1,10 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -12,7 +10,6 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertTouchHeightIsEqualTo
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -22,9 +19,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.height
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -283,11 +278,13 @@ class SearchStopScreenInteractionTest {
     }
 
     @Test
-    fun noSelectOnMapRowAnywhere() {
+    fun selectOnMap_isInTheListStateOfAMapScreen_andNeverOnTheMapState() {
         setScreen(withMap())
+        composeRule.onNodeWithText("Select on map").assertDoesNotExist()
+
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
 
-        composeRule.onNodeWithText("Select on map").assertDoesNotExist()
+        composeRule.onNodeWithText("Select on map").assertIsDisplayed()
     }
 
     // endregion
@@ -463,15 +460,20 @@ class SearchStopScreenInteractionTest {
     // region The location pill
 
     @Test
-    fun theLocationPillIsOneItemUnderTheForm_onlyWhenPermissionIsNotGranted() {
-        // A fresh Robolectric device has no permission decision recorded, so the one pill shows.
-        setScreen(SearchStopFixtures.recentWithDefaults())
+    fun theLocationPillIsOneItemUnderTheForm_onlyWhenPermissionIsNotGranted_andOnlyOnTheMapState() {
+        // A fresh Robolectric device has no permission decision recorded, so the one pill shows on the map state.
+        setScreen(withMap())
         composeRule.waitForIdle()
 
         composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertCountEquals(1)
         composeRule.onNodeWithText("Location permission required").assertIsDisplayed()
         // The chip is taj's extra small button with a 48 dp touch target from the interactive size modifier (rule 24).
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertTouchHeightIsEqualTo(48.dp)
+
+        // The list state is the box and the list, with nothing between them.
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertCountEquals(0)
     }
 
     // endregion
@@ -479,7 +481,7 @@ class SearchStopScreenInteractionTest {
     // region StopLabelAssignRow icon state
 
     @Test
-    fun aPlainRecentRow_hasNoChevron_becauseItHasNothingToExpand() {
+    fun aPlainRecentRow_hasAChevron_andAStopWithALabelHasItsPillAndNone() {
         composeRule.setContent {
             PreviewTheme {
                 SearchStopScreen(
@@ -489,10 +491,10 @@ class SearchStopScreenInteractionTest {
             }
         }
 
-        // Central Station is saved as Home and shows its label pill. Town Hall is a plain recent row. Neither
-        // draws a chevron: only a result row that opens its label wall does.
+        // Central Station is saved as Home and shows its label pill, with no chevron. Town Hall is a plain recent row,
+        // so it has the one chevron at its end that opens the label wall, as the Search Stop list always drew it.
         composeRule.onAllNodesWithContentDescription("Assign to a label")
-            .assertCountEquals(0)
+            .assertCountEquals(1)
     }
 
     @Test

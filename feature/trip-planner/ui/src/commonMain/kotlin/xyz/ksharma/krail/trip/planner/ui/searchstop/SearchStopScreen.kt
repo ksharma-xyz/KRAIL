@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -36,11 +35,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.SoftwareKeyboardController
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import kotlinx.collections.immutable.ImmutableList
@@ -63,7 +65,7 @@ import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.CloudFieldSpec
 import xyz.ksharma.krail.taj.components.CloudGradientBackground
 import xyz.ksharma.krail.taj.hexToComposeColor
-import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.AssignNewLabelSheet
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionPane
@@ -491,9 +493,13 @@ private fun rememberLocationPillState(
 // endregion
 
 /**
- * Single-pane layout for phones: the map is the screen and everything else floats on it. The map is
- * a SIBLING of the floating column and of any gradient behind it, never a child of one: on iOS a
- * MapLibre UIKitView cannot composite into an offscreen graphicsLayer and renders blank.
+ * Single-pane layout for phones. The map state is the map with the box on it, and nothing else but the location
+ * chip and the Options row. The list state covers the map with the cloud gradient, the Search Stop list's own
+ * background, and the list under the same box. The map is a SIBLING of the gradient and of the floating column,
+ * never a child of either: on iOS a MapLibre UIKitView cannot composite into an offscreen graphicsLayer and renders
+ * blank. It stays composed under the gradient, so its camera, its open stop card and its nearby stops are as the
+ * rider left them when the list state steps back to it, and its semantics are cleared while it is covered so a screen
+ * reader never reaches a control it cannot see.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -532,8 +538,11 @@ private fun SearchStopScreenSinglePane(
     // Two step back. The arrow in the bar and system back are the same step.
     BackHandler(enabled = true, onBack = onBack)
 
+    // The gradient is the screen in the list state, and stands in for the map while there is none.
+    val showGradient = flow.mode == SearchStopMode.List || mapState == null
+
     // Force dark status bar icons while the map is visible (the map is always light-themed).
-    StatusBarAppearanceEffect(lightStatusBar = mapState != null)
+    StatusBarAppearanceEffect(lightStatusBar = mapState != null && !showGradient)
 
     // The top block's height after layout, so the map's ornaments (compass, scale bar) and an open stop card start
     // below the box and the chip.
@@ -560,12 +569,13 @@ private fun SearchStopScreenSinglePane(
     Box(modifier = modifier.fillMaxSize().imePadding()) {
         if (mapState != null) {
             SearchStopMap(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().then(if (showGradient) Modifier.clearAndSetSemantics {} else Modifier),
                 mapUiState = mapState,
                 keyboard = keyboard,
                 focusRequester = form.focusRequester,
                 ornamentTopPadding = headerHeight,
                 ornamentPadding = ornamentPadding,
+                isCovered = showGradient,
                 onEvent = onEvent,
                 onStopSelect = onStopSelect,
                 allowPermissionRequest = location.allowPermissionRequest,
@@ -590,31 +600,32 @@ private fun SearchStopScreenSinglePane(
                     }
                 },
             )
-        } else {
-            // No map to show (maps are off for this rider): the gradient stands in. It has no map
-            // beside it to hide, so it is safe on iOS.
+        }
+        if (showGradient) {
+            // Over the map, so the list state looks as the list always did. It takes every touch, so nothing reaches the
+            // map under it.
             CloudGradientBackground(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxSize().testTag(TripPlannerTestTags.SEARCH_STOP_LIST_BACKGROUND).pointerInput(Unit) {},
                 themeColor = themeColor.hexToComposeColor(),
                 spec = CloudFieldSpec.aiPair(themeColorHex = themeColor, motionScale = SEARCH_FIELD_MOTION_SCALE),
             ) {}
         }
 
-        // The map state floats only the box, and the location chip under it while location is not allowed. The
-        // list state adds the list under them.
+        // The box, and the location chip under it while location is not allowed, are one block in both states. The list
+        // state adds the list under it, as wide as the screen.
         Column(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .fillMaxWidth()
                 .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal))
-                .statusBarsPadding()
-                .padding(gaps.edge),
+                .statusBarsPadding(),
         ) {
             SearchStopTopBlock(
                 form = form,
                 location = location,
                 onBack = onBack,
                 modifier = Modifier.onGloballyPositioned { headerHeightPx = it.size.height },
+                showLocationChip = flow.mode == SearchStopMode.Map,
             )
             if (flow.mode == SearchStopMode.List) {
                 SearchStopListSection(
@@ -622,19 +633,24 @@ private fun SearchStopScreenSinglePane(
                     fieldType = fieldType,
                     rows = rows,
                     onManageClick = onManageClick,
+                    onOpenMap = if (searchStopState.isMapsAvailable) onMapTap else null,
                 )
             }
         }
     }
 }
 
-/** The list under the group card, one [SearchStopGaps.betweenCards] below it, as tall as the room allows. */
+/**
+ * The list under the box, as wide as the screen and as tall as the room allows. [onOpenMap] is Select on map, null
+ * where there is no map to go to.
+ */
 @Composable
 private fun ColumnScope.SearchStopListSection(
     searchStopState: SearchStopState,
     fieldType: SearchStopFieldType,
     rows: StopRowActions,
     onManageClick: () -> Unit,
+    onOpenMap: (() -> Unit)?,
 ) {
     val userLocation = (searchStopState.mapUiState as? MapUiState.Ready)?.mapDisplay?.userLocation
     val nearbyStops = (searchStopState.mapUiState as? MapUiState.Ready)?.mapDisplay?.nearbyStops
@@ -662,9 +678,8 @@ private fun ColumnScope.SearchStopListSection(
         recentsCard = card,
         actions = rows,
         onManageClick = onManageClick,
-        modifier = Modifier
-            .weight(1f, fill = false)
-            .padding(top = rememberSearchStopGaps().betweenCards),
+        onOpenMap = onOpenMap,
+        modifier = Modifier.weight(1f, fill = false),
     )
 }
 
@@ -730,18 +745,15 @@ private fun SearchStopScreenDualPane(
                 themeColor = themeColor.hexToComposeColor(),
                 spec = CloudFieldSpec.aiPair(themeColorHex = themeColor, motionScale = SEARCH_FIELD_MOTION_SCALE),
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .statusBarsPadding()
-                        .padding(KrailTheme.dimensions.spacingXL),
-                ) {
+                Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
                     SearchStopTopBlock(form = form, location = location, onBack = onBack)
+                    // The map is already in the right pane, so there is no Select on map to go to.
                     SearchStopListSection(
                         searchStopState = searchStopState,
                         fieldType = fieldType,
                         rows = rows,
                         onManageClick = onManageClick,
+                        onOpenMap = null,
                     )
                 }
             }

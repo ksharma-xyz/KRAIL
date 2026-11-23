@@ -19,9 +19,10 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
- * The label row, first in the card: Home, Work and any custom label that has a stop, as whole chips
- * in one row that scrolls sideways (the exception rule 4 gives it). The first chip starts fully
- * visible. Keyed the same in every list state so the row stays mounted when the rider types.
+ * The label row, first in the list: Home, Work and any custom label that has a stop, as whole chips
+ * in one row that scrolls sideways (the exception rule 4 gives it), then taj's Manage button at chip size, as the
+ * Search Stop list always drew them. The first chip starts fully visible. Keyed the same in every list state so the
+ * row stays mounted when the rider types.
  */
 internal fun LazyListScope.labelRowSection(
     show: Boolean,
@@ -57,7 +58,7 @@ private fun LabelShortcutsRow(
         contentPadding = PaddingValues(
             start = dim.pageHorizontalPadding,
             end = dim.pageHorizontalPadding,
-            top = dim.spacingNone,
+            top = dim.spacingS,
             bottom = dim.spacingS,
         ),
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),

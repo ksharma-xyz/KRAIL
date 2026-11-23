@@ -37,7 +37,9 @@ internal data class SearchStopFormModel(
 /**
  * The top of Search Stop: the [SearchStopGroupCard] and, directly under it while the location is not allowed, the
  * [LocationStatusChip], one [SearchStopGaps.betweenCards] below the box and at its left edge. The chip is not part
- * of the box, so the box holds only the two pills. On the map state this is everything that floats at the top.
+ * of the box, so the box holds only the two pills. On the map state this is everything that floats at the top. The
+ * block stands [SearchStopGaps.edge] in from the start, top and end of where it is placed. [showLocationChip] is false
+ * in the single pane list state, which is the box and the list and nothing between them.
  */
 @Composable
 internal fun SearchStopTopBlock(
@@ -45,11 +47,14 @@ internal fun SearchStopTopBlock(
     location: LocationPillState,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    showLocationChip: Boolean = true,
 ) {
     val gaps = rememberSearchStopGaps()
-    Column(modifier = modifier) {
+    // The edge is this block's own, outside whatever [modifier] measures, so a caller that reads the block's size gets the
+    // box and the chip and not the margin around them. There is none at the bottom: what comes next brings its own.
+    Column(modifier = Modifier.padding(start = gaps.edge, top = gaps.edge, end = gaps.edge).then(modifier)) {
         SearchStopGroupCard(form = form, onBack = onBack)
-        if (locationChipShownFor(location.pill)) {
+        if (showLocationChip && locationChipShownFor(location.pill)) {
             LocationStatusChip(
                 pill = location.pill,
                 onClick = location.onClick,

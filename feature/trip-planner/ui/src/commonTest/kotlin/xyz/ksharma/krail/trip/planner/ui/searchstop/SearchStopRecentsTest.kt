@@ -1,6 +1,5 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
-import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.transport.TransportMode

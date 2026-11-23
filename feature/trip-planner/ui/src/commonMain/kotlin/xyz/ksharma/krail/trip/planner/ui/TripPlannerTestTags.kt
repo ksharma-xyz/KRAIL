@@ -113,6 +113,12 @@ object TripPlannerTestTags {
     /** The row of labels at the top of the list. It scrolls sideways. */
     const val SEARCH_STOP_LABEL_ROW = "searchstop.labelrow"
 
+    /** The cloud gradient that covers the map in Search Stop's list state. */
+    const val SEARCH_STOP_LIST_BACKGROUND = "searchstop.listbackground"
+
+    /** The Select on map row of the list state, which returns to the map state. */
+    const val SEARCH_STOP_SELECT_ON_MAP = "searchstop.selectonmap"
+
     /** The mode filter block at the bottom of Search Stop's map state, drawn only while it is open. */
     const val SEARCH_STOP_MODE_CHIPS = "searchstop.modechips"
 

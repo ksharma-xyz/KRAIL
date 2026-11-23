@@ -15,10 +15,10 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 // What the recents on Search Stop's list state hold, `docs/MAP_HOME_UX.md` rule 9. Every decision is a
 // pure function, so the three sources and their order are pinned without a layout or a database.
 
-/** The most stops the recents card shows. */
+/** The most stops the recents show. */
 internal const val MAX_RECENT_ROWS = 5
 
-/** Where the rows of the recents card came from. */
+/** Where the rows of the recents came from. */
 internal enum class RecentsSource {
     /** The rider's own recent stops. */
     Recents,
@@ -30,15 +30,15 @@ internal enum class RecentsSource {
     Curated,
 }
 
-/** The rows of the recents card and where they came from. */
+/** The rows of the recents and where they came from. */
 internal data class RecentsCard(val source: RecentsSource, val rows: List<SearchStopState.StopResult>)
 
 /**
- * The card for a rider with nothing typed, or null when there is nothing to show.
+ * The recents for a rider with nothing typed, or null when there is nothing to show.
  *
  * - Any recents win, at most [MAX_RECENT_ROWS] of them.
  * - With no recents and a known location, the [nearest] stops. While they are still loading there is
- *   nothing to show yet, and the curated stops do not stand in for them, so the card never swaps
+ *   nothing to show yet, and the curated stops do not stand in for them, so the list never swaps
  *   one set for another a moment later.
  * - With no recents and no location, the [curated] stops.
  */
@@ -57,7 +57,7 @@ internal fun recentsCardFor(
 
 /**
  * The stops in [stops] nearest [location], nearest first, at most [limit]. Equal distances go to the
- * smaller stop id so the same rider position always gives the same card. With a [radiusKm] a stop
+ * smaller stop id so the same rider position always gives the same rows. With a [radiusKm] a stop
  * further away is left out, the edge is inclusive, and a stop whose distance cannot be worked out is
  * skipped.
  */

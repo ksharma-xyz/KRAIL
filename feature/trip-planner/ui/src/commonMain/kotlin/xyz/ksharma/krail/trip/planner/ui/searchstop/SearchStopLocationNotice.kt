@@ -26,7 +26,7 @@ import xyz.ksharma.krail.info.tiles.ui.InfoTileStyle
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
-import xyz.ksharma.krail.trip.planner.ui.components.MapLightScope
+import xyz.ksharma.krail.trip.planner.ui.components.CardGroundScope
 import xyz.ksharma.krail.trip.planner.ui.components.mapCardColors
 import xyz.ksharma.krail.trip.planner.ui.components.mapChipEdge
 import xyz.ksharma.krail.trip.planner.ui.components.mapSizeFadeIn
@@ -34,8 +34,9 @@ import xyz.ksharma.krail.trip.planner.ui.components.mapSizeFadeOut
 
 /**
  * The location notice under the Search Stop box while location is not allowed: the app's own [InfoTile] in its `Plain`
- * style (the soft theme tint, no glow), read in the light palette in both app modes ([MapLightScope], so it is the box's own
- * fixed light tint and text on the always light map), expanded, left aligned and the box's width, [SearchStopGaps.betweenCards] under it. It
+ * style (the soft theme tint, no glow), read in the box's own ground ([CardGroundScope], [onGradient]: the fixed light tint and
+ * text on the always light map, and the app mode's own on the gradient), expanded, left aligned and the box's width,
+ * [SearchStopGaps.betweenCards] under it. It
  * says what is wrong and what to do ([LOCATION_NOTICE_TITLE], [LOCATION_NOTICE_BODY]), with one call to action that does what
  * the old chip did, ask or open Settings ([onCtaClick]), and the tile's own text button Not now ([onDismiss]).
  *
@@ -54,6 +55,7 @@ internal fun LocationNotice(
     onDismiss: () -> Unit,
     onCtaClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onGradient: Boolean = false,
 ) {
     val reduceMotion = isReduceMotionEnabled()
     val gaps = rememberSearchStopGaps()
@@ -67,7 +69,7 @@ internal fun LocationNotice(
         exit = mapSizeFadeOut(reduceMotion),
     ) {
         Box(modifier = Modifier.padding(top = gaps.betweenCards)) {
-            MapLightScope {
+            CardGroundScope(onGradient = onGradient) {
                 InfoTile(
                     infoTileData = InfoTileData(
                         key = LOCATION_NOTICE_KEY,

@@ -18,11 +18,19 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.contrastRatio
+import xyz.ksharma.krail.taj.theme.md_theme_dark_onSurface
+import xyz.ksharma.krail.taj.theme.md_theme_dark_onSurface_placeholder
+import xyz.ksharma.krail.taj.theme.md_theme_dark_outline_subtle
+import xyz.ksharma.krail.taj.theme.md_theme_dark_softLabel
+import xyz.ksharma.krail.taj.theme.md_theme_dark_surface
 import xyz.ksharma.krail.taj.theme.md_theme_light_onSurface
+import xyz.ksharma.krail.taj.theme.md_theme_light_onSurface_placeholder
+import xyz.ksharma.krail.taj.theme.md_theme_light_outline_subtle
 import xyz.ksharma.krail.taj.theme.md_theme_light_softLabel
 import xyz.ksharma.krail.taj.theme.md_theme_light_surface
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeDecorColor
+import xyz.ksharma.krail.taj.tokens.AiThemeGradientTokens
 
 /**
  * The colours of every card that floats over the map, from the one accessor ([mapCardColors]). The Search Stop card, the bare
@@ -204,9 +212,160 @@ class MapCardColorsTest {
         assertNotEquals(onSurface, accessor.onTint, "and the fixed card's is not")
     }
 
+    // region the list state's look, on the cloud gradient
+
+    private fun darkListLook(theme: Color): CardLook = modeCardLook(
+        themeColor = theme,
+        darkMode = true,
+        surface = md_theme_dark_surface,
+        onSurface = md_theme_dark_onSurface,
+        softLabel = md_theme_dark_softLabel,
+        labelPlaceholder = md_theme_dark_onSurface_placeholder,
+        outlineSubtle = md_theme_dark_outline_subtle,
+    )
+
+    private fun lightListLook(theme: Color): CardLook = modeCardLook(
+        themeColor = theme,
+        darkMode = false,
+        surface = md_theme_light_surface,
+        onSurface = md_theme_light_onSurface,
+        softLabel = md_theme_light_softLabel,
+        labelPlaceholder = md_theme_light_onSurface_placeholder,
+        outlineSubtle = md_theme_light_outline_subtle,
+    )
+
+    /**
+     * The dark cloud gradient's darkest point is the bare surface, where no blob reaches. Its lightest point is bounded by laying
+     * all three blobs at their peak over the surface, which the gradient never does at one spot, since their centres differ. The
+     * peak is the gradient's own 0.32 dark peak times the pair's 0.85, and the third blob is 0.85 of that. The constants are
+     * private in taj, so they are restated here as a stand in and the lightest figure is an upper bound.
+     */
+    private fun darkGradientLightest(style: KrailThemeStyle): Color {
+        val stops = AiThemeGradientTokens.stopsFor(style)
+        val peak = 0.32f * 0.85f
+        return stops[2].copy(alpha = peak * 0.85f)
+            .compositeOver(stops[1].copy(alpha = peak).compositeOver(stops[0].copy(alpha = peak).compositeOver(md_theme_dark_surface)))
+    }
+
+    @Test
+    fun `the list state's dark look reads on the four offered themes, and its hairline stands off the dark gradient`() {
+        var placeholderTokenFails = false
+        for (style in themes) {
+            val theme = style.hexColorCode.hexToComposeColor()
+            val look = darkListLook(theme)
+            val darkest = md_theme_dark_surface
+            val lightest = darkGradientLightest(style)
+            val text = look.onTint.contrastRatio(look.tint)
+            val placeholder = look.placeholder.contrastRatio(look.tint)
+            val edgeOnDarkest = look.edge.contrastRatio(darkest)
+            val edgeOnLightest = look.edge.contrastRatio(lightest)
+            val tokenPlaceholder = md_theme_dark_onSurface_placeholder.contrastRatio(look.tint)
+            println(
+                "LISTGROUND dark ${style.name} textOnTint=$text placeholderOnTint=$placeholder edgeOnGradientDarkest=$edgeOnDarkest " +
+                    "edgeOnGradientLightestBound=$edgeOnLightest tintOnGradientDarkest=${look.tint.contrastRatio(darkest)} " +
+                    "tintOnGradientLightestBound=${look.tint.contrastRatio(lightest)} edgeOnTint=${look.edge.contrastRatio(look.tint)} " +
+                    "placeholderTokenOnTint=$tokenPlaceholder",
+            )
+            assertTrue(text >= TEXT, "dark ${style.name}: the text on the dark tint is $text to 1")
+            assertTrue(placeholder >= TEXT, "dark ${style.name}: the prompt on the dark tint is $placeholder to 1")
+            assertTrue(edgeOnDarkest >= EDGE_ON_DARKEST, "dark ${style.name}: the hairline against the darkest gradient is $edgeOnDarkest to 1")
+            assertTrue(edgeOnLightest >= EDGE_ON_LIGHTEST_BOUND, "dark ${style.name}: the hairline against the lightest gradient bound is $edgeOnLightest to 1")
+            if (tokenPlaceholder < TEXT) placeholderTokenFails = true
+        }
+        assertTrue(placeholderTokenFails, "the placeholder token alone is under 4.5 on the dark tint of a theme, which is why the prompt is the ink")
+    }
+
+    @Test
+    fun `the list state's dark tint is the Timetable's own 45 percent over the dark surface, and the ink, edge and divider are the dark palette's`() {
+        for (style in themes) {
+            val theme = style.hexColorCode.hexToComposeColor()
+            val look = darkListLook(theme)
+            assertEquals(theme.copy(alpha = 0.45f).compositeOver(md_theme_dark_surface), look.tint, "${style.name}: the tint")
+            assertEquals(md_theme_dark_onSurface, look.onTint, "${style.name}: the ink")
+            assertEquals(md_theme_dark_softLabel, look.edge, "${style.name}: the hairline")
+            assertEquals(md_theme_dark_outline_subtle, look.divider, "${style.name}: the divider")
+            assertEquals(md_theme_dark_onSurface, look.placeholder, "${style.name}: the prompt is the ink")
+        }
+    }
+
+    @Test
+    fun `the list state's light look is exactly the map state's fixed light look on every theme, so light mode shows no change`() {
+        for (style in allThemes) {
+            val theme = style.hexColorCode.hexToComposeColor()
+            assertEquals(fixedLightCardLook(theme), lightListLook(theme), "${style.name}: light mode list look equals the fixed look")
+        }
+        for (style in themes) {
+            val look = fixedLightCardLook(style.hexColorCode.hexToComposeColor())
+            val text = look.onTint.contrastRatio(look.tint)
+            println("LISTGROUND light ${style.name} textOnTint=$text hairlineOnMap=${look.edge.contrastRatio(MAP_GROUND)}")
+            assertTrue(text in CARD_TEXT_LOW..CARD_TEXT_HIGH, "light ${style.name}: the text is $text to 1, 17.51 to 18.27 as before")
+            assertTrue(look.edge.contrastRatio(MAP_GROUND) >= HAIRLINE, "light ${style.name}: the hairline is 3.81 to 1 as before")
+        }
+    }
+
+    @Test
+    fun `the blend of the two looks is exact at both ends and part way between`() {
+        val theme = KrailThemeStyle.Train.hexColorCode.hexToComposeColor()
+        val map = fixedLightCardLook(theme)
+        val list = darkListLook(theme)
+
+        assertEquals(map, blendCardLook(map, list, 0f), "0 is the map look, exactly")
+        assertEquals(list, blendCardLook(map, list, 1f), "1 is the list look, exactly")
+        val mid = blendCardLook(map, list, 0.5f)
+        assertNotEquals(map.tint, mid.tint)
+        assertNotEquals(list.tint, mid.tint)
+        assertTrue(mid.tint.luminance() < map.tint.luminance() && mid.tint.luminance() > list.tint.luminance(), "the middle fill lies between the two")
+        assertTrue(mid.onTint.luminance() > map.onTint.luminance() && mid.onTint.luminance() < list.onTint.luminance(), "and so does the ink")
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-night")
+    fun `under a ground scope in dark mode the accessor gives the dark look on the gradient and the fixed light look on the map`() {
+        var onGradient: MapCardColors? = null
+        var onMap: MapCardColors? = null
+        var outside: MapCardColors? = null
+        var theme = Color.Unspecified
+        composeRule.setContent {
+            PreviewTheme(themeStyle = KrailThemeStyle.Train) {
+                theme = themeDecorColor()
+                outside = mapCardColors()
+                CardGroundScope(onGradient = true) { onGradient = mapCardColors() }
+                CardGroundScope(onGradient = false) { onMap = mapCardColors() }
+            }
+        }
+        composeRule.waitForIdle()
+
+        val dark = darkListLook(theme)
+        val fixed = fixedLightCardLook(theme)
+        val g = checkNotNull(onGradient)
+        assertEquals(dark.tint, g.tint, "on the gradient the fill is the dark tint")
+        assertEquals(dark.onTint, g.onTint, "the ink is cream")
+        assertEquals(dark.edge, g.chipEdge, "the hairline is the dark softLabel")
+        assertEquals(dark.placeholder, g.placeholder)
+        assertEquals(dark.divider, g.divider)
+        assertEquals(dark.tint, g.chip.containerColor, "a chip on the gradient wears it too")
+        for (card in listOf(checkNotNull(onMap), checkNotNull(outside))) {
+            assertEquals(fixed.tint, card.tint, "on the map, or outside any scope, the fill is the fixed light tint")
+            assertEquals(fixed.onTint, card.onTint)
+            assertEquals(fixed.edge, card.chipEdge)
+            assertEquals(fixed.placeholder, card.placeholder)
+            assertEquals(fixed.divider, card.divider)
+        }
+        assertEquals(md_theme_light_surface, g.pill.containerColor, "the Options pill is white on either ground")
+        assertEquals(md_theme_light_onSurface, g.pill.contentColor)
+    }
+
+    // endregion
+
     private companion object {
         const val TEXT = 4.5f
         const val EDGE = 3f
+
+        /** The hairline against the bare dark surface, where the gradient is darkest: 7.93 to 1 as printed. */
+        const val EDGE_ON_DARKEST = 7f
+
+        /** The hairline against the stacked peak bound of the gradient, never reached at one spot: 2.00 to 1 on Bus as printed. */
+        const val EDGE_ON_LIGHTEST_BOUND = 1.9f
         const val HAIRLINE = 3.8f
         const val CARD_TEXT_LOW = 17.5f
         const val CARD_TEXT_HIGH = 18.3f

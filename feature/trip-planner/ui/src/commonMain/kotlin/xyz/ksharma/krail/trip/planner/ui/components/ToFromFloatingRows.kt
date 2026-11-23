@@ -31,7 +31,6 @@ import xyz.ksharma.krail.taj.components.TextField
 import xyz.ksharma.krail.taj.components.TextFieldColors
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.theme.md_theme_light_onSurface_placeholder
 
 /** What the two floating rows say and do, in one holder so the block hands it over as one argument. */
 @Immutable
@@ -114,9 +113,9 @@ internal fun ToFromFloatingRows(
 }
 
 /**
- * The bars' colours: the shared [softFieldColors], or, when [fixedLight] is set, the Search Stop box's own fixed light look: its
- * tint for the fill, the light `onSurface` for the text and caret, and the light placeholder token, all from the light palette
- * so they are the same in both app modes.
+ * The bars' colours: the shared [softFieldColors], or, when [fixedLight] is set, the Search Stop box's own look from
+ * [mapCardColors]: its tint for the fill, its ink for the text and caret and its placeholder. On the map that is the light palette
+ * in both app modes, and on the gradient of the list state it is the app mode's own (see `CardGroundScope`).
  */
 @Composable
 private fun floatingFieldColors(fixedLight: Boolean): TextFieldColors {
@@ -125,7 +124,7 @@ private fun floatingFieldColors(fixedLight: Boolean): TextFieldColors {
     return TextFieldColors(
         containerColor = card.tint,
         contentColor = card.onTint,
-        placeholderColor = md_theme_light_onSurface_placeholder,
+        placeholderColor = card.placeholder,
         cursorColor = card.onTint,
     )
 }

@@ -47,7 +47,6 @@ import xyz.ksharma.krail.taj.components.TextField
 import xyz.ksharma.krail.taj.components.TextFieldColors
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.theme.md_theme_light_outline_subtle
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import kotlin.math.roundToInt
 
@@ -131,7 +130,7 @@ internal fun ToFromCardRows(rows: CardRowsContent, modifier: Modifier = Modifier
         ) {
             Divider(
                 modifier = Modifier.testTag(TripPlannerTestTags.SEARCH_ROW_DIVIDER),
-                color = md_theme_light_outline_subtle,
+                color = mapCardColors().divider,
             )
         }
         CardStopRow(

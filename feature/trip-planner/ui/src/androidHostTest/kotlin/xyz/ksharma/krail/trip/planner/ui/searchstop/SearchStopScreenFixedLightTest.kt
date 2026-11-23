@@ -3,19 +3,25 @@ package xyz.ksharma.krail.trip.planner.ui.searchstop
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.view.View
+import androidx.activity.ComponentActivity
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.SoftwareKeyboardController
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsNode
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpRect
@@ -30,7 +36,12 @@ import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.theme.isAppInDarkMode
+import xyz.ksharma.krail.taj.theme.md_theme_dark_onSurface
+import xyz.ksharma.krail.taj.theme.md_theme_dark_surface
+import xyz.ksharma.krail.taj.theme.md_theme_light_onSurface
 import xyz.ksharma.krail.taj.theme.md_theme_light_surface
+import xyz.ksharma.krail.taj.themeDecorColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.mapCardColors
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
@@ -41,10 +52,12 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 /**
- * Every state of the real Search Stop screen wears the one fixed light card look, in light and dark app mode: the map state's box, the
- * location notice under it, the white Options pill and the Options card, the list state's box once the field is tapped, and the
- * box in a wide window's left pane. Each is read from the pixels the screen draws, against the tint of the card family read from
- * the same tokens, and the dark runs also prove the page behind is not that tint.
+ * What each state of the real Search Stop screen stands on decides its card look. The map state, which is always light, wears the one
+ * fixed light look in light and dark app mode: the box, the location notice under it, the white Options pill and the Options card.
+ * The list state, once the field is tapped, and the box in a wide window's left pane stand on the cloud gradient, which follows the
+ * app mode, so they follow it: the same light look in light mode and the Timetable's dark tint with cream text in dark mode. Each is
+ * read from the pixels the screen draws, against the expected tint built from the taj tokens, and the screen is taken from the map
+ * state to the list state and back in dark mode. This replaces the S7 rule that the list state's box was fixed light.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -52,7 +65,7 @@ import kotlin.test.assertTrue
 class SearchStopScreenFixedLightTest {
 
     @get:Rule
-    val composeRule = createComposeRule()
+    val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     private val quietKeyboard = object : SoftwareKeyboardController {
         override fun show() = Unit
@@ -60,6 +73,8 @@ class SearchStopScreenFixedLightTest {
     }
     private var composeView: View? = null
     private var tint = Color.Unspecified
+    private var listTint = Color.Unspecified
+    private var cream = Color.Unspecified
     private var pageSurface = Color.Unspecified
 
     private fun setScreen(fontScale: Float = 1f, locationAllowed: Boolean = true) {
@@ -76,6 +91,14 @@ class SearchStopScreenFixedLightTest {
                 PreviewTheme {
                     composeView = LocalView.current
                     tint = mapCardColors().tint
+                    // The list state's tint, built from the taj tokens: the Timetable's 45 percent over the dark surface in dark mode and
+                    // 15 percent over white in light mode.
+                    listTint = if (isAppInDarkMode()) {
+                        themeDecorColor().copy(alpha = 0.45f).compositeOver(md_theme_dark_surface)
+                    } else {
+                        themeDecorColor().copy(alpha = 0.15f).compositeOver(md_theme_light_surface)
+                    }
+                    cream = if (isAppInDarkMode()) md_theme_dark_onSurface else md_theme_light_onSurface
                     pageSurface = KrailTheme.colors.surface
                     SearchStopScreen(searchStopState = state, onEvent = {})
                 }
@@ -111,6 +134,28 @@ class SearchStopScreenFixedLightTest {
         val block = boundsOf(tag)
         val at = pixel(image, block.left + 3.dp, block.cy())
         assertTrue(close(tint, at), "$what is the card family's fixed light tint $tint, drawn as $at")
+    }
+
+    /** The card's fill on the gradient: the tint of the app mode, which is the fixed light tint in light mode. */
+    private fun assertFilledWithListTint(what: String, tag: String, image: Bitmap) {
+        val block = boundsOf(tag)
+        val at = pixel(image, block.left + 3.dp, block.cy())
+        assertTrue(close(listTint, at), "$what is the app mode's own tint $listTint, drawn as $at")
+    }
+
+    /** Every text the box holds is the app mode's own text colour, cream in dark mode. */
+    private fun assertTextIsModeInk(what: String, tag: String) {
+        val node = composeRule.onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode()
+        val colors = mutableListOf<TextLayoutResult>()
+        fun collect(n: SemanticsNode) {
+            n.config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(colors)
+            n.children.forEach { collect(it) }
+        }
+        collect(node)
+        assertTrue(colors.isNotEmpty(), "$what holds text")
+        for (layout in colors) {
+            assertTrue(close(cream, layout.layoutInput.style.color.copy(alpha = 1f)), "$what text is $cream, drawn as ${layout.layoutInput.style.color}")
+        }
     }
 
     // region the map state
@@ -177,30 +222,57 @@ class SearchStopScreenFixedLightTest {
         composeRule.waitForIdle()
 
         composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertCountEquals(0)
-        assertFilledWithTint("$mode, the list state's box", TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, drawn())
+        assertFilledWithListTint("$mode, the list state's box", TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, drawn())
+        assertTextIsModeInk("$mode, the list state's box", TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
     }
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-notnight-xxhdpi")
-    fun `in light mode the list state's box is the fixed light tint`() = assertListState("light")
+    fun `in light mode the list state's box is the light tint it was`() {
+        assertListState("light")
+        assertTrue(close(tint, listTint), "in light mode the list state's tint is the very same as the map state's")
+    }
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
-    fun `in dark mode the list state's box is the very same fixed light tint`() = assertListState("dark")
+    fun `in dark mode the list state's box is the Timetable's dark tint with cream text, not the light tint`() {
+        assertListState("dark")
+        assertTrue(!close(tint, listTint), "the dark tint $listTint is not the map state's light tint $tint")
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
+    fun `in dark mode going from the map state to the list state and back moves the box from light to dark and back`() {
+        setScreen()
+        assertFilledWithTint("dark, the map state's box", TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, drawn())
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
+        composeRule.waitForIdle()
+        assertFilledWithListTint("dark, the list state's box", TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, drawn())
+
+        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertCountEquals(1)
+        assertFilledWithTint("dark, back on the map state, the box", TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, drawn())
+    }
 
     private fun assertWideWindow(mode: String) {
         setScreen()
 
-        assertFilledWithTint("$mode, the box in the wide window's left pane", TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, drawn())
+        assertFilledWithListTint("$mode, the box in the wide window's left pane", TripPlannerTestTags.SEARCH_STOP_GROUP_CARD, drawn())
+        assertTextIsModeInk("$mode, the box in the wide window's left pane", TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
     }
 
     @Test
     @Config(qualifiers = "w900dp-h700dp-notnight-xxhdpi")
-    fun `in light mode the box in a wide window is the fixed light tint`() = assertWideWindow("light")
+    fun `in light mode the box in a wide window is the light tint`() = assertWideWindow("light")
 
     @Test
     @Config(qualifiers = "w900dp-h700dp-night-xxhdpi")
-    fun `in dark mode the box in a wide window is the very same fixed light tint`() = assertWideWindow("dark")
+    fun `in dark mode the box in a wide window, which stands on the gradient, is the dark tint with cream text`() {
+        assertWideWindow("dark")
+        assertTrue(!close(tint, listTint), "the dark tint $listTint is not the map state's light tint $tint")
+    }
 
     // endregion
 }

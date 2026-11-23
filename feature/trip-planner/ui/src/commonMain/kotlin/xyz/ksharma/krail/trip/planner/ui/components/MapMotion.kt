@@ -6,10 +6,12 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.Easing
+import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -180,6 +182,14 @@ internal fun goLeaveScaleSpec(): AnimationSpec<Float> = tween(MapMotion.GO_LEAVE
 internal fun goLeaveFadeSpec(): AnimationSpec<Float> = tween(MapMotion.GO_LEAVE_MS, easing = LinearEasing)
 
 private val GO_LEAVE_EASING = Easing { fraction -> fraction * fraction }
+
+/**
+ * The card spec: how the Search Stop box and the notice change their colours between the map state and the list state, the same
+ * [MapMotion.ENTER_MS] on the arrival curve the box and the lone pill fade into one another in. A snap with reduced motion, so
+ * the colours jump in one frame.
+ */
+internal fun <T> mapCardFadeSpec(reduceMotion: Boolean): FiniteAnimationSpec<T> =
+    if (reduceMotion) snap() else tween(MapMotion.ENTER_MS, easing = MapMotion.ENTER_EASING)
 
 /** The swap's glide between the divider level and the From row's centre line, on the arrival curve. */
 internal fun swapGlideSpec(): AnimationSpec<Float> = tween(MapMotion.SWAP_GLIDE_MS, easing = MapMotion.ENTER_EASING)

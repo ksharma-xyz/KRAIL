@@ -69,20 +69,6 @@ internal fun cardGrid(dim: KrailDimensions = KrailDimensions()): CardGrid = Card
 @Composable
 internal fun rememberCardGrid(): CardGrid = cardGrid(KrailTheme.dimensions)
 
-/** A row's height: 56 dp or the [lines] of [lineHeight] with 12 dp above and below, whichever is taller. A line is never cut. */
-internal fun cardRowHeight(grid: CardGrid, lines: Int, lineHeight: Dp): Dp =
-    maxOf(grid.rowMin, grid.rowChrome + lineHeight * lines.toFloat())
-
-/**
- * The swap's two resting heights, from the top of the card, for a From row [fromHeight] tall and a divider [divider] thick:
- * the divider's centre while at most one stop is chosen, and the From row's centre line once both are.
- */
-internal fun swapCentreY(fromHeight: Dp, divider: Dp, lifted: Boolean): Dp =
-    if (lifted) fromHeight / 2f else fromHeight + divider / 2f
-
-/** How far the swap glides between its two resting heights: half the From row plus half the divider, 28.5 dp at 56 and 1. */
-internal fun swapGlideDistance(fromHeight: Dp, divider: Dp): Dp = fromHeight / 2f + divider / 2f
-
 /**
  * Whether the card's right column is in use for the whole card, so the divider and the rows hold their room for it. The swap lives
  * there once the rider has picked a stop ([hasSwap]) and the go circle with both ([showGo]). The room does not follow the swap's own

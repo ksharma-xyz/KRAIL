@@ -539,8 +539,8 @@ three zone frame, and everything it decides is in pure functions with table test
   the Settings screen's behaviour and tests are unchanged. The Intro reaches it through `IntroCompletion`, which already holds
   Sandook, Analytics and the IO dispatcher, because the view model is at the constructor limit.
 - **Confirming.** `Let's KRAIL` is not shown until a theme is selected. It reports the choice once with the existing
-  `analytics.trackThemeSelectionEvent(themeId)` (event `theme_selected`, param `themeId` only, no new name and no new param,
-  and the ledger has no Pending row for it), and, since unit U9, finishes the Intro (it used to move on to Park & Ride). Tapping
+  `analytics.trackThemeSelectionEvent(themeId, source)` (event `theme_selected`, params `themeId` and, since unit N2,
+  `source = intro`, no new name; the ledger has a Pending row for `source`), and, since unit U9, finishes the Intro (it used to move on to Park & Ride). Tapping
   a badge reports nothing. The choice is reported once.
 - **The flow.** Since unit U9 `IntroFirstStep` is PARK_RIDE and THEME is the last screen. The flow only moves forward (see "No back
   anywhere"), and a Park & Ride screen with nothing to decide is passed over. The selected
@@ -2311,6 +2311,15 @@ Two changes to what the Intro reports, so the Intro is measurable screen by scre
 | N1-3 | `introVersion` is on every firing of the new build. `IntroOutcome.introVersion` is a non-null Int set from one constant, `IntroOutcome.toEvent()` is the only place the event is built (`IntroEventCallSiteTest` reads the sources and fails on a second), and a test sends each way the Intro can finish through the real view model: saved, Not now, the question never answered, no pair picked and stops that failed to load. All carry `introVersion = 2` | A param that can be dropped by a second call site would split the funnel by version without anyone seeing it | Default, not yet seen by owner |
 | N1-4 | Cost. API calls: none added. `intro_lets_krail` has one more short param. `view_screen` goes from three sends in a run to five, each one Firebase log call that the SDK batches into its own upload (the analytics owner's estimate, a GUESS, not measured). Payload: under 1 kB per event (a GUESS). Counted from the code and not measured on the wire: a `view_screen` is about 35 characters (the event name, the `name` param and its value), and `themeId` adds 7 characters of name and one of value. Time to first content: unchanged, nothing waits. UX: no screen. Caching and dedupe: one send for each step in a run, by a set held in the view model, so no duplicate through a rotation. Battery: no timer, no radio of our own, no work beyond one set lookup per step change. Shared limits: none touched. Names: no new event name, five new values of an existing param, one new param name on an existing event | The brief's cost budget | Default, not yet seen by owner |
 
+### Unit N2, decisions where the spec was silent: telling the Intro's colour from a rider changing theme
+
+The analytics owner asked for it. `theme_selected` is sent from the Settings theme screen and, since the Intro rebuild, at the Intro's finish press, so the event alone cannot say which a row is. Every row is `Default, not yet seen by owner`.
+
+| # | Decision | Why and what to change | Status |
+|---|---|---|---|
+| N2-1 | `theme_selected` gains `source`, `intro` or `settings`. It is a param on the existing event: no new event name, no change to which events fire, and `themeId` is unchanged on `theme_selected` and on `intro_lets_krail` (which keeps its own). In code it is `ThemeSelectedEvent.Source`, modelled on `RateAppClickEvent.Source` (`PROP_SOURCE`, an enum with a string `value`). It has no default on purpose, so a new caller cannot forget to say where the choice was made. A build from before this change sends none, which the analytics side reads as unknown. Replaces R2-12's "No param is added" | One shared call (`ThemeChoice.track(productClass, source)`) sends it, so the two screens cannot report differently: `IntroCompletion.trackTheme` passes `intro`, `ThemeSelectionViewModel` passes `settings`. `ThemeSelectedEventTest` holds the property map for both values, `ThemeChoiceTest` the shared call, `IntroFlowViewModelThemeTest`, `IntroLetsKrailThemeIdTest` and `IntroFlowRouteThemeTest` the Intro finish, and `ThemeSelectionViewModelTest` the Settings pick | Default, not yet seen by owner |
+| N2-2 | Cost. API calls: none added. `theme_selected` carries one more short param (about 6 characters of name and 8 of value at most, counted from the code and not measured on the wire). Time to first content, UX, caching, battery and shared limits: unchanged, no screen, no timer, no request, nothing waits. Names: no new event name and no new param name, because `source` is already sent by other events (`save_trip_click`, `rate_app_click`, `park_ride_user_facility` and others), so a dimension registered for it already covers this event | The cost budget | Default, not yet seen by owner |
+
 ### Assumptions for approval (mandatory, no code until signed off)
 
 Evidence that comes from private analytics is shown to the owner in the message that introduces this ERD and is kept outside this repository. This table states the rule, the options and the public facts.
@@ -2428,7 +2437,7 @@ The 500 event-name budget is respected. Nothing here mints a name.
   rebuilt Intro never. Before N1: `IntroFirstTrip` was the one new name, `Intro` was the Park & Ride and theme screens, and a run sent
   `Intro`, `IntroFirstTrip` once for the three trip screens, and `Intro` again on the theme screen, so a funnel read a run by its first
   `Intro` view. A rider who reaches a screen and never finishes is the drop-off, and the last name a rider sent says where. `theme_selected` (existing) is sent once when the rider presses `Let's KRAIL` on the theme screen,
-  with `themeId` only, as the Settings screen sends it, and that press is also the finish that sends `intro_lets_krail`.
+  with `themeId` and, since unit N2, `source = intro` (the Settings screen sends `source = settings`), and that press is also the finish that sends `intro_lets_krail`.
 - `park_ride_user_facility` (existing) gains `source = intro`. `save_trip_click` (existing) gains `source = intro`. These make
   Intro-created saves countable without a second event and without double counting.
 - Nothing carries a coordinate, a stop name or free text. The "Search another stop" path reuses the app's existing search and

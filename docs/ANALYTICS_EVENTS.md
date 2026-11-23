@@ -55,7 +55,7 @@ param name competes for a registerable dimension slot, see the caps section abov
 |---|---|---|
 | Different gesture, same surface, same params | `action` value on the existing event | Departures icon fires `timetable_stop_header_click` with `action = open_departures` — not a separate `timetable_departures_icon_click` |
 | Outcomes of one interaction (accept/dismiss, on/off, success/failure) | ONE event with a boolean or enum param | `save_trip_prompt_action(accepted: Boolean, dismissCount)` — not `_accepted` + `_dismissed` |
-| Same event fired from several surfaces | `source` param | `DepartureBoardSource` enum, `SaveTripClickEvent.source = star \| prompt` |
+| Same event fired from several surfaces | `source` param | `DepartureBoardSource` enum, `SaveTripClickEvent.source = star \| prompt`, `ThemeSelectedEvent.source = intro \| settings` (the Intro's finish press and the Settings theme screen both send `theme_selected`; a build from before the param sends none, read as unknown) |
 | Feature state changes (error/retry/loading) | `{feature}_status(action)` | `dep_board_status(action: error \| retry)` — not one event per state |
 
 ## Double-counting check

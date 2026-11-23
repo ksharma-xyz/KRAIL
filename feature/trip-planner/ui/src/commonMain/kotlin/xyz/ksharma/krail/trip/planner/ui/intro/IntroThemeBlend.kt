@@ -39,7 +39,13 @@ private fun ThemeBlendInputs.request(tapped: Int, origin: Offset): ThemeChangeRe
         target = ThemeChangeTarget(themeId, hex, colour),
         toText = if (chosen) colour.asThemeInk(dark) else onSurface,
         toGround = if (chosen) introGroundColour(colour, surface, dark) else surface,
-        headline = HeadlineContent(headline.lines, headline.emphasisIndex, introEmojiFor(IntroStep.THEME, themeId)),
+        headline = HeadlineContent(
+            lines = headline.lines,
+            emphasisIndex = headline.emphasisIndex,
+            emoji = introEmojiFor(IntroStep.THEME, themeId),
+            spoken = headline.spoken,
+            fitsRoom = headline.fitsRoom,
+        ),
         tapped = tapped,
         origin = origin,
     )

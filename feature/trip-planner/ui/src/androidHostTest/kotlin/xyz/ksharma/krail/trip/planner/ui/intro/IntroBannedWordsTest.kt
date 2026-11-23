@@ -106,21 +106,24 @@ class IntroBannedWordsTest {
 
     private fun stringLiterals(source: String): List<String> = LiteralReader(source).read()
 
-    // The last lines of the five headlines, which are questions: the only strings that may have a question mark.
-    private val questionLines: List<String> = listOf(
+    // The last lines of the five headlines, which are questions, and the whole spoken question of the colour screen, whose drawn
+    // lines are a short form of it: the only strings that may have a question mark.
+    private val drawnQuestionLines: List<String> = listOf(
         PARK_RIDE_HEADLINE,
         DESTINATION_HEADLINE,
         ORIGIN_HEADLINE,
         CONFIRM_HEADLINE,
         PICK_THEME_HEADLINE,
     ).map { it.last() }
+    private val questionLines: List<String> = drawnQuestionLines + PICK_THEME_HEADING
 
     @Test
     fun `a question mark is allowed at the end of the last line of the five headlines and nowhere else`() {
         assertEquals(
             listOf("station?", "you going?", "leaving from?", "trip?", "in Sydney?"),
-            questionLines,
+            drawnQuestionLines,
         )
+        assertEquals("What's your favourite transport mode in Sydney?", questionLines.last(), "the spoken question is exempt too")
         questionLines.forEach { assertEquals(emptyList(), problems(it), "$it") }
         // The exemption is the exact line, so the same words with more, or any other question, are caught.
         listOf("trip? now", "Which one?", "trip??", "Save this trip?", "Pick a colour?").forEach {

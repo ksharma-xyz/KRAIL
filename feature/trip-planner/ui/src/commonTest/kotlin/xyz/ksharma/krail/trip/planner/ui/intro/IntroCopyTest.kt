@@ -80,7 +80,7 @@ class IntroCopyTest {
         CONFIRM_HEADLINE,
         PICK_THEME_HEADLINE,
     )
-    private val questionStrings = headlines.flatMap { listOf(it.last(), introHeadlinePhrase(it)) }
+    private val questionStrings = headlines.flatMap { listOf(it.last(), introHeadlinePhrase(it)) } + PICK_THEME_HEADING
 
     @Test
     fun `no button and no other string has a question mark, an exclamation mark, a colon, a dash, an arrow or a dot`() {
@@ -97,10 +97,13 @@ class IntroCopyTest {
         assertEquals(listOf("Where are", "you going?"), DESTINATION_HEADLINE)
         assertEquals(listOf("Where are you", "leaving from?"), ORIGIN_HEADLINE)
         assertEquals(listOf("Save this", "trip?"), CONFIRM_HEADLINE)
-        assertEquals(listOf("What's your", "favourite", "transport mode", "in Sydney?"), PICK_THEME_HEADLINE)
-        listOf(PARK_RIDE_HEADING, DESTINATION_HEADING, ORIGIN_HEADING, CONFIRM_HEADING, PICK_THEME_HEADING)
+        assertEquals(listOf("Your favourite", "transport mode", "in Sydney?"), PICK_THEME_HEADLINE)
+        listOf(PARK_RIDE_HEADING, DESTINATION_HEADING, ORIGIN_HEADING, CONFIRM_HEADING)
             .zip(headlines)
             .forEach { (heading, lines) -> assertEquals(lines.joinToString(" "), heading) }
+        // The colour screen draws a short form of its question and says the whole of it, so its heading is not the lines joined.
+        assertEquals("What's your favourite transport mode in Sydney?", PICK_THEME_HEADING)
+        assertEquals(PICK_THEME_HEADING, introThemeHeadline(null).spoken)
         headlines.forEach { lines ->
             assertEquals(1, lines.joinToString(" ").count { it == QUESTION_MARK }, "$lines")
             assertTrue(lines.last().endsWith(QUESTION_MARK), "$lines")

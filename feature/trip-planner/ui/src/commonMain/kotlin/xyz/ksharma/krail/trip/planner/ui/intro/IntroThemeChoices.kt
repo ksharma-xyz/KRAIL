@@ -66,14 +66,26 @@ internal fun taglineLines(tagLine: String): List<String> {
         .filter { it.isNotEmpty() }
 }
 
-/** What the theme screen's headline says: its lines and the one with the key word. */
-internal data class IntroThemeHeadline(val lines: List<String>, val emphasisIndex: Int)
+/**
+ * What the theme screen's headline says: its [lines] and the one with the key word, the [spoken] text a screen reader reads as the
+ * heading, and whether the lines are kept whole by the size they are drawn at ([fitsRoom], the question only).
+ */
+internal data class IntroThemeHeadline(
+    val lines: List<String>,
+    val emphasisIndex: Int,
+    val spoken: String = introHeadlinePhrase(lines),
+    val fitsRoom: Boolean = false,
+)
 
-/** Before a choice, the question in four lines, a complete plain question. */
-internal val PICK_THEME_HEADLINE = listOf("What's your", "favourite", "transport mode", "in Sydney?")
+/**
+ * Before a choice, the question as it is drawn, in three lines. Each line is at most 16 characters, and the headline draws them
+ * in capitals at the largest size at which the widest one fits the window, with a floor ([fittedHeadlineDensity]). It is the
+ * short form of the question, and what is spoken is [PICK_THEME_HEADING].
+ */
+internal val PICK_THEME_HEADLINE = listOf("Your favourite", "transport mode", "in Sydney?")
 
-/** The whole headline as one phrase, which a screen reader reads as the heading. */
-internal val PICK_THEME_HEADING = introHeadlinePhrase(PICK_THEME_HEADLINE)
+/** The whole question, which a screen reader reads as the heading, and is the text a test finds. It is not the drawn lines joined. */
+internal const val PICK_THEME_HEADING = "What's your favourite transport mode in Sydney?"
 
 /**
  * The headline for the theme chosen, [selectedId]: the question before a choice, and after one that
@@ -81,7 +93,12 @@ internal val PICK_THEME_HEADING = introHeadlinePhrase(PICK_THEME_HEADLINE)
  */
 internal fun introThemeHeadline(selectedId: Int?): IntroThemeHeadline {
     val choice = themeChoiceFor(selectedId)
-        ?: return IntroThemeHeadline(PICK_THEME_HEADLINE, emphasisIndex = PICK_THEME_HEADLINE.lastIndex)
+        ?: return IntroThemeHeadline(
+            lines = PICK_THEME_HEADLINE,
+            emphasisIndex = PICK_THEME_HEADLINE.lastIndex,
+            spoken = PICK_THEME_HEADING,
+            fitsRoom = true,
+        )
     val lines = taglineLines(choice.style.tagLine)
     return IntroThemeHeadline(lines, emphasisIndex = lines.lastIndex)
 }
@@ -90,8 +107,10 @@ internal fun introThemeHeadline(selectedId: Int?): IntroThemeHeadline {
  * Every headline the theme screen can show, each as its lines: the question before a choice and the tagline of each
  * theme. The room the screen keeps for its headline is that of the longest of these, so it is the same whichever shows.
  */
-internal fun themeHeadlineVariants(): List<List<String>> =
-    listOf(PICK_THEME_HEADLINE) + introThemeChoices().map { taglineLines(it.style.tagLine) }
+internal fun themeHeadlineVariants(): List<List<String>> = listOf(PICK_THEME_HEADLINE) + themeTaglineVariants()
+
+/** The lines of each theme's tagline, which are drawn at the ordinary headline size, unlike the question. */
+internal fun themeTaglineVariants(): List<List<String>> = introThemeChoices().map { taglineLines(it.style.tagLine) }
 
 /**
  * How many lines of room the longest of [variants] needs once drawn: each line of a headline is its own block that wraps

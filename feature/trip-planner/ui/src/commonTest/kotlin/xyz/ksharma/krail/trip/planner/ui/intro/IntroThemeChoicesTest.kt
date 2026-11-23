@@ -119,12 +119,14 @@ class IntroThemeChoicesTest {
     }
 
     @Test
-    fun `before a choice the headline is the plain question about the favourite transport mode, in four lines`() {
+    fun `before a choice the headline is the question about the favourite transport mode, in three lines, said in full`() {
         val headline = introThemeHeadline(null)
 
-        assertEquals(listOf("What's your", "favourite", "transport mode", "in Sydney?"), headline.lines)
+        assertEquals(listOf("Your favourite", "transport mode", "in Sydney?"), headline.lines)
         assertEquals("in Sydney?", headline.lines[headline.emphasisIndex])
         assertEquals("What's your favourite transport mode in Sydney?", PICK_THEME_HEADING)
+        assertEquals(PICK_THEME_HEADING, headline.spoken, "what is said is the whole question, not the drawn lines")
+        assertTrue(headline.fitsRoom, "the question is kept to its three lines by size")
         assertEquals(headline, introThemeHeadline(NOT_A_THEME), "an id that is not offered is no choice")
     }
 
@@ -135,6 +137,8 @@ class IntroThemeChoicesTest {
 
             assertEquals(taglineLines(choice.style.tagLine), headline.lines, choice.name)
             assertEquals(headline.lines.lastIndex, headline.emphasisIndex, choice.name)
+            assertEquals(taglineLines(choice.style.tagLine).joinToString(" "), headline.spoken, choice.name)
+            assertTrue(!headline.fitsRoom, "a tagline is drawn at the ordinary headline size: ${choice.name}")
             assertNotNull(headline.lines.getOrNull(headline.emphasisIndex), choice.name)
         }
     }

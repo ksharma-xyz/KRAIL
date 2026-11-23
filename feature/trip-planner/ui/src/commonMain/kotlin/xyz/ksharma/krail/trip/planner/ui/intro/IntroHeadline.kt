@@ -162,8 +162,12 @@ private val LineRiseDistance = 24.dp
  * [minLines] is the least number of lines of room to keep, for a screen whose headline changes length: with it
  * the headline takes the height of the emoji and that many lines whatever it says, so nothing below it moves.
  *
- * For a screen reader the whole headline is one heading whose text is the full phrase, with no pause
- * between lines, and the emoji is hidden from it.
+ * [fitToRoom] is for the colour screen's question, whose lines are kept whole by size: it is drawn at the largest size at
+ * which its widest line fits the room, never larger than the other headlines and never below the floor
+ * ([fittedHeadlineDensity]), and wraps a line at a word below that.
+ *
+ * For a screen reader the whole headline is one heading whose text is [spoken], which is the full phrase, the lines joined,
+ * unless the lines drawn are a shortened form of it, with no pause between lines, and the emoji is hidden from it.
  */
 @Composable
 internal fun IntroHeadline(
@@ -173,6 +177,8 @@ internal fun IntroHeadline(
     modifier: Modifier = Modifier,
     minLines: Int = 0,
     celebrate: Boolean = false,
+    spoken: String = introHeadlinePhrase(lines),
+    fitToRoom: Boolean = false,
 ) {
     val reduceMotion = isReduceMotionEnabled()
     val inspection = LocalInspectionMode.current
@@ -181,7 +187,7 @@ internal fun IntroHeadline(
     val startsSettled = remember { headlineStartsSettled(reduceMotion, inspection, entered) }
     LaunchedEffect(Unit) { entered = true }
 
-    val content = HeadlineContent(lines, emphasisIndex, emoji)
+    val content = HeadlineContent(lines, emphasisIndex, emoji, spoken, fitToRoom)
     // The headline the screen opened with is the one that enters line by line. Every later one arrives by the change.
     val first = remember { content }
     val spec = headlineChangeSpec(reduceMotion)
@@ -213,7 +219,7 @@ private fun IntroHeadlineBody(
     val lines = content.lines
     val emphasisIndex = content.emphasisIndex
     val emoji = content.emoji
-    val phrase = introHeadlinePhrase(lines)
+    val phrase = content.spoken
     val reduceMotion = isReduceMotionEnabled()
     val inspection = LocalInspectionMode.current
     val animate = kinetic
@@ -238,10 +244,13 @@ private fun IntroHeadlineBody(
     // The headline grows with the system text size only up to the ceiling, so a word in capitals always fits.
     val lineGap = KrailTheme.dimensions.spacingS
     val emojiGap = introEmojiTitleGap(KrailTheme.dimensions.spacingXXL, LocalDensity.current.fontScale)
-    CompositionLocalProvider(LocalDensity provides headlineDensity()) {
+    val drawnDensity = fittedHeadlineDensity(content)
+    // Read here, in the screen's density, so a fitted headline keeps the room of the ordinary ones and nothing moves on a change.
+    val reservedHeight = reservedHeadlineHeight(minLines, hasEmoji = emoji.isNotEmpty(), emojiGap = emojiGap)
+    CompositionLocalProvider(LocalDensity provides drawnDensity) {
         Column(
             modifier = Modifier
-                .heightIn(min = reservedHeadlineHeight(minLines, hasEmoji = emoji.isNotEmpty(), emojiGap = emojiGap))
+                .heightIn(min = reservedHeight)
                 .clearAndSetSemantics {
                     heading()
                     text = AnnotatedString(phrase)

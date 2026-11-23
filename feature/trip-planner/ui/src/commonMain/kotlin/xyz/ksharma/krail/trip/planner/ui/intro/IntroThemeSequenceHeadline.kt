@@ -19,6 +19,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.text
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.themeInkColor
@@ -41,17 +42,22 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 @Composable
 internal fun IntroThemeSequenceHeadline(change: IntroThemeChange, minLines: Int, modifier: Modifier = Modifier) {
     val headline = change.spec.headline
-    val phrase = introHeadlinePhrase(headline.incoming.lines)
+    val phrase = headline.incoming.spoken
     val lineGap = KrailTheme.dimensions.spacingS
     val emojiGap = introEmojiTitleGap(KrailTheme.dimensions.spacingXXL, LocalDensity.current.fontScale)
     val chosen = change.spec.target.themeId != null
     val settledInk = if (chosen) themeInkColor() else KrailTheme.colors.onSurface
     val ink = if (change.isRunning) sequenceInk(change) else settledInk
     val emoji = if (change.emojiShowsNew) headline.incoming.emoji else headline.emojiBefore
+    // Each headline is drawn at its own size, the question fitted to its room and a tagline at the ordinary one, and the room kept
+    // is read in the screen's density, so it is the same whichever shows.
+    val incomingDensity = fittedHeadlineDensity(headline.incoming)
+    val outgoingDensity = fittedHeadlineDensity(headline.outgoing)
+    val reservedHeight = reservedHeadlineHeight(minLines, hasEmoji = true, emojiGap = emojiGap)
     CompositionLocalProvider(LocalDensity provides headlineDensity()) {
         Column(
             modifier = modifier
-                .heightIn(min = reservedHeadlineHeight(minLines, hasEmoji = true, emojiGap = emojiGap))
+                .heightIn(min = reservedHeight)
                 .clearAndSetSemantics {
                     heading()
                     text = AnnotatedString(phrase)
@@ -75,6 +81,7 @@ internal fun IntroThemeSequenceHeadline(change: IntroThemeChange, minLines: Int,
                     SequenceLines(
                         lines = leaving.lines,
                         colour = ink,
+                        density = outgoingDensity,
                         alphaOf = change::outgoingAlphaNow,
                         riseDpOf = change::outgoingRiseNowDp,
                     )
@@ -82,6 +89,7 @@ internal fun IntroThemeSequenceHeadline(change: IntroThemeChange, minLines: Int,
                 SequenceLines(
                     lines = headline.incoming.lines,
                     colour = ink,
+                    density = incomingDensity,
                     alphaOf = change::incomingAlphaNow,
                     riseDpOf = change::incomingRiseNowDp,
                 )
@@ -101,21 +109,27 @@ private fun sequenceInk(change: IntroThemeChange): Color {
 private fun SequenceLines(
     lines: List<String>,
     colour: Color,
+    density: Density,
     alphaOf: (Int) -> Float,
     riseDpOf: (Int) -> Float,
 ) {
     val display = KrailTheme.typography.introTagline.asHeadlineStyle()
-    Column(verticalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingS), horizontalAlignment = Alignment.Start) {
-        lines.forEachIndexed { index, line ->
-            Text(
-                text = introHeadlineDisplay(line),
-                style = display,
-                color = colour,
-                modifier = Modifier.graphicsLayer {
-                    alpha = alphaOf(index)
-                    translationY = riseDpOf(index).dp.toPx()
-                },
-            )
+    CompositionLocalProvider(LocalDensity provides density) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingS),
+            horizontalAlignment = Alignment.Start,
+        ) {
+            lines.forEachIndexed { index, line ->
+                Text(
+                    text = introHeadlineDisplay(line),
+                    style = display,
+                    color = colour,
+                    modifier = Modifier.graphicsLayer {
+                        alpha = alphaOf(index)
+                        translationY = riseDpOf(index).dp.toPx()
+                    },
+                )
+            }
         }
     }
 }

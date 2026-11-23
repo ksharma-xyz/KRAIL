@@ -10,10 +10,19 @@ internal const val LINE_STAGGER_MS = 70L
 internal const val EMPHASIS_BEAT_MS = 40L
 
 /**
- * What a headline says, as a value: its [lines], the one with the key word and the [emoji] above them. Two headlines
- * are the same headline when all three are equal, so the screen can tell a change of words from a redraw.
+ * What a headline says, as a value: its [lines], the one with the key word and the [emoji] above them. [spoken] is the text
+ * a screen reader reads as the heading, which is the lines joined unless the drawn lines are a shortened form of what is said.
+ * [fitsRoom] is for the question on the colour screen, whose lines are kept whole by choosing the size they are drawn at
+ * ([fittedHeadlineDensity]). Two headlines are the same headline when all of these are equal, so the screen can tell a change
+ * of words from a redraw.
  */
-internal data class HeadlineContent(val lines: List<String>, val emphasisIndex: Int, val emoji: String)
+internal data class HeadlineContent(
+    val lines: List<String>,
+    val emphasisIndex: Int,
+    val emoji: String,
+    val spoken: String = introHeadlinePhrase(lines),
+    val fitsRoom: Boolean = false,
+)
 
 /** The words of a headline as one phrase, which is what a screen reader reads and what a test finds. */
 internal fun introHeadlinePhrase(lines: List<String>): String = lines.joinToString(separator = " ")

@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -54,6 +55,8 @@ internal fun IntroThemeStepContent(
                         emphasisIndex = headline.emphasisIndex,
                         emoji = introEmojiFor(IntroStep.THEME, selectedThemeId),
                         minLines = minLines,
+                        spoken = headline.spoken,
+                        fitToRoom = headline.fitsRoom,
                     )
                 } else {
                     // Inside the Intro's shell the words, the emoji and the colours are all played on the one clock of the sequence.
@@ -143,22 +146,27 @@ private fun pressed(base: () -> BadgeFrame, change: IntroThemeChange?, index: In
     }
 }
 
-/** The lines of room the theme screen's headline keeps at [width]: the most any of its headlines takes, as drawn. */
+/**
+ * The lines of room the theme screen's headline keeps at [width]: the most any of its headlines takes, as drawn. The question
+ * is measured at the size it is fitted to, in as many lines as that leaves, and each tagline at the ordinary headline size.
+ */
 @Composable
 private fun rememberThemeHeadlineLines(width: Dp): Int {
     val density = headlineDensity()
+    val fitted = fittedHeadlineDensity(PICK_THEME_HEADLINE, fit = true, room = width)
     val measurer = rememberTextMeasurer()
     // The widest weight, because a lead line is lighter and never wider than the emphasised one.
     val style = KrailTheme.typography.introTagline.asHeadlineStyle()
-    return remember(width, density, style) {
-        val maxWidth = with(density) { width.roundToPx() }
-        reservedHeadlineLines(themeHeadlineVariants()) { text ->
-            measurer.measure(
-                text = AnnotatedString(text),
-                style = style,
-                constraints = Constraints(maxWidth = maxWidth),
-                density = density,
-            ).lineCount
-        }
+    return remember(width, density, fitted, style) {
+        fun linesOf(text: String, drawn: Density): Int = measurer.measure(
+            text = AnnotatedString(text),
+            style = style,
+            constraints = Constraints(maxWidth = with(drawn) { width.roundToPx() }),
+            density = drawn,
+        ).lineCount
+        maxOf(
+            reservedHeadlineLines(listOf(PICK_THEME_HEADLINE)) { linesOf(it, fitted) },
+            reservedHeadlineLines(themeTaglineVariants()) { linesOf(it, density) },
+        )
     }
 }

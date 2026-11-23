@@ -257,7 +257,11 @@ abstract class IntroBarOverlayTestBase(private val windowWidth: Dp, private val 
         primary().assertIsDisplayed()
         val after = snapshot()
         // The badge that was picked sits lifted by its own 4 dp, as it always has. Nothing else moves.
-        assertEquals(before[0], after[0], "the headline moved")
+        // Its right edge is the width of its widest line, which is not where it is: the question is three lines that all fit,
+        // and a tagline is wider, so only where it starts and how tall it is are held.
+        assertEquals(before[0].left, after[0].left, "the headline moved across")
+        assertEquals(before[0].top, after[0].top, "the headline moved down")
+        assertEquals(before[0].bottom, after[0].bottom, "the headline changed height")
         before.zip(after).drop(1).forEachIndexed { i, (was, now) ->
             val picked = introThemeChoices()[i].style.id == KrailThemeStyle.Train.id
             if (picked) {

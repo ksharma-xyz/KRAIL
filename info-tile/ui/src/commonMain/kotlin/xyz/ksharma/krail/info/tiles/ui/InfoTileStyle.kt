@@ -111,7 +111,10 @@ private fun plainFill(): Color =
 
 // The fill sits over the glow's shadow, so the shadow colour does not show through. The border is part of the glow.
 @Composable
-private fun Modifier.standardSurface(shape: Shape): Modifier = background(color = KrailTheme.colors.surface, shape = shape)
+private fun Modifier.standardSurface(shape: Shape): Modifier = background(
+    color = KrailTheme.colors.surface,
+    shape = shape,
+)
 
 @Composable
 private fun aiFillBrush(): Brush {

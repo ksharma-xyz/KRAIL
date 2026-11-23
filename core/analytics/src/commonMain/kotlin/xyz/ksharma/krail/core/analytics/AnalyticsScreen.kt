@@ -13,6 +13,7 @@ sealed class AnalyticsScreen(val name: String) {
     data object ManageStopLabels : AnalyticsScreen(name = "ManageStopLabels")
     data object AddParkRide : AnalyticsScreen(name = "AddParkRide")
     data object ServiceAlerts : AnalyticsScreen(name = "ServiceAlerts")
+
     // The first Intro and the two step Intro's names, which older builds send and the ledger records. The rebuilt
     // Intro sends one name for each of its five screens, below, and sends neither of these.
     data object Intro : AnalyticsScreen(name = "Intro")

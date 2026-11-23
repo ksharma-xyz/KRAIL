@@ -116,7 +116,12 @@ fun InfoTile(
             }
 
             if (infoTileData.showDismissButton || infoTileData.primaryCta != null) {
-                InfoTileActions(infoTileData = infoTileData, style = style, onCtaClick = onCtaClick, onDismissClick = onDismissClick)
+                InfoTileActions(
+                    infoTileData = infoTileData,
+                    style = style,
+                    onCtaClick = onCtaClick,
+                    onDismissClick = onDismissClick,
+                )
             }
         }
     }

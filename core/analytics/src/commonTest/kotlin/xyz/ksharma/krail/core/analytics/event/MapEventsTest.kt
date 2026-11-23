@@ -195,8 +195,13 @@ class MapEventsTest {
 
         assertEquals(
             setOf(
-                "entry", "hadUserLocation", "locationPermission", "mapSessionId",
-                "selected", "durationBucket", "hadStops",
+                "entry",
+                "hadUserLocation",
+                "locationPermission",
+                "mapSessionId",
+                "selected",
+                "durationBucket",
+                "hadStops",
             ),
             names,
         )
@@ -245,7 +250,11 @@ class MapEventsTest {
         assertFalse(event.properties.orEmpty().containsKey("mapSessionId"))
         assertEquals(
             setOf(
-                "stopId", "searchRadiusKm", "radiusSource", "enabledModesCount", "nearbyStopsCount",
+                "stopId",
+                "searchRadiusKm",
+                "radiusSource",
+                "enabledModesCount",
+                "nearbyStopsCount",
                 "hadUserLocation",
             ),
             event.properties.orEmpty().keys,

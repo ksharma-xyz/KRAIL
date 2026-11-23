@@ -190,7 +190,10 @@ class SplashFirstRunTest {
 
             val before = seen.takeWhile { !it.first }
             assertTrue(before.isNotEmpty(), "the unloaded frame is seen")
-            assertTrue(before.all { it.second == null }, "returning $returning: a frame drew the theme colour before the load: $before")
+            assertTrue(
+                before.all { it.second == null },
+                "returning $returning: a frame drew the theme colour before the load: $before",
+            )
             val last = seen.last()
             assertTrue(last.first, "the load finished")
             if (returning) assertEquals(colourOf(KrailThemeStyle.Metro), last.second) else assertNull(last.second)

@@ -150,7 +150,7 @@ class SearchStopScreenInteractionTest {
     }
 
     @Test
-    fun singlePane_opensOnTheMapState_withTheBarsTheModeButtonTheRecentsCardAndNoKeyboard() {
+    fun singlePane_opensOnTheCleanMapState_withTheBoxTheOptionsButtonAndNoListOrKeyboard() {
         val shown = mutableListOf<String>()
         val keyboard = object : SoftwareKeyboardController {
             override fun show() {
@@ -161,14 +161,14 @@ class SearchStopScreenInteractionTest {
         }
         setScreen(withMap(), keyboard = keyboard)
 
-        // Rules 9 and 39: the map, the group card with the bars, the recents card floating under it and the small
-        // mode button at the bottom, with no keyboard. The mode block is shut until asked for. The card is the same
-        // one the list state grows into.
+        // Rules 9 and 39: the map, the box with the two pills and the Options button, with no list, no recents and no
+        // keyboard. The Options card is shut until asked for.
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_FROM).assertIsDisplayed()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertIsDisplayed()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertDoesNotExist()
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertIsDisplayed()
-        composeRule.onNodeWithText("Central Station").assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertDoesNotExist()
+        composeRule.onNodeWithText("Central Station").assertDoesNotExist()
         assert(shown.isEmpty()) { "the map state raises no keyboard, got $shown" }
     }
 
@@ -420,10 +420,15 @@ class SearchStopScreenInteractionTest {
             onTripChosen = { from, to -> chosen = from to to },
             goBack = { wentBack++ },
         )
-        // From the map state, where the card is, so no keyboard or focus turns the first back into a step.
+        // A tap on the pill is the list state, where the pick is made. The first back returns to the map state and the
+        // second leaves, so the half pick is dropped.
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
         composeRule.onNodeWithText("Central Station").performClick()
         composeRule.waitForIdle()
 
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_BACK).performClick()
+        composeRule.waitForIdle()
+        assert(wentBack == 0) { "the first back returns to the map state, got $wentBack" }
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_BACK).performClick()
         composeRule.waitForIdle()
 
@@ -432,7 +437,7 @@ class SearchStopScreenInteractionTest {
     }
 
     @Test
-    fun aPickOnTheMapState_staysOnTheMapState_withTheKeyboardStillDown() {
+    fun aPickFromTheList_staysOnTheScreen_andTheKeyboardFollowsTheOtherPill() {
         val shown = mutableListOf<String>()
         val keyboard = object : SoftwareKeyboardController {
             override fun show() {
@@ -442,77 +447,15 @@ class SearchStopScreenInteractionTest {
             override fun hide() = Unit
         }
         setScreen(withMap(), keyboard = keyboard)
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
+        composeRule.waitForIdle()
+        shown.clear()
 
         composeRule.onNodeWithText("Central Station").performClick()
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertIsDisplayed()
-        assert(shown.isEmpty()) { "a pick from the map state raises no keyboard, got $shown" }
-    }
-
-    // endregion
-
-    // region The recents card on the map state
-
-    @Test
-    fun theMapStateCard_isCappedToAShareOfTheWindowAndScrollsInside() {
-        val many = (1..5).map { SearchStopState.StopResult("Stop $it", "id_$it") }
-        val state = withMap(SearchStopFixtures.recentWithHomeSet().copy(recentStops = many.toImmutableList()))
-        var windowHeight = 0.dp
-        composeRule.setContent {
-            CompositionLocalProvider(
-                LocalInspectionMode provides true,
-                LocalSoftwareKeyboardController provides quietKeyboard,
-            ) {
-                PreviewTheme {
-                    windowHeight = LocalWindowInfo.current.containerDpSize.height
-                    SearchStopScreen(searchStopState = state, onEvent = {})
-                }
-            }
-        }
-        composeRule.waitForIdle()
-
-        val card = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST)
-            .getUnclippedBoundsInRoot()
-        // The card may take at most 40 percent of the window the screen is in.
-        val cap = mapStateCardMaxHeight(windowHeight = windowHeight)
-
-        assert(card.height <= cap + 1.dp) { "the card $card stays within its cap $cap on the map state" }
-    }
-
-    @Test
-    @Config(qualifiers = "w320dp-h640dp")
-    fun at320dpAndTwoTimesText_theGroupCardTheListCardAndTheModeControlsDoNotOverlap_andAllStayInTheWindow() {
-        composeRule.setContent {
-            CompositionLocalProvider(
-                LocalDensity provides Density(LocalDensity.current.density, fontScale = 2f),
-                LocalInspectionMode provides true,
-                LocalSoftwareKeyboardController provides quietKeyboard,
-            ) {
-                PreviewTheme {
-                    SearchStopScreen(
-                        searchStopState = withMap(SearchStopFixtures.recentWithHomeSet()),
-                        onEvent = {},
-                    )
-                }
-            }
-        }
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).performClick()
-        composeRule.waitForIdle()
-
-        val group = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_TO).getUnclippedBoundsInRoot()
-        val card = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST)
-            .getUnclippedBoundsInRoot()
-        val block = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).getUnclippedBoundsInRoot()
-        val button = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON)
-            .getUnclippedBoundsInRoot()
-        assert(group.bottom <= card.top) { "the group card's bars $group sit above the list card $card" }
-        assert(card.bottom <= block.top + 1.dp) { "the list card $card yields to the mode block $block" }
-        assert(block.bottom <= button.top + 1.dp) { "the block $block sits above its button $button" }
-        for (box in listOf(card, block, button)) {
-            assert(box.left >= 0.dp && box.right <= 320.dp) { "$box stays inside the 320 dp window" }
-        }
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_TO).assertIsDisplayed()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertIsDisplayed()
     }
 
     // endregion

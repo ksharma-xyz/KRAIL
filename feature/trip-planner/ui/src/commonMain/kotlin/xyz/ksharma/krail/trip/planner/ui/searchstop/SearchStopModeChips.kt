@@ -20,15 +20,15 @@ import kotlinx.collections.immutable.ImmutableSet
 import xyz.ksharma.krail.core.transport.ModeSelectionSurface
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
+import xyz.ksharma.krail.info.tiles.ui.infoTileGlow
+import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
-import xyz.ksharma.krail.trip.planner.ui.components.FloatingDark
-import xyz.ksharma.krail.trip.planner.ui.components.FloatingDarkTheme
 import xyz.ksharma.krail.trip.planner.ui.components.TransportModeChip
 
 /**
- * The mode filter block of the map state: a rounded card, a fixed dark surface with fixed light content, holding
- * one whole chip per mode the map can show. It opens from the mode button at the bottom of the map and never
- * sits in the group card at the top.
+ * The mode filter block of the map state: a rounded card on taj's own surface, white in light mode and dark in dark
+ * mode, with the info tile's glow around it, holding one whole chip per mode the map can show. It opens from the Options
+ * button at the bottom of the map and never sits in the group card at the top.
  *
  * Whole chips wrap onto the next line when width is short, at every text size, so it is never a row that
  * scrolls sideways and never has a fade at an edge. A chip is never shrunk, clipped or broken across lines.
@@ -44,24 +44,24 @@ internal fun SearchStopModeBlock(
 ) {
     val modes = remember { NswTransportConfig.modesFor(ModeSelectionSurface.NEARBY_STOPS) }
     val gaps = rememberSearchStopGaps()
-    FloatingDarkTheme {
-        FlowRow(
-            modifier = modifier
-                .fillMaxWidth()
-                .testTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS)
-                .clip(RoundedCornerShape(gaps.cardCorner))
-                .background(FloatingDark.container)
-                .padding(gaps.cardPadding),
-            horizontalArrangement = Arrangement.spacedBy(gaps.betweenRows),
-            verticalArrangement = Arrangement.spacedBy(gaps.betweenRows),
-        ) {
-            modes.forEach { mode ->
-                ModeChip(
-                    mode = mode,
-                    selected = NswTransportConfig.productClassFor(mode) in selectedModes,
-                    onToggle = onToggle,
-                )
-            }
+    val shape = RoundedCornerShape(gaps.cardCorner)
+    FlowRow(
+        modifier = modifier
+            .fillMaxWidth()
+            .testTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS)
+            .infoTileGlow(shape)
+            .clip(shape)
+            .background(KrailTheme.colors.surface)
+            .padding(gaps.cardPadding),
+        horizontalArrangement = Arrangement.spacedBy(gaps.betweenRows),
+        verticalArrangement = Arrangement.spacedBy(gaps.betweenRows),
+    ) {
+        modes.forEach { mode ->
+            ModeChip(
+                mode = mode,
+                selected = NswTransportConfig.productClassFor(mode) in selectedModes,
+                onToggle = onToggle,
+            )
         }
     }
 }

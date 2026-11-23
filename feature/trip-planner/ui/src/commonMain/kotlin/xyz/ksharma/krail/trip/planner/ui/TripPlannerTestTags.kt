@@ -104,20 +104,23 @@ object TripPlannerTestTags {
     /** The X in the search bar. It clears the text and nothing else. */
     const val SEARCH_STOP_CLEAR = "searchstop.clear"
 
-    /** The one rounded card at the top of Search Stop's map state, holding the bars and the location chip. */
+    /** The one rounded box at the top of Search Stop, holding the To and From pills. */
     const val SEARCH_STOP_GROUP_CARD = "searchstop.groupcard"
 
     /** The one status pill under the form while location permission is not granted. */
     const val SEARCH_STOP_LOCATION_PILL = "searchstop.locationpill"
 
-    /** The row of labels at the top of the recents card. It scrolls sideways. */
+    /** The row of labels at the top of the list. It scrolls sideways. */
     const val SEARCH_STOP_LABEL_ROW = "searchstop.labelrow"
 
     /** The mode filter block at the bottom of Search Stop's map state, drawn only while it is open. */
     const val SEARCH_STOP_MODE_CHIPS = "searchstop.modechips"
 
-    /** The small button at the bottom left of the map state that opens and shuts that block. */
+    /** The Options button on the bottom row of the map state that opens and shuts that block. */
     const val SEARCH_STOP_MODE_BUTTON = "searchstop.modebutton"
+
+    // The map's location control at the bottom end of the map state.
+    const val SEARCH_STOP_LOCATION_BUTTON = "searchstop.locationbutton"
 
     // Timetable
     const val TIME_TABLE_SCREEN = "timetable.screen"

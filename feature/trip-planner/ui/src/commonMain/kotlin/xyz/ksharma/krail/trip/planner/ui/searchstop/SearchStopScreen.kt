@@ -5,13 +5,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.text.input.clearText
@@ -38,7 +40,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.LifecycleStartEffect
@@ -97,7 +98,8 @@ data class StopPick(
 /**
  * Search Stop (`docs/MAP_HOME_UX.md` rules 8, 9, 24, 35, 36 and 39).
  *
- * It opens as the map state: the map and one dark pill, no list and no keyboard. Tapping the bar is
+ * It opens as the clean map state: the map, the box with the two pills at the top, the location chip under it while
+ * location is not allowed, and the Options button on the bottom row, with no list and no keyboard. Tapping a pill is
  * the list state, with the keyboard and the recents. Back, or a tap on the map, returns to the map
  * state, and back again goes home. The state lives in [SearchStopFlow], held across rotation.
  *
@@ -533,25 +535,27 @@ private fun SearchStopScreenSinglePane(
     // Force dark status bar icons while the map is visible (the map is always light-themed).
     StatusBarAppearanceEffect(lightStatusBar = mapState != null)
 
-    // Header height after layout, so map ornaments (compass, scale bar) start below the floating group card.
+    // The top block's height after layout, so the map's ornaments (compass, scale bar) and an open stop card start
+    // below the box and the chip.
     var headerHeightPx by remember { mutableStateOf(0) }
     val density = LocalDensity.current
     val headerHeight: Dp by remember { derivedStateOf { with(density) { headerHeightPx.toDp() } } }
+    val gaps = rememberSearchStopGaps()
+    val ornamentPadding = mapOrnamentPadding(
+        gaps = gaps,
+        statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
+        navigationBarBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding(),
+        headerHeight = headerHeight,
+    )
 
-    // The card on the map state keeps to a share of the window, so the pins around it stay usable.
-    val mapStateCardCap = mapStateCardMaxHeight(windowHeight = LocalWindowInfo.current.containerDpSize.height)
-
-    // The mode block is open or shut for the map state only, and the controls report where they start so the
-    // stack at the top ends above them and the list card inside it is what yields height.
+    // The mode block is open or shut for the map state only.
     var modeBlockOpen by rememberSaveable { mutableStateOf(false) }
-    var controlsTop by remember { mutableStateOf<Dp?>(null) }
     val controlsShown = modeControlsShown(flow.mode, mapReady = mapState is MapUiState.Ready)
     LaunchedEffect(flow.mode) {
         if (flow.mode != SearchStopMode.Map) {
             modeBlockOpen = reduceModeBlock(modeBlockOpen, ModeBlockEvent.LeftMapState)
         }
     }
-    val gaps = rememberSearchStopGaps()
 
     Box(modifier = modifier.fillMaxSize().imePadding()) {
         if (mapState != null) {
@@ -561,6 +565,7 @@ private fun SearchStopScreenSinglePane(
                 keyboard = keyboard,
                 focusRequester = form.focusRequester,
                 ornamentTopPadding = headerHeight,
+                ornamentPadding = ornamentPadding,
                 onEvent = onEvent,
                 onStopSelect = onStopSelect,
                 allowPermissionRequest = location.allowPermissionRequest,
@@ -580,7 +585,6 @@ private fun SearchStopScreenSinglePane(
                                 modeBlockOpen = reduceModeBlock(modeBlockOpen, ModeBlockEvent.ButtonTapped)
                             },
                             onToggleMode = { onEvent(SearchStopUiEvent.TransportModeFilterToggled(it)) },
-                            onTopChanged = { controlsTop = it },
                             clearance = clearance,
                         )
                     }
@@ -596,13 +600,12 @@ private fun SearchStopScreenSinglePane(
             ) {}
         }
 
-        // The stack at the top: the group card, the location chip under it while it shows, then the list card, one gap apart. Its height is capped
-        // above the mode controls, so on a short window it is the list card that gives.
+        // The map state floats only the box, and the location chip under it while location is not allowed. The
+        // list state adds the list under them.
         Column(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .fillMaxWidth()
-                .heightIn(max = if (controlsShown) topStackMaxHeight(controlsTop, gaps) else Dp.Unspecified)
                 .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal))
                 .statusBarsPadding()
                 .padding(gaps.edge),
@@ -613,32 +616,25 @@ private fun SearchStopScreenSinglePane(
                 onBack = onBack,
                 modifier = Modifier.onGloballyPositioned { headerHeightPx = it.size.height },
             )
-            // The card is under the group card in both states (rule 9). On the map state it is capped and scrolls
-            // inside, and on the list state it grows into the whole list.
-            if (flow.editing != null) {
+            if (flow.mode == SearchStopMode.List) {
                 SearchStopListSection(
                     searchStopState = searchStopState,
                     fieldType = fieldType,
                     rows = rows,
                     onManageClick = onManageClick,
-                    maxHeight = if (flow.mode == SearchStopMode.Map) mapStateCardCap else Dp.Unspecified,
                 )
             }
         }
     }
 }
 
-/**
- * The card under the group card, one [SearchStopGaps.betweenCards] below it. A [maxHeight] caps it and the card
- * scrolls inside; unspecified leaves it as tall as the room allows.
- */
+/** The list under the group card, one [SearchStopGaps.betweenCards] below it, as tall as the room allows. */
 @Composable
 private fun ColumnScope.SearchStopListSection(
     searchStopState: SearchStopState,
     fieldType: SearchStopFieldType,
     rows: StopRowActions,
     onManageClick: () -> Unit,
-    maxHeight: Dp = Dp.Unspecified,
 ) {
     val userLocation = (searchStopState.mapUiState as? MapUiState.Ready)?.mapDisplay?.userLocation
     val nearbyStops = (searchStopState.mapUiState as? MapUiState.Ready)?.mapDisplay?.nearbyStops
@@ -668,7 +664,6 @@ private fun ColumnScope.SearchStopListSection(
         onManageClick = onManageClick,
         modifier = Modifier
             .weight(1f, fill = false)
-            .heightIn(max = maxHeight)
             .padding(top = rememberSearchStopGaps().betweenCards),
     )
 }

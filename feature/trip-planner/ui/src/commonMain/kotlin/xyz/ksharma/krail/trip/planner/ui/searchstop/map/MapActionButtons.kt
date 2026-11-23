@@ -8,14 +8,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import xyz.ksharma.krail.core.maps.ui.components.UserLocationButton
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 
 /**
- * The location button at the bottom end of the map. The mode filter that used to sit beside it as
- * Options is a row of chips under the form now, so this holds the one button.
+ * The location button at the bottom end of the map, one 48 dp touch target one edge above the system bottom inset.
+ * Search Stop's Options button stands in this same row at the start, centred in it, so the two share a centre line.
  * All business logic (location fetch, permission handling) is delegated to the caller via callbacks.
  *
  * @param onLocationButtonClick Callback when location button is tapped, the caller handles the rest
@@ -37,7 +39,11 @@ internal fun MapActionButtons(
         horizontalArrangement = Arrangement.End,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        UserLocationButton(onClick = onLocationButtonClick, isActive = isLocationActive)
+        UserLocationButton(
+            onClick = onLocationButtonClick,
+            isActive = isLocationActive,
+            modifier = Modifier.testTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_BUTTON),
+        )
     }
 }
 

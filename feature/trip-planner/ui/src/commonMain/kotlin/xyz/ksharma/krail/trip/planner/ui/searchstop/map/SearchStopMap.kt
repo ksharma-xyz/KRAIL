@@ -77,6 +77,9 @@ fun SearchStopMap(
     keyboard: SoftwareKeyboardController? = null,
     focusRequester: FocusRequester? = null,
     ornamentTopPadding: Dp = 0.dp,
+    // The whole margin of the map's own ornaments (compass, scale bar, info icon), for a host that stands controls
+    // in the same corners. Null keeps just [ornamentTopPadding] at the top.
+    ornamentPadding: PaddingValues? = null,
     onEvent: (SearchStopUiEvent) -> Unit = {},
     onStopSelect: (StopItem) -> Unit = {},
     allowPermissionRequest: Boolean = false,
@@ -111,6 +114,7 @@ fun SearchStopMap(
                     keyboard = keyboard,
                     focusRequester = focusRequester,
                     ornamentTopPadding = ornamentTopPadding,
+                    ornamentPadding = ornamentPadding,
                     onEvent = onEvent,
                     onStopSelect = onStopSelect,
                     allowPermissionRequest = allowPermissionRequest,
@@ -159,6 +163,7 @@ private fun MapContent(
     keyboard: SoftwareKeyboardController? = null,
     focusRequester: FocusRequester? = null,
     ornamentTopPadding: Dp = 0.dp,
+    ornamentPadding: PaddingValues? = null,
     allowPermissionRequest: Boolean = false,
     onPermissionStatus: (PermissionStatus) -> Unit = {},
     onRequestPermission: () -> Unit = {},
@@ -279,7 +284,7 @@ private fun MapContent(
             MapSurface(
                 mapState = mapState,
                 cameraState = cameraState,
-                ornamentTopPadding = ornamentTopPadding,
+                ornamentPadding = ornamentPadding ?: PaddingValues(top = ornamentTopPadding),
                 onStopSelected = { stop ->
                     if (onStopPinTap != null) {
                         onStopPinTap(stop)
@@ -390,7 +395,7 @@ private fun MapContent(
 private fun MapSurface(
     mapState: MapUiState.Ready,
     cameraState: org.maplibre.compose.camera.CameraState,
-    ornamentTopPadding: Dp,
+    ornamentPadding: PaddingValues,
     onStopSelected: (NearbyStopFeature) -> Unit,
     onMapTap: () -> Unit,
     modifier: Modifier = Modifier,
@@ -426,7 +431,7 @@ private fun MapSurface(
                 },
                 options = MapOptions(
                     ornamentOptions = OrnamentOptions(
-                        padding = PaddingValues(top = ornamentTopPadding),
+                        padding = ornamentPadding,
                         isLogoEnabled = LOGO_ENABLED,
                         isAttributionEnabled = ATTRIBUTION_ENABLED,
                         attributionAlignment = ATTRIBUTION_ALIGNMENT,

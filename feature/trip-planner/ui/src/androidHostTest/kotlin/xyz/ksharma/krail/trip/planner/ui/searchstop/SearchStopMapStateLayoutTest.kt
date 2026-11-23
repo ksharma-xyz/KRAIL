@@ -6,13 +6,15 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.SoftwareKeyboardController
-import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -27,20 +29,25 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
+import xyz.ksharma.krail.core.transport.ModeSelectionSurface
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 import kotlin.math.abs
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 /**
- * The layout of Search Stop's map state, read from the real bounds of the real screen: one group card at the
- * top holding only the two bars as rows with a divider, the location chip as its own small button directly under
- * it at its left edge, the list card under that as a separate card one gap below, and the mode button and block
- * at the bottom. Run at 411 dp, and at 320 dp with 200 percent
- * text, in light and in dark app mode.
+ * The layout of Search Stop's clean map state, read from the real bounds of the real screen. Only four things float
+ * on the map: the box with the two pills at the top, the location chip under it while location is not allowed, and on
+ * the one bottom row the Options button with the map's own location control, with the Options card right above that row
+ * while it is open. There is no list card, no recents and no near you in this state. Run at 411 dp, and at 320 dp with
+ * 200 percent text.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -56,10 +63,12 @@ class SearchStopMapStateLayoutTest {
     }
     private val gaps = searchStopGaps()
     private var windowHeight = 0.dp
+    private var windowWidth = 0.dp
 
-    private fun setScreen(fontScale: Float? = null) {
+    private fun setScreen(fontScale: Float? = null, locationAllowed: Boolean = false) {
+        val display = if (locationAllowed) MapDisplay(userLocation = LatLng(-33.8688, 151.2093)) else MapDisplay()
         val state: SearchStopState = SearchStopFixtures.recentWithHomeSet()
-            .copy(isMapsAvailable = true, mapUiState = MapUiState.Ready())
+            .copy(isMapsAvailable = true, mapUiState = MapUiState.Ready(mapDisplay = display))
         composeRule.setContent {
             val density = LocalDensity.current
             CompositionLocalProvider(
@@ -69,6 +78,7 @@ class SearchStopMapStateLayoutTest {
             ) {
                 PreviewTheme {
                     windowHeight = LocalWindowInfo.current.containerDpSize.height
+                    windowWidth = LocalWindowInfo.current.containerDpSize.width
                     SearchStopScreen(searchStopState = state, onEvent = {})
                 }
             }
@@ -88,125 +98,203 @@ class SearchStopMapStateLayoutTest {
         assertTrue(abs((expected - actual).value) <= 1f, "$what: expected $expected, got $actual")
     }
 
-    // region 411 dp
+    private fun DpRect.centreY(): Dp = top + height / 2f
+
+    // region the box and the chip
 
     @Test
     @Config(qualifiers = W411)
-    fun `the group card is one rounded card one edge from the top and sides`() {
+    fun `the box is one rounded box one edge from the top and sides`() {
         setScreen()
 
-        val card = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
-        assertNear("top edge", gaps.edge, card.top)
-        assertNear("left edge", gaps.edge, card.left)
-        assertNear("right edge", 411.dp - gaps.edge, card.right)
+        val box = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
+        assertNear("top edge", gaps.edge, box.top)
+        assertNear("left edge", gaps.edge, box.left)
+        assertNear("right edge", 411.dp - gaps.edge, box.right)
     }
 
     @Test
     @Config(qualifiers = W411)
-    fun `the bars are two pills of one width, one card padding inside the card, one gap apart`() {
+    fun `the box holds two pills of one width, 48 tall, one padding inside and one gap apart`() {
         setScreen()
 
-        val card = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
+        val box = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
         val to = boundsOf(TripPlannerTestTags.SEARCH_ROW_TO)
         val from = boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM)
-        assertNear("To left", card.left + gaps.cardPadding, to.left)
-        assertNear("To top", card.top + gaps.cardPadding, to.top)
-        assertNear("bars share a left edge", to.left, from.left)
-        assertNear("bars share a width", to.width, from.width)
+        assertNear("To left", box.left + gaps.cardPadding, to.left)
+        assertNear("To top", box.top + gaps.cardPadding, to.top)
+        assertNear("pills share a left edge", to.left, from.left)
+        assertNear("pills share a width", to.width, from.width)
         assertNear("To is 48 tall", 48.dp, to.height)
         assertNear("From is 48 tall", 48.dp, from.height)
         assertNear("From sits one gap under To", to.bottom + gaps.betweenRows, from.top)
+        assertNear("the box ends one padding under From", from.bottom + gaps.cardPadding, box.bottom)
     }
 
     @Test
     @Config(qualifiers = W411)
-    fun `the status chip is its own button under the card, left aligned with it, one gap below and not inside it`() {
+    fun `the chip is its own button under the box, left aligned with it, one gap below and never inside it`() {
         setScreen()
 
-        val card = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
-        val from = boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM)
+        val box = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
         val chip = touchBoundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
-        assertTrue(from.bottom <= card.bottom - gaps.cardPadding + 1.dp, "The From bar ends the card's content")
-        assertNear("the card ends one padding under the From bar", from.bottom + gaps.cardPadding, card.bottom)
-        assertNear("one gap token under the card", card.bottom + gaps.betweenCards, chip.top)
-        assertNear("left aligned with the card", card.left, chip.left)
-        assertTrue(chip.top >= card.bottom, "The chip $chip is outside the card $card, never inside it")
+        assertNear("one gap token under the box", box.bottom + gaps.betweenCards, chip.top)
+        assertNear("left aligned with the box", box.left, chip.left)
         assertTrue(chip.height >= 48.dp - 1.dp, "The chip keeps its 48 dp touch target: $chip")
-        assertTrue(chip.right <= card.right, "The chip $chip stays within the card's right edge")
+        assertTrue(chip.right <= box.right, "The chip $chip stays within the box's right edge")
     }
 
     @Test
     @Config(qualifiers = W411)
-    fun `the list card is one gap under the chip, and under the card when the chip is not shown`() {
+    fun `the chip is not there while location is allowed`() {
+        setScreen(locationAllowed = true)
+
+        composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL).assertCountEquals(0)
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).assertExists()
+    }
+
+    // endregion
+
+    // region a clean map
+
+    @Test
+    @Config(qualifiers = W411)
+    fun `the map state has no list card, no recents, no near you and no label row`() {
         setScreen()
 
-        val chip = touchBoundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
-        val list = boundsOf(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST)
-        assertNear("gap between the chip's touch target and the list card", chip.bottom + gaps.betweenCards, list.top)
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RESULTS_LIST).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_LABEL_ROW).assertDoesNotExist()
+        composeRule.onNodeWithText("Central Station").assertDoesNotExist()
+        composeRule.onNodeWithText("Recent").assertDoesNotExist()
+        composeRule.onNodeWithText("Near you").assertDoesNotExist()
+        composeRule.onNodeWithText("Select on map").assertDoesNotExist()
     }
 
     @Test
     @Config(qualifiers = W411)
-    fun `the list card is a separate card under the group card on the same edges`() {
+    fun `the map state shows the box, the Options button and the location control`() {
         setScreen()
 
-        val group = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
-        val list = boundsOf(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST)
-        val chip = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
-        assertTrue(list.top >= group.bottom + gaps.betweenCards - 1.dp, "The list card $list is under the group card")
-        assertTrue(list.top >= chip.bottom, "The list card $list is under the chip $chip")
-        assertNear("same left edge", group.left, list.left)
-        assertNear("same right edge", group.right, list.right)
-    }
-
-    @Test
-    @Config(qualifiers = W411)
-    fun `the mode chips are not in the group card and there is nothing that scrolls sideways at the top`() {
-        setScreen()
-
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).assertExists()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_TO).assertExists()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_FROM).assertExists()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).assertExists()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_LOCATION_BUTTON).assertExists()
+        composeRule.onNodeWithText("Options").assertExists()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertDoesNotExist()
     }
+
+    // endregion
+
+    // region the bottom row
 
     @Test
     @Config(qualifiers = W411)
-    fun `the mode button sits at the bottom left, inside the window and clear of the bottom row`() {
-        setScreen()
-
-        val button = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON)
-        assertNear("left edge", gaps.edge, button.left)
-        assertNear("48 wide", 48.dp, button.width)
-        assertNear("48 tall", 48.dp, button.height)
-        // The location button and the attribution icon share the bottom row, one edge above the inset.
-        val controlRowTop = windowHeight - gaps.edge - MAP_CONTROL_ROW_HEIGHT
-        assertTrue(button.bottom <= controlRowTop - gaps.betweenCards + 1.dp, "$button is above the row at $controlRowTop")
-        assertTrue(button.top >= 0.dp && button.right <= 411.dp, "$button stays inside the window")
-    }
+    fun `at 411 dp and 100 percent text Options and the location control share a centre line`() = assertBottomRow(null)
 
     @Test
     @Config(qualifiers = W411)
-    fun `the open mode block is a card above its button on the same edges and the list card is above it`() {
+    fun `at 411 dp and 150 percent text Options and the location control share a centre line`() = assertBottomRow(1.5f)
+
+    @Test
+    @Config(qualifiers = W411)
+    fun `at 411 dp and 200 percent text Options and the location control share a centre line`() = assertBottomRow(2f)
+
+    @Test
+    @Config(qualifiers = W320)
+    fun `at 320 dp and 100 percent text Options and the location control share a centre line`() = assertBottomRow(null)
+
+    @Test
+    @Config(qualifiers = W320)
+    fun `at 320 dp and 150 percent text Options and the location control share a centre line`() = assertBottomRow(1.5f)
+
+    @Test
+    @Config(qualifiers = W320)
+    fun `at 320 dp and 200 percent text Options and the location control share a centre line`() = assertBottomRow(2f)
+
+    /**
+     * The row is one [MAP_CONTROL_ROW_HEIGHT] row one edge above the inset. Options stands right after the info icon's
+     * 48 dp slot, the location control ends one edge in, and both are centred on the row, so their centre lines are the
+     * row's, which is where the info icon is centred too. The native info icon is not drawn here.
+     */
+    private fun assertBottomRow(fontScale: Float?) {
+        setScreen(fontScale = fontScale)
+
+        val rowCentre = windowHeight - gaps.edge - MAP_CONTROL_ROW_HEIGHT / 2f
+        val options = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON)
+        val location = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_BUTTON)
+        assertNear("Options centre line", rowCentre, options.centreY())
+        assertNear("location control centre line", rowCentre, location.centreY())
+        assertNear("Options and the location control share a centre line", options.centreY(), location.centreY())
+        assertNear("Options starts after the info icon's slot", gaps.edge + MAP_ATTRIBUTION_SLOT, options.left)
+        assertNear("the location control is 48 wide", 48.dp, location.width)
+        assertNear("the location control ends one edge in", windowWidth - gaps.edge, location.right)
+        assertTrue(options.right <= location.left, "Options $options never reaches the location control $location")
+        // The visible button is centred in its touch target, so the drawn button shares the line too.
+        val drawn = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON)
+        assertNear("the drawn button centre", rowCentre, drawn.centreY())
+    }
+
+    // endregion
+
+    // region the Options card
+
+    @Test
+    @Config(qualifiers = W411)
+    fun `the open Options card is 8 dp above the row, on the box's edges, and the map is still clean`() {
         setScreen()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).performClick()
         composeRule.waitForIdle()
 
-        val block = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS)
-        val button = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON)
-        val list = boundsOf(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST)
-        assertNear("gap between the block and its button", block.bottom + gaps.betweenCards, button.top)
-        assertNear("block left edge", gaps.edge, block.left)
-        assertNear("block right edge", 411.dp - gaps.edge, block.right)
-        assertTrue(list.bottom <= block.top, "The list card $list never reaches the block $block")
+        val card = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS)
+        val rowTop = windowHeight - gaps.edge - MAP_CONTROL_ROW_HEIGHT
+        val box = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
+        assertNear("8 dp between the card and the row", rowTop - 8.dp, card.bottom)
+        assertEquals(8.dp, gaps.betweenCards)
+        assertNear("card left edge", box.left, card.left)
+        assertNear("card right edge", box.right, card.right)
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertDoesNotExist()
+        composeRule.onAllNodesWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertCountEquals(1)
+    }
+
+    @Test
+    @Config(qualifiers = W320)
+    fun `at 320 dp and 200 percent text the mode chips wrap whole and never scroll sideways`() {
+        setScreen(fontScale = 2f)
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).performClick()
+        composeRule.waitForIdle()
+
+        val card = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS)
+        val modes = NswTransportConfig.modesFor(ModeSelectionSurface.NEARBY_STOPS)
+            .map { TripPlannerTestTags.searchStopModeChip(NswTransportConfig.productClassFor(it)) }
+        val chips = modes.map { boundsOf(it) }
+        assertTrue(chips.map { it.top }.distinct().size > 1, "At 200 percent the chips wrap onto more than one line.")
+        for ((tag, chip) in modes.zip(chips)) {
+            assertTrue(
+                chip.left >= card.left - 1.dp && chip.right <= card.right + 1.dp,
+                "$tag $chip stays whole inside the card $card",
+            )
+        }
         composeRule.onAllNodes(
             hasScrollAction() and hasAnyAncestor(hasTestTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS)),
             useUnmergedTree = true,
         ).assertCountEquals(0)
+        val row = windowHeight - gaps.edge - MAP_CONTROL_ROW_HEIGHT
+        assertNear("8 dp above the row", row - 8.dp, card.bottom)
+        assertTrue(card.top > boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD).bottom, "The card stays under the box.")
     }
 
     @Test
     @Config(qualifiers = W411)
-    fun `the mode button and block are gone with the keyboard up, in the list state`() {
+    fun `the Options button opens and shuts the card, and leaving to the list state puts both away`() {
         setScreen()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).performClick()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertExists()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).performClick()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).assertDoesNotExist()
+
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).performClick()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_QUERY_FIELD).performClick()
         composeRule.waitForIdle()
@@ -220,34 +308,32 @@ class SearchStopMapStateLayoutTest {
     // region 320 dp at 200 percent
 
     @Test
-    @Config(qualifiers = "w320dp-h640dp")
+    @Config(qualifiers = W320)
     fun `at 320 dp and 200 percent text nothing overlaps and nothing leaves the window`() {
         setScreen(fontScale = 2f)
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON).performClick()
         composeRule.waitForIdle()
 
-        val group = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
+        val box = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
         val chip = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
-        val list = boundsOf(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST)
-        val block = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS)
-        val button = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON)
-        assertTrue(chip.top >= group.bottom, "The chip $chip is under the card $group")
-        assertTrue(chip.left >= group.left - 1.dp && chip.right <= group.right + 1.dp, "The chip $chip stays in the width")
-        assertTrue(chip.bottom <= list.top, "The chip $chip is above the list card $list")
-        assertTrue(group.bottom <= list.top, "The group card $group is above the list card $list")
-        assertTrue(list.bottom <= block.top + 1.dp, "The list card $list yields to the block $block")
-        assertTrue(block.bottom <= button.top + 1.dp, "The block $block is above its button $button")
-        for (box in listOf(group, chip, list, block, button)) {
-            assertTrue(box.left >= 0.dp && box.right <= 320.dp, "$box stays inside the 320 dp window")
-            assertTrue(box.top >= 0.dp && box.bottom <= windowHeight, "$box stays inside the window height")
+        val card = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS)
+        val options = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON)
+        val location = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_BUTTON)
+        assertTrue(chip.top >= box.bottom, "The chip $chip is under the box $box")
+        assertTrue(box.bottom <= card.top, "The box $box is above the Options card $card")
+        assertTrue(card.bottom <= options.top + 1.dp, "The card $card is above its button $options")
+        for (item in listOf(box, chip, card, options, location)) {
+            assertTrue(item.left >= 0.dp && item.right <= 320.dp, "$item stays inside the 320 dp window")
+            assertTrue(item.top >= 0.dp && item.bottom <= windowHeight, "$item stays inside the window height")
         }
-        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_TO).assertExists()
-        assertEquals(48.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).height, "The bar stays one 48 dp line.")
+        assertNotEquals(0.dp, options.width, "Options is drawn.")
+        assertEquals(48.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).height, "The pill stays one 48 dp line.")
     }
 
     // endregion
 
     private companion object {
         const val W411 = "w411dp-h891dp"
+        const val W320 = "w320dp-h640dp"
     }
 }

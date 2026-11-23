@@ -16,11 +16,12 @@ import xyz.ksharma.krail.taj.theme.ThemeMode
 /**
  * The one dark that floats over the map, the same in light and dark app modes.
  *
- * The map is always light, so everything that floats on it (the group card, its bars, the status chip, the
- * recents card, the mode button and its block) is a fixed dark container with fixed light content, and never
- * follows the app mode. taj already has the pair, `stopLabelSurface` and `onStopLabelSurface`, which are the
- * same dark and the same light in both modes, so [container] and [content] are those tokens and nothing is a
- * hex value or a new token.
+ * The map is always light, so a small control that floats on it by itself (the location notice, the Options
+ * button, a stop card's actions) is a fixed dark container with fixed light content, and never follows the app
+ * mode. taj already has the pair, `stopLabelSurface` and `onStopLabelSurface`, which are the same dark and the same
+ * light in both modes, so [container] and [content] are those tokens and nothing is a hex value or a new token.
+ * The cards that hold content (the Search Stop box and the mode card) are not this: they are taj's own mode aware
+ * surface with the info tile's glow.
  *
  * Rows and buttons that are not ours (the stop row, the label pills, the chips) read `onSurface`, `label` and
  * the other mode adaptive tokens. [FloatingDarkTheme] makes those read the dark scheme inside it, through the
@@ -50,6 +51,16 @@ internal object FloatingDark {
     fun buttonColors(): ButtonColors = ButtonDefaults.buttonColors(
         customContainerColor = container,
         customContentColor = content,
+    )
+
+    /**
+     * The same button in its active look: the two colours swapped, a light fill with the dark ink, for a control that
+     * says a filter is on.
+     */
+    @Composable
+    fun activeButtonColors(): ButtonColors = ButtonDefaults.buttonColors(
+        customContainerColor = content,
+        customContentColor = container,
     )
 
     /**

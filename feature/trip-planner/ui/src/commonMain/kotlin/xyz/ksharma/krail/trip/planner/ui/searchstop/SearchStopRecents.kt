@@ -1,7 +1,5 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import xyz.ksharma.krail.core.maps.state.LatLng
@@ -14,7 +12,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ListState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 
-// What the recents card on Search Stop holds, `docs/MAP_HOME_UX.md` rule 9. Every decision is a
+// What the recents on Search Stop's list state hold, `docs/MAP_HOME_UX.md` rule 9. Every decision is a
 // pure function, so the three sources and their order are pinned without a layout or a database.
 
 /** The most stops the recents card shows. */
@@ -122,18 +120,3 @@ internal fun shouldShowLabelRow(listState: ListState, stopLabels: List<StopLabel
 /** The suggested stops to fall back on: starts for a start field, ends for everything else. */
 internal fun SearchStopState.curatedStopsFor(fieldType: SearchStopFieldType): List<SearchStopState.StopResult> =
     if (fieldType == SearchStopFieldType.FROM) curatedStartStops else curatedEndStops
-
-/** The share of the window height the recents card may take on the map state, so the pins stay usable. */
-internal const val MAP_STATE_CARD_SHARE = 0.4f
-
-/** The least the capped card keeps, enough for the label row and a row or two, on a short window. */
-internal val MAP_STATE_CARD_FLOOR = 200.dp
-
-/**
- * The most height the recents card takes on the map state (rule 9 of `docs/MAP_HOME_UX.md`): a share of the
- * window, so the map keeps room for pins around it, and never less than [MAP_STATE_CARD_FLOOR]. The card
- * scrolls inside this, and on the list state it has no cap and grows into the whole list. The room left
- * under the bars and the mode chips still limits it first on a short window.
- */
-internal fun mapStateCardMaxHeight(windowHeight: Dp): Dp =
-    maxOf(windowHeight * MAP_STATE_CARD_SHARE, MAP_STATE_CARD_FLOOR)

@@ -1,6 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.theme.KrailDimensions
 import kotlin.test.Test
@@ -64,17 +64,35 @@ class SearchStopLayoutRulesTest {
     }
 
     @Test
-    fun `the mode controls stand one control row and one gap above the map's own bottom row`() {
+    fun `the Options row stands one edge above the inset, the row the location control is on`() {
         val gaps = searchStopGaps()
-        assertEquals(16.dp + 48.dp + 8.dp, modeControlsBottomPadding(gaps))
+        assertEquals(16.dp, modeControlsBottomPadding(gaps))
         assertEquals(
             modeControlsBottomPadding(gaps) + 120.dp,
             modeControlsBottomPadding(gaps, clearance = 120.dp),
-            "An open stop card lifts the controls by its own height and gap.",
+            "An open stop card lifts the row by its own height and gap.",
         )
-        assertTrue(
-            modeControlsBottomPadding(gaps) >= gaps.edge + MAP_CONTROL_ROW_HEIGHT,
-            "The controls clear the location button's row, which stands one edge above the inset.",
+        assertEquals(48.dp, MAP_CONTROL_ROW_HEIGHT, "The row is the location control's one 48 dp target.")
+        assertEquals(48.dp, MAP_ATTRIBUTION_SLOT, "Options stands after the info icon's 48 dp slot.")
+    }
+
+    @Test
+    fun `the ornaments start under the box and the chip, one edge in at the sides, and the info icon is on the row`() {
+        val gaps = searchStopGaps()
+        val padding = mapOrnamentPadding(
+            gaps = gaps,
+            statusBarTop = 24.dp,
+            navigationBarBottom = 24.dp,
+            headerHeight = 136.dp,
+        )
+
+        assertEquals(24.dp + 16.dp + 136.dp + 8.dp, padding.calculateTopPadding(), "Under the box, one gap clear.")
+        assertEquals(16.dp, padding.calculateLeftPadding(LayoutDirection.Ltr))
+        assertEquals(16.dp, padding.calculateRightPadding(LayoutDirection.Ltr))
+        assertEquals(
+            24.dp + modeControlsBottomPadding(gaps),
+            padding.calculateBottomPadding(),
+            "The info icon is above the inset by the same edge the Options row is.",
         )
     }
 
@@ -105,14 +123,6 @@ class SearchStopLayoutRulesTest {
         assertEquals(false, reduceModeBlock(open = true, ModeBlockEvent.MapTapped))
         assertEquals(false, reduceModeBlock(open = true, ModeBlockEvent.LeftMapState))
         assertEquals(false, reduceModeBlock(open = false, ModeBlockEvent.MapTapped))
-    }
-
-    @Test
-    fun `the top stack ends one gap above the mode controls, and is unbounded with none`() {
-        val gaps = searchStopGaps()
-        assertEquals(Dp.Unspecified, topStackMaxHeight(controlsTop = null, gaps = gaps))
-        assertEquals(492.dp, topStackMaxHeight(controlsTop = 500.dp, gaps = gaps))
-        assertEquals(0.dp, topStackMaxHeight(controlsTop = 4.dp, gaps = gaps), "Never negative.")
     }
 
     // endregion

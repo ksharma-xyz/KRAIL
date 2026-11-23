@@ -1,8 +1,8 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.theme.KrailDimensions
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -34,9 +34,8 @@ internal fun locationChipShownFor(pill: LocationPill): Boolean = pill != Locatio
  * - [cardPadding] is the inner padding of every card, the card's own padding token on all four sides.
  * - [cardCorner] is the corner of every card, the card's own radius token.
  * - [betweenRows] is the one gap between rows inside the group card and around its divider.
- * - [betweenCards] is the one gap between floating elements: group card to the location chip under it (or to the
- *   list card with no chip), chip to list card, mode block to its button, and the mode controls to the control row
- *   beneath them.
+ * - [betweenCards] is the one gap between floating elements: group card to the location chip under it, and the mode
+ *   block to the control row under it.
  */
 internal data class SearchStopGaps(
     val edge: Dp,
@@ -57,17 +56,42 @@ internal fun searchStopGaps(dim: KrailDimensions = KrailDimensions()): SearchSto
 @Composable
 internal fun rememberSearchStopGaps(): SearchStopGaps = searchStopGaps(KrailTheme.dimensions)
 
-/** The height of the control row at the map's bottom edge: the location button is one 48 dp touch target. */
+/** The height of the control row at the map's bottom edge: the location control is one 48 dp touch target. */
 internal val MAP_CONTROL_ROW_HEIGHT = 48.dp
 
 /**
- * How far above the system bottom inset the mode controls stand. The location button stands [edge] above the
- * inset with a 48 dp row, and the map's attribution icon sits in the same bottom row at the left, so the mode
- * button stands one row and one [SearchStopGaps.betweenCards] above that, never over either. [clearance] is
- * what rides the controls above an open stop card, the same value that lifts the location button.
+ * The width the map's own info icon (its attribution, a licence requirement that is never turned off) takes at the
+ * start of the bottom row: a 48 dp touch box. The Options button stands right after it. Taken from the map's
+ * one control size and not measured from the native icon, so it is the one number to check on a device.
+ */
+internal val MAP_ATTRIBUTION_SLOT = 48.dp
+
+/**
+ * How far above the system bottom inset the Options row stands: the same [SearchStopGaps.edge] the location control
+ * stands above it, so the two rows are one row and share one centre line. [clearance] is what rides the row above
+ * an open stop card, the same value that lifts the location control.
  */
 internal fun modeControlsBottomPadding(gaps: SearchStopGaps, clearance: Dp = 0.dp): Dp =
-    gaps.edge + MAP_CONTROL_ROW_HEIGHT + gaps.betweenCards + clearance
+    gaps.edge + clearance
+
+/**
+ * The margin of the map's own ornaments in Search Stop's map state, so none of them is under the box and the info icon
+ * stands on the bottom row. At the top the compass and scale bar start [SearchStopGaps.betweenCards] under the box
+ * (which is [statusBarTop] and one edge down and [headerHeight] tall), at the sides they are one edge in like the box,
+ * and at the bottom the info icon is one edge above [navigationBarBottom], the row the Options button and the
+ * location control are on.
+ */
+internal fun mapOrnamentPadding(
+    gaps: SearchStopGaps,
+    statusBarTop: Dp,
+    navigationBarBottom: Dp,
+    headerHeight: Dp,
+): PaddingValues = PaddingValues(
+    start = gaps.edge,
+    top = statusBarTop + gaps.edge + headerHeight + gaps.betweenCards,
+    end = gaps.edge,
+    bottom = navigationBarBottom + gaps.edge,
+)
 
 /** The mode button and its block are drawn in the map state of a map that is ready, never with the keyboard up. */
 internal fun modeControlsShown(mode: SearchStopMode, mapReady: Boolean): Boolean =
@@ -85,11 +109,3 @@ internal fun reduceModeBlock(open: Boolean, event: ModeBlockEvent): Boolean = wh
     ModeBlockEvent.ButtonTapped -> !open
     ModeBlockEvent.MapTapped, ModeBlockEvent.LeftMapState -> false
 }
-
-/**
- * The most height the stack at the top (group card and list card) may take, so it ends above the mode controls
- * by one [SearchStopGaps.betweenCards] and the list card, which scrolls inside, is what gives. [controlsTop] is
- * where the controls start, measured from the top of the screen, or null with no controls.
- */
-internal fun topStackMaxHeight(controlsTop: Dp?, gaps: SearchStopGaps): Dp =
-    if (controlsTop == null) Dp.Unspecified else (controlsTop - gaps.betweenCards).coerceAtLeast(0.dp)

@@ -35,10 +35,9 @@ internal data class SearchStopFormModel(
 )
 
 /**
- * The top of Search Stop's map state: the [SearchStopGroupCard] and, directly under it while the location is
- * not allowed, the [LocationStatusChip], one [SearchStopGaps.betweenCards] below the card and at its left edge.
- * The chip is not part of the card, so a card holds only the bars. The list card the caller draws next sits
- * under this block with the same gap.
+ * The top of Search Stop: the [SearchStopGroupCard] and, directly under it while the location is not allowed, the
+ * [LocationStatusChip], one [SearchStopGaps.betweenCards] below the box and at its left edge. The chip is not part
+ * of the box, so the box holds only the two pills. On the map state this is everything that floats at the top.
  */
 @Composable
 internal fun SearchStopTopBlock(

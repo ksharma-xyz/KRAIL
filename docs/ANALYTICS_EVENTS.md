@@ -173,7 +173,9 @@ there, so no new name was added:
 
 Rows from before the change keep their old shape. A `stop_selected_from_map` row from an older build
 carries a `searchRadiusKm` the rider chose (1, 3 or 5), and a newer one carries the config value, so the
-param is only comparable within one side of the release.
+param is only comparable within one side of the release. The newer rows also carry `radiusSource`
+(`remote_config`), and an older row has none, so the side a row is on is read from `radiusSource` and
+not from the app version.
 
 ## Window, fold and pane reporting: how to read it
 

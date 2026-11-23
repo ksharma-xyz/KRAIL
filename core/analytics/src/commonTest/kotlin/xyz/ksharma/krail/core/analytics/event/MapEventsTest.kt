@@ -222,6 +222,7 @@ class MapEventsTest {
             mapOf(
                 "stopId" to "200060",
                 "searchRadiusKm" to 3.0,
+                "radiusSource" to "remote_config",
                 "enabledModesCount" to 4,
                 "nearbyStopsCount" to 12,
                 "hadUserLocation" to true,
@@ -243,7 +244,10 @@ class MapEventsTest {
 
         assertFalse(event.properties.orEmpty().containsKey("mapSessionId"))
         assertEquals(
-            setOf("stopId", "searchRadiusKm", "enabledModesCount", "nearbyStopsCount", "hadUserLocation"),
+            setOf(
+                "stopId", "searchRadiusKm", "radiusSource", "enabledModesCount", "nearbyStopsCount",
+                "hadUserLocation",
+            ),
             event.properties.orEmpty().keys,
         )
     }

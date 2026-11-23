@@ -1537,6 +1537,8 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      * @param stopId             The ID of the stop the user selected.
      * @param searchRadiusKm     The active search radius at the moment of selection. It is the value of
      *                           Remote Config `nearby_stops_radius_km`, since nothing in the app changes it.
+     *                           It used to be a rider's choice of 1, 3 or 5 under the same name, so read it
+     *                           with [radiusSource]: only a row that carries `radiusSource` is the config value.
      * @param enabledModesCount  Number of transport modes currently enabled on the map's mode chips
      *                           (not which ones). This is the only place the mode filter is reported
      *                           now that the Options sheet and its save event are gone.
@@ -1546,6 +1548,9 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      * @param mapSessionId       The id of the map open this pick belongs to, the same value `map_viewed` and
      *                           `map_dismissed` carry, so a pick joins the open it came from. Left out when no
      *                           open was in progress, so rows from older builds and a pick with no open carry none.
+     * @param radiusSource       Which regime [searchRadiusKm] is from. A version number cannot say, so this build
+     *                           always sends `remote_config`, and a row with no `radiusSource` is from an older
+     *                           build where the number was the rider's own choice.
      */
     data class StopSelectedFromMapEvent(
         val stopId: String,
@@ -1554,17 +1559,28 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         val nearbyStopsCount: Int,
         val hadUserLocation: Boolean,
         val mapSessionId: String? = null,
+        val radiusSource: RadiusSource = RadiusSource.REMOTE_CONFIG,
     ) : AnalyticsEvent(
         name = "stop_selected_from_map",
         rawProperties = buildMap {
             put(PROP_STOP_ID, stopId)
             put("searchRadiusKm", searchRadiusKm)
+            put("radiusSource", radiusSource.value)
             put("enabledModesCount", enabledModesCount)
             put("nearbyStopsCount", nearbyStopsCount)
             put(PROP_HAD_USER_LOCATION, hadUserLocation)
             mapSessionId?.let { put(PROP_MAP_SESSION_ID, it) }
         },
-    )
+    ) {
+        /**
+         * Where the radius came from. [FIXED] is the rider's own choice of 1, 3 or 5, which older builds sent
+         * without saying so, so no build sends it now and it exists so the value set is the one the registry reads.
+         */
+        enum class RadiusSource(val value: String) {
+            FIXED("fixed"),
+            REMOTE_CONFIG("remote_config"),
+        }
+    }
 
     /**
      * Fired when the user taps a stop marker on the SearchStopMap (the bottom sheet opens).

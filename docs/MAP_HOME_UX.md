@@ -96,8 +96,8 @@ If a design breaks one of these rules, the design changes, not the rule.
 6. **One pill search bar.** On home and on Search Stop. Never two fields stacked. Home is always the one pill, whatever
    stops a pin card, a chip or Ask KRAIL has handed on: those open Search Stop, which holds the To and From form.
 7. **The microphone is on the home pill only.** Never on Search Stop.
-8. **Search Stop always opens on a clean map, with no keyboard.** Only four things float on it: the box with the two pills at
-   the top, the location chip under it while location is not allowed, and on the control line the Options button, only while
+8. **Search Stop always opens on a clean map, with no keyboard.** Only four things float on it: the box (the Timetable style card, see The Search Stop box) at
+   the top, the location notice under it while location is not allowed (the chip is replaced), and on the control line the Options button, only while
    the location is allowed, with the map's own location control (rule 39). There is no list, no recents, no near you and no card at open, so the map stays
    the screen. The rider taps a pill to raise the keyboard and the list.
 9. **The recents are in the list state, not on the map.** (This replaces the earlier rule that floated a recents card on
@@ -120,11 +120,9 @@ If a design breaks one of these rules, the design changes, not the rule.
     A chip (the Options button and the Location permission required chip) is the Timetable's chip: the tint with the
     page's text colour, plus a 1 dp `softLabel` hairline (`mapChipEdge`) so a pale chip holds against the light map, and
     Options takes taj's default solid theme colour while any mode is switched off. Placeholders on a tint use the page's
-    text colour, never the placeholder token, which fails on the dark tints. Cards wear the info tile's glow around their
-    corner (`Modifier.infoTileGlow`, through `searchStopEdge`: the theme coloured shadow and the thin theme coloured border
-    from `InfoTileDefaults`, one place for the numbers) and no plain outline. The Search Stop box is taj's `surface` with the
-    same glow until it moves to the tint. The glow is what lifts a pale card off the light map: the fill alone is about 1.0
-    to 1 against it in light mode. A translucent theme wash is not used
+    text colour, never the placeholder token, which fails on the dark tints. **(The glow here is replaced: Search Stop has no glow, its edge is the `softLabel` hairline of The Search Stop box.)** Cards wore the info tile's glow around their
+    corner (`Modifier.infoTileGlow`, through `searchStopEdge`) and the box was taj's `surface`; both are replaced. A pale card is
+    about 1.0 to 1 against the light map, which is why the hairline is there. A translucent theme wash is not used
     as a fill over the map. **taj components are used as they ship**, with their own sizes and defaults and only the
     parameters they expose: colours go through a component's own `colors` parameter or taj's text colour locals, never a
     restyle, a custom shape or shadow, a size outside `ButtonDefaults`, or a wrapper that redraws a taj look. taj has no
@@ -150,7 +148,7 @@ If a design breaks one of these rules, the design changes, not the rule.
 
 ### Forms, cards and behaviour
 
-24. **Location needs one small button.** When location permission is not granted, one small status button, taj's filled
+24. **(Replaced by the location notice, see The Search Stop box. The chip is kept for the saved trips map pane.) Location needs one small button.** When location permission is not granted, one small status button, taj's filled
     `Button` at its extra small size (normal weight text) in the soft theme tint with a hairline (rule 10), with a real 48 dp
     touch target, sits directly under the box on Search Stop's map state, at the box's left edge and one 8 gap below it. It is not inside the box, which holds only
     the To and From pills. At large text its words wrap inside it. It is not drawn in the list state of a phone, which is the
@@ -185,19 +183,17 @@ If a design breaks one of these rules, the design changes, not the rule.
     are checked by measurement, never by eye.
 33. **Two surface colours in any group of floating controls, and one on Search Stop.** On home, in the To and From block, they
     are near-black and white: the field being edited, the go circle and Done are near-black, the other field is white. Orange
-    is not used there. On Search Stop the box is one mode aware surface (rule 10) holding two soft pills,
-    and the go circle is the pill's text colour with the pill's fill as its arrow, so it is the opposite of the pill in light
-    and in dark. The count of distinct backgrounds is checked in light and dark.
+    is not used there. **(Replaced on Search Stop: the box is one card in the soft tint with two plain rows, and the go circle is the theme colour, see The Search Stop box.)** The count of distinct backgrounds is checked in light and dark.
 34. **A text field is one line, 48 tall, and ends in an ellipsis.** This covers the home pill, the search pill, the To value
     and the From value. The accessibility label carries the full text. Only single-line fields may truncate; chips, cards,
     badges and rows still wrap or stack whole items.
-35. **The search pill has a back arrow and an X.** Back is a 48 box at the left, like today's search bar. The X shows only
+35. **The search pill has a back arrow and an X. (The group card has no back arrow now: system back does the two step back, and the X takes the row's circle slot while the row holds text. The bare single pill keeps its arrow.)** Back is a 48 box at the left, like today's search bar. The X shows only
     when the field has content and only clears it, and never dismisses the screen. Back follows rule 39, except from the
     start field, where it returns to To and From with the destination kept (on the bar that still needs a stop). System back and the iOS swipe do the same. In To
     and From the X clears the destination and raises the keyboard. The To row has a matching 48 column with the destination pin
     so From and To values start at one x. The arrow and the X are drawn in the bar's content colour, never a hex.
 36. **From is on top, To is below it, and neither row ever moves.** On Search Stop both bars are the same taj text field as a
-    soft pill in the box, From above To, 8 apart with no divider. Tapping a bar edits it in place: the query field and
+    row of the Timetable style card, From above To, a divider between them (the pills, the back arrow and the go circle at the end of To as 4 around 40 are replaced, see The Search Stop box). Tapping a bar edits it in place: the query field and
     the keyboard move to it, and nothing else changes, because the idle bar is the same field unfocused, and a tap on it
     focuses it. Focus shows by the caret, the keyboard and the placeholder, never by a fill, a ring or a colour swap, and no
     row changes position. (On the classic home, with the maps flag off, the bar being edited is still the dark one and the
@@ -403,6 +399,52 @@ A tapped pin opens a floating stop card, never a bottom sheet.
    is no go circle. The go circle is the only way out with a trip, and back from the results returns here.
 6. Tapping a pin opens a floating stop card: departures, Save as, and Set as destination or Set as starting point (rule 10, Stop card).
 
+### The Search Stop box (S6, replaces the pills, the back arrow, the glow, the old go circle and the chip)
+
+This block is in force where it differs from rules 8, 10, 24, 33, 35 and 36 above, which are marked replaced below.
+
+- **The box is the Timetable's own From and To card.** One rounded card in the soft theme tint (`mapCardColors().tint`, the
+  tint the Timetable card is, in light and dark mode), with two plain rows, From above To, and a 1 dp `outlineSubtle` divider
+  between them. No pills, no second fill, no back arrow: system back does the two step back. The rows are still the editable
+  fields (taj `TextField` with no container, fixed prompts Choose starting point and Choose destination, `onSurface` text,
+  prompt and caret, because the placeholder token fails 4.5 on the dark tints). A single field stays the bare pill, with its
+  back arrow, and is a card only when From and To both show.
+- **Markers.** From is the 10 dp filled dot, To is the pin. A stop that has a saved label shows that label's own icon in place
+  of the marker (`stopLabelIcon`, eight vectors chosen by label name; emoji are stripped from names, so a custom name with no
+  icon keeps the dot or pin) and its row reads as the Timetable's does, the label in bold then the stop in brackets, with no
+  helper text.
+- **The grid, in dp at 411 wide and 100 percent text.** Card padding 16 (`spacingXL`), marker 20 (`iconSmall`), gap 8, text at 44,
+  rows 56. The divider runs from the text start to 8 before the circle column, which is 64 from the card's right edge. When a
+  name no longer fits beside its marker (320 dp, 200 percent) the marker wraps whole above it, the text and the divider start at
+  16, the names wrap whole and the card grows. Nothing is truncated or squeezed. `ToFromCardGrid.kt` holds the numbers.
+- **The right column.** Two 40 dp taj `RoundIconButton` circles on one axis, 16 from the card's right edge (the left padding), each
+  centred on its row (8 above and below in a 56 row), each in a real 48 dp target (`CircleTargetButton`, the pattern of
+  `CloseCircleButton`) so a tap never reaches the map. The column is reserved in every state, so the card is the same height
+  with and without the go circle.
+  - The swap is at the end of the From row: `softLabel` fill, `ic_reverse` in `getForegroundColor`, screen reader Swap From and To.
+    A tap trades the stops (not the rows) and the glyph makes a half turn, 180 degrees in 300 ms, while the circle stays still.
+    It is drawn once the rider has picked a stop, since an auto filled start alone is nothing to swap.
+  - The go circle is at the end of the To row: the theme colour, the existing arrow in `getForegroundColor`, screen reader Show
+    trips. It starts the trip as before, and is present only when both stops are chosen (absent, not disabled). It arrives
+    growing to 1.2 by 180 ms and settling to 1.0 by 300 ms (one keyframes spec of two eases, not a spring) with an 80 ms fade, and
+    leaves shrinking to nothing in 150 ms, taking no tap on the way out. While the row being edited holds text, an X takes that
+    row's circle.
+- **No glow anywhere in Search Stop.** The box, the bare pill, the Options card, the stop card and the notice wear a 1 dp
+  `softLabel` hairline (`searchStopEdge`, through `mapChipEdge`) in light mode on the map (3.81 against the map ground), none on the
+  dark map (the card is 5.9 to 10 against it), and the hairline in both modes on the gradient of the list state. The info tile
+  keeps its glow on the home and in the timetable.
+- **The location notice is the real info tile.** Under the box, one 8 gap down, left aligned and the box's width: the `InfoTile`
+  in its new `Plain` style (the soft tint, the tile's 1 dp themed border, no shadow), expanded, titled Location is off, with
+  Turn on location to see stops near you, the app's pin, Allow or Settings (what the old chip did on a tap) and the tile's own Not
+  now. Not now hides it for the visit only (a `rememberSaveable` flag in the top block, never saved, not through the info tile
+  manager). It comes and goes with the shared fade and size change, is not drawn in the phone list state, and takes every touch
+  over it. Options stays hidden while location is not granted.
+- **The info tile.** `InfoTileStyle.Plain` is new. Its actions row is a `FlowRow` now, so at 320 dp and 200 percent the call to
+  action wraps whole under Not now instead of breaking in the middle of a word.
+
+Cost. Layout and short animations only. No API calls, no payload, no timers, no battery. The one new piece of state is the
+notice's `rememberSaveable` flag.
+
 ### Spacing
 
 | What | Value |
@@ -411,7 +453,7 @@ A tapped pin opens a floating stop card, never a bottom sheet.
 | Edge inset, all sides | 16 (top and bottom measured from the safe area) |
 | Gap between floating elements | 8 (the chips and notices flow to the pill, card to card, stack to the chips and notices). On Search Stop: between the two pills in the box, the box to the location button, and the Options card to the bottom row |
 | Search Stop edge | 16 from the system top inset to the box and from the box to the screen's sides |
-| Card padding | 16 on all four sides, equal top and bottom. Every Search Stop card (the box and the Options card) takes the card's own radius token (16) and padding token (16). The box is two 48 pills and an 8 gap, so 136 tall at every text size |
+| Card padding | 16 on all four sides, equal top and bottom, for the Options card, which takes the card's own radius token (16) and padding token (16). The box has no padding of its own: its rows are 56 tall with 16 at the start and the circle column at the end, so it is 113 tall at 100 percent text and grows at large text when a marker wraps above its name |
 | Search Stop bottom two lines | The info icon alone at the bottom most left, resting on the library's 8 margin with no padding of ours, its i starting 1.75 in from the icon's 21 square. Above it the control line: the Options pill 4 above the i, the location control ending 16 in and centred on the pill, one centre line at every text size. Options has a 48 finger target that ends at the i's top. The Options card is 8 above the line's visible top. The 21, 8 and 1.75 are read from the library, not measured on a device, and are the numbers to check on a phone |
 | List row | 14 above and below its content, 16 left, a 44 hit area for the plus |
 | Search pill, go circle, Done | 48 tall or wide (the go circle inside the From bar is 40, rule 36). A chip or a notice has a 48 touch target |
@@ -431,7 +473,7 @@ A tapped pin opens a floating stop card, never a bottom sheet.
   back down on dismiss); the stop card's action words (cross fade); the Departure Board (the height, the chevron and the rows' fade in
   step, the rows a touch after the height starts and gone before it ends, the loading, failed and rows phases cross fading); the top box
   (slides up and fades while the board is expanded, the card's room growing on the same curve); and the bare pill and the group card
-  (a fade between them with a soft size change and no clip).
+  (a fade between them with a soft size change and no clip); the go circle (arrives 0 to 1.2 by 180 ms and settles to 1.0 by 300 ms with an 80 ms fade, leaves in 150 ms), the swap glyph (a half turn in 300 ms) and the location notice (the shared fade and size change).
 - A card never animates its height because data arrived. Only a rider's tap expands a Park & Ride card or the Departure Board.
 - Reduce motion: plain, no movement.
 
@@ -526,7 +568,7 @@ A tapped pin opens a floating stop card, never a bottom sheet.
 - No empty-state card that explains what to do.
 - No element that moves because data loaded or failed.
 - No card stretched wide around short content.
-- No theme-colour ring or border on the search bar, and no plain grey outline on the Search Stop box: the glow is its edge.
+- No theme-colour ring or border on the search bar, and no glow anywhere in Search Stop: the box's edge is the 1 dp `softLabel` hairline in light mode.
 - No second field, no mic on Search Stop.
 - No text broken beside a sibling, no clipping, no truncating, no shrinking. The one exception is a single-line text field,
   which ends in an ellipsis.

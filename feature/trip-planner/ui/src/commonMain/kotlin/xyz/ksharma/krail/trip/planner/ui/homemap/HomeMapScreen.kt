@@ -74,6 +74,7 @@ import xyz.ksharma.krail.trip.planner.ui.savedtrips.homeChipsFor
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.homeStackListBody
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.onFirstTouch
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.rememberAskKrailFocus
+import xyz.ksharma.krail.trip.planner.ui.savedtrips.reorderListTopPadding
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.savedTripsColumn
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
@@ -401,6 +402,8 @@ private fun HomeCardStack(
             contentPadding = PaddingValues(
                 start = columnGutterFor(maxWidth),
                 end = columnGutterFor(maxWidth),
+                // Room for the first card's delete target, which reaches above the card, in reorder mode.
+                top = if (savedTripsState.reorder != null) reorderListTopPadding() else dim.spacingNone,
                 bottom = dim.spacingXL,
             ),
         ) {

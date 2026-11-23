@@ -181,8 +181,11 @@ object TripPlannerTestTags {
         /** The grip on a card, by the card's key: a trip's id or the Park & Ride row's key. */
         fun grip(key: String): String = "savedtrips.reorder.grip.$key"
 
-        /** The delete circle on a trip card. */
+        /** The 48 dp delete target on a trip card. */
         fun delete(tripId: String): String = "savedtrips.reorder.delete.$tripId"
+
+        /** The drawn circle inside a trip card's delete target. */
+        fun deleteCircle(tripId: String): String = "savedtrips.reorder.delete.circle.$tripId"
     }
 
     /** The floating stop card's tags, kept in their own object so this one stays under its limit. */

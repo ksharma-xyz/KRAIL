@@ -220,7 +220,13 @@ If a design breaks one of these rules, the design changes, not the rule.
     unlabelled end is its stop name. When both ends are labelled the card keeps the app's one-line form, "Home to Work",
     with no stop names. A label shows on a card whenever that card's stop is the labelled stop.
 38. **Delete is the app's own delete circle.** In reorder mode a trip card carries `TripDeleteOverlay`: a 24 circle in the
-    ink colour with a white X (12), at the card's top-right corner, overhanging it by 6, with a 48 hit area. Stations do not
+    ink colour with a white X (12), at the card's top-right corner, overhanging it by 6, with a 48 hit area. The hit area is
+    centred on the circle down the card and reaches 16 past the card on the right, where the page margin ends (the circle sits 2
+    in from the middle of it), so the window edge never cuts it. In reorder mode the list leaves 18 above its first card (a
+    list margin of 12 on top of the card's own 6), so the list's top edge never cuts it either. This changed on 2026-11-24:
+    the hit area was centred on the circle, reached 18 past the card, and the first card stood 6 below the list's top edge,
+    so a tap on the first card's delete circle landed in 46 across by 36 down at 411 wide and not 48 by 48. The circle did not
+    move and is still 24 with its 6 overhang. Stations do not
     carry one and do not reorder one by one. The Park & Ride row is one outlined block with a grip that moves up or down as
     a unit. A station is removed on the Add Park & Ride screen with its toggle, or from its P card, which reads "Remove from
     home" when the station is on home and "Add to home" when it is not. Done saves, back or a tap on the map cancels.

@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.krail.taj.resources.ic_close
 import kotlinx.collections.immutable.ImmutableList
@@ -88,7 +89,7 @@ internal fun LazyItemScope.ReorderableTripItem(
     val editing = reorder != null
 
     ReorderableItem(reorderState, key = trip.tripId) { isDragging ->
-        Column(modifier = Modifier.padding(top = if (editing) dim.spacingS else dim.spacingNone)) {
+        Column(modifier = Modifier.padding(top = if (editing) reorderCardTopPadding() else dim.spacingNone)) {
             Box(modifier = Modifier.padding(horizontal = dim.pageHorizontalPadding)) {
                 SavedTripCard(
                     fromDisplay = trip.fromStopDisplay(stopLabels),
@@ -128,6 +129,7 @@ internal fun LazyItemScope.ReorderableTripItem(
                     ReorderDeleteOverlay(
                         onClick = { actions.onEvent(SavedTripUiEvent.ReorderRemove(tripId = trip.tripId)) },
                         tag = TripPlannerTestTags.Reorder.delete(trip.tripId),
+                        circleTag = TripPlannerTestTags.Reorder.deleteCircle(trip.tripId),
                         modifier = Modifier.align(Alignment.TopEnd),
                     )
                 }
@@ -141,20 +143,26 @@ internal fun LazyItemScope.ReorderableTripItem(
 /**
  * The delete circle on a trip card in the map home's reorder mode (`docs/MAP_HOME_UX.md` rule 38): a 24 dp
  * circle in the ink colour with a 12 dp X, at the card's top right corner and overhanging it by 6 dp. Its
- * touch target is 48 dp, centred on the circle, so the drawn circle stays small and the tap is not.
+ * touch target is 48 dp, so the drawn circle stays small and the tap is not.
+ *
+ * The target is centred on the circle down the card and reaches 16 dp past the card on the right, where the
+ * card's page margin ends, so the window edge never cuts it. That leaves the circle 2 dp in from the middle of
+ * its target. It reaches [DELETE_TARGET_REACH] above the card, which a list that hosts it must leave room for
+ * (see [reorderListTopPadding]), because a parent's bounds cut a touch as well as a drawing.
  */
 @Composable
 internal fun ReorderDeleteOverlay(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     tag: String? = null,
+    circleTag: String? = null,
 ) {
     val dim = KrailTheme.dimensions
+    // Past the card by the page margin it sits in, and never by more than centring would put it.
+    val reachRight = minOf(dim.pageHorizontalPadding, DELETE_TARGET_REACH)
     Box(
         modifier = modifier
-            // The circle overhangs the corner by 6 dp, so its centre is 6 dp in from the edge and
-            // 6 dp down from the top. The 48 dp box that takes the tap is centred on it.
-            .offset(x = DELETE_TARGET_OFFSET, y = -DELETE_TARGET_OFFSET)
+            .offset(x = reachRight, y = -DELETE_TARGET_REACH)
             .size(DELETE_TARGET)
             // After the offset, so the tag's bounds are where the target is.
             .then(if (tag != null) Modifier.testTag(tag) else Modifier)
@@ -163,7 +171,12 @@ internal fun ReorderDeleteOverlay(
     ) {
         Box(
             modifier = Modifier
+                // The circle overhangs the corner by 6 dp, so its centre is 6 dp in from the edge and 6 dp down
+                // from the top. When the target stops short of reaching past the card by 18 dp, the circle keeps
+                // its place and sits that much off the middle of the target.
+                .offset(x = DELETE_TARGET_REACH - reachRight)
                 .size(dim.spacingXXXL)
+                .then(if (circleTag != null) Modifier.testTag(circleTag) else Modifier)
                 .clip(CircleShape)
                 .background(KrailTheme.colors.onSurface, CircleShape),
             contentAlignment = Alignment.Center,
@@ -178,7 +191,20 @@ internal fun ReorderDeleteOverlay(
     }
 }
 
+/**
+ * What a list that hosts the reorder stack adds above its first item in reorder mode. The first card's delete
+ * target reaches [DELETE_TARGET_REACH] above the card and the card carries [reorderCardTopPadding] of its own,
+ * so without this the list's top edge cuts the target short, and a tap on the cut part never arrives.
+ */
+@Composable
+internal fun reorderListTopPadding(): Dp = (DELETE_TARGET_REACH - reorderCardTopPadding()).coerceAtLeast(0.dp)
+
+/** The room a trip card keeps above itself in reorder mode, for the grip that is centred on its top edge. */
+@Composable
+private fun reorderCardTopPadding(): Dp = KrailTheme.dimensions.spacingS
+
 private val DELETE_TARGET = 48.dp
 
-// The 48 dp target is centred on the circle: 24 dp from its edge, less the 6 dp the circle overhangs.
-private val DELETE_TARGET_OFFSET = 18.dp
+// How far the 48 dp target reaches above the card, and past it when it is centred on the circle: 24 dp
+// from the circle's centre to the target's edge, less the 6 dp the circle's centre is in from the card's edge.
+private val DELETE_TARGET_REACH = 18.dp

@@ -161,11 +161,80 @@ class ReorderModeLayoutTest {
 
         val card = bounds(TripPlannerTestTags.savedTripCard(TRIPS[0].tripId))
         val target = bounds(TripPlannerTestTags.Reorder.delete(TRIPS[0].tripId))
+        // The target is the clickable and merges what is inside it, so the circle is read from the unmerged tree.
+        val circle = composeRule
+            .onNodeWithTag(TripPlannerTestTags.Reorder.deleteCircle(TRIPS[0].tripId), useUnmergedTree = true)
+            .getVisibleBoundsInRoot()
         assertNear("delete target width", 48.dp, target.width)
         assertNear("delete target height", 48.dp, target.height)
-        // The circle's centre is 6 dp in from the card's right edge and 6 dp down from its top.
-        assertNear("delete centre x", card.right - 6.dp, (target.left + target.right) / 2)
-        assertNear("delete centre y", card.top + 6.dp, (target.top + target.bottom) / 2)
+        assertNear("delete circle width", 24.dp, circle.width)
+        assertNear("delete circle height", 24.dp, circle.height)
+        // The circle overhangs the card's right edge by 6 dp and its top edge by 6 dp.
+        assertNear("delete circle right edge", card.right + 6.dp, circle.right)
+        assertNear("delete circle top edge", card.top - 6.dp, circle.top)
+        // The target is centred on the circle down the card and 2 dp short of centred across it, because
+        // the page margin is 16 dp and the window edge would cut a target that reached 18 dp past the card.
+        assertNear("delete target centre y", (circle.top + circle.bottom) / 2, (target.top + target.bottom) / 2)
+        assertNear("delete target right edge", card.right + 16.dp, target.right)
+        assertTrue(
+            circle.left >= target.left && circle.right <= target.right && circle.top >= target.top && circle.bottom <= target.bottom,
+            "The circle $circle is inside its target $target.",
+        )
+    }
+
+    @Test
+    @Config(qualifiers = PHONE)
+    fun `the delete target of the first and the middle card is whole at 411 dp`() =
+        assertDeleteTargetsWhole(window = 411.dp, scale = 1f)
+
+    @Test
+    @Config(qualifiers = "w360dp-h800dp")
+    fun `the delete target of the first and the middle card is whole at 360 dp`() =
+        assertDeleteTargetsWhole(window = 360.dp, scale = 1f)
+
+    @Test
+    @Config(qualifiers = "w360dp-h800dp")
+    fun `the delete target of the first and the middle card is whole at 360 dp and 200 percent text`() =
+        assertDeleteTargetsWhole(window = 360.dp, scale = 2f)
+
+    @Test
+    @Config(qualifiers = "w320dp-h800dp")
+    fun `the delete target of the first and the middle card is whole at 320 dp`() =
+        assertDeleteTargetsWhole(window = 320.dp, scale = 1f)
+
+    @Test
+    @Config(qualifiers = "w320dp-h800dp")
+    fun `the delete target of the first and the middle card is whole at 320 dp and 200 percent text`() =
+        assertDeleteTargetsWhole(window = 320.dp, scale = 2f)
+
+    /**
+     * A tap lands only where the target is on screen, so the rider's 48 dp is what the list and the window leave of it.
+     * The visible bounds must equal the size the target was laid out with, and both must be 48 dp, with the target
+     * inside the window on the right and below the list's top edge.
+     */
+    private fun assertDeleteTargetsWhole(window: Dp, scale: Float) {
+        setScreen(reordering = true, fontScale = scale)
+
+        listOf(TRIPS[0], TRIPS[1]).forEach { trip ->
+            val target = composeRule.onNodeWithTag(TripPlannerTestTags.Reorder.delete(trip.tripId))
+            val visible = target.getVisibleBoundsInRoot()
+            val laidOut = with(target.fetchSemanticsNode().layoutInfo.density) {
+                val size = target.fetchSemanticsNode().size
+                size.width.toDp() to size.height.toDp()
+            }
+            assertNear("laid out width of the delete target on ${trip.tripId}", 48.dp, laidOut.first)
+            assertNear("laid out height of the delete target on ${trip.tripId}", 48.dp, laidOut.second)
+            assertNear("visible width of the delete target on ${trip.tripId}", laidOut.first, visible.width)
+            assertNear("visible height of the delete target on ${trip.tripId}", laidOut.second, visible.height)
+            assertTrue(
+                visible.left >= 0.dp,
+                "The delete target on ${trip.tripId} starts inside the window at ${visible.left}.",
+            )
+            assertTrue(
+                visible.right <= window + TOLERANCE,
+                "The delete target on ${trip.tripId} ends at ${visible.right}, inside the $window window.",
+            )
+        }
     }
 
     @Test

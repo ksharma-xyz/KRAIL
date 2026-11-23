@@ -8,6 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.shadow.Shadow
 import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.SHADOW_ALPHA
@@ -36,18 +37,35 @@ enum class InfoTileStyle {
 private const val AI_FILL_STOP_SHARE_DARK = 0.4f
 private const val AI_FILL_STOP_SHARE_LIGHT = 0.2f
 
+/**
+ * The info tile's glow: a soft shadow in the rider's theme colour around [shape] and a thin border of the same
+ * colour on its edge. It is the one place those numbers (from [InfoTileDefaults]) are applied, so every surface
+ * that wants the tile's look, the tile itself and the Search Stop box, wears the same glow.
+ *
+ * Apply it before the surface: the shadow must come before any clip, so it can spread outside the shape, and the
+ * surface's own fill and clip come after it with the same [shape]. The border is drawn over everything the surface
+ * holds, on the edge of the shape.
+ */
+@Composable
+fun Modifier.infoTileGlow(shape: Shape = InfoTileDefaults.shape): Modifier {
+    val glow = themeBackgroundColor()
+    return this
+        .dropShadow(
+            shape = shape,
+            shadow = Shadow(
+                radius = shadowRadius,
+                color = glow,
+                spread = shadowSpread,
+                alpha = SHADOW_ALPHA,
+            ),
+        )
+        .border(width = borderWidth, color = glow, shape = shape)
+}
+
 /** The glow and border, applied before the click target so the shadow sits outside it. */
 @Composable
 internal fun Modifier.infoTileOuter(style: InfoTileStyle): Modifier = when (style) {
-    InfoTileStyle.Standard -> dropShadow(
-        shape = shape,
-        shadow = Shadow(
-            radius = shadowRadius,
-            color = themeBackgroundColor(),
-            spread = shadowSpread,
-            alpha = SHADOW_ALPHA,
-        ),
-    )
+    InfoTileStyle.Standard -> infoTileGlow(shape)
 
     InfoTileStyle.AiFill -> this
 }
@@ -60,11 +78,9 @@ internal fun Modifier.infoTileSurface(style: InfoTileStyle): Modifier = when (st
     InfoTileStyle.AiFill -> background(brush = aiFillBrush(), shape = shape)
 }
 
-// Background after the border, so the shadow colour does not show through.
+// The fill sits over the glow's shadow, so the shadow colour does not show through. The border is part of the glow.
 @Composable
-private fun Modifier.standardSurface(): Modifier = this
-    .border(width = borderWidth, color = themeBackgroundColor(), shape = shape)
-    .background(color = KrailTheme.colors.surface, shape = shape)
+private fun Modifier.standardSurface(): Modifier = background(color = KrailTheme.colors.surface, shape = shape)
 
 @Composable
 private fun aiFillBrush(): Brush {

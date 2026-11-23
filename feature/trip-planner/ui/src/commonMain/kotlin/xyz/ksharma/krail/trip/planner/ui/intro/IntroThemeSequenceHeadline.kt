@@ -23,7 +23,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.themeInkColor
 
 /**
  * The colour screen's headline while it is driven by the theme change sequence ([IntroThemeChange]), in the same layout as the
@@ -54,7 +53,7 @@ internal fun IntroThemeSequenceHeadline(
     val lineGap = headlineLineGap()
     val emojiGap = introEmojiTitleGap(KrailTheme.dimensions.spacingXXL, LocalDensity.current.fontScale)
     val chosen = change.spec.target.themeId != null
-    val settledInk = if (chosen) themeInkColor() else KrailTheme.colors.onSurface
+    val settledInk = if (chosen) introTaglineInkColor() else KrailTheme.colors.onSurface
     val ink = if (change.isRunning) sequenceInk(change) else settledInk
     val emoji = if (change.emojiShowsNew) headline.incoming.emoji else headline.emojiBefore
     val incomingPlan = rememberHeadlinePlan(headline.incoming)

@@ -14,7 +14,6 @@ import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
-import xyz.ksharma.krail.taj.theme.asThemeInk
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
 import xyz.ksharma.krail.taj.toHex
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
@@ -34,11 +33,12 @@ private fun ThemeBlendInputs.request(tapped: Int, origin: Offset): ThemeChangeRe
     val colour = hex.hexToComposeColor()
     val headline = introThemeHeadline(themeId)
     val chosen = themeId != null
+    val ground = introGroundColour(colour, surface, dark)
     return ThemeChangeRequest(
         reduceMotion = reduceMotion,
         target = ThemeChangeTarget(themeId, hex, colour),
-        toText = if (chosen) colour.asThemeInk(dark) else onSurface,
-        toGround = if (chosen) introGroundColour(colour, surface, dark) else surface,
+        toText = if (chosen) introTaglineInk(colour, ground, onSurface) else onSurface,
+        toGround = if (chosen) ground else surface,
         headline = HeadlineContent(
             lines = headline.lines,
             emphasisIndex = headline.emphasisIndex,

@@ -1,7 +1,11 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.text.TextLayoutResult
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import org.junit.Rule
 import org.junit.Test
@@ -12,6 +16,8 @@ import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.contrastRatio
+import xyz.ksharma.krail.departures.ui.state.DeparturesState
+import xyz.ksharma.krail.trip.planner.ui.components.DepartureBoardBody
 import xyz.ksharma.krail.trip.planner.ui.components.FloatingDark
 import xyz.ksharma.krail.trip.planner.ui.components.mapActiveChipColors
 import xyz.ksharma.krail.trip.planner.ui.components.mapCardColors
@@ -154,8 +160,97 @@ class SearchStopContrastTest {
         assertTrue(placeholder >= TEXT, "$mode: the lone pill's placeholder on the surface fill is $placeholder to 1 (map $againstMap)")
     }
 
+    // region the stop card's secondary text
+
+    private class BoardSecondary(val body: Color, val header: Color, val softLabel: Color, val onSurface: Color)
+
+    private lateinit var board: BoardSecondary
+
+    private fun readBoardSecondary() {
+        composeRule.setContent {
+            PreviewTheme {
+                board = BoardSecondary(
+                    body = mapCardColors().body,
+                    header = mapCardColors().header,
+                    softLabel = KrailTheme.colors.softLabel,
+                    onSurface = KrailTheme.colors.onSurface,
+                )
+            }
+        }
+        composeRule.waitForIdle()
+    }
+
+    /**
+     * softLabel on the stop card's tint, the old colour of the board's secondary text: on the body it is 3.98 to 1 in light mode
+     * (under 4.5) and 5.31 in dark mode, and on the header, the stronger step the card is drawn in, 3.28 in dark mode. The card's
+     * own text colour is what the board is given now, and it reads 4.5 to 1 or better on both bands in both modes.
+     */
+    private fun assertBoardSecondary(mode: String, softOnBody: Float, softOnHeader: Float) {
+        readBoardSecondary()
+
+        val onBody = board.softLabel.contrastRatio(board.body)
+        val onHeader = board.softLabel.contrastRatio(board.header)
+        val inkBody = board.onSurface.contrastRatio(board.body)
+        val inkHeader = board.onSurface.contrastRatio(board.header)
+        println("CONTRAST $mode stopCardSecondary softLabelOnBody=$onBody softLabelOnHeader=$onHeader onSurfaceOnBody=$inkBody onSurfaceOnHeader=$inkHeader")
+        assertTrue(kotlin.math.abs(onBody - softOnBody) < 0.05f, "$mode: softLabel on the body is $onBody to 1, expected about $softOnBody")
+        assertTrue(kotlin.math.abs(onHeader - softOnHeader) < 0.05f, "$mode: softLabel on the header is $onHeader to 1, expected about $softOnHeader")
+        assertTrue(minOf(onBody, onHeader) < TEXT, "$mode: softLabel is under 4.5 on a band of the card, which is why the card passes its own text colour")
+        assertTrue(inkBody >= TEXT, "$mode: the card's own text colour on the body is $inkBody to 1, 4.5 needed")
+        assertTrue(inkHeader >= TEXT, "$mode: the card's own text colour on the header is $inkHeader to 1, 4.5 needed")
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-notnight")
+    fun `in light mode the board's secondary text on the stop card reads in the card's text colour at 4_5 to 1 or better, where softLabel was 3_98`() =
+        assertBoardSecondary("light", softOnBody = 3.98f, softOnHeader = LIGHT_HEADER_SOFT)
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-night")
+    fun `in dark mode the board's secondary text on the stop card reads in the card's text colour at 4_5 to 1 or better, where softLabel was 3_28 on the header`() =
+        assertBoardSecondary("dark", softOnBody = 5.31f, softOnHeader = 3.28f)
+
+    /** The colour the empty board draws its message in, and the page's softLabel, for a host that passes [secondary]. */
+    private fun emptyBoardTextColor(secondary: Color?): Pair<Color, Color> {
+        var soft = Color.Unspecified
+        composeRule.setContent {
+            PreviewTheme {
+                soft = KrailTheme.colors.softLabel
+                DepartureBoardBody(
+                    state = DeparturesState(isLoading = false),
+                    onRetry = {},
+                    onLoadPreviousDepartures = {},
+                    secondaryTextColor = secondary,
+                )
+            }
+        }
+        composeRule.waitForIdle()
+        val results = mutableListOf<TextLayoutResult>()
+        composeRule.onNodeWithText("No upcoming departures found.", useUnmergedTree = true).fetchSemanticsNode()
+            .config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(results)
+        return results.first().layoutInput.style.color to soft
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-notnight")
+    fun `the shared board draws its secondary text in the colour a host passes`() {
+        val passed = Color(0xFF123456)
+        assertTrue(emptyBoardTextColor(passed).first == passed, "A host's colour reaches the board's secondary text.")
+    }
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-notnight")
+    fun `with no colour passed the board's secondary text is softLabel exactly as before`() {
+        val (drawn, soft) = emptyBoardTextColor(null)
+        assertTrue(drawn == soft, "Other hosts are unchanged: $drawn against softLabel $soft.")
+    }
+
+    // endregion
+
     private companion object {
         const val TEXT = 4.5f
+        /** softLabel on the light stop card header, the stronger step, as the run prints it. */
+        const val LIGHT_HEADER_SOFT = 3.33f
         const val EDGE = 3f
         const val PILL_SHAPE_FLOOR = 1.1f
 

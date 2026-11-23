@@ -86,7 +86,7 @@ fun ScheduledTimeRow(
                         }
                     },
                     style = KrailTheme.typography.bodyMedium,
-                    color = pastDepartureColor(isPast, KrailTheme.colors.softLabel),
+                    color = pastDepartureColor(isPast, departureSecondaryText()),
                 )
                 Text(
                     text = deviationLabel,

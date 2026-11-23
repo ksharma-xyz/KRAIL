@@ -37,6 +37,7 @@ import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.DepartureBoardSource
 import xyz.ksharma.krail.departures.ui.state.DeparturesState
 import xyz.ksharma.krail.departures.ui.state.DeparturesUiEvent
+import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.components.AnimatedDots
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.klickable
@@ -239,6 +240,9 @@ private fun BoardBody(
             onShowPreviousToggle = { show -> onEvent(DeparturesUiEvent.TogglePreviousDepartures(stopId, show)) },
             crossfadePhases = true,
             reduceMotion = reduceMotion,
+            // The card is on the soft tint, where softLabel is 3.98 to 1 in light mode and 3.28 in dark, under the 4.5 text needs.
+            // The rows read in the card's own text colour, which is the page's text on the tint.
+            secondaryTextColor = LocalContentColor.current,
         )
     }
 }

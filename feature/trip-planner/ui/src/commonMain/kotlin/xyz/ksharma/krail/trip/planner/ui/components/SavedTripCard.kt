@@ -16,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.CardShape
@@ -29,6 +30,11 @@ import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeDecorColor
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopDisplay
 
+/**
+ * The saved trip tile. [textWeight] is the weight of the Regular lines (the stop names, and the word `to` between two labels), for
+ * a surface that reads them a step heavier, such as the Intro's confirm screen. Titles stay Bold. It is null on Saved Trips, which
+ * keeps the weights it has.
+ */
 @Composable
 fun SavedTripCard(
     fromDisplay: StopDisplay,
@@ -37,6 +43,7 @@ fun SavedTripCard(
     modifier: Modifier = Modifier,
     editing: Boolean = false,
     onLongClick: (() -> Unit)? = null,
+    textWeight: FontWeight? = null,
 ) {
     val dim = KrailTheme.dimensions
     val cardShape = CardShape
@@ -78,6 +85,7 @@ fun SavedTripCard(
             LabelledSavedTripContent(
                 fromLabel = fromLabel,
                 toLabel = toLabel,
+                textWeight = textWeight,
                 modifier = Modifier.weight(1f),
             )
         } else {
@@ -85,8 +93,8 @@ fun SavedTripCard(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(dim.spacingL),
             ) {
-                StopDisplayRow(display = fromDisplay)
-                StopDisplayRow(display = toDisplay)
+                StopDisplayRow(display = fromDisplay, textWeight = textWeight)
+                StopDisplayRow(display = toDisplay, textWeight = textWeight)
             }
         }
     }
@@ -100,6 +108,7 @@ fun SavedTripCard(
 private fun LabelledSavedTripContent(
     fromLabel: String,
     toLabel: String,
+    textWeight: FontWeight?,
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
@@ -115,7 +124,7 @@ private fun LabelledSavedTripContent(
         )
         Text(
             text = "to",
-            style = KrailTheme.typography.bodySmall,
+            style = KrailTheme.typography.bodySmall.withWeight(textWeight),
             modifier = Modifier.align(Alignment.Bottom),
         )
         Text(
@@ -129,6 +138,7 @@ private fun LabelledSavedTripContent(
 @Composable
 private fun StopDisplayRow(
     display: StopDisplay,
+    textWeight: FontWeight?,
     modifier: Modifier = Modifier,
 ) {
     val dim = KrailTheme.dimensions
@@ -148,7 +158,7 @@ private fun StopDisplayRow(
                 KrailTheme.typography.bodySmall
             } else {
                 KrailTheme.typography.bodyLarge
-            },
+            }.withWeight(textWeight),
         )
     }
 }

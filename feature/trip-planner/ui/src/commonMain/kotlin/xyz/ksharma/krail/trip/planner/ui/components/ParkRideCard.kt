@@ -49,6 +49,10 @@ private val ParkRideCardVerticalPadding = 20.dp // no token equivalent
  * [iconColor] is the fill of the `P` tile, for a surface drawn in a colour of its own, such as the Intro. It is the theme colour
  * when null, as it is on the home card. The tint of the card is always the theme's, so a surface that has its own colour gives
  * the card that colour as the theme (`LocalThemeColor`) and not as a parameter.
+ *
+ * [textWeight] is the weight of the lines that are Regular on the home card (the car park name, the words beside the figures and
+ * `Last updated`), for a surface that reads them a step heavier, such as the Intro. The figures stay Bold, and every colour and size
+ * stay as they are. It is null on the home card, which keeps the weights it has.
  */
 @Composable
 fun ParkRideCard(
@@ -58,6 +62,7 @@ fun ParkRideCard(
     onClick: (() -> Unit)? = {},
     keepReadingSpace: Boolean = false,
     iconColor: Color? = null,
+    textWeight: FontWeight? = null,
 ) {
     val dim = KrailTheme.dimensions
     Row(
@@ -90,21 +95,24 @@ fun ParkRideCard(
                                 // Facility Name
                                 Text(
                                     text = facility.facilityName,
-                                    style = KrailTheme.typography.displaySmall.copy(fontWeight = FontWeight.Normal),
+                                    style = KrailTheme.typography.displaySmall.copy(
+                                        fontWeight = textWeight ?: FontWeight.Normal,
+                                    ),
                                 )
 
                                 if (facility.spotsAvailable >= 0 || !keepReadingSpace) {
                                     ParkRideFigures(
                                         spots = "${facility.spotsAvailable}",
                                         percentFull = "${facility.percentageFull}%",
+                                        textWeight = textWeight,
                                     )
 
                                     // Time Information
                                     if (facility.timeText.isNotBlank()) {
-                                        ParkRideUpdatedAt(timeText = facility.timeText)
+                                        ParkRideUpdatedAt(timeText = facility.timeText, textWeight = textWeight)
                                     }
                                 } else {
-                                    ParkRideReadingPlaceholder()
+                                    ParkRideReadingPlaceholder(textWeight = textWeight)
                                 }
                             }
                         }
@@ -112,7 +120,7 @@ fun ParkRideCard(
                 } else {
                     Text(
                         text = "Loading...",
-                        style = KrailTheme.typography.bodyMedium,
+                        style = KrailTheme.typography.bodyMedium.withWeight(textWeight),
                     )
                 }
             }
@@ -124,7 +132,7 @@ fun ParkRideCard(
             ) {
                 Text(
                     text = parkRideUiState.stopName,
-                    style = KrailTheme.typography.displaySmall.copy(fontWeight = FontWeight.Normal),
+                    style = KrailTheme.typography.displaySmall.copy(fontWeight = textWeight ?: FontWeight.Normal),
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -133,7 +141,7 @@ fun ParkRideCard(
 }
 
 @Composable
-private fun ParkRideFigures(spots: String, percentFull: String) {
+private fun ParkRideFigures(spots: String, percentFull: String, textWeight: FontWeight?) {
     val dim = KrailTheme.dimensions
     // Spots Information
     FlowRow(
@@ -148,7 +156,7 @@ private fun ParkRideFigures(spots: String, percentFull: String) {
             )
             Text(
                 text = "spots available",
-                style = KrailTheme.typography.bodyMedium,
+                style = KrailTheme.typography.bodyMedium.withWeight(textWeight),
                 modifier = Modifier.alignByBaseline(),
             )
         }
@@ -163,7 +171,7 @@ private fun ParkRideFigures(spots: String, percentFull: String) {
             )
             Text(
                 text = "full",
-                style = KrailTheme.typography.bodyMedium,
+                style = KrailTheme.typography.bodyMedium.withWeight(textWeight),
                 modifier = Modifier.alignByBaseline(),
             )
         }
@@ -171,23 +179,23 @@ private fun ParkRideFigures(spots: String, percentFull: String) {
 }
 
 @Composable
-private fun ParkRideUpdatedAt(timeText: String) {
+private fun ParkRideUpdatedAt(timeText: String, textWeight: FontWeight?) {
     Text(
         text = "Last updated at\u00A0$timeText",
-        style = KrailTheme.typography.bodySmall,
+        style = KrailTheme.typography.bodySmall.withWeight(textWeight),
         color = KrailTheme.colors.secondaryLabel,
     )
 }
 
 /** The lines a reading takes, drawn with nothing in them and hidden from a screen reader. */
 @Composable
-private fun ParkRideReadingPlaceholder() {
+private fun ParkRideReadingPlaceholder(textWeight: FontWeight?) {
     Column(
         modifier = Modifier.alpha(0f).clearAndSetSemantics {},
         verticalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingXS),
     ) {
-        ParkRideFigures(spots = "000", percentFull = "00%")
-        ParkRideUpdatedAt(timeText = "0:00\u00A0AM")
+        ParkRideFigures(spots = "000", percentFull = "00%", textWeight = textWeight)
+        ParkRideUpdatedAt(timeText = "0:00\u00A0AM", textWeight = textWeight)
     }
 }
 

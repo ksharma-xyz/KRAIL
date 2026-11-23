@@ -57,6 +57,7 @@ internal fun IntroConfirmStepContent(state: IntroState, modifier: Modifier = Mod
                 toDisplay = StopDisplay(stopId = end.stopId, name = end.name),
                 onCardClick = {},
                 editing = true,
+                textWeight = IntroCardTextWeight,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding)

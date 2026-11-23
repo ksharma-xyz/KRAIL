@@ -12,6 +12,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableSet
@@ -153,6 +154,13 @@ private fun IntroParkRideNoStation() {
     }
 }
 
+/**
+ * The weight of the lines of the cards the Intro draws that are Regular elsewhere: the car park name, the words beside the figures,
+ * `Last updated` and the stop names of the trip card. Medium, 500, one step up, because the thin look read as pale. Colours, sizes and
+ * the Bold figures are as they are, and the same cards outside the Intro keep their weights.
+ */
+internal val IntroCardTextWeight = FontWeight.Medium
+
 /** The shared card. A [standIn] is a picture of a card, so it names nothing and does nothing. */
 @Composable
 private fun IntroParkRideCard(card: ParkRideUiState, modifier: Modifier = Modifier, standIn: Boolean = false) {
@@ -164,6 +172,7 @@ private fun IntroParkRideCard(card: ParkRideUiState, modifier: Modifier = Modifi
         // The tile is the screen's button fill, because the white letter is not legible on the raw theme colour. The tint of
         // the card is the screen's colour family, which the screen provides as its theme (IntroScreenColours).
         iconColor = introPrimaryFill(IntroStep.PARK_RIDE),
+        textWeight = IntroCardTextWeight,
         modifier = modifier
             .padding(horizontal = KrailTheme.dimensions.pageHorizontalPadding)
             .then(if (standIn) Modifier.clearAndSetSemantics {} else Modifier),

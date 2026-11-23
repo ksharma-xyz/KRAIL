@@ -109,8 +109,8 @@ Trip fields read:
 - `legs[].transportation.iconId` decides a replacement leg (14 or 22). `product.id` carries the same value.
 - `legs[].infos` where `type` is `lineInfo`, for the detail text only (A7), never as a trigger.
 
-Metro alert fields read (unchanged from 1.30): header text, description text, url, effect, every
-active period, informed route ids.
+Metro alert fields read: header text, url, effect, every active period, informed route ids. The
+description text is no longer read: NSW sends two versions of it that can disagree (A10).
 
 ## Why the alert feeds are not used for trains
 
@@ -160,19 +160,19 @@ The metro alert load from 1.30 runs beside the trip call and never gates it. It 
 
 | # | Question | Answer |
 |---|---|---|
-| 1 | API calls | **0 new.** The replacement-bus banner and row text read the trip reply that is already fetched. The metro alert call is the 1.30 call, unchanged. |
+| 1 | API calls | **0 new** for the banner and row text: they read the trip reply that is already fetched. The metro alert call is the 1.30 call plus one retry (A12): a normal open makes 1 call, a failed or timed-out first request with nothing cached makes 2. A refresh while an answer is cached is never retried. |
 | 2 | Payload | **0 new.** Parse cost: one pass over the legs already in memory. |
-| 3 | Timing | Unchanged. The banner arrives with the results. |
-| 4 | UX | No spinner and no placeholder. Failed or offline: results unaffected, no banner. The banner is a list item with `animateItem`. |
-| 5 | Network efficiency | No new requests, so nothing to cache or dedupe. |
-| 6 | Battery | No timers and no background work. It rides `fetchTrip()`, which the screen already runs. |
-| 7 | Shared limits | No change to NSW call volume. |
+| 3 | Timing | The banner arrives with the results. The alert call runs beside the trip call and never blocks it. Measured 0.19 to 0.31 s for 3.2 KB; each try is capped at 3 s, so with the retry a failure is final after at most 6 s, and a first try that fails fast adds only the retry's own time. |
+| 4 | UX | No spinner and no placeholder. Failed or offline: results unaffected, no banner. A slow first open now gets a second try, so the banner appears a few seconds late instead of not at all. The banner is a list item with `animateItem`. |
+| 5 | Network efficiency | Cache 3 min (NSW sends `max-age=90`), one request at a time per repository. The retry runs inside that same lock, so a second caller waits at most 6 s and then reads the cache. Retry once, only when nothing is cached, no backoff and no third try. |
+| 6 | Battery | No timers and no background work. It rides `fetchTrip()`, which the screen already runs. Worst case is a network that hangs with nothing cached: a Leave now screen then makes up to 2 requests of 3 s each per 30 s refresh instead of 1, while the screen is visible. A network that is simply off fails at once and costs nothing extra. |
+| 7 | Shared limits | No change to NSW call volume in normal use. The retry adds one call only after a failure, never in steady state. |
 
 ## 7. States and UX
 
 | State | Behaviour | Reuse |
 |---|---|---|
-| Replacement buses in the results | Banner "Replacement buses on this trip". Each row with a replacement leg says "Replacement bus" in plain text beside the line badge, with no border. Tap the banner for the planner's line alert detail when one is attached (A7). | `InfoTile`, row text |
+| Replacement buses in the results | Banner "Replacement buses on this trip". Each row with a replacement leg says "Replacement bus" in plain text beside the line badge, with no border. Tap the banner for the metro alert's headline and window when it also says buses replace the line (A10), else the planner's line alert (A7), else it does not expand. | `InfoTile`, row text |
 | No replacement leg | Nothing from version 2. | none |
 | Rider moved to another working mode | Nothing, because no replacement leg exists. | none |
 | Content, no disruption | Nothing. | none |
@@ -202,7 +202,8 @@ new-event checklist in `docs/ANALYTICS_EVENTS.md` in the PR that adds it. No ale
 ## 8. Test plan
 
 Built in version 1 and kept: `AlertClassifierTest`, `RealDisruptionRepositoryTest`,
-`DisruptionRelevanceTest`, `DisruptionDetailTest`, `DisruptionAnalyticsTest`, banner snapshots.
+`DisruptionRelevanceTest`, `DisruptionWindowTest`, `DisruptionAnalyticsTest`, banner snapshots.
+`DisruptionDetailTest` was removed with the description parser (A10).
 
 New, from real captured trip replies (fixtures committed under the module's test resources):
 - Replacement legs: Cronulla to Central (every leg iconId 14), Bankstown to Sydenham at 11:30 pm
@@ -215,6 +216,9 @@ New, from real captured trip replies (fixtures committed under the module's test
 - Configuration change and state survival: banner state is derived; tile expansion stays in
   `rememberSaveable`.
 - A hanging metro alerts feed must not delay the trip result.
+- Alert retry (A12), in `RealDisruptionRepositoryTest`: first try times out then succeeds; first try errors then succeeds; both time out and both error each fail after exactly two requests; a good first try is not retried; a refresh that times out while an answer is cached is not retried and keeps the cached answer.
+- Every result is a replacement bus, so the metro is missing from the results: the metro alert still
+  supplies the detail (Bankstown to Sydenham at 11:40 pm Mon 23 Nov, real reply).
 
 ## 9. Open gaps and decisions
 
@@ -223,6 +227,7 @@ New, from real captured trip replies (fixtures committed under the module's test
 | No unplanned metro fault observed; every live alert is planned trackwork. The closure wording list is from planned alerts. | Open. Needs a captured real fault. |
 | How far ahead the planner loads replacement buses. Loaded for Richmond to Blacktown the next morning, not for Ashfield to Central, not for Mon 30 Nov. Those riders see nothing from version 2. | Accepted by owner 2026-11-21. |
 | Replacement legs for light rail and ferry. | Open, not yet seen. |
+| The metro alert request gives up after 3 s. One slow first request on a phone left the banner without its alert, and since A11 that means no banner. Leave now refetches every 30 s, so it recovered within about 30 s; a search for a later time does not auto-refresh and stayed without it until the screen was reopened. Seen once on a Pixel 6 Pro, not on the Pixel 10 Pro. | Decided 2026-11-22: retry once (A12). Main only, not in RC3 or `prod/1.30.0`. |
 | `active_period` read as one field and only the first period used. | Fix in PR 1. |
 
 ### Assumptions for approval (mandatory, no code until signed off). All rows signed.
@@ -233,14 +238,17 @@ Each row decides who sees a banner, when, or which cases count. Sign-off line:
 | # | Assumption | Evidence (real data, named cases) | What breaks if it is wrong | Decision |
 |---|---|---|---|---|
 | A1 | A replacement bus is a leg whose `transportation.iconId` is 14 ("Temporary Buses", class 5), or 22 ("Temporary Coaches", class 7) for regional. The same value is `transportation.product.id`. | 27 legs across Cronulla, Waterfall, Dapto, Olympic Park, Richmond and a metro closure, none on the 11 normal bus legs (id 5, "Sydney Buses Network"). `iconId` and both values are in the trip API's field documentation, copied in the app's `TripResponse.Transportation`. On a phone the Cronulla to Central results showed the banner on every row. | A replacement of another type is invisible, and a renamed product silently removes the banner. | Approved by ksharma-xyz, 2026-11-21 |
-| A2 | A banner shows only when the trip reply carries a replacement-bus leg. Alert text is never a trigger. A rider whose planner has not loaded the buses yet sees nothing. | Ashfield to Central Sun 22 Nov 7:00 am, closure from 6:20 am: trains, no buses. Richmond to Blacktown Sun 22 Nov: buses shown. | A rider days ahead of a closure is not warned. | Approved by ksharma-xyz, 2026-11-21 (option A) |
+| A2 | A banner shows only when the trip reply carries a replacement-bus leg. Alert text is never a trigger. A rider whose planner has not loaded the buses yet sees nothing. (Narrowed by A11: the leg must be in the first result.) | Ashfield to Central Sun 22 Nov 7:00 am, closure from 6:20 am: trains, no buses. Richmond to Blacktown Sun 22 Nov: buses shown. | A rider days ahead of a closure is not warned. | Approved by ksharma-xyz, 2026-11-21 (option A) |
 | A3 | An alert attached to a leg covers the whole route, so it is never a trigger by itself. | Central to Bondi Junction and Central to Coogee carried the Cronulla to Central closure. T1 trains from Parramatta carried the Richmond to Blacktown closure. | A banner for a rider far from the closed stretch. | Approved by ksharma-xyz, 2026-11-21 |
 | A4 | A rider whose results moved to another working mode sees no banner. | Sydenham to Central Sat 21 Nov: train closure live, planner returned metro only. | The rider does not learn trains are replaced. | Approved by ksharma-xyz, 2026-11-21 |
 | A5 | Banner title "Replacement buses on this trip" when replacement buses are in the results. | 1.30 shows the alert headline today, so this shortens the collapsed title. | The collapsed card says less than 1.30 does. | Approved by ksharma-xyz, 2026-11-21 |
 | A6 | Rows with a replacement-bus leg say "Replacement bus" in plain text, no border. | Cronulla to Central, Bankstown to Sydenham at 11:30 pm. | None beyond a longer row. | Approved by ksharma-xyz, 2026-11-21 |
-| A7 | The expanded banner shows the planner's own line alert (`type` `lineInfo`) attached to a leg in the results, as the planner gives it. With none, the banner is not expandable. | Cronulla to Central: the bus leg carried no alert, a train leg carried "Buses replace trains between Cronulla, Waterfall and Central" with its full HTML content and url. | A detail that does not explain the replacement, because leg alerts are route-wide (A3). | Approved by ksharma-xyz, 2026-11-21 ("makes sense" after the default was shown) |
+| A7 | The expanded banner shows the planner's own line alert (`type` `lineInfo`) attached to a leg in the results, as the planner gives it, unless a metro alert that also says buses replace the line supplies the detail (A10). With neither, the banner is not expandable. | Cronulla to Central: the bus leg carried no alert, a train leg carried "Buses replace trains between Cronulla, Waterfall and Central" with its full HTML content and url. | A detail that does not explain the replacement, because leg alerts are route-wide (A3). | Approved by ksharma-xyz, 2026-11-21 ("makes sense" after the default was shown) |
 | A8 | The 1.30 metro alert banner is unchanged except it reads every active period. 1.30 rules kept: closure wording, hidden when the rider filtered that mode out, trains and metro only, delays never show a banner. One banner per results screen; when a replacement leg and a metro alert both apply, the replacement-bus words show. | The metro feed carries 6 alerts on 2026-11-21, all `MODIFIED_SERVICE`. | The metro banner stays wording-based, which the check in section 4 found unreliable for trains. | The 1.30 rules: Approved by ksharma-xyz, 2026-11-21. Leaving metro unchanged and the precedence rule: Approved by ksharma-xyz, 2026-11-21 ("makes sense" after the default was shown). |
 | A9 | The later-today heads-up is deferred. It needs a closure's start time from alert text, which version 2 does not read for trains. | Metro closure from 11:20 pm Mon 23 Nov would be the only case. | A rider is not warned a closure starts later today. | Deferred, no code. Approved by ksharma-xyz, 2026-11-21 ("makes sense" after the default was shown). |
+| A10 | A metro alert's expanded text is NSW's headline and the alert's start and end (`active_period`), with a More info link. It is used whenever the alert says buses replace the line and a replacement leg is in the results, including when every result is a replacement bus and no metro train is listed. The description text, the bold times and the "last metro before buses" list from 1.30 are not shown. | The description carries two versions, language `en` (plain) and `en/html`, and they disagree. Bankstown to Sydenham, Mon 23 Nov: `en` says buses from 11:10 PM and the last metro leaves Bankstown 23:03; `en/html` says 11:20 PM and 11:40 PM by direction and the last metro leaves Bankstown 23:33. The planner listed a metro leaving Bankstown at 11:33 PM and the feed window starts 11:20 PM, so `en` was stale. 1.30 read the first version, which showed the stale times on a Pixel 10 Pro. Rough count: 4 of 6 metro alerts and 9 of 67 train alerts name different clock times in the two versions. Every replacement leg carries no alert of its own (`infos` empty) and NSW sends its description as "Unknown". | The rider loses the last-metro list, and the window is the whole alert's, not their direction's. Reading the HTML version instead was the other option: it matched the planner in the one case checked, but needs HTML parsing and is unproven elsewhere. | Approved by ksharma-xyz, 2026-11-21 (option "Headline + window + More info"). |
+| A11 | The replacement-bus banner shows only when the first result, the trip the rider would take next, has a replacement-bus leg, and only when there is an alert with a real link to open: the metro alert when it says buses replace the line, else the planner's line alert on a leg of that first result. Without the alert's link to the Transport for NSW website there is no banner, and that applies to the 1.30 metro alert banner too. Each row still says "Replacement bus". The rest of the 1.30 metro rules are unchanged. | Seven Hills to Redfern (owner's screenshot): tonight's two trips normal, replacement bus only in the 3rd result, tomorrow 6:29 am, and the banner showed at the top with nothing to open. Bankstown to Sydenham Mon 11:40 pm: 6 of 6 results replaced, metro alert opens. Tallawong to Bankstown Mon 11:40 pm: first result replaced, planner line alert with a link on its metro leg. Cronulla to Central: first result replaced, no alert on the replacement legs, so no banner. Parramatta to Central and Central to Bondi Junction: none. Both inputs are data fields (`iconId`, leg order, alert url). | A rider who misses the first trip and meets replacement buses in the second is not warned by this banner, only by the row text. A train closure with replacement buses and no planner alert (Cronulla) shows no banner. | Approved by ksharma-xyz, 2026-11-21 (options "Only if the first result has one" and "Hide the banner when there is no alert", then: "Unless we have a real alert link to go to we don't show the banner"). |
+| A12 | The metro alert request is tried a second time, straight away, when the first try times out (3 s) or errors and nothing is cached for that feed. When an answer is cached it is not retried, and the cached answer is kept as before. Never a third try, no wait between tries. | The first alert request after opening the timetable timed out once on a Pixel 6 Pro. Normal response 3.2 KB in 0.19 to 0.31 s, so 3 s is about ten times normal. Leave now already retries every 30 s through the 30 s refresh; a later-time search never refetches, so the retry is its only second chance. | A network that hangs with nothing cached costs 2 requests of 3 s per refresh instead of 1 (section 6, row 6). A second timeout still leaves no banner. | Retry once: approved by ksharma-xyz, 2026-11-22 ("1 option i agree"). The limit to nothing-cached was added by the author to keep steady-state cost at zero and is stated in the PR. |
 
 Dropped on 2026-11-21 after the reliability check: closed stretch from headline, stretch rules,
 route to line map, bundled station order, train alert feed. Each depended on reading text.

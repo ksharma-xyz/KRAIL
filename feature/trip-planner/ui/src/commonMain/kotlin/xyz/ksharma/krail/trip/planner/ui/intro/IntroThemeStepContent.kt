@@ -10,7 +10,6 @@ import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -46,6 +45,7 @@ internal fun IntroThemeStepContent(
 ) {
     val headline = introThemeHeadline(selectedThemeId)
     val change = LocalIntroThemeChange.current
+    val accent = introAccentColor(IntroStep.THEME)
     IntroStepFrame(
         headline = {
             // The room is that of the tallest headline at this width and text size, measured as it is drawn, so the
@@ -60,13 +60,14 @@ internal fun IntroThemeStepContent(
                         reservedLinesHeight = linesHeight,
                         spoken = headline.spoken,
                         heroLayout = headline.heroLayout,
+                        accent = accent,
                     )
                 } else {
                     // Inside the Intro's shell the words, the emoji and the colours are all played on the one clock of the sequence.
                     IntroThemeSequenceHeadline(
                         change = change,
                         reservedLinesHeight = linesHeight,
-                        accent = Color.Unspecified,
+                        accent = accent,
                     )
                 }
             }

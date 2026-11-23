@@ -33,6 +33,7 @@ internal fun IntroParkRideStepContent(state: IntroState, modifier: Modifier = Mo
                 emoji = introEmojiFor(IntroStep.PARK_RIDE),
                 spoken = PARK_RIDE_HEADING,
                 heroLayout = true,
+                accent = introAccentColor(IntroStep.PARK_RIDE),
             )
         },
         modifier = modifier,

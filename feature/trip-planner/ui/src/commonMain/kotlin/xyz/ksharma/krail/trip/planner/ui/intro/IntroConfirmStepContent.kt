@@ -44,6 +44,7 @@ internal fun IntroConfirmStepContent(state: IntroState, modifier: Modifier = Mod
                 spoken = CONFIRM_HEADING,
                 celebrate = true,
                 heroLayout = true,
+                accent = introAccentColor(IntroStep.CONFIRM),
             )
         },
         modifier = modifier,

@@ -20,10 +20,10 @@ internal sealed interface ToFromBlockStyle {
     /**
      * Search Stop's two soft pills on the one card the caller draws: both are the same taj text field in the soft
      * pill colours, [rowGap] apart with no divider, and which bar has focus changes the caret and the keyboard and
-     * nothing else. With [fillSurface] the bars are filled with the app's own surface instead, which is what a lone pill
-     * standing directly on the map wants, since the soft fill is only a touch off white and would nearly vanish there.
+     * nothing else. With [fixedLight] the bars are the fixed light card look instead (the Search Stop box's own tint and text, the
+     * same in both app modes), which is what a lone pill standing directly on the always light map wants.
      */
-    data class FloatingRows(val rowGap: Dp, val fillSurface: Boolean = false) : ToFromBlockStyle
+    data class FloatingRows(val rowGap: Dp, val fixedLight: Boolean = false) : ToFromBlockStyle
 
     /**
      * Search Stop's From and To card in the Timetable's own style (see [ToFromCardRows]): two plain rows on the soft tint

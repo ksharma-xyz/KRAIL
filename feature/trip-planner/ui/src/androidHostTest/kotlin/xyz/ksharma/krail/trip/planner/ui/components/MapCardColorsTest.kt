@@ -18,15 +18,19 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.taj.theme.contrastRatio
+import xyz.ksharma.krail.taj.theme.md_theme_light_onSurface
+import xyz.ksharma.krail.taj.theme.md_theme_light_softLabel
+import xyz.ksharma.krail.taj.theme.md_theme_light_surface
 import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.taj.themeDecorColor
 
 /**
- * The colours of every card that floats over the map, from the one accessor ([mapCardColors]): the soft tint family the
- * Timetable's cards are in, never a near black slab (the stop card was one in both modes) and never pure white. The table
- * of every theme in both modes is printed, so the real figures are on record, and held to the floors the brief set: the
- * text on the body and on the header 4.5 to 1 or better, the header a visibly different step from the body at 1.15 to 1
- * or better, and a chip's text on its tint 4.5 to 1 or better.
+ * The colours of every card that floats over the map, from the one accessor ([mapCardColors]). The Search Stop card, the bare
+ * pill, the notice, the Options card and the Options pill are one fixed light look in both app modes: the theme colour at
+ * 15 percent over white with the light palette's text and its `softLabel` hairline, never a dark tint and never the mode aware
+ * `softLabel`. The stop card keeps the older mode aware family (a body and a header band), which is held here as it was: the text
+ * on the body and on the header 4.5 to 1 or better, the header a visibly different step from the body at 1.15 to 1 or better.
+ * The table of every theme in both modes is printed, so the real figures are on record.
  *
  * The map ground is a stand in. The real tiles are not in a host test, so [MAP_GROUND] is the flat ground of the approved
  * mock, not a value read from the style.
@@ -91,38 +95,53 @@ class MapCardColorsTest {
     private val allThemes = KrailThemeStyle.entries
 
     /**
-     * The Search Stop card is the Timetable's own tint ([MapCardColors.tint]) with the page's text colour on it, the hairline
-     * `softLabel` as its edge in light mode, and no edge on the dark map where the card stands off the ground by itself. The
-     * numbers are printed for every theme, and held to the floors of the approved picture: text 4.5, the hairline and the dark
-     * card 3 against the map ground.
+     * The Search Stop card is one fixed light look in both app modes: the Timetable's light tint over white with the light
+     * palette's text, and the light palette's `softLabel` as its hairline. The numbers are printed for every theme and held to the
+     * floors of the approved picture: the text 4.5 to 1 on every theme and 17.5 to 18.3 on the four standard ones, the hairline
+     * 3.8 to 1 against the map ground, and the fill, the text and the edge the very same in light and dark app mode.
      */
-    private fun assertSearchStopCard(mode: String, dark: Boolean) {
+    private fun assertSearchStopCard(mode: String) {
         readTokens()
-        assertEquals(timetableTint, accessor.tint, "$mode: the card's tint is the Timetable's own")
+        val lightSurface = md_theme_light_surface
+        val lightText = md_theme_light_onSurface
+        assertEquals(lightText, accessor.onTint, "$mode: the text is the light palette's onSurface")
+        assertEquals(md_theme_light_softLabel, accessor.chipEdge, "$mode: the edge is the light palette's softLabel")
+        assertEquals(lightText, accessor.chip.contentColor, "$mode: a chip carries the same text")
+        val expected = themeColor.copy(alpha = TIMETABLE_ALPHA_LIGHT).compositeOver(lightSurface)
+        assertEquals(expected, accessor.tint, "$mode: the card is the theme at 15 percent over white")
+        assertEquals(expected, accessor.chip.containerColor, "$mode: a chip is the card's tint")
+        assertTrue(accessor.chipEdge.contrastRatio(MAP_GROUND) >= HAIRLINE, "$mode: the hairline is ${accessor.chipEdge.contrastRatio(MAP_GROUND)} to 1 against the map")
         for (style in allThemes) {
-            val tint = mapCardColorsFor(style.hexColorCode.hexToComposeColor(), darkMode = dark, surface = surface, onSurface = onSurface).chip
-            val text = onSurface.contrastRatio(tint)
-            val cardOnMap = tint.contrastRatio(MAP_GROUND)
-            val hairlineOnMap = softLabel.contrastRatio(MAP_GROUND)
-            println("SEARCHCARD $mode ${style.name} textOnTint=$text cardOnMap=$cardOnMap hairlineOnMap=$hairlineOnMap")
+            val tint = mapCardColorsFor(style.hexColorCode.hexToComposeColor(), darkMode = false, surface = lightSurface, onSurface = lightText).chip
+            val text = lightText.contrastRatio(tint)
+            println("SEARCHCARD $mode ${style.name} textOnTint=$text hairlineOnMap=${accessor.chipEdge.contrastRatio(MAP_GROUND)} hairlineOnTint=${accessor.chipEdge.contrastRatio(tint)}")
             assertTrue(text >= TEXT, "$mode ${style.name}: the stop name, prompt, dot and pin on the card are $text to 1")
-            if (dark) {
-                assertTrue(cardOnMap >= EDGE, "$mode ${style.name}: the dark card needs no edge, it is $cardOnMap to 1 against the map")
-            } else {
-                assertTrue(hairlineOnMap >= EDGE, "$mode ${style.name}: the hairline is $hairlineOnMap to 1 against the map")
-            }
+        }
+        for (style in themes) {
+            val tint = mapCardColorsFor(style.hexColorCode.hexToComposeColor(), darkMode = false, surface = lightSurface, onSurface = lightText).chip
+            val text = lightText.contrastRatio(tint)
+            assertTrue(text in CARD_TEXT_LOW..CARD_TEXT_HIGH, "$mode ${style.name}: the card text is $text to 1, the picture's 17.51 to 18.26")
         }
     }
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-notnight")
-    fun `in light mode the Search Stop card reads at 4_5 to 1 on every theme and its hairline holds 3 to 1 on the map`() =
-        assertSearchStopCard("light", dark = false)
+    fun `in light mode the Search Stop card is the fixed light look and reads at 17_5 to 18_3 on the standard themes`() =
+        assertSearchStopCard("light")
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night")
-    fun `in dark mode the Search Stop card reads at 4_5 to 1 on every theme and stands off the map by itself`() =
-        assertSearchStopCard("dark", dark = true)
+    fun `in dark mode the Search Stop card is the very same fixed light look, not a dark tint`() = assertSearchStopCard("dark")
+
+    @Test
+    @Config(qualifiers = "w411dp-h891dp-night")
+    fun `in dark mode the edge is not the mode aware softLabel, which is 1_82 to 1 against the map`() {
+        readTokens()
+
+        assertNotEquals(softLabel, accessor.chipEdge, "The mode aware softLabel in dark mode is ${softLabel.contrastRatio(MAP_GROUND)} to 1 against the map")
+        assertTrue(softLabel.contrastRatio(MAP_GROUND) < EDGE)
+        assertTrue(accessor.chipEdge.contrastRatio(MAP_GROUND) >= HAIRLINE)
+    }
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-notnight")
@@ -160,29 +179,37 @@ class MapCardColorsTest {
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-notnight")
-    fun `the accessor follows the Timetable's own tint function and the pure family agrees with it`() {
+    fun `in light mode the fixed tint is exactly taj's themeBackgroundColor over the surface, so it has not drifted`() {
         readTokens()
 
-        assertEquals(timetableTint, accessor.chip.containerColor, "A chip is exactly the Timetable's tint over the surface")
+        assertEquals(timetableTint, accessor.tint, "The card is exactly the Timetable's tint over the surface")
+        assertEquals(timetableTint, accessor.chip.containerColor)
         val pure = mapCardColorsFor(themeColor, darkMode = false, surface = surface, onSurface = onSurface)
         assertEquals(timetableTint, pure.chip, "and the pure family has not drifted from taj's themeBackgroundColor")
         assertEquals(pure.body, accessor.body)
         assertEquals(pure.header, accessor.header)
         assertEquals(onSurface, accessor.onCard)
+        assertEquals(onSurface, accessor.onTint)
     }
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night")
-    fun `in dark mode the chip is the Timetable's tint too`() {
+    fun `in dark mode the stop card keeps its mode aware family and the fixed tint is the light one`() {
         readTokens()
 
-        assertEquals(timetableTint, accessor.chip.containerColor)
-        assertEquals(timetableTint, accessor.header, "and the dark header is that same tint")
+        assertEquals(timetableTint, accessor.header, "the stop card's dark header is still the Timetable's dark tint")
+        assertNotEquals(timetableTint, accessor.tint, "and the fixed card is not that dark tint")
+        assertTrue(accessor.tint.luminance() > 0.5f, "it is the light tint: ${accessor.tint.luminance()}")
+        assertEquals(onSurface, accessor.onCard, "the stop card's text is the dark mode text")
+        assertNotEquals(onSurface, accessor.onTint, "and the fixed card's is not")
     }
 
     private companion object {
         const val TEXT = 4.5f
         const val EDGE = 3f
+        const val HAIRLINE = 3.8f
+        const val CARD_TEXT_LOW = 17.5f
+        const val CARD_TEXT_HIGH = 18.3f
         const val HEADER_STEP = 1.15f
         const val DARK_STEP_OVER_PAGE = 1.3f
         val MAP_GROUND = Color(0xFFEDEBE4)

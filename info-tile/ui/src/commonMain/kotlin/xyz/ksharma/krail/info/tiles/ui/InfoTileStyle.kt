@@ -8,7 +8,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.shadow.Shadow
 import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.SHADOW_ALPHA
@@ -19,8 +21,9 @@ import xyz.ksharma.krail.info.tiles.ui.InfoTileDefaults.shape
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
+import xyz.ksharma.krail.taj.theme.md_theme_dark_surface
+import xyz.ksharma.krail.taj.theme.md_theme_light_surface
 import xyz.ksharma.krail.taj.themeBackgroundColor
-import xyz.ksharma.krail.taj.themeSolidBackgroundColor
 import xyz.ksharma.krail.taj.tokens.AiThemeGradientTokens
 
 /** How an [InfoTile] is painted. Only the surface changes; layout and behaviour are shared. */
@@ -35,9 +38,10 @@ enum class InfoTileStyle {
     AiFill,
 
     /**
-     * The soft tint of the rider's theme colour as the fill (the Timetable's own tint, solid, so nothing shows through
-     * it), the tile's 1 dp themed border and no drop shadow. For a tile that sits on a card or over the map, where the
-     * glow is the wrong look. The layout, the padding and the behaviour are the other styles' own.
+     * The soft tint of the rider's theme colour as the fill (the Timetable's own tint over the surface of the mode the tile is
+     * drawn in, solid, so nothing shows through it), the tile's 1 dp themed border and no drop shadow. For a tile that sits on a
+     * card or over the map, where the glow is the wrong look. The mode is the app mode, so a caller that pins the light palette
+     * (the always light map) gets the light tint in dark mode. The layout, the padding and the behaviour are the other styles' own.
      */
     Plain,
 }
@@ -87,8 +91,13 @@ internal fun Modifier.infoTileSurface(style: InfoTileStyle): Modifier = when (st
 
     InfoTileStyle.AiFill -> background(brush = aiFillBrush(), shape = shape)
 
-    InfoTileStyle.Plain -> background(color = themeSolidBackgroundColor(), shape = shape)
+    InfoTileStyle.Plain -> background(color = plainFill(), shape = shape)
 }
+
+/** The Timetable's tint laid over the page surface of the mode the tile is read in, so it is opaque and follows [isAppInDarkMode]. */
+@Composable
+private fun plainFill(): Color =
+    themeBackgroundColor().compositeOver(if (isAppInDarkMode()) md_theme_dark_surface else md_theme_light_surface)
 
 // The fill sits over the glow's shadow, so the shadow colour does not show through. The border is part of the glow.
 @Composable

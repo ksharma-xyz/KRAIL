@@ -2,7 +2,9 @@ package xyz.ksharma.krail.trip.planner.ui.components
 
 import androidx.compose.material3.ButtonColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
@@ -11,21 +13,34 @@ import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
+import xyz.ksharma.krail.taj.LocalContentColor
+import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.LocalThemeController
+import xyz.ksharma.krail.taj.theme.ThemeController
+import xyz.ksharma.krail.taj.theme.ThemeMode
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
-import xyz.ksharma.krail.taj.themeBackgroundColor
+import xyz.ksharma.krail.taj.theme.md_theme_light_onSurface
+import xyz.ksharma.krail.taj.theme.md_theme_light_softLabel
+import xyz.ksharma.krail.taj.theme.md_theme_light_surface
 import xyz.ksharma.krail.taj.themeDecorColor
 
 /**
- * Where every card that floats over the map takes its fill from: the soft tint of the rider's theme colour, the family the
- * Timetable's From and To card and the saved trip cards are drawn in (`themeBackgroundColor`), so a card is a light peach on
- * Train in light mode and a dark brown on Train in dark mode, and never a near black slab or a pure white one. The family is
- * in this one place, so it is tuned here and nowhere else.
+ * Where every card that floats over the map takes its colours from. The map is always light, in both app modes, so there are
+ * two families here and which one a surface wears is decided by what it is, not by the app mode.
  *
- * The family is the theme colour at a few strengths laid over the page's own surface, which makes each step an opaque
- * colour: what the Timetable draws is the same tint over the same surface, and over the light map a translucent wash would
- * show the map through it. There are two steps and which is stronger is the same in both modes, the header:
+ * The cards that hold the rider's own content on the map are one fixed light look ([tint], [onTint], [chip], [chipEdge]): the
+ * Search Stop box, the bare single pill, the location notice, the Options card and the Options pill. The fill is the theme
+ * colour at [TIMETABLE_ALPHA_LIGHT] over white (the Timetable's own tint function, evaluated with the light palette even in dark
+ * mode), the text is the light palette's `onSurface`, and the edge is a 1 dp hairline in the light palette's `softLabel` (3.81 to
+ * 1 against the map ground, where the dark mode `softLabel` would be 1.82). Every colour is a taj token, none is typed here.
+ * `MapCardColorsTest` pins them equal in light and dark app mode.
+ *
+ * The stop card is not part of that look and is not changed: its [body], [header] and [onCard] are the older mode aware family,
+ * the theme colour at a few strengths laid over the page's own surface, which makes each step an opaque colour (over the
+ * light map a translucent wash would show the map through it). There are two steps and which is stronger is the same in both
+ * modes, the header:
  * - Light mode: the body is the Timetable's tint, [TIMETABLE_ALPHA_LIGHT] of the theme colour, and the header a stronger
  *   step, [HEADER_ALPHA_LIGHT]. A stronger step reads clearly as a band and still keeps the text far above 4.5 to 1.
  * - Dark mode: the header is the Timetable's tint, [TIMETABLE_ALPHA_DARK], and the body is half of it, [BODY_ALPHA_DARK].
@@ -36,20 +51,22 @@ import xyz.ksharma.krail.taj.themeDecorColor
  */
 @Immutable
 internal class MapCardColors(
-    /** The body of a card: the soft tint. */
+    /** The stop card's body: the soft tint, in the mode the app is in. */
     val body: Color,
-    /** A band on a card (the stop card's header): a visibly different step of the same family. */
+    /** A band on the stop card (its header): a visibly different step of the same family. */
     val header: Color,
+    /** Text and icons on [body] and [header]: the page's own text colour, in the mode the app is in. */
+    val onCard: Color,
     /**
-     * The Timetable's own tint, opaque, whatever the mode: the Search Stop box (the From and To card) and the location notice
-     * under it are this colour, so they are the very card the rider knows from the Timetable. In light mode it is [body].
+     * The fill of the Search Stop card and of every surface that wears its look: the theme colour at 15 percent over white, the
+     * same in light and dark app mode, opaque.
      */
     val tint: Color,
-    /** Text and icons on [body] and [header]: the page's own text colour. */
-    val onCard: Color,
-    /** A small chip on the map: the Timetable's tint, opaque, with [onCard] on it. */
+    /** Text, markers and icons on [tint]: the light palette's `onSurface`, whatever the app mode. */
+    val onTint: Color,
+    /** A small chip on the map: [tint] with [onTint] on it. */
     val chip: ButtonColors,
-    /** The hairline round a chip, so a pale chip does not vanish into the light map. */
+    /** The hairline round every light card and chip: the light palette's `softLabel`, whatever the app mode. */
     val chipEdge: Color,
 )
 
@@ -87,27 +104,54 @@ internal data class MapCardTints(val header: Color, val body: Color, val chip: C
 /** The one accessor of the card colours, for the current theme and mode. */
 @Composable
 internal fun mapCardColors(): MapCardColors {
-    val tints = mapCardColorsFor(
-        themeColor = themeDecorColor(),
+    val theme = themeDecorColor()
+    val inMode = mapCardColorsFor(
+        themeColor = theme,
         darkMode = isAppInDarkMode(),
         surface = KrailTheme.colors.surface,
         onSurface = KrailTheme.colors.onSurface,
     )
-    // The Timetable's own function, read here so the chip can never drift from it: the same tint over the same surface.
-    val timetable = themeBackgroundColor().compositeOver(KrailTheme.colors.surface)
-    val onCard = tints.onCard
+    // The fixed light look: the same family function with the light palette's own tokens, so it is the Timetable's light tint over
+    // white and the light text colour even while the app is in dark mode.
+    val light = mapCardColorsFor(
+        themeColor = theme,
+        darkMode = false,
+        surface = md_theme_light_surface,
+        onSurface = md_theme_light_onSurface,
+    )
+    val tint = light.chip
+    val onTint = light.onCard
     return MapCardColors(
-        body = tints.body,
-        header = tints.header,
-        tint = timetable,
-        onCard = onCard,
+        body = inMode.body,
+        header = inMode.header,
+        onCard = inMode.onCard,
+        tint = tint,
+        onTint = onTint,
         chip = ButtonColors(
-            containerColor = timetable,
-            contentColor = onCard,
-            disabledContainerColor = timetable.copy(alpha = DISABLED_ALPHA),
-            disabledContentColor = onCard.copy(alpha = DISABLED_ALPHA),
+            containerColor = tint,
+            contentColor = onTint,
+            disabledContainerColor = tint.copy(alpha = DISABLED_ALPHA),
+            disabledContentColor = onTint.copy(alpha = DISABLED_ALPHA),
         ),
-        chipEdge = KrailTheme.colors.softLabel,
+        chipEdge = md_theme_light_softLabel,
+    )
+}
+
+/**
+ * Everything inside draws in the light palette whatever the app mode is: taj's own text and content colours are the light
+ * `onSurface`, and the app mode the theme colour's ink and tint are read in is light. It is for the surfaces that stand on the
+ * always light map (the Search Stop box, the Options card and the location notice) and reuse a component that reads the mode
+ * inside and takes no colours (a text button's ink, the info tile's border and tint). A colour that a component takes is passed
+ * to it from [mapCardColors] instead.
+ */
+@Composable
+internal fun MapLightScope(content: @Composable () -> Unit) {
+    val controller = remember { ThemeController(currentMode = ThemeMode.LIGHT, setThemeMode = {}) }
+    CompositionLocalProvider(
+        LocalThemeController provides controller,
+        LocalTextColor provides md_theme_light_onSurface,
+        LocalContentColor provides md_theme_light_onSurface,
+        content = content,
     )
 }
 
@@ -121,11 +165,11 @@ private const val DISABLED_ALPHA = 0.38f
 internal fun mapActiveChipColors(): ButtonColors = ButtonDefaults.buttonColors()
 
 /**
- * The 1 dp hairline round a chip that floats over the map, in `softLabel`, drawn over the chip's own fill so the chip's
- * edge shows even where its tint is close to the map's ground. It is the one place that edge is drawn.
+ * The 1 dp hairline round a chip or card that floats over the map, in the light palette's `softLabel` ([MapCardColors.chipEdge]),
+ * drawn over the fill so the edge shows even where its tint is close to the map's ground. It is drawn in both app modes.
  */
 @Composable
-internal fun Modifier.mapChipEdge(shape: Shape, color: Color = mapCardColors().chipEdge): Modifier =
+internal fun Modifier.mapChipEdge(shape: Shape, color: Color = md_theme_light_softLabel): Modifier =
     drawWithContent {
         drawContent()
         drawOutline(outline = shape.createOutline(size, layoutDirection, this), color = color, style = Stroke(width = 1.dp.toPx()))

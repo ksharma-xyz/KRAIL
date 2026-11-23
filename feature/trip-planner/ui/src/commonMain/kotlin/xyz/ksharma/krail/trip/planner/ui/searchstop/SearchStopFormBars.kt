@@ -29,7 +29,7 @@ import xyz.ksharma.krail.trip.planner.ui.components.ToFromBlock
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromBlockStyle
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromEditor
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
-import xyz.ksharma.krail.trip.planner.ui.components.softFieldColors
+import xyz.ksharma.krail.trip.planner.ui.components.mapCardColors
 import xyz.ksharma.krail.trip.planner.ui.components.toFromBarInsets
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -175,18 +175,18 @@ private fun BackArrowButton(onClick: () -> Unit) {
 }
 
 /**
- * The X in the end column: it clears the field and does nothing else. It is a circle with a cross in it, the go circle's
- * own colours, the bar's text colour for the circle and the bar's fill for the cross, so it is the same kind of round control
- * as the go circle it takes the place of while there is text, and reads on the soft pill and on the lone pill alike.
+ * The X in the end column: it clears the field and does nothing else. It is a circle with a cross in it, the fixed light card's
+ * text colour for the circle and its tint for the cross, so it reads on the lone pill, which is the fixed light look in both
+ * app modes.
  */
 @Composable
 private fun ClearTextButton(onClick: () -> Unit) {
-    val colors = softFieldColors()
+    val card = mapCardColors()
     CloseCircleButton(
         contentDescription = "Clear",
         onClick = onClick,
-        circle = colors.contentColor,
-        glyph = colors.containerColor,
+        circle = card.onTint,
+        glyph = card.tint,
         glyphSize = KrailTheme.dimensions.iconL,
         tag = TripPlannerTestTags.SEARCH_STOP_CLEAR,
         circleTag = TripPlannerTestTags.SEARCH_STOP_CLEAR_CIRCLE,

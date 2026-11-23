@@ -42,7 +42,8 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
-import xyz.ksharma.krail.taj.themeSolidBackgroundColor
+import xyz.ksharma.krail.taj.theme.md_theme_light_softLabel
+import androidx.compose.ui.graphics.luminance
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.mapCardColors
 import kotlin.math.abs
@@ -74,16 +75,18 @@ class SearchStopLocationNoticeTest {
     private var surface = Color.Unspecified
     private var tint = Color.Unspecified
     private var edge = Color.Unspecified
+    private var modeSoftLabel = Color.Unspecified
 
-    private fun setNotice(fontScale: Float = 1f, onGradient: Boolean = false) {
+    private fun setNotice(fontScale: Float = 1f) {
         composeRule.setContent {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, fontScale)) {
                 PreviewTheme {
                     composeView = LocalView.current
                     surface = KrailTheme.colors.surface
-                    tint = themeSolidBackgroundColor()
+                    tint = mapCardColors().tint
                     edge = mapCardColors().chipEdge
+                    modeSoftLabel = KrailTheme.colors.softLabel
                     // The map under the notice: a tap that reaches it is counted.
                     Box(modifier = Modifier.fillMaxSize().background(surface).clickable { mapTaps++ }.padding(16.dp)) {
                         LocationNotice(
@@ -94,7 +97,6 @@ class SearchStopLocationNoticeTest {
                                 dismisses++
                             },
                             onCtaClick = { ctas++ },
-                            onGradient = onGradient,
                         )
                     }
                 }
@@ -279,7 +281,7 @@ class SearchStopLocationNoticeTest {
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-notnight-xxhdpi")
-    fun `in light mode on the map the tile wears the 1 dp softLabel hairline`() {
+    fun `in light mode the tile wears the 1 dp light softLabel hairline`() {
         setNotice()
 
         assertTrue(close(edge, edgeAcross(edge)), "a pixel across the tile's edge is the hairline")
@@ -287,17 +289,24 @@ class SearchStopLocationNoticeTest {
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
-    fun `in dark mode on the map the tile wears no hairline, and on the gradient it does`() {
+    fun `in dark mode the tile wears the same light softLabel hairline, not the mode aware one`() {
         setNotice()
-        assertTrue(!close(edge, edgeAcross(edge)), "no hairline on the dark map")
+
+        assertTrue(close(edge, edgeAcross(edge)), "a pixel across the tile's edge is the light hairline in dark mode too")
+        assertNotEquals(modeSoftLabel, edge)
+        assertEquals(md_theme_light_softLabel, edge)
     }
 
     @Test
-    @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
-    fun `in dark mode on the gradient the tile wears the hairline`() {
-        setNotice(onGradient = true)
+    @Config(qualifiers = "w411dp-h891dp-night")
+    fun `in dark mode the tile is the card's own fixed light tint, with the card's text colour on it`() {
+        setNotice()
 
-        assertTrue(close(edge, edgeAcross(edge)), "a pixel across the tile's edge is the hairline")
+        val tile = boundsOf(TripPlannerTestTags.SEARCH_STOP_LOCATION_PILL)
+        val image = drawn()
+        assertTrue(close(tint, pixelAt(image, tile.right - 8.dp, tile.top + 8.dp)), "the fill is the card's tint, not a dark tint of it")
+        assertTrue(tint.luminance() > 0.5f, "and it is light: ${tint.luminance()}")
+        assertNotEquals(surface, tint)
     }
 
     @Test

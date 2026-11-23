@@ -182,7 +182,7 @@ internal fun ToFromBlock(
             ),
             insets = insets,
             rowGap = style.rowGap,
-            fillSurface = style.fillSurface,
+            fixedLight = style.fixedLight,
             modifier = modifier,
         )
         return

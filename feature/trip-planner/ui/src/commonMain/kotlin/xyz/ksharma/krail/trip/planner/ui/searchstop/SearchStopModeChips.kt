@@ -20,14 +20,18 @@ import kotlinx.collections.immutable.ImmutableSet
 import xyz.ksharma.krail.core.transport.ModeSelectionSurface
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
+import xyz.ksharma.krail.taj.theme.md_theme_light_surface
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.components.MapLightScope
 import xyz.ksharma.krail.trip.planner.ui.components.TransportModeChip
 import xyz.ksharma.krail.trip.planner.ui.components.mapCardColors
+import xyz.ksharma.krail.trip.planner.ui.components.mapChipEdge
 
 /**
- * The mode filter block of the map state: a rounded card in the soft theme tint ([mapCardColors], the family the Timetable's
- * cards are in) with the box edge ([searchStopEdge], a hairline in light mode and no glow) round it, holding one whole chip per mode the map can show. It opens from the Options
- * button at the bottom of the map and never sits in the group card at the top.
+ * The mode filter block of the map state: a rounded card in the fixed light tint ([MapCardColors.tint], the Search Stop box's own
+ * colour in both app modes) with the box edge ([mapChipEdge], a hairline in both modes and no glow) round it, holding one whole
+ * chip per mode the map can show. It opens from the Options button at the bottom of the map and never sits in the group card at
+ * the top.
  *
  * Whole chips wrap onto the next line when width is short, at every text size, so it is never a row that
  * scrolls sideways and never has a fade at an edge. A chip is never shrunk, clipped or broken across lines.
@@ -44,23 +48,25 @@ internal fun SearchStopModeBlock(
     val modes = remember { NswTransportConfig.modesFor(ModeSelectionSurface.NEARBY_STOPS) }
     val gaps = rememberSearchStopGaps()
     val shape = RoundedCornerShape(gaps.cardCorner)
-    FlowRow(
-        modifier = modifier
-            .fillMaxWidth()
-            .testTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS)
-            .searchStopEdge(shape)
-            .clip(shape)
-            .background(mapCardColors().body)
-            .padding(gaps.cardPadding),
-        horizontalArrangement = Arrangement.spacedBy(gaps.betweenRows),
-        verticalArrangement = Arrangement.spacedBy(gaps.betweenRows),
-    ) {
-        modes.forEach { mode ->
-            ModeChip(
-                mode = mode,
-                selected = NswTransportConfig.productClassFor(mode) in selectedModes,
-                onToggle = onToggle,
-            )
+    MapLightScope {
+        FlowRow(
+            modifier = modifier
+                .fillMaxWidth()
+                .testTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS)
+                .mapChipEdge(shape)
+                .clip(shape)
+                .background(mapCardColors().tint)
+                .padding(gaps.cardPadding),
+            horizontalArrangement = Arrangement.spacedBy(gaps.betweenRows),
+            verticalArrangement = Arrangement.spacedBy(gaps.betweenRows),
+        ) {
+            modes.forEach { mode ->
+                ModeChip(
+                    mode = mode,
+                    selected = NswTransportConfig.productClassFor(mode) in selectedModes,
+                    onToggle = onToggle,
+                )
+            }
         }
     }
 }
@@ -76,6 +82,7 @@ private fun ModeChip(
         transportMode = mode,
         selected = selected,
         onClick = { onToggle(mode) },
+        unselectedFill = md_theme_light_surface,
         modifier = Modifier
             .testTag(TripPlannerTestTags.searchStopModeChip(NswTransportConfig.productClassFor(mode)))
             .semantics {

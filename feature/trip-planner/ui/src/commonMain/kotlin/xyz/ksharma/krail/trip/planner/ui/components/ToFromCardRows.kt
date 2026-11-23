@@ -61,6 +61,8 @@ import xyz.ksharma.krail.taj.theme.getForegroundColor
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.md_theme_light_outline_subtle
+import xyz.ksharma.krail.taj.theme.md_theme_light_softLabel
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 
 /** What one row of the card says: the bar (its tag, prompt and tap) and the saved label of the stop it holds. */
@@ -129,7 +131,10 @@ internal fun ToFromCardRows(rows: CardRowsContent, modifier: Modifier = Modifier
                     end = grid.endReserved,
                 ),
             ) {
-                Divider(modifier = Modifier.testTag(TripPlannerTestTags.SEARCH_ROW_DIVIDER))
+                Divider(
+                    modifier = Modifier.testTag(TripPlannerTestTags.SEARCH_ROW_DIVIDER),
+                    color = md_theme_light_outline_subtle,
+                )
             }
             CardStopRow(
                 row = rows.to,
@@ -268,7 +273,7 @@ private fun IdleRowText(row: CardRowContent, padding: PaddingValues) {
             readOnly = true,
             modifier = Modifier.fillMaxWidth().focusProperties { canFocus = false },
             colors = cardFieldColors(),
-            textStyle = if (bar.hasStop) KrailTheme.typography.titleMedium.copy(color = KrailTheme.colors.onSurface) else null,
+            textStyle = if (bar.hasStop) KrailTheme.typography.titleMedium.copy(color = mapCardColors().onTint) else null,
             lineLimits = TextFieldLineLimits.MultiLine(),
             minHeight = 0.dp,
             contentPadding = padding,
@@ -279,14 +284,14 @@ private fun IdleRowText(row: CardRowContent, padding: PaddingValues) {
 /** No fill of its own, so the card's tint shows, and the page's text colour for the text, the prompt and the caret. */
 @Composable
 private fun cardFieldColors(): TextFieldColors {
-    val ink = KrailTheme.colors.onSurface
+    val ink = mapCardColors().onTint
     return TextFieldColors(containerColor = Color.Transparent, contentColor = ink, placeholderColor = ink, cursorColor = ink)
 }
 
 /** The marker in its 20 dp box: the stop's label icon, else the 10 dp dot for From or the pin for To, in the page's text colour. */
 @Composable
 private fun RowMarker(isOrigin: Boolean, label: String?, grid: CardGrid) {
-    val ink = KrailTheme.colors.onSurface
+    val ink = mapCardColors().onTint
     val labelIcon = label?.let { stopLabelIcon(it) }
     Box(modifier = Modifier.size(grid.marker), contentAlignment = Alignment.Center) {
         when {
@@ -349,7 +354,7 @@ private fun rememberNaturalWidth(row: CardRowContent, editing: Boolean): Dp {
  */
 @Composable
 private fun SwapCircle(onSwap: () -> Unit) {
-    val fill = KrailTheme.colors.softLabel
+    val fill = md_theme_light_softLabel
     var turned by rememberSaveable { mutableStateOf(false) }
     val reduceMotion = isReduceMotionEnabled()
     val angle by animateFloatAsState(
@@ -415,7 +420,7 @@ private fun GoCircle(visible: Boolean, onClick: () -> Unit) {
 /** The X in a row's circle slot while its field holds text: it clears the field and does nothing else. */
 @Composable
 private fun ClearCircle(state: TextFieldState) {
-    val fill = KrailTheme.colors.softLabel
+    val fill = md_theme_light_softLabel
     CloseCircleButton(
         contentDescription = "Clear",
         onClick = { state.clearText() },

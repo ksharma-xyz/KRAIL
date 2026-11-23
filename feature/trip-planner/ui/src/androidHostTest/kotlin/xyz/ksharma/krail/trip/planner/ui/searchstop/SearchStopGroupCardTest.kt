@@ -43,6 +43,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.theme.md_theme_light_softLabel
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.FROM_PLACEHOLDER
 import xyz.ksharma.krail.trip.planner.ui.components.TO_PLACEHOLDER
@@ -75,6 +76,7 @@ class SearchStopGroupCardTest {
     private var pillFill = Color.Unspecified
     private var tint = Color.Unspecified
     private var edge = Color.Unspecified
+    private var modeSoftLabel = Color.Unspecified
     private var composeView: View? = null
 
     private var toStopState by mutableStateOf<StopItem?>(null)
@@ -88,7 +90,6 @@ class SearchStopGroupCardTest {
         fontScale: Float? = null,
         toStop: StopItem? = null,
         fromStop: StopItem? = null,
-        onGradient: Boolean = false,
         fromLabel: String? = null,
         toLabel: String? = null,
         editing: ToFromField? = ToFromField.To,
@@ -110,6 +111,7 @@ class SearchStopGroupCardTest {
                     pillFill = softFieldColors().containerColor
                     tint = mapCardColors().tint
                     edge = mapCardColors().chipEdge
+                    modeSoftLabel = KrailTheme.colors.softLabel
                     typed = rememberTextFieldState()
                     Box(modifier = Modifier.fillMaxSize().background(surface).padding(gaps.edge)) {
                         SearchStopGroupCard(
@@ -129,7 +131,6 @@ class SearchStopGroupCardTest {
                                 toLabel = toLabelState,
                             ),
                             onBack = {},
-                            onGradient = onGradient,
                         )
                     }
                 }
@@ -149,6 +150,7 @@ class SearchStopGroupCardTest {
                     composeView = LocalView.current
                     surface = KrailTheme.colors.surface
                     pillFill = softFieldColors().containerColor
+                    tint = mapCardColors().tint
                     Box(modifier = Modifier.fillMaxSize().padding(gaps.edge)) {
                         SearchStopGroupCard(
                             form = SearchStopFormModel(
@@ -433,7 +435,7 @@ class SearchStopGroupCardTest {
     }
 
     @Test
-    fun `a single field is one bare pill with no card, 16 dp in on both sides and filled with the surface`() {
+    fun `a single field is one bare pill with no card, 16 dp in on both sides and filled with the card's fixed light tint`() {
         setSingleBar()
         showSingle(ToFromField.To, labelPromptFor("Home"))
 
@@ -448,8 +450,8 @@ class SearchStopGroupCardTest {
         val density = composeRule.density
         // A point in the pill clear of its text and icons: its right end, where nothing is drawn.
         val inPill = image.at(with(density) { (pill.right - 24.dp).roundToPx() }, with(density) { (pill.top + 24.dp).roundToPx() })
-        assertClose(surface, inPill, "the pill, the card's own fill and not the soft one")
-        assertNotEquals(pillFill, surface)
+        assertClose(tint, inPill, "the pill, the box's own fixed light tint and not the soft one")
+        assertNotEquals(pillFill, tint)
     }
 
     @Test
@@ -514,39 +516,31 @@ class SearchStopGroupCardTest {
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-notnight-xxhdpi")
-    fun `in light mode on the map the card wears the 1 dp softLabel hairline and no glow`() {
+    fun `in light mode the card wears the 1 dp light softLabel hairline and no glow`() {
         setBox(toStop = TOWN_HALL, fromStop = CENTRAL, editing = null)
 
         val (outside, onEdge) = pixelsOutsideAndOnEdge(edge)
         assertClose(surface, outside, "just outside the card, where the glow used to spread, is the page's own colour")
         assertClose(edge, onEdge, "across the card's edge there is a pixel of the softLabel hairline")
+        assertEquals(md_theme_light_softLabel, edge, "the hairline is the light palette's softLabel")
     }
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
-    fun `in dark mode on the map the card wears no edge at all, and no glow`() {
+    fun `in dark mode the card wears the same light softLabel hairline, never the mode aware one, and no glow`() {
         setBox(toStop = TOWN_HALL, fromStop = CENTRAL, editing = null)
 
         val (outside, onEdge) = pixelsOutsideAndOnEdge(edge)
         assertClose(surface, outside, "just outside the card is the page's own colour, no glow")
-        assertTrue(!isClose(edge, onEdge), "no pixel across the card's edge is the hairline on the dark map: $onEdge")
+        assertClose(edge, onEdge, "across the card's edge there is a pixel of the light softLabel hairline in dark mode too")
+        assertEquals(md_theme_light_softLabel, edge)
+        assertNotEquals(modeSoftLabel, edge, "the dark mode softLabel (B0B0B0, 1.82 to 1 against the map) is not what the edge uses")
     }
 
     @Test
-    @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
-    fun `on the gradient of the list state the card wears the hairline in dark mode too`() {
-        setBox(toStop = TOWN_HALL, fromStop = CENTRAL, editing = null, onGradient = true)
-
-        val (_, onEdge) = pixelsOutsideAndOnEdge(edge)
-        assertClose(edge, onEdge, "across the card's edge there is a pixel of the softLabel hairline on the gradient")
-    }
-
-    @Test
-    fun `the hairline is drawn in light mode always and in dark mode only on the gradient`() {
-        assertTrue(searchStopEdgeShown(onGradient = false, darkMode = false))
-        assertTrue(searchStopEdgeShown(onGradient = true, darkMode = false))
-        assertTrue(searchStopEdgeShown(onGradient = true, darkMode = true))
-        assertTrue(!searchStopEdgeShown(onGradient = false, darkMode = true))
+    fun `the stop card keeps its own edge rule, in light mode only`() {
+        assertTrue(searchStopEdgeShown(darkMode = false))
+        assertTrue(!searchStopEdgeShown(darkMode = true))
     }
 
     // endregion

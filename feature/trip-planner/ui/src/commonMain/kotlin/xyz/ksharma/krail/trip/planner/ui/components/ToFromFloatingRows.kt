@@ -31,6 +31,7 @@ import xyz.ksharma.krail.taj.components.TextField
 import xyz.ksharma.krail.taj.components.TextFieldColors
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.theme.KrailTheme
+import xyz.ksharma.krail.taj.theme.md_theme_light_onSurface_placeholder
 
 /** What the two floating rows say and do, in one holder so the block hands it over as one argument. */
 @Immutable
@@ -68,9 +69,9 @@ internal fun ToFromFloatingRows(
     insets: ToFromBarInsets,
     rowGap: Dp,
     modifier: Modifier = Modifier,
-    fillSurface: Boolean = false,
+    fixedLight: Boolean = false,
 ) {
-    val colors = floatingFieldColors(fillSurface)
+    val colors = floatingFieldColors(fixedLight)
     Column(modifier = modifier.fillMaxWidth()) {
         // The gap belongs to the From row, so a hidden From leaves nothing above To.
         AnimatedVisibility(
@@ -113,12 +114,21 @@ internal fun ToFromFloatingRows(
 }
 
 /**
- * The bars' colours: the shared [softFieldColors], or the same with the fill swapped for the app's own surface when
- * [fillSurface] is set. The text, the placeholder and the caret keep the soft colours' tokens, which read on both.
+ * The bars' colours: the shared [softFieldColors], or, when [fixedLight] is set, the Search Stop box's own fixed light look: its
+ * tint for the fill, the light `onSurface` for the text and caret, and the light placeholder token, all from the light palette
+ * so they are the same in both app modes.
  */
 @Composable
-private fun floatingFieldColors(fillSurface: Boolean): TextFieldColors =
-    softFieldColors().let { if (fillSurface) it.copy(containerColor = KrailTheme.colors.surface) else it }
+private fun floatingFieldColors(fixedLight: Boolean): TextFieldColors {
+    if (!fixedLight) return softFieldColors()
+    val card = mapCardColors()
+    return TextFieldColors(
+        containerColor = card.tint,
+        contentColor = card.onTint,
+        placeholderColor = md_theme_light_onSurface_placeholder,
+        cursorColor = card.onTint,
+    )
+}
 
 /**
  * The go circle of the floating rows: the opposite of the pill, its text colour for the circle and its fill for the

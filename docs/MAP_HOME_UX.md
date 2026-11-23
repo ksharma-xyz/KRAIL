@@ -112,16 +112,17 @@ If a design breaks one of these rules, the design changes, not the rule.
    nearest stops show when a location fix exists, and otherwise the suggested stops. The mode filter is not in the box: it is
    the Options button on the map's bottom row (rule 39). The map stays composed under the gradient, so going back to it
    keeps its camera, and its controls are hidden from a screen reader while it is covered.
-10. **(Replaced in part: on the map state the Search Stop box, the bare pill, the Options card and the notice are one fixed light
-    look in both app modes, and in the list state the box, the pill and the notice follow the app mode, see The Search Stop box. The
-    stop card keeps the mode aware family below.) Everything that floats on the map is the soft
+10. **(Replaced in part: the Search Stop box, the bare pill, the notice, the Options card and the home map's notices follow the app
+    mode on the map and in the list state alike, see The Search Stop box. The stop card keeps the mode aware family
+    below.) Everything that floats on the map is the soft
     theme tint, in light and dark mode, never a near black slab and never pure white.** Cards and chips take their fill from one accessor, `mapCardColors()`: the theme colour at a few strengths laid
     over the page's own surface, the family the Timetable's From and To card and the saved trip cards are drawn in, so Train
     is a light peach in light mode and a dark brown in dark mode, Metro a light mint and a dark green. The stop card's body
     and the Options card are the soft step, and the stop card's header is a stronger step, at least 1.15 to 1 from the body,
     with text at least 4.5 to 1 on both for Train, Metro, Bus and Ferry in both modes (`MapCardColorsTest` prints the table).
     A chip (the Options button and the Location permission required chip) is the Timetable's chip: the tint with the
-    page's text colour, plus a 1 dp `softLabel` hairline (`mapChipEdge`) so a pale chip holds against the light map, and
+    page's text colour, plus a 1 dp `softLabel` hairline (`mapChipEdge`) in light mode so a pale chip holds against the light map
+    (the dark tint is clear of the map on its own and has none), and
     Options takes taj's default solid theme colour while any mode is switched off. Placeholders on a tint use the page's
     text colour, never the placeholder token, which fails on the dark tints. **(The glow here is replaced: Search Stop has no glow, its edge is the `softLabel` hairline of The Search Stop box.)** Cards wore the info tile's glow around their
     corner (`Modifier.infoTileGlow`, through `searchStopEdge`) and the box was taj's `surface`; both are replaced. A pale card is
@@ -235,7 +236,8 @@ If a design breaks one of these rules, the design changes, not the rule.
     the filter icon (The Search Stop box replaces the extra small pill in the soft tint). It opens the mode chips as a card 8 above
     the line's visible top and shuts them again with a short fade and scale from the card's bottom start corner (200 ms in,
     150 ms out, reduced motion plain), a tap on the map shuts them too, and the selection (which modes show their stop pins) is kept while
-    the card is shut. The card is the box's fixed light tint with its hairline, as wide as the box, and its chips always wrap whole and never
+    the card is shut. The card is the box's tint, which follows the app mode, with its hairline in light mode, as wide as the box, and its
+    chips (the app's own, in the app's colours for the mode) always wrap whole and never
     scroll sideways. Options takes taj's default solid theme colour while any mode is switched off, with no count. Options
     is drawn only while the location permission is granted (`modeControlsFor`): not asked yet or refused it is not drawn
     at all, it fades and scales back in when the permission is granted, and the modes the rider switched off are kept.
@@ -410,27 +412,36 @@ A tapped pin opens a floating stop card, never a bottom sheet.
 ### The Search Stop box (S7 on S6, replaces the pills, the back arrow, the glow, the old go circle and the chip)
 
 This block is in force where it differs from rules 8, 10, 24, 33, 35 and 36 above, which are marked replaced below. S7 replaces
-the S6 card colours, the S6 swap circle and the marker that wrapped above a long name. The map is always light, so the cards on it
-are one fixed light look in both app modes. S9 narrows that to the map state: the list state has no map, its ground is the cloud
-gradient, and the box there follows the app mode (the next two bullets).
+the S6 card colours, the S6 swap circle and the marker that wrapped above a long name. S7 also made the cards on the map one fixed
+light look in both app modes, because the map is always light. S10 replaces that: the cards that hold the rider's own content
+follow the app mode on the map too, so a card is one colour wherever it stands (the next bullet).
 
-- **(Replaced in part by the next bullet: this holds on the map state only, the list state's box, pill and notice follow the app
-  mode. S9 replaced the S7 statement that the list state's box is fixed light.) The card colour on the map is fixed light, in light
-  and dark app mode.** The box, the bare pill, the Options card, the Options pill's
-  white and the notice read the light palette (`MapLightScope`, `mapCardColors()`): the theme colour at 15 percent over white
-  for the fill, the light `onSurface` for text, markers and glyphs, and a 1 dp light `softLabel` hairline (`mapChipEdge`) in
-  both modes, never the mode aware one. Card text is 17.5 to 18.3 to 1 on the four standard themes and the hairline is 3.81 to 1
-  against the map ground (`SearchStopContrastTest` prints them). The stop card is not changed. No glow anywhere on Search Stop.
-- **The card colour in the list state follows the app mode.** The list state and a wide window's left pane have no map, so the box,
-  the bare pill (the label assign pill and the typing pill) and the notice stand on the cloud gradient and wear the app mode's own
-  look (`CardGroundScope`, `mapCardColors()`). Light mode is exactly the fixed light look above, with no visible change. Dark mode
-  is the Timetable's own dark tint, the theme colour at 45 percent over the dark surface, with cream text (`onSurface`), the dark
-  `softLabel` 1 dp hairline (`mapChipEdge`) and the dark `outlineSubtle` divider. The clear X, the swap glyph, the dot and pin, the
-  pill's back arrow and every prompt take the box's text colour, so they read in dark mode. Text on the dark tint is 6.59 to 8.15
-  to 1 on Train, Metro, Bus and Ferry, the hairline against the darkest point of the dark gradient is 7.93 to 1 and against a
-  bound for its lightest 2.00 to 4.06 (`MapCardColorsTest` prints them as `LISTGROUND`). The state is the one flag that shows the
-  gradient, so the screen decides it in one place. Moving between the map state and the list state in dark mode crossfades the
-  colours in 200 ms on the arrival curve, the spec the box and the pill already fade on, and is one frame with reduced motion.
+- **The card colour follows the app mode, on the map and in the list state alike.** The map is always light, but the cards on it
+  are not: the box, the bare pill (the label assign pill and the typing pill), the notice, the Options card and the home map's
+  notices wear the app mode's own look (`CardGroundScope`, `mapCardColors()`), so the map state and the list state draw the very
+  same fill, text and glyphs, and a rider who taps the box and watches it leave the map sees no change of colour. This replaces
+  the S7 sentence that the map cards are fixed light in both modes, and the S9 sentence that only the list state follows the app
+  mode and that the colours crossfade when the state changes.
+  - Light mode is the look it always was: the theme colour at 15 percent over white for the fill (Train FEEDDE, Metro D9F0EB, Bus
+    D9F4FD, Ferry E6F3E0), the light `onSurface` for text, markers, glyphs and the prompt, the light `outlineSubtle` divider and a
+    1 dp light `softLabel` hairline (`mapChipEdge`). Card text is 17.5 to 18.3 to 1 and the hairline is 3.81 to 1 against the map
+    ground.
+  - Dark mode is the Timetable's own dark tint, the theme colour at 45 percent over the dark surface (Train 7E4D1C, Metro 0F5544,
+    Bus 0F607A, Ferry 385E24), with cream text, markers and glyphs (`onSurface`, FCF6F1), the dark `outlineSubtle` divider and the
+    dark `softLabel` hairline where there is one. The clear X, the swap glyph, the dot and pin, the pill's back arrow and every
+    prompt take the box's text colour. Text on the dark tint is 6.59 to 8.15 to 1 on Train, Metro, Bus and Ferry
+    (`MapCardColorsTest`, `SearchStopCardLookTest`).
+  - The hairline is the one thing that depends on what the card stands on. It is drawn in light mode on both grounds. In dark mode
+    it is drawn on the gradient of the list state, where it separates the box from the page (7.93 to 1 against the darkest point of
+    the dark gradient), and it is not drawn on the map, where the dark card stands 5.9 to 7.3 to 1 off the map ground on its own and
+    the dark `softLabel` would be only 1.82 to 1. It fades in and out in 200 ms on the card spec (`mapCardFadeSpec`) when the state
+    changes, and jumps with reduced motion. Nothing else moves between the states.
+  - The state is the one flag that shows the gradient (`showGradient`, always true in a wide window's left pane), passed down as
+    `onGradient`, and it decides only the hairline. A card outside a `CardGroundScope` stands on the map.
+- **The map's controls are not cards and keep one look in both app modes.** The Options pill is white with the light text and a 1 dp
+  light `softLabel` hairline (`MapCardColors.pillEdge`), and the info icon, the location control and the go circle are as they
+  were. The Home, Work and Park & Ride chips on the home map, the Park & Ride cards and the stop card's actions are the fixed dark
+  of `FloatingDark` and are unchanged. The stop card keeps its mode aware family.
 - **The box is the Timetable's own From and To card.** One rounded card with two plain rows, From above To, and a 1 dp
   `outlineSubtle` divider between them. No pills, no second fill, no back arrow: system back does the two step back. The rows are
   still the editable fields (taj `TextField` with no container, fixed prompts Choose starting point and Choose destination). A
@@ -468,20 +479,23 @@ gradient, and the box there follows the app mode (the next two bullets).
   - While the row being edited holds text, a bare X (24 dp, the card's text colour, no circle, in a 48 dp box) takes that row's end.
 - **No glow anywhere in Search Stop.** The info tile keeps its glow on the home and in the timetable.
 - **The location notice is the real info tile.** Under the box, one 8 gap down, left aligned and the box's width: the `InfoTile`
-  in its `Plain` style (the box's own tint, fixed light on the map and the app mode's on the gradient, the 1 dp hairline, no shadow), expanded, titled Location is off, with
+  in its `Bare` style, which paints nothing, so the notice wears exactly the box's surface (`searchStopCardSurface`: the same fill,
+  the same 1 dp hairline rule and the same 16 dp corner, from one modifier), no shadow, expanded, titled Location is off, with
   Turn on location to see stops near you, the app's pin, Allow or Settings (what the old chip did on a tap) and the tile's own Not
-  now. Not now hides it for the visit only (a `rememberSaveable` flag in the top block, never saved, not through the info tile
+  now, which takes the box's text colour like the pin and the words (the call to action stays taj's filled button as it ships). Not now
+  hides it for the visit only (a `rememberSaveable` flag in the top block, never saved, not through the info tile
   manager). It comes and goes with the shared fade and size change, is not drawn in the phone list state, and takes every touch
   over it. Options stays hidden while location is not granted.
-- **The info tile.** `InfoTileStyle.Plain` is its own style. Its actions row is a `FlowRow` now, so at 320 dp and 200 percent the
-  call to action wraps whole under Not now instead of breaking in the middle of a word.
+- **The info tile.** `InfoTileStyle.Plain` is its own style, the soft tint with the tile's themed border, and `InfoTileStyle.Bare`
+  paints nothing, so a caller can give the tile another card's surface. The tile takes an optional corner (`shape`) for every style. Its actions row is a
+  `FlowRow` now, so at 320 dp and 200 percent the call to action wraps whole under Not now instead of breaking in the middle of a word.
 - **The Options pill is taj's medium button, white.** As shipped: 32 dp tall at 100 percent text, 36 at 130 and 39 at 150, growing
   with the text. Container white (the light `surface`), content the light `onSurface` (20.87 to 1), a 1 dp light `softLabel`
   hairline, through `ButtonColors`. It stays on one centre line with the 48 dp location control at every text size, keeps its 48
   dp finger target, and takes taj's solid theme colour while any mode is switched off.
 
-Cost. Layout and short animations only, no API calls, no payload, no battery, no new state. The list state colours (S9) are colour
-only, with one float that animates for 200 ms when the screen changes state in dark mode.
+Cost. Layout and short animations only, no API calls, no payload, no battery, no new state. The card colours (S9, S10) are colour
+only, with one float that animates the hairline for 200 ms when the screen changes state in dark mode.
 
 ### Spacing
 
@@ -511,7 +525,7 @@ only, with one float that animates for 200 ms when the screen changes state in d
   back down on dismiss); the stop card's action words (cross fade); the Departure Board (the height, the chevron and the rows' fade in
   step, the rows a touch after the height starts and gone before it ends, the loading, failed and rows phases cross fading); the top box
   (slides up and fades while the board is expanded, the card's room growing on the same curve); and the bare pill and the group card
-  (a fade between them with a soft size change and no clip); the box's colours between the map state and the list state in dark mode (a crossfade over 200 ms on the arrival curve, one frame with reduced motion); the go circle (arrives 0 to 1.2 by 180 ms and settles to 1.0 by 300 ms with an 80 ms fade, leaves in 150 ms with scale 1 minus p squared), the swap (glides between the divider level and the From row's centre line in 200 ms, fades in over 150 ms, a half turn in 300 ms) and the location notice (the shared fade and size change).
+  (a fade between them with a soft size change and no clip); the box's hairline between the map state and the list state in dark mode (a fade over 200 ms on the arrival curve, one frame with reduced motion, and nothing else about the box changes colour); the go circle (arrives 0 to 1.2 by 180 ms and settles to 1.0 by 300 ms with an 80 ms fade, leaves in 150 ms with scale 1 minus p squared), the swap (glides between the divider level and the From row's centre line in 200 ms, fades in over 150 ms, a half turn in 300 ms) and the location notice (the shared fade and size change).
 - A card never animates its height because data arrived. Only a rider's tap expands a Park & Ride card or the Departure Board.
 - Reduce motion: plain, no movement.
 

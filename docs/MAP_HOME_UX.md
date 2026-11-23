@@ -97,8 +97,8 @@ If a design breaks one of these rules, the design changes, not the rule.
    stops a pin card, a chip or Ask KRAIL has handed on: those open Search Stop, which holds the To and From form.
 7. **The microphone is on the home pill only.** Never on Search Stop.
 8. **Search Stop always opens on a clean map, with no keyboard.** Only four things float on it: the box with the two pills at
-   the top, the location chip under it while location is not allowed, and on the control line the Options button with the
-   map's own location control (rule 39). There is no list, no recents, no near you and no card at open, so the map stays
+   the top, the location chip under it while location is not allowed, and on the control line the Options button, only while
+   the location is allowed, with the map's own location control (rule 39). There is no list, no recents, no near you and no card at open, so the map stays
    the screen. The rider taps a pill to raise the keyboard and the list.
 9. **The recents are in the list state, not on the map.** (This replaces the earlier rule that floated a recents card on
    the map at open, which covered most of it.) Tapping a pill is the list state: the cloud gradient covers the map and the
@@ -111,21 +111,26 @@ If a design breaks one of these rules, the design changes, not the rule.
    nearest stops show when a location fix exists, and otherwise the suggested stops. The mode filter is not in the box: it is
    the Options button on the map's bottom row (rule 39). The map stays composed under the gradient, so going back to it
    keeps its camera, and its controls are hidden from a screen reader while it is covered.
-10. **A small control that floats alone on the map is a fixed dark container with fixed light content, in light and dark
-    app modes, and a card that holds content is taj's own surface.** The map is always light, so the location status
-    button, the notices, the Options button, the stop card and the Park & Ride cards never follow the app mode. The dark and
-    the light are taj's `stopLabelSurface` and `onStopLabelSurface`, the pair that is the same in both modes, passed
-    through a component's own `colors` parameter. The Search Stop box and the Options card are the other kind: taj's
-    `surface`, white in light mode and dark in dark mode, so they follow the app mode and are never a fixed dark and never
-    pure black, with the info tile's glow around their corner (`Modifier.infoTileGlow`: the theme coloured shadow and the
-    thin theme coloured border from `InfoTileDefaults`, one place for the numbers) and no plain outline. The glow is what
-    lifts a white box off the light map: the fill alone is about 1.2 to 1 against it. A translucent theme wash is not used
+10. **Everything that floats on the map is the soft theme tint, in light and dark mode, never a near black slab and never pure
+    white.** Cards and chips take their fill from one accessor, `mapCardColors()`: the theme colour at a few strengths laid
+    over the page's own surface, the family the Timetable's From and To card and the saved trip cards are drawn in, so Train
+    is a light peach in light mode and a dark brown in dark mode, Metro a light mint and a dark green. The stop card's body
+    and the Options card are the soft step, and the stop card's header is a stronger step, at least 1.15 to 1 from the body,
+    with text at least 4.5 to 1 on both for Train, Metro, Bus and Ferry in both modes (`MapCardColorsTest` prints the table).
+    A chip (the Options button and the Location permission required chip) is the Timetable's chip: the tint with the
+    page's text colour, plus a 1 dp `softLabel` hairline (`mapChipEdge`) so a pale chip holds against the light map, and
+    Options takes taj's default solid theme colour while any mode is switched off. Placeholders on a tint use the page's
+    text colour, never the placeholder token, which fails on the dark tints. Cards wear the info tile's glow around their
+    corner (`Modifier.infoTileGlow`, through `searchStopEdge`: the theme coloured shadow and the thin theme coloured border
+    from `InfoTileDefaults`, one place for the numbers) and no plain outline. The Search Stop box is taj's `surface` with the
+    same glow until it moves to the tint. The glow is what lifts a pale card off the light map: the fill alone is about 1.0
+    to 1 against it in light mode. A translucent theme wash is not used
     as a fill over the map. **taj components are used as they ship**, with their own sizes and defaults and only the
     parameters they expose: colours go through a component's own `colors` parameter or taj's text colour locals, never a
     restyle, a custom shape or shadow, a size outside `ButtonDefaults`, or a wrapper that redraws a taj look. taj has no
     card, chip or pill, so a container is an existing in-app card shell. `FloatingDarkTheme`, taj's `KrailTheme` fixed to
-    dark, is kept only where a reused component reads mode adaptive tokens inside and takes no colours (the departure
-    board's rows and the label pills on a fixed dark card). The pills are taj's `TextField`, 48 tall, full radius, in the
+    dark, is kept only where a reused component reads mode adaptive tokens inside and takes no colours and sits on a fixed
+    dark card (the Park & Ride pin card, which keeps the fixed dark until it moves to the tint). The pills are taj's `TextField`, 48 tall, full radius, in the
     shared `softFieldColors()`: a fill that is a touch darker than the box in light mode and a touch lighter in dark mode,
     the page's own text colour, and a placeholder that passes 4.5 to 1 on it, with no ring and no border of their own. The
     fill is about 1.16 to 1 against the box in light mode and 1.22 in dark, soft on purpose, and the pills read because they
@@ -146,8 +151,8 @@ If a design breaks one of these rules, the design changes, not the rule.
 ### Forms, cards and behaviour
 
 24. **Location needs one small button.** When location permission is not granted, one small status button, taj's filled
-    `Button` at its extra small size (normal weight text) in the fixed dark, with a 48 touch target, sits directly under the
-    box on Search Stop's map state, at the box's left edge and one 8 gap below it. It is not inside the box, which holds only
+    `Button` at its extra small size (normal weight text) in the soft theme tint with a hairline (rule 10), with a real 48 dp
+    touch target, sits directly under the box on Search Stop's map state, at the box's left edge and one 8 gap below it. It is not inside the box, which holds only
     the To and From pills. At large text its words wrap inside it. It is not drawn in the list state of a phone, which is the
     box and the list, and a wide window's list pane keeps it. Tapping it asks for permission, or opens Settings if refused.
     On home the same status is the same button, and it is one of the whole items in the chips' own wrapping row, left aligned
@@ -227,11 +232,15 @@ If a design breaks one of these rules, the design changes, not the rule.
     (spacingXS), measured from the i and not from the icon's slot, so the gap is the same at every text size and the line rises
     with the pill. Its 48 finger target is a real box that is itself the clickable, and it ends where the i begins, so it
     reaches over the icon's empty top edge and never over the i. Options and the i share the box's left edge. Options is taj's
-    extra small `Button` reading Options after the filter icon, in the fixed dark. It opens the mode chips as a card 8 above
+    extra small `Button` reading Options after the filter icon, in the soft theme tint with a hairline (rule 10). It opens the mode chips as a card 8 above
     the line's visible top and shuts them again with a short fade and scale from the card's bottom start corner (200 ms in,
     150 ms out, reduced motion plain), a tap on the map shuts them too, and the selection (which modes show their stop pins) is kept while
-    the card is shut. The card is taj's surface with the glow, as wide as the box, and its chips always wrap whole and never
-    scroll sideways. Options shows its active look, the two colours swapped, while any mode is switched off, with no count.
+    the card is shut. The card is the soft tint with the glow, as wide as the box, and its chips always wrap whole and never
+    scroll sideways. Options takes taj's default solid theme colour while any mode is switched off, with no count. Options
+    is drawn only while the location permission is granted (`modeControlsFor`): not asked yet or refused it is not drawn
+    at all, it fades and scales back in when the permission is granted, and the modes the rider switched off are kept.
+    Options and the location control also fade and shrink away while a stop card is open, and come back when it is dismissed,
+    and an open Options card is shut as the button goes.
     Options and the card are in the map state only and are gone while the keyboard is up. The map's compass and scale bar
     start 8 under the box and the chip. Tapping a pill is the list state (rule 9), with the keyboard. X clears the text and
     keeps the recents. Back, or Select on map, returns to the map state, and back again goes home. System back is a two-step
@@ -253,8 +262,9 @@ If a design breaks one of these rules, the design changes, not the rule.
     the screen changing. Where a message is needed, it takes a place in the layout and everything else moves to make room.
 43. **Icons and behaviours are the app's own.** Find the app's version of a control before drawing it. A new icon, menu or
     pattern needs an explicit yes.
-44. **No custom transitions.** Screens change with the platform's standard navigation transition only. No pill that rises
-    while cards fade, no card that grows into its screen.
+44. **No custom transitions between screens.** Screens change with the platform's standard navigation transition only. No
+    pill that rises while cards fade, no card that grows into its screen. What floats on the map inside Search Stop moves on
+    the one motion spec (Motion), and only there.
 45. **One column, one set of edges.** Trips are one vertical column, at most 560 wide and centred. The cards, the chips and
     the pill share its left and right edges at every size. Expanded and dual screen keep the 480 list pane with the map
     beside it, and the same rule holds inside the pane.
@@ -267,6 +277,11 @@ If a design breaks one of these rules, the design changes, not the rule.
     once, never when a station is already saved, and never when the Intro already asked. The card is the Park & Ride tile's own
     shell and figures with the two buttons under them, in the row's place while there is no row. Home that has no station near
     gives no card, even with the rider at one.
+48. **Every X is inside a circle.** The close X of the stop card and the clear X of the search field are taj's round icon button,
+    a 40 dp circle in a real 48 dp box that is itself the clickable, because Compose's minimum touch target loses to the map
+    under a control that floats over it. The cross is one step of the icon scale larger than a bare glyph (24 on the card, 32 in
+    the field). The stop card's circle is the app's surface on the header band, the field's is the go circle's own pair, and the
+    cross is 4.5 to 1 or better on its circle. A screen reader hears one button, Close with the stop's name or Clear.
 
 ## Design rules
 
@@ -278,13 +293,13 @@ If a design breaks one of these rules, the design changes, not the rule.
 | Top | KRAIL logo (left), Discover and Settings (right), nothing else | One centre line, 16 insets, solid, floating. The card stack never rises into it. |
 | Card stack | Two trips, the Park & Ride row, the rest of the trips | Scrolls vertically inside its own height. The Park & Ride row scrolls sideways. |
 | Chips | Set Home, Set Work, + Park & Ride | One wrapping flow of whole items above the pill, taj's small filled button in the fixed dark with a 48 touch target. Home and Work chips stay once set. The Park & Ride chip stays, so Add is always one tap. From about 650 wide they share the pill's row and the pill takes the rest. It never scrolls. |
-| Notices | The location button and the Map offline button, only while one applies | Taj's extra small filled button in the fixed dark, whole items in the chips' own flow, left aligned on the chips' edge (rule 24). |
+| Notices | The location button and the Map offline button, only while one applies | Taj's extra small filled button in the soft theme tint with a hairline (rule 10), whole items in the chips' own flow, left aligned on the chips' edge (rule 24). |
 | Pill | Taj's text field, read only, in the fixed dark, mic at the end | Bottom, in the thumb's reach. Shares the column's edges (rule 45). The only search bar home ever shows: no To and From block, no go circle, no swap button. |
 
 ### The card shell
 
 - Saved trips and Park & Ride share one shell, copied from `SavedTripCard` and `ParkRideCard`.
-- Background: a saved trip card is the theme colour wash (`themeBackgroundColor()`), 15% light and 45% dark. A card that floats on the map (the Park & Ride tiles and cards, the stop card, the suggestion card) is the fixed dark, opaque, with fixed light content (rule 10), because a translucent wash is unreadable over the light map.
+- Background: a saved trip card is the theme colour wash (`themeBackgroundColor()`), 15% light and 45% dark. A card that floats on the map is opaque, because a translucent wash is unreadable over the light map: the stop card and the Options card are the soft tint laid over the page surface (rule 10), and the Park & Ride tiles and cards and the suggestion card are still the fixed dark with fixed light content.
 - Padding 16, corner radius 16, 8 between cards in the stack.
 - A card is a whole tap target. Minimum height 48.
 - Saved trip: two stop names stacked, 12 apart. A labelled end follows rule 37.
@@ -326,27 +341,39 @@ If a design breaks one of these rules, the design changes, not the rule.
 
 A tapped pin opens a floating stop card, never a bottom sheet.
 
-- Line 1 is the stop name with a 48 close button at the right. A card closes, a field does not.
-- Line 2 is the mode badges, left.
-- Then the Departure Board, straight on the card's one surface: no card, background or padding of its own inside the card, the
-  rows and their dividers only.
-- Padding 16 above and below and 16 from each side, applied once, so the stop name, the board title, the rows and the buttons
-  share one left edge. 8 between the blocks. The Park & Ride pin card is the same shell.
+- The card is two parts. The header is a band in the stronger tint step with the card's corner on its top: the stop name as
+  the card's title (the app's `title`, 20 sp bold, the largest and strongest style on the card), the mode badges under
+  it, and the close X at the end, a 40 circle in a 48 target (rule 47). The stop name may wrap inside the band without
+  pushing the X out. The body is the soft tint: the Departure Board row (the section label, `titleMediumRegular`, 16 sp
+  regular, so it never reads as the title at 100 or 200 percent) and the actions. No divider, the band is the separation,
+  and the same 16 edge inset is in both parts, so the stop name, the board title, the rows and the buttons share one left
+  edge. 8 between the blocks.
 - The board heading holds the title and the chevron, and the whole row, at least 48 tall, opens and closes the board, not only
-  the arrow. The board is closed until the heading is tapped, and only then is it fetched. Open, it lists every departure for every line, and the rider narrows it with the board's own filter, the pill and
-  the per mode line groups above the rows. There is no Lines chip.
-- Buttons at the bottom: Save as pills, then Go here or Start here. The pills are the app's own label pills, a label no stop
-  carries outlined and worded "Save as Home", and the label this stop carries one filled pill that is not a control. A label
-  sitting on another stop is not offered. The pills are whole items that wrap, 48 tall, and the row keeps the tallest room it
-  has held so assigning a label never shortens the card. The action reads Go here when choosing a destination and Start here in
-  a start search. While a stop is being chosen for a label it stays Select stop and there is no Save as.
+  the arrow. The board is closed until the heading is tapped, and only then is it fetched. Open, it lists every departure for
+  every line, and the rider narrows it with the board's own filter, the pill and the per mode line groups above the rows. There
+  is no Lines chip.
+- The actions are pinned under the board, so the board scrolls inside the card and the action never leaves it. Save as pills, then
+  the one primary action, taj's theme coloured `Button`, worded by what the rider is doing on Search Stop: Set as destination
+  for the To field, Set as starting point for the From field, and Set as followed by the label's saved name exactly as saved
+  (Set as Home, Set as Work, Set as Gym) when a stop is being chosen for a label. It is one line that ends in an ellipsis if too
+  long, and a screen reader hears the words drawn. The words cross fade if the context changes with the card open. Hosts with no
+  field to name, the home map, keep Go here (Start here in a start search) and Select stop. The pills are the app's own label
+  pills, a label no stop carries outlined and worded "Save as Home", and the label this stop carries one filled pill that is not a
+  control. A label sitting on another stop is not offered. The pills are whole items that wrap, 48 tall, and the row keeps the
+  tallest room it has held so assigning a label never shortens the card. While a stop is being chosen for a label there is no
+  Save as.
+- Expanding the board hides the box at the top (the group card or the bare pill, and the location chip) with a slide up and a fade,
+  and the card takes its room, up to the window less the top inset and a margin. The box is kept, not rebuilt. It returns when
+  the board is collapsed or the card is dismissed. System back goes one step at a time: it shuts an expanded board, then dismisses
+  the card, then is the screen's own two step back.
+- The card slides up from the bottom with a fade as it arrives and slides back down as it is dismissed (see Motion).
 - A Park & Ride pin shows the station's numbers instead of the board: the total and its time when the station has several car
   parks, then every car park stacked at equal weight, each with its own Directions button, then Add to home or Remove from
   home. Directions use the car park's own coordinates. A car park without them has no Directions button.
   Go here sits under Add to home, the primary action, when the station has a stop in the stops table, the smallest stop id the table holds, and a station
   with no stop has no Go here, so the card never promises a trip it cannot start (rule 40).
-- The card floats at the bottom of the map in the one column of rule 45, on the fixed dark, opaque, with fixed light content (rule 10), and closes
-  with its close button, a tap on the map or system back.
+- The card floats at the bottom of the map in the one column of rule 45, in the soft tint of rule 10 (the Park & Ride pin card
+  keeps the fixed dark for now), and closes with its close button, a tap on the map or system back.
 
 ### Search bar
 
@@ -374,7 +401,7 @@ A tapped pin opens a floating stop card, never a bottom sheet.
 5. The bar reads To with the stop. The From row sits under it with the go circle inside it at the end (rules 26 and 36), shown
    as soon as both bars hold a stop. Tapping a bar edits it in place. With no start, From reads Choose starting point and there
    is no go circle. The go circle is the only way out with a trip, and back from the results returns here.
-6. Tapping a pin opens a floating stop card: departures, Save as, Go here or Start here.
+6. Tapping a pin opens a floating stop card: departures, Save as, and Set as destination or Set as starting point (rule 10, Stop card).
 
 ### Spacing
 
@@ -395,8 +422,18 @@ A tapped pin opens a floating stop card, never a bottom sheet.
 
 - Screens change with the platform's standard navigation transition (rule 44). Nothing is choreographed.
 - Saving a trip is on the timetable. Back on home shows the new card already in place.
-- A card never animates its height because data arrived. Only a rider's tap expands a Park & Ride card.
-- Reduce motion: a plain cross-fade, no movement.
+- Inside Search Stop one motion spec, `MapMotion`, holds every number: an arrival takes 200 ms on a decelerating curve with a 150 ms
+  fade, a departure 150 ms on an accelerating one, a label that changes in place cross fades in 150 ms, the Departure Board moves in
+  300 ms, and the top box slides in 250 ms. Finite and short, never a loop. With reduced motion every one of them is plain: there or
+  not, with no frame between.
+- What moves: the Options card and button (fade and scale from the bottom start corner, 80 percent), the location control (to nothing
+  about its own centre), both hiding while a stop card is open or the location is not allowed; the stop card (slides up with a fade,
+  back down on dismiss); the stop card's action words (cross fade); the Departure Board (the height, the chevron and the rows' fade in
+  step, the rows a touch after the height starts and gone before it ends, the loading, failed and rows phases cross fading); the top box
+  (slides up and fades while the board is expanded, the card's room growing on the same curve); and the bare pill and the group card
+  (a fade between them with a soft size change and no clip).
+- A card never animates its height because data arrived. Only a rider's tap expands a Park & Ride card or the Departure Board.
+- Reduce motion: plain, no movement.
 
 ### Colour and type
 

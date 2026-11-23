@@ -58,30 +58,6 @@ class IntroNoDisabledButtonTest {
 
     private val disabled = SemanticsMatcher.keyIsDefined(SemanticsProperties.Disabled)
 
-    private fun show(state: IntroState) {
-        shown.value = state
-        if (!contentSet) {
-            contentSet = true
-            composeRule.setContent {
-                PreviewTheme {
-                    IntroFlowScreen(
-                        state = shown.value,
-                        suggestedStops = DEFAULT_SUGGESTED_STOPS,
-                        onEvent = { _, _ -> },
-                    )
-                }
-            }
-        }
-        composeRule.waitForIdle()
-    }
-
-    private fun theme(decision: TripDecision?, saved: Boolean, themeId: Int?) = picked.copy(
-        step = IntroStep.THEME,
-        tripDecision = decision,
-        saved = saved,
-        selectedThemeId = themeId,
-    )
-
     // One state for each shape of bar the model can give, with the stops data, which is not an input, left out on purpose.
     private val everyScreen: List<Pair<String, IntroState>> = listOf(
         "park and ride asking" to ON_PARK_RIDE,
@@ -106,6 +82,30 @@ class IntroNoDisabledButtonTest {
             }
         }
     } + ("theme, no answer recorded" to theme(decision = null, saved = false, themeId = KrailThemeStyle.Train.id))
+
+    private fun show(state: IntroState) {
+        shown.value = state
+        if (!contentSet) {
+            contentSet = true
+            composeRule.setContent {
+                PreviewTheme {
+                    IntroFlowScreen(
+                        state = shown.value,
+                        suggestedStops = DEFAULT_SUGGESTED_STOPS,
+                        onEvent = { _, _ -> },
+                    )
+                }
+            }
+        }
+        composeRule.waitForIdle()
+    }
+
+    private fun theme(decision: TripDecision?, saved: Boolean, themeId: Int?) = picked.copy(
+        step = IntroStep.THEME,
+        tripDecision = decision,
+        saved = saved,
+        selectedThemeId = themeId,
+    )
 
     @Test
     fun `no button on any screen in any state is disabled, in the merged tree or the unmerged one`() {

@@ -86,6 +86,8 @@ class SearchStopGroupCardTest {
     private var toLabelState by mutableStateOf<String?>(null)
     private var editingState by mutableStateOf<ToFromField?>(ToFromField.To)
     private lateinit var typed: androidx.compose.foundation.text.input.TextFieldState
+    private var singleEditing by mutableStateOf<ToFromField?>(null)
+    private var singlePrompt by mutableStateOf("")
 
     private fun setBox(
         fontScale: Float? = null,
@@ -178,9 +180,6 @@ class SearchStopGroupCardTest {
         }
         composeRule.waitForIdle()
     }
-
-    private var singleEditing by mutableStateOf<ToFromField?>(null)
-    private var singlePrompt by mutableStateOf("")
 
     private fun showSingle(editing: ToFromField?, prompt: String) {
         composeRule.runOnIdle {

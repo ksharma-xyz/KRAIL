@@ -138,7 +138,8 @@ class SearchStopCardSwapTest {
     }
 
     private fun exists(tag: String) = composeRule.onAllNodes(hasTestTag(tag), useUnmergedTree = true)
-        .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
+        .fetchSemanticsNodes(atLeastOneRootRequired = false)
+        .isNotEmpty()
 
     private fun change(block: () -> Unit) = composeRule.runOnUiThread {
         block()

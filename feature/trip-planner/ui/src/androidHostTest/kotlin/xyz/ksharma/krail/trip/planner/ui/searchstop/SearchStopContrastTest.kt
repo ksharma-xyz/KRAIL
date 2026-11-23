@@ -66,6 +66,7 @@ class SearchStopContrastTest {
     )
 
     private lateinit var read: Read
+    private lateinit var board: BoardSecondary
 
     private fun readTokens() {
         composeRule.setContent {
@@ -277,8 +278,6 @@ class SearchStopContrastTest {
 
     private class BoardSecondary(val body: Color, val header: Color, val softLabel: Color, val onSurface: Color)
 
-    private lateinit var board: BoardSecondary
-
     private fun readBoardSecondary() {
         composeRule.setContent {
             PreviewTheme {
@@ -350,8 +349,12 @@ class SearchStopContrastTest {
         }
         composeRule.waitForIdle()
         val results = mutableListOf<TextLayoutResult>()
-        composeRule.onNodeWithText("No upcoming departures found.", useUnmergedTree = true).fetchSemanticsNode()
-            .config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(results)
+        composeRule.onNodeWithText("No upcoming departures found.", useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .config
+            .getOrNull(SemanticsActions.GetTextLayoutResult)
+            ?.action
+            ?.invoke(results)
         return results.first().layoutInput.style.color to soft
     }
 

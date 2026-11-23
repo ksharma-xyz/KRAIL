@@ -23,14 +23,6 @@ class TripResultsBackStackTest {
     private val home = SavedTripsRoute
     private val searchStop = SearchStopRoute(fieldType = SearchStopFieldType.TO)
     private val timetable = timetable(from = "200060", to = "200070")
-
-    private fun timetable(from: String, to: String) = TimeTableRoute(
-        fromStopId = from,
-        fromStopName = "From $from",
-        toStopId = to,
-        toStopName = "To $to",
-    )
-
     private val stack = NavBackStack<NavKey>(home)
     private val navigator = Navigator(
         NavigationState(
@@ -38,6 +30,13 @@ class TripResultsBackStackTest {
             topLevelRoute = mutableStateOf(home),
             backStacks = mapOf(home to stack),
         ),
+    )
+
+    private fun timetable(from: String, to: String) = TimeTableRoute(
+        fromStopId = from,
+        fromStopName = "From $from",
+        toStopId = to,
+        toStopName = "To $to",
     )
 
     private fun stackNow(): List<NavKey> = stack.toList()

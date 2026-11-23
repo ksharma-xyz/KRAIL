@@ -78,7 +78,8 @@ class IntroTextWeightTest {
             SemanticsMatcher.keyIsDefined(SemanticsActions.GetTextLayoutResult),
             useUnmergedTree = true,
         )
-            .fetchSemanticsNodes().mapNotNull { node ->
+            .fetchSemanticsNodes()
+            .mapNotNull { node ->
                 val results = mutableListOf<TextLayoutResult>()
                 node.config[SemanticsActions.GetTextLayoutResult].action?.invoke(results)
                 results.singleOrNull()
@@ -94,7 +95,9 @@ class IntroTextWeightTest {
                 it.layoutInput.text.text == text
             }
         }
-            ?.layoutInput?.style?.fontWeight
+            ?.layoutInput
+            ?.style
+            ?.fontWeight
 
     private fun colourOf(text: String): Color =
         layouts().first { it.layoutInput.text.text.startsWith(text) }.layoutInput.style.color

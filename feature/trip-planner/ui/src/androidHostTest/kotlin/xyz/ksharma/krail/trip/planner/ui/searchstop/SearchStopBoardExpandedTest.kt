@@ -84,8 +84,7 @@ class SearchStopBoardExpandedTest {
 
     private val form = 136.dp + 16.dp
 
-    /** True while a test reads the box's place: the box stays in the semantics tree though it is hidden, so its bounds are readable. */
-    private var keepBoxReadable = true
+    private var hiddenBoxStaysInSemanticsTree = true
 
     private fun show(fontScale: Float = 1f, reduceMotion: Boolean = false, board: DeparturesState = TALL) {
         composeRule.setContent {
@@ -95,7 +94,9 @@ class SearchStopBoardExpandedTest {
                     val slide by rememberTopBoxSlide(hidden = hidden, reduceMotion = reduceMotion)
                     Box(modifier = Modifier.fillMaxSize()) {
                         Box(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures { mapTaps++ } })
-                        TopBox(slideProgress = { slide }, hidden = hidden && !keepBoxReadable)
+                        // True while a test reads the box's place: the box stays in the semantics tree though it is
+                        // hidden, so its bounds are readable.
+                        TopBox(slideProgress = { slide }, hidden = hidden && !hiddenBoxStaysInSemanticsTree)
                         if (cardOpen) {
                             StopCardPlacement(topReserve = stopCardTopReserveFor(form, slide), onHeight = {}) {
                                 StopCard(
@@ -201,7 +202,7 @@ class SearchStopBoardExpandedTest {
 
     @Test
     fun `while the box is hidden it takes no touch, the map under it does`() {
-        keepBoxReadable = false
+        hiddenBoxStaysInSemanticsTree = false
         show()
         val centre = composeRule.onNodeWithTag(BOX).fetchSemanticsNode().boundsInRoot.center
         setBoard(true)

@@ -193,17 +193,21 @@ class IntroThemeBadgeGridTest {
     fun `no two badges overlap for any number of badges and any room`() {
         (1..6).forEach { count ->
             listOf(64, 100, 154, 200, 288, 328, 379, 448, 900).forEach { available ->
-                val grid = themeBadgeGrid(count, available.toFloat(), badge)
+                assertNoTwoOverlap(count, available)
+            }
+        }
+    }
 
-                grid.xsDp.indices.forEach { i ->
-                    grid.xsDp.indices.filter { it > i }.forEach { j ->
-                        val distance = hypot(grid.xsDp[i] - grid.xsDp[j], grid.ysDp[i] - grid.ysDp[j])
-                        assertTrue(
-                            distance > badge,
-                            "badges $i and $j overlap: $count of them in $available dp, $distance apart",
-                        )
-                    }
-                }
+    private fun assertNoTwoOverlap(count: Int, available: Int) {
+        val grid = themeBadgeGrid(count, available.toFloat(), badge)
+
+        grid.xsDp.indices.forEach { i ->
+            grid.xsDp.indices.filter { it > i }.forEach { j ->
+                val distance = hypot(grid.xsDp[i] - grid.xsDp[j], grid.ysDp[i] - grid.ysDp[j])
+                assertTrue(
+                    distance > badge,
+                    "badges $i and $j overlap: $count of them in $available dp, $distance apart",
+                )
             }
         }
     }
@@ -284,28 +288,11 @@ class IntroThemeBadgeGridTest {
 
     @Test
     fun `two badges that float never touch, over the whole loop of all four, at every room`() {
-        // The whole loop of every badge at once is 6435 s, which is every period's common multiple, so it is walked through whole.
-        val loop = 6435f
         val rooms = listOf(154, 168, 198, 208, 248, 288, 309, 320, 328, 379, 448, 600)
         rooms.forEach { available ->
             val grid = themeBadgeGrid(4, available.toFloat(), badge)
             val a = grid.floatAmplitudeDp
-            val xs = FloatArray(4)
-            val ys = FloatArray(4)
-
-            var closest = Float.POSITIVE_INFINITY
-            var t = 0f
-            while (t < loop) {
-                for (i in 0 until 4) {
-                    val o = floatOffsetAt(i, t, a)
-                    xs[i] = grid.xsDp[i] + o.xDp
-                    ys[i] = grid.ysDp[i] + o.yDp
-                }
-                for (i in 0 until 4) {
-                    for (j in i + 1 until 4) closest = min(closest, hypot(xs[i] - xs[j], ys[i] - ys[j]) - badge)
-                }
-                t += 0.25f
-            }
+            val closest = closestWhileFloating(grid, a)
 
             assertTrue(
                 closest >= KEPT_GAP_DP,
@@ -314,47 +301,39 @@ class IntroThemeBadgeGridTest {
         }
     }
 
+    private fun closestWhileFloating(grid: ThemeBadgeGrid, a: Float): Float {
+        // The whole loop of every badge at once is 6435 s, which is every period's common multiple, so it is walked through whole.
+        val loop = 6435f
+        val xs = FloatArray(4)
+        val ys = FloatArray(4)
+
+        var closest = Float.POSITIVE_INFINITY
+        var t = 0f
+        while (t < loop) {
+            for (i in 0 until 4) {
+                val o = floatOffsetAt(i, t, a)
+                xs[i] = grid.xsDp[i] + o.xDp
+                ys[i] = grid.ysDp[i] + o.yDp
+            }
+            for (i in 0 until 4) {
+                for (j in i + 1 until 4) closest = min(closest, hypot(xs[i] - xs[j], ys[i] - ys[j]) - badge)
+            }
+            t += 0.25f
+        }
+        return closest
+    }
+
     @Test
     fun `a badge that dances never touches a neighbour that floats, at every moment of the dance and every share of it, at every room`() {
         val rooms = listOf(154, 168, 198, 208, 248, 288, 309, 320, 379, 448)
         rooms.forEach { available ->
             val grid = themeBadgeGrid(4, available.toFloat(), badge)
             val a = grid.floatAmplitudeDp
-            val xs = FloatArray(4)
-            val ys = FloatArray(4)
-            val radius = FloatArray(4)
 
             var closest = Float.POSITIVE_INFINITY
             for (dancer in 0 until 4) {
                 for (weight in listOf(0.25f, 0.5f, 0.75f, 1f)) {
-                    // The dance and the float are walked on their own times, which is more than the one clock gives them, so every
-                    // beat of the dance meets every place of the float.
-                    var danceTime = 0f
-                    while (danceTime < 2 * DANCE_LEG_SECONDS) {
-                        val dance = danceAt(danceTime)
-                        var floatTime = 0f
-                        while (floatTime < LOOP_SECONDS) {
-                            for (i in 0 until 4) {
-                                val o = floatOffsetAt(i, floatTime, a)
-                                if (i == dancer) {
-                                    xs[i] = grid.xsDp[i] + o.xDp + (dance.xDp - o.xDp) * weight
-                                    ys[i] = grid.ysDp[i] + o.yDp + (dance.yDp - o.yDp) * weight
-                                    radius[i] = badge / 2f * (1f + (dance.scale - 1f) * weight)
-                                } else {
-                                    xs[i] = grid.xsDp[i] + o.xDp
-                                    ys[i] = grid.ysDp[i] + o.yDp
-                                    radius[i] = badge / 2f
-                                }
-                            }
-                            for (i in 0 until 4) {
-                                for (j in i + 1 until 4) {
-                                    closest = min(closest, hypot(xs[i] - xs[j], ys[i] - ys[j]) - radius[i] - radius[j])
-                                }
-                            }
-                            floatTime += FLOAT_WALK_STEP
-                        }
-                        danceTime += DANCE_WALK_STEP
-                    }
+                    closest = min(closest, closestWhileDancing(grid, a, dancer, weight))
                 }
             }
 
@@ -363,6 +342,54 @@ class IntroThemeBadgeGridTest {
                 "a dancing badge comes to $closest dp of a neighbour in a room of $available dp, float $a",
             )
         }
+    }
+
+    private fun closestWhileDancing(grid: ThemeBadgeGrid, a: Float, dancer: Int, weight: Float): Float {
+        // The dance and the float are walked on their own times, which is more than the one clock gives them, so every
+        // beat of the dance meets every place of the float.
+        var closest = Float.POSITIVE_INFINITY
+        var danceTime = 0f
+        while (danceTime < 2 * DANCE_LEG_SECONDS) {
+            closest = min(closest, closestAcrossFloatLoop(grid, a, dancer, weight, danceAt(danceTime)))
+            danceTime += DANCE_WALK_STEP
+        }
+        return closest
+    }
+
+    private fun closestAcrossFloatLoop(
+        grid: ThemeBadgeGrid,
+        a: Float,
+        dancer: Int,
+        weight: Float,
+        dance: BadgeFrame,
+    ): Float {
+        val xs = FloatArray(4)
+        val ys = FloatArray(4)
+        val radius = FloatArray(4)
+
+        var closest = Float.POSITIVE_INFINITY
+        var floatTime = 0f
+        while (floatTime < LOOP_SECONDS) {
+            for (i in 0 until 4) {
+                val o = floatOffsetAt(i, floatTime, a)
+                if (i == dancer) {
+                    xs[i] = grid.xsDp[i] + o.xDp + (dance.xDp - o.xDp) * weight
+                    ys[i] = grid.ysDp[i] + o.yDp + (dance.yDp - o.yDp) * weight
+                    radius[i] = badge / 2f * (1f + (dance.scale - 1f) * weight)
+                } else {
+                    xs[i] = grid.xsDp[i] + o.xDp
+                    ys[i] = grid.ysDp[i] + o.yDp
+                    radius[i] = badge / 2f
+                }
+            }
+            for (i in 0 until 4) {
+                for (j in i + 1 until 4) {
+                    closest = min(closest, hypot(xs[i] - xs[j], ys[i] - ys[j]) - radius[i] - radius[j])
+                }
+            }
+            floatTime += FLOAT_WALK_STEP
+        }
+        return closest
     }
 
     // endregion

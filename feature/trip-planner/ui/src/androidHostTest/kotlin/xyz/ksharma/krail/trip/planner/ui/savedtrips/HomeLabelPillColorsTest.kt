@@ -166,8 +166,12 @@ class HomeLabelPillColorsTest {
         composeRule.waitForIdle()
 
         val layouts = mutableListOf<TextLayoutResult>()
-        composeRule.onNode(hasText("+ Home"), useUnmergedTree = true).fetchSemanticsNode().config
-            .getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(layouts)
+        composeRule.onNode(hasText("+ Home"), useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .config
+            .getOrNull(SemanticsActions.GetTextLayoutResult)
+            ?.action
+            ?.invoke(layouts)
         val ink = layouts.first().layoutInput.style.color
 
         assertEquals(getForegroundColor(sheet), ink, "The pill's text is the ink picked for the sheet.")

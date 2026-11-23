@@ -109,10 +109,11 @@ class IntroParkRideStepNarrowTest {
             .assertInsideWindow("OK")
         composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_SECONDARY_ACTION).assertDoesNotExist()
         val layouts = mutableListOf<TextLayoutResult>()
-        composeRule.onNodeWithText(
-            PARK_RIDE_NO_STATION,
-        ).fetchSemanticsNode().config[SemanticsActions.GetTextLayoutResult]
-            .action?.invoke(layouts)
+        composeRule.onNodeWithText(PARK_RIDE_NO_STATION)
+            .fetchSemanticsNode()
+            .config[SemanticsActions.GetTextLayoutResult]
+            .action
+            ?.invoke(layouts)
         val layout = layouts.single()
         for (line in 0 until layout.lineCount - 1) {
             val end = layout.getLineEnd(line)

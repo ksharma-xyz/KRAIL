@@ -97,7 +97,9 @@ class SearchStopOptionsPermissionTest {
 
     private fun chipState(productClass: Int): ToggleableState? = composeRule
         .onNodeWithTag(TripPlannerTestTags.searchStopModeChip(productClass))
-        .fetchSemanticsNode().config.getOrNull(SemanticsProperties.ToggleableState)
+        .fetchSemanticsNode()
+        .config
+        .getOrNull(SemanticsProperties.ToggleableState)
 
     @Test
     fun `with the permission granted Options is drawn`() {

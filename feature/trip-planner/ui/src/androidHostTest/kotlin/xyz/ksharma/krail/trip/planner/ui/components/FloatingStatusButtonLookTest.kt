@@ -102,8 +102,12 @@ class FloatingStatusButtonLookTest {
 
     private fun textColorOf(text: String): Color {
         val results = mutableListOf<TextLayoutResult>()
-        composeRule.onNodeWithText(text, useUnmergedTree = true).fetchSemanticsNode()
-            .config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(results)
+        composeRule.onNodeWithText(text, useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .config
+            .getOrNull(SemanticsActions.GetTextLayoutResult)
+            ?.action
+            ?.invoke(results)
         return results.first().layoutInput.style.color
     }
 
@@ -112,8 +116,9 @@ class FloatingStatusButtonLookTest {
         val box = boundsOf(tag)
         val density = composeRule.density
         val y = with(density) { (box.top + (box.bottom - box.top) / 2f).roundToPx() }
-        return (with(density) { (box.left - 2.dp).roundToPx() } ..with(density) { (box.left + 2.dp).roundToPx() })
-            .map { Color(image.getPixel(it, y)) }
+        val firstX = with(density) { (box.left - 2.dp).roundToPx() }
+        val lastX = with(density) { (box.left + 2.dp).roundToPx() }
+        return (firstX..lastX).map { Color(image.getPixel(it, y)) }
     }
 
     private fun assertLook(mode: String, dark: Boolean) {

@@ -33,9 +33,6 @@ class IntroHeadlinePlanTest {
         "MODE" to 132.015625f,
     )
 
-    private fun widthAt(line: String, scale: Float): Int =
-        ceil(widthAt476.getValue(introHeadlineDisplay(line)) * scale).toInt()
-
     private class Screen(val name: String, val lines: List<String>, val hero: Int)
 
     private val screens = listOf(
@@ -54,6 +51,9 @@ class IntroHeadlinePlanTest {
     private val phone = Frame("411 dp, 100 percent", 379, 1.0f)
     private val phoneLarge = Frame("411 dp, 150 percent", 379, 1.5f)
     private val narrow = Frame("320 dp, 200 percent", 288, 2.0f)
+
+    private fun widthAt(line: String, scale: Float): Int =
+        ceil(widthAt476.getValue(introHeadlineDisplay(line)) * scale).toInt()
 
     private fun plan(screen: Screen, frame: Frame) =
         planHeroHeadline(screen.lines, screen.hero, frame.normal, frame.roomDp, ::widthAt)
@@ -143,24 +143,28 @@ class IntroHeadlinePlanTest {
     fun `no line is wider than its room in any frame, and no word is split`() {
         for (frame in listOf(phone, phoneLarge, narrow)) {
             for (screen in screens) {
-                val plan = plan(screen, frame)
-                val words = screen.lines.flatMap { it.split(' ') }.toSet()
-                plan.units.forEach { unit ->
-                    unit.rows.forEach { row ->
-                        assertTrue(
-                            widthAt(row, unit.scale) <= frame.roomDp,
-                            "${screen.name}, ${frame.name}: \"$row\" is too wide",
-                        )
-                        assertTrue(row.split(' ').all { it in words }, "${screen.name}: \"$row\" splits a word")
-                    }
-                }
-                assertEquals(
-                    screen.lines.joinToString(" "),
-                    plan.units.flatMap { it.rows }.joinToString(" "),
-                    screen.name,
-                )
+                assertRowsFitWithNoWordSplit(screen, frame)
             }
         }
+    }
+
+    private fun assertRowsFitWithNoWordSplit(screen: Screen, frame: Frame) {
+        val plan = plan(screen, frame)
+        val words = screen.lines.flatMap { it.split(' ') }.toSet()
+        plan.units.forEach { unit ->
+            unit.rows.forEach { row ->
+                assertTrue(
+                    widthAt(row, unit.scale) <= frame.roomDp,
+                    "${screen.name}, ${frame.name}: \"$row\" is too wide",
+                )
+                assertTrue(row.split(' ').all { it in words }, "${screen.name}: \"$row\" splits a word")
+            }
+        }
+        assertEquals(
+            screen.lines.joinToString(" "),
+            plan.units.flatMap { it.rows }.joinToString(" "),
+            screen.name,
+        )
     }
 
     @Test

@@ -88,7 +88,8 @@ class IntroBarFillCrossfadeTest {
     // A pixel inside the left end of the filled button, where its label is not.
     private fun buttonFill(): Color {
         val bounds = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION, useUnmergedTree = true)
-            .fetchSemanticsNode().boundsInRoot
+            .fetchSemanticsNode()
+            .boundsInRoot
         val inset = with(composeRule.density) { 14.dp.toPx() }
         return IntroPixels(
             composeRule,

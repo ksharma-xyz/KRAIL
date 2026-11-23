@@ -240,23 +240,32 @@ internal fun KrailTestScope.exploreWorld(readiness: StopsReadiness, maxPlaces: I
         if (from != null && action != null) {
             if (next.path.isEmpty()) restores += from to here else edges += WorldEdge(from, action, here)
         }
-        if (here in nodes) continue
-        check(nodes.size < maxPlaces) { "more than $maxPlaces places, so the search is not finishing" }
-        nodes[here] = WorldRecipe(next.root, next.path)
-        if (here.finaleStarted) {
-            // The finale covers the screen and every event is dropped from here, which `IntroTapSafetyTest` holds. Only time
-            // matters now, because it is what ends the wait for the stops.
-            worldActions(IntroStep.THEME).filterIsInstance<WorldAction.Advance>()
-                .forEach { queue += Pending(next.root, next.path + it, here, it) }
-            continue
+        if (here !in nodes) {
+            check(nodes.size < maxPlaces) { "more than $maxPlaces places, so the search is not finishing" }
+            nodes[here] = WorldRecipe(next.root, next.path)
+            queue += pendingFrom(next, here, barEvents)
         }
-        (worldActions(here.state.step) + barEvents).distinct().forEach { queue += Pending(next.root, next.path + it, here, it) }
-        // A process killed here is reopened on what the system saved with the screen, or on what the device kept.
-        val restore = WorldAction.Advance(0)
-        queue += Pending(WorldRoot.SystemSaved(here.state), emptyList(), here, restore)
-        queue += Pending(WorldRoot.DeviceProgress(here.state), emptyList(), here, restore)
     }
     return WorldGraph(nodes, edges, restores)
+}
+
+/** The places to visit next from a place that has just been found: what can happen there, and the Intro reopened there. */
+private fun pendingFrom(next: Pending, here: WorldNode, barEvents: List<WorldAction>): List<Pending> {
+    if (here.finaleStarted) {
+        // The finale covers the screen and every event is dropped from here, which `IntroTapSafetyTest` holds. Only time
+        // matters now, because it is what ends the wait for the stops.
+        return worldActions(IntroStep.THEME).filterIsInstance<WorldAction.Advance>()
+            .map { Pending(next.root, next.path + it, here, it) }
+    }
+    val ownActions = (worldActions(here.state.step) + barEvents).distinct()
+        .map { Pending(next.root, next.path + it, here, it) }
+    // A process killed here is reopened on what the system saved with the screen, or on what the device kept.
+    val restore = WorldAction.Advance(0)
+    val reopenings = listOf(
+        Pending(WorldRoot.SystemSaved(here.state), emptyList(), here, restore),
+        Pending(WorldRoot.DeviceProgress(here.state), emptyList(), here, restore),
+    )
+    return ownActions + reopenings
 }
 
 private const val MAX_PLACES = 5_000

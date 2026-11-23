@@ -703,8 +703,12 @@ class SavedTripsHomeLayoutTest {
     private fun pillText(name: String): TextLayoutResult {
         val inPill = hasAnyAncestor(hasTestTag(TripPlannerTestTags.homeLabelChip(name))) and hasText(name, substring = true)
         val layouts = mutableListOf<TextLayoutResult>()
-        composeRule.onNode(inPill, useUnmergedTree = true).fetchSemanticsNode().config
-            .getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(layouts)
+        composeRule.onNode(inPill, useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .config
+            .getOrNull(SemanticsActions.GetTextLayoutResult)
+            ?.action
+            ?.invoke(layouts)
         return layouts.first()
     }
 
@@ -733,12 +737,14 @@ class SavedTripsHomeLayoutTest {
         composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
 
     /** The whole touch target of a control, which the 48 dp interactive size gives a button that draws smaller. */
-    private fun touchBounds(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true)
-        .fetchSemanticsNode().touchBoundsInRoot.let { rect ->
-            with(
-                composeRule.density,
-            ) { DpRect(rect.left.toDp(), rect.top.toDp(), rect.right.toDp(), rect.bottom.toDp()) }
+    private fun touchBounds(tag: String): DpRect {
+        val rect = composeRule.onNodeWithTag(tag, useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .touchBoundsInRoot
+        return with(composeRule.density) {
+            DpRect(rect.left.toDp(), rect.top.toDp(), rect.right.toDp(), rect.bottom.toDp())
         }
+    }
 
     private fun textBounds(text: String): DpRect =
         composeRule.onNodeWithText(text, useUnmergedTree = true).getUnclippedBoundsInRoot()

@@ -221,29 +221,33 @@ class IntroDecisionBarTest {
         listOf(false, true).forEach { card ->
             listOf(NARROW_WIDTH, 320, 360, PHONE_WIDTH, 440, WIDE_WIDTH).forEach { widthDp ->
                 listOf(1f, 1.3f, 1.5f, 1.8f, 2f).forEach { scale ->
-                    show(widthDp, scale, card = card)
-                    val where = "card $card, $widthDp dp, $scale"
-
-                    labelLayouts().forEach { layout ->
-                        assertEquals(
-                            1,
-                            layout.lineCount,
-                            "\"${layout.layoutInput.text.text}\" is on two lines at $where",
-                        )
-                    }
-                    listOf(primary(), secondary()).forEach { button ->
-                        val bounds = button.bounds()
-                        assertTrue(
-                            bounds.left >= 0.dp && bounds.right <= widthDp.dp + ROUNDING,
-                            "a button is outside the window at $where: $bounds",
-                        )
-                        assertTrue(
-                            bounds.height >= MIN_TOUCH_HEIGHT - ROUNDING,
-                            "a button is only ${bounds.height} tall at $where",
-                        )
-                    }
+                    assertOneLineAndInsideWindow(card = card, widthDp = widthDp, scale = scale)
                 }
             }
+        }
+    }
+
+    private fun assertOneLineAndInsideWindow(card: Boolean, widthDp: Int, scale: Float) {
+        show(widthDp, scale, card = card)
+        val where = "card $card, $widthDp dp, $scale"
+
+        labelLayouts().forEach { layout ->
+            assertEquals(
+                1,
+                layout.lineCount,
+                "\"${layout.layoutInput.text.text}\" is on two lines at $where",
+            )
+        }
+        listOf(primary(), secondary()).forEach { button ->
+            val bounds = button.bounds()
+            assertTrue(
+                bounds.left >= 0.dp && bounds.right <= widthDp.dp + ROUNDING,
+                "a button is outside the window at $where: $bounds",
+            )
+            assertTrue(
+                bounds.height >= MIN_TOUCH_HEIGHT - ROUNDING,
+                "a button is only ${bounds.height} tall at $where",
+            )
         }
     }
 

@@ -89,10 +89,14 @@ class IntroTapSafetyUiTest {
 
     // A touch on the place where the bar's primary button is drawn, whether or not it is there now: a finger does not know.
     private fun primaryPlace(): Offset = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION)
-        .fetchSemanticsNode().boundsInRoot.center
+        .fetchSemanticsNode()
+        .boundsInRoot
+        .center
 
     private fun primaryRightPlace(): Offset = composeRule.onNodeWithTag(TripPlannerTestTags.INTRO_PRIMARY_ACTION)
-        .fetchSemanticsNode().boundsInRoot.let { Offset(it.right - RIGHT_INSET_PX, it.center.y) }
+        .fetchSemanticsNode()
+        .boundsInRoot
+        .let { Offset(it.right - RIGHT_INSET_PX, it.center.y) }
 
     private fun tapAt(place: Offset) = composeRule.onRoot().performTouchInput { click(place) }
 

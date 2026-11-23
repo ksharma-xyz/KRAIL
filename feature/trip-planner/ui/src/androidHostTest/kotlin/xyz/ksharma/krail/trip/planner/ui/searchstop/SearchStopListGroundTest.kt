@@ -93,6 +93,9 @@ class SearchStopListGroundTest {
     private var toStop by mutableStateOf<StopItem?>(null)
     private lateinit var typed: TextFieldState
 
+    private val darkTint get() = theme.copy(alpha = DARK_ALPHA).compositeOver(md_theme_dark_surface)
+    private val lightTint get() = theme.copy(alpha = LIGHT_ALPHA).compositeOver(md_theme_light_surface)
+
     private fun setCard(
         gradient: Boolean,
         withNotice: Boolean = false,
@@ -143,9 +146,6 @@ class SearchStopListGroundTest {
 
     // region reading what is drawn
 
-    private val darkTint get() = theme.copy(alpha = DARK_ALPHA).compositeOver(md_theme_dark_surface)
-    private val lightTint get() = theme.copy(alpha = LIGHT_ALPHA).compositeOver(md_theme_light_surface)
-
     private fun drawn(): Bitmap {
         var bitmap: Bitmap? = null
         composeRule.runOnUiThread {
@@ -168,7 +168,8 @@ class SearchStopListGroundTest {
         androidx.compose.ui.test.hasTestTag(tag),
         useUnmergedTree = true,
     )
-        .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
+        .fetchSemanticsNodes(atLeastOneRootRequired = false)
+        .isNotEmpty()
 
     private fun DpRect.cx() = left + width / 2f
     private fun DpRect.cy() = top + height / 2f
@@ -204,8 +205,9 @@ class SearchStopListGroundTest {
         val box = boundsOf(tag)
         val density = composeRule.density
         val y = with(density) { box.cy().roundToPx() }
-        val across = (with(density) { (box.left - 2.dp).roundToPx() }..with(density) { (box.left + 2.dp).roundToPx() })
-            .map { Color(image.getPixel(it, y)) }
+        val firstX = with(density) { (box.left - 2.dp).roundToPx() }
+        val lastX = with(density) { (box.left + 2.dp).roundToPx() }
+        val across = (firstX..lastX).map { Color(image.getPixel(it, y)) }
         fun distance(c: Color) = abs(c.red - expected.red) + abs(c.green - expected.green) + abs(c.blue - expected.blue)
         return across.minBy { distance(it) }
     }
@@ -213,8 +215,12 @@ class SearchStopListGroundTest {
     /** The pixel of [bounds] nearest [expected], so a glyph that has holes and anti aliased edges is read at its ink. */
     private fun nearestInk(bounds: DpRect, expected: Color, image: Bitmap = drawn()): Color {
         val density = composeRule.density
-        val xs = with(density) { bounds.left.roundToPx() }..with(density) { bounds.right.roundToPx() }
-        val ys = with(density) { bounds.top.roundToPx() }..with(density) { bounds.bottom.roundToPx() }
+        val left = with(density) { bounds.left.roundToPx() }
+        val right = with(density) { bounds.right.roundToPx() }
+        val top = with(density) { bounds.top.roundToPx() }
+        val bottom = with(density) { bounds.bottom.roundToPx() }
+        val xs = left..right
+        val ys = top..bottom
         var best = Color.Unspecified
         var bestDistance = Float.MAX_VALUE
         for (x in xs) {

@@ -24,6 +24,16 @@ class IntroThemeChangeSpecTest {
     private val windowWidth = 1000f
     private val windowHeight = 2000f
     private val tolerance = 1e-4f
+    private val questionRequest = request(null, -1, Offset.Unspecified)
+    private val probes = listOf(
+        0f,
+        100f,
+        200f,
+        450f,
+        700f,
+        900f,
+    ).flatMap { x -> listOf(0f, 300f, 800f, 1500f, 1999f).map { y -> x to y } }
+    private val interruptTimes = listOf(0f, 60f, 120f, 233f, 300f, 450f, 520f, 600f, 699f, 700f, 900f)
 
     private fun KrailThemeStyle.colour(): Color = hexColorCode.hexToComposeColor()
 
@@ -47,8 +57,6 @@ class IntroThemeChangeSpecTest {
         )
     }
 
-    private val questionRequest = request(null, -1, Offset.Unspecified)
-
     // The screen as it opens, with no theme, and the run for the first pick after it.
     private fun first(reduceMotion: Boolean = false, style: KrailThemeStyle = KrailThemeStyle.Train): ThemeChangeSpec {
         val settled = settledThemeChangeSpec(questionRequest, ground = surface, text = onSurface)
@@ -70,22 +78,11 @@ class IntroThemeChangeSpecTest {
         return seen
     }
 
-    private val probes = listOf(
-        0f,
-        100f,
-        200f,
-        450f,
-        700f,
-        900f,
-    ).flatMap { x -> listOf(0f, 300f, 800f, 1500f, 1999f).map { y -> x to y } }
-
     private fun assertSameColour(expected: Color, actual: Color, what: String) {
         assertEquals(expected.red, actual.red, tolerance, "$what red")
         assertEquals(expected.green, actual.green, tolerance, "$what green")
         assertEquals(expected.blue, actual.blue, tolerance, "$what blue")
     }
-
-    private val interruptTimes = listOf(0f, 60f, 120f, 233f, 300f, 450f, 520f, 600f, 699f, 700f, 900f)
 
     @Test
     fun `a run that follows another starts in the state the other had reached, at every time and for every colour and the ground`() {

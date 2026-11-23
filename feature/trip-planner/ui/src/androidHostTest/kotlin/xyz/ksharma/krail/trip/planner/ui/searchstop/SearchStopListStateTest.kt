@@ -55,11 +55,6 @@ class SearchStopListStateTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
-    /** System back, the one step back there is now that the box has no back arrow. */
-    private fun pressSystemBack() {
-        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
-    }
-
     private val quietKeyboard = object : SoftwareKeyboardController {
         override fun show() = Unit
         override fun hide() = Unit
@@ -67,6 +62,11 @@ class SearchStopListStateTest {
     private val gaps = searchStopGaps()
     private var windowHeight = 0.dp
     private var wentBack = 0
+
+    /** System back, the one step back there is now that the box has no back arrow. */
+    private fun pressSystemBack() {
+        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
+    }
 
     private fun withMap(
         state: SearchStopState = SearchStopFixtures.recentWithHomeSet(),

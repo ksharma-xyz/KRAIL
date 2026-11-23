@@ -63,7 +63,8 @@ class SearchStopOptionsPillTest {
 
     private val gaps = searchStopGaps()
     private val allModes: ImmutableSet<Int> = NswTransportConfig.modesFor(ModeSelectionSurface.NEARBY_STOPS)
-        .map { NswTransportConfig.productClassFor(it) }.toImmutableSet()
+        .map { NswTransportConfig.productClassFor(it) }
+        .toImmutableSet()
 
     private var measuredPill by mutableStateOf(MAP_OPTIONS_PILL_REST_HEIGHT)
     private var selected by mutableStateOf(allModes)
@@ -251,15 +252,9 @@ class SearchStopOptionsPillTest {
         // The hairline: a pixel across the pill's left edge is the light softLabel.
         val density = composeRule.density
         val y = with(density) { pill.cy().roundToPx() }
-        val across = (
-            with(density) {
-                (pill.left - 1.dp).roundToPx()
-            } ..with(density) { (pill.left + 2.dp).roundToPx() }
-            ).map {
-            Color(
-                image.getPixel(it, y),
-            )
-        }
+        val firstX = with(density) { (pill.left - 1.dp).roundToPx() }
+        val lastX = with(density) { (pill.left + 2.dp).roundToPx() }
+        val across = (firstX..lastX).map { Color(image.getPixel(it, y)) }
         assertTrue(
             across.any { close(md_theme_light_softLabel, it) },
             "$mode: the 1 dp light softLabel hairline is drawn across the pill's edge",

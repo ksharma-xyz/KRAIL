@@ -194,10 +194,10 @@ class IntroParkRidePlaceholderWidthTest {
                 "the room for the spots is narrower than $it, $where",
             )
         }
-        (0..100).map { "$it%" }.forEach {
+        for (share in 0..100) {
             assertTrue(
-                width(figureStyle, it) <= percent,
-                "the room for the share is narrower than $it, $where",
+                width(figureStyle, "$share%") <= percent,
+                "the room for the share is narrower than $share%, $where",
             )
         }
         // The time is a line of words that wraps in a narrow room, so the room is compared with a reading in the same room, line for line.

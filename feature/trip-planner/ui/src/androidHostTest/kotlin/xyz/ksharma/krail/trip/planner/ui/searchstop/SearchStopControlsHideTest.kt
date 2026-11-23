@@ -55,6 +55,9 @@ class SearchStopControlsHideTest {
     private var locationTaps = 0
     private var optionsTaps = 0
     private var windowHeightPx = 0
+    private val location = TripPlannerTestTags.SEARCH_STOP_LOCATION_BUTTON
+    private val options = TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON
+    private val chips = TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS
 
     private fun setControls(reduceMotion: Boolean = false, hides: Boolean = true) {
         composeRule.setContent {
@@ -107,10 +110,6 @@ class SearchStopControlsHideTest {
     private fun count(tag: String) = composeRule.onAllNodesWithTag(tag).fetchSemanticsNodes().size
 
     private fun bounds(tag: String): Rect = composeRule.onNodeWithTag(tag).fetchSemanticsNode().boundsInRoot
-
-    private val location = TripPlannerTestTags.SEARCH_STOP_LOCATION_BUTTON
-    private val options = TripPlannerTestTags.SEARCH_STOP_MODE_BUTTON
-    private val chips = TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS
 
     private fun tapAt(position: Offset): String {
         mapTaps = 0

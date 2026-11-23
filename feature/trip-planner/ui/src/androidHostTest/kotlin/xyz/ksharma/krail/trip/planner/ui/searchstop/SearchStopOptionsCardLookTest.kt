@@ -113,8 +113,9 @@ class SearchStopOptionsCardLookTest {
         val box = boundsOf(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS)
         val density = composeRule.density
         val y = with(density) { (box.top + (box.bottom - box.top) / 2f).roundToPx() }
-        return (with(density) { (box.left - 2.dp).roundToPx() } ..with(density) { (box.left + 2.dp).roundToPx() })
-            .map { Color(image.getPixel(it, y)) }
+        val firstX = with(density) { (box.left - 2.dp).roundToPx() }
+        val lastX = with(density) { (box.left + 2.dp).roundToPx() }
+        return (firstX..lastX).map { Color(image.getPixel(it, y)) }
     }
 
     /** The lightest pixel across the edge: in dark mode a drawn hairline raises it well above the dark card and the dark page. */
@@ -160,6 +161,10 @@ class SearchStopOptionsCardLookTest {
                 "offLabelOnOffChip=${Color.Gray.contrastRatio(pageSurface)} onLabelOnOnChip=${getForegroundColor(ferryColor).contrastRatio(ferryColor)} " +
                 "hairlineStrength=$strength",
         )
+        assertHairlineAndLabels(mode, dark, image, strength, ferryColor)
+    }
+
+    private fun assertHairlineAndLabels(mode: String, dark: Boolean, image: Bitmap, strength: Float, ferryColor: Color) {
         if (dark) {
             assertTrue(strength < HAIRLINE_PRESENT, "$mode: no hairline on the map, strength $strength")
             assertTrue(

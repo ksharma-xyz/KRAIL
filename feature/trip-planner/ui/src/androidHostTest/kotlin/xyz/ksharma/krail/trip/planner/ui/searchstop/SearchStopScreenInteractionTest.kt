@@ -72,14 +72,14 @@ class SearchStopScreenInteractionTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
-    /** System back, the one step back there is now that the box has no back arrow. */
-    private fun pressSystemBack() {
-        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
-    }
-
     private val quietKeyboard = object : SoftwareKeyboardController {
         override fun show() = Unit
         override fun hide() = Unit
+    }
+
+    /** System back, the one step back there is now that the box has no back arrow. */
+    private fun pressSystemBack() {
+        composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
     }
 
     // region Pill row visibility

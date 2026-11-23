@@ -220,15 +220,17 @@ class SplashFirstRunTest {
     fun `the decision is the same as what the state says, for every combination`() {
         listOf(false, true).forEach { seen ->
             listOf(false, true).forEach { saved ->
-                listOf(false, true).forEach { loaded ->
-                    val state = SplashState(hasSeenIntro = seen, hasSavedTheme = saved, loaded = loaded)
-                    val firstRun = !seen && !saved
-                    val expected = if (loaded && !firstRun) colourOf(state.themeStyle) else null
-
-                    assertEquals(firstRun, state.isFirstRun, "seen $seen saved $saved")
-                    assertEquals(expected, splashLogoColor(state), "seen $seen saved $saved loaded $loaded")
-                }
+                listOf(false, true).forEach { loaded -> assertDecision(seen = seen, saved = saved, loaded = loaded) }
             }
         }
+    }
+
+    private fun assertDecision(seen: Boolean, saved: Boolean, loaded: Boolean) {
+        val state = SplashState(hasSeenIntro = seen, hasSavedTheme = saved, loaded = loaded)
+        val firstRun = !seen && !saved
+        val expected = if (loaded && !firstRun) colourOf(state.themeStyle) else null
+
+        assertEquals(firstRun, state.isFirstRun, "seen $seen saved $saved")
+        assertEquals(expected, splashLogoColor(state), "seen $seen saved $saved loaded $loaded")
     }
 }

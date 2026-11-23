@@ -172,20 +172,24 @@ class MapEventsTest {
 
         events.forEach { event ->
             event.properties.orEmpty().forEach { (key, value) ->
-                when (value) {
-                    is Int -> assertTrue(value == 0 || value == 1, "${event.name}.$key is $value")
-                    is String -> {
-                        assertTrue(value.length < MAX_PARAM_LENGTH, "${event.name}.$key is ${value.length} long")
-                        assertFalse(value.endsWith("~trunc"), "${event.name}.$key was truncated")
-                        if (key == "mapSessionId") {
-                            assertEquals(sessionId, value)
-                        } else {
-                            assertTrue(value in allowedWords, "${event.name}.$key sent '$value'")
-                        }
-                    }
-                    else -> error("${event.name}.$key is a ${value::class.simpleName}")
+                assertParamIsSafe(eventName = event.name, key = key, value = value, allowedWords = allowedWords)
+            }
+        }
+    }
+
+    private fun assertParamIsSafe(eventName: String, key: String, value: Any, allowedWords: Set<String>) {
+        when (value) {
+            is Int -> assertTrue(value == 0 || value == 1, "$eventName.$key is $value")
+            is String -> {
+                assertTrue(value.length < MAX_PARAM_LENGTH, "$eventName.$key is ${value.length} long")
+                assertFalse(value.endsWith("~trunc"), "$eventName.$key was truncated")
+                if (key == "mapSessionId") {
+                    assertEquals(sessionId, value)
+                } else {
+                    assertTrue(value in allowedWords, "$eventName.$key sent '$value'")
                 }
             }
+            else -> error("$eventName.$key is a ${value::class.simpleName}")
         }
     }
 

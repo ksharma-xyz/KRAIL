@@ -249,16 +249,3 @@ class IntroFlowViewModelParkRideAddTest {
         assertEquals(1, rig.log.count("pref:KEY_PARK_RIDE_SUGGESTION_SHOWN=true"))
     }
 }
-
-/** Wraps the shared fake and fails the delete, the one write a rider taking Add back cannot be held up by. */
-private class DeleteFailsParkRideSandook(
-    private val delegate: NswParkRideSandook = FakeNswParkRideSandook(),
-) : NswParkRideSandook by delegate {
-    override suspend fun deleteSavedParkRide(
-        stopId: String,
-        facilityId: String,
-        source: NswParkRideSandook.Companion.SavedParkRideSource,
-    ) {
-        error("disk full")
-    }
-}

@@ -53,6 +53,7 @@ class StopCardBoardMotionTest {
     val composeRule = createComposeRule()
 
     private var board by mutableStateOf(ROWS)
+    private var probe: () -> Pair<Float, Float> = { 0f to 0f }
 
     private fun setCard(reduceMotion: Boolean = false) {
         val resolver = ApplicationProvider.getApplicationContext<Context>().contentResolver
@@ -275,8 +276,6 @@ class StopCardBoardMotionTest {
         assertTrue(goneAt in 0 until shutAt, "The rows are gone ($goneAt) before the height ends ($shutAt)")
         assertTrue(closing[goneAt].first > 0.05f, "while there is still height left: ${closing[goneAt].first}")
     }
-
-    private var probe: () -> Pair<Float, Float> = { 0f to 0f }
 
     // endregion
 

@@ -6,33 +6,41 @@ import kotlin.test.assertTrue
 
 class IntroMiddlePlacementTest {
 
-    // windowMiddle, middle, headlineBottom, barTop, bottomGap, expected top. A 1000 px frame whose bar slot starts at 880,
-    // a headline that ends at 300 and a gap of 16 above the bar.
+    private class MiddleCase(
+        val windowMiddle: Int,
+        val middle: Int,
+        val headlineBottom: Int,
+        val barTop: Int,
+        val gap: Int,
+        val expected: Int,
+    )
+
+    // A 1000 px frame whose bar slot starts at 880, a headline that ends at 300 and a gap of 16 above the bar.
     private val rows = listOf(
         // Fits: the middle is centred on the window, 500, with a middle 200 tall, so it starts at 400.
-        listOf(500, 200, 300, 880, 16, 400),
+        MiddleCase(500, 200, 300, 880, 16, 400),
         // The ideal top is above the headline: the headline's limit wins and the middle starts at its bottom.
-        listOf(500, 400, 300, 880, 16, 300),
-        listOf(500, 800, 300, 880, 16, 300),
+        MiddleCase(500, 400, 300, 880, 16, 300),
+        MiddleCase(500, 800, 300, 880, 16, 300),
         // The ideal top would end lower than one gap above the bar, so it stops there: 880 - 16 - 200 = 664.
-        listOf(800, 200, 300, 880, 16, 664),
+        MiddleCase(800, 200, 300, 880, 16, 664),
         // No room for both: it starts under the headline and the column scrolls.
-        listOf(500, 700, 300, 880, 16, 300),
+        MiddleCase(500, 700, 300, 880, 16, 300),
         // A window middle above the frame's middle, because the bottom inset is smaller than the top one.
-        listOf(460, 200, 300, 880, 16, 360),
+        MiddleCase(460, 200, 300, 880, 16, 360),
         // A frame with no bar slot: the bar's top is the bottom of the frame.
-        listOf(500, 200, 300, 1000, 16, 400),
-        listOf(960, 200, 300, 1000, 16, 784),
+        MiddleCase(500, 200, 300, 1000, 16, 400),
+        MiddleCase(960, 200, 300, 1000, 16, 784),
     )
 
     @Test
     fun `the middle is centred on the window and moved only to clear the headline and the bar`() {
         rows.forEach { row ->
-            val (windowMiddle, middle, headlineBottom, barTop, gap, expected) = row
             assertEquals(
-                expected,
-                windowCentredMiddleTop(windowMiddle, middle, headlineBottom, barTop, gap),
-                "window middle $windowMiddle, middle $middle, headline bottom $headlineBottom, bar top $barTop, gap $gap",
+                row.expected,
+                windowCentredMiddleTop(row.windowMiddle, row.middle, row.headlineBottom, row.barTop, row.gap),
+                "window middle ${row.windowMiddle}, middle ${row.middle}, headline bottom ${row.headlineBottom}, " +
+                    "bar top ${row.barTop}, gap ${row.gap}",
             )
         }
     }
@@ -86,5 +94,3 @@ class IntroMiddlePlacementTest {
         assertEquals(MiddlePlacement.CentredOnWindow, middlePlacement(centreMiddle = false, centreOnWindow = true))
     }
 }
-
-private operator fun <T> List<T>.component6(): T = this[5]

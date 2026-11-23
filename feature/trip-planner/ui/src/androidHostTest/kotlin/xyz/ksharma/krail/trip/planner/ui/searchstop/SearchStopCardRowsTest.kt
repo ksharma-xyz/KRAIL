@@ -75,12 +75,9 @@ class SearchStopCardRowsTest {
 
     private var fontScaleState by mutableStateOf(1f)
 
-    /** Whether the screen offers the swap, which it does once the rider has picked a stop (`swapShown`). */
-    private var swapOffered by mutableStateOf(false)
+    private var screenOffersSwap by mutableStateOf(false)
     private lateinit var typed: TextFieldState
-
-    /** The width of a name on one line in the row's own style, measured in the composition so the font scale is the card's. */
-    private var naturalWidth: (String) -> Dp = { 0.dp }
+    private var nameWidthOnOneLine: (String) -> Dp = { 0.dp }
 
     private fun setCard(fontScale: Float = 1f) {
         fontScaleState = fontScale
@@ -90,7 +87,11 @@ class SearchStopCardRowsTest {
                 PreviewTheme {
                     val measurer = rememberTextMeasurer()
                     val style = KrailTheme.typography.titleMedium
-                    naturalWidth = { name -> with(density) { measurer.measure(name, style, softWrap = false).size.width.toDp() } }
+                    // The width of a name on one line in the row's own style, measured in the composition so the font
+                    // scale is the card's.
+                    nameWidthOnOneLine = { name ->
+                        with(density) { measurer.measure(name, style, softWrap = false).size.width.toDp() }
+                    }
                     typed = rememberTextFieldState()
                     Box(modifier = Modifier.fillMaxSize().background(KrailTheme.colors.surface).padding(gaps.edge)) {
                         SearchStopGroupCard(
@@ -108,7 +109,8 @@ class SearchStopCardRowsTest {
                                 onTextChange = {},
                                 fromLabel = fromLabel,
                                 toLabel = toLabel,
-                                onSwap = if (swapOffered) ({}) else null,
+                                // The screen offers the swap once the rider has picked a stop (`swapShown`).
+                                onSwap = if (screenOffersSwap) ({}) else null,
                             ),
                             onBack = {},
                         )
@@ -457,7 +459,7 @@ class SearchStopCardRowsTest {
         fromStop = name
         toStop = null
         editing = ToFromField.To
-        swapOffered = false
+        screenOffersSwap = false
     }
 
     @Test
@@ -495,7 +497,7 @@ class SearchStopCardRowsTest {
         fromStop = LONG_NAME
         toStop = null
         editing = ToFromField.To
-        swapOffered = true
+        screenOffersSwap = true
         setCard()
 
         assertNear(
@@ -514,7 +516,7 @@ class SearchStopCardRowsTest {
         assertNear("and the From name", 64.dp, card().right - textRight(TripPlannerTestTags.SEARCH_ROW_FROM))
         assertNear("and the To name", 64.dp, card().right - textRight(TripPlannerTestTags.SEARCH_ROW_TO))
 
-        composeRule.runOnIdle { swapOffered = true }
+        composeRule.runOnIdle { screenOffersSwap = true }
         composeRule.waitForIdle()
         assertNear("go circle and swap, the divider", 64.dp, dividerRoom())
         assertNear("and the From name", 64.dp, card().right - textRight(TripPlannerTestTags.SEARCH_ROW_FROM))
@@ -562,11 +564,11 @@ class SearchStopCardRowsTest {
         listState(LONG_NAME)
         setCard(fontScale = 1.3f)
         val name = LONG_NAME.stopName
-        val natural = composeRule.runOnIdle { naturalWidth(name) }
+        val natural = composeRule.runOnIdle { nameWidthOnOneLine(name) }
         val withoutSwap = fromLayout().lineCount
         val widthWithout = card().w() - 44.dp - 16.dp
 
-        composeRule.runOnIdle { swapOffered = true }
+        composeRule.runOnIdle { screenOffersSwap = true }
         composeRule.waitForIdle()
         val withSwap = fromLayout().lineCount
         val widthWith = card().w() - 44.dp - 64.dp
@@ -625,7 +627,7 @@ class SearchStopCardRowsTest {
         fromStop = LONG_NAME
         toStop = null
         editing = ToFromField.To
-        swapOffered = true
+        screenOffersSwap = true
         setCard()
         val fromBefore = textRight(TripPlannerTestTags.SEARCH_ROW_FROM)
         val dividerBefore = dividerRoom()
@@ -642,7 +644,7 @@ class SearchStopCardRowsTest {
         // Nothing picked: the From name and the divider keep the full width and the typed row alone makes room for its X.
         composeRule.runOnIdle {
             typed.setTextAndPlaceCursorAtEnd("")
-            swapOffered = false
+            screenOffersSwap = false
         }
         composeRule.waitForIdle()
         val fromFull = textRight(TripPlannerTestTags.SEARCH_ROW_FROM)
@@ -674,7 +676,7 @@ class SearchStopCardRowsTest {
         composeRule.mainClock.autoAdvance = false
         composeRule.runOnUiThread {
             toStop = TOWN_HALL
-            swapOffered = true
+            screenOffersSwap = true
             editing = null
             Snapshot.sendApplyNotifications()
         }
@@ -702,7 +704,7 @@ class SearchStopCardRowsTest {
     @Test
     fun `the map state numbers are the same with the real swap offered, rows 56 and 56 and the card 113 at 411 dp and 100 percent`() {
         trip()
-        swapOffered = true
+        screenOffersSwap = true
         setCard()
 
         assertNear("From row", 56.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).height)
@@ -722,14 +724,14 @@ class SearchStopCardRowsTest {
                 fontScaleState = scale
                 fromStop = null
                 toStop = null
-                swapOffered = false
+                screenOffersSwap = false
             }
             composeRule.waitForIdle()
             val none = card().height
 
             composeRule.runOnIdle {
                 fromStop = CENTRAL
-                swapOffered = true
+                screenOffersSwap = true
             }
             composeRule.waitForIdle()
             val one = card().height

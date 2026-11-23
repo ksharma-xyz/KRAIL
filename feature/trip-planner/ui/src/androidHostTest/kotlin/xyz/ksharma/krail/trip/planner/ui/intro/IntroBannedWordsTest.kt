@@ -37,6 +37,18 @@ class IntroBannedWordsTest {
             .toMap()
     }
 
+    // The last lines of the five headlines, which are questions, and the whole spoken question of each screen, which is a text of its
+    // own and not the drawn lines joined: the only strings that may have a question mark.
+    private val drawnQuestionLines: List<String> = listOf(
+        PARK_RIDE_HEADLINE,
+        DESTINATION_HEADLINE,
+        ORIGIN_HEADLINE,
+        CONFIRM_HEADLINE,
+        PICK_THEME_HEADLINE,
+    ).map { it.last() }
+    private val questionLines: List<String> = drawnQuestionLines + PICK_THEME_HEADING +
+        listOf(PARK_RIDE_HEADING, DESTINATION_HEADING, ORIGIN_HEADING, CONFIRM_HEADING)
+
     @Test
     fun `the Intro sources and their strings are found, so this guard cannot pass by looking at nothing`() {
         assertTrue(introSources.size >= MIN_SOURCES, "found only ${introSources.map { it.name }}")
@@ -108,18 +120,6 @@ class IntroBannedWordsTest {
     }
 
     private fun stringLiterals(source: String): List<String> = LiteralReader(source).read()
-
-    // The last lines of the five headlines, which are questions, and the whole spoken question of each screen, which is a text of its
-    // own and not the drawn lines joined: the only strings that may have a question mark.
-    private val drawnQuestionLines: List<String> = listOf(
-        PARK_RIDE_HEADLINE,
-        DESTINATION_HEADLINE,
-        ORIGIN_HEADLINE,
-        CONFIRM_HEADLINE,
-        PICK_THEME_HEADLINE,
-    ).map { it.last() }
-    private val questionLines: List<String> = drawnQuestionLines + PICK_THEME_HEADING +
-        listOf(PARK_RIDE_HEADING, DESTINATION_HEADING, ORIGIN_HEADING, CONFIRM_HEADING)
 
     @Test
     fun `a question mark is allowed at the end of the last line of the five headlines and nowhere else`() {

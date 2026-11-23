@@ -128,7 +128,8 @@ class SearchStopCardCirclesTest {
     private fun goWidthDp(): Dp? {
         val node = composeRule.onAllNodes(hasTestTag(TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE), useUnmergedTree = true)
             .fetchSemanticsNodes(atLeastOneRootRequired = false)
-            .firstOrNull() ?: return null
+            .firstOrNull()
+            ?: return null
         return with(composeRule.density) { node.boundsInRoot.width.toDp() }
     }
 
@@ -280,7 +281,10 @@ class SearchStopCardCirclesTest {
      */
     private fun glyphWidthDp(): Dp = with(composeRule.density) {
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_SWAP_GLYPH, useUnmergedTree = true)
-            .fetchSemanticsNode().boundsInRoot.width.toDp()
+            .fetchSemanticsNode()
+            .boundsInRoot
+            .width
+            .toDp()
     }
 
     @Test

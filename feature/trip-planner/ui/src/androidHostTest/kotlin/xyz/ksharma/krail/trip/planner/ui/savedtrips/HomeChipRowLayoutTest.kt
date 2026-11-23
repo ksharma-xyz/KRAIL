@@ -362,12 +362,14 @@ class HomeChipRowLayoutTest {
         composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
 
     /** The whole touch target of a control, which the 48 dp interactive size gives a button that draws smaller. */
-    private fun touchBounds(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true)
-        .fetchSemanticsNode().touchBoundsInRoot.let { rect ->
-            with(
-                composeRule.density,
-            ) { DpRect(rect.left.toDp(), rect.top.toDp(), rect.right.toDp(), rect.bottom.toDp()) }
+    private fun touchBounds(tag: String): DpRect {
+        val rect = composeRule.onNodeWithTag(tag, useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .touchBoundsInRoot
+        return with(composeRule.density) {
+            DpRect(rect.left.toDp(), rect.top.toDp(), rect.right.toDp(), rect.bottom.toDp())
         }
+    }
 
     private fun textBounds(text: String): DpRect =
         composeRule.onNodeWithText(text, useUnmergedTree = true).getUnclippedBoundsInRoot()

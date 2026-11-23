@@ -49,8 +49,12 @@ class StopCardBoardSecondaryTextTest {
         composeRule.waitForIdle()
 
         val results = mutableListOf<TextLayoutResult>()
-        composeRule.onNodeWithText("No upcoming departures found.", useUnmergedTree = true).fetchSemanticsNode()
-            .config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(results)
+        composeRule.onNodeWithText("No upcoming departures found.", useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .config
+            .getOrNull(SemanticsActions.GetTextLayoutResult)
+            ?.action
+            ?.invoke(results)
         assertEquals(cardInk, results.first().layoutInput.style.color)
     }
 }

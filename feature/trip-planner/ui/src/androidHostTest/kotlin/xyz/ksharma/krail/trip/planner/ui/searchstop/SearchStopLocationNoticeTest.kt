@@ -67,7 +67,7 @@ import kotlin.test.assertTrue
 @Config(sdk = [34], qualifiers = "w411dp-h891dp-notnight", manifest = Config.NONE)
 class SearchStopLocationNoticeTest {
 
-    private val EM_DASH = Char(EM_DASH_CODE)
+    private val emDash = Char(EM_DASH_CODE)
 
     @get:Rule
     val composeRule = createComposeRule()
@@ -126,8 +126,12 @@ class SearchStopLocationNoticeTest {
 
     private fun lineCountOf(text: String): Int {
         val results = mutableListOf<TextLayoutResult>()
-        composeRule.onNodeWithText(text, useUnmergedTree = true).fetchSemanticsNode()
-            .config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(results)
+        composeRule.onNodeWithText(text, useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .config
+            .getOrNull(SemanticsActions.GetTextLayoutResult)
+            ?.action
+            ?.invoke(results)
         assertTrue(results.isNotEmpty(), "$text is text that can be measured.")
         return results.first().lineCount
     }
@@ -136,7 +140,8 @@ class SearchStopLocationNoticeTest {
         androidx.compose.ui.test.hasTestTag(tag),
         useUnmergedTree = true,
     )
-        .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
+        .fetchSemanticsNodes(atLeastOneRootRequired = false)
+        .isNotEmpty()
 
     // region copy and calls
 
@@ -170,7 +175,7 @@ class SearchStopLocationNoticeTest {
             LOCATION_NOTICE_CTA_ALLOW,
             LOCATION_NOTICE_CTA_SETTINGS,
         )) {
-            assertTrue(':' !in text && EM_DASH !in text, "$text")
+            assertTrue(':' !in text && emDash !in text, "$text")
         }
     }
 
@@ -289,8 +294,9 @@ class SearchStopLocationNoticeTest {
         val density = composeRule.density
         val image = drawn()
         val y = with(density) { (tile.top + tile.height / 2f).roundToPx() }
-        val across = (with(density) { (tile.left - 2.dp).roundToPx() }..with(density) { (tile.left + 2.dp).roundToPx() })
-            .map { Color(image.getPixel(it, y)) }
+        val firstX = with(density) { (tile.left - 2.dp).roundToPx() }
+        val lastX = with(density) { (tile.left + 2.dp).roundToPx() }
+        val across = (firstX..lastX).map { Color(image.getPixel(it, y)) }
         fun distance(
             c: Color,
         ) = abs(c.red - expectedEdge.red) + abs(c.green - expectedEdge.green) + abs(c.blue - expectedEdge.blue)
@@ -362,8 +368,12 @@ class SearchStopLocationNoticeTest {
         assertNotEquals(surface, dark)
         for (text in listOf(LOCATION_NOTICE_TITLE, LOCATION_NOTICE_BODY, LOCATION_NOTICE_DISMISS)) {
             val results = mutableListOf<TextLayoutResult>()
-            composeRule.onNodeWithText(text, useUnmergedTree = true).fetchSemanticsNode()
-                .config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(results)
+            composeRule.onNodeWithText(text, useUnmergedTree = true)
+                .fetchSemanticsNode()
+                .config
+                .getOrNull(SemanticsActions.GetTextLayoutResult)
+                ?.action
+                ?.invoke(results)
             assertEquals(
                 md_theme_dark_onSurface,
                 results.first().layoutInput.style.color.copy(alpha = 1f),

@@ -47,7 +47,8 @@ class SearchStopModeBlockMotionTest {
 
     private var open by mutableStateOf(false)
     private val allModes = NswTransportConfig.modesFor(ModeSelectionSurface.NEARBY_STOPS)
-        .map { NswTransportConfig.productClassFor(it) }.toImmutableSet()
+        .map { NswTransportConfig.productClassFor(it) }
+        .toImmutableSet()
 
     /** The screen's own rule for the button: a tap flips it. The magenta ground makes a half faded card show. */
     private fun setControls(reduceMotion: Boolean) {
@@ -147,8 +148,14 @@ class SearchStopModeBlockMotionTest {
     private fun chipLines(): Int = NswTransportConfig.modesFor(ModeSelectionSurface.NEARBY_STOPS)
         .map {
             composeRule.onNodeWithTag(TripPlannerTestTags.searchStopModeChip(NswTransportConfig.productClassFor(it)))
-                .fetchSemanticsNode().layoutInfo.coordinates.positionInRoot().y
-        }.distinct().size
+                .fetchSemanticsNode()
+                .layoutInfo
+                .coordinates
+                .positionInRoot()
+                .y
+        }
+        .distinct()
+        .size
 
     @Test
     fun `after the animation the card is at its final size and does not move again`() {

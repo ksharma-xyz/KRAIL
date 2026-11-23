@@ -44,6 +44,17 @@ class IntroCopyTest {
     // nothing else is exempt.
     private val taglines = KrailThemeStyle.entries.map { it.tagLine }
 
+    // The five headlines are complete plain questions, so each ends in one question mark on its last line. Those lines
+    // and the phrases they make are the only strings that may have one.
+    private val headlines = listOf(
+        PARK_RIDE_HEADLINE,
+        DESTINATION_HEADLINE,
+        ORIGIN_HEADLINE,
+        CONFIRM_HEADLINE,
+        PICK_THEME_HEADLINE,
+    )
+    private val questionStrings = headlines.flatMap { listOf(it.last(), introHeadlinePhrase(it)) } + PICK_THEME_HEADING
+
     private fun barWords(): List<String> = states.flatMap { state ->
         listOfNotNull(introBar(state)).flatMap { bar ->
             listOfNotNull(bar.left, bar.right).flatMap { listOf(it.label, it.spokenLabel) }
@@ -74,17 +85,6 @@ class IntroCopyTest {
             }
         }
     }
-
-    // The five headlines are complete plain questions, so each ends in one question mark on its last line. Those lines
-    // and the phrases they make are the only strings that may have one.
-    private val headlines = listOf(
-        PARK_RIDE_HEADLINE,
-        DESTINATION_HEADLINE,
-        ORIGIN_HEADLINE,
-        CONFIRM_HEADLINE,
-        PICK_THEME_HEADLINE,
-    )
-    private val questionStrings = headlines.flatMap { listOf(it.last(), introHeadlinePhrase(it)) } + PICK_THEME_HEADING
 
     @Test
     fun `no button and no other string has a question mark, an exclamation mark, a colon, a dash, an arrow or a dot`() {

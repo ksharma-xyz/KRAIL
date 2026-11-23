@@ -91,13 +91,6 @@ class SearchStopMapStateLayoutTest {
     private fun boundsOf(tag: String): DpRect =
         composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
 
-    private fun touchBoundsOf(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true)
-        .fetchSemanticsNode().touchBoundsInRoot.let { rect ->
-            with(
-                composeRule.density,
-            ) { DpRect(rect.left.toDp(), rect.top.toDp(), rect.right.toDp(), rect.bottom.toDp()) }
-        }
-
     private fun assertNear(what: String, expected: Dp, actual: Dp) {
         assertTrue(abs((expected - actual).value) <= 1f, "$what: expected $expected, got $actual")
     }

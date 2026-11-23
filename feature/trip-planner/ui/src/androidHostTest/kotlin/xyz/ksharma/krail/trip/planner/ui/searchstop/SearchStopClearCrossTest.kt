@@ -140,7 +140,8 @@ class SearchStopClearCrossTest {
     ).getUnclippedBoundsInRoot()
 
     private fun exists(tag: String) = composeRule.onAllNodes(hasTestTag(tag), useUnmergedTree = true)
-        .fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
+        .fetchSemanticsNodes(atLeastOneRootRequired = false)
+        .isNotEmpty()
 
     private fun DpRect.cx() = left + width / 2f
     private fun DpRect.cy() = top + height / 2f

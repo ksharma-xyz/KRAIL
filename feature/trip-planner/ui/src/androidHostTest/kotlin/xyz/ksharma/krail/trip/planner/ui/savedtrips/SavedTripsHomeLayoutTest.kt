@@ -17,7 +17,6 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
@@ -48,6 +47,7 @@ import xyz.ksharma.krail.core.adaptiveui.DUAL_PANE_LIST_WIDTH
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.flow.RecordingTripPlannerNavigator
+import xyz.ksharma.krail.trip.planner.ui.getVisibleBoundsInRoot
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
@@ -734,7 +734,7 @@ class SavedTripsHomeLayoutTest {
     }
 
     private fun bounds(tag: String): DpRect =
-        composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+        composeRule.onNodeWithTag(tag, useUnmergedTree = true).getVisibleBoundsInRoot()
 
     /** The whole touch target of a control, which the 48 dp interactive size gives a button that draws smaller. */
     private fun touchBounds(tag: String): DpRect {
@@ -747,7 +747,7 @@ class SavedTripsHomeLayoutTest {
     }
 
     private fun textBounds(text: String): DpRect =
-        composeRule.onNodeWithText(text, useUnmergedTree = true).getUnclippedBoundsInRoot()
+        composeRule.onNodeWithText(text, useUnmergedTree = true).getVisibleBoundsInRoot()
 
     private fun assertNear(what: String, expected: Dp, actual: Dp) {
         assertTrue(

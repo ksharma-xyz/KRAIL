@@ -6,7 +6,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -22,6 +21,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.park.ride.ui.components.DirectionsButton
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.getVisibleBoundsInRoot
 import kotlin.math.abs
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -44,7 +44,7 @@ class DirectionsButtonLayoutTest {
     fun `the button is 48 dp square, one button, spoken with the car park`() {
         show()
 
-        val bounds = composeRule.onNodeWithTag(TAG).getUnclippedBoundsInRoot()
+        val bounds = composeRule.onNodeWithTag(TAG).getVisibleBoundsInRoot()
         assertNear("width", 48.dp.value, bounds.width.value)
         assertNear("height", 48.dp.value, bounds.height.value)
         val node = composeRule.onNodeWithContentDescription(LABEL).fetchSemanticsNode()

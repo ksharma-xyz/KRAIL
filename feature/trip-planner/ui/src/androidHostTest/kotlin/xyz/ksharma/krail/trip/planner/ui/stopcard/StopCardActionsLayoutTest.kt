@@ -13,7 +13,6 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertHasNoClickAction
-import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -38,6 +37,7 @@ import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.departures.ui.state.DeparturesState
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags.StopCard
+import xyz.ksharma.krail.trip.planner.ui.getVisibleBoundsInRoot
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
@@ -293,7 +293,7 @@ class StopCardActionsLayoutTest {
         )
     }
 
-    private fun bounds(tag: String): DpRect = composeRule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
+    private fun bounds(tag: String): DpRect = composeRule.onNodeWithTag(tag).getVisibleBoundsInRoot()
 
     /** The words on a control, merged with its children, which is what a screen reader reads. */
     private fun textOf(tag: String): String =

@@ -12,7 +12,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -42,6 +41,7 @@ import xyz.ksharma.krail.departures.ui.state.DeparturesUiEvent
 import xyz.ksharma.krail.departures.ui.state.model.StopDeparture
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags.StopCard
+import xyz.ksharma.krail.trip.planner.ui.getVisibleBoundsInRoot
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
 import kotlin.math.abs
 import kotlin.test.assertEquals
@@ -223,9 +223,9 @@ class StopCardLayoutTest {
         showCard(MULTI_LINE_STOP, MANY_LINE_BOARD, boardOpen = true)
 
         val card = bounds(StopCard.CARD)
-        val name = composeRule.onNodeWithText("Central Station", useUnmergedTree = true).getUnclippedBoundsInRoot()
-        val title = composeRule.onNodeWithText("Departure Board", useUnmergedTree = true).getUnclippedBoundsInRoot()
-        val row = composeRule.onAllNodesWithText("Anywhere")[0].getUnclippedBoundsInRoot()
+        val name = composeRule.onNodeWithText("Central Station", useUnmergedTree = true).getVisibleBoundsInRoot()
+        val title = composeRule.onNodeWithText("Departure Board", useUnmergedTree = true).getVisibleBoundsInRoot()
+        val row = composeRule.onAllNodesWithText("Anywhere")[0].getVisibleBoundsInRoot()
         assertNear("stop name inset", 16.dp, name.left - card.left)
         assertNear("board title inset", 16.dp, title.left - card.left)
         // One 16 dp inset, not the 32 dp an inner card used to add.
@@ -365,7 +365,7 @@ class StopCardLayoutTest {
 
     private fun headingConfig() = composeRule.onNodeWithTag(StopCard.BOARD_HEADING).fetchSemanticsNode().config
 
-    private fun bounds(tag: String): DpRect = composeRule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
+    private fun bounds(tag: String): DpRect = composeRule.onNodeWithTag(tag).getVisibleBoundsInRoot()
 
     private fun assertNear(what: String, expected: Dp, actual: Dp) {
         assertTrue(

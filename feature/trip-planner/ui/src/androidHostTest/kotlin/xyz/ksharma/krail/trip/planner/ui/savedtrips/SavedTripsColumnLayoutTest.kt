@@ -1,6 +1,5 @@
 package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
-import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.Dp
@@ -17,6 +16,7 @@ import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.core.adaptiveui.DUAL_PANE_LIST_WIDTH
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.getVisibleBoundsInRoot
 import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapScreenForTest
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
@@ -106,7 +106,7 @@ class SavedTripsColumnLayoutTest {
     }
 
     private fun boundsOfTag(tag: String): DpRect =
-        composeRule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
+        composeRule.onNodeWithTag(tag).getVisibleBoundsInRoot()
 
     private fun assertEdges(what: String, actual: DpRect, left: Dp, right: Dp) {
         assertLeft(what, actual, left)

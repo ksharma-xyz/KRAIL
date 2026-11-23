@@ -10,13 +10,13 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.text.TextLayoutResult
@@ -38,6 +38,7 @@ import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.getVisibleBoundsInRoot
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState.ParkRideFacilityDetail
 import kotlin.math.abs
@@ -71,11 +72,18 @@ class ParkRideRowLayoutTest {
     fun `a tile is 148 dp wide, 8 dp apart, and the first starts 16 dp in`() {
         setRow(stations = FOUR_STATIONS)
 
-        FOUR_STATIONS.forEachIndexed { index, station ->
-            val tile = tile(station.stopId)
-            assertNear("width of tile $index", 148.dp, tile.width)
-            assertNear("left edge of tile $index", 16.dp + (148.dp + 8.dp) * index, tile.left)
+        // At the start of the scroll the left edges of the first three tiles are on screen, 156 dp apart.
+        FOUR_STATIONS.take(ON_SCREEN_AT_START).forEachIndexed { index, station ->
+            assertNear("left edge of tile $index", 16.dp + (148.dp + 8.dp) * index, tile(station.stopId).left)
         }
+        // A tile is measured once the row is scrolled to it, because the row hides the rest of it by design.
+        FOUR_STATIONS.forEachIndexed { index, station ->
+            assertNear("width of tile $index", 148.dp, tileScrolledTo(station.stopId).width)
+        }
+        // The row is now at its end, so the last two tiles are both whole on screen.
+        val last = tile(FOUR_STATIONS.last().stopId)
+        val before = tile(FOUR_STATIONS[FOUR_STATIONS.size - 2].stopId)
+        assertNear("gap between the last two tiles", 8.dp, last.left - before.right)
     }
 
     @Test
@@ -83,9 +91,11 @@ class ParkRideRowLayoutTest {
     fun `the next tile peeks past the right edge and nothing masks it`() {
         setRow(stations = FOUR_STATIONS)
 
+        // What the rider sees of the third tile: it starts inside the window and shows less than its 148 dp.
         val third = tile(FOUR_STATIONS[2].stopId)
         assertTrue(third.left < 411.dp, "The third tile starts at ${third.left}, inside the 411 dp window")
-        assertTrue(third.right > 411.dp, "The third tile ends at ${third.right}, so it is cut by the screen edge")
+        assertNear("the third tile is shown up to the screen edge", 411.dp, third.right)
+        assertTrue(third.width < 148.dp - TOLERANCE_DP.dp, "Only ${third.width} of the third tile is shown")
     }
 
     @Test
@@ -105,9 +115,12 @@ class ParkRideRowLayoutTest {
     fun `at 320 dp and 200 percent text a tile is the column less 60 dp, so the next tile peeks`() {
         setRow(stations = FOUR_STATIONS, fontScale = 2f)
 
-        FOUR_STATIONS.forEach { assertNear("tile width", 260.dp, tile(it.stopId).width) }
+        // The second tile is the peek: it starts inside the window and only part of its 260 dp is shown.
         val second = tile(FOUR_STATIONS[1].stopId)
-        assertTrue(second.left < 320.dp && second.right > 320.dp, "The second tile $second peeks past 320 dp")
+        assertTrue(second.left < 320.dp, "The second tile $second starts inside the 320 dp window")
+        assertNear("the second tile is shown up to the screen edge", 320.dp, second.right)
+        assertTrue(second.width < 260.dp - TOLERANCE_DP.dp, "Only ${second.width} of the second tile is shown")
+        FOUR_STATIONS.forEach { assertNear("tile width", 260.dp, tileScrolledTo(it.stopId).width) }
     }
 
     @Test
@@ -115,7 +128,7 @@ class ParkRideRowLayoutTest {
     fun `in the widest column a tile at 200 percent is 296 dp`() {
         setRow(stations = FOUR_STATIONS, fontScale = 2f)
 
-        FOUR_STATIONS.forEach { assertNear("tile width", 296.dp, tile(it.stopId).width) }
+        FOUR_STATIONS.forEach { assertNear("tile width", 296.dp, tileScrolledTo(it.stopId).width) }
     }
 
     // endregion
@@ -353,7 +366,14 @@ class ParkRideRowLayoutTest {
 
     private fun tile(stationId: String): DpRect = bounds(TripPlannerTestTags.parkRideTile(stationId))
 
-    private fun bounds(tag: String): DpRect = composeRule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
+    /** The tile after the row has been scrolled until all of it is on screen, as a rider brings the next tile in. */
+    private fun tileScrolledTo(stationId: String): DpRect {
+        composeRule.onNodeWithTag(TripPlannerTestTags.parkRideTile(stationId)).performScrollTo()
+        composeRule.waitForIdle()
+        return tile(stationId)
+    }
+
+    private fun bounds(tag: String): DpRect = composeRule.onNodeWithTag(tag).getVisibleBoundsInRoot()
 
     private fun assertNear(what: String, expected: Dp, actual: Dp) {
         assertTrue(
@@ -365,6 +385,9 @@ class ParkRideRowLayoutTest {
     private companion object {
         const val PHONE = "w411dp-h891dp"
         const val TOLERANCE_DP = 1.5f
+
+        /** In 411 dp the tiles leave room for two whole ones and the left edge of a third. */
+        const val ON_SCREEN_AT_START = 3
 
         val LOADED = station("2153478", "Bella Vista", car("31", "Bella Vista Car Park", "2153478", free = 120))
         val LOADED_TWO = station("2000001", "Hornsby", car("41", "Hornsby Car Park", "2000001", free = 64))

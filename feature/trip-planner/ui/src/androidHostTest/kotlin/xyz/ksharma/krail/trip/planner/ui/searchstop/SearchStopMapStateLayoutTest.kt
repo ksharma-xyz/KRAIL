@@ -7,7 +7,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasTestTag
@@ -35,6 +34,7 @@ import xyz.ksharma.krail.core.transport.ModeSelectionSurface
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.getVisibleBoundsInRoot
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
@@ -89,7 +89,7 @@ class SearchStopMapStateLayoutTest {
     }
 
     private fun boundsOf(tag: String): DpRect =
-        composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+        composeRule.onNodeWithTag(tag, useUnmergedTree = true).getVisibleBoundsInRoot()
 
     private fun assertNear(what: String, expected: Dp, actual: Dp) {
         assertTrue(abs((expected - actual).value) <= 1f, "$what: expected $expected, got $actual")

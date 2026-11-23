@@ -15,7 +15,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -37,6 +36,7 @@ import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.core.adaptiveui.DUAL_PANE_LIST_WIDTH
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.getVisibleBoundsInRoot
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputUiState
 import xyz.ksharma.krail.trip.planner.ui.searchstop.LocationPill
@@ -549,7 +549,7 @@ class HomeMapScreenLayoutTest {
     }
 
     private fun bounds(tag: String): DpRect =
-        composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+        composeRule.onNodeWithTag(tag, useUnmergedTree = true).getVisibleBoundsInRoot()
 
     /** The whole touch target of a control, which the 48 dp interactive size gives a button that draws smaller. */
     private fun touchBounds(tag: String): DpRect {
@@ -562,7 +562,7 @@ class HomeMapScreenLayoutTest {
     }
 
     private fun textBounds(text: String): DpRect =
-        composeRule.onNodeWithText(text, useUnmergedTree = true).getUnclippedBoundsInRoot()
+        composeRule.onNodeWithText(text, useUnmergedTree = true).getVisibleBoundsInRoot()
 
     private fun assertNear(what: String, expected: Dp, actual: Dp) {
         assertTrue(

@@ -11,7 +11,6 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
-import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -32,6 +31,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.getVisibleBoundsInRoot
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.CarParkBlock
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.ParkRideTile
 import kotlin.math.abs
@@ -297,9 +297,9 @@ class ParkRideSuggestionCardLayoutTest {
         assertTrue(button.height < MAX_ONE_LINE_BUTTON_AT_200, "$tag is one line tall, not ${button.height}")
     }
 
-    private fun bounds(tag: String): DpRect = composeRule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
+    private fun bounds(tag: String): DpRect = composeRule.onNodeWithTag(tag).getVisibleBoundsInRoot()
 
-    private fun textBounds(text: String): DpRect = composeRule.onNodeWithText(text).getUnclippedBoundsInRoot()
+    private fun textBounds(text: String): DpRect = composeRule.onNodeWithText(text).getVisibleBoundsInRoot()
 
     private fun SemanticsNode.allNodes(): List<SemanticsNode> = listOf(this) + children.flatMap { it.allNodes() }
 

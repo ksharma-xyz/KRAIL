@@ -9,7 +9,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
-import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -32,6 +31,7 @@ import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.getVisibleBoundsInRoot
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -91,7 +91,7 @@ class SearchStopModeChipsLayoutTest {
     fun `the block is a card with the card corner and padding and has no sideways scroll or fade`() {
         setChips(fontScale = 2f)
 
-        val block = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).getUnclippedBoundsInRoot()
+        val block = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).getVisibleBoundsInRoot()
         val gaps = searchStopGaps()
         val chips = chipBounds()
         assertEquals(gaps.cardPadding, chips.minOf { it.left } - block.left, "Chips start one card padding in.")
@@ -127,14 +127,14 @@ class SearchStopModeChipsLayoutTest {
     }
 
     private fun assertAllInsideTheBlock(chips: List<DpRect>) {
-        val block = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).getUnclippedBoundsInRoot()
+        val block = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_MODE_CHIPS).getVisibleBoundsInRoot()
         for (chip in chips) {
             assertTrue(chip.left >= block.left && chip.right <= block.right, "A chip $chip stays in the block $block")
         }
     }
 
     private fun chipBounds(): List<DpRect> = modes.map { mode ->
-        composeRule.onNodeWithTag(chipTag(mode), useUnmergedTree = true).getUnclippedBoundsInRoot()
+        composeRule.onNodeWithTag(chipTag(mode), useUnmergedTree = true).getVisibleBoundsInRoot()
     }
 
     private fun setChips(

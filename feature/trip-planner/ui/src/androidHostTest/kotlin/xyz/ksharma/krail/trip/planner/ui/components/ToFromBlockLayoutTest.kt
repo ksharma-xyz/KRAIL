@@ -21,7 +21,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
-import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -45,6 +44,7 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.getVisibleBoundsInRoot
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import kotlin.math.abs
 import kotlin.test.assertEquals
@@ -666,10 +666,10 @@ class ToFromBlockLayoutTest {
     }
 
     private fun boundsOf(tag: String): DpRect =
-        composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+        composeRule.onNodeWithTag(tag, useUnmergedTree = true).getVisibleBoundsInRoot()
 
     private fun textBounds(text: String): DpRect =
-        composeRule.onNodeWithText(text, useUnmergedTree = true).getUnclippedBoundsInRoot()
+        composeRule.onNodeWithText(text, useUnmergedTree = true).getVisibleBoundsInRoot()
 
     private fun layoutOf(text: String): TextLayoutResult {
         val results = mutableListOf<TextLayoutResult>()

@@ -5,7 +5,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -29,6 +28,7 @@ import xyz.ksharma.krail.core.adaptiveui.DUAL_PANE_LIST_WIDTH
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.getVisibleBoundsInRoot
 import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapActions
 import xyz.ksharma.krail.trip.planner.ui.homemap.HomeMapScreenForTest
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
@@ -359,7 +359,7 @@ class HomeChipRowLayoutTest {
     )
 
     private fun bounds(tag: String): DpRect =
-        composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
+        composeRule.onNodeWithTag(tag, useUnmergedTree = true).getVisibleBoundsInRoot()
 
     /** The whole touch target of a control, which the 48 dp interactive size gives a button that draws smaller. */
     private fun touchBounds(tag: String): DpRect {
@@ -372,7 +372,7 @@ class HomeChipRowLayoutTest {
     }
 
     private fun textBounds(text: String): DpRect =
-        composeRule.onNodeWithText(text, useUnmergedTree = true).getUnclippedBoundsInRoot()
+        composeRule.onNodeWithText(text, useUnmergedTree = true).getVisibleBoundsInRoot()
 
     private fun assertNear(what: String, expected: Dp, actual: Dp) {
         assertTrue(

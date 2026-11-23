@@ -94,10 +94,6 @@
     <ID>FunctionNaming:OutlineRadioButton.kt$@Composable fun OutlineRadioButton( text: String, themeColor: Color, modifier: Modifier = Modifier, type: RadioButtonType = RadioButtonType.DEFAULT, selected: Boolean = false, enabled: Boolean = true, onClick: () -&gt; Unit = {}, )</ID>
     <ID>FunctionNaming:ParkRideCard.kt$@Composable fun ParkRideCard( parkRideUiState: ParkRideUiState, isExpanded: Boolean, modifier: Modifier = Modifier, onClick: () -&gt; Unit = {}, )</ID>
     <ID>FunctionNaming:ParkRideCard.kt$@Preview @Composable private fun ParkRideCardPreview()</ID>
-    <ID>FunctionNaming:ParkRideContent.kt$@Composable fun ParkRideLoadedContent( parkRideFacilityDetail: ParkRideFacilityDetail, modifier: Modifier = Modifier, )</ID>
-    <ID>FunctionNaming:ParkRideContent.kt$@Preview @Composable fun ParkRideLoadedContentPreview_Barbie()</ID>
-    <ID>FunctionNaming:ParkRideContent.kt$@Preview @Composable fun ParkRideLoadedContentPreview_Default()</ID>
-    <ID>FunctionNaming:ParkRideContent.kt$@Preview @Composable fun ParkRideLoadedContentPreview_Full()</ID>
     <ID>FunctionNaming:ParkRideIcon.kt$@Composable internal fun ParkRideIcon( modifier: Modifier = Modifier, )</ID>
     <ID>FunctionNaming:ParkRideIcon.kt$@Composable internal fun ParkRideIconContainer( backgroundColor: Color, modifier: Modifier = Modifier, content: @Composable BoxScope.() -&gt; Unit, )</ID>
     <ID>FunctionNaming:ParkRideIcon.kt$@Preview @Composable private fun ParkRideIconBusThemePreview()</ID>
@@ -192,7 +188,6 @@
     <ID>LongMethod:LegView.kt$@Composable fun LegView( routeText: String?, // AVC via XYZ transportModeLine: TransportModeLine, stops: ImmutableList&lt;TimeTableState.JourneyCardInfo.Stop&gt;, modifier: Modifier = Modifier, displayAllStops: Boolean = false, onClick: () -&gt; Unit = {}, )</ID>
     <ID>LongMethod:OriginDestination.kt$@Composable internal fun OriginDestination( trip: Trip, timeLineColor: Color, modifier: Modifier = Modifier, )</ID>
     <ID>LongMethod:ParkRideCard.kt$@Composable fun ParkRideCard( parkRideUiState: ParkRideUiState, isExpanded: Boolean, modifier: Modifier = Modifier, onClick: () -&gt; Unit = {}, )</ID>
-    <ID>LongMethod:ParkRideContent.kt$@Composable fun ParkRideLoadedContent( parkRideFacilityDetail: ParkRideFacilityDetail, modifier: Modifier = Modifier, )</ID>
     <ID>LongMethod:SavedTripsScreen.kt$@Composable fun SavedTripsScreen( savedTripsState: SavedTripsState, modifier: Modifier = Modifier, fromButtonClick: () -&gt; Unit = {}, toButtonClick: () -&gt; Unit = {}, onReverseButtonClick: () -&gt; Unit = {}, onSavedTripCardClick: (StopItem?, StopItem?) -&gt; Unit = { _, _ -&gt; }, onSearchButtonClick: () -&gt; Unit = {}, onSettingsButtonClick: () -&gt; Unit = {}, onDiscoverButtonClick: () -&gt; Unit = {}, onEvent: (SavedTripUiEvent) -&gt; Unit = {}, )</ID>
     <ID>LongMethod:SavedTripsScreen.kt$private fun LazyListScope.savedTripsContent( savedTripsState: SavedTripsState, onEvent: (SavedTripUiEvent) -&gt; Unit, onSavedTripCardClick: (StopItem?, StopItem?) -&gt; Unit = { _, _ -&gt; }, expandedMap: SnapshotStateMap&lt;String, Boolean&gt;, )</ID>
     <ID>LongMethod:SearchStopRow.kt$@Composable fun SearchStopRow( fromButtonClick: () -&gt; Unit, toButtonClick: () -&gt; Unit, modifier: Modifier = Modifier, fromStopItem: StopItem? = null, toStopItem: StopItem? = null, onReverseButtonClick: () -&gt; Unit = {}, onSearchButtonClick: () -&gt; Unit = {}, )</ID>
@@ -308,9 +303,6 @@
     <ID>ParameterNaming:JourneyTimeOptionsGroup.kt$onOptionSelected</ID>
     <ID>ParameterNaming:ThemeSelectionScreen.kt$onThemeSelected</ID>
     <ID>ParameterNaming:TimeTableScreen.kt$onModeSelectionChanged</ID>
-    <ID>PreviewPublic:ParkRideContent.kt$ParkRideLoadedContentPreview_Barbie</ID>
-    <ID>PreviewPublic:ParkRideContent.kt$ParkRideLoadedContentPreview_Default</ID>
-    <ID>PreviewPublic:ParkRideContent.kt$ParkRideLoadedContentPreview_Full</ID>
     <ID>ReturnCount:DiscoverViewModel.kt$fun DiscoverState.getCtaOrPartnerSocialLinkForCard(cardId: String): String?</ID>
     <ID>SpacingAroundColon:TripPlannerDestinations.kt$AppUpgradeRoute$:</ID>
     <ID>SpacingAroundColon:TripPlannerDestinations.kt$IntroRoute$:</ID>

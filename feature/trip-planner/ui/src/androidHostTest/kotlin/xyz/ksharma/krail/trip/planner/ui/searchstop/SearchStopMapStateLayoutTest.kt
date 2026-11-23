@@ -116,20 +116,20 @@ class SearchStopMapStateLayoutTest {
 
     @Test
     @Config(qualifiers = W411)
-    fun `the box holds two pills of one width, 48 tall, one padding inside and one gap apart`() {
+    fun `the box holds From above To, two pills of one width, 48 tall, one padding inside and one gap apart`() {
         setScreen()
 
         val box = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
         val to = boundsOf(TripPlannerTestTags.SEARCH_ROW_TO)
         val from = boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM)
-        assertNear("To left", box.left + gaps.cardPadding, to.left)
-        assertNear("To top", box.top + gaps.cardPadding, to.top)
+        assertNear("From left", box.left + gaps.cardPadding, from.left)
+        assertNear("From top", box.top + gaps.cardPadding, from.top)
         assertNear("pills share a left edge", to.left, from.left)
         assertNear("pills share a width", to.width, from.width)
         assertNear("To is 48 tall", 48.dp, to.height)
         assertNear("From is 48 tall", 48.dp, from.height)
-        assertNear("From sits one gap under To", to.bottom + gaps.betweenRows, from.top)
-        assertNear("the box ends one padding under From", from.bottom + gaps.cardPadding, box.bottom)
+        assertNear("To sits one gap under From", from.bottom + gaps.betweenRows, to.top)
+        assertNear("the box ends one padding under To", to.bottom + gaps.cardPadding, box.bottom)
     }
 
     @Test

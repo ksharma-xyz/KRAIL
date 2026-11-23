@@ -59,6 +59,7 @@ class ToFromFloatingRowsTest {
         from: StopItem? = null,
         onTo: () -> Unit = {},
         onFrom: () -> Unit = {},
+        showGo: Boolean = false,
     ) {
         composeRule.setContent {
             PreviewTheme {
@@ -75,7 +76,7 @@ class ToFromFloatingRowsTest {
                             modifier = Modifier.testTag(QUERY_FIELD),
                         ),
                         toLeading = { Box(Modifier.size(48.dp).testTag(BACK_PROBE)) },
-                        showGo = false,
+                        showGo = showGo,
                         style = ToFromBlockStyle.FloatingRows(rowGap = rowGap),
                     )
                 }
@@ -84,10 +85,11 @@ class ToFromFloatingRowsTest {
         composeRule.waitForIdle()
     }
 
-    private fun boundsOf(tag: String): DpRect = composeRule.onNodeWithTag(tag).getUnclippedBoundsInRoot()
+    private fun boundsOf(tag: String): DpRect =
+        composeRule.onNodeWithTag(tag, useUnmergedTree = true).getUnclippedBoundsInRoot()
 
     @Test
-    fun `the bars are two pills of one width, 48 tall, one gap apart with no divider between`() {
+    fun `the bars are two pills of one width, 48 tall, one gap apart with no divider, From above To`() {
         setRows(mutableStateOf(ToFromField.To))
 
         val to = boundsOf(TripPlannerTestTags.SEARCH_ROW_TO)
@@ -96,8 +98,90 @@ class ToFromFloatingRowsTest {
         assertEquals(to.width, from.width)
         assertEquals(48.dp, to.height)
         assertEquals(48.dp, from.height)
-        assertTrue(abs((from.top - to.bottom - rowGap).value) <= 0.5f, "To $to From $from")
+        assertTrue(from.top < to.top, "From is the top pill: From $from To $to")
+        assertTrue(abs((to.top - from.bottom - rowGap).value) <= 0.5f, "From $from To $to")
     }
+
+    @Test
+    fun `the back arrow starts the top pill, the pin starts the pill below it, and the go circle ends that one`() {
+        setRows(mutableStateOf<ToFromField?>(null), to = TOWN_HALL, from = CENTRAL, showGo = true)
+
+        val from = boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM)
+        val to = boundsOf(TripPlannerTestTags.SEARCH_ROW_TO)
+        val arrow = boundsOf(BACK_PROBE)
+        val pin = boundsOf(TripPlannerTestTags.SEARCH_ROW_DESTINATION_PIN)
+        val go = boundsOf(TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE)
+        assertTrue(arrow.top >= from.top && arrow.bottom <= from.bottom, "The arrow $arrow is in the top pill $from")
+        assertTrue(arrow.left - from.left < 1.dp, "and at its start")
+        assertTrue(pin.top >= to.top && pin.bottom <= to.bottom, "The pin $pin is in the pill below $to")
+        assertTrue(abs((pin.centerX() - arrow.centerX()).value) <= 1f, "and in the same start column as the arrow")
+        assertTrue(go.top >= to.top && go.bottom <= to.bottom, "The go circle $go is in the last pill $to")
+        assertTrue(abs((to.right - go.right).value) <= 8.5f, "and at its end")
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT).assertDoesNotExist()
+    }
+
+    @Test
+    fun `with one bar the back arrow is its start and there is no pin, no From and no gap above it`() {
+        composeRule.setContent {
+            PreviewTheme {
+                ToFromBlock(
+                    toStopItem = null,
+                    fromStopItem = null,
+                    onToClick = {},
+                    onFromClick = {},
+                    onGoClick = {},
+                    editing = null,
+                    toLeading = { Box(Modifier.size(48.dp).testTag(BACK_PROBE)) },
+                    showFrom = false,
+                    showGo = false,
+                    style = ToFromBlockStyle.FloatingRows(rowGap = rowGap),
+                )
+            }
+        }
+        composeRule.waitForIdle()
+
+        val to = boundsOf(TripPlannerTestTags.SEARCH_ROW_TO)
+        val arrow = boundsOf(BACK_PROBE)
+        assertTrue(arrow.top >= to.top && arrow.bottom <= to.bottom && arrow.left - to.left < 1.dp, "$arrow in $to")
+        assertEquals(0.dp, to.top, "Nothing is above the one bar.")
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_FROM).assertDoesNotExist()
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_DESTINATION_PIN).assertDoesNotExist()
+    }
+
+    @Test
+    fun `a bar at rest shows its stop as text and its prompt only while empty`() {
+        val editing = mutableStateOf<ToFromField?>(null)
+        setRows(editing, to = TOWN_HALL)
+
+        composeRule.onNodeWithText(TOWN_HALL.stopName).assertExists()
+        composeRule.onNodeWithText(TO_PLACEHOLDER).assertDoesNotExist()
+        composeRule.onNodeWithText(FROM_PLACEHOLDER).assertExists()
+    }
+
+    @Test
+    fun `a bar that holds a stop and is edited starts empty with its fixed prompt, never the stop's name`() {
+        val editing = mutableStateOf<ToFromField?>(ToFromField.To)
+        setRows(editing, to = TOWN_HALL, from = CENTRAL)
+
+        composeRule.onNodeWithText(TOWN_HALL.stopName).assertDoesNotExist()
+        composeRule.onNodeWithText(TO_PLACEHOLDER).assertExists()
+        composeRule.onNodeWithText(CENTRAL.stopName).assertExists()
+
+        composeRule.runOnIdle { editing.value = ToFromField.From }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText(CENTRAL.stopName).assertDoesNotExist()
+        composeRule.onNodeWithText(FROM_PLACEHOLDER).assertExists()
+        composeRule.onNodeWithText(TOWN_HALL.stopName).assertExists()
+
+        composeRule.runOnIdle { editing.value = null }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText(CENTRAL.stopName).assertExists()
+        composeRule.onNodeWithText(TOWN_HALL.stopName).assertExists()
+    }
+
+    private fun DpRect.centerX() = left + (right - left) / 2f
 
     @Test
     fun `the idle bar is the same field, a tap on it edits it, and the bar being edited holds the query field`() {

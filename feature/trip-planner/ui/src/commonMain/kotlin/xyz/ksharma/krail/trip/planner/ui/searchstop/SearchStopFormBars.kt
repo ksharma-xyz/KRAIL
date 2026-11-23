@@ -24,10 +24,12 @@ import xyz.ksharma.krail.taj.components.CloseIcon
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.components.FloatingGoCircle
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromBlock
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromBlockStyle
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromEditor
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
+import xyz.ksharma.krail.trip.planner.ui.components.toFromBarInsets
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
 /**
@@ -39,14 +41,15 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
  *   the query field, the other is that field unfocused, and tapping it moves the field and the keyboard to
  *   it. With [ToFromBlockStyle.Classic] the bar being edited is the dark one and the other the light
  *   button. No row moves either way.
- * - The back arrow stays on the To bar and the origin dot on the From bar in every state.
+ * - From is the top bar and To is the bar below it. The back arrow stays at the start of the first (top) bar in
+ *   every state, which is From, or the one bar of a single field. To has the destination pin at its start.
  * - The X shows only while the field has text, and only clears it. It never leaves the screen, so
  *   the recents stay where they are.
- * - The go circle is drawn as soon as [goVisible] says the trip can start, and it is the only way out
- *   of the screen with a trip.
- * - Each bar shows its stop. From shows [fromStop], which is the stop the rider picked or else the one
- *   nearest them, and it stays editable. A bar edited while it holds a stop reads that stop as its
- *   placeholder until the rider types.
+ * - The go circle is drawn on the To bar, the last one, as soon as [goVisible] says the trip can start, and it is the
+ *   only way out of the screen with a trip.
+ * - Each bar shows its stop as its text while it is at rest. From shows [fromStop], which is the stop the rider
+ *   picked or else the one nearest them, and it stays editable. A bar that is edited starts empty with its fixed
+ *   prompt as the placeholder, never the stop's name.
  * - [editing] null means both bars hold a stop and neither is being edited, so neither bar holds the field.
  */
 @Composable
@@ -75,10 +78,21 @@ internal fun SearchStopForm(
             onTextChange = onTextChange,
         )
     }
+    val showGo = goVisible(from = fromStop, to = toStop)
+    val insets = toFromBarInsets()
     // The X stays in the column even while it has nothing to draw, so the field never shifts a
     // step to the right the moment the rider types.
     val clear: @Composable () -> Unit = {
         if (hasText) ClearTextButton(onClick = { fieldState.clearText() })
+    }
+    // The To bar is the last one and ends in the go circle, so while it is edited and nothing is typed the go circle
+    // keeps its place, and the X takes it only while there is text to clear.
+    val clearOrGo: @Composable () -> Unit = {
+        if (hasText) {
+            ClearTextButton(onClick = { fieldState.clearText() })
+        } else if (showGo) {
+            FloatingGoCircle(insets = insets, onClick = onGoClick)
+        }
     }
 
     ToFromBlock(
@@ -92,10 +106,10 @@ internal fun SearchStopForm(
         editor = editor,
         showFrom = shape == FormShape.ToAndFrom,
         toLeading = { BackArrowButton(onClick = onBack) },
-        toTrailing = { if (editing == ToFromField.To) clear() },
+        toTrailing = if (editing == ToFromField.To) clearOrGo else null,
         toPlaceholder = toPlaceholder,
         fromPlaceholder = fromPlaceholder,
-        showGo = goVisible(from = fromStop, to = toStop),
+        showGo = showGo,
         fromTrailing = if (editing == ToFromField.From) clear else null,
         style = style,
     )

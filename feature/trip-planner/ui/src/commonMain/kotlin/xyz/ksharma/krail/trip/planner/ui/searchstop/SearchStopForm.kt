@@ -18,7 +18,7 @@ internal enum class FormShape {
     /** A label, or one leg of a trip: one stop, one bar. */
     Single,
 
-    /** To above From, the shape of the home block. */
+    /** From above To, two pills on one card. */
     ToAndFrom,
 }
 
@@ -26,19 +26,17 @@ internal fun formShapeFor(fieldType: SearchStopFieldType, editTripLeg: Boolean):
     if (fieldType == SearchStopFieldType.LABEL || editTripLeg) FormShape.Single else FormShape.ToAndFrom
 
 /**
- * The placeholder a bar shows while it is empty. The To and From bars always read the same two
- * phrases, except that a bar holding a stop ([current]) reads that stop while it is the one being
- * edited and nothing is typed, so the rider still sees what they are changing. A single bar names
- * what it is for: a label's stop, or the end of the trip being changed.
+ * The prompt a bar shows while its field is empty, empty because nothing is typed or because it holds no stop. It is a
+ * fixed phrase: From is [FROM_PLACEHOLDER] and To is [TO_PLACEHOLDER], and a single bar names what it is for, a label's
+ * stop, or the end of the trip being changed. It is never a stop's name: a stop a bar holds is the bar's text while the
+ * bar is at rest, and while the bar is edited the field starts empty with this prompt.
  */
 internal fun barPlaceholderFor(
     field: ToFromField,
     fieldType: SearchStopFieldType,
     editTripLeg: Boolean,
-    current: StopItem? = null,
 ): String = when (formShapeFor(fieldType, editTripLeg)) {
-    FormShape.ToAndFrom -> current?.stopName
-        ?: if (field == ToFromField.From) FROM_PLACEHOLDER else TO_PLACEHOLDER
+    FormShape.ToAndFrom -> if (field == ToFromField.From) FROM_PLACEHOLDER else TO_PLACEHOLDER
     FormShape.Single -> when {
         fieldType == SearchStopFieldType.LABEL -> PLACEHOLDER_LABEL
         fieldType == SearchStopFieldType.FROM -> PLACEHOLDER_CHANGE_ORIGIN

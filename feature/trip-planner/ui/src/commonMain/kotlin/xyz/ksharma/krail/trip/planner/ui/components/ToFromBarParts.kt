@@ -20,6 +20,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
+import krail.feature.trip_planner.ui.generated.resources.Res
+import krail.feature.trip_planner.ui.generated.resources.ic_location_on
+import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.LocalContentColor
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.SeparatorIcon
@@ -69,6 +72,22 @@ internal fun OriginDot() {
             .size(KrailTheme.dimensions.spacingM)
             .testTag(TripPlannerTestTags.SEARCH_ROW_ORIGIN_DOT),
         color = LocalContentColor.current,
+    )
+}
+
+/**
+ * The pin that marks the To bar: the app's own destination pin, the one the stop rows draw for a destination, in the bar's
+ * own content colour so it reads on the light bar and on the dark one.
+ */
+@Composable
+internal fun DestinationPin() {
+    Image(
+        painter = painterResource(Res.drawable.ic_location_on),
+        contentDescription = null,
+        colorFilter = ColorFilter.tint(LocalContentColor.current),
+        modifier = Modifier
+            .size(KrailTheme.dimensions.iconM)
+            .testTag(TripPlannerTestTags.SEARCH_ROW_DESTINATION_PIN),
     )
 }
 

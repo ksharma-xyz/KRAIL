@@ -123,7 +123,7 @@ class SearchStopGroupCardTest {
     // region shape
 
     @Test
-    fun `the box is two pills, 48 tall and one gap apart, inside one padding on all four sides`() {
+    fun `the box is two pills, From above To, 48 tall and one gap apart, inside one padding on all four sides`() {
         setBox()
 
         val box = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
@@ -131,11 +131,12 @@ class SearchStopGroupCardTest {
         val from = boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM)
         assertNear("To is 48 tall", 48.dp, to.height)
         assertNear("From is 48 tall", 48.dp, from.height)
-        assertNear("8 dp between the pills, no divider", 8.dp, from.top - to.bottom)
-        assertNear("padding above To", gaps.cardPadding, to.top - box.top)
-        assertNear("padding under From", gaps.cardPadding, box.bottom - from.bottom)
-        assertNear("padding at the start", gaps.cardPadding, to.left - box.left)
-        assertNear("padding at the end", gaps.cardPadding, box.right - to.right)
+        assertTrue(from.top < to.top, "From is the top pill, To is below it")
+        assertNear("8 dp between the pills, no divider", 8.dp, to.top - from.bottom)
+        assertNear("padding above From", gaps.cardPadding, from.top - box.top)
+        assertNear("padding under To", gaps.cardPadding, box.bottom - to.bottom)
+        assertNear("padding at the start", gaps.cardPadding, from.left - box.left)
+        assertNear("padding at the end", gaps.cardPadding, box.right - from.right)
         assertNear("the box is 136 tall", 136.dp, box.height)
         assertEquals(16.dp, gaps.cardCorner, "The box keeps the card's 16 dp corner.")
     }

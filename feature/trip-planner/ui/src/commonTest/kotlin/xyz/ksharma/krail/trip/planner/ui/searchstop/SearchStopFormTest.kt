@@ -3,6 +3,8 @@ package xyz.ksharma.krail.trip.planner.ui.searchstop
 import kotlinx.collections.immutable.persistentListOf
 import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.krail.core.maps.state.LatLng
+import xyz.ksharma.krail.trip.planner.ui.components.FROM_PLACEHOLDER
+import xyz.ksharma.krail.trip.planner.ui.components.TO_PLACEHOLDER
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
@@ -39,15 +41,15 @@ class SearchStopFormTest {
     }
 
     @Test
-    fun `a bar holding a stop reads that stop until the rider types`() {
-        assertEquals(
-            "Central Station",
-            barPlaceholderFor(ToFromField.To, SearchStopFieldType.TO, editTripLeg = false, current = central),
-        )
-        assertEquals(
-            "Central Station",
-            barPlaceholderFor(ToFromField.From, SearchStopFieldType.TO, editTripLeg = false, current = central),
-        )
+    fun `the prompt is the fixed phrase of its bar and never a stop's name`() {
+        // The function takes no stop, so nothing a bar holds can reach it, whether the field is empty or holds a stop,
+        // focused or not. Every combination of field and opened-for field reads the same two phrases.
+        for (type in listOf(SearchStopFieldType.TO, SearchStopFieldType.FROM)) {
+            assertEquals(TO_PLACEHOLDER, barPlaceholderFor(ToFromField.To, type, editTripLeg = false))
+            assertEquals(FROM_PLACEHOLDER, barPlaceholderFor(ToFromField.From, type, editTripLeg = false))
+        }
+        assertEquals("Choose destination", TO_PLACEHOLDER)
+        assertEquals("Choose starting point", FROM_PLACEHOLDER)
     }
 
     @Test

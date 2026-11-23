@@ -75,9 +75,11 @@ internal fun toFromBarInsets(): ToFromBarInsets {
  * [showFrom] false hides the From bar (the beat after a label pill tap, before it animates in).
  * Because From is under To, showing it never moves To.
  *
- * [style] is the block's look. [ToFromBlockStyle.Classic] is everything above, the home's own. Search Stop's
- * map state passes [ToFromBlockStyle.FloatingRows]: the two bars are soft pills of taj's [TextField] on the one
- * card the caller draws, a gap apart, and neither bar swaps fill when focus moves (see `ToFromFloatingRows`).
+ * [style] is the block's look. [ToFromBlockStyle.Classic] is everything above, the home's own. Search Stop
+ * passes [ToFromBlockStyle.FloatingRows]: the two bars are soft pills of taj's [TextField], From on top and To below,
+ * a gap apart, and neither bar swaps fill when focus moves. In that style [toLeading] stands at the start of the first
+ * bar (From, or To when it is alone), [toTrailing] and [fromTrailing] are the end of the bar they name, and the go
+ * circle is the end of the last bar (see `ToFromFloatingRows`).
  */
 @Composable
 internal fun ToFromBlock(
@@ -127,7 +129,7 @@ internal fun ToFromBlock(
                 editing = editing,
                 editor = editor,
                 showFrom = showFrom,
-                toLeading = toLeading,
+                firstLeading = toLeading,
                 toTrailing = toTrailing,
                 fromTrailing = fromTrailing,
                 showGo = showGo,

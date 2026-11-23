@@ -40,7 +40,7 @@ internal class FloatingRowsContent(
     val editing: ToFromField?,
     val editor: ToFromEditor?,
     val showFrom: Boolean,
-    val toLeading: @Composable () -> Unit,
+    val firstLeading: @Composable () -> Unit,
     val toTrailing: (@Composable () -> Unit)?,
     val fromTrailing: (@Composable () -> Unit)?,
     val showGo: Boolean,
@@ -48,16 +48,19 @@ internal class FloatingRowsContent(
 )
 
 /**
- * The To and From block as two soft pills on one card (`docs/MAP_HOME_UX.md` rules 33, 35 and 36).
+ * The To and From block as two soft pills on one card (`docs/MAP_HOME_UX.md` rules 33, 35 and 36), From on top and To
+ * below it.
  *
  * Both bars are taj's [TextField] in [softFieldColors]: a pill that is a touch darker than the card in light mode
  * and a touch lighter in dark mode, with the page's own text colour, so they read as shapes without a border and
  * follow the app mode. The colours are the same whether the bar has focus or not, so nothing swaps between fills
- * when focus moves. The bar being edited holds the one query field. The other is the same field unfocused: it
- * shows its stop, or its placeholder, and a tap on it is the tap that edits it. [rowGap] separates the pills,
- * with no divider, and each pill is 48 tall with the same two 48 columns [toFromBarInsets] measures, so the back
- * arrow, the origin dot, the clear X and the go circle sit where they always did. A pill is one line and its text
- * ends in an ellipsis, so the pair is the same height at every text size.
+ * when focus moves. The bar being edited holds the one query field, empty with its fixed prompt as the placeholder. The
+ * other is the same field unfocused: it shows its stop as its text, or its prompt, and a tap on it is the tap that
+ * edits it. [rowGap] separates the pills, with no divider, and each pill is 48 tall with the same two 48 columns
+ * [toFromBarInsets] measures. The first bar's start column is [FloatingRowsContent.firstLeading], the back arrow, which is
+ * From's when both show and To's when it is the only one; the second bar's is the destination pin. The go circle is the
+ * last bar's end column and the clear X is the end column of the bar being edited. A pill is one line and its text ends
+ * in an ellipsis, so the pair is the same height at every text size.
  */
 @Composable
 internal fun ToFromFloatingRows(
@@ -66,19 +69,9 @@ internal fun ToFromFloatingRows(
     rowGap: Dp,
     modifier: Modifier = Modifier,
 ) {
-    val dim = KrailTheme.dimensions
     val colors = softFieldColors()
     Column(modifier = modifier.fillMaxWidth()) {
-        FloatingBar(
-            bar = rows.to,
-            isEditing = ToFromField.To.hasDarkFill(rows.editing),
-            editor = rows.editor,
-            insets = insets,
-            colors = colors,
-            leading = rows.toLeading,
-            trailing = rows.toTrailing,
-        )
-        // The gap belongs to the From row, so a hidden From leaves nothing under To.
+        // The gap belongs to the From row, so a hidden From leaves nothing above To.
         AnimatedVisibility(
             visible = rows.showFrom,
             enter = expandVertically(
@@ -86,32 +79,52 @@ internal fun ToFromFloatingRows(
                 animationSpec = tween(durationMillis = 450, easing = FastOutSlowInEasing),
             ) + fadeIn(animationSpec = tween(350)),
         ) {
-            Column(modifier = Modifier.fillMaxWidth().padding(top = rowGap)) {
+            Column(modifier = Modifier.fillMaxWidth().padding(bottom = rowGap)) {
                 FloatingBar(
                     bar = rows.from,
                     isEditing = ToFromField.From.hasDarkFill(rows.editing),
                     editor = rows.editor,
                     insets = insets,
                     colors = colors,
-                    leading = { OriginDot() },
-                    trailing = rows.fromTrailing
-                        ?: if (rows.showGo) {
-                            {
-                                // The opposite of the pill: its text colour for the circle, its fill for the arrow.
-                                GoCircle(
-                                    circle = colors.contentColor,
-                                    arrow = colors.containerColor,
-                                    diameter = goCircleDiameter(insets.column, dim.spacingXS),
-                                    onClick = rows.onGoClick,
-                                )
-                            }
-                        } else {
-                            null
-                        },
+                    leading = rows.firstLeading,
+                    trailing = rows.fromTrailing,
                 )
             }
         }
+        FloatingBar(
+            bar = rows.to,
+            isEditing = ToFromField.To.hasDarkFill(rows.editing),
+            editor = rows.editor,
+            insets = insets,
+            colors = colors,
+            leading = if (rows.showFrom) {
+                { DestinationPin() }
+            } else {
+                rows.firstLeading
+            },
+            trailing = rows.toTrailing ?: if (rows.showGo) {
+                { FloatingGoCircle(insets = insets, onClick = rows.onGoClick) }
+            } else {
+                null
+            },
+        )
     }
+}
+
+/**
+ * The go circle of the floating rows: the opposite of the pill, its text colour for the circle and its fill for the
+ * arrow. It is the last bar's end column, and a caller that fills that column itself (the clear X while typing)
+ * draws this when it has nothing else to show.
+ */
+@Composable
+internal fun FloatingGoCircle(insets: ToFromBarInsets, onClick: () -> Unit) {
+    val colors = softFieldColors()
+    GoCircle(
+        circle = colors.contentColor,
+        arrow = colors.containerColor,
+        diameter = goCircleDiameter(insets.column, KrailTheme.dimensions.spacingXS),
+        onClick = onClick,
+    )
 }
 
 /** One row: the query field when it is the one being edited and an editor is there, else the same field idle. */

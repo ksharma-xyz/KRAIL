@@ -11,19 +11,25 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 // decision is a pure function or one table, so the order of the rows, which of them show and every gap are
 // pinned without a layout.
 
-/** One row of the group card at the top, in the order it is drawn. The card holds only the two pills. */
-internal enum class GroupRow { To, From }
+/** One row of the form at the top, in the order it is drawn. */
+internal enum class GroupRow { From, To }
 
 /**
- * The rows of the group card, top to bottom. The To pill is always first. The From pill comes under it, one
- * gap away with no divider, when the form is [FormShape.ToAndFrom], and a single bar (a label, or one leg of a
- * trip) has only the one. The location status chip and the mode chips are not in this card at all: the chip is
- * under it ([locationChipShownFor]) and the mode chips are in [SearchStopModeControls].
+ * The rows of the form, top to bottom. From is the top pill and To is the pill below it, one gap away with no divider,
+ * when the form is [FormShape.ToAndFrom]. A single bar (a label, or one leg of a trip) has only the one, the To row. The
+ * location status chip and the mode chips are not in the form at all: the chip is under it ([locationChipShownFor]) and
+ * the mode chips are in [SearchStopModeControls].
  */
 internal fun groupCardRows(shape: FormShape): List<GroupRow> = buildList {
-    add(GroupRow.To)
     if (shape == FormShape.ToAndFrom) add(GroupRow.From)
+    add(GroupRow.To)
 }
+
+/**
+ * Whether the form is drawn on a card: only when two fields, From and To, are there. A single field is one bare rounded
+ * pill on the map. It depends on how many rows the shape shows and on nothing else, so no screen picks it by name.
+ */
+internal fun groupCardShownFor(shape: FormShape): Boolean = groupCardRows(shape).size > 1
 
 /** Whether the location status chip is drawn under the group card: only while the location is not allowed. */
 internal fun locationChipShownFor(pill: LocationPill): Boolean = pill != LocationPill.Hidden

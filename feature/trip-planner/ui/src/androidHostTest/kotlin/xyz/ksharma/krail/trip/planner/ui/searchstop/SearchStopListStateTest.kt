@@ -175,9 +175,11 @@ class SearchStopListStateTest {
         tapToPill()
         composeRule.waitForIdle()
 
-        // The nearest stop also fills the From pill by itself, so its name is on the screen twice: in the pill and in the row.
+        // The nearest stop also fills the From pill by itself, but the pill being edited starts empty with its fixed
+        // prompt and never reads the stop's name, so the name is on the screen once, in the row.
         composeRule.onNodeWithText("Near you").assertIsDisplayed()
-        composeRule.onAllNodesWithText("Wynyard Station").assertCountEquals(2)
+        composeRule.onAllNodesWithText("Wynyard Station").assertCountEquals(1)
+        composeRule.onNodeWithText("Choose starting point").assertExists()
         composeRule.onNodeWithText("Recent").assertDoesNotExist()
     }
 
@@ -275,7 +277,7 @@ class SearchStopListStateTest {
         assertEquals(before, after, "Tapping a pill does not move or resize the box.")
         assertNear("To is 48 tall", 48.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).height)
         assertNear("From is 48 tall", 48.dp, boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).height)
-        assertNear("the pills are one gap apart", gaps.betweenRows, boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).top - boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).bottom)
+        assertNear("the pills are one gap apart", gaps.betweenRows, boundsOf(TripPlannerTestTags.SEARCH_ROW_TO).top - boundsOf(TripPlannerTestTags.SEARCH_ROW_FROM).bottom)
     }
 
     // endregion

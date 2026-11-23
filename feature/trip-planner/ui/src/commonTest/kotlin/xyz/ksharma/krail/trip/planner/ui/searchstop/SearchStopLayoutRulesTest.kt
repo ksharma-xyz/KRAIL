@@ -13,20 +13,31 @@ class SearchStopLayoutRulesTest {
     // region the rows of the group card
 
     @Test
-    fun `a To and From form is the To pill and then the From pill, with no divider`() {
-        assertEquals(listOf(GroupRow.To, GroupRow.From), groupCardRows(FormShape.ToAndFrom))
+    fun `a To and From form is the From pill and then the To pill, with no divider`() {
+        assertEquals(listOf(GroupRow.From, GroupRow.To), groupCardRows(FormShape.ToAndFrom))
     }
 
     @Test
-    fun `a single bar has no From row`() {
+    fun `a single bar has only the To row`() {
         assertEquals(listOf(GroupRow.To), groupCardRows(FormShape.Single))
     }
 
     @Test
-    fun `the To pill is always first`() {
+    fun `the To pill is always last and From is always first when it is there`() {
         for (shape in FormShape.entries) {
-            assertEquals(GroupRow.To, groupCardRows(shape).first())
+            assertEquals(GroupRow.To, groupCardRows(shape).last())
+            if (GroupRow.From in groupCardRows(shape)) assertEquals(GroupRow.From, groupCardRows(shape).first())
         }
+    }
+
+    @Test
+    fun `every form shape is a card or one bare pill by how many fields it shows, and nothing else`() {
+        for (shape in FormShape.entries) {
+            val fields = groupCardRows(shape).size
+            assertEquals(fields > 1, groupCardShownFor(shape), "$shape shows $fields field(s)")
+        }
+        assertTrue(groupCardShownFor(FormShape.ToAndFrom), "Two fields, From and To, are on the card.")
+        assertEquals(false, groupCardShownFor(FormShape.Single), "One field is one bare pill on the map.")
     }
 
     @Test

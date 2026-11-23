@@ -186,8 +186,8 @@ fun SearchStopScreen(
     val form = SearchStopFormModel(
         shape = shape,
         editing = flow.editing,
-        toPlaceholder = barPlaceholderFor(ToFromField.To, fieldType, editTripLeg, trip.to),
-        fromPlaceholder = barPlaceholderFor(ToFromField.From, fieldType, editTripLeg, fromStop),
+        toPlaceholder = barPlaceholderFor(ToFromField.To, fieldType, editTripLeg),
+        fromPlaceholder = barPlaceholderFor(ToFromField.From, fieldType, editTripLeg),
         toStop = trip.to,
         fromStop = fromStop,
         fieldState = fieldState,

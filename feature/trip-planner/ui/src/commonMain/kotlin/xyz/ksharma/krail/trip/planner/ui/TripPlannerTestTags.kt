@@ -94,6 +94,7 @@ object TripPlannerTestTags {
     // origin dot in the From bar's leading column.
     const val SEARCH_ROW_GO_CIRCLE = "searchrow.gocircle"
     const val SEARCH_ROW_ORIGIN_DOT = "searchrow.origindot"
+    const val SEARCH_ROW_DESTINATION_PIN = "searchrow.destinationpin"
 
     // Search stop
     const val SEARCH_STOP_QUERY_FIELD = "searchstop.query"

@@ -97,7 +97,7 @@ If a design breaks one of these rules, the design changes, not the rule.
    stops a pin card, a chip or Ask KRAIL has handed on: those open Search Stop, which holds the To and From form.
 7. **The microphone is on the home pill only.** Never on Search Stop.
 8. **Search Stop always opens on a clean map, with no keyboard.** Only four things float on it: the box with the two pills at
-   the top, the location chip under it while location is not allowed, and on the bottom row the Options button with the
+   the top, the location chip under it while location is not allowed, and on the control line the Options button with the
    map's own location control (rule 39). There is no list, no recents, no near you and no card at open, so the map stays
    the screen. The rider taps a pill to raise the keyboard and the list.
 9. **The recents are in the list state, not on the map.** (This replaces the earlier rule that floated a recents card on
@@ -189,17 +189,28 @@ If a design breaks one of these rules, the design changes, not the rule.
 35. **The search pill has a back arrow and an X.** Back is a 48 box at the left, like today's search bar. The X shows only
     when the field has content and only clears it, and never dismisses the screen. Back follows rule 39, except from the
     start field, where it returns to To and From with the destination kept (on the bar that still needs a stop). System back and the iOS swipe do the same. In To
-    and From the X clears the destination and raises the keyboard. The From row has a matching 48 column with a filled origin
-    dot so To and From values start at one x. The arrow and the X are drawn in the bar's content colour, never a hex.
-36. **To is on top, From is below, and neither row ever moves.** While To is being edited, From shows under it when the
-    rider's location is known. On Search Stop both bars are the same taj text field as a soft pill in the box, one above the other
-    8 apart with no divider. Tapping From edits it in place: the query field and
-    the keyboard move to it, and nothing else changes, because the idle bar is the same field unfocused, showing its stop or
-    its placeholder, and a tap on it focuses it. Focus shows by the caret, the keyboard and the placeholder, never by a fill,
-    a ring or a colour swap, and no row changes position. (On the classic home, with the maps flag off, the bar being edited
-    is still the dark one and the other the light button.) The back arrow stays on the To row and the origin dot on the From
-    row in every state. Both rows are the same width and share both edges. The go circle is 40, inside the From bar with 4
-    around it, in the same column as the clear X above it, and has one state.
+    and From the X clears the destination and raises the keyboard. The To row has a matching 48 column with the destination pin
+    so From and To values start at one x. The arrow and the X are drawn in the bar's content colour, never a hex.
+36. **From is on top, To is below it, and neither row ever moves.** On Search Stop both bars are the same taj text field as a
+    soft pill in the box, From above To, 8 apart with no divider. Tapping a bar edits it in place: the query field and
+    the keyboard move to it, and nothing else changes, because the idle bar is the same field unfocused, and a tap on it
+    focuses it. Focus shows by the caret, the keyboard and the placeholder, never by a fill, a ring or a colour swap, and no
+    row changes position. (On the classic home, with the maps flag off, the bar being edited is still the dark one and the
+    other the light button, with To above From as the home block draws it.) The back arrow stays at the start of the first
+    bar, which is From, or the one bar of a single field, in every state. To has the destination pin at its start, the pin
+    the stop rows draw for a destination. The From dot cannot share the 48 column with the arrow, so From has none. Both
+    rows are the same width and share both edges. The go circle is 40, at the end of the To bar with 4 around it, and has
+    one state. While To is edited and nothing is typed it keeps its place, and the clear X takes it only while there is text.
+    **A placeholder is never a stop name.** Each bar has one fixed prompt: From reads Choose starting point and To reads
+    Choose destination. A stop a bar holds is its real text while the bar is at rest. Tapping a bar that holds a stop starts
+    its field empty with the fixed prompt showing, the old stop is not drawn as grey text, and leaving without a pick
+    restores the selection.
+    **A card only when two fields show.** The box is a card, with its edge and padding, only while From and To are both
+    there. A single field (a label being assigned, or one leg of a trip being changed) is one bare rounded pill on the map,
+    full radius and 48 tall, filled with the card's own surface and wearing the same edge, with the back arrow inside it and
+    the same 16 side margins. The choice follows the number of rows the form shows and nothing else (`groupCardShownFor`).
+    The label field's prompt names the label: Search and select Home, Search and select Work, or Search and select followed
+    by the label's saved name exactly as saved.
 37. **Every end of a saved trip follows one rule.** A labelled end is the label in bold with its stop small under it. An
     unlabelled end is its stop name. When both ends are labelled the card keeps the app's one-line form, "Home to Work",
     with no stop names. A label shows on a card whenever that card's stop is the labelled stop.
@@ -209,11 +220,16 @@ If a design breaks one of these rules, the design changes, not the rule.
     a unit. A station is removed on the Add Park & Ride screen with its toggle, or from its P card, which reads "Remove from
     home" when the station is on home and "Add to home" when it is not. Done saves, back or a tap on the map cancels.
 39. **Search Stop has two states.** It opens as the clean map state (rule 8): the map, the box with the two pills, the location
-    chip while location is not allowed, and the bottom row, with no keyboard. The bottom row is one 48 row, 16 above the system
-    inset, with the map's own info icon (its attribution, a licence requirement that is never turned off) at the start, the
-    Options button right after it, and the location control at the end, all on one centre line. Options is taj's extra small
-    `Button` reading Options after the filter icon, in the fixed dark. It opens the mode chips as a card 8 above that row and
-    shuts them again, a tap on the map shuts them too, and the selection (which modes show their stop pins) is kept while
+    chip while location is not allowed, and the bottom two lines, with no keyboard. The lowest line is the map's own info icon
+    (its attribution, a licence requirement that is never turned off) alone at the bottom most left, resting on the library's
+    own margin with no padding of ours. Above it is the control line: Options at the start and the location control at the
+    end, on one centre line at every text size. Options stands over the icon in z order. The pill is 4 above the visible i
+    (spacingXS), measured from the i and not from the icon's slot, so the gap is the same at every text size and the line rises
+    with the pill. Its 48 finger target is a real box that is itself the clickable, and it ends where the i begins, so it
+    reaches over the icon's empty top edge and never over the i. Options and the i share the box's left edge. Options is taj's
+    extra small `Button` reading Options after the filter icon, in the fixed dark. It opens the mode chips as a card 8 above
+    the line's visible top and shuts them again with a short fade and scale from the card's bottom start corner (200 ms in,
+    150 ms out, reduced motion plain), a tap on the map shuts them too, and the selection (which modes show their stop pins) is kept while
     the card is shut. The card is taj's surface with the glow, as wide as the box, and its chips always wrap whole and never
     scroll sideways. Options shows its active look, the two colours swapped, while any mode is switched off, with no count.
     Options and the card are in the map state only and are gone while the keyboard is up. The map's compass and scale bar
@@ -345,8 +361,8 @@ A tapped pin opens a floating stop card, never a bottom sheet.
 
 1. One box on top holding only the To and From pills, 8 apart. Under it, while the location is not allowed, the location
    status button, left aligned on the box's edge and one 8 gap below it. Map behind, clean, with no keyboard. At the bottom,
-   one row with the map's info icon, the Options button and the location control (rule 39), and the Options card above it
-   when it is open.
+   the map's info icon alone at the bottom most left, with the Options button and the location control on one line over it (rule
+   39), and the Options card above that line when it is open.
 2. The recents are in the list state. A tap on a pill covers the map with the cloud gradient and shows the list under the same
    box (rule 9): the label row when any label is set, Select on map, the heading with Clear all, then recent stops, at most
    five rows. With location off and no recents, the suggested stops from the Intro show instead, each carrying its own stop id
@@ -369,7 +385,7 @@ A tapped pin opens a floating stop card, never a bottom sheet.
 | Gap between floating elements | 8 (the chips and notices flow to the pill, card to card, stack to the chips and notices). On Search Stop: between the two pills in the box, the box to the location button, and the Options card to the bottom row |
 | Search Stop edge | 16 from the system top inset to the box and from the box to the screen's sides |
 | Card padding | 16 on all four sides, equal top and bottom. Every Search Stop card (the box and the Options card) takes the card's own radius token (16) and padding token (16). The box is two 48 pills and an 8 gap, so 136 tall at every text size |
-| Search Stop bottom row | one 48 row, 16 above the system bottom inset. The info icon is at the start, Options starts 48 after the 16 edge, and the location control ends 16 in. Options and the control are centred on the row, so the three share one centre line at every text size. The info icon's own size is native and is the one number to check on a device |
+| Search Stop bottom two lines | The info icon alone at the bottom most left, resting on the library's 8 margin with no padding of ours, its i starting 1.75 in from the icon's 21 square. Above it the control line: the Options pill 4 above the i, the location control ending 16 in and centred on the pill, one centre line at every text size. Options has a 48 finger target that ends at the i's top. The Options card is 8 above the line's visible top. The 21, 8 and 1.75 are read from the library, not measured on a device, and are the numbers to check on a phone |
 | List row | 14 above and below its content, 16 left, a 44 hit area for the plus |
 | Search pill, go circle, Done | 48 tall or wide (the go circle inside the From bar is 40, rule 36). A chip or a notice has a 48 touch target |
 | Corner radius of any pill, chip or circle | Half its height, always. A field is one line, so a pill never grows into a rounded rectangle |
@@ -418,7 +434,7 @@ A tapped pin opens a floating stop card, never a bottom sheet.
 | Where | Words |
 |---|---|
 | Home pill | Where are you going? |
-| Search placeholders | Choose destination, Choose starting point, Choose a stop (when assigning a label) |
+| Search placeholders | Choose destination, Choose starting point, Search and select Home, Search and select Work, Search and select and the label's own name (when assigning a label). Fixed, never a stop name |
 | Buttons | Change start, Show trips, Go here, Start here, Select stop, Choose start, Add to home, Not now |
 | Save as pills | Save as Home, Save as Work, Save as and the label's own name |
 | Chips | Set Home, Set Work, Park & Ride (with a plus) |

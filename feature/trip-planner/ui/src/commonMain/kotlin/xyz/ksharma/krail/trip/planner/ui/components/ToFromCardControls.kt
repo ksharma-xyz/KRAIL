@@ -27,6 +27,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_reverse
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -132,32 +134,71 @@ private fun krailRippleOnGlyph(radius: Dp) = krailRipple(bounded = false, radius
 
 /**
  * The go circle: the theme colour with the app's arrow in the colour taj gives that fill. It is there only while [shown] (both
- * stops chosen), absent and not disabled otherwise, arriving by [mapGoCircleIn] and leaving by [mapVanishOut], and it takes no
- * touch while it is on its way out. The slot is the To row's end, so the card is the same height with it and without it.
+ * stops chosen), absent and not disabled otherwise. It arrives scaling from nothing to [MapMotion.GO_PEAK_SCALE] by
+ * [MapMotion.GO_PEAK_MS] and back to 1 by [MapMotion.GO_ENTER_MS] while it fades in over [MapMotion.GO_FADE_IN_MS], and it leaves
+ * in [MapMotion.GO_LEAVE_MS] with its scale 1 minus p squared and its alpha 1 minus p. The scale is drawn on the 40 dp circle and
+ * the 48 dp box round it never changes size. The box takes no tap until the scale reaches [MapMotion.GO_TAP_SCALE] on the way in
+ * and none from the first frame of the way out, and it consumes the touch meanwhile so it never reaches the map. Plain, with no
+ * frame between, with reduced motion. The slot is the To row's end, so the card is the same height with the circle and without it.
  */
 @Composable
 internal fun GoCircleSlot(shown: Boolean, onClick: () -> Unit) {
     val reduceMotion = isReduceMotionEnabled()
-    MapControlVisibility(
-        visible = shown,
-        enter = mapGoCircleIn(reduceMotion),
-        exit = mapVanishOut(reduceMotion),
-    ) {
-        val fill = mapActiveChipColors().containerColor
-        CircleTargetButton(
-            contentDescription = "Show trips",
-            onClick = onClick,
-            circle = fill,
-            tag = TripPlannerTestTags.SEARCH_ROW_SEARCH,
-            circleTag = TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE,
-        ) {
-            Image(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null,
-                colorFilter = ColorFilter.tint(getForegroundColor(fill)),
-                modifier = Modifier.size(KrailTheme.dimensions.iconM),
-            )
+    val scale = remember { Animatable(if (shown) 1f else 0f) }
+    val fade = remember { Animatable(if (shown) 1f else 0f) }
+    var present by remember { mutableStateOf(shown) }
+    val currentShown by rememberUpdatedState(shown)
+    val currentClick by rememberUpdatedState(onClick)
+    LaunchedEffect(shown, reduceMotion) {
+        if (shown) {
+            present = true
+            if (reduceMotion) {
+                scale.snapTo(1f)
+                fade.snapTo(1f)
+            } else {
+                coroutineScope {
+                    launch { fade.animateTo(1f, goAppearFadeSpec()) }
+                    launch {
+                        scale.animateTo(MapMotion.GO_PEAK_SCALE, goGrowSpec())
+                        scale.animateTo(1f, goSettleSpec())
+                    }
+                }
+            }
+        } else {
+            if (reduceMotion) {
+                scale.snapTo(0f)
+                fade.snapTo(0f)
+            } else {
+                coroutineScope {
+                    launch { fade.animateTo(0f, goLeaveFadeSpec()) }
+                    launch { scale.animateTo(0f, goLeaveScaleSpec()) }
+                }
+            }
+            present = false
         }
+    }
+    if (!present) return
+    val fill = mapActiveChipColors().containerColor
+    CircleTargetButton(
+        contentDescription = "Show trips",
+        onClick = {
+            if (currentShown && scale.value >= MapMotion.GO_TAP_SCALE) currentClick()
+        },
+        circle = fill,
+        tag = TripPlannerTestTags.SEARCH_ROW_SEARCH,
+        circleTag = TripPlannerTestTags.SEARCH_ROW_GO_CIRCLE,
+        circleLayer = {
+            scaleX = scale.value
+            scaleY = scale.value
+            alpha = fade.value
+        },
+    ) {
+        Image(
+            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(getForegroundColor(fill)),
+            modifier = Modifier.size(KrailTheme.dimensions.iconM),
+        )
     }
 }
 

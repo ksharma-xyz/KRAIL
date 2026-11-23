@@ -15,6 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.GraphicsLayerScope
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -70,7 +72,7 @@ internal fun CloseCircleButton(
  * It is the pattern of [CloseCircleButton], for any round control that floats over the map (the go circle of the Search Stop
  * card): the target is a box that consumes the touch, not the slop Compose adds around a small clickable, so a tap in the 48 dp
  * reaches the control and never the map under it. [tag] is on that box, [circleTag] on the circle. A screen reader hears one
- * button, [contentDescription].
+ * button, [contentDescription]. [circleLayer] draws the circle alone in a graphics layer (the go circle's scale and fade).
  */
 @Composable
 internal fun CircleTargetButton(
@@ -80,22 +82,27 @@ internal fun CircleTargetButton(
     modifier: Modifier = Modifier,
     tag: String? = null,
     circleTag: String? = null,
+    circleLayer: (GraphicsLayerScope.() -> Unit)? = null,
     glyph: @Composable () -> Unit,
 ) {
     TargetBox(contentDescription = contentDescription, onClick = onClick, modifier = modifier, tag = tag) {
-        Box(
-            modifier = Modifier
-                .size(CIRCLE_DIAMETER)
-                .then(if (circleTag != null) Modifier.testTag(circleTag) else Modifier),
-        ) {
-            // The round button is the circle and the glyph. The box round it is the one a screen reader finds, so the
-            // button's own semantics are cleared and the name is said once.
-            RoundIconButton(
-                onClick = onClick,
-                color = circle,
-                modifier = Modifier.fillMaxSize().clearAndSetSemantics {},
+        // [circleLayer] scales or fades the circle alone, drawn in a layer round it, so the 48 dp box that takes the touch
+        // keeps its size whatever the circle is doing.
+        Box(modifier = if (circleLayer != null) Modifier.graphicsLayer(circleLayer) else Modifier) {
+            Box(
+                modifier = Modifier
+                    .size(CIRCLE_DIAMETER)
+                    .then(if (circleTag != null) Modifier.testTag(circleTag) else Modifier),
             ) {
-                glyph()
+                // The round button is the circle and the glyph. The box round it is the one a screen reader finds, so the
+                // button's own semantics are cleared and the name is said once.
+                RoundIconButton(
+                    onClick = onClick,
+                    color = circle,
+                    modifier = Modifier.fillMaxSize().clearAndSetSemantics {},
+                ) {
+                    glyph()
+                }
             }
         }
     }

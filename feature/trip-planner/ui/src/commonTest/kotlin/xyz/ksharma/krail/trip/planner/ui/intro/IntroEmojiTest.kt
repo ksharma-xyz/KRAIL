@@ -23,7 +23,7 @@ class IntroEmojiTest {
 
     @Test
     fun `each screen has the emoji the table says, read from the approved list or the declared exceptions`() {
-        // The list is read by index and never typed: 0 is the scooter, a neutral ride that is no mode.
+        // The list is read by index and never typed: 0 is the scooter, a neutral ride that is no mode, and 2 is the rocket.
         val table = listOf(
             Row("theme, nothing chosen", THEME, null, approved[0]),
             Row("theme, Train", THEME, KrailThemeStyle.Train.id, INTRO_TRAIN_EMOJI),
@@ -34,7 +34,7 @@ class IntroEmojiTest {
             Row("theme, an id that is no theme", THEME, NOT_A_THEME, approved[0]),
             Row("park and ride", PARK_RIDE, null, INTRO_CAR_EMOJI),
             Row("destination", DESTINATION, null, INTRO_PIN_EMOJI),
-            Row("origin", ORIGIN, null, approved[0]),
+            Row("origin", ORIGIN, null, approved[2]),
             Row("confirm", CONFIRM, null, INTRO_STAR_EMOJI),
         )
 
@@ -134,9 +134,44 @@ class IntroEmojiTest {
             val list = List(size) { "e$it" }
 
             assertEquals(list[0], introEmojiFor(THEME, null, list), "size $size theme")
-            // The origin's entry is the eighth place, a number of its own, so a screen put before it moves nothing.
-            assertEquals(list[8 % size], introEmojiFor(ORIGIN, null, list), "size $size origin")
+            // The origin's entry is the third place, a number of its own, so a screen put before it moves nothing.
+            assertEquals(list[2 % size], introEmojiFor(ORIGIN, null, list), "size $size origin")
         }
+    }
+
+    @Test
+    fun `the five screens show five different emoji, against the real list, so the origin is not the scooter of the theme screen`() {
+        val shown = listOf(
+            "theme, nothing chosen" to introEmojiFor(THEME, null),
+            "park and ride" to introEmojiFor(PARK_RIDE),
+            "destination" to introEmojiFor(DESTINATION),
+            "origin" to introEmojiFor(ORIGIN),
+            "confirm" to introEmojiFor(CONFIRM),
+        )
+
+        assertEquals(5, shown.map { it.second }.toSet().size, "two screens share an emoji: $shown")
+        shown.forEach { (name, emoji) -> assertTrue(emoji.isNotEmpty(), "$name has none") }
+        assertEquals(approved[2], introEmojiFor(ORIGIN), "the origin is the third entry of the list")
+        assertEquals(listOf(0x1F680), introEmojiFor(ORIGIN).codePointList(), "and the third entry is the rocket")
+        assertNotEquals(introEmojiFor(THEME, null), introEmojiFor(ORIGIN))
+    }
+
+    @Test
+    fun `the origin's entry is inside the real list and is not the entry of any other screen, so it cannot wrap onto one`() {
+        // The one place the origin reads is the same for a list of any length from the real one up, and is not the first entry.
+        assertTrue(approved.size > 2, "the real list has ${approved.size} entries, too few for the origin's place")
+        val originIndex = approved.indexOf(introEmojiFor(ORIGIN))
+        assertEquals(2, originIndex)
+        assertTrue(originIndex in approved.indices)
+        assertNotEquals(approved.indexOf(introEmojiFor(THEME, null)), originIndex, "the origin is the theme screen's entry")
+        // Every longer list gives the same entry, because the place is under the length and nothing wraps.
+        (approved.size..MAX_LIST).forEach { size ->
+            val list = List(size) { "e$it" }
+            assertEquals(list[2], introEmojiFor(ORIGIN, null, list), "size $size")
+            assertNotEquals(introEmojiFor(THEME, null, list), introEmojiFor(ORIGIN, null, list), "size $size")
+        }
+        // The declared exceptions of the other three screens are not the list's entry either.
+        IntroDeclaredEmoji.forEach { assertNotEquals(it, introEmojiFor(ORIGIN), it) }
     }
 
     @Test

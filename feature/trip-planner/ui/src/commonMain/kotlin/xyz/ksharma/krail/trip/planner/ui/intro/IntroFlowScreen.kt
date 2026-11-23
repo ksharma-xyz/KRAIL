@@ -6,11 +6,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
@@ -53,6 +55,11 @@ private val IntroMaxContentWidth = DUAL_PANE_LIST_WIDTH
  * Content is capped to a phone width and centred, and each screen scrolls, so nothing is ever clipped at a large
  * font or a narrow window. The decision bar is laid over the bottom of the screen and the content goes full height
  * beneath it: while the bar is shown each screen keeps its last row able to scroll clear of it (`IntroBarLayer`).
+ *
+ * A bar that is going away keeps what it was. The colour screen and the two stop screens open with their button hidden, so when the
+ * Intro moves to one of them the old bar fades out over the bottom of the screen in its own words, layout and fill, takes no touch
+ * and has no semantics, and the new bar is hidden from the first frame (`IntroBarHold`). It is not part of the layout, so the room
+ * the screen reserves for its bar is the new step's at once.
  */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -97,29 +104,35 @@ internal fun IntroFlowScreen(
     ) {
         val bar = introBar(state)
         val primaryFill = introAnimatedPrimaryFill(state.step)
+        val barShown = bar?.shown == true && revealed
+        // A bar that is fading out, because the Intro moved on to a screen whose bar is not shown yet, keeps its own clothes.
+        val leavingBar = rememberLeavingIntroBar(state.step, bar, barShown, primaryFill)
         // The step on screen is moving to the step in the state until the one transition that draws it has finished.
         val transition = updateTransition(targetState = state.step, label = "intro-step")
         val settled = transition.currentState == transition.targetState && !transition.isRunning
         val sendFromBar = remember(send, state.step) { { event: IntroUiEvent -> send(event, state.step) } }
         IntroBarLayer(
-            barShown = bar?.shown == true && revealed,
+            barShown = barShown,
             modifier = Modifier.widthIn(max = IntroMaxContentWidth).fillMaxHeight(),
             bar = bar?.let {
                 {
-                    IntroDecisionBar(
-                        left = it.left,
-                        right = it.right,
-                        onEvent = sendFromBar,
-                        shown = it.shown && revealed,
-                        rightShown = it.rightShown,
-                        acceptsPresses = settled,
-                        labelPairs = it.labelPairs,
-                        primaryFill = primaryFill,
-                        modifier = Modifier.padding(
-                            horizontal = dim.pageHorizontalPadding,
-                            vertical = dim.spacingL,
-                        ),
-                    )
+                    // One bar for each step: a bar never carries its fade from the step before, so a hidden bar starts hidden.
+                    key(state.step) {
+                        IntroDecisionBar(
+                            left = it.left,
+                            right = it.right,
+                            onEvent = sendFromBar,
+                            shown = it.shown && revealed,
+                            rightShown = it.rightShown,
+                            acceptsPresses = settled,
+                            labelPairs = it.labelPairs,
+                            primaryFill = primaryFill,
+                            modifier = Modifier.padding(
+                                horizontal = dim.pageHorizontalPadding,
+                                vertical = dim.spacingL,
+                            ),
+                        )
+                    }
                 }
             },
         ) {
@@ -136,6 +149,17 @@ internal fun IntroFlowScreen(
                     ground = pageGround,
                 )
             }
+        }
+        leavingBar?.let {
+            // Over the bottom of the screen where the bar was, and no part of its layout.
+            IntroLeavingBar(
+                held = it,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .widthIn(max = IntroMaxContentWidth)
+                    .fillMaxWidth()
+                    .padding(horizontal = dim.pageHorizontalPadding, vertical = dim.spacingL),
+            )
         }
     }
 }

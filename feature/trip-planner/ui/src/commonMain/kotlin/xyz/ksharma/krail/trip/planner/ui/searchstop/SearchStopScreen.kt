@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.text.input.clearText
-import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -64,6 +63,7 @@ import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.components.CloudFieldSpec
 import xyz.ksharma.krail.taj.components.CloudGradientBackground
+import xyz.ksharma.krail.taj.components.rememberTextFieldTextState
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.AssignNewLabelSheet
@@ -150,7 +150,9 @@ fun SearchStopScreen(
     val themeColor by LocalThemeColor.current
     // rememberSaveable so text survives rotation and dark/light mode config changes.
     var textFieldText: String by rememberSaveable { mutableStateOf(searchQuery) }
-    val fieldState = rememberTextFieldState(searchQuery)
+    // Not rememberTextFieldState: the trip results open over this screen, so this state is restored when the
+    // rider comes back, and the library saver throws on iOS once the field has been typed in.
+    val fieldState = rememberTextFieldTextState(searchQuery)
 
     // Hoisted here so it survives any config change regardless of which pane is active. It opens as
     // the map state; only the single-pane layout reads the mode, dual-pane always shows both.

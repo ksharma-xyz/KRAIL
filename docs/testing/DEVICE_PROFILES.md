@@ -167,7 +167,7 @@ them; they are listed here so nobody removes them.
 
 | Guard | Catches | Where |
 |---|---|---|
-| `check_layout_invariants.py`, raw cutout check | `WindowInsets.displayCutout` or its import in non test Kotlin anywhere but `Modifier.sideSafeInsets()` | CI, `fullQualityChecks.sh`, pre push |
+| `check_layout_invariants.py`, raw cutout check | `WindowInsets.displayCutout` or its import in non test Kotlin anywhere but `Modifier.sideSafeInsets()` and the helper's own `DeviceInsets.kt` | CI, `fullQualityChecks.sh`, pre push |
 | `DeviceMatrixAdoptionGuardTest` | a top level `XxxScreen` in a `*/ui/src/commonMain` source set with no matrix test naming it, unless it is in `config/device-matrix-baseline.txt` with a reason; and a stale baseline entry | `testAndroidHostTest` |
 
 The baseline only shrinks (the ratchet contract in [GUARDS.md](GUARDS.md)). Adding a screen means

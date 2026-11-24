@@ -331,8 +331,10 @@ assumptions** CI step. Exits non-zero on a violation. Enforces the mechanical pa
    property) anywhere. Compose on iOS reports it as 0 at the sides and carries a side safe area in
    `systemBars` and `safeDrawing`, so a surface padded by the cutout runs under the iPhone Duo status
    pill while every Android test passes. Pad with `Modifier.sideSafeInsets()` from taj. Comments are
-   stripped first, test source sets are skipped by directory, and the one exempt file is the shared
-   modifier itself, which reads `safeDrawing` and so names nothing. The repo has no pattern for
+   stripped first (keeping line numbers true), test source sets are skipped by directory, and two files
+   are exempt: the shared modifier, which reads `safeDrawing` and so names nothing, and the device
+   profile helper `DeviceInsets.kt`, which never ships and names the cutout to deliver one to a screen
+   under test. The repo has no pattern for
    testing its Python scripts, so the proof is a mutation run recorded in the commit that added it:
    put the cutout padding back and the script prints the file and line and exits 1.
 

@@ -19,8 +19,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.testTag
+import xyz.ksharma.krail.taj.components.TitleBar
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
+import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.isAppInDarkMode
+import xyz.ksharma.krail.taj.theme.md_theme_light_onSurface
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.CardGroundScope
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromBlockStyle
@@ -52,20 +55,44 @@ internal fun SearchStopTopBlock(
 ) {
     val gaps = rememberSearchStopGaps()
     var noticeDismissed by rememberSaveable { mutableStateOf(false) }
-    // The edge is this block's own, outside whatever [modifier] measures, so a caller that reads the block's size gets the
-    // box and the chip and not the margin around them. There is none at the bottom: what comes next brings its own.
-    Column(modifier = Modifier.padding(start = gaps.edge, top = gaps.edge, end = gaps.edge).then(modifier)) {
-        SearchStopGroupCard(form = form, onBack = onBack, onGradient = onGradient)
-        if (showLocationChip) {
-            LocationNotice(
-                pill = location.pill,
-                dismissed = noticeDismissed,
-                onDismiss = { noticeDismissed = true },
-                onCtaClick = location.onClick,
-                onGradient = onGradient,
-            )
+    // The top edge is this block's own, outside whatever [modifier] measures. The title bar runs from screen edge to screen
+    // edge, so the side edges are on what stands under it. There is none at the bottom: what comes next brings its own.
+    Column(modifier = Modifier.padding(top = searchStopBlockTop(form.shape, gaps)).then(modifier)) {
+        // The card has no arrow of its own, so a title bar stands above it. The lone pill carries its arrow inside.
+        if (groupCardShownFor(form.shape)) {
+            CardTitleBar(onBack = onBack, onGradient = onGradient)
+        }
+        Column(modifier = Modifier.padding(horizontal = gaps.edge)) {
+            SearchStopGroupCard(form = form, onBack = onBack, onGradient = onGradient)
+            if (showLocationChip) {
+                LocationNotice(
+                    pill = location.pill,
+                    dismissed = noticeDismissed,
+                    onDismiss = { noticeDismissed = true },
+                    onCtaClick = location.onClick,
+                    onGradient = onGradient,
+                )
+            }
         }
     }
+}
+
+/**
+ * The title bar over the From and To card: taj's [TitleBar] with its back button and nothing else, so the arrow is bare and
+ * stands where it does on the Timetable. The map is light in dark mode too, so over it the arrow takes the light palette's
+ * ink, and on the gradient of the list state it takes the app mode's. A tap is the same step as system back.
+ */
+@Composable
+private fun CardTitleBar(
+    onBack: () -> Unit,
+    onGradient: Boolean,
+) {
+    TitleBar(
+        title = {},
+        onNavActionClick = onBack,
+        navActionColor = if (onGradient) KrailTheme.colors.onSurface else md_theme_light_onSurface,
+        navActionModifier = Modifier.testTag(TripPlannerTestTags.SEARCH_STOP_BACK),
+    )
 }
 
 /**
@@ -121,7 +148,7 @@ internal fun searchStopEdgeShown(darkMode: Boolean): Boolean = !darkMode
 /**
  * The group card (`docs/MAP_HOME_UX.md`, The box): the Timetable's own From and To card, one rounded box in [MapCardColors.tint]
  * (the theme colour at 15 percent over white in light mode and at 45 percent over the dark surface in dark mode, on the map and on
- * the gradient of the list state alike), with no glow and no back arrow (system back is the two step back). It is the card's own
+ * the gradient of the list state alike), with no glow and no back arrow inside it (the title bar above it has one). It is the card's own
  * corner and its surface, hairline and clip come from [searchStopCardSurface], the one source the location notice takes its surface
  * from too. Inside, [ToFromCardRows] draws the From row, the divider and the To row, and the right column of controls. The card has
  * no padding of its own: each row keeps the grid's 16 dp at the start and the controls' column at the end.

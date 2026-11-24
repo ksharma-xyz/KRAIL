@@ -66,6 +66,8 @@ class SearchStopDeviceMatrixTest {
             assertNothingInteractiveUnderSystemBars()
             assertTouchReaches(onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_REVERSE))
             assertTouchReaches(onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_SEARCH))
+            // Last, because the tap leaves the screen.
+            assertTouchReaches(onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_BACK))
         }
 
     @Test
@@ -91,6 +93,8 @@ class SearchStopDeviceMatrixTest {
 
             assertNothingInteractiveUnderSystemBars()
             assertScrollEndClearsBottomBar(onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST))
+            // Last, because the tap leaves the list state.
+            assertTouchReaches(onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_BACK))
         }
 
     private fun DeviceMatrixScope.onAllNodesWithTagCount(tag: String): Int =

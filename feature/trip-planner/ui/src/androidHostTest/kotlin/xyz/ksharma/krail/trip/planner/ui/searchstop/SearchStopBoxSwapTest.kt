@@ -66,7 +66,6 @@ class SearchStopBoxSwapTest {
                             onGoClick = {},
                             onTextChange = {},
                         ),
-                        onBack = {},
                     )
                 }
             }

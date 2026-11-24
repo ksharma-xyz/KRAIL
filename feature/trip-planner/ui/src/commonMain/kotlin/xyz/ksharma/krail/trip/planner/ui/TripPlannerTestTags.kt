@@ -112,6 +112,7 @@ object TripPlannerTestTags {
     // Search stop
     const val SEARCH_STOP_QUERY_FIELD = "searchstop.query"
     const val SEARCH_STOP_BACK = "searchstop.back"
+    const val SEARCH_STOP_SEARCH_GLYPH = "searchstop.search.glyph"
     const val SEARCH_STOP_RESULTS_LIST = "searchstop.results"
     const val SEARCH_STOP_RECENTS_LIST = "searchstop.recents"
 

@@ -41,7 +41,7 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
  * when focus moves. The bar being edited holds the one query field, empty with its fixed prompt as the placeholder. The
  * other is the same field unfocused: it shows its stop as its text, or its prompt, and a tap on it is the tap that
  * edits it. [rowGap] separates the pills, with no divider, and each pill is 48 tall with the same two 48 columns
- * [toFromBarInsets] measures. The first bar's start column is [FloatingRowsContent.firstLeading], the back arrow, which is
+ * [toFromBarInsets] measures. The first bar's start column is [FloatingRowsContent.firstLeading], which is
  * From's when both show and To's when it is the only one; the second bar's is the destination pin. The go circle is the
  * last bar's end column and the clear X is the end column of the bar being edited. A pill is one line and its text ends
  * in an ellipsis, so the pair is the same height at every text size.
@@ -152,7 +152,7 @@ private fun FloatingBar(
 /**
  * The bar at rest: the same taj [TextField], read only, holding its stop as text or showing its placeholder.
  * It cannot take focus, and a tap over the text between its two columns is the tap that edits it. The two
- * columns stay the controls' own, so the back arrow, the origin dot and the go circle are never under that tap.
+ * columns stay the controls' own, so the start column, the origin dot and the go circle are never under that tap.
  */
 @Composable
 private fun IdleFloatingBar(

@@ -136,7 +136,6 @@ class SearchStopGroupCardTest {
                                 // is the card's while it holds one, with or without the go circle.
                                 onSwap = if (fromStopState != null || toStopState != null) ({}) else null,
                             ),
-                            onBack = {},
                         )
                     }
                 }
@@ -172,7 +171,6 @@ class SearchStopGroupCardTest {
                                 onGoClick = {},
                                 onTextChange = {},
                             ),
-                            onBack = {},
                         )
                     }
                 }

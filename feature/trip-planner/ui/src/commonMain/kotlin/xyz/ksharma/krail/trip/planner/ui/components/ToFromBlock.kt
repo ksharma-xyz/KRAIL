@@ -58,13 +58,13 @@ internal fun toFromBarInsets(): ToFromBarInsets {
  *
  * Both bars reserve a 48 dp column at the start and the From bar one at the end, which
  * [toFromBarInsets] measures:
- * - The start column holds the back arrow on To ([toLeading]) and the origin dot on From, so the
+ * - The start column holds the caller's [toLeading] on To and the origin dot on From, so the
  *   two values start at one x.
  * - The end column holds the clear X on To ([toTrailing]) and the go circle on From, so the two
  *   share one column. Without [toTrailing] To's text runs to the page padding instead.
  *
  * The slots are the caller's. The block keeps the room for them and gives them the bar's content
- * colour, so the back arrow and the X read on whichever fill the bar has. In a bar at rest they sit
+ * colour, so they and the X read on whichever fill the bar has. In a bar at rest they sit
  * over the button as its siblings and in the dark bar they are the text field's own leading and
  * trailing controls, so a control is never inside another control. [fromTrailing] stands in the go
  * circle's column and [showGo] false leaves the column empty, so a From with no start has no go
@@ -342,7 +342,7 @@ private fun ToFromBar(
 
 /**
  * A bar at rest: taj's [TextFieldButton]. Its tap target is the whole pill. The two end columns are
- * siblings drawn over it, so the back arrow, the X and the go circle are their own buttons and never
+ * siblings drawn over it, so a start control, the X and the go circle are their own buttons and never
  * a button nested inside another. The button pads its text by the spacing scale's 16 dp, so the text
  * adds what is left of the inset.
  */

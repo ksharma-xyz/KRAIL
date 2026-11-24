@@ -25,7 +25,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.click
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
-import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -56,7 +55,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * The clear X of a search field is a bare cross: no circle, no fill, no ring, the size of the field's back arrow (24 dp) and the
+ * The clear X of a search field is a bare cross: no circle, no fill, no ring, the size of the field's search glyph (24 dp) and the
  * field's own text colour, inside an invisible 48 dp box that is the touch target and never lets the tap through to the map
  * (`docs/MAP_HOME_UX.md`, rule 48). It is read from the real single pill and from the real From and To card, which both have one.
  * It shows only while the field holds text, clears it, and a screen reader hears Clear. The other X buttons keep their circle
@@ -112,7 +111,6 @@ class SearchStopClearCrossTest {
                             onGoClick = {},
                             onTextChange = {},
                         ),
-                        onBack = {},
                     )
                 }
             }
@@ -170,7 +168,7 @@ class SearchStopClearCrossTest {
     // region the cross, in the pill and in the card
 
     /**
-     * The one rule of the clear X, asserted on whatever field it is in: a bare 24 dp cross the size of a field's back arrow in the
+     * The one rule of the clear X, asserted on whatever field it is in: a bare 24 dp cross the size of a field's search glyph in the
      * text colour, centred in a 48 dp box, with nothing drawn in the box round the cross (so no circle, no fill, no ring) and no
      * circle node. [behind] is the colour the box sits on.
      */
@@ -231,15 +229,15 @@ class SearchStopClearCrossTest {
     }
 
     @Test
-    fun `the cross is the size of the field's back arrow`() {
+    fun `the cross is the size of the field's search glyph`() {
         setForm(FormShape.Single)
         type("seven hills")
 
-        val arrow = composeRule.onNode(hasContentDescription("Back"), useUnmergedTree = true).getUnclippedBoundsInRoot()
+        val glyph = boundsOf(TripPlannerTestTags.SEARCH_STOP_SEARCH_GLYPH)
         val cross = boundsOf(TripPlannerTestTags.SEARCH_STOP_CLEAR_GLYPH)
-        assertNear("the arrow's glyph is 24 dp", 24.dp, arrow.width)
-        assertNear("the cross is as wide as the arrow", arrow.width, cross.width)
-        assertNear("and as tall", arrow.height, cross.height)
+        assertNear("the search glyph is 24 dp", 24.dp, glyph.width)
+        assertNear("the cross is as wide as the glyph", glyph.width, cross.width)
+        assertNear("and as tall", glyph.height, cross.height)
     }
 
     @Test

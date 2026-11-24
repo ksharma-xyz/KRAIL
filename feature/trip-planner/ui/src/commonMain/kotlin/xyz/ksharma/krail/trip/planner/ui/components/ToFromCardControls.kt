@@ -155,7 +155,7 @@ internal fun GoCircleSlot(shown: Boolean, onClick: () -> Unit) {
 }
 
 /**
- * The X in a row's end slot while its field holds text: a bare cross, no circle, `iconM` (24 dp) across like the back arrow
+ * The X in a row's end slot while its field holds text: a bare cross, no circle, `iconM` (24 dp) across like the search glyph
  * of a field and in the card's text colour, in a 48 dp target that consumes the touch (see [ClearGlyphButton]). It clears the field
  * and does nothing else.
  */

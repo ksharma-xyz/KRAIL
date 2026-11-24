@@ -109,7 +109,6 @@ class SearchStopCardSwapTest {
                                 onTextChange = {},
                                 onSwap = if (fromStop != null || toStop != null) ({ swaps++ }) else null,
                             ),
-                            onBack = {},
                         )
                     }
                 }

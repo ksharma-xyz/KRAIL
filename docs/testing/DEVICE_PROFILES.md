@@ -46,11 +46,20 @@ measured without a probe.
 | `AndroidLandscapeSideNavBar` | 914 x 411 | 2.625 | 1.0 | `ANDROID_SIDE_NAVIGATION_BAR` |
 | `FoldCover` | 443 x 995 | 2.4375 | 1.0 | `ANDROID` |
 | `FoldInner` | 852 x 883 | 2.4375 | 1.0 | `ANDROID` |
+| `Medium720` | 720 x 900 | 2.0 | 1.0 | `ANDROID` |
+| `Gate839` | 839 x 900 | 2.0 | 1.0 | `ANDROID` |
+| `Gate840` | 840 x 900 | 2.0 | 1.0 | `ANDROID` |
 | `TabletLandscape` | 1280 x 800 | 2.0 | 1.0 | `ANDROID` |
 | `IPhoneSmall` | 375 x 667 | 2.0 | 1.0 | `IOS` |
 | `IPhoneProPortrait` | 402 x 874 | 3.0 | 1.0 | `IOS` |
 | `IPhoneProLandscape` | 874 x 402 | 3.0 | 1.0 | `IOS` |
 | `IPhoneDuoOuter` | 466 x 678 | 3.0 | 1.0 | `IOS` |
+| `IPhoneDuoInnerPortrait` | 669 x 951 | 3.0 | 1.0 | `IOS` |
+| `IPhoneDuoInnerLandscape` | 951 x 669 | 3.0 | 1.0 | `IOS` |
+| `IPadMiniPortrait` | 744 x 1133 | 2.0 | 1.0 | `IOS` |
+| `IPadMiniLandscape` | 1133 x 744 | 2.0 | 1.0 | `IOS` |
+| `IPadPro13Portrait` | 1032 x 1376 | 2.0 | 1.0 | `IOS` |
+| `IPadPro13Landscape` | 1376 x 1032 | 2.0 | 1.0 | `IOS` |
 
 ### Insets the platform reports, by type
 
@@ -65,11 +74,20 @@ Left, top, right, bottom in dp or pt. A type not listed reports 0.
 | `AndroidLandscapeSideNavBar` | T24 | R48 | none | T24 R48 | assumed: a three button bar moved to the side in landscape |
 | `FoldCover` | T28 | B24 | none | T28 B24 | size and density measured on the fold emulator (1080 x 2424 at 390 dpi); insets assumed |
 | `FoldInner` | T28 | B24 | none | T28 B24 | size and density measured on the fold emulator (2076 x 2152 at 390 dpi); insets assumed |
+| `Medium720` | T24 | B24 | none | T24 B24 | assumed: a window in the 600 to 839 dp band that is single pane by the gate |
+| `Gate839` | T24 | B24 | none | T24 B24 | assumed: one dp under the dual pane gate, so still single pane |
+| `Gate840` | T24 | B24 | none | T24 B24 | assumed: exactly on the dual pane gate, the first width that is dual pane |
 | `TabletLandscape` | T24 | B48 | none | T24 B48 | size and density measured on the tablet emulator (2560 x 1600 at 320 dpi); insets assumed |
 | `IPhoneSmall` | T20 | none | none | T20 | assumed: a status bar and no home indicator |
 | `IPhoneProPortrait` | T62 | B34 | none | T62 B34 | size measured on the iPhone 18 Pro simulator (1206 x 2622 px at 3x); insets assumed because the probe ran on the Duo only |
 | `IPhoneProLandscape` | none | B21 | none | L62 R62 B21 | assumed, side strips taken to arrive like the Duo's, in `systemBars` only |
 | `IPhoneDuoOuter` | none | B34 | none | R84 B34 | measured: Compose inset probe on the Duo simulator (iOS 27.2), 24 Nov 2026. `safeContent`, `safeGestures` and `systemGestures` read R84 B34 too; `statusBars`, `displayCutout`, `tappableElement` and `waterfall` read 0 |
+| `IPhoneDuoInnerPortrait` | none | B34 | none | R84 B34 | assumed, a size only stand in and never a measurement: the size is the simulator display config `primary-1` of the Duo device type (2007 x 2853 px at 3x), the insets are copied from the outer screen |
+| `IPhoneDuoInnerLandscape` | none | B21 | none | L62 R62 B21 | assumed, a size only stand in and never a measurement: `primary-1` turned to landscape, the insets are the iPhone Pro landscape ones |
+| `IPadMiniPortrait` | T24 | B20 | none | T24 B20 | width measured (TABLET_FOLDABLE_UX.md, iOS simulators, 11 Oct 2026); height and insets assumed |
+| `IPadMiniLandscape` | T24 | B20 | none | T24 B20 | width measured (TABLET_FOLDABLE_UX.md, iOS simulators, 11 Oct 2026); height and insets assumed |
+| `IPadPro13Portrait` | T24 | B20 | none | T24 B20 | width measured (TABLET_FOLDABLE_UX.md, iOS simulators, 11 Oct 2026); height and insets assumed |
+| `IPadPro13Landscape` | T24 | B20 | none | T24 B20 | width measured (TABLET_FOLDABLE_UX.md, iOS simulators, 11 Oct 2026); height and insets assumed |
 
 ### How the shape delivers a side inset
 
@@ -90,6 +108,27 @@ The `IOS` shape also fills `systemGestures` with the side strips and the bottom,
 `safeContent` as R84 B34 too. The `ANDROID` shapes do not invent gesture insets, since none was
 measured for them.
 
+### The profiles that stand in for something else
+
+- **The Duo inner screen** (`IPhoneDuoInnerPortrait`, `IPhoneDuoInnerLandscape`) is a size only stand in and never a
+  measurement. The size, 669 x 951 pt, is the display config `primary-1` of the iPhone Duo simulator device type (2007 x 2853 px at
+  3x), read from the device type's profile with no simulator driven. The insets are copied from the outer screen in portrait and
+  from the iPhone Pro in landscape, because the inner screen cannot be driven headless, so nobody has probed what it reports.
+  One more reason to hold the numbers loosely: [TABLET_FOLDABLE_UX.md](../TABLET_FOLDABLE_UX.md) records a measured Duo window
+  of 624 dp, not 669, in issue 2040. A pass on these two profiles says the screen copes with a large single pane window and a
+  side strip. It does not say the inner screen is right.
+- **The iPads** (`IPadMiniPortrait`, `IPadMiniLandscape`, `IPadPro13Portrait`, `IPadPro13Landscape`) take their window widths from
+  the table in [TABLET_FOLDABLE_UX.md](../TABLET_FOLDABLE_UX.md) (checked on iOS simulators, 11 Oct 2026). The heights are the
+  device's screen heights and the insets are guesses, a 24 pt status bar and a 20 pt home indicator, so only the widths are
+  measured.
+- **The gate edge** (`Medium720`, `Gate839`, `Gate840`) is one window in the 600 to 839 dp band, one dp under the dual pane gate and
+  exactly on it. The gate is 840 dp wide and 480 dp high or more (`AdaptiveBreakpoints`, TABLET_FOLDABLE_UX.md section 1). Every
+  matrix test runs on them like any other profile, so a screen is checked at each side of the edge, and
+  `PaneGateDeviceMatrixTest` checks the gate itself: it writes out, per profile, whether the app should be one pane or two,
+  reads the real adaptive reader under the profile's window, and checks that the map home puts its map beside a 480 dp list from
+  840 dp and fills the window below it. The height edge, 479 against 480 dp, is not a profile. The phone landscape profiles are
+  the only compact height ones, and they are far below it.
+
 ---
 
 ## What the helper gives you
@@ -108,7 +147,7 @@ the test passes its theme in.
 | `assertTouchReaches(node)` | a real pointer press at the node's centre through the blockers; fails if a blocker took it |
 | `assertScrollEndClearsBottomBar(list)` | scrolls the list to its end; its last item must clear the bottom bar |
 
-The tests that prove the helper can go red are `DeviceMatrixTest` in `:core:testing`: a screen that ignores every inset, one that pads by `displayCutout` only (the incident, red on exactly the two profiles that deliver the side strip elsewhere), and a list with no end padding each fail, and the fixed versions pass on every profile.
+The tests that prove the helper can go red are `DeviceMatrixTest` in `:core:testing`: a screen that ignores every inset, one that pads by `displayCutout` only (the incident, red on exactly the profiles that deliver the side strip outside the cutout: the Duo outer screen, both turns of the Duo inner stand in, and the iPhone Pro in landscape), and a list with no end padding each fail, and the fixed versions pass on every profile.
 
 Sanity checks run on every profile, so the helper cannot pass by doing nothing: the window the
 test got must be the profile's size, and the insets the composition reads back must be the
@@ -177,9 +216,9 @@ adding its matrix test, not a line to the baseline.
 
 ## What it cannot cover
 
-- **The inner screen of the Duo** (669 x 951 pt) and the fold hinge. The simulator cannot be driven
-  headless to its inner screen, and a host test has no hinge or posture change. The fold profiles
-  cover the two window sizes, not the move between them.
+- **The inner screen of the Duo, for real**, and the fold hinge. The simulator cannot be driven
+  headless to its inner screen, so the Duo inner profiles are a size only stand in (see above) and their insets are guesses. A
+  host test has no hinge or posture change either. The fold profiles cover the two window sizes, not the move between them.
 - **A real edge swipe.** Back swipes, the home indicator swipe and Control Center are system
   gestures. The blockers model a tap that lands on a system region, not a gesture the system
   steals from the edge.
@@ -200,32 +239,35 @@ adding its matrix test, not a line to the baseline.
 |---|---|
 | App runtime | None. The helper is in `:core:testing`, which never ships. `Modifier.sideSafeInsets()` is the same `windowInsetsPadding` call every site made before, so no extra layout pass. |
 | Network, storage, timers, battery | None. |
-| CI | 38 tests added, about 39 s of test class time in total. Measured below. |
+| CI | 40 tests added, about 43 s of test class time in total, 56 s wall clock for both modules. Measured below. |
 
 Measured on 24 Nov 2026 on a laptop with a warm Gradle daemon, by running both modules' host tests with `--rerun` so nothing
-was cached. Each matrix test runs its screen once per profile, 12 profiles, in a fresh activity each time.
+was cached. Each matrix test runs its screen once per profile, in a fresh activity each time. The first measurement, with 12
+profiles, gave 39 s of class time and 55 s wall clock. The table below is after the iPad, Duo inner screen and gate edge profiles
+were added, 21 profiles in all, which is the figure to plan with.
 
 | Test class | Module | Tests | Class time |
 |---|---|---|---|
-| `DeviceMatrixTest` (the helper going red, on a stand in screen) | `:core:testing` | 14 | 8.9 s |
-| `DeviceMatrixAdoptionGuardTest` | `:core:testing` | 9 | 0.6 s |
+| `DeviceMatrixTest` (the helper going red, on a stand in screen) | `:core:testing` | 14 | 10.6 s |
+| `DeviceMatrixAdoptionGuardTest` | `:core:testing` | 9 | 0.4 s |
 | `DeviceProfilesDocTest` | `:core:testing` | 1 | under 0.1 s |
-| `SettingsDeviceMatrixTest` (Settings, Our story) | `:feature:trip-planner:ui` | 2 | 10.2 s |
-| `SavedTripsDeviceMatrixTest` (Saved Trips, map home, each at rest and reordering) | `:feature:trip-planner:ui` | 4 | 5.7 s |
-| `SearchStopDeviceMatrixTest` (map state, Options card, list state) | `:feature:trip-planner:ui` | 3 | 4.9 s |
-| `IntroDeviceMatrixTest` (every `IntroStep`) | `:feature:trip-planner:ui` | 1 | 4.3 s |
-| `DiscoverDeviceMatrixTest` | `:feature:trip-planner:ui` | 1 | 2.3 s |
-| `StopCardDeviceMatrixTest` | `:feature:trip-planner:ui` | 2 | 1.1 s |
-| `TimeTableDeviceMatrixTest` | `:feature:trip-planner:ui` | 1 | 0.7 s |
+| `SettingsDeviceMatrixTest` (Settings, Our story) | `:feature:trip-planner:ui` | 2 | 12.0 s |
+| `IntroDeviceMatrixTest` (every `IntroStep`) | `:feature:trip-planner:ui` | 1 | 5.5 s |
+| `SavedTripsDeviceMatrixTest` (Saved Trips, map home, each at rest and reordering) | `:feature:trip-planner:ui` | 4 | 4.8 s |
+| `SearchStopDeviceMatrixTest` (map state, Options card, list state) | `:feature:trip-planner:ui` | 3 | 3.9 s |
+| `DiscoverDeviceMatrixTest` | `:feature:trip-planner:ui` | 1 | 2.7 s |
+| `PaneGateDeviceMatrixTest` (the one pane and two pane gate at its edge) | `:feature:trip-planner:ui` | 2 | 1.2 s |
+| `StopCardDeviceMatrixTest` | `:feature:trip-planner:ui` | 2 | 1.2 s |
+| `TimeTableDeviceMatrixTest` | `:feature:trip-planner:ui` | 1 | 0.8 s |
 
-The two modules together took 55 s wall clock with `--rerun`, which includes Gradle's own task and Robolectric start up. The
-first class to run in a JVM pays the Robolectric start, so `SettingsDeviceMatrixTest`, which ran first, is the high one and the
-others are a fair per profile cost: roughly 0.05 to 0.4 s a profile for a screen, and about 0.25 s for the helper's own
-12 profile tests. `testAndroidHostTest` for `:feature:trip-planner:ui` is the long pole of CI, and these classes add well under a
-minute of test time to it. A screen that is large or animates forever costs more, and the Timetable and Intro tests were
-written to avoid a state that never goes idle.
+The two modules together took 56 s wall clock with `--rerun`, which includes Gradle's own task and Robolectric start up. That
+is one second more than with 12 profiles, because the start up and the screens' first compose dominate and a profile after the
+first is cheap, about 0.02 to 0.1 s for a screen. The class times above are noisy from run to run by a few seconds, since the
+first class in a JVM pays the Robolectric start. `testAndroidHostTest` for `:feature:trip-planner:ui` is the long pole of CI, and
+these classes add well under a minute of test time to it. A screen that is large or animates forever costs more, and the
+Timetable and Intro tests were written to avoid a state that never goes idle.
 
-A new screen's matrix test is one `forEachDeviceProfile` call and costs about 0.5 to 3 s. If that ever matters, the answer is
+A new screen's matrix test is one `forEachDeviceProfile` call and costs about 0.5 to 3 s on the 21 profiles. If that ever matters, the answer is
 `profiles = listOf(...)` on that one call, with the reason in a comment, and not dropping a profile from `DeviceProfiles.all`.
 
 ---

@@ -97,7 +97,10 @@ class DeviceMatrixTest {
             assertNothingInteractiveUnderSystemBars()
         }
 
-        assertEquals(setOf("IPhoneDuoOuter", "IPhoneProLandscape"), failed)
+        assertEquals(
+            setOf("IPhoneDuoOuter", "IPhoneDuoInnerPortrait", "IPhoneDuoInnerLandscape", "IPhoneProLandscape"),
+            failed,
+        )
     }
 
     @Test
@@ -132,7 +135,16 @@ class DeviceMatrixTest {
         }
 
         // The control is 48 wide at the right edge: wholly under a side strip of 48 or more, so every profile with one.
-        assertEquals(setOf("AndroidLandscapeSideNavBar", "IPhoneProLandscape", "IPhoneDuoOuter"), failed)
+        assertEquals(
+            setOf(
+                "AndroidLandscapeSideNavBar",
+                "IPhoneProLandscape",
+                "IPhoneDuoOuter",
+                "IPhoneDuoInnerPortrait",
+                "IPhoneDuoInnerLandscape",
+            ),
+            failed,
+        )
     }
 
     @Test

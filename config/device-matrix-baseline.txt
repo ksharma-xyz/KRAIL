@@ -10,7 +10,6 @@
 # Written 24 Nov 2026 with the matrix itself: the screens the first adoption pass did not reach.
 AddParkRideScreen # not adopted yet: needs an AddParkRideState with stations; its map pane places the location control at the bottom end with no side inset (read in ParkRideMapPane, not measured), the same fault the matrix found on Search Stop
 AskKrailScreen # not adopted yet: the full screen cover over the home, needs an AiSearchInputUiState and a suggestion fixture
-DateTimeSelectorScreen # not adopted yet: needs only a DateTimeSelectionItem fixture
 DebugConfigScreen # debug menu only: its ui module has no host test source set and no :core:testing dependency yet
 JourneyMapScreen # not adopted yet: a full screen map, and its location control sits at the bottom end with no side inset (read in JourneyMap, not measured), the same fault the matrix found on Search Stop
 ManageStopLabelsScreen # not adopted yet: a reorderable list of labels, needs a StopLabel fixture

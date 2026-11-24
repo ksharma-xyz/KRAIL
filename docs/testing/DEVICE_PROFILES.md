@@ -203,6 +203,31 @@ them; they are listed here so nobody removes them.
 
 ---
 
+## Sheets
+
+A `ModalBottomSheet` opens its own window, and that window runs edge to edge: Compose Multiplatform opens it with
+`usePlatformInsets = false`, Material 3 pads the sheet's content by the vertical insets only, and every caller passes empty
+`contentWindowInsets`. So no screen level inset reaches a sheet, and a sheet as wide as a narrow window draws its content under a
+side strip. The Plan your trip sheet did, on the outer screen of the iPhone Duo (466 pt): Reset and the next day chevron stood
+under the status pill, and a tap on Reset opened Control Center.
+
+The fix is in taj, once, for every sheet: both platform sheets put their content in `SheetContent`, which pads it by the side
+safe inset through `Modifier.sideSafeInsets`. The Material 3 sheet is no wider than `BottomSheetDefaults.SheetMaxWidth` (640 dp)
+and sits in the middle of the window, so it has room at each side already in a wider window, and only the part of an inset past
+that room is padded. That is why only two profiles go red without the fix (`IPhoneDuoOuter`, and `IPhoneDuoInnerPortrait` where
+the sheet is 640 of 669 pt): on the iPhone Pro in landscape, the Duo inner screen in landscape and an Android phone with a
+cutout the sheet never reaches the strip, and padding it there would put its content off centre for nothing.
+
+How a sheet is tested: the sheet's window cannot be shown in a host test, so a test composes the body in `SheetHost` (a test
+helper that places it as Material 3 does, at the foot of the window, centred and no wider than the cap) with
+`SheetContent` around it. `ModalSheetContentDeviceMatrixTest` holds the container on every profile (a control at each end of a
+full width row stands clear of a strip, and the content is padded by exactly the part of each side inset that the sheet's own
+edge does not clear). A sheet body's own test, `DateTimeSelectorDeviceMatrixTest` for Plan your trip, composes the real screen
+the same way. Nothing a host test can run ties the real sheet to `SheetContent`, so that link is checked on the simulator (see the Gaps in
+[DEVICE_COVERAGE.md](DEVICE_COVERAGE.md)).
+
+---
+
 ## The guards that keep it honest
 
 | Guard | Catches | Where |
@@ -227,6 +252,12 @@ adding its matrix test, not a line to the baseline.
   is what Compose reported on the Duo on 24 Nov 2026. When the Compose version moves, run the inset
   probe again and update the measured rows; the matrix tests then fail on any screen the new
   reporting breaks.
+- **A sheet's own window.** The window `ModalBottomSheet` opens cannot be shown in a host test, and the iOS sheet is in `iosMain`,
+  which the Android host tests do not compile. The container test composes `SheetContent` as the sheet does, in the activity
+  window, so it proves the padding and not that the real sheet is wired to it. What the iOS sheet's own composition reports for the
+  insets is not measured either: the sheet reads them in the caller's composition, before its window opens, so it does not depend
+  on that. Reading the Compose Multiplatform dialog and iOS inset code suggests the sheet's layer reports the window's insets,
+  but nothing here ran it, and the history of `MIN_STATUS_BAR_HEIGHT` in taj records an inset reading 0 inside a dialog.
 - **The pill's true extent, the status bar's drawing, Dynamic Type, map tiles.** The strip is the
   region; what the system draws inside it is not reproduced.
 - **Every `assumed` row.** An assumed inset is a guess about a device nobody has probed. It
@@ -238,7 +269,7 @@ adding its matrix test, not a line to the baseline.
 
 | | |
 |---|---|
-| App runtime | None. The helper is in `:core:testing`, which never ships. `Modifier.sideSafeInsets()` is the same `windowInsetsPadding` call every site made before, so no extra layout pass. |
+| App runtime | None. The helper is in `:core:testing`, which never ships. `Modifier.sideSafeInsets()` is the same `windowInsetsPadding` call every site made before, so no extra layout pass. A sheet reads the window's width and side insets once before it opens and applies one `windowInsetsPadding` to its content, so it adds no layout pass either. |
 | Network, storage, timers, battery | None. |
 | CI | 40 tests added, about 43 s of test class time in total, 56 s wall clock for both modules. Measured below. |
 
@@ -260,8 +291,11 @@ were added, 21 profiles in all, which is the figure to plan with.
 | `PaneGateDeviceMatrixTest` (the one pane and two pane gate at its edge) | `:feature:trip-planner:ui` | 2 | 1.2 s |
 | `StopCardDeviceMatrixTest` | `:feature:trip-planner:ui` | 2 | 1.2 s |
 | `TimeTableDeviceMatrixTest` | `:feature:trip-planner:ui` | 1 | 0.8 s |
+| `DateTimeSelectorDeviceMatrixTest` (Plan your trip, in a sheet body) | `:feature:trip-planner:ui` | 2 | 7.4 s |
+| `ModalSheetContentDeviceMatrixTest` (the sheet container) | `:feature:trip-planner:ui` | 3 | about 1 s |
 
-The two modules together took 56 s wall clock with `--rerun`, which includes Gradle's own task and Robolectric start up. That
+The last two rows were added with the sheet fix and are measured separately (a warm daemon, the class on its own, on a quiet
+machine, 24 Nov 2026); they are not in the totals above. The two modules together took 56 s wall clock with `--rerun`, which includes Gradle's own task and Robolectric start up. That
 is one second more than with 12 profiles, because the start up and the screens' first compose dominate and a profile after the
 first is cheap, about 0.02 to 0.1 s for a screen. The class times above are noisy from run to run by a few seconds, since the
 first class in a JVM pays the Robolectric start. `testAndroidHostTest` for `:feature:trip-planner:ui` is the long pole of CI, and

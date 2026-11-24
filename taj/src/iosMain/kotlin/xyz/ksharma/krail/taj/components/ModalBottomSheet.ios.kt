@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.cinterop.ExperimentalForeignApi
 import platform.UIKit.UIAccessibilityIsReduceMotionEnabled
 import xyz.ksharma.krail.taj.modifier.klickable
+import xyz.ksharma.krail.taj.modifier.sideSafeInsets
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import androidx.compose.material3.ModalBottomSheet as Material3ModalBottomSheet
 
@@ -53,7 +54,7 @@ actual fun ModalBottomSheet(
             content = content,
         )
     } else {
-        val maxContentHeight = rememberSheetMaxContentHeight()
+        val sheetFrame = rememberSheetFrame()
 
         Material3ModalBottomSheet(
             onDismissRequest = onDismissRequest,
@@ -63,7 +64,7 @@ actual fun ModalBottomSheet(
             contentWindowInsets = contentWindowInsets,
             dragHandle = { WideDragHandle() },
         ) {
-            CappedSheetContent(maxContentHeight, content)
+            SheetContent(frame = sheetFrame, content = content)
         }
     }
 }
@@ -112,8 +113,9 @@ private fun SimpleBottomSheetOverlay(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
             )
 
-            // Scrollable content area below the drag handle
-            Box(modifier = Modifier.fillMaxWidth()) {
+            // Scrollable content area below the drag handle. The sheet is full width, so its content stands inside the
+            // side safe area like the content of the Material 3 sheet does (SheetContent).
+            Box(modifier = Modifier.fillMaxWidth().sideSafeInsets()) {
                 content()
             }
         }

@@ -14,11 +14,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
@@ -44,6 +46,7 @@ import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 
@@ -116,8 +119,9 @@ internal fun LazyListScope.homeLabelRowItem(
  * and the last one in view is cut by the edge. A pill's text is one line that is never truncated or squeezed, so a long custom
  * name makes that pill wider and the row scrolls.
  *
- * A label with a stop is taj's filled [Button] in the theme colour, a label with no stop is taj's [OutlinedButton] reading
- * "+ Work", both at [ButtonDefaults.chipButtonSize], text only. A tap is [onLabelClick] with the label's key: the existing
+ * A label with a stop is taj's [Button] and a label with no stop is taj's [OutlinedButton] reading "+ Work", both at
+ * [ButtonDefaults.chipButtonSize], text only, wearing the saved trip cards' own fill and ink ([homeSetPillColors],
+ * [homeUnsetPillColors]). A tap is [onLabelClick] with the label's key: the existing
  * `LabelChipTapEffect` plans a trip to a set label and starts setting an unset one.
  */
 @Composable
@@ -179,6 +183,30 @@ private class LabelCellsMeasurePolicy(
     }
 }
 
+/**
+ * A set label's colours: what a saved trip card looks like. The card's fill is `themeBackgroundColor()` (the rider's theme colour at
+ * 15 percent in light mode and 45 percent in dark mode, over the page) and its text is the page's text colour,
+ * `KrailTheme.colors.onSurface`, the default of the card's `Text`. This is the pair, passed through taj's
+ * [ButtonDefaults.buttonColors] and nothing else of taj's changed, instead of a solid theme colour that taj's automatic ink turns
+ * black in both modes.
+ *
+ * `Button` draws its container at the content alpha (full), so a translucent container would come out as the solid theme colour. The
+ * fill is therefore the card's tint already laid over the page surface, which is the colour the rider sees on the card, and the page
+ * behind the label row is that surface.
+ */
+@Composable
+internal fun homeSetPillColors(): ButtonColors = ButtonDefaults.buttonColors(
+    customContainerColor = themeBackgroundColor().compositeOver(KrailTheme.colors.surface),
+    customContentColor = KrailTheme.colors.onSurface,
+)
+
+/**
+ * An unset label's colours: no fill, with its text and its outline in the card's ink (`KrailTheme.colors.onSurface`, which is
+ * what [ButtonDefaults.outlinedButtonColors] reads as `label`), so it is the outline version of the set pill.
+ */
+@Composable
+internal fun homeUnsetPillColors(): ButtonColors = ButtonDefaults.outlinedButtonColors()
+
 @Composable
 private fun HomeLabelPill(label: StopLabel, onClick: () -> Unit) {
     val description = homeLabelDescription(label)
@@ -195,7 +223,7 @@ private fun HomeLabelPill(label: StopLabel, onClick: () -> Unit) {
         Button(
             onClick = onClick,
             modifier = target,
-            colors = ButtonDefaults.buttonColors(),
+            colors = homeSetPillColors(),
             dimensions = ButtonDefaults.chipButtonSize(),
         ) {
             Text(text = label.label, maxLines = 1)
@@ -204,7 +232,7 @@ private fun HomeLabelPill(label: StopLabel, onClick: () -> Unit) {
         OutlinedButton(
             onClick = onClick,
             modifier = target,
-            colors = ButtonDefaults.outlinedButtonColors(),
+            colors = homeUnsetPillColors(),
             dimensions = ButtonDefaults.chipButtonSize(),
         ) {
             Text(text = "+ ${label.label}", maxLines = 1)

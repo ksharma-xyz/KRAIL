@@ -2,13 +2,16 @@ package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
@@ -41,16 +44,19 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.taj.LocalThemeColor
-import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.ThemeController
 import xyz.ksharma.krail.taj.theme.ThemeMode
+import xyz.ksharma.krail.taj.themeBackgroundColor
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.components.SavedTripCard
 import xyz.ksharma.krail.trip.planner.ui.getVisibleBoundsInRoot
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroPixels
 import xyz.ksharma.krail.trip.planner.ui.intro.colourAt
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
+import java.awt.image.BufferedImage
 import kotlin.math.abs
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -69,6 +75,9 @@ class HomeLabelRowLayoutTest {
 
     @get:Rule
     val composeRule = createComposeRule()
+
+    // What a saved trip card's background is in the theme the harness draws, read from the same function the card calls.
+    private var cardFill: Color = Color.Unspecified
 
     private val clicks = mutableListOf<String>()
 
@@ -167,7 +176,12 @@ class HomeLabelRowLayoutTest {
         val y = pill.top.value + 3f
         val inside = picture.colourAt(pill.right.value - 24f, y)
         val atEdge = picture.colourAt(pill.right.value - 1f, y)
-        assertEquals(THEME_COLOUR.toArgb(), inside.toArgb(), "The pill is the theme colour inside the row.")
+        assertColourNear(
+            cardFill.compositeOver(Color.White),
+            inside,
+            "The pill is the card's tint inside the row.",
+            PAGE_TOLERANCE,
+        )
         assertEquals(
             inside.toArgb(),
             atEdge.toArgb(),
@@ -228,17 +242,18 @@ class HomeLabelRowLayoutTest {
     }
 
     @Test
-    fun `a set label is filled in the theme colour and an unset one is outlined with no fill, both text only`() {
+    fun `a set label is filled in the card's tint and an unset one is outlined with no fill, both text only`() {
         setRow(MIXED, page = Color.White)
 
         val picture = IntroPixels(composeRule).of(ROW_HOST)
         val home = bounds(TripPlannerTestTags.homeLabelChip("Home"))
         val work = bounds(TripPlannerTestTags.homeLabelChip("Work"))
         // Four px into the pill, level with its middle: in its rounded end, before the text, so only the fill or the page is there.
-        assertEquals(
-            THEME_COLOUR.toArgb(),
-            picture.colourAt(home.left.value + 4f, home.top.value + home.height.value / 2).toArgb(),
-            "A set label's fill is the theme colour.",
+        assertColourNear(
+            cardFill.compositeOver(Color.White),
+            picture.colourAt(home.left.value + 4f, home.top.value + home.height.value / 2),
+            "A set label's fill is the card's tint, and not the solid theme colour.",
+            PAGE_TOLERANCE,
         )
         assertEquals(
             Color.White.toArgb(),
@@ -254,6 +269,102 @@ class HomeLabelRowLayoutTest {
             val texts = inPill.count { SemanticsProperties.Text in it.config }
             assertEquals(1, texts, "$name holds one text and no icon: ${inPill.size} nodes")
         }
+    }
+
+    @Test
+    fun `in light mode a set pill has the same fill and ink as the saved trip card beside it`() {
+        assertPillIsTheCard(ThemeMode.LIGHT)
+    }
+
+    @Test
+    fun `in dark mode a set pill has the same fill and ink as the saved trip card beside it, with white text`() {
+        assertPillIsTheCard(ThemeMode.DARK)
+    }
+
+    /**
+     * A real [SavedTripCard] and the row, drawn on the page in [mode] in the same theme colour, read back as pixels: the pill's
+     * fill is the card's fill, and the strongest ink in the pill's text is the card's text colour (near black in light mode, near
+     * white in dark mode).
+     */
+    private fun assertPillIsTheCard(mode: ThemeMode) {
+        var ink = Color.Unspecified
+        composeRule.setContent {
+            KrailTheme(themeController = ThemeController(currentMode = mode, setThemeMode = {})) {
+                CompositionLocalProvider(
+                    LocalThemeColor provides remember { mutableStateOf(KrailThemeStyle.Train.hexColorCode) },
+                ) {
+                    ink = KrailTheme.colors.onSurface
+                    Column(modifier = Modifier.fillMaxSize().background(KrailTheme.colors.surface).testTag(ROW_HOST)) {
+                        Box(modifier = Modifier.padding(16.dp).testTag(CARD_TAG)) {
+                            SavedTripCard(
+                                fromDisplay = StopDisplay(stopId = "1", name = "Central Station"),
+                                toDisplay = StopDisplay(stopId = "2", name = "Town Hall Station"),
+                                onCardClick = {},
+                            )
+                        }
+                        HomeLabelRow(labels = MIXED.toImmutableList(), onLabelClick = {})
+                    }
+                }
+            }
+        }
+        composeRule.waitForIdle()
+
+        val picture = IntroPixels(composeRule).of(ROW_HOST)
+        val card = bounds(CARD_TAG)
+        val pill = bounds(TripPlannerTestTags.homeLabelChip("Home"))
+        val cardFillPixel = picture.colourAt(card.left.value + 6f, card.top.value + card.height.value / 2)
+        val pillFillPixel = picture.colourAt(pill.left.value + 4f, pill.top.value + pill.height.value / 2)
+        assertColourNear(cardFillPixel, pillFillPixel, "$mode: the pill's fill is the card's fill")
+
+        val dark = mode == ThemeMode.DARK
+        val cardInk = strongestInk(
+            picture,
+            card.left.value + 12f,
+            card.top.value + 12f,
+            card.right.value - 12f,
+            card.bottom.value - 12f,
+            dark,
+        )
+        val pillInk = strongestInk(
+            picture,
+            pill.left.value + 6f,
+            pill.top.value + 4f,
+            pill.right.value - 6f,
+            pill.bottom.value - 4f,
+            dark,
+        )
+        assertColourNear(ink, cardInk, "$mode: the card's text is the page's text colour", INK_TOLERANCE)
+        assertColourNear(ink, pillInk, "$mode: the pill's text is the card's text colour", INK_TOLERANCE)
+    }
+
+    /** The darkest pixel in the box in light mode and the lightest in dark mode: where a glyph is fully covered, its ink. */
+    private fun strongestInk(
+        picture: BufferedImage,
+        left: Float,
+        top: Float,
+        right: Float,
+        bottom: Float,
+        dark: Boolean,
+    ): Color {
+        var best = picture.colourAt(left, top)
+        fun strength(c: Color) = (c.red + c.green + c.blue) * if (dark) 1f else -1f
+        for (y in top.toInt()..bottom.toInt()) {
+            for (x in left.toInt()..right.toInt()) {
+                val c = picture.colourAt(x.toFloat(), y.toFloat())
+                if (strength(c) > strength(best)) best = c
+            }
+        }
+        return best
+    }
+
+    private fun assertColourNear(expected: Color, actual: Color, what: String, tolerance: Int = FILL_TOLERANCE) {
+        val e = expected.toArgb()
+        val a = actual.toArgb()
+        val off = listOf(16, 8, 0).maxOf { shift -> abs(((e shr shift) and 0xFF) - ((a shr shift) and 0xFF)) }
+        assertTrue(
+            off <= tolerance,
+            "$what: expected ${Integer.toHexString(e)} but read ${Integer.toHexString(a)} (off by $off).",
+        )
     }
 
     // endregion
@@ -333,6 +444,7 @@ class HomeLabelRowLayoutTest {
                     CompositionLocalProvider(
                         LocalThemeColor provides remember { mutableStateOf(KrailThemeStyle.Train.hexColorCode) },
                     ) {
+                        cardFill = themeBackgroundColor()
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -384,7 +496,12 @@ class HomeLabelRowLayoutTest {
         const val ROW_HOST = "test.rowhost"
         const val TOLERANCE_DP = 1.5f
         const val LONG = "Grandparents house far away"
-        val THEME_COLOUR = KrailThemeStyle.Train.hexColorCode.hexToComposeColor()
+        const val CARD_TAG = "test.card"
+        const val FILL_TOLERANCE = 1
+
+        // The page is pure white in a few tests, and the pill's tint was laid over the theme's own page surface, a level or two off it.
+        const val PAGE_TOLERANCE = 4
+        const val INK_TOLERANCE = 40
         val PHONE_WIDTH = 411.dp
         val NARROW_WIDTH = 320.dp
 

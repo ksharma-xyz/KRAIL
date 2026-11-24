@@ -26,7 +26,7 @@ Ride cards with the pink `P`, and the Add Park & Ride card with its own line.
 leading edge, 8 dp apart, each pill in a 48 dp touch slot. It scrolls sideways and is cut hard at the trailing edge when it
 overflows, with no fade mask and no gradient, and its content ends at the side safe area edge. While every pill fits the cells
 are equal in width, past that each pill is as wide as its name and the last one in view is cut by the edge. A label with a stop
-is taj's filled `Button` in the theme colour. A label with no stop is taj's `OutlinedButton` reading "+ Work" ("+ Home", or "+ "
+is taj's `Button` in the saved trip card's own fill and ink (the theme tint and the page's text colour, so the text is white in dark mode). A label with no stop is taj's `OutlinedButton` reading "+ Work" ("+ Home", or "+ "
 and the name for a label the rider made). Text only, no label icon, the same height and radius, and a pill's text is never
 truncated or squeezed: a long name makes that pill wider and the row scrolls. A screen reader hears "Home, double tap to go there"
 for a set label and "Work, not set, double tap to choose a stop" for an unset one. A set label plans from the nearest stop, or

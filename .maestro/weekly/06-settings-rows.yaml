@@ -5,8 +5,10 @@
 # are the controls a status pill or a cutout would cover first. Each is tapped, and the screen that follows is what
 # proves the tap landed.
 #
-# Rows tapped: Change Theme and Our story, and Debug Config with its Network tile on a debug build, which is what CI and a
-# local build are. The row is guarded because a release build does not draw it.
+# Rows tapped: Change Theme, Manage stop labels and Our story, and Debug Config with its Network tile on a debug build, which is
+# what CI and a local build are. The row is guarded because a release build does not draw it. Manage stop labels is the row
+# under Change Theme and the only way into the Manage your labels screen, which has no tag of its own, and it is not a pane of
+# the list and detail layout, so it takes the whole window and Settings is gone while it is open.
 #
 # Rows asserted but not tapped: Invite your friends and Rate KRAIL. Each hands the rider to a system surface, a share sheet
 # or the store's review prompt, which is outside the app and has no portable way back on both platforms. Their taps are
@@ -51,6 +53,8 @@ appId: ${APP_ID}
 - assertVisible:
     id: "settings.item.theme"
 - assertVisible:
+    id: "settings.item.managelabels"
+- assertVisible:
     id: "settings.item.invite"
 - assertVisible:
     id: "settings.item.rate"
@@ -58,6 +62,23 @@ appId: ${APP_ID}
 # --- Change Theme ---
 - tapOn:
     id: "settings.item.theme"
+- extendedWaitUntil:
+    notVisible:
+      id: "settings.screen"
+    timeout: 20000
+- waitForAnimationToEnd:
+    timeout: 5000
+- tapOn: "Back"
+- extendedWaitUntil:
+    visible:
+      id: "settings.screen"
+    timeout: 20000
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# --- Manage stop labels ---
+- tapOn:
+    id: "settings.item.managelabels"
 - extendedWaitUntil:
     notVisible:
       id: "settings.screen"

@@ -1,0 +1,449 @@
+name: Maestro Weekly Devices
+
+# The same app driven by real taps on the screens the nightly run never sees: the outer screen of the iPhone Duo with its
+# floating status pill, an iPad, a small iPhone, an Android tablet and an Android foldable. It exists for one class of bug, a
+# control that is on the screen but cannot be reached because a system bar, a status pill or a side inset sits over it, which
+# the nightly's iPhone 17 and Pixel 6 have no side inset to show. A flow that taps a control and asserts what the tap did
+# catches it, so the flows in .maestro/weekly/ do that for every key control.
+#
+# Reports only, like the nightly. Nothing here merges, tags, publishes or auto-anything. A red leg is a signal for a human.
+#
+# It does not touch the nightly: that workflow, .maestro/config.yaml and the nightly and smoke flows are unchanged, and the
+# nightly never reads .maestro/weekly/.
+
+on:
+  schedule:
+    # Wednesday 17:00 UTC, which is Thursday 03:00 AEST (04:00 in daylight saving), the same quiet end of a Sydney night the
+    # nightly uses, on a different day. The nightly runs Saturday 17:00 UTC and the iOS leg of it takes the best part of an
+    # hour, so the two are three days apart and cannot queue behind each other for a macOS runner, even when GitHub starts a
+    # scheduled run hours late, which it has done to the nightly. They also share one NSW API key, and a flow here reads
+    # live timetable data, so they should not run at the same time.
+    - cron: '0 17 * * 3'
+  workflow_dispatch:
+    inputs:
+      devices:
+        description: 'Which devices to run: all, ios, android, or a list from duo, ipad, small-iphone, tablet, fold (comma separated)'
+        required: false
+        default: 'all'
+        type: string
+
+# Nothing at the top: every job names what it needs. The jobs that build need to read the repository and to read GitHub
+# Packages, where settings.gradle.kts resolves the KRAIL-API-PROTO sources JAR with GITHUB_TOKEN; without read:packages the
+# narrowed token cannot see the repository and Gradle fails to resolve.
+permissions: {}
+
+concurrency:
+  # Keyed on ref, like the nightly: this runs on a schedule, where there is no pull request to key on.
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # Decides the legs. The list of devices is in .maestro/ci/plan-weekly-matrix.sh, and a manual run can pick a subset.
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      ios: ${{ steps.plan.outputs.ios }}
+      android: ${{ steps.plan.outputs.android }}
+      ios_count: ${{ steps.plan.outputs.ios_count }}
+      android_count: ${{ steps.plan.outputs.android_count }}
+    steps:
+      # Only the CI scripts are checked out, because the planner is the one thing this job needs from the repository. It is a
+      # script and not inline YAML so that the device list can be read, and tried, from a terminal.
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: .maestro/ci
+          persist-credentials: false
+
+      - name: Plan the legs
+        id: plan
+        env:
+          DEVICES: ${{ inputs.devices }}
+        run: bash .maestro/ci/plan-weekly-matrix.sh
+
+  # The iOS app is built once and every iOS leg installs the same build. The build is by far the longest thing the iOS lane
+  # does: on the nightly's last scheduled run the xcodebuild step took 37 minutes and the flows 8. Building once for three
+  # legs instead of three times is what keeps a weekly matrix of several simulators affordable on a macOS runner. A simulator
+  # build is the same for every simulator device type, so nothing is lost; the legs differ in the device, not the app.
+  build-ios:
+    needs: plan
+    if: needs.plan.outputs.ios_count != '0'
+    # Xcode 27 is only on GitHub's preview image so far, not on macos-latest, the same runner as the nightly.
+    # See docs/ci_cd/XCODE_AND_IOS_TOOLCHAIN.md before moving it back or on.
+    runs-on: xcode-27
+    environment: Firebase
+    # The nightly's whole iOS job, flows included, has a 90 minute limit. This is the build alone.
+    timeout-minutes: 75
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - uses: actions/checkout@v6
+
+      # Requires Xcode 26+ for the iOS 26 SDK, same pin as the nightly. The Duo's full display needs the iOS 27.1 SDK.
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '27.1'  # exact: the image also carries a 27.2 beta, which '~27' could pick
+
+      - name: Setup environment variables
+        env:
+          IOS_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
+          ANDROID_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
+        run: |
+          echo "IOS_NSW_TRANSPORT_API_KEY=$IOS_KEY" >> "$GITHUB_ENV"
+          echo "ANDROID_NSW_TRANSPORT_API_KEY=$ANDROID_KEY" >> "$GITHUB_ENV"
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-disabled: false
+
+      - name: Firebase iOS - GoogleService-Info.plist
+        env:
+          DATA: ${{ secrets.FIREBASE_IOS_GOOGLE_INFO }}
+        run: echo "$DATA" | base64 -d > iosApp/iosApp/GoogleService-Info.plist
+
+      - name: Pre-build SPM for MapLibre (Gradle)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./gradlew :feature:trip-planner:ui:SwiftPackageConfigAppleSpmMaplibreCompileSwiftPackageIosSimulatorArm64 --no-daemon --stacktrace
+
+      # xcodebuild wants a concrete destination, as the nightly's does, so the build is for one simulator device and is not
+      # generic: a generic simulator destination builds every architecture and the Kotlin framework is built for one. This
+      # simulator is created and never booted, since a build does not need it running, and it is deleted afterwards.
+      - name: Create the simulator the build is for
+        id: sim
+        run: |
+          set -e
+          UDID=$(xcrun simctl create weekly-build com.apple.CoreSimulator.SimDeviceType.iPhone-17)
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Build iOS app for simulator
+        env:
+          IOS_NSW_TRANSPORT_API_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
+          UDID: ${{ steps.sim.outputs.udid }}
+        run: |
+          xcodebuild -project iosApp/iosApp.xcodeproj \
+                     -scheme iosApp \
+                     -configuration Debug \
+                     -destination "id=$UDID" \
+                     -derivedDataPath "$GITHUB_WORKSPACE/build/ios" \
+                     CODE_SIGN_IDENTITY="" \
+                     CODE_SIGNING_REQUIRED=NO \
+                     CODE_SIGNING_ALLOWED=NO \
+                     -parallelizeTargets \
+                     build
+
+      # A tar, because actions/upload-artifact zips what it is given and a zip does not keep the executable bit, which an
+      # app bundle needs to launch.
+      - name: Package the app
+        run: |
+          set -e
+          APP=$(find "$GITHUB_WORKSPACE/build/ios/Build/Products" -maxdepth 2 -name "*.app" | head -1)
+          echo "Packaging $APP"
+          tar -C "$(dirname "$APP")" -cf "$RUNNER_TEMP/ios-app.tar" "$(basename "$APP")"
+          ls -l "$RUNNER_TEMP/ios-app.tar"
+
+      - name: Upload the app for the legs
+        uses: actions/upload-artifact@v7
+        with:
+          name: maestro-weekly-ios-app-${{ github.run_id }}
+          path: ${{ runner.temp }}/ios-app.tar
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Delete the build simulator
+        if: always()
+        env:
+          UDID: ${{ steps.sim.outputs.udid }}
+        run: xcrun simctl delete "$UDID" || true
+
+  # One job for each iOS device type, so that one failing leg does not hide the others.
+  ios:
+    name: iOS ${{ matrix.name }}
+    needs: [plan, build-ios]
+    if: needs.plan.outputs.ios_count != '0'
+    runs-on: xcode-27
+    # Boot, install and the flows. The build is not here, so this is far shorter than the nightly's iOS job.
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.ios) }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '27.1'  # exact, as in the build job and the nightly
+
+      # Maestro itself runs on Java.
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Download the app
+        uses: actions/download-artifact@v8
+        with:
+          name: maestro-weekly-ios-app-${{ github.run_id }}
+          path: ${{ runner.temp }}/app-download
+
+      - name: Install Maestro
+        env:
+          MAESTRO_VERSION: 2.8.0
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Verify Maestro version
+        run: maestro --version
+
+      # Does this runner image have the device type, and an iOS runtime that supports it? If not, this says so in the job
+      # summary and the steps below are skipped. See the script for why a skip and not a failure.
+      - name: Probe the device type
+        id: probe
+        env:
+          DEVICE_TYPE: ${{ matrix.device_type }}
+          LEG_NAME: ${{ matrix.name }}
+        run: bash .maestro/ci/probe-ios-device-type.sh "$DEVICE_TYPE" "$LEG_NAME"
+
+      # Created on the runtime the probe chose, so it is never left to simctl to pick one, which for the Duo would matter: its
+      # runtime supports that device type only.
+      - name: Create and boot the simulator
+        id: sim
+        if: steps.probe.outputs.available == 'true'
+        env:
+          DEVICE_TYPE: ${{ matrix.device_type }}
+          RUNTIME: ${{ steps.probe.outputs.runtime }}
+          LEG: ${{ matrix.leg }}
+        run: |
+          set -e
+          UDID=$(xcrun simctl create "weekly-$LEG" "$DEVICE_TYPE" "$RUNTIME")
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+
+      - name: Install app on simulator
+        if: steps.probe.outputs.available == 'true'
+        env:
+          UDID: ${{ steps.sim.outputs.udid }}
+        run: |
+          set -e
+          mkdir -p "$RUNNER_TEMP/app"
+          tar -xf "$RUNNER_TEMP/app-download/ios-app.tar" -C "$RUNNER_TEMP/app"
+          APP=$(find "$RUNNER_TEMP/app" -maxdepth 1 -name "*.app" | head -1)
+          echo "Installing $APP"
+          xcrun simctl install "$UDID" "$APP"
+
+      # Retried once, and only here, for the reasons the nightly gives: simulator runs are flakier than emulator runs and
+      # this lane reports and does not gate, so one retry buys signal without hiding a real break, because a genuine
+      # regression fails twice. The retry restarts the simulator itself, not just the app, as the nightly's does.
+      # The weekly flows are not tagged android-only: the one Android only check, the system back key, is a condition inside
+      # the flow.
+      - name: Run weekly flows
+        id: run
+        if: steps.probe.outputs.available == 'true'
+        env:
+          UDID: ${{ steps.sim.outputs.udid }}
+          MAESTRO_RETRIES: '1'
+          RESTART_SIMULATOR_ON_RETRY: '1'
+        run: bash .maestro/ci/run-weekly-ios.sh "$UDID" xyz.ksharma.krail .maestro/weekly/ maestro-output
+
+      # A crash in the app does not necessarily fail a flow, and the nightly's iOS leg keeps no device log, so what the
+      # simulator wrote about a crash is kept with the run. Crash reports for simulator apps are written to the Mac's own
+      # diagnostic reports folder.
+      - name: Collect crash reports
+        if: always() && steps.probe.outputs.available == 'true'
+        run: |
+          mkdir -p maestro-output/crash-reports
+          cp "$HOME"/Library/Logs/DiagnosticReports/*.ips maestro-output/crash-reports/ 2>/dev/null || true
+          echo "Crash reports collected: $(find maestro-output/crash-reports -type f | wc -l | tr -d ' ')"
+
+      # The table of how each flow ended, for the run page. Written whether the run passed or failed.
+      - name: Write the result table
+        if: always() && steps.probe.outputs.available == 'true'
+        env:
+          LEG_NAME: ${{ matrix.name }}
+          DEVICE_TYPE: ${{ matrix.device_type }}
+          RUNTIME: ${{ steps.probe.outputs.runtime }}
+          RUN_OUTCOME: ${{ steps.run.outcome }}
+        run: |
+          {
+            echo "### iOS $LEG_NAME"
+            echo
+            echo "Device type \`$DEVICE_TYPE\`, runtime \`$RUNTIME\`, $(xcodebuild -version | head -1). Suite: $RUN_OUTCOME."
+            echo
+            bash .maestro/ci/weekly-summary.sh maestro-output .maestro/weekly
+            echo
+            echo "Crash reports collected: $(find maestro-output/crash-reports -type f 2>/dev/null | wc -l | tr -d ' ')"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Maestro debug output
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: maestro-weekly-ios-${{ matrix.leg }}-${{ github.run_id }}
+          path: maestro-output/**
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Shut down simulator
+        if: always() && steps.sim.outputs.udid != ''
+        env:
+          UDID: ${{ steps.sim.outputs.udid }}
+        run: |
+          xcrun simctl shutdown "$UDID" || true
+          xcrun simctl delete "$UDID" || true
+
+  # One job for each Android device profile. The nightly's Android job is the pattern, step for step.
+  android:
+    name: Android ${{ matrix.name }}
+    needs: plan
+    if: needs.plan.outputs.android_count != '0'
+    runs-on: ubuntu-latest
+    environment: Firebase
+    # The nightly's Android job has 45 minutes for six flows on one posture. This has seven flows, on a bigger screen, and
+    # the fold leg runs them twice, once on each display.
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.android) }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Setup environment variables
+        env:
+          ANDROID_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
+          IOS_KEY: ${{ secrets.IOS_NSW_TRANSPORT_API_KEY }}
+        run: |
+          echo "ANDROID_NSW_TRANSPORT_API_KEY=$ANDROID_KEY" >> "$GITHUB_ENV"
+          echo "IOS_NSW_TRANSPORT_API_KEY=$IOS_KEY" >> "$GITHUB_ENV"
+
+      - name: set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: 21
+
+      - name: Make Gradle executable
+        run: chmod +x ./gradlew
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-disabled: false
+
+      - name: Firebase (Debug) - Google Services.json file
+        env:
+          DATA: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_DEBUG }}
+        run: echo "$DATA" | base64 -di > androidApp/src/debug/google-services.json
+
+      - name: Build debug APK
+        env:
+          ANDROID_NSW_TRANSPORT_API_KEY: ${{ secrets.ANDROID_NSW_TRANSPORT_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew :androidApp:assembleDebug --stacktrace --no-configuration-cache
+
+      - name: Install Maestro
+        env:
+          MAESTRO_VERSION: 2.8.0
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Verify Maestro version
+        run: maestro --version
+
+      # The nightly's emulator, step for step, with a tablet or a foldable profile in place of the Pixel 6: the same google_atd
+      # image and the same reasons for it (see the nightly), the same animation and error dialog settings, and the same retry,
+      # as a same-line prefix because this action runs its script one line at a time. The last line is one script that runs the
+      # flows in each posture the device has, and keeps each posture's output apart. See .maestro/ci/run-weekly-android.sh.
+      - name: Run weekly flows
+        id: run
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_atd
+          arch: x86_64
+          profile: ${{ matrix.profile }}
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb shell settings put global hide_error_dialogs 1
+            adb shell am force-stop com.google.android.apps.nexuslauncher
+            adb install -r androidApp/build/outputs/apk/debug/androidApp-debug.apk
+            adb shell settings put global window_animation_scale 0
+            adb shell settings put global transition_animation_scale 0
+            adb shell settings put global animator_duration_scale 0
+            MAESTRO_RETRIES=1 bash .maestro/ci/run-weekly-android.sh xyz.ksharma.krail.debug .maestro/weekly/ ${{ matrix.leg }}
+
+      # The table of how each flow ended, one for each posture the leg ran. Written whether the run passed or failed.
+      - name: Write the result table
+        if: always()
+        env:
+          LEG_NAME: ${{ matrix.name }}
+          PROFILE: ${{ matrix.profile }}
+          RUN_OUTCOME: ${{ steps.run.outcome }}
+        run: |
+          {
+            echo "### Android $LEG_NAME"
+            echo
+            echo "Emulator profile \`$PROFILE\`, API 34, google_atd. Suite: $RUN_OUTCOME."
+            echo
+            if [ -s maestro-output/postures.txt ]; then
+              echo "Postures run:"
+              echo
+              sed 's/^/- /' maestro-output/postures.txt
+              echo
+            fi
+            shown=0
+            for dir in maestro-output/*/; do
+              [ -d "$dir" ] || continue
+              shown=1
+              echo "#### $(basename "$dir")"
+              echo
+              bash .maestro/ci/weekly-summary.sh "$dir" .maestro/weekly
+              echo
+            done
+            if [ "$shown" -eq 0 ]; then
+              echo "No flow results were recorded, so the run stopped before the flows."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload Maestro debug output
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: maestro-weekly-android-${{ matrix.leg }}-${{ github.run_id }}
+          path: |
+            maestro-output/**
+            logcat-android-*.txt
+          if-no-files-found: ignore
+          retention-days: 14

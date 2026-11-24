@@ -6,8 +6,9 @@ docs/learning/2026-08-16-ime-pan-and-unbounded-column.md. The third comes from i
 incident, docs/learning/2026-08-16-clipped-inside-its-own-parent.md, where the probe
 itself was the thing that was wrong. The fourth comes from the iPhone Duo side inset
 incident, recorded in docs/testing/DEVICE_PROFILES.md, and the fifth from its second half, the
-Plan your trip sheet, which a sheet's own window hid from every screen level check. The rules
-they enforce are explained in docs/LAYOUT_AND_INSETS.md.
+Plan your trip sheet, which a sheet's own window hid from every screen level check. The sixth is
+the same incident again: a sheet body that padded the sides itself on top of the container, which the
+host model could not show and the real iOS sheet did. The rules they enforce are explained in docs/LAYOUT_AND_INSETS.md.
 
 Run standalone or via scripts/fullQualityChecks.sh. Exit code 1 on any violation.
 """
@@ -285,6 +286,47 @@ def check_sheet_content_is_inset(root: Path = ROOT) -> list[str]:
     return problems
 
 
+# Modifiers that pad the sides of the window as well as the top and bottom. Inside a sheet the container already did.
+SHEET_BODY_SIDE_PADDING = re.compile(
+    r"\b(systemBarsPadding|safeDrawingPadding|safeContentPadding|safeGesturesPadding|sideSafeInsets)\("
+)
+SHEET_CALL = re.compile(r"\bModalBottomSheet\(")
+
+
+def check_sheet_bodies_do_not_pad_the_sides(root: Path = ROOT) -> list[str]:
+    """A file that opens a `ModalBottomSheet` does not pad the sides of the window itself.
+
+    `SheetContent` keeps the body of every sheet out of the side strips. A body that pads by the whole of
+    `systemBarsPadding()` as well was padded twice on the real iOS sheet: `StopDetailsBottomSheet` on the outer screen of
+    the iPhone Duo had its content 84 pt narrower, with the right 168 pt of the sheet empty. The host model said the
+    container's consumption prevented it, and it did not, so a host test cannot be trusted to catch this and the rule is a
+    plain one: a sheet body pads the vertical system bars itself (`WindowInsets.systemBars.only(Vertical)`,
+    `navigationBarsPadding()`) and nothing that carries the sides.
+
+    Reads whole files, so a file that opens a sheet and also holds a screen must pad that screen elsewhere. Comments are
+    stripped first. `taj` is skipped: the sheet container lives there and is checked by `check_sheet_content_is_inset`.
+    """
+    problems: list[str] = []
+    for path in non_test_kotlin_files(root):
+        rel = path.relative_to(root)
+        if rel.parts and rel.parts[0] == "taj":
+            continue
+        code = strip_kotlin_comments(path.read_text(), keep_lines=True)
+        if not SHEET_CALL.search(code):
+            continue
+        for number, line in enumerate(code.splitlines(), start=1):
+            match = SHEET_BODY_SIDE_PADDING.search(line)
+            if match:
+                problems.append(
+                    f"{rel}:{number}: {match.group(1)}() in a file that opens a ModalBottomSheet. It pads the sides of "
+                    "the window as well, and SheetContent already did, so on iOS the side strip is padded twice (the "
+                    "stop sheet on the iPhone Duo outer screen lost 84 pt). Pad the vertical bars only: "
+                    "WindowInsets.systemBars.only(WindowInsetsSides.Vertical) or navigationBarsPadding(). See "
+                    "docs/LAYOUT_AND_INSETS.md 1.6."
+                )
+    return problems
+
+
 def main() -> int:
     problems = (
         check_manifest_adjust_resize()
@@ -292,6 +334,7 @@ def main() -> int:
         + check_layout_probes_assert_display()
         + check_no_raw_display_cutout()
         + check_sheet_content_is_inset()
+        + check_sheet_bodies_do_not_pad_the_sides()
     )
 
     if problems:

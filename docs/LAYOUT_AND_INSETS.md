@@ -181,6 +181,14 @@ does not call `sideSafeInsets()` and needs no `contentWindowInsets` for the side
 `SheetContent` in a matrix test; `DateTimeSelectorDeviceMatrixTest` and `ModalSheetContentDeviceMatrixTest` are the examples.
 `scripts/check_layout_invariants.py` fails when either platform sheet stops using `SheetContent`, or `SheetContent` stops padding.
 
+A sheet body pads the vertical system bars itself and never the sides. `StopDetailsBottomSheet` once padded by the whole of
+`systemBarsPadding()`: on iOS the side strip is part of the system bars, and on the outer screen of the iPhone Duo the real sheet
+padded it a second time, so the content ended 84 pt short of where it should (the right 168 pt of the sheet was empty). The host
+model said the container's consumption stopped that, and it did not on the real sheet, so no host test caught it and the rule is
+plain. Use `WindowInsets.systemBars.only(WindowInsetsSides.Vertical)` or `navigationBarsPadding()`.
+`scripts/check_layout_invariants.py` fails on `systemBarsPadding()`, `safeDrawingPadding()`, `safeContentPadding()`,
+`safeGesturesPadding()` or `sideSafeInsets()` in a non taj file that opens a `ModalBottomSheet`.
+
 Cost: layout only. No API call, no payload, no storage, no timer and no battery change.
 
 ---

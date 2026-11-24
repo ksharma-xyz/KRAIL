@@ -4,14 +4,9 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
 import xyz.ksharma.krail.core.log.log
-import xyz.ksharma.krail.core.remoteconfig.JsonConfig
-import xyz.ksharma.krail.core.remoteconfig.RemoteConfigDefaults
 import xyz.ksharma.krail.core.remoteconfig.flag.Flag
 import xyz.ksharma.krail.core.remoteconfig.flag.FlagKeys
-import xyz.ksharma.krail.core.remoteconfig.flag.FlagValue
 import xyz.ksharma.krail.core.remoteconfig.flag.asBoolean
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
@@ -42,7 +37,7 @@ internal class RealStopResultsManager(
         private set
 
     private val highPriorityStopIdList: List<String> by lazy {
-        flag.getFlagValue(FlagKeys.HIGH_PRIORITY_STOP_IDS.key).toStopsIdList()
+        flag.getFlagValue(FlagKeys.HIGH_PRIORITY_STOP_IDS.key).toHighPriorityStopIds()
     }
 
     private val isFuzzyEnabled: Boolean by lazy {
@@ -316,26 +311,6 @@ internal class RealStopResultsManager(
         stopName = stopName,
         transportModeType = this.productClasses.toTransportModeList(),
     )
-
-    private fun FlagValue.toStopsIdList(): List<String> {
-        return when (this) {
-            is FlagValue.JsonValue -> {
-                log("flagValue: ${this.value}")
-                val jsonObject = JsonConfig.lenient.parseToJsonElement(value).jsonObject
-                jsonObject["stop_ids"]?.jsonArray?.map {
-                    it.toString().trim('"')
-                } ?: emptyList()
-            }
-
-            else -> {
-                val defaultJson: String = RemoteConfigDefaults.getDefaults()
-                    .firstOrNull { it.first == FlagKeys.HIGH_PRIORITY_STOP_IDS.key }?.second as String
-                JsonConfig.lenient.parseToJsonElement(defaultJson).jsonArray.map {
-                    it.toString().trim('"')
-                }
-            }
-        }
-    }
 
     // region Recent Search Stop
 

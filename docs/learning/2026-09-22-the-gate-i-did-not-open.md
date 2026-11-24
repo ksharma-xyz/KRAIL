@@ -113,6 +113,11 @@ full structural verdict, which is exactly what was missed here.
       `scripts/fullQualityChecks.sh` runs first. A clone that runs the gate once gets the hook. It
       still does not use `core.hooksPath`, for the reason above: that would replace
       `.git/hooks` wholesale and orphan the git-lfs hooks.
+- [x] Follow-up, 2026-11-24: the first version of the hook left out the two script steps that CI
+      runs first, so a later PR went red on `scripts/check_layout_invariants.py` with every local
+      gate green. The hook and `scripts/fullQualityChecks.sh` now run one shared list,
+      `scripts/ci_fast_checks.sh`, and `scripts/check_ci_parity.py` fails when that list and
+      `.github/workflows/code-quality.yml` disagree.
 
 ## The transferable part
 

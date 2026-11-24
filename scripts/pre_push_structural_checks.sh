@@ -5,9 +5,9 @@
 #
 # What runs, in order, from the one list in scripts/ci_fast_checks.sh:
 #
-#   1. The script steps of code-quality.yml (`python3 scripts/check_layout_invariants.py` and
-#      `check_stale_assumptions.py`). Milliseconds, no Gradle, no local.properties needed. They run
-#      first so a violation fails before anything slow starts.
+#   1. The script steps of code-quality.yml (`python3 scripts/check_layout_invariants.py`,
+#      `check_stale_assumptions.py` and `check_ci_parity.py`). Milliseconds, no Gradle, no
+#      local.properties needed. They run first so a violation fails before anything slow starts.
 #   2. A grep for commas in backtick test names, for modules on the iOS lane (not a CI step, see below).
 #   3. The four Gradle `verify*` tasks of the "Verify test wiring" step. Seconds, not milliseconds.
 #
@@ -25,7 +25,8 @@
 # that wraps these. See docs/learning/2026-09-22-the-gate-i-did-not-open.md. The script steps were
 # left out of the first version of this hook, and CI's first step failed on one of them for the same
 # reason: the local gates were a subset of CI's. scripts/ci_fast_checks.sh is the single list now, so
-# this hook and fullQualityChecks.sh cannot disagree with each other.
+# this hook and fullQualityChecks.sh cannot disagree with each other, and scripts/check_ci_parity.py
+# (one of its steps) fails when that list and code-quality.yml disagree.
 #
 # Bypass with `git push --no-verify`, or SKIP_STRUCTURAL_CHECKS=1 when the hook itself is in
 # the way. Both are fine; the point is that skipping becomes a decision rather than an oversight.
@@ -42,7 +43,7 @@ cd "$repo_root"
 
 # The script steps of code-quality.yml first: milliseconds, and they need neither Gradle nor
 # local.properties, so a fresh worktree gets them too. Non-zero exits fail the push, as in CI.
-echo "pre-push: fast CI checks (layout invariants, analytics assumptions)..."
+echo "pre-push: fast CI checks (layout invariants, analytics assumptions, CI parity)..."
 if ! "$repo_root/scripts/ci_fast_checks.sh" scripts; then
   cat >&2 <<'MSG'
 

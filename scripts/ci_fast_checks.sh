@@ -31,6 +31,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SCRIPT_STEPS=(
   "python3 scripts/check_layout_invariants.py"
   "python3 scripts/check_stale_assumptions.py"
+  "python3 scripts/check_ci_parity.py"
 )
 
 # The "Verify test wiring" step of code-quality.yml. These answer "is the repo still coherent?",

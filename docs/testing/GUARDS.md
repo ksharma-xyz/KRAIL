@@ -11,7 +11,7 @@ Two mechanisms:
 - **Custom detekt rules** — syntax-tree checks, run by `./gradlew detekt`.
 - **Guard tests** — ordinary JVM tests that walk the source tree, run by `testAndroidHostTest`.
 
-Plus two Gradle-level and one Python-level check that fit neither box.
+Plus two Gradle-level checks and the Python scripts in `scripts/` that fit neither box.
 
 ---
 
@@ -313,8 +313,9 @@ is caught on every PR rather than only on the macOS lane.
 
 ## `scripts/check_layout_invariants.py`
 
-Runs as step 0 of `fullQualityChecks.sh` and as the **Layout invariants and analytics
-assumptions** CI step. Exits non-zero on a violation. Enforces the mechanical parts of
+Runs as the **Layout invariants and analytics assumptions** CI step, and locally through
+`scripts/ci_fast_checks.sh` (see below), which the pre-push hook and `fullQualityChecks.sh` both
+run. Exits non-zero on a violation. Enforces the mechanical parts of
 [`docs/LAYOUT_AND_INSETS.md`](../LAYOUT_AND_INSETS.md):
 
 1. `MainActivity` keeps `android:windowSoftInputMode="adjustResize"` in the manifest — without
@@ -348,7 +349,37 @@ assumptions** CI step. Exits non-zero on a violation. Enforces the mechanical pa
 
 The sibling `check_stale_assumptions.py` in the same CI step is **warning-only**: an analytics
 assumption falling due is not a reason to block an unrelated PR. A scheduled job runs it
-`--strict`.
+`--strict`. It is warning-only because it exits 0, not because anything ignores its exit code:
+the workflow runs the step under `bash -e`, so a non-zero exit (a missing ledger, a table that no
+longer parses) fails the step, and the local list treats it the same way.
+
+---
+
+## `scripts/ci_fast_checks.sh` and `scripts/check_ci_parity.py`
+
+The fast steps of `code-quality.yml` live in one list, `scripts/ci_fast_checks.sh`: the
+`python3 scripts/...` steps in `SCRIPT_STEPS` and the `verify*` Gradle tasks in `VERIFY_TASKS`.
+The pre-push hook (`scripts/pre_push_structural_checks.sh`) and `fullQualityChecks.sh` both call
+it, so a push and the pre-PR gate run exactly the steps CI runs before detekt. Before it
+existed, each carried its own copy and the hook's copy lacked the two script steps, so a branch
+passed every local gate and failed CI on its first step.
+
+`scripts/check_ci_parity.py` is the guard on the list. It is itself one of the script steps, so
+it runs in CI, in the hook and in `fullQualityChecks.sh`. It reads `code-quality.yml` (non-comment
+lines only) for `python3 scripts/<name>.py [args]` and for `verifyXxx` task names, asks
+`ci_fast_checks.sh --list` for the local list, and fails on any difference in either direction:
+
+| Difference | Meaning |
+|---|---|
+| The workflow runs a step the list does not | The gap that caused the incident: CI checks something no local gate runs |
+| The list runs a step the workflow does not | A stale entry: the list no longer describes CI |
+| Same script, different arguments | The local step is not the CI step (`--strict` turns a warning into a failure) |
+| No steps found on either side | The scan broke, so it refuses to pass by comparing two empty sets |
+
+Each failure message names the file to edit. The check cannot see a step in another workflow
+file, a shell script CI calls, or a Gradle task not named `verify*`; add the matching pattern
+there when one of those becomes a fast CI step. To test the check itself, point it at a copy of
+the workflow with `--workflow path/to/copy.yml`.
 
 ---
 

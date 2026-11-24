@@ -200,6 +200,7 @@ or the reverse:
 | The rules' own unit tests | `code-quality.yml`, step **Run build-logic tests** — `./gradlew detekt` cannot run them, see below |
 | The guard tests | `code-quality.yml`, step **Run host tests** |
 | `check_layout_invariants.py`, `check_stale_assumptions.py` (warns only) | `code-quality.yml`, step **Layout invariants and analytics assumptions**, and locally through `scripts/ci_fast_checks.sh`, which `fullQualityChecks.sh` and the pre-push hook both run |
+| `check_ci_parity.py`, which fails when the rows above and `scripts/ci_fast_checks.sh` disagree | The same step as `check_layout_invariants.py`, and the same local list |
 | Snapshot verify | `snapshot-verify.yml`, a separate **macOS** job called from `build.yml` |
 
 `:detekt-rules` lives in the `gradle/build-logic` included build. `./gradlew detekt` resolves its

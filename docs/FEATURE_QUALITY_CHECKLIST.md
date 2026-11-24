@@ -84,7 +84,7 @@ works until the device rotates is a broken screen**, and no static check will te
       typed, same filtered results, same scroll position, same expanded rows
 - [ ] **Device profiles.** A new screen has a host test that calls
       `forEachDeviceProfile(screen = "XxxScreen")` (`docs/testing/DEVICE_PROFILES.md`), so it is
-      composed on 12 window shapes with real system bar and side insets, and nothing the rider
+      composed on every window shape in the profile table with real system bar and side insets, and nothing the rider
       presses stands under a system bar. Pad the sides with `Modifier.sideSafeInsets()`, never
       `displayCutout`. `DeviceMatrixAdoptionGuardTest` fails the build on a screen without the test
 

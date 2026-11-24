@@ -153,7 +153,7 @@ traps, both hit writing `SearchStopSideInsetLayoutTest`:
 The inset that matches iOS on Android is the caption bar type: no other padding call on the screen reads it. Mutation check
 the probe both ways: put `displayCutout` back and the tests must go red.
 
-That probe is now a shared helper, run on 12 device profiles at once, so a new screen does not write its own. On iOS the side
+That probe is now a shared helper, run on every device profile at once, so a new screen does not write its own. On iOS the side
 safe area is in `systemBars`, `safeDrawing`, `safeContent` and `safeGestures`, and `displayCutout` is 0, so anything that pads
 by the cutout alone is wrong on iPhone; on an Android phone in landscape the same inset arrives as `displayCutout`, and on a
 three button bar in landscape it arrives as `navigationBars`. Call `forEachDeviceProfile(screen = "XxxScreen")` in a host test

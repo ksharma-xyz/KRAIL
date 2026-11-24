@@ -84,6 +84,39 @@ object DeviceProfiles {
             "(2076 x 2152 at 390 dpi), 24 Nov 2026 QA",
     )
 
+    val Medium720 = DeviceProfile(
+        name = "Medium720",
+        widthDp = 720,
+        heightDp = 900,
+        density = 2.0f,
+        insets = SystemInsets(top = 24, bottom = 24),
+        shape = PlatformInsetShape.ANDROID,
+        source = "assumed: a window in the 600 to 839 dp band, a small tablet in portrait or an open fold, " +
+            "that is single pane by the gate in docs/TABLET_FOLDABLE_UX.md",
+    )
+
+    val Gate839 = DeviceProfile(
+        name = "Gate839",
+        widthDp = 839,
+        heightDp = 900,
+        density = 2.0f,
+        insets = SystemInsets(top = 24, bottom = 24),
+        shape = PlatformInsetShape.ANDROID,
+        source = "assumed: one dp under the dual pane gate (840 dp wide, 480 dp high, AdaptiveBreakpoints), " +
+            "so still single pane",
+    )
+
+    val Gate840 = DeviceProfile(
+        name = "Gate840",
+        widthDp = 840,
+        heightDp = 900,
+        density = 2.0f,
+        insets = SystemInsets(top = 24, bottom = 24),
+        shape = PlatformInsetShape.ANDROID,
+        source = "assumed: exactly on the dual pane gate (840 dp wide, 480 dp high, AdaptiveBreakpoints), " +
+            "so the first width that is dual pane",
+    )
+
     val TabletLandscape = DeviceProfile(
         name = "TabletLandscape",
         widthDp = 1280,
@@ -135,6 +168,74 @@ object DeviceProfiles {
         source = "measured: Compose inset probe on the iPhone Duo simulator, iOS 27.2, 24 Nov 2026",
     )
 
+    val IPhoneDuoInnerPortrait = DeviceProfile(
+        name = "IPhoneDuoInnerPortrait",
+        widthDp = 669,
+        heightDp = 951,
+        density = 3.0f,
+        insets = SystemInsets(right = 84, bottom = 34),
+        shape = PlatformInsetShape.IOS,
+        source = "assumed: a size only stand in, never a measurement. The size is the simulator display config " +
+            "primary-1 of the iPhone Duo device type (2007 x 2853 px at 3x), read from its profile. The insets are " +
+            "copied from the outer screen, because the inner screen cannot be driven headless to probe it",
+    )
+
+    val IPhoneDuoInnerLandscape = DeviceProfile(
+        name = "IPhoneDuoInnerLandscape",
+        widthDp = 951,
+        heightDp = 669,
+        density = 3.0f,
+        insets = SystemInsets(left = 62, right = 62, bottom = 21),
+        shape = PlatformInsetShape.IOS,
+        source = "assumed: a size only stand in, never a measurement. The size is the simulator display config " +
+            "primary-1 of the iPhone Duo device type turned to landscape. The insets are the iPhone Pro landscape " +
+            "ones, because nothing is known about where the inner screen puts its strips when turned",
+    )
+
+    val IPadMiniPortrait = DeviceProfile(
+        name = "IPadMiniPortrait",
+        widthDp = 744,
+        heightDp = 1133,
+        density = 2.0f,
+        insets = SystemInsets(top = 24, bottom = 20),
+        shape = PlatformInsetShape.IOS,
+        source = "measured width, assumed height and insets: the window width from docs/TABLET_FOLDABLE_UX.md " +
+            "(iOS simulators, 11 Oct 2026), the height from the device's screen, a status bar and a home indicator guessed",
+    )
+
+    val IPadMiniLandscape = DeviceProfile(
+        name = "IPadMiniLandscape",
+        widthDp = 1133,
+        heightDp = 744,
+        density = 2.0f,
+        insets = SystemInsets(top = 24, bottom = 20),
+        shape = PlatformInsetShape.IOS,
+        source = "measured width, assumed height and insets: the window width from docs/TABLET_FOLDABLE_UX.md " +
+            "(iOS simulators, 11 Oct 2026), the height from the device's screen, a status bar and a home indicator guessed",
+    )
+
+    val IPadPro13Portrait = DeviceProfile(
+        name = "IPadPro13Portrait",
+        widthDp = 1032,
+        heightDp = 1376,
+        density = 2.0f,
+        insets = SystemInsets(top = 24, bottom = 20),
+        shape = PlatformInsetShape.IOS,
+        source = "measured width, assumed height and insets: the window width from docs/TABLET_FOLDABLE_UX.md " +
+            "(iOS simulators, 11 Oct 2026), the height from the device's screen, a status bar and a home indicator guessed",
+    )
+
+    val IPadPro13Landscape = DeviceProfile(
+        name = "IPadPro13Landscape",
+        widthDp = 1376,
+        heightDp = 1032,
+        density = 2.0f,
+        insets = SystemInsets(top = 24, bottom = 20),
+        shape = PlatformInsetShape.IOS,
+        source = "measured width, assumed height and insets: the window width from docs/TABLET_FOLDABLE_UX.md " +
+            "(iOS simulators, 11 Oct 2026), the height from the device's screen, a status bar and a home indicator guessed",
+    )
+
     /** Every profile, narrowest first on Android then iOS. A matrix test runs on all of these unless it says otherwise. */
     val all: List<DeviceProfile> = listOf(
         Narrow320Font2,
@@ -144,10 +245,19 @@ object DeviceProfiles {
         AndroidLandscapeSideNavBar,
         FoldCover,
         FoldInner,
+        Medium720,
+        Gate839,
+        Gate840,
         TabletLandscape,
         IPhoneSmall,
         IPhoneProPortrait,
         IPhoneProLandscape,
         IPhoneDuoOuter,
+        IPhoneDuoInnerPortrait,
+        IPhoneDuoInnerLandscape,
+        IPadMiniPortrait,
+        IPadMiniLandscape,
+        IPadPro13Portrait,
+        IPadPro13Landscape,
     )
 }

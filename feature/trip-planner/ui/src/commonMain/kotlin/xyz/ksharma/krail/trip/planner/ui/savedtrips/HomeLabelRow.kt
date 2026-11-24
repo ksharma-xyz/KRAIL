@@ -62,11 +62,20 @@ internal fun homeLabelsFor(stopLabels: List<StopLabel>): ImmutableList<StopLabel
 }
 
 /** What a screen reader says for a label's pill, written into the pill's content description. */
-internal fun homeLabelDescription(label: StopLabel): String =
-    if (label.isSet) "${label.label}, double tap to go there" else "${label.label}, not set, double tap to choose a stop"
+internal fun homeLabelDescription(label: StopLabel): String = if (label.isSet) {
+    "${label.label}, double tap to go there"
+} else {
+    "${label.label}, not set, double tap to choose a stop"
+}
 
-/** The label row's place in the list, kept the same so the row stays mounted when the list changes. */
+// Kept the same so the row stays mounted when the list changes.
 private const val HOME_LABEL_ROW_KEY = "home_label_row"
+
+// The same timings the reorder hint uses, so the row and the hint move together.
+private const val ROW_EXPAND_MS = 250
+private const val ROW_FADE_IN_MS = 200
+private const val ROW_SHRINK_MS = 200
+private const val ROW_FADE_OUT_MS = 150
 
 /**
  * The label row as the first item of the Saved Trips list, above the info tiles and the Saved Trips heading, so it scrolls away with
@@ -86,8 +95,10 @@ internal fun LazyListScope.homeLabelRowItem(
     item(key = HOME_LABEL_ROW_KEY) {
         AnimatedVisibility(
             visible = !editing,
-            enter = expandVertically(animationSpec = tween(durationMillis = 250)) + fadeIn(animationSpec = tween(durationMillis = 200)),
-            exit = shrinkVertically(animationSpec = tween(durationMillis = 200)) + fadeOut(animationSpec = tween(durationMillis = 150)),
+            enter = expandVertically(animationSpec = tween(durationMillis = ROW_EXPAND_MS)) +
+                fadeIn(animationSpec = tween(durationMillis = ROW_FADE_IN_MS)),
+            exit = shrinkVertically(animationSpec = tween(durationMillis = ROW_SHRINK_MS)) +
+                fadeOut(animationSpec = tween(durationMillis = ROW_FADE_OUT_MS)),
         ) {
             HomeLabelRow(labels = labels, onLabelClick = onLabelClick)
         }
@@ -214,7 +225,12 @@ private val previewManyLabels = persistentListOf(
     StopLabel(emoji = "W", label = "Work"),
     StopLabel(emoji = "U", label = "Uni", stopId = "206710", stopName = "Chatswood Station"),
     StopLabel(emoji = "G", label = "Gym"),
-    StopLabel(emoji = "P", label = "Grandma's place in Marrickville", stopId = "200100", stopName = "Marrickville Station"),
+    StopLabel(
+        emoji = "P",
+        label = "Grandma's place in Marrickville",
+        stopId = "200100",
+        stopName = "Marrickville Station",
+    ),
     StopLabel(emoji = "B", label = "Beach", stopId = "200090", stopName = "Bondi Junction"),
 )
 

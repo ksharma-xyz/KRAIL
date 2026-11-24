@@ -9,7 +9,6 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.unit.dp
-import kotlin.test.assertTrue
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
@@ -33,6 +32,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ReorderSession
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
+import kotlin.test.assertTrue
 
 /**
  * The saved trips home, the classic one and the map home, on every device profile (`docs/testing/DEVICE_PROFILES.md`), with the
@@ -125,7 +125,10 @@ class SavedTripsDeviceMatrixTest {
                 useUnmergedTree = true,
             )
             val overflows = scroller.fetchSemanticsNode().config[SemanticsProperties.HorizontalScrollAxisRange].maxValue() > 0f
-            assertTrue(overflows || profile.widthDp > ABOUT_ONE_PANE_DP, "${profile.name}: the long label row did not overflow, so no pill was cut")
+            assertTrue(
+                overflows || profile.widthDp > ABOUT_ONE_PANE_DP,
+                "${profile.name}: the long label row did not overflow, so no pill was cut",
+            )
 
             // The last label scrolls into view, stands inside the safe sides and takes a touch, so the cut hides nothing for good.
             val lastTag = TripPlannerTestTags.homeLabelChip(MANY_LABELS.last().label)

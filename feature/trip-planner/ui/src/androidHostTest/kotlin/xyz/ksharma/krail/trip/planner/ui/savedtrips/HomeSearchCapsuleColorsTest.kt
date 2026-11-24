@@ -7,8 +7,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.test.junit4.createComposeRule
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,6 +26,8 @@ import xyz.ksharma.krail.taj.theme.md_theme_dark_onSurface
 import xyz.ksharma.krail.taj.theme.md_theme_dark_surface
 import xyz.ksharma.krail.taj.theme.md_theme_light_onSurface
 import xyz.ksharma.krail.taj.theme.md_theme_light_surface
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * The capsule's colours, which are the same in every theme colour and differ only by mode: white in light mode and taj's raised dark
@@ -76,12 +76,22 @@ class HomeSearchCapsuleColorsTest {
         KrailThemeStyle.entries.forEach { style ->
             val read = read(mode, style)
             val fill = read.colors.containerColor
-            listOf("the page" to read.page, "the page's own text" to read.text, "the theme colour" to read.theme).forEach { (name, behind) ->
+            listOf(
+                "the page" to read.page,
+                "the page's own text" to read.text,
+                "the theme colour" to read.theme,
+            ).forEach { (name, behind) ->
                 val seen = fill.compositeOver(behind)
                 val question = read.colors.placeholderColor.contrastRatio(seen)
                 val glyph = read.colors.contentColor.contrastRatio(seen)
-                assertTrue(question >= MIN_TEXT_CONTRAST, "$mode $style: the question is $question to 1 on the capsule over $name")
-                assertTrue(glyph >= MIN_TEXT_CONTRAST, "$mode $style: the glyph and microphone are $glyph to 1 on the capsule over $name")
+                assertTrue(
+                    question >= MIN_TEXT_CONTRAST,
+                    "$mode $style: the question is $question to 1 on the capsule over $name",
+                )
+                assertTrue(
+                    glyph >= MIN_TEXT_CONTRAST,
+                    "$mode $style: the glyph and microphone are $glyph to 1 on the capsule over $name",
+                )
             }
         }
     }
@@ -91,7 +101,11 @@ class HomeSearchCapsuleColorsTest {
             val colors = read(mode, style).colors
             assertEquals(base.copy(alpha = HOME_CAPSULE_FILL_ALPHA), colors.containerColor, "$mode $style fill")
             assertEquals(text, colors.contentColor, "$mode $style content")
-            assertEquals(colors.contentColor, colors.placeholderColor, "$mode $style: the question is the full text colour, not dimmed")
+            assertEquals(
+                colors.contentColor,
+                colors.placeholderColor,
+                "$mode $style: the question is the full text colour, not dimmed",
+            )
             assertEquals(1f, colors.placeholderColor.alpha, "$mode $style: no opacity on the question")
             assertEquals(colors.contentColor, colors.cursorColor, "$mode $style caret")
         }

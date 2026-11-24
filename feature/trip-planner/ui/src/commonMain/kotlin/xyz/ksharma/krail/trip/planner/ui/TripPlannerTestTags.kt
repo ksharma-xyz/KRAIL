@@ -64,6 +64,9 @@ object TripPlannerTestTags {
     // The theme coloured sheet at the bottom of the classic home, the one that holds the search bar.
     const val SAVED_TRIPS_BOTTOM_SHEET = "savedtrips.sheet"
 
+    // The search glyph at the start of the home capsule, drawn whether or not the microphone is.
+    const val HOME_SEARCH_GLYPH = "savedtrips.searchglyph"
+
     // The Park & Ride row of tiles on home. The tiles and their car parks are per station and per
     // car park, see [parkRideTile], [parkRideCarPark] and [parkRideDirections].
     const val SAVED_TRIPS_PARK_RIDE_ROW = "savedtrips.parkride.row"

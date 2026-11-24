@@ -32,7 +32,10 @@ class DeviceMatrixAdoptionGuardTest {
 
         // A scan that finds nothing would pass for any tree, so it fails loudly instead.
         assertTrue(screens.size >= MIN_SCREENS, "found only ${screens.size} screens, so this guard scans nothing")
-        assertTrue(covered.isNotEmpty(), "found no forEachDeviceProfile(screen = ...) call, so this guard scans nothing")
+        assertTrue(
+            covered.isNotEmpty(),
+            "found no forEachDeviceProfile(screen = ...) call, so this guard scans nothing",
+        )
 
         val problems = adoptionProblems(screens, covered, baseline)
         if (problems.isNotEmpty()) fail(problems.joinToString("\n\n"))
@@ -62,7 +65,10 @@ class DeviceMatrixAdoptionGuardTest {
         )
 
         assertEquals(1, problems.size, problems.toString())
-        assertTrue(problems.single().contains("DoneScreen is on the baseline but has a device matrix test"), problems.single())
+        assertTrue(
+            problems.single().contains("DoneScreen is on the baseline but has a device matrix test"),
+            problems.single(),
+        )
     }
 
     @Test
@@ -180,13 +186,19 @@ class DeviceMatrixAdoptionGuardTest {
                 screen !in screens ->
                     add("$screen is on the baseline but is not a screen any more. Delete its line from $BASELINE_PATH.")
                 screen in covered ->
-                    add("$screen is on the baseline but has a device matrix test now. Delete its line from $BASELINE_PATH.")
+                    add(
+                        "$screen is on the baseline but has a device matrix test now. Delete its line from $BASELINE_PATH.",
+                    )
                 reason.isBlank() ->
-                    add("$screen is on the baseline with no reason. Every entry says why, after a #, in $BASELINE_PATH.")
+                    add(
+                        "$screen is on the baseline with no reason. Every entry says why, after a #, in $BASELINE_PATH.",
+                    )
             }
         }
         covered.filter { it.endsWith("Screen") && it !in screens }.sorted().forEach { name ->
-            add("A device matrix test names $name, which is not a screen in a ui/src/commonMain source set. Fix the name.")
+            add(
+                "A device matrix test names $name, which is not a screen in a ui/src/commonMain source set. Fix the name.",
+            )
         }
     }
 

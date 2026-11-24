@@ -39,8 +39,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * The way back at the top of Search Stop. The From and To card has no arrow of its own, so a title bar stands above it with
- * the Timetable's bare back button. The lone pill carries its arrow inside, so every form has exactly one.
+ * The way back at the top of Search Stop. Whatever the box shows, the From and To card or the lone pill, one title bar stands
+ * above it with the Timetable's bare back button, in the same place with the same padding, and the box has no arrow of its own.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -136,7 +136,7 @@ class SearchStopBackButtonTest {
     }
 
     @Test
-    fun `the card's back button sits where the Timetable's does and the card starts under the bar`() {
+    fun `the card's back button sits where the Timetable's does and the card starts one gap under the bar`() {
         show(FormShape.ToAndFrom)
 
         assertEquals(1, backCount())
@@ -146,7 +146,11 @@ class SearchStopBackButtonTest {
         assertNear("height", 48f, (back.bottom - back.top).value)
         assertNear("from the start, the title bar's padding", BAR_START, back.left.value)
         assertNear("from the top, the title bar's padding", CORNER + BAR_TOP, back.top.value)
-        assertNear("the card starts where the bar ends", CORNER + BAR_HEIGHT, card.top.value)
+        assertNear(
+            "the card starts one gap under the bar, as on the Timetable",
+            CORNER + BAR_HEIGHT + UNDER_BAR,
+            card.top.value,
+        )
         assertNear("the card keeps its side edge", searchStopGaps().edge.value, card.left.value)
         assertTrue(back.top >= 0.dp)
     }
@@ -183,12 +187,28 @@ class SearchStopBackButtonTest {
     }
 
     @Test
-    fun `the lone pill keeps its own arrow and gets no second one`() {
+    fun `over the lone pill the back button has the same place and padding, and the pill has no arrow of its own`() {
         show(FormShape.Single)
 
         assertEquals(1, backCount())
         val back = boundsOf(TripPlannerTestTags.SEARCH_STOP_BACK)
-        assertNear("the pill still stands one edge from the top", searchStopGaps().edge.value, back.top.value)
+        val pill = boundsOf(TripPlannerTestTags.SEARCH_ROW_TO)
+        assertNear("from the start, as over the card", BAR_START, back.left.value)
+        assertNear("from the top, as over the card", CORNER + BAR_TOP, back.top.value)
+        assertNear("the pill starts where the card does", CORNER + BAR_HEIGHT + UNDER_BAR, pill.top.value)
+        assertNear("the pill keeps the card's side edge", searchStopGaps().edge.value, pill.left.value)
+        val glyph = boundsOf(TripPlannerTestTags.SEARCH_STOP_SEARCH_GLYPH)
+        assertTrue(glyph.top > pill.top && glyph.bottom < pill.bottom, "the search glyph is inside the pill")
+    }
+
+    @Test
+    fun `a tap on the back button over the lone pill goes back once`() {
+        show(FormShape.Single)
+
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_BACK).performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(1, backs)
     }
 
     private companion object {
@@ -202,6 +222,9 @@ class SearchStopBackButtonTest {
         const val BAR_START = 8f
         const val BAR_TOP = 4f
         const val BAR_HEIGHT = 56f
+
+        // What the Timetable leaves between its title bar and its From and To card.
+        const val UNDER_BAR = 8f
         const val CLOSE = 0.08f
         const val MIN_INK_PIXELS = 40
         const val MIN_GROUND_SHARE = 0.75f

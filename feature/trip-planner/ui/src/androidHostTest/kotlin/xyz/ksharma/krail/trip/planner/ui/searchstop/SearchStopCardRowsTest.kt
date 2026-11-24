@@ -112,7 +112,6 @@ class SearchStopCardRowsTest {
                                 // The screen offers the swap once the rider has picked a stop (`swapShown`).
                                 onSwap = if (screenOffersSwap) ({}) else null,
                             ),
-                            onBack = {},
                         )
                     }
                 }

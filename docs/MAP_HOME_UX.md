@@ -190,7 +190,7 @@ If a design breaks one of these rules, the design changes, not the rule.
 34. **A text field is one line, 48 tall, and ends in an ellipsis.** This covers the home pill, the search pill, the To value
     and the From value. The accessibility label carries the full text. Only single-line fields may truncate; chips, cards,
     badges and rows still wrap or stack whole items.
-35. **The search pill has a back arrow and an X. (The group card has no back arrow inside it: the title bar above the card has one, see The Search Stop box, and the X takes the row's circle slot while the row holds text. The bare single pill keeps its arrow.)** Back is a 48 box at the left, like today's search bar. The X shows only
+35. **The search pill has an X, and one back button stands above the box. (Neither the pill nor the group card holds a back arrow: the title bar above them has it, see The Search Stop box. The X takes the row's circle slot while the row holds text. The bare single pill has the search glyph at its start.)** Back is a 48 box at the left. The X shows only
     when the field has content and only clears it, and never dismisses the screen. Back follows rule 39, except from the
     start field, where it returns to To and From with the destination kept (on the bar that still needs a stop). System back and the iOS swipe do the same. In To
     and From the X clears the destination and raises the keyboard. The To row has a matching 48 column with the destination pin
@@ -200,9 +200,9 @@ If a design breaks one of these rules, the design changes, not the rule.
     the keyboard move to it, and nothing else changes, because the idle bar is the same field unfocused, and a tap on it
     focuses it. Focus shows by the caret, the keyboard and the placeholder, never by a fill, a ring or a colour swap, and no
     row changes position. (On the classic home, with the maps flag off, the bar being edited is still the dark one and the
-    other the light button, with To above From as the home block draws it.) The back arrow stays at the start of the first
-    bar, which is From, or the one bar of a single field, in every state. To has the destination pin at its start, the pin
-    the stop rows draw for a destination. The From dot cannot share the 48 column with the arrow, so From has none. Both
+    other the light button, with To above From as the home block draws it.) No bar holds a back arrow, because the title bar
+    above the box has it. The one bar of a single field has the search glyph at its start. In the card From has the dot and
+    To has the destination pin, the pin the stop rows draw for a destination. Both
     rows are the same width and share both edges. The go circle is 40, at the end of the To bar with 4 around it, and has
     one state. While To is edited and nothing is typed it keeps its place, and the clear X takes it only while there is text.
     **A placeholder is never a stop name.** Each bar has one fixed prompt: From reads Choose starting point and To reads
@@ -211,7 +211,7 @@ If a design breaks one of these rules, the design changes, not the rule.
     restores the selection.
     **A card only when two fields show.** The box is a card, with its edge and padding, only while From and To are both
     there. A single field (a label being assigned, or one leg of a trip being changed) is one bare rounded pill on the map,
-    full radius and 48 tall, filled with the card's own surface and wearing the same edge, with the back arrow inside it and
+    full radius and 48 tall, filled with the card's own surface and wearing the same edge, with the search glyph at its start and
     the same 16 side margins. The choice follows the number of rows the form shows and nothing else (`groupCardShownFor`).
     The label field's prompt names the label: Search and select Home, Search and select Work, or Search and select followed
     by the label's saved name exactly as saved.
@@ -290,7 +290,7 @@ If a design breaks one of these rules, the design changes, not the rule.
     step of the icon scale larger than a bare glyph (24 on the card). The stop card's circle is the app's surface on the header
     band, and the cross is 4.5 to 1 or better on its circle. A screen reader hears one button, Close with the stop's name. The
     clear X of a search field (the single pill, and a From or To row while it holds text) is a bare cross with no circle, no fill
-    and no ring: the close icon at 24 dp, the size of the field's back arrow, in the card's text colour, inside an invisible
+    and no ring: the close icon at 24 dp, the size of the field's search glyph, in the card's text colour, inside an invisible
     48 dp box that is the clickable and consumes the touch (`ClearGlyphButton`). It shows only while the field holds text, clears
     it, and a screen reader hears Clear.
 
@@ -433,7 +433,7 @@ follow the app mode on the map too, so a card is one colour wherever it stands (
     ground.
   - Dark mode is the Timetable's own dark tint, the theme colour at 45 percent over the dark surface (Train 7E4D1C, Metro 0F5544,
     Bus 0F607A, Ferry 385E24), with cream text, markers and glyphs (`onSurface`, FCF6F1), the dark `outlineSubtle` divider and the
-    dark `softLabel` hairline where there is one. The clear X, the swap glyph, the dot and pin, the pill's back arrow and every
+    dark `softLabel` hairline where there is one. The clear X, the swap glyph, the dot and pin, the pill's search glyph and every
     prompt take the box's text colour. Text on the dark tint is 6.59 to 8.15 to 1 on Train, Metro, Bus and Ferry
     (`MapCardColorsTest`, `SearchStopCardLookTest`).
   - The hairline is the one thing that depends on what the card stands on. It is drawn in light mode on both grounds. In dark mode
@@ -448,9 +448,9 @@ follow the app mode on the map too, so a card is one colour wherever it stands (
   were. The Home, Work and Park & Ride chips on the home map, the Park & Ride cards and the stop card's actions are the fixed dark
   of `FloatingDark` and are unchanged. The stop card keeps its mode aware family.
 - **The box is the Timetable's own From and To card.** One rounded card with two plain rows, From above To, and a 1 dp
-  `outlineSubtle` divider between them. No pills, no second fill and no back arrow inside it. One back button stands above the card, in taj's `TitleBar` with nothing else in it: bare, with no circle, and in the same place as on the Timetable, so the card starts 56 under the status bar. The map is light in dark mode too, so over the map the arrow is drawn in the light palette's ink, and on the gradient of the list state in the app mode's. It does the same two step back as system back, and leaves the screen with the card when the Departure Board takes the box's room. The rows are
+  `outlineSubtle` divider between them. No pills, no second fill and no back arrow inside it. One back button stands above the box, whether it shows the card or the lone pill, in taj's `TitleBar` with nothing else in it: bare, with no circle, and with the same place and padding as on the Timetable, so the box starts 64 under the status bar, the bar and then the same 8 the Timetable leaves over its card. The map is light in dark mode too, so over the map the arrow is drawn in the light palette's ink, and on the gradient of the list state in the app mode's. It does the same two step back as system back, and leaves the screen with the box when the Departure Board takes its room. The rows are
   still the editable fields (taj `TextField` with no container, fixed prompts Choose starting point and Choose destination). A
-  single field stays the bare pill, with its back arrow, and is a card only when From and To both show.
+  single field stays the bare pill, with the search glyph at its start, and is a card only when From and To both show.
 - **Markers.** From is the 10 dp filled dot, To is the pin. A stop that has a saved label shows that label's own icon in place
   of the marker (`stopLabelIcon`) and its row reads as the Timetable's does, the label in bold then the stop in brackets, with no
   helper text.

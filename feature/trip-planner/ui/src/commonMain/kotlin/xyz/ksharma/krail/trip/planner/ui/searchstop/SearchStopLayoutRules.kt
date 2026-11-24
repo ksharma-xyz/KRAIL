@@ -2,7 +2,6 @@ package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.theme.KrailDimensions
 import xyz.ksharma.krail.taj.theme.KrailTheme
 
@@ -29,13 +28,6 @@ internal fun groupCardRows(shape: FormShape): List<GroupRow> = buildList {
  * pill on the map. It depends on how many rows the shape shows and on nothing else, so no screen picks it by name.
  */
 internal fun groupCardShownFor(shape: FormShape): Boolean = groupCardRows(shape).size > 1
-
-/**
- * How far under the status bar the top block starts: one [SearchStopGaps.edge], or nothing while the card is shown, because
- * the title bar over it brings its own room and its back button then stands where it does on every other screen.
- */
-internal fun searchStopBlockTop(shape: FormShape, gaps: SearchStopGaps): Dp =
-    if (groupCardShownFor(shape)) 0.dp else gaps.edge
 
 /** Whether the location status chip is drawn under the group card: only while the location is not allowed. */
 internal fun locationChipShownFor(pill: LocationPill): Boolean = pill != LocationPill.Hidden

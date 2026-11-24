@@ -109,7 +109,7 @@ class SearchStopMapStateLayoutTest {
         // This window has no status bar, so the bar adds its 16 dp corner clearance.
         assertNear("the back button is where the title bar puts it, from the top", 20.dp, back.top)
         assertNear("and from the start", 8.dp, back.left)
-        assertNear("the box starts where the title bar ends", 72.dp, box.top)
+        assertNear("the box starts one gap under the title bar, as the Timetable's card does", 80.dp, box.top)
         assertNear("left edge", gaps.edge, box.left)
         assertNear("right edge", 411.dp - gaps.edge, box.right)
     }

@@ -103,7 +103,6 @@ class SearchStopGoMotionTest {
                                 onTextChange = {},
                                 onSwap = if (fromStop != null || toStop != null) ({ swaps++ }) else null,
                             ),
-                            onBack = {},
                         )
                     }
                 }

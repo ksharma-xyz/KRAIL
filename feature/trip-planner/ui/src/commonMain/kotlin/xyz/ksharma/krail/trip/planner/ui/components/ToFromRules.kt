@@ -29,7 +29,7 @@ internal sealed interface ToFromBlockStyle {
     /**
      * Search Stop's From and To card in the Timetable's own style (see [ToFromCardRows]): two plain rows on the soft tint
      * the caller draws, a divider between them, a marker at the start of each and the swap and go circles at the end. It has
-     * no back arrow: system back does the two step back.
+     * no back arrow: the screen's title bar above it has one.
      */
     data object CardRows : ToFromBlockStyle
 }

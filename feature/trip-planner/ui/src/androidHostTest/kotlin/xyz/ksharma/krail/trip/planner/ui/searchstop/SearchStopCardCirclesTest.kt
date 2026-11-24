@@ -95,7 +95,6 @@ class SearchStopCardCirclesTest {
                                 onTextChange = {},
                                 onSwap = if (swapEnabled) ({ swaps++ }) else null,
                             ),
-                            onBack = {},
                         )
                     }
                 }

@@ -140,7 +140,6 @@ class SearchStopCardLookTest {
                                 onTextChange = {},
                                 onSwap = if (shape == FormShape.ToAndFrom) ({}) else null,
                             ),
-                            onBack = {},
                             onGradient = onGradient,
                         )
                         if (withNotice) {
@@ -504,9 +503,9 @@ class SearchStopCardLookTest {
         val pill = boundsOf(TripPlannerTestTags.SEARCH_ROW_TO)
         val fill = drawn().at(pill.right - 24.dp, pill.cy())
         val prompt = textColorsIn(TripPlannerTestTags.SEARCH_ROW_TO)
-        val back = nearestInk(boundsOf(TripPlannerTestTags.SEARCH_STOP_BACK), ink(dark))
+        val glyph = nearestInk(boundsOf(TripPlannerTestTags.SEARCH_STOP_SEARCH_GLYPH), ink(dark))
         println(
-            "CARDLOOK pill $mode ${style.name} $ground fill=${hex(fill)} prompt=${prompt.map { hex(it) }.toSet()} back=${hex(back)} " +
+            "CARDLOOK pill $mode ${style.name} $ground fill=${hex(fill)} prompt=${prompt.map { hex(it) }.toSet()} glyph=${hex(glyph)} " +
                 "edge=${edgeStrength(TripPlannerTestTags.SEARCH_ROW_TO)}",
         )
         assertClose(
@@ -525,7 +524,7 @@ class SearchStopCardLookTest {
             }
             assertTrue(color in allowed, "$mode ${style.name} $ground: the prompt is ${hex(color)}")
         }
-        assertClose(ink(dark), back, "$mode ${style.name} $ground: the back arrow is the box's ink")
+        assertClose(ink(dark), glyph, "$mode ${style.name} $ground: the search glyph is the box's ink")
         val drawnEdge = !dark || gradient
         val strength = edgeStrength(TripPlannerTestTags.SEARCH_ROW_TO)
         assertTrue(
@@ -536,7 +535,7 @@ class SearchStopCardLookTest {
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
-    fun `in dark mode the bare pill is the same dark tint with cream prompt, back arrow and clear X on the map and in the list state`() =
+    fun `in dark mode the bare pill is the same dark tint with cream prompt, search glyph and clear X on the map and in the list state`() =
         assertPill("dark", dark = true)
 
     @Test

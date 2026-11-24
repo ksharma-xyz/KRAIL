@@ -55,15 +55,13 @@ internal fun SearchStopTopBlock(
 ) {
     val gaps = rememberSearchStopGaps()
     var noticeDismissed by rememberSaveable { mutableStateOf(false) }
-    // The top edge is this block's own, outside whatever [modifier] measures. The title bar runs from screen edge to screen
-    // edge, so the side edges are on what stands under it. There is none at the bottom: what comes next brings its own.
-    Column(modifier = Modifier.padding(top = searchStopBlockTop(form.shape, gaps)).then(modifier)) {
-        // The card has no arrow of its own, so a title bar stands above it. The lone pill carries its arrow inside.
-        if (groupCardShownFor(form.shape)) {
-            CardTitleBar(onBack = onBack, onGradient = onGradient)
-        }
-        Column(modifier = Modifier.padding(horizontal = gaps.edge)) {
-            SearchStopGroupCard(form = form, onBack = onBack, onGradient = onGradient)
+    // The title bar brings the room above and runs from screen edge to screen edge, so the side edges are on what stands
+    // under it. There is none at the bottom: what comes next brings its own.
+    Column(modifier = modifier) {
+        SearchStopTitleBar(onBack = onBack, onGradient = onGradient)
+        // The same gap under the bar as the Timetable leaves over its own card.
+        Column(modifier = Modifier.padding(start = gaps.edge, top = gaps.betweenCards, end = gaps.edge)) {
+            SearchStopGroupCard(form = form, onGradient = onGradient)
             if (showLocationChip) {
                 LocationNotice(
                     pill = location.pill,
@@ -78,12 +76,12 @@ internal fun SearchStopTopBlock(
 }
 
 /**
- * The title bar over the From and To card: taj's [TitleBar] with its back button and nothing else, so the arrow is bare and
- * stands where it does on the Timetable. The map is light in dark mode too, so over it the arrow takes the light palette's
+ * The title bar over the box, the card or the lone pill: taj's [TitleBar] with its back button and nothing else, so the
+ * arrow is bare and stands where it does on the Timetable, whatever the box shows. The map is light in dark mode too, so over it the arrow takes the light palette's
  * ink, and on the gradient of the list state it takes the app mode's. A tap is the same step as system back.
  */
 @Composable
-private fun CardTitleBar(
+private fun SearchStopTitleBar(
     onBack: () -> Unit,
     onGradient: Boolean,
 ) {
@@ -104,7 +102,6 @@ private fun CardTitleBar(
 @Composable
 internal fun SearchStopGroupCard(
     form: SearchStopFormModel,
-    onBack: () -> Unit,
     modifier: Modifier = Modifier,
     onGradient: Boolean = false,
 ) {
@@ -125,7 +122,7 @@ internal fun SearchStopGroupCard(
             if (showsCard) {
                 SearchStopCard(form = form)
             } else {
-                SearchStopPill(form = form, onBack = onBack)
+                SearchStopPill(form = form)
             }
         }
     }
@@ -168,19 +165,18 @@ private fun SearchStopCard(
             .testTag(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
             .searchStopCardSurface(shape),
     ) {
-        SearchStopFormFor(form = form, onBack = {}, style = ToFromBlockStyle.CardRows)
+        SearchStopFormFor(form = form, style = ToFromBlockStyle.CardRows)
     }
 }
 
 /**
  * The single field, one bare pill directly on the map: full radius, 48 dp tall, in the box's own tint and text ([MapCardColors],
- * the app mode's own on both grounds) with the box's hairline (no glow), and the back arrow inside it. No card, no padding and no
+ * the app mode's own on both grounds) with the box's hairline (no glow), and the search glyph at its start. No card, no padding and no
  * card test tag: it is the pill, and it is as wide as the card would have been.
  */
 @Composable
 private fun SearchStopPill(
     form: SearchStopFormModel,
-    onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val gaps = rememberSearchStopGaps()
@@ -193,7 +189,6 @@ private fun SearchStopPill(
     ) {
         SearchStopFormFor(
             form = form,
-            onBack = onBack,
             style = ToFromBlockStyle.FloatingRows(rowGap = gaps.betweenRows, boxLook = true),
         )
     }
@@ -204,7 +199,6 @@ private const val PILL_PERCENT = 50
 @Composable
 private fun SearchStopFormFor(
     form: SearchStopFormModel,
-    onBack: () -> Unit,
     style: ToFromBlockStyle,
 ) {
     SearchStopForm(
@@ -217,7 +211,6 @@ private fun SearchStopFormFor(
         fieldState = form.fieldState,
         focusRequester = form.focusRequester,
         onFlowEvent = form.onFlowEvent,
-        onBack = onBack,
         onGoClick = form.onGoClick,
         onTextChange = form.onTextChange,
         fromLabel = form.fromLabel,

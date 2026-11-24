@@ -67,7 +67,7 @@ import kotlin.test.assertTrue
  * The Search Stop box and the location notice follow the app mode on the map and on the cloud gradient of the list state alike, read
  * from the real components: light mode is the Timetable's light tint with the light palette's text, hairline and divider, and dark
  * mode is the Timetable's own dark tint (45 percent of the theme colour over the dark surface) with the dark palette's cream text,
- * its `softLabel` hairline and its divider. The clear X, the swap glyph, the markers, the back arrow and the prompts take the box's
+ * its `softLabel` hairline and its divider. The clear X, the swap glyph, the markers, the search glyph and the prompts take the box's
  * text colour, so they read in dark mode. The one thing that differs between the grounds is the dark mode hairline, which is not
  * drawn on the map. `SearchStopCardLookTest` holds the map against the list state theme by theme and frame by frame.
  *
@@ -126,7 +126,6 @@ class SearchStopListGroundTest {
                             onTextChange = {},
                             onSwap = if (shape == FormShape.ToAndFrom && (fromStop != null || toStop != null)) ({}) else null,
                         ),
-                        onBack = {},
                         onGradient = onGradient,
                     )
                     if (withNotice) {
@@ -425,7 +424,7 @@ class SearchStopListGroundTest {
 
     @Test
     @Config(qualifiers = "w411dp-h891dp-night-xxhdpi")
-    fun `list state in dark mode, the lone pill is the dark tint with cream prompt, back arrow and clear X`() {
+    fun `list state in dark mode, the lone pill is the dark tint with cream prompt, search glyph and clear X`() {
         shape = FormShape.Single
         editing = ToFromField.To
         setCard(gradient = true)
@@ -445,8 +444,8 @@ class SearchStopListGroundTest {
         )
         assertClose(
             md_theme_dark_onSurface,
-            nearestInk(boundsOf(TripPlannerTestTags.SEARCH_STOP_BACK), md_theme_dark_onSurface),
-            "the back arrow is the box's text colour",
+            nearestInk(boundsOf(TripPlannerTestTags.SEARCH_STOP_SEARCH_GLYPH), md_theme_dark_onSurface),
+            "the search glyph is the box's text colour",
         )
 
         type("seven hills")

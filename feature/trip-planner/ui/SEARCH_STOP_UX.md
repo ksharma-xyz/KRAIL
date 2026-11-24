@@ -209,8 +209,8 @@ The app's To and From block (`ToFromBlock`) with the search field typed into the
 The bar being edited is taj's dark `TextField` and the other bar is taj's light `TextFieldButton`, so tapping the
 other bar swaps which is which and no row moves.
 
-- With From and To, one back button stands above the card. A single field keeps its back arrow inside the pill. The origin
-  dot stays on the From bar in every state.
+- One back button stands above the box in every form. A single field has the search glyph at the start of its pill, and the
+  origin dot stays on the From bar of the two field card.
 - The X sits in the To bar's end column and shows only while the field has text.
 - A bar holding the field has no tap target of its own (the field takes the tap), so it has no merged label.
 - Placeholders: "Choose destination", "Choose starting point", "Choose a stop" for a label, and "Change origin" or

@@ -17,6 +17,7 @@ import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.testing.device.DeviceMatrixRule
 import xyz.ksharma.krail.core.testing.device.DeviceMatrixScope
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopFixtures
 import xyz.ksharma.krail.trip.planner.ui.searchstop.SearchStopScreen
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
@@ -94,6 +95,24 @@ class SearchStopDeviceMatrixTest {
             assertNothingInteractiveUnderSystemBars()
             assertScrollEndClearsBottomBar(onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST))
             // Last, because the tap leaves the list state.
+            assertTouchReaches(onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_BACK))
+        }
+
+    @Test
+    fun `the one field form keeps its back button and its pill inside the safe area`() =
+        matrix.forEachDeviceProfile(screen = "SearchStopScreen") {
+            val display = MapDisplay()
+            setContent(theme = { QuietBareTheme(it) }) {
+                SearchStopScreen(
+                    searchStopState = SearchStopFixtures.recentWithHomeSet()
+                        .copy(isMapsAvailable = true, mapUiState = MapUiState.Ready(mapDisplay = display)),
+                    fieldType = SearchStopFieldType.LABEL,
+                    dualPaneMapUiState = MapUiState.Ready(mapDisplay = display),
+                )
+            }
+
+            assertNothingInteractiveUnderSystemBars()
+            // Last, because the tap leaves the screen.
             assertTouchReaches(onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_BACK))
         }
 

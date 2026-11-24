@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -14,13 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.semantics
 import xyz.ksharma.krail.taj.LocalContentColor
-import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.ClearGlyphButton
@@ -42,12 +38,12 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
  *   the query field, the other is that field unfocused, and tapping it moves the field and the keyboard to
  *   it. With [ToFromBlockStyle.Classic] the bar being edited is the dark one and the other the light
  *   button. No row moves either way.
- * - From is the top bar and To is the bar below it. The back arrow stays at the start of the first (top) bar in
- *   every state, which is From, or the one bar of a single field. To has the destination pin at its start.
+ * - From is the top bar and To is the bar below it. Neither holds a back arrow: the title bar above the box has it (see
+ *   `SearchStopTopBlock`). The one bar of a single field has the search glyph at its start, and To under a From has the
+ *   destination pin.
  * - The X is a bare cross with no circle. It shows only while the field has text, and only clears it. It never leaves the screen, so
  *   the recents stay where they are.
- * - With [ToFromBlockStyle.CardRows], the From and To card of the Timetable's style, there is no back arrow in the card (it
- *   stands above it, see `SearchStopTopBlock`) and the go circle
+ * - With [ToFromBlockStyle.CardRows], the From and To card of the Timetable's style, the go circle
  *   and the swap are the card's own right column (see `ToFromCardRows`); [fromLabel] and [toLabel] are the saved labels of the
  *   stops the rows hold, and [onSwap] is what the swap does (null draws none).
  * - The go circle is drawn on the To bar, the last one, as soon as [goVisible] says the trip can start, and it is the
@@ -68,7 +64,6 @@ internal fun SearchStopForm(
     fieldState: TextFieldState,
     focusRequester: FocusRequester,
     onFlowEvent: (SearchStopFlowEvent) -> Unit,
-    onBack: () -> Unit,
     onGoClick: () -> Unit,
     onTextChange: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -113,7 +108,7 @@ internal fun SearchStopForm(
         editing = editing,
         editor = editor,
         showFrom = shape == FormShape.ToAndFrom,
-        toLeading = { BackArrowButton(onClick = onBack) },
+        toLeading = { SearchGlyph() },
         toTrailing = if (editing == ToFromField.To) clearOrGo else null,
         toPlaceholder = toPlaceholder,
         fromPlaceholder = fromPlaceholder,
@@ -161,21 +156,6 @@ private fun searchStopEditor(
 )
 
 /**
- * The back arrow in the To bar's start column: taj's [RoundIconButton] with no fill, so it is the app's
- * own round button at 48, drawn in the bar's colour and not the button's own, which reads the wrong
- * way round on the dark bar. The tag is the one the arrow always had.
- */
-@Composable
-private fun BackArrowButton(onClick: () -> Unit) {
-    BarIconButton(
-        icon = Icons.AutoMirrored.Filled.ArrowBack,
-        contentDescription = "Back",
-        tag = TripPlannerTestTags.SEARCH_STOP_BACK,
-        onClick = onClick,
-    )
-}
-
-/**
  * The X in the end column: it clears the field and does nothing else. It is a bare cross the size of the back arrow, in the box's
  * text colour, with no circle and no fill (see [ClearGlyphButton]), so it reads on the lone pill in light and in dark app mode.
  */
@@ -192,32 +172,17 @@ private fun ClearTextButton(onClick: () -> Unit) {
 }
 
 /**
- * One icon button inside a bar. [RoundIconButton] swaps in its own content colour, so the bar's is
- * read first and the icon is tinted with it, which keeps the arrow and the X legible on the white
- * bar and on the dark one in both themes.
- *
- * In the dark bar the button is inside taj's text field, whose semantics merge everything in it, and
- * a tag on a node that does not merge is dropped by that. The tag's node merges its own children, so
- * it stays a node of its own and the tag is still how a test or a flow finds the button.
+ * The search glyph at the start of the lone pill, where the home capsule has it too. It is decoration in the pill's own text
+ * colour, so a screen reader skips it: the field says what it is for.
  */
 @Composable
-private fun BarIconButton(
-    icon: ImageVector,
-    contentDescription: String,
-    tag: String,
-    onClick: () -> Unit,
-) {
-    val barContent = LocalContentColor.current
-    RoundIconButton(
-        onClick = onClick,
-        color = Color.Transparent,
-        modifier = Modifier.testTag(tag).semantics(mergeDescendants = true) {},
-    ) {
-        Image(
-            imageVector = icon,
-            contentDescription = contentDescription,
-            colorFilter = ColorFilter.tint(barContent),
-            modifier = Modifier.size(KrailTheme.dimensions.iconM),
-        )
-    }
+private fun SearchGlyph() {
+    Image(
+        imageVector = Icons.Filled.Search,
+        contentDescription = null,
+        colorFilter = ColorFilter.tint(LocalContentColor.current),
+        modifier = Modifier
+            .testTag(TripPlannerTestTags.SEARCH_STOP_SEARCH_GLYPH)
+            .size(KrailTheme.dimensions.iconM),
+    )
 }

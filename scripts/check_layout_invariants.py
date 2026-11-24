@@ -5,8 +5,9 @@ The first two checks come from one incident, recorded in
 docs/learning/2026-08-16-ime-pan-and-unbounded-column.md. The third comes from its sister
 incident, docs/learning/2026-08-16-clipped-inside-its-own-parent.md, where the probe
 itself was the thing that was wrong. The fourth comes from the iPhone Duo side inset
-incident, recorded in docs/testing/DEVICE_PROFILES.md. The rules they enforce are explained
-in docs/LAYOUT_AND_INSETS.md.
+incident, recorded in docs/testing/DEVICE_PROFILES.md, and the fifth from its second half, the
+Plan your trip sheet, which a sheet's own window hid from every screen level check. The rules
+they enforce are explained in docs/LAYOUT_AND_INSETS.md.
 
 Run standalone or via scripts/fullQualityChecks.sh. Exit code 1 on any violation.
 """
@@ -52,6 +53,16 @@ SIDE_SAFE_INSETS_FILE = "taj/src/commonMain/kotlin/xyz/ksharma/krail/taj/modifie
 # test, the way the platform does on an Android phone in landscape, so it is the one other file
 # allowed to.
 DEVICE_INSETS_FILE = "core/testing/src/androidMain/kotlin/xyz/ksharma/krail/core/testing/device/DeviceInsets.kt"
+
+# taj's ModalBottomSheet: the common file holds SheetContent, which insets a sheet's content at the sides, and each
+# platform actual must put its content in it. A sheet's window runs edge to edge, so nothing above it insets content.
+SHEET_COMMON_FILE = "taj/src/commonMain/kotlin/xyz/ksharma/krail/taj/components/ModalBottomSheet.kt"
+SHEET_ACTUAL_FILES = (
+    "taj/src/androidMain/kotlin/xyz/ksharma/krail/taj/components/ModalBottomSheet.android.kt",
+    "taj/src/iosMain/kotlin/xyz/ksharma/krail/taj/components/ModalBottomSheet.ios.kt",
+)
+# The iOS reduced motion overlay draws no Material 3 sheet, so it insets its content itself.
+SHEET_IOS_OVERLAY_FILE = SHEET_ACTUAL_FILES[1]
 
 # Source sets that hold tests, matched by directory and never by file name. A test dispatches a
 # cutout inset on purpose, to prove what the screen does with it.
@@ -228,12 +239,59 @@ def check_no_raw_display_cutout(root: Path = ROOT) -> list[str]:
     return problems
 
 
+def check_sheet_content_is_inset(root: Path = ROOT) -> list[str]:
+    """Every sheet puts its content in `SheetContent`, and `SheetContent` insets it at the sides.
+
+    A `ModalBottomSheet` opens its own window, which runs edge to edge, and Material 3 pads the content by the vertical
+    insets only, so a sheet as wide as a narrow window (the outer screen of the iPhone Duo) put its content under the
+    status pill: the Reset button of the Plan your trip sheet opened Control Center. No screen level inset reaches it,
+    and the host tests cannot show a sheet window, so what keeps the content clear is that both platform sheets go
+    through `SheetContent` and that it calls `sideSafeInsets`. This reads the three files and fails when either link is
+    gone. The behaviour itself is proved by `ModalSheetContentDeviceMatrixTest` and `DateTimeSelectorDeviceMatrixTest`.
+
+    Comments are stripped first, so a KDoc that names `SheetContent` does not count as a call.
+    """
+    problems: list[str] = []
+
+    def code_of(relative: str) -> str | None:
+        path = root / relative
+        if not path.is_file():
+            problems.append(
+                f"{relative}: missing, so the sheet content inset cannot be checked. "
+                f"Update the paths in {Path(__file__).name}."
+            )
+            return None
+        return strip_kotlin_comments(path.read_text())
+
+    common = code_of(SHEET_COMMON_FILE)
+    if common is not None and not re.search(r"\bsideSafeInsets\(", common):
+        problems.append(
+            f"{SHEET_COMMON_FILE}: SheetContent no longer calls sideSafeInsets. A sheet's window runs edge to edge, so "
+            "its content runs under the system's side strips (the iPhone Duo status pill) and a control there takes no "
+            "touch. See docs/LAYOUT_AND_INSETS.md 1.6."
+        )
+    for relative in SHEET_ACTUAL_FILES:
+        code = code_of(relative)
+        if code is not None and not re.search(r"\bSheetContent\(", code):
+            problems.append(
+                f"{relative}: the Material 3 sheet's content is not put in SheetContent, so it is not kept out of the "
+                "side strips. Wrap it: SheetContent(frame = sheetFrame, content = content)."
+            )
+    overlay = code_of(SHEET_IOS_OVERLAY_FILE)
+    if overlay is not None and not re.search(r"\bsideSafeInsets\(", overlay):
+        problems.append(
+            f"{SHEET_IOS_OVERLAY_FILE}: the reduced motion overlay no longer pads its content with sideSafeInsets()."
+        )
+    return problems
+
+
 def main() -> int:
     problems = (
         check_manifest_adjust_resize()
         + check_single_ime_authority()
         + check_layout_probes_assert_display()
         + check_no_raw_display_cutout()
+        + check_sheet_content_is_inset()
     )
 
     if problems:

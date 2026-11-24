@@ -93,8 +93,8 @@ What no automation here can cover, and so what a human must check on real hardwa
 9. **Dynamic Type beyond the app's own font scale.** The matrix runs the one 320 dp frame at 200 percent text. A larger system
    setting on iOS is not run.
 10. **A sheet's own window.** A host test cannot show the window a `ModalBottomSheet` opens, and the iOS sheet is not compiled for
-    the host tests, so the matrix proves the padding of `SheetContent` but nothing automated checks that the real sheets use it, and
-    no automation drags a real sheet to full height. Do that on the Duo outer screen for every sheet (Plan
+    the host tests, so the matrix proves the padding of `SheetContent` and `check_layout_invariants.py` checks that both platform
+    sheets use it, but no automation drags a real sheet to full height. Do that on the Duo outer screen for every sheet (Plan
     your trip, Service Alerts, the stop sheet, Assign a label) and tap the control at the top right of each.
 
 Before a release, run [MANUAL_TEST_CASES.md](MANUAL_TEST_CASES.md) section 2 on the hardware rows it lists, and walk gaps 1 to 5

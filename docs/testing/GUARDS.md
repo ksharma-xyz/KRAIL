@@ -337,6 +337,14 @@ assumptions** CI step. Exits non-zero on a violation. Enforces the mechanical pa
    under test. The repo has no pattern for
    testing its Python scripts, so the proof is a mutation run recorded in the commit that added it:
    put the cutout padding back and the script prints the file and line and exits 1.
+5. Every taj `ModalBottomSheet` puts its content in `SheetContent`, and `SheetContent` calls
+   `sideSafeInsets`. A sheet opens its own window, which runs edge to edge, and Material 3 pads its content
+   by the vertical insets only, so on the outer screen of the iPhone Duo the Plan your trip sheet put Reset
+   under the status pill. Host tests cannot show a sheet window, so this reads the common file and both
+   platform actuals (and the iOS reduced motion overlay) and fails when a link is gone. The behaviour is
+   proved by `ModalSheetContentDeviceMatrixTest` and `DateTimeSelectorDeviceMatrixTest`; the mutation run
+   (take `SheetContent` out of an actual, take `sideSafeInsets` out of `SheetContent`, take it out of the
+   overlay) is recorded in the commit that added the check.
 
 The sibling `check_stale_assumptions.py` in the same CI step is **warning-only**: an analytics
 assumption falling due is not a reason to block an unrelated PR. A scheduled job runs it

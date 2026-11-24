@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -65,6 +64,7 @@ import xyz.ksharma.krail.taj.components.CloudFieldSpec
 import xyz.ksharma.krail.taj.components.CloudGradientBackground
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TitleBar
+import xyz.ksharma.krail.taj.components.rememberTextFieldTextState
 import xyz.ksharma.krail.taj.hexToComposeColor
 import xyz.ksharma.krail.taj.modifier.klickable
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
@@ -151,7 +151,7 @@ fun AskKrailScreen(
     // each of them.
     ListenOnOpenEffect(state = state, onEvent = onEvent)
 
-    val textFieldState = rememberTextFieldState()
+    val textFieldState = rememberTextFieldTextState()
     LaunchedEffect(state.typedText) {
         if (state.typedText != textFieldState.text.toString()) {
             textFieldState.setTextAndPlaceCursorAtEnd(state.typedText)

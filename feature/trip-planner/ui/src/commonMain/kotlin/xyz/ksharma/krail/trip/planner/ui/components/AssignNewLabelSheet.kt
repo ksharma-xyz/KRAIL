@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -27,6 +26,7 @@ import xyz.ksharma.krail.taj.components.Divider
 import xyz.ksharma.krail.taj.components.ModalBottomSheet
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextField
+import xyz.ksharma.krail.taj.components.rememberTextFieldTextState
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
@@ -86,7 +86,7 @@ internal fun AssignNewLabelSheetContent(
     existingLabelNames: ImmutableList<String> = persistentListOf(),
 ) {
     val dim = KrailTheme.dimensions
-    val textFieldState = rememberTextFieldState("")
+    val textFieldState = rememberTextFieldTextState("")
     val cleanedName by remember {
         derivedStateOf { normaliseLabelName(textFieldState.text.toString()) }
     }

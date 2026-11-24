@@ -12,10 +12,11 @@ the device.
 
 ## 1. Who owns the insets
 
-A screen owns the system insets. A component does not read them. In taj, only two components do, because they are system
-surfaces: `TitleBar` (it pads for the status bar and for the sides of the system bars, and clears the top leading corner) and
-`ModalBottomSheet` (one implementation each for Android and iOS). `PreviewTheme` pads for the system bars so a preview is not
-drawn under them, which is also why a layout test must not use it (see section 4).
+A screen owns the system insets. A component does not read them. That is how taj is built today, checked by searching the
+module on 24 Nov 2026: only two components read system insets, because they are system surfaces. They are `TitleBar` (it pads for
+the status bar and for the sides of the system bars, and clears the top leading corner) and `ModalBottomSheet` (one
+implementation each for Android and iOS). `PreviewTheme` pads for the system bars so a preview is not drawn under them, which is
+also why a layout test must not use it (see section 4). The two modifiers below are the rest.
 
 - [ ] The component takes its space from its parent. It has no `statusBarsPadding()`, `navigationBarsPadding()`,
       `systemBarsPadding()`, `safeDrawingPadding()` or `WindowInsets` read of its own.

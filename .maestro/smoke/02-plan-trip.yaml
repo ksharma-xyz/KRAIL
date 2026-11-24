@@ -1,5 +1,5 @@
 # The core journey: pick a destination, pick an origin, tap the go circle, get a timetable. The home's one
-# search bar opens Search Stop from `searchrow.to`, and the To and From form there stays on screen through both
+# search capsule opens Search Stop from `searchrow.to`, and the To and From form there stays on screen through both
 # picks, so the trip leaves only with the go circle.
 #
 # Every selector is a testTag, and results are chosen by index rather than by
@@ -33,7 +33,7 @@ appId: ${APP_ID}
     timeout: 60000
 
 # --- Destination ---
-# The destination comes first because `searchrow.to` is the home's one search bar, and it opens Search Stop on the
+# The destination comes first because `searchrow.to` is the home's one search capsule, and it opens Search Stop on the
 # destination field. The trip is Central to Town Hall.
 - tapOn:
     id: "searchrow.to"

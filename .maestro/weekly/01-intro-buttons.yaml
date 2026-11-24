@@ -174,7 +174,8 @@ appId: ${APP_ID}
 - assertNotVisible:
     id: "intro.screen"
 # The outcome of Yes, save it: the trip the rider chose is on Saved Trips. Scrolled to rather than asserted in
-# place, because on a short screen the pills and the search bar can push the first card below the fold.
+# place, because on a short screen the label row above the heading and the search capsule's room at the bottom can push
+# the first card below the fold.
 - scrollUntilVisible:
     element:
       id: "savedtrips.card..*"

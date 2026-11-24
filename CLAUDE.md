@@ -67,10 +67,13 @@ once every automated layer has been ruled out.
 
 ## End-to-end flows (Maestro)
 
-`.maestro/` holds two lanes: `smoke/` (three flows) and `nightly/` (lifecycle, rotation and
-permission-denial flows too slow to gate a PR on). Despite the name, the nightly runs **weekly**
-(Sunday 03:00 AEST), on both Android and iOS, and **reports only** — a red nightly is a signal
-for a human, never a trigger for a machine.
+`.maestro/` holds three lanes: `smoke/` (three flows), `nightly/` (lifecycle, rotation and
+permission-denial flows too slow to gate a PR on) and `weekly/` (real taps on every key control,
+on the iPhone Duo outer screen, an iPad, a small iPhone and an Android tablet and foldable).
+Despite the name, the nightly runs **weekly** (Sunday 03:00 AEST), on both Android and iOS, and
+**reports only**: a red nightly is a signal for a human, never a trigger for a machine. The
+weekly device run is its own workflow, `maestro-weekly-devices.yml` (Thursday 03:00 AEST), and
+reports only in the same way.
 
 **When a lane is red, read [`docs/MAESTRO_TRIAGE.md`](docs/MAESTRO_TRIAGE.md) before
 theorising.** It has the artifact map, the order to read it in (`commands.json` first, the

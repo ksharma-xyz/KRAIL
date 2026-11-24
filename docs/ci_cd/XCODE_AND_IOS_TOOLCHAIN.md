@@ -18,7 +18,7 @@ Four independent things, and a new Xcode can break any one of them:
 |---|---|---|
 | Kotlin/Native | `kotlin` in `gradle/libs.versions.toml` | Kotlin compile or link errors, an "unsupported Xcode" warning |
 | spmForKmp | `spmForKmp` in `gradle/libs.versions.toml` | `SwiftPackageConfig...CompileSwiftPackage...` fails with only "spmForKmp failed when running buildPackage" |
-| CI Xcode | `runs-on:` and `setup-xcode`'s `xcode-version:` in `build-ios.yml`, `ios-unit-tests.yml`, `distribute-testflight.yml`, `maestro-nightly.yml` | green locally, red in CI (or the reverse) |
+| CI Xcode | `runs-on:` and `setup-xcode`'s `xcode-version:` in `build-ios.yml`, `ios-unit-tests.yml`, `distribute-testflight.yml`, `maestro-nightly.yml`, `maestro-weekly-devices.yml` | green locally, red in CI (or the reverse) |
 | App deployment target | `IPHONEOS_DEPLOYMENT_TARGET` in `iosApp/iosApp.xcodeproj/project.pbxproj` | Xcode refusing a target below its supported range |
 
 spmForKmp builds two Swift packages of our own, `aiTextBridge` (`:core:ai-text`) and

@@ -147,6 +147,8 @@ Before drawing anything in the theme colour, read
 [`taj/THEME_COLOUR_ROLES.md`](taj/THEME_COLOUR_ROLES.md).
 
 For everything else about colour and light/dark, read [`taj/THEMING.md`](taj/THEMING.md).
+For size, insets and device types when building or changing a taj component or a screen, read
+[`taj/COMPONENT_GUIDELINES.md`](taj/COMPONENT_GUIDELINES.md).
 
 One accessor per role, because a call site that does not say which role it means cannot be
 checked:

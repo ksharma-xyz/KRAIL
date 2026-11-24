@@ -19,6 +19,8 @@ Nothing here replaces the source docs; it is the order to read them in and the f
 | `composeApp/.../KrailNavHost.kt` + `navigation/entries/*Entry.kt` | Which routes are a Navigation 3 `listPane()` / `detailPane()` |
 | `docs/LAYOUT_AND_INSETS.md` | Inset authority, bottom-anchored inputs, keyboard |
 | `taj/THEME_COLOUR_ROLES.md`, `taj/THEMING.md` | Ground vs ink colour, contrast, light and dark |
+| `taj/COMPONENT_GUIDELINES.md` | Which insets belong to the screen, width and text checks, the window sizes the app branches on |
+| `docs/testing/DEVICE_COVERAGE.md`, `docs/testing/DEVICE_PROFILES.md` | The device frames the app is tested on, which are measured, and what no automation covers |
 | `taj/src/commonMain/.../theme/Color.kt` | Real token values for the mockup |
 | The screen's own UX doc (listed in `CLAUDE.md`) | Invariants the design must not break |
 | `feature/trip-planner/ui/ALERT_SUMMARY_UX.md` | The pattern for any on-device AI surface |

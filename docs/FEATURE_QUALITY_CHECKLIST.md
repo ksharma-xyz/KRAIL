@@ -86,7 +86,10 @@ works until the device rotates is a broken screen**, and no static check will te
       `forEachDeviceProfile(screen = "XxxScreen")` (`docs/testing/DEVICE_PROFILES.md`), so it is
       composed on every window shape in the profile table with real system bar and side insets, and nothing the rider
       presses stands under a system bar. Pad the sides with `Modifier.sideSafeInsets()`, never
-      `displayCutout`. `DeviceMatrixAdoptionGuardTest` fails the build on a screen without the test
+      `displayCutout`. `DeviceMatrixAdoptionGuardTest` fails the build on a screen without the test.
+      Think about the rows of the [device coverage map](testing/DEVICE_COVERAGE.md) your change touches, and read its Gaps
+      for what no automation checks. For a taj component or a screen built from them,
+      [`taj/COMPONENT_GUIDELINES.md`](../taj/COMPONENT_GUIDELINES.md) is the checklist
 
 > Shipped defects: the picker crashed on rotation because its route was unregistered; typed
 > search text vanished on rotation because the list pane was called from two call sites; on the

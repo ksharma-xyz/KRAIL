@@ -271,6 +271,7 @@ Concrete bug classes the current setup makes hard or impossible:
 - Snapshot infra: [`core/snapshot-testing/`](core/snapshot-testing/) and [`core/snapshot-testing-annotations/`](core/snapshot-testing-annotations/)
 - E2E flows: [`.maestro/README.md`](.maestro/README.md)
 - Device profiles, the matrix that runs every screen on every phone, fold, tablet, iPad and iPhone window shape in its table, with real system bar insets: [`docs/testing/DEVICE_PROFILES.md`](docs/testing/DEVICE_PROFILES.md)
+- Which device or posture is checked by what, and the gaps no automation covers: [`docs/testing/DEVICE_COVERAGE.md`](docs/testing/DEVICE_COVERAGE.md)
 - Manual sanity cases for what no layer reaches: [`docs/testing/MANUAL_TEST_CASES.md`](docs/testing/MANUAL_TEST_CASES.md)
 - Integration-testing rationale and the discriminating-test procedure: [`docs/INTEGRATION_TESTING_PLAN.md`](docs/INTEGRATION_TESTING_PLAN.md)
 - Per-feature UX invariants worth keeping tests in sync with: e.g. [`feature/trip-planner/ui/SEARCH_STOP_UX.md`](feature/trip-planner/ui/SEARCH_STOP_UX.md)

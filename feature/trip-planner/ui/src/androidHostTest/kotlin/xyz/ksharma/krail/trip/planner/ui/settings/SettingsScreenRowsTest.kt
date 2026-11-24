@@ -8,6 +8,9 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.height
+import androidx.compose.ui.unit.width
 import com.github.takahirom.roborazzi.RobolectricDeviceQualifiers
 import org.junit.Rule
 import org.junit.Test
@@ -17,14 +20,18 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
+import xyz.ksharma.krail.trip.planner.ui.getVisibleBoundsInRoot
 import java.io.File
+import kotlin.math.abs
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
  * The Settings screen has no How to KRAIL entry: the Intro opens on a first run from the splash and is not reached from Settings. The
- * other rows are as they were, each with its tag and its own click, and About keeps Our story. The last test holds that nothing in the
- * source still names what was removed with the row: its parameter, its tag, the view model method, the navigator method and the event.
+ * other rows are as they were, each with its tag and its own click, and About keeps Our story. Manage stop labels is a row of its own
+ * directly under Change Theme, the same row as the others and the only way into that screen now that Search Stop has no Manage button.
+ * The last test holds that nothing in the source still names what was removed with the How to KRAIL row: its parameter, its tag, the
+ * view model method, the navigator method and the event.
  */
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -47,6 +54,7 @@ class SettingsScreenRowsTest {
                     appVersion = "1.0.0",
                     showDebugConfig = showDebugConfig,
                     onChangeThemeClick = { clicks += "theme" },
+                    onManageStopLabelsClick = { clicks += "manage" },
                     onReferFriendClick = { clicks += "invite" },
                     onRateAppClick = { clicks += "rate" },
                     onAboutUsClick = { clicks += "story" },
@@ -71,11 +79,13 @@ class SettingsScreenRowsTest {
         show()
 
         composeRule.onNodeWithText("Change Theme").assertIsDisplayed()
+        composeRule.onNodeWithText("Manage stop labels").assertIsDisplayed()
         composeRule.onNodeWithText("Rate KRAIL").assertIsDisplayed()
         composeRule.onNodeWithText("About").assertIsDisplayed()
         composeRule.onNodeWithText("Our story").assertIsDisplayed()
         listOf(
             TripPlannerTestTags.SETTINGS_ITEM_THEME to "theme",
+            TripPlannerTestTags.SETTINGS_ITEM_MANAGE_LABELS to "manage",
             TripPlannerTestTags.SETTINGS_ITEM_INVITE to "invite",
             TripPlannerTestTags.SETTINGS_ITEM_RATE to "rate",
             TripPlannerTestTags.SETTINGS_ITEM_OUR_STORY to "story",
@@ -84,6 +94,24 @@ class SettingsScreenRowsTest {
             composeRule.onNodeWithTag(tag).performClick()
             assertEquals(listOf(expected), clicks, tag)
         }
+    }
+
+    @Test
+    fun `Manage stop labels is one row under Change Theme, drawn the same as it, and a tap on it opens Manage and nothing else`() {
+        show()
+
+        val theme = composeRule.onNodeWithTag(TripPlannerTestTags.SETTINGS_ITEM_THEME).getVisibleBoundsInRoot()
+        val manage = composeRule.onNodeWithTag(TripPlannerTestTags.SETTINGS_ITEM_MANAGE_LABELS).getVisibleBoundsInRoot()
+        val invite = composeRule.onNodeWithTag(TripPlannerTestTags.SETTINGS_ITEM_INVITE).getVisibleBoundsInRoot()
+        assertSameDp("Manage stop labels starts where Change Theme ends", theme.bottom, manage.top)
+        assertSameDp("Invite your friends starts where Manage stop labels ends", manage.bottom, invite.top)
+        assertSameDp("the same left edge as Change Theme", theme.left, manage.left)
+        assertSameDp("the same width as Change Theme", theme.width, manage.width)
+        assertSameDp("the same height as Change Theme", theme.height, manage.height)
+
+        composeRule.onNodeWithText("Manage stop labels").performClick()
+
+        assertEquals(listOf("manage"), clicks)
     }
 
     @Test
@@ -117,7 +145,13 @@ class SettingsScreenRowsTest {
         assertTrue(offenders.isEmpty(), "These were removed with the Settings row and must not come back: $offenders")
     }
 
+    /** Two measurements of the same layout, which differ only by the last bit of a float. */
+    private fun assertSameDp(what: String, expected: Dp, actual: Dp) {
+        assertTrue(abs(expected.value - actual.value) <= MEASURE_TOLERANCE_DP, "$what: expected $expected, got $actual")
+    }
+
     private companion object {
+        const val MEASURE_TOLERANCE_DP = 0.5f
         const val THIS_FILE = "SettingsScreenRowsTest.kt"
         const val MIN_SOURCES = 200
         const val REMOVED_TAG = "settings.item.howto"

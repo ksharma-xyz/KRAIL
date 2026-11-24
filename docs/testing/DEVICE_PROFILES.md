@@ -235,6 +235,7 @@ overlay stops padding its content). The simulator is the other check (see the Ga
 |---|---|---|
 | `check_layout_invariants.py`, raw cutout check | `WindowInsets.displayCutout` or its import in non test Kotlin anywhere but `Modifier.sideSafeInsets()` and the helper's own `DeviceInsets.kt` | CI, `fullQualityChecks.sh`, pre push |
 | `check_layout_invariants.py`, sheet content check | a taj `ModalBottomSheet` actual that no longer puts its content in `SheetContent`, `SheetContent` no longer calling `sideSafeInsets`, or the iOS reduced motion overlay no longer padding its content | CI, `fullQualityChecks.sh`, pre push |
+| `check_layout_invariants.py`, sheet body check | `systemBarsPadding()`, `safeDrawingPadding()`, `safeContentPadding()`, `safeGesturesPadding()` or `sideSafeInsets()` in a non taj file that opens a `ModalBottomSheet`: on the real iOS sheet the side strip was padded twice, which the host model does not show | CI, `fullQualityChecks.sh`, pre push |
 | `DeviceMatrixAdoptionGuardTest` | a top level `XxxScreen` in a `*/ui/src/commonMain` source set with no matrix test naming it, unless it is in `config/device-matrix-baseline.txt` with a reason; and a stale baseline entry | `testAndroidHostTest` |
 
 The baseline only shrinks (the ratchet contract in [GUARDS.md](GUARDS.md)). Adding a screen means

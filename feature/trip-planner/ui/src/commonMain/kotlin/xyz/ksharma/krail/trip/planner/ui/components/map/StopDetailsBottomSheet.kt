@@ -6,10 +6,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -62,7 +66,9 @@ fun StopDetailsBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .systemBarsPadding()
+                // Top and bottom only. The sides are the sheet's: SheetContent already keeps the content out of them, and on
+                // iOS the side strip is part of the system bars, so a full systemBarsPadding() here padded it a second time.
+                .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Vertical))
                 .verticalScroll(rememberScrollState()),
         ) {
             // Stop Name, with its badge where the surface has one.

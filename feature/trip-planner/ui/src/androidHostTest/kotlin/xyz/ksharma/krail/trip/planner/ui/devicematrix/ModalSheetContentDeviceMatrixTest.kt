@@ -4,11 +4,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
@@ -35,7 +39,7 @@ import kotlin.test.fail
  * The container of every `ModalBottomSheet`, `SheetContent`, on every device profile (`docs/testing/DEVICE_PROFILES.md`). Three
  * things are held: a control at either end of a full width row stands clear of a side strip and takes a real touch; the
  * content is padded by exactly the part of each side inset that the sheet's own edge does not already clear; and a body that
- * pads by the system bars itself is not padded a second time. The second keeps the first from being met by padding everywhere:
+ * pads the vertical system bars itself leaves the sides to the container. The second keeps the first from being met by padding everywhere:
  * a centred sheet in a wide window, an Android phone in landscape for one, does not reach the cutout, and content padded there
  * would sit off centre for nothing.
  *
@@ -81,15 +85,24 @@ class ModalSheetContentDeviceMatrixTest {
         }
 
     /**
-     * `StopDetailsBottomSheet` pads its own content by `systemBarsPadding()`, which on iOS carries the side strip too, so a
-     * body like it must not be padded a second time by the container: the container consumes the whole side inset.
+     * `StopDetailsBottomSheet` pads its own content by the vertical system bars only, so a body like it leaves the sides to the
+     * container. It used to pad by the whole of `systemBarsPadding()`: the host model says the container's consumption keeps
+     * that from doubling the side inset, but on the real iOS sheet it doubled (the content was 84 pt narrower on the outer
+     * screen of the iPhone Duo), so no sheet body pads the sides itself and `scripts/check_layout_invariants.py` fails the
+     * build on one that does.
      */
     @Test
-    fun `a sheet body that pads by the system bars itself is not padded twice at the sides`() =
+    fun `a sheet body that pads the vertical system bars itself leaves the sides to the container`() =
         matrix.forEachDeviceProfile(screen = "ModalBottomSheet") { profile ->
             setContent(theme = { BareKrailTheme(content = it) }) {
                 SheetHost {
-                    Box(modifier = Modifier.systemBarsPadding().fillMaxWidth().height(48.dp).testTag(BODY))
+                    Box(
+                        modifier = Modifier
+                            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Vertical))
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .testTag(BODY),
+                    )
                 }
             }
 

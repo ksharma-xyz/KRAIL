@@ -18,7 +18,7 @@ maestro --version   # expect 2.x
 
 | Lane | Runs | Contents |
 |---|---|---|
-| `smoke/` | Every PR | Launch, and plan a trip. Fast enough to gate a merge. |
+| `smoke/` | With the `nightly/` lane, in the weekly cron run (it no longer runs on pull requests, see `docs/testing/LAYERS.md`) | Launch, and plan a trip. Short enough that it could gate a merge again. |
 | `nightly/` | Weekly cron (Sunday 03:00 AEST), `prod/**`, manual dispatch | Rotation, process lifecycle and permission-denial cases. Slower, and not worth blocking a PR on. |
 | `weekly/` | Weekly cron (Thursday 03:00 AEST), manual dispatch | Real taps on every key control, on the device types the other lanes never see: the iPhone Duo outer screen, an iPad, a small iPhone, an Android tablet and an Android foldable. See [The weekly device run](#the-weekly-device-run). |
 

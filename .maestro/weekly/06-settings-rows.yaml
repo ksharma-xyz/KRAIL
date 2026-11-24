@@ -1,0 +1,147 @@
+# Settings: the gear opens it, every row that stays inside the app opens its screen and the back arrow returns, and the
+# Settings back arrow returns to Saved Trips.
+#
+# The gear is a title bar action at the top right, and the back arrows are at the top left, so on an unusual display they
+# are the controls a status pill or a cutout would cover first. Each is tapped, and the screen that follows is what
+# proves the tap landed.
+#
+# Rows tapped: Change Theme and Our story, and Debug Config with its Network tile on a debug build, which is what CI and a
+# local build are. The row is guarded because a release build does not draw it.
+#
+# Rows asserted but not tapped: Invite your friends and Rate KRAIL. Each hands the rider to a system surface, a share sheet
+# or the store's review prompt, which is outside the app and has no portable way back on both platforms. Their taps are
+# `viewModel.onReferFriendClick()` and `onRateAppClick()`, which leave the app.
+#
+# Screens have no tag of their own except Settings and Debug Config, so a screen the rider has reached is proved by the
+# one before it going away, and the way back by it returning. Settings, Change Theme and Our story are all detail panes of
+# the list and detail layout (`ListDetailSceneStrategy.detailPane()`), which on a wide window sit beside Saved Trips, so
+# Saved Trips is not asserted away here and Settings is. The back arrow is found by its label, "Back", because the shared
+# title bar draws it without a tag.
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+    permissions:
+      location: never
+
+# Unconditional. The shared flow settles the app and no-ops on a device that has already been through the Intro.
+- runFlow: ../shared/dismiss-intro.yaml
+
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
+    timeout: 60000
+# A tap on the gear straight after Saved Trips appears has been taken without opening Settings on a simulator, while the
+# screen was still settling. The wait ends as soon as the screen is still.
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# --- The gear opens Settings ---
+- tapOn:
+    id: "savedtrips.action.settings"
+- extendedWaitUntil:
+    visible:
+      id: "settings.screen"
+    timeout: 20000
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# The rows at the top are on the screen. The two that are not tapped are only asserted.
+- assertVisible:
+    id: "settings.item.theme"
+- assertVisible:
+    id: "settings.item.invite"
+- assertVisible:
+    id: "settings.item.rate"
+
+# --- Change Theme ---
+- tapOn:
+    id: "settings.item.theme"
+- extendedWaitUntil:
+    notVisible:
+      id: "settings.screen"
+    timeout: 20000
+- waitForAnimationToEnd:
+    timeout: 5000
+- tapOn: "Back"
+- extendedWaitUntil:
+    visible:
+      id: "settings.screen"
+    timeout: 20000
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# --- Our story ---
+# The rows at the bottom sit under the app logo and version, which are drawn over the foot of the list, until the list is
+# scrolled. The list leaves room to scroll clear of them, so on a short screen the row is scrolled to before it is tapped.
+- scrollUntilVisible:
+    element:
+      id: "settings.item.ourstory"
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: "settings.item.ourstory"
+- extendedWaitUntil:
+    notVisible:
+      id: "settings.screen"
+    timeout: 20000
+- waitForAnimationToEnd:
+    timeout: 5000
+- tapOn: "Back"
+- extendedWaitUntil:
+    visible:
+      id: "settings.screen"
+    timeout: 20000
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# --- Debug Config, on a debug build ---
+# One more scroll, to the end of the list, so the row below Our story is clear of the logo before the guard looks for it.
+- scroll
+- runFlow:
+    when:
+      visible:
+        id: "settings.item.debugconfig"
+    commands:
+      - tapOn:
+          id: "settings.item.debugconfig"
+      - extendedWaitUntil:
+          visible:
+            id: "debugconfig.screen"
+          timeout: 20000
+      - waitForAnimationToEnd:
+          timeout: 5000
+      - tapOn:
+          id: "debugconfig.tile.network"
+      - extendedWaitUntil:
+          notVisible:
+            id: "debugconfig.screen"
+          timeout: 20000
+      - waitForAnimationToEnd:
+          timeout: 5000
+      - tapOn: "Back"
+      - extendedWaitUntil:
+          visible:
+            id: "debugconfig.screen"
+          timeout: 20000
+      - waitForAnimationToEnd:
+          timeout: 5000
+      - tapOn: "Back"
+      - extendedWaitUntil:
+          visible:
+            id: "settings.screen"
+          timeout: 20000
+      - waitForAnimationToEnd:
+          timeout: 5000
+
+# --- Settings back arrow returns to Saved Trips ---
+- tapOn: "Back"
+- extendedWaitUntil:
+    notVisible:
+      id: "settings.screen"
+    timeout: 20000
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
+    timeout: 30000

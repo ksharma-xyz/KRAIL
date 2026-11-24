@@ -1,0 +1,139 @@
+# Search Stop's own controls, each tapped and each followed by an assertion on what it did: the clear X, Select on map,
+# the swap and the go circle.
+#
+# This is the screen the weekly device run was added for. On the outer screen of a foldable iPhone the swap and the go
+# circle once stood under the system status pill, so a tap on either opened Control Center and never reached the app.
+# Tapping each control by its tag and then reading the result is what catches that: a tap that does not arrive leaves the
+# stops where they were and the screen where it was, and the assertions below fail.
+#
+# What each tap must do:
+#   - The clear X takes the focused row's end while it holds text. Tapped, it empties the field and keeps the screen: the
+#     query field is still there, the X is gone, and the list is back to its recents.
+#   - Select on map returns from the list state to the map state, where the recents list is not drawn. It is a row of the
+#     phone list state, so it is tapped only where it is on screen.
+#   - The swap trades the two stops. The From and To rows carry the real stop name in the label a screen reader reads,
+#     "From, <name>" and "To, <name>", so the labels are read before and after and the From after must be the To
+#     before, and the other way round. The names are never typed into the flow, so it does not depend on how NSW names
+#     or orders its stops, and the comparison is plain JavaScript string equality, which has no regular expression to
+#     escape.
+#   - The go circle is the only way out of Search Stop with a trip, and it opens the timetable.
+#
+# Options is not here: it is drawn only while location is granted, and this flow denies location. See
+# 04-search-stop-options.yaml.
+#
+# Every wait is an `extendedWaitUntil`, never a fixed sleep, and `waitForAnimationToEnd` only where a control moves, so
+# the flow reads the same on a software rendered emulator and on a simulator.
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+    permissions:
+      location: never
+
+# Unconditional. The shared flow settles the app and no-ops on a device that has already been through the Intro.
+- runFlow: ../shared/dismiss-intro.yaml
+
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
+    timeout: 60000
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# --- Open Search Stop on the destination ---
+- tapOn:
+    id: "searchrow.to"
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.query"
+    timeout: 30000
+- tapOn:
+    id: "searchstop.query"
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.recents"
+    timeout: 30000
+
+# --- The clear X ---
+# Text in the focused row brings the X in.
+- inputText: "Cen"
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.clear"
+    timeout: 15000
+- tapOn:
+    id: "searchstop.clear"
+# The X clears the text and nothing else: the field is still there, the X is gone, and the list is back to the recents.
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.recents"
+    timeout: 15000
+- assertNotVisible:
+    id: "searchstop.clear"
+- assertVisible:
+    id: "searchstop.query"
+
+# --- Select on map ---
+# Only where the row is on screen, which is the phone list state. Tapped, it returns to the map state, where the
+# recents list is not drawn, and the query field is tapped again to come back to the list.
+- runFlow:
+    when:
+      visible:
+        id: "searchstop.selectonmap"
+    commands:
+      - tapOn:
+          id: "searchstop.selectonmap"
+      - extendedWaitUntil:
+          notVisible:
+            id: "searchstop.recents"
+          timeout: 15000
+      - extendedWaitUntil:
+          visible:
+            id: "searchstop.query"
+          timeout: 15000
+      - tapOn:
+          id: "searchstop.query"
+      - extendedWaitUntil:
+          visible:
+            id: "searchstop.recents"
+          timeout: 30000
+
+# --- Pick both stops ---
+- runFlow:
+    file: ../shared/pick-trip-stops.yaml
+    env:
+      TO_QUERY: "Town Hall"
+      FROM_QUERY: "Central"
+
+# --- The swap ---
+# The labels before the tap.
+- copyTextFrom:
+    text: "From, .*"
+- evalScript: ${output.fromBefore = maestro.copiedText}
+- copyTextFrom:
+    text: "To, .*"
+- evalScript: ${output.toBefore = maestro.copiedText}
+- tapOn:
+    id: "searchrow.reverse"
+- waitForAnimationToEnd:
+    timeout: 5000
+# The labels after the tap. "From, " is six characters and "To, " is four.
+- copyTextFrom:
+    text: "From, .*"
+- evalScript: ${output.fromAfter = maestro.copiedText}
+- copyTextFrom:
+    text: "To, .*"
+- evalScript: ${output.toAfter = maestro.copiedText}
+- assertTrue: ${output.fromAfter.substring(6) == output.toBefore.substring(4)}
+- assertTrue: ${output.toAfter.substring(4) == output.fromBefore.substring(6)}
+
+# --- The go circle ---
+- tapOn:
+    id: "searchrow.search"
+- extendedWaitUntil:
+    visible:
+      id: "timetable.screen"
+    timeout: 30000
+- assertVisible:
+    id: "timetable.action.reverse"

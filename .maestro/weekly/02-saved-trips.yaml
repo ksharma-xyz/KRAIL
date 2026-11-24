@@ -1,0 +1,82 @@
+# Saved Trips, the home: a saved trip opens its timetable, the timetable's back arrow brings the rider home, and the
+# search bar opens Search Stop.
+#
+# Each of those is a real tap whose outcome is asserted, so a control that a system bar or a side inset covers on an
+# unusual display fails here and not in front of a rider.
+#
+# The saved trip is the one 01-intro-buttons saves on its last screen, so the card steps are guarded: on a device
+# whose Intro was finished without saving a trip there is no card to tap, and the guarded block is skipped rather than
+# made to fail. On a fresh CI simulator or emulator 01 has just run, and the card is there. The wait for it is
+# optional for the same reason, and is what stops the guard being evaluated before the list has loaded.
+#
+# Location is denied, as in every weekly flow, so no flow depends on where the device is or on a system prompt.
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+    permissions:
+      location: never
+
+# Unconditional. The shared flow settles the app and no-ops on a device that has already been through the Intro.
+- runFlow: ../shared/dismiss-intro.yaml
+
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
+    timeout: 60000
+# A tap straight after the screen appears can be taken while the list is still settling. The wait ends as soon as the
+# screen is still, and is not a fixed pause.
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# The title bar's action and the search bar are what the rider reaches this screen for.
+- assertVisible:
+    id: "savedtrips.action.settings"
+- assertVisible:
+    id: "searchrow.to"
+
+# --- A saved trip opens its timetable ---
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.card..*"
+    timeout: 15000
+    optional: true
+- runFlow:
+    when:
+      visible:
+        id: "savedtrips.card..*"
+    commands:
+      - tapOn:
+          id: "savedtrips.card..*"
+          index: 0
+      - extendedWaitUntil:
+          visible:
+            id: "timetable.screen"
+          timeout: 30000
+      # The timetable's own back arrow, not the system back key, and so the same on both platforms. A trip opened from a
+      # saved card is not opened over Search Stop, so back lands on Saved Trips.
+      - tapOn: "Back"
+      - extendedWaitUntil:
+          visible:
+            id: "savedtrips.screen"
+          timeout: 30000
+      - extendedWaitUntil:
+          notVisible:
+            id: "timetable.screen"
+          timeout: 15000
+
+# --- The search bar opens Search Stop ---
+- waitForAnimationToEnd:
+    timeout: 5000
+- tapOn:
+    id: "searchrow.to"
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.query"
+    timeout: 30000
+# Search Stop is a screen of its own, so Saved Trips is gone from under it.
+- extendedWaitUntil:
+    notVisible:
+      id: "savedtrips.screen"
+    timeout: 15000

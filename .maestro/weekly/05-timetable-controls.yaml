@@ -1,0 +1,143 @@
+# The timetable's title bar: the reverse button, the save star and the back arrow, each tapped and each followed by an
+# assertion on what it did.
+#
+# These three sit at the top of the screen, on the line a status bar, a camera cutout or a floating status pill runs along
+# on an unusual display, so they are the first controls a bad inset would put out of reach.
+#
+#   - Reverse trades the trip's origin and destination. The two stop rows carry "Departures from <name>" in the label a
+#     screen reader reads, origin first, so the names are read before and after and the origin after must be the destination
+#     before, and the other way round. The names come from whatever the first result for each query is, never from the flow,
+#     and are compared as plain strings in JavaScript. The header recomposes as soon as the trip changes, but the check is
+#     a bounded poll rather than one read, so a slow device costs time and not a false failure.
+#   - The star saves the trip and takes it back. Its label says which it is about to do, "Save Trip" or "Remove Saved Trip",
+#     so the tap is asserted by the label flipping, and it is tapped a second time so the flow leaves the saved trips as it
+#     found them. Either starting state is handled, because a trip that happens to be saved already must not fail it.
+#   - Back, the title bar's arrow and not the system key, returns to Search Stop with both stops kept and the go circle shown,
+#     because the go circle opened the timetable over it.
+#
+# The trip is planned through Search Stop, as 02-plan-trip does, so this flow does not depend on a saved trip existing.
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+    permissions:
+      location: never
+
+# Unconditional. The shared flow settles the app and no-ops on a device that has already been through the Intro.
+- runFlow: ../shared/dismiss-intro.yaml
+
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
+    timeout: 60000
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# --- Plan a trip ---
+- tapOn:
+    id: "searchrow.to"
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.query"
+    timeout: 30000
+- tapOn:
+    id: "searchstop.query"
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.recents"
+    timeout: 30000
+- runFlow:
+    file: ../shared/pick-trip-stops.yaml
+    env:
+      TO_QUERY: "Town Hall"
+      FROM_QUERY: "Central"
+- tapOn:
+    id: "searchrow.search"
+- extendedWaitUntil:
+    visible:
+      id: "timetable.screen"
+    timeout: 30000
+# The header's two stop rows are drawn from the trip, before the journeys have loaded.
+- extendedWaitUntil:
+    visible:
+      text: "Departures from .*"
+    timeout: 60000
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# --- Reverse ---
+- copyTextFrom:
+    text: "Departures from .*"
+    index: 0
+- evalScript: ${output.originBefore = maestro.copiedText}
+- copyTextFrom:
+    text: "Departures from .*"
+    index: 1
+- evalScript: ${output.destinationBefore = maestro.copiedText}
+- tapOn:
+    id: "timetable.action.reverse"
+# Read again until the origin is what the destination was, at most ten times. The `while` is checked before each pass, so
+# the variable is set to something that cannot match first.
+- evalScript: ${output.originAfter = ''}
+- repeat:
+    times: 10
+    while:
+      true: ${output.originAfter != output.destinationBefore}
+    commands:
+      - waitForAnimationToEnd:
+          timeout: 3000
+      - copyTextFrom:
+          text: "Departures from .*"
+          index: 0
+      - evalScript: ${output.originAfter = maestro.copiedText}
+- copyTextFrom:
+    text: "Departures from .*"
+    index: 1
+- evalScript: ${output.destinationAfter = maestro.copiedText}
+- assertTrue: ${output.originAfter == output.destinationBefore}
+- assertTrue: ${output.destinationAfter == output.originBefore}
+
+# --- The star ---
+# The saved state is read from the device's database a moment after the trip changes, so it is settled before it is read.
+- waitForAnimationToEnd:
+    timeout: 5000
+- runFlow:
+    when:
+      visible: "Save Trip"
+    commands:
+      - tapOn:
+          id: "timetable.action.savetrip"
+      - extendedWaitUntil:
+          visible: "Remove Saved Trip"
+          timeout: 15000
+      - tapOn:
+          id: "timetable.action.savetrip"
+      - extendedWaitUntil:
+          visible: "Save Trip"
+          timeout: 15000
+- runFlow:
+    when:
+      visible: "Remove Saved Trip"
+    commands:
+      - tapOn:
+          id: "timetable.action.savetrip"
+      - extendedWaitUntil:
+          visible: "Save Trip"
+          timeout: 15000
+      - tapOn:
+          id: "timetable.action.savetrip"
+      - extendedWaitUntil:
+          visible: "Remove Saved Trip"
+          timeout: 15000
+
+# --- Back ---
+- tapOn: "Back"
+- extendedWaitUntil:
+    visible:
+      id: "searchrow.search"
+    timeout: 30000
+- extendedWaitUntil:
+    notVisible:
+      id: "timetable.screen"
+    timeout: 15000

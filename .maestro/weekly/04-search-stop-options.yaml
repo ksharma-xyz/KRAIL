@@ -1,0 +1,56 @@
+# Search Stop's Options button on the map state: tapped it opens the mode filter block, and tapped again it shuts it.
+#
+# Options is the button at the start of the map's control line, over the map's attribution icon, which is the control a
+# bottom system bar or a rounded corner would cover on an unusual display. It is drawn only while the location
+# permission is granted (`modeControlsFor` in `SearchStopModeRules.kt`), so this flow is the one weekly flow that does NOT
+# deny location. A plain `launchApp` grants every permission, which is what Maestro does when `permissions` is left out,
+# and that is the state this flow needs. No fix is needed, only the permission: the rule reads the permission status
+# and not a position.
+#
+# Unlike the other weekly flows the button is waited for and asserted, not guarded. With the permission granted it must be
+# drawn, and a flow that quietly skipped it would pass on exactly the device where it is missing. The wait is long because
+# the controls appear only once the map is ready, and a map loads tiles over the network on a CI runner.
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+
+# Unconditional. The shared flow settles the app and no-ops on a device that has already been through the Intro.
+- runFlow: ../shared/dismiss-intro.yaml
+
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
+    timeout: 60000
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- tapOn:
+    id: "searchrow.to"
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.query"
+    timeout: 30000
+
+# --- Options ---
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.modebutton"
+    timeout: 60000
+# Shut when the screen opens.
+- assertNotVisible:
+    id: "searchstop.modechips"
+- tapOn:
+    id: "searchstop.modebutton"
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.modechips"
+    timeout: 15000
+# The same button shuts it again.
+- tapOn:
+    id: "searchstop.modebutton"
+- extendedWaitUntil:
+    notVisible:
+      id: "searchstop.modechips"
+    timeout: 15000

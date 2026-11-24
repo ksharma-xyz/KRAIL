@@ -1,0 +1,94 @@
+# The stop card on Search Stop's map: a tap on a stop pin opens it, and Set as destination hands the stop to the To bar
+# and closes it.
+#
+# The card is the one control here with no way to reach it but a touch on the map. The pins are drawn by the map and are not
+# nodes in the accessibility tree, so there is no tag to select and this flow taps points, which is the one place in the weekly
+# flows that does. The points are percentages of the screen and not pixels, and they are tried one after another until the
+# card is up, because which pin a point lands on depends on the map's tiles and on the screen's shape.
+#
+# Why a few points are enough. The map opens on Sydney's centre at zoom 13, where stops in the city are a few dozen points
+# apart, and each pin takes taps in a 20 dp radius (`STOP_HIT_TARGET_RADIUS_DP`), so a point near the middle of the map lands on
+# one far more often than not. The points all sit to the right of the middle: the left of the screen is the list pane of a
+# wide window, where a tap would pick a recent stop and leave the To bar already filled before the card is opened. They also
+# stay clear of the box at the top and the control line at the bottom. A tap that lands on no pin does nothing here.
+#
+# The outcome is read two ways. The card has to close, and the To bar has to hold a stop: a bar with no stop reads
+# "Choose destination" and one with a stop reads "To, <name>" in the label a screen reader reads, so a label starting "To, " is
+# the bar filled. The destination field is the one being edited because Search Stop was opened from the destination bar, which
+# is what makes the action read Set as destination and not Set as starting point.
+#
+# If the card never opens the flow fails on the wait after the last point, and says so there.
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: false
+    stopApp: true
+    permissions:
+      location: never
+
+# Unconditional. The shared flow settles the app and no-ops on a device that has already been through the Intro.
+- runFlow: ../shared/dismiss-intro.yaml
+
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
+    timeout: 60000
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- tapOn:
+    id: "searchrow.to"
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.query"
+    timeout: 30000
+# The map is on screen in the map state, and its nearby stops load once it has a camera. There is no node to wait for,
+# so the screen is waited on until it is still, which tiles arriving keep from happening for a while.
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# --- Tap pins until the card is up ---
+# One point a pass, in order, for at most eight passes, and the loop ends the moment a card is up. `output.pin` counts the
+# passes and picks the point: the nth entry of the first list is the x and of the second the y, both percentages. A pass
+# that lands on no pin waits four seconds for the card and moves on to the next point.
+- evalScript: ${output.pin = 0}
+- repeat:
+    times: 8
+    while:
+      notVisible:
+        id: "stopcard.card"
+    commands:
+      - tapOn:
+          point: "${[62, 72, 68, 82, 58, 78, 90, 70][output.pin]}%,${[50, 42, 60, 52, 38, 66, 46, 55][output.pin]}%"
+      - evalScript: ${output.pin = output.pin + 1}
+      - extendedWaitUntil:
+          visible:
+            id: "stopcard.card"
+          timeout: 4000
+          optional: true
+
+# The card has to be up by now, or no point found a pin.
+- extendedWaitUntil:
+    visible:
+      id: "stopcard.card"
+    timeout: 10000
+- extendedWaitUntil:
+    visible:
+      id: "stopcard.pick"
+    timeout: 10000
+
+# --- Set as destination ---
+# The card slides in, and a tap on its button during that lands on a button that is still moving.
+- waitForAnimationToEnd:
+    timeout: 5000
+- tapOn:
+    id: "stopcard.pick"
+- extendedWaitUntil:
+    notVisible:
+      id: "stopcard.card"
+    timeout: 15000
+# The To bar holds the stop now: its label is "To, <name>", where it was the prompt "Choose destination".
+- extendedWaitUntil:
+    visible:
+      text: "To, .*"
+    timeout: 15000

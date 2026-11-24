@@ -575,6 +575,9 @@ private fun SearchStopScreenSinglePane(
     val density = LocalDensity.current
     val headerHeight: Dp by remember { derivedStateOf { with(density) { headerHeightPx.toDp() } } }
     val gaps = rememberSearchStopGaps()
+    // Both count the block from one edge under the status bar. With its title bar the block starts higher than that, so the
+    // difference comes off what is measured.
+    val headerTrimPx = with(density) { (gaps.edge - searchStopBlockTop(form.shape, gaps)).roundToPx() }
     val ornamentPadding = mapOrnamentPadding(
         gaps = gaps,
         statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding(),
@@ -679,7 +682,7 @@ private fun SearchStopScreenSinglePane(
                 location = location,
                 onBack = onBack,
                 modifier = Modifier
-                    .onGloballyPositioned { headerHeightPx = it.size.height }
+                    .onGloballyPositioned { headerHeightPx = (it.size.height - headerTrimPx).coerceAtLeast(0) }
                     .slideAwayUp(progress = { slide }, extraDistancePx = slideExtraPx, hidden = topBoxHidden),
                 showLocationChip = flow.mode == SearchStopMode.Map,
                 onGradient = showGradient,

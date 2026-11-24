@@ -101,11 +101,15 @@ class SearchStopMapStateLayoutTest {
 
     @Test
     @Config(qualifiers = W411)
-    fun `the box is one rounded box one edge from the top and sides`() {
+    fun `the box is one rounded box one edge from the sides, under the back button`() {
         setScreen()
 
         val box = boundsOf(TripPlannerTestTags.SEARCH_STOP_GROUP_CARD)
-        assertNear("top edge", gaps.edge, box.top)
+        val back = boundsOf(TripPlannerTestTags.SEARCH_STOP_BACK)
+        // This window has no status bar, so the bar adds its 16 dp corner clearance.
+        assertNear("the back button is where the title bar puts it, from the top", 20.dp, back.top)
+        assertNear("and from the start", 8.dp, back.left)
+        assertNear("the box starts where the title bar ends", 72.dp, box.top)
         assertNear("left edge", gaps.edge, box.left)
         assertNear("right edge", 411.dp - gaps.edge, box.right)
     }

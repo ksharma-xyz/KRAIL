@@ -46,7 +46,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
  *   every state, which is From, or the one bar of a single field. To has the destination pin at its start.
  * - The X is a bare cross with no circle. It shows only while the field has text, and only clears it. It never leaves the screen, so
  *   the recents stay where they are.
- * - With [ToFromBlockStyle.CardRows], the From and To card of the Timetable's style, there is no back arrow and the go circle
+ * - With [ToFromBlockStyle.CardRows], the From and To card of the Timetable's style, there is no back arrow in the card (it
+ *   stands above it, see `SearchStopTopBlock`) and the go circle
  *   and the swap are the card's own right column (see `ToFromCardRows`); [fromLabel] and [toLabel] are the saved labels of the
  *   stops the rows hold, and [onSwap] is what the swap does (null draws none).
  * - The go circle is drawn on the To bar, the last one, as soon as [goVisible] says the trip can start, and it is the

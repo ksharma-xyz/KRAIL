@@ -190,7 +190,7 @@ If a design breaks one of these rules, the design changes, not the rule.
 34. **A text field is one line, 48 tall, and ends in an ellipsis.** This covers the home pill, the search pill, the To value
     and the From value. The accessibility label carries the full text. Only single-line fields may truncate; chips, cards,
     badges and rows still wrap or stack whole items.
-35. **The search pill has a back arrow and an X. (The group card has no back arrow now: system back does the two step back, and the X takes the row's circle slot while the row holds text. The bare single pill keeps its arrow.)** Back is a 48 box at the left, like today's search bar. The X shows only
+35. **The search pill has a back arrow and an X. (The group card has no back arrow inside it: the title bar above the card has one, see The Search Stop box, and the X takes the row's circle slot while the row holds text. The bare single pill keeps its arrow.)** Back is a 48 box at the left, like today's search bar. The X shows only
     when the field has content and only clears it, and never dismisses the screen. Back follows rule 39, except from the
     start field, where it returns to To and From with the destination kept (on the bar that still needs a stop). System back and the iOS swipe do the same. In To
     and From the X clears the destination and raises the keyboard. The To row has a matching 48 column with the destination pin
@@ -448,7 +448,7 @@ follow the app mode on the map too, so a card is one colour wherever it stands (
   were. The Home, Work and Park & Ride chips on the home map, the Park & Ride cards and the stop card's actions are the fixed dark
   of `FloatingDark` and are unchanged. The stop card keeps its mode aware family.
 - **The box is the Timetable's own From and To card.** One rounded card with two plain rows, From above To, and a 1 dp
-  `outlineSubtle` divider between them. No pills, no second fill, no back arrow: system back does the two step back. The rows are
+  `outlineSubtle` divider between them. No pills, no second fill and no back arrow inside it. One back button stands above the card, in taj's `TitleBar` with nothing else in it: bare, with no circle, and in the same place as on the Timetable, so the card starts 56 under the status bar. The map is light in dark mode too, so over the map the arrow is drawn in the light palette's ink, and on the gradient of the list state in the app mode's. It does the same two step back as system back, and leaves the screen with the card when the Departure Board takes the box's room. The rows are
   still the editable fields (taj `TextField` with no container, fixed prompts Choose starting point and Choose destination). A
   single field stays the bare pill, with its back arrow, and is a card only when From and To both show.
 - **Markers.** From is the 10 dp filled dot, To is the pin. A stop that has a saved label shows that label's own icon in place

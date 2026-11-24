@@ -233,6 +233,7 @@ class SearchStopGroupCardTest {
         assertNear("a row is the card's width at the start", card.left, from.left)
         assertNear("a row is the card's width at the end", card.right, to.right)
         assertEquals(16.dp, gaps.cardCorner, "The box keeps the card's 16 dp corner.")
+        // The card holds no arrow. The back button above it belongs to the top block (`SearchStopBackButtonTest`).
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_BACK).assertDoesNotExist()
     }
 

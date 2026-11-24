@@ -199,7 +199,7 @@ or the reverse:
 | The 7 custom detekt rules | `code-quality.yml`, step **Run Detekt** |
 | The rules' own unit tests | `code-quality.yml`, step **Run build-logic tests** — `./gradlew detekt` cannot run them, see below |
 | The guard tests | `code-quality.yml`, step **Run host tests** |
-| `check_layout_invariants.py` | `code-quality.yml`, step **Layout invariants**, and `fullQualityChecks.sh` |
+| `check_layout_invariants.py`, `check_stale_assumptions.py` (warns only) | `code-quality.yml`, step **Layout invariants and analytics assumptions**, and locally through `scripts/ci_fast_checks.sh`, which `fullQualityChecks.sh` and the pre-push hook both run |
 | Snapshot verify | `snapshot-verify.yml`, a separate **macOS** job called from `build.yml` |
 
 `:detekt-rules` lives in the `gradle/build-logic` included build. `./gradlew detekt` resolves its

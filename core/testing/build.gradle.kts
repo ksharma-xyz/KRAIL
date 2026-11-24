@@ -18,6 +18,8 @@ import xyz.ksharma.krail.gradle.AndroidVersion
  */
 plugins {
     alias(libs.plugins.krail.kotlin.multiplatform)
+    alias(libs.plugins.krail.compose.multiplatform)
+    alias(libs.plugins.compose.compiler)
     alias(libs.plugins.krail.android.kmp.library)
 }
 
@@ -29,7 +31,10 @@ kotlin {
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
 
-        withHostTest {}
+        withHostTest {
+            // The device matrix helper's own tests run under Robolectric, which needs the merged Android resources.
+            isIncludeAndroidResources = true
+        }
     }
 
     iosArm64()
@@ -78,9 +83,33 @@ kotlin {
             }
         }
 
+        // The device profile matrix (`docs/testing/DEVICE_PROFILES.md`): Compose host test helpers that compose a screen on a list of
+        // devices with each platform's real system insets. They live in androidMain because Robolectric and the Compose test rule
+        // are Android only, and they are reachable only through test configurations, as every other part of this module is.
+        androidMain {
+            dependencies {
+                api(libs.compose.runtime)
+                api(libs.compose.ui)
+                api(libs.test.composeUiTestJunit4)
+                api(libs.test.junit)
+                api(libs.test.robolectric)
+
+                implementation(libs.activity.compose)
+                implementation(libs.compose.foundation)
+            }
+        }
+
         commonTest {
             dependencies {
                 implementation(libs.test.kotlin)
+            }
+        }
+
+        getByName("androidHostTest") {
+            dependencies {
+                // Robolectric's ActivityScenario launches a ComponentActivity, which needs it declared in a manifest. This
+                // artifact ships exactly that debug only manifest.
+                implementation(libs.test.composeUiTestManifest)
             }
         }
     }

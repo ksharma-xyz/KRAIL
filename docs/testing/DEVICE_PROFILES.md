@@ -85,6 +85,11 @@ A screen that pads by `displayCutout`, by `statusBars` or by `navigationBars` al
 unpadded on the iPhone and on this shape. A screen that pads by `safeDrawing` horizontal, which is
 `Modifier.sideSafeInsets()`, does not.
 
+The `IOS` shape also fills `systemGestures` with the side strips and the bottom, and
+`mandatorySystemGestures` with the bottom, because the Duo probe read `safeGestures` and
+`safeContent` as R84 B34 too. The `ANDROID` shapes do not invent gesture insets, since none was
+measured for them.
+
 ---
 
 ## What the helper gives you
@@ -102,6 +107,8 @@ the test passes its theme in.
 | `assertNothingInteractiveUnderSystemBars()` | walks the semantics tree; every node that is clickable, toggleable, a button or a text field must be wholly inside the safe area, measured with `getVisibleBoundsInRoot()` |
 | `assertTouchReaches(node)` | a real pointer press at the node's centre through the blockers; fails if a blocker took it |
 | `assertScrollEndClearsBottomBar(list)` | scrolls the list to its end; its last item must clear the bottom bar |
+
+The tests that prove the helper can go red are `DeviceMatrixTest` in `:core:testing`: a screen that ignores every inset, one that pads by `displayCutout` only (the incident, red on exactly the two profiles that deliver the side strip elsewhere), and a list with no end padding each fail, and the fixed versions pass on every profile.
 
 Sanity checks run on every profile, so the helper cannot pass by doing nothing: the window the
 test got must be the profile's size, and the insets the composition reads back must be the

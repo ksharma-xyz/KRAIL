@@ -205,6 +205,7 @@ internal fun LazyListScope.parkRideSection(
 @Composable
 internal fun LazyItemScope.SavedTripItem(
     trip: Trip,
+    isLast: Boolean,
     stopLabels: ImmutableList<StopLabel>,
     editing: Boolean,
     reorderState: ReorderableLazyListState,
@@ -265,7 +266,11 @@ internal fun LazyItemScope.SavedTripItem(
                 }
             }
 
-            Spacer(modifier = Modifier.height(dim.spacingXL))
+            // The space between two cards. The last card ends flush, because the heading below it already has the section gap
+            // above it (sectionHeadingGap) and a spacer here would double it.
+            if (!isLast) {
+                Spacer(modifier = Modifier.height(dim.spacingXL))
+            }
         }
     }
 }

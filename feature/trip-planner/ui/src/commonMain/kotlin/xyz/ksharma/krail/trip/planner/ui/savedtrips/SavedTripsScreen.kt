@@ -24,12 +24,10 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.only
@@ -41,6 +39,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
@@ -63,6 +62,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import app.krail.taj.resources.ic_close
 import kotlinx.collections.immutable.ImmutableList
 import org.jetbrains.compose.resources.painterResource
@@ -360,7 +360,6 @@ internal fun LazyListScope.savedTripsContent(
                 onStopTracking = onStopTracking,
                 modifier = Modifier.padding(horizontal = KrailTheme.dimensions.spacingXL),
             )
-            Spacer(modifier = Modifier.height(KrailTheme.dimensions.spacingXL))
         }
     }
 
@@ -390,12 +389,13 @@ internal fun LazyListScope.savedTripsContent(
         }
     }
 
-    items(
+    itemsIndexed(
         items = savedTripsState.savedTrips,
-        key = { trip -> trip.tripId },
-    ) { trip ->
+        key = { _, trip -> trip.tripId },
+    ) { index, trip ->
         SavedTripItem(
             trip = trip,
+            isLast = index == savedTripsState.savedTrips.lastIndex,
             stopLabels = savedTripsState.stopLabels,
             editing = editing,
             reorderState = reorderState,
@@ -454,6 +454,14 @@ internal fun rememberWiggleRotation(active: Boolean, seed: Int): Float {
     return if (active) angle else 0f
 }
 
+/**
+ * The space above every section heading on the home, and the same below it. The heading owns it: whatever stands above a heading
+ * (the label row, the last saved trip card, the tracking card, the title bar) ends flush and adds none of its own, so the gap above
+ * Saved Trips and the gap above Park & Ride are this one value (`SavedTripsSectionGapTest`).
+ */
+@Composable
+internal fun sectionHeadingGap(): Dp = KrailTheme.dimensions.spacingXL
+
 @Composable
 internal fun SavedTripsTitle(
     modifier: Modifier = Modifier,
@@ -463,7 +471,7 @@ internal fun SavedTripsTitle(
     Row(
         modifier = modifier.fillMaxWidth()
             .background(color = KrailTheme.colors.surface)
-            .padding(vertical = dim.spacingXL, horizontal = dim.spacingXL),
+            .padding(vertical = sectionHeadingGap(), horizontal = dim.spacingXL),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(dim.spacingM),
     ) {

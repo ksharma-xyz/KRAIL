@@ -17,34 +17,33 @@ Ride cards with the pink `P`, and the Add Park & Ride card with its own line.
 | Part | What |
 |---|---|
 | Title bar | KRAIL, Discover and Settings, as on main |
-| Pills | Home and Work, inside the sheet at the bottom, directly above the search bar. They stay put while the list scrolls and go with the sheet while the cards are being reordered |
-| List | Info tiles, Tracking Real Time, Saved Trips, Park & Ride, as on main |
-| Sheet and bar | main's theme coloured sheet at the bottom, in every posture, holding the pills row and, 8 dp under it, one read only search bar. A tap opens Search Stop on the destination field. The microphone at its end opens Ask KRAIL and shows only where Ask KRAIL is available |
+| Label row | Every label the rider has, one sideways row, the first item of the list, above the info tiles and the Saved Trips heading. It scrolls away with the list and goes while the cards are being reordered |
+| List | Label row, info tiles, Tracking Real Time, Saved Trips, Park & Ride |
+| Capsule | One search capsule alone at the bottom, in every posture. No sheet, no theme coloured slab, no pills. A tap opens Search Stop on the destination field. The microphone at its end opens Ask KRAIL and shows only where Ask KRAIL is available |
 | Wide window | The 480 dp list pane on the left and the map pane on the right, as on main. The location permission chip is on the map pane |
 
-**The pills.** A row of whole pills in the sheet, directly above the search bar: the sheet's own 16 dp side inset, 8 dp
-apart, an 8 dp gap (`spacingM`) down to the bar, each pill with a 48 dp touch target. They are not in the list, so the list
-is main's list. A label with no stop is taj's `OutlinedButton` at its chip size, reading "+ Home" or "+ Work" (a label the
-rider made reads "+ " and its name). Its text and outline are the near black ink that `getForegroundColor` picks for the
-sheet's colour, passed through the button's own `colors` parameter, because taj's default (cream in dark mode) is only 2.21 to
-3.29 to 1 on the four theme colours and the near black is 5.92 to 8.80. A label with a stop is the in-app near black label pill (`SetLabelPill`), with the
-label's icon and name and a 1 dp `outlineSubtle` hairline drawn inside it, so its edge shows on a dark page. The two are the
-same height, so the row does not move when a label is saved. When the pills do not fit one line the whole pill goes onto
-the next line: the row never scrolls sideways and nothing is shrunk or clipped. A pill's text is one line and ends in an
-ellipsis only if that one pill is wider than the row. A set label plans from the nearest stop, or opens Search Stop holding
-that stop as the destination when there is no location fix. An unset label opens Search Stop to set it. Both are the
-existing `LabelChipTapEffect` and its rules, unchanged.
+**The label row.** Home, Work, then the rider's own labels in their saved order, set and unset, left aligned from the 16 dp
+leading edge, 8 dp apart, each pill in a 48 dp touch slot. It scrolls sideways and is cut hard at the trailing edge when it
+overflows, with no fade mask and no gradient, and its content ends at the side safe area edge. While every pill fits the cells
+are equal in width, past that each pill is as wide as its name and the last one in view is cut by the edge. A label with a stop
+is taj's filled `Button` in the theme colour. A label with no stop is taj's `OutlinedButton` reading "+ Work" ("+ Home", or "+ "
+and the name for a label the rider made). Text only, no label icon, the same height and radius, and a pill's text is never
+truncated or squeezed: a long name makes that pill wider and the row scrolls. A screen reader hears "Home, double tap to go there"
+for a set label and "Work, not set, double tap to choose a stop" for an unset one. A set label plans from the nearest stop, or
+opens Search Stop holding that stop as the destination when there is no location fix. An unset label opens Search Stop to set it.
+Both are the existing `LabelChipTapEffect` and its rules, unchanged. The row is drawn once the labels are known and nothing is
+drawn when there are none, so no empty slot is kept.
 
-**The sheet and the bar.** The pills and the bar sit in the sheet `main` drew the search row in: the rider's theme colour,
-rounded on the top two corners only (36 dp), full width from the screen edge down behind the navigation bar, with 28 dp
-above the first row and 20 dp below the bar plus the navigation bar. It is 96 dp tall without pills and 56 dp taller with
-them, and taller again for each line the pills wrap onto at large text. It slides up and fades in once the saved trips have loaded, as on main. The bar is
-taj's `TextField`, read only, in taj's own default field colours (the page surface, so a light pill in light mode and a dark
-one in dark mode, never the inverted set), 48 dp tall, a full pill, with the placeholder "Where are you going?", inside
-the page's 16 dp side inset. The microphone is taj's `MicIcon` as it ships, plain, in the bar's content colour, in a 48 dp
-slot flush with the bar's end. There is no From bar, no go circle, no swap button and no collapsed "Plan a trip" button.
-The list keeps the sheet's measured height plus 8 dp clear at its end, so the last card scrolls fully into view at every
-text size, and the sheet is not part of the list's layout.
+**The capsule.** Centred and capped at 480 dp wide, 16 dp in from the side safe inset at each side and 12 dp above the navigation
+bar. A full pill, filled white in light mode and with the raised dark surface taj's sheets use in dark mode, 92 percent opaque.
+No theme colour on it, no border, no hairline and no top highlight: the fill and a soft drop shadow do the separating, with no blur, no
+fade and no gradient. It is taj's `TextField`, read only, with the search glyph always at the start, the placeholder "Where are you
+going?" start aligned and always one line that ends in an ellipsis, and taj's plain `MicIcon` at the end only where Ask KRAIL is
+available. When the microphone is absent nothing else moves. The placeholder is the full text colour at 4.5 to 1 or more on the
+fill, with no dimming. The height is one text line plus a constant 15 dp above and below, never under 48 dp, so it grows with the
+text size, and the glyph and microphone follow taj's adaptive icon size. It slides up and fades in once the saved trips have loaded and
+is gone while the cards are reordered. The list keeps the capsule's measured height plus 8 dp clear at its end, so the last card
+scrolls fully into view at every text size, and the capsule is not part of the list's layout.
 
 **Not on the home.** The map, the Park & Ride tiles, the nearby station suggestion, the notices row, floating stop cards, pins and
 the location notice are not drawn on a phone. The location notice is Search Stop's, and the wide window's map pane

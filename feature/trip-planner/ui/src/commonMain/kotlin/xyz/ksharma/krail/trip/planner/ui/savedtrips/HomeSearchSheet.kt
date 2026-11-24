@@ -6,14 +6,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,6 +20,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.krail.taj.LocalThemeColor
 import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.modifier.sideSafeInsets
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 
@@ -44,9 +41,10 @@ internal fun homeSheetColor(): Color {
 /**
  * The sheet at the bottom of the classic Saved Trips home, as `main` drew the search row's container: the rider's theme
  * colour, rounded on the two top corners only, full width, from the screen edge down behind the navigation bar. The
- * cutout inset is on the outer box so the colour itself does not draw behind a camera notch in landscape. It holds
- * [content] in a column inside the page's own side inset and above the navigation bar: the Home and Work pills when
- * the labels have loaded, then the one search bar, 8 dp apart (`spacingM`, and no gap at all when there are no pills).
+ * side safe inset is on the outer box so the colour itself does not draw behind a camera notch, a side navigation bar
+ * or a status pill. It holds [content] in a column inside the page's own side inset and above the navigation bar: the
+ * Home and Work pills when the labels have loaded, then the one search bar, 8 dp apart (`spacingM`, and no gap at all
+ * when there are no pills).
  * Without pills the sheet is 96 dp tall (28 above the 48 dp bar, 20 below) and the navigation bar inset is on top of
  * that. With them it is 56 dp taller, and taller again for each line the pills wrap onto at large text, so the caller
  * reads its real height ([modifier] can carry an `onSizeChanged`) and never assumes one.
@@ -67,7 +65,7 @@ internal fun HomeSearchSheet(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)),
+            .sideSafeInsets(),
     ) {
         Column(
             modifier = Modifier

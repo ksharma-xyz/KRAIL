@@ -20,15 +20,11 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -56,6 +52,7 @@ import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.RoundIconButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.modifier.sideSafeInsets
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.tokens.AiThemeGradientTokens
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
@@ -199,7 +196,7 @@ private fun CollapsedPill(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal))
+            .sideSafeInsets()
             .padding(
                 bottom = with(LocalDensity.current) { navBarPadding.dp } + dim.spacingXL,
                 start = dim.pageHorizontalPadding,
@@ -255,13 +252,13 @@ private fun ExpandedSearchRow(
 ) {
     val dim = KrailTheme.dimensions
 
-    // Cutout inset on the outer box so the background itself doesn't draw behind
-    // the camera notch/punch-hole in landscape. Content and background are both
-    // constrained to the safe horizontal area.
+    // Side safe inset on the outer box so the background itself doesn't draw behind a
+    // camera notch or punch-hole, a side navigation bar or a status pill. Content and
+    // background are both constrained to the safe horizontal area.
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Horizontal)),
+            .sideSafeInsets(),
     ) {
         Column(
             modifier = Modifier
@@ -370,7 +367,7 @@ private fun ExpandedSearchRow(
                 }
             }
         }
-    } // closes cutout Box
+    } // closes side inset Box
 }
 
 /**

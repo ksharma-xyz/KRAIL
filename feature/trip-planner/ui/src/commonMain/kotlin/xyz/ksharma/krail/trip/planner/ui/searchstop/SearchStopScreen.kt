@@ -61,6 +61,7 @@ import xyz.ksharma.krail.taj.components.CloudFieldSpec
 import xyz.ksharma.krail.taj.components.CloudGradientBackground
 import xyz.ksharma.krail.taj.components.rememberTextFieldTextState
 import xyz.ksharma.krail.taj.hexToComposeColor
+import xyz.ksharma.krail.taj.modifier.sideSafeInsets
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.components.AssignNewLabelSheet
 import xyz.ksharma.krail.trip.planner.ui.components.ToFromField
@@ -684,7 +685,7 @@ private fun SearchStopScreenSinglePane(
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .fillMaxWidth()
-                .searchStopSideInsets()
+                .sideSafeInsets()
                 .statusBarsPadding(),
         ) {
             SearchStopTopBlock(
@@ -812,7 +813,7 @@ private fun SearchStopScreenDualPane(
             CloudGradientBackground(
                 modifier = Modifier
                     .fillMaxSize()
-                    .searchStopSideInsets(),
+                    .sideSafeInsets(),
                 themeColor = themeColor.hexToComposeColor(),
                 spec = CloudFieldSpec.aiPair(themeColorHex = themeColor, motionScale = SEARCH_FIELD_MOTION_SCALE),
             ) {

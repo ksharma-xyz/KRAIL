@@ -1,23 +1,34 @@
 #!/usr/bin/env bash
 #
-# The structural half of ./scripts/fullQualityChecks.sh, fast enough to sit on a push.
+# The fast half of CI's `code-quality / detekt` job, run on a push. Everything here is a step that
+# job runs before detekt and the tests, and each is cheap enough to run locally every time.
 #
-# These four tasks answer "is the repo still coherent?" rather than "is my change correct?".
-# They are the ones a targeted `./gradlew :some:module:testAndroidHostTest` can never find,
-# because the defects they catch are in the shape of the build rather than in any one module:
-# a module with test sources and no host-test task, a module with shared tests and no iOS lane
-# classification, an ad-hoc fake at a boundary that has a real one.
+# What runs, in order, from the one list in scripts/ci_fast_checks.sh:
+#
+#   1. The script steps of code-quality.yml (`python3 scripts/check_layout_invariants.py` and
+#      `check_stale_assumptions.py`). Milliseconds, no Gradle, no local.properties needed. They run
+#      first so a violation fails before anything slow starts.
+#   2. A grep for commas in backtick test names, for modules on the iOS lane (not a CI step, see below).
+#   3. The four Gradle `verify*` tasks of the "Verify test wiring" step. Seconds, not milliseconds.
+#
+# The Gradle tasks answer "is the repo still coherent?" rather than "is my change correct?". They are
+# the ones a targeted `./gradlew :some:module:testAndroidHostTest` can never find, because the defects
+# they catch are in the shape of the build rather than in any one module: a module with test sources
+# and no host-test task, a module with shared tests and no iOS lane classification, an ad-hoc fake at a
+# boundary that has a real one.
 #
 # Placed on pre-push rather than pre-commit deliberately. They take seconds, not milliseconds,
 # and a commit is cheap to amend while a red CI run is not.
 #
 # Why this exists at all: `verifyIosTestClassification` failed in CI on a change whose author
 # had run a compile, detekt and the touched modules' tests, all green, and skipped the script
-# that wraps these. See docs/learning/2026-09-22-the-gate-i-did-not-open.md.
+# that wraps these. See docs/learning/2026-09-22-the-gate-i-did-not-open.md. The script steps were
+# left out of the first version of this hook, and CI's first step failed on one of them for the same
+# reason: the local gates were a subset of CI's. scripts/ci_fast_checks.sh is the single list now, so
+# this hook and fullQualityChecks.sh cannot disagree with each other.
 #
 # Bypass with `git push --no-verify`, or SKIP_STRUCTURAL_CHECKS=1 when the hook itself is in
-# the way. Both are fine; the point is that skipping becomes a decision rather than an
-# oversight.
+# the way. Both are fine; the point is that skipping becomes a decision rather than an oversight.
 
 set -euo pipefail
 
@@ -26,17 +37,34 @@ if [ "${SKIP_STRUCTURAL_CHECKS:-0}" = "1" ]; then
   exit 0
 fi
 
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+# The script steps of code-quality.yml first: milliseconds, and they need neither Gradle nor
+# local.properties, so a fresh worktree gets them too. Non-zero exits fail the push, as in CI.
+echo "pre-push: fast CI checks (layout invariants, analytics assumptions)..."
+if ! "$repo_root/scripts/ci_fast_checks.sh" scripts; then
+  cat >&2 <<'MSG'
+
+pre-push: fast CI checks failed. Nothing has been pushed.
+
+These are the scripts code-quality.yml runs first, before detekt and the tests. The output above
+names the file and the rule. Running them takes milliseconds and failing them in CI costs a whole
+red run, which is why they sit here.
+
+Fix it, or push with --no-verify if you know why it is failing.
+MSG
+  exit 1
+fi
+
 # A fresh worktree has none of the gitignored local config, and Gradle then fails with an error that
 # does not say what to do. Say it here, before the slow part.
-if [ ! -f "$(git rev-parse --show-toplevel)/local.properties" ]; then
+if [ ! -f "$repo_root/local.properties" ]; then
   echo "pre-push: local.properties is missing, so Gradle cannot run." >&2
   echo "pre-push: this looks like a fresh worktree. Run ./scripts/worktree_setup.sh and push again." >&2
   echo "pre-push: see docs/WORKTREES.md. A clone with no NSW key can push with SKIP_STRUCTURAL_CHECKS=1." >&2
   exit 1
 fi
-
-repo_root="$(git rev-parse --show-toplevel)"
-cd "$repo_root"
 
 if [ ! -x ./gradlew ]; then
   echo "pre-push: no ./gradlew here, skipping structural checks"
@@ -80,17 +108,9 @@ if [ -f "$ios_lane_file" ]; then
   fi
 fi
 
-# --continue so all four report at once rather than one per run, matching the
-# "Verify test wiring" step in code-quality.yml and fullQualityChecks.sh.
-#
-# -PciQuality is deliberately NOT passed: that flag exists so CI can substitute placeholder
-# API keys, and a local run has the real ones in local.properties.
-if ./gradlew --quiet \
-  verifyTestWiring \
-  verifyTestingModuleUsage \
-  verifyNoAdHocBoundaryFakes \
-  verifyIosTestClassification \
-  --continue; then
+# The "Verify test wiring" step of code-quality.yml, from the same list fullQualityChecks.sh uses
+# (--continue so all four report at once, no -PciQuality, both explained in ci_fast_checks.sh).
+if "$repo_root/scripts/ci_fast_checks.sh" gradle --quiet; then
   echo "pre-push: structural checks passed"
 else
   cat >&2 <<'MSG'

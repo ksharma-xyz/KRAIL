@@ -5,8 +5,8 @@
 # This script is the documented pre-PR gate, so it has to run everything CI can
 # fail on that is not a full build. It previously did not, and a branch that was
 # green here failed `code-quality / detekt` on a task this script never invoked.
-# When a verification task is added to .github/workflows/code-quality.yml, add it
-# here in the same change.
+# When a script or verification task is added to .github/workflows/code-quality.yml, add it to
+# scripts/ci_fast_checks.sh in the same change; that one list feeds this script and the pre-push hook.
 
 set -e
 
@@ -17,31 +17,13 @@ cd "$ROOT"
 # gate once also gets the pre-push hook, rather than depending on someone remembering to.
 ./scripts/install_git_hooks.sh
 
-echo "▶ Layout invariants..."
-python3 scripts/check_layout_invariants.py
-
-echo ""
-echo "▶ Analytics assumptions..."
-# Warns only. A date passing is not a reason to block an unrelated build; a scheduled job
-# runs this with --strict to raise an issue instead.
-python3 scripts/check_stale_assumptions.py
-
-echo ""
-echo "▶ Test wiring and lane classification..."
-# The same four tasks as the "Verify test wiring" step in code-quality.yml, and
-# they run before the compiles on purpose: each is a seconds-long structural
-# check, so a module with test sources and no host-test task, or with no iOS lane
-# classification, fails in seconds instead of after two full compiles.
-#
-# --continue matches CI so all four report at once rather than one per run.
-# -PciQuality is deliberately NOT passed: that flag exists so CI can substitute
-# placeholder API keys, and a local run has the real ones in local.properties.
-./gradlew \
-  verifyTestWiring \
-  verifyTestingModuleUsage \
-  verifyNoAdHocBoundaryFakes \
-  verifyIosTestClassification \
-  --continue
+echo "▶ Fast CI checks (script steps, then test wiring and lane classification)..."
+# The steps code-quality.yml runs before detekt, from the one list in scripts/ci_fast_checks.sh that
+# the pre-push hook also uses, so the two cannot drift apart. The script steps (layout invariants,
+# analytics assumptions) come first and the four verify tasks after them; both run before the
+# compiles on purpose, because each is a seconds-long structural check that should fail in seconds
+# rather than after two full compiles. check_stale_assumptions.py warns without failing, as in CI.
+./scripts/ci_fast_checks.sh
 
 echo ""
 echo "▶ Android compile..."

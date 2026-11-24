@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import xyz.ksharma.krail.core.maps.ui.components.UserLocationButton
+import xyz.ksharma.krail.taj.modifier.sideSafeInsets
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -21,7 +22,8 @@ import xyz.ksharma.krail.trip.planner.ui.components.mapVanishIn
 import xyz.ksharma.krail.trip.planner.ui.components.mapVanishOut
 
 /**
- * The location button at the bottom end of the map, one 48 dp touch target [bottomPadding] above the system bottom inset,
+ * The location button at the bottom end of the map, one 48 dp touch target [bottomPadding] above the system bottom inset and
+ * one edge in from the side safe area (so it stands clear of the status pill strip on the outer screen of a foldable iPhone),
  * one edge above it unless the host says otherwise. Search Stop stands it on the one line Options is on, above the map's
  * info icon. All business logic (location fetch, permission handling) is delegated to the caller via callbacks.
  *
@@ -46,6 +48,7 @@ internal fun MapActionButtons(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .sideSafeInsets()
             .navigationBarsPadding()
             .padding(start = dim.spacingXL, end = dim.spacingXL, bottom = bottomPadding),
         horizontalArrangement = Arrangement.End,

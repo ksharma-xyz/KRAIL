@@ -2,7 +2,10 @@ package xyz.ksharma.krail.trip.planner.ui.searchstop
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
@@ -58,12 +61,16 @@ internal fun SearchStopListContent(
 /**
  * What the list keeps above its first row and under its last. Above it is one [KrailDimensions.spacingXL] step, 16 dp, so
  * the first row (the label chips, or Select on map when there are none) stands clear of the box and its hairline edge. Under the last row it is what lets the last
- * stop clear the keyboard and the screen's edge.
+ * stop clear the keyboard and the screen's edge, and never less than the navigation bar: a three button bar is taller than
+ * the fixed step, and the last row ended under it (found by the device matrix, a 320 dp window with a 48 dp bar).
  */
 @Composable
 private fun listPadding(): PaddingValues = PaddingValues(
     top = KrailTheme.dimensions.spacingXL,
-    bottom = KrailTheme.dimensions.spacingXXXXL,
+    bottom = maxOf(
+        KrailTheme.dimensions.spacingXXXXL,
+        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding(),
+    ),
 )
 
 @Composable

@@ -48,6 +48,7 @@ the device type.
 |---|---|---|
 | Narrow, big font | 320 dp at 200% font | Where layouts break first. Define the fallback mode |
 | Phone portrait | 360 to 411 dp | Compact, the everyday case |
+| Phone, iPhone Duo outer screen | 466 x 678 pt | A system strip 84 pt wide down the right edge, full height, with the status pill near the top right, and a 34 pt home indicator zone at the bottom. Keep every control, card edge and button clear of both, and draw the strips so the clearance is visible. A card padded for the Android cutout alone runs under the strip, and a tap there opens Control Center |
 | Phone landscape | compact height, < 480 dp tall | Single pane always, and it scrolls. Keep the phone's vertical structure (stop lists stay vertical); do not flatten content into rows to save height |
 | Foldable open / small tablet portrait | 600 to 840 dp | Medium, still single pane. Cap stretchy content (about 480 dp) and keep stacking vertically: there is room below. Do not fill spare width with side-by-side extras |
 | Tablet, dual-pane | >= 840 dp, height >= 480 dp | List pane fixed at 480 dp, so list content renders as on a phone. Show what the other pane (map or detail) does |

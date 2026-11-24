@@ -11,6 +11,7 @@
 ## Testing
 
 <!-- Test tasks run, detekt status, compile targets verified. -->
+<!-- UI change: say which device profiles ran (docs/testing/DEVICE_PROFILES.md), or why none apply. -->
 
 ## Cost
 

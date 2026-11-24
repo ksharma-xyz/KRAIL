@@ -171,7 +171,7 @@ Two limits worth knowing before you plan work around them:
 ## Guards
 
 Beyond ordinary tests, the repo carries checks that hold **repo-wide invariants**: seven custom
-detekt rules, fifteen guard tests, four Gradle verification tasks and one Python
+detekt rules, seventeen guard tests, four Gradle verification tasks and one Python
 script. Each exists because the mistake it catches actually shipped, is invisible in review, and
 is not catchable by a normal unit test.
 
@@ -270,6 +270,7 @@ Concrete bug classes the current setup makes hard or impossible:
 - Custom detekt rules: [`gradle/build-logic/detekt-rules/`](gradle/build-logic/detekt-rules/)
 - Snapshot infra: [`core/snapshot-testing/`](core/snapshot-testing/) and [`core/snapshot-testing-annotations/`](core/snapshot-testing-annotations/)
 - E2E flows: [`.maestro/README.md`](.maestro/README.md)
+- Device profiles, the matrix that runs every screen on 12 phone, fold, tablet and iPhone window shapes with real system bar insets: [`docs/testing/DEVICE_PROFILES.md`](docs/testing/DEVICE_PROFILES.md)
 - Manual sanity cases for what no layer reaches: [`docs/testing/MANUAL_TEST_CASES.md`](docs/testing/MANUAL_TEST_CASES.md)
 - Integration-testing rationale and the discriminating-test procedure: [`docs/INTEGRATION_TESTING_PLAN.md`](docs/INTEGRATION_TESTING_PLAN.md)
 - Per-feature UX invariants worth keeping tests in sync with: e.g. [`feature/trip-planner/ui/SEARCH_STOP_UX.md`](feature/trip-planner/ui/SEARCH_STOP_UX.md)

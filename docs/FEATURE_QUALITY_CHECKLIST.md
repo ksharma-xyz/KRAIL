@@ -82,9 +82,17 @@ works until the device rotates is a broken screen**, and no static check will te
 - [ ] Anything in `rememberSaveable` is `@Serializable`, `Parcelable`, or has a `Saver`
 - [ ] After rotation the user is looking at **exactly** what they were looking at: same text
       typed, same filtered results, same scroll position, same expanded rows
+- [ ] **Device profiles.** A new screen has a host test that calls
+      `forEachDeviceProfile(screen = "XxxScreen")` (`docs/testing/DEVICE_PROFILES.md`), so it is
+      composed on 12 window shapes with real system bar and side insets, and nothing the rider
+      presses stands under a system bar. Pad the sides with `Modifier.sideSafeInsets()`, never
+      `displayCutout`. `DeviceMatrixAdoptionGuardTest` fails the build on a screen without the test
 
 > Shipped defects: the picker crashed on rotation because its route was unregistered; typed
-> search text vanished on rotation because the list pane was called from two call sites.
+> search text vanished on rotation because the list pane was called from two call sites; on the
+> outer screen of the iPhone Duo the From and To card ran under the status pill, because the side
+> inset was padded by `displayCutout`, which iOS reports as 0, so the swap and go buttons could not
+> be pressed.
 
 ## 4. Empty, loading and error states — design all four up front
 

@@ -327,7 +327,6 @@ assumptions** CI step. Exits non-zero on a violation. Enforces the mechanical pa
    comments are stripped first, so a KDoc explaining the ban is fine. Measure with
    `getVisibleBoundsInRoot()` (`feature/trip-planner/ui/src/androidHostTest/.../ui/VisibleBounds.kt`)
    instead: it asserts the node is displayed and returns bounds clipped to its ancestors.
-
 4. No non test Kotlin reads `displayCutout` (`WindowInsets.displayCutout`, its import, or the platform
    property) anywhere. Compose on iOS reports it as 0 at the sides and carries a side safe area in
    `systemBars` and `safeDrawing`, so a surface padded by the cutout runs under the iPhone Duo status

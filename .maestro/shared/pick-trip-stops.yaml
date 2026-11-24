@@ -1,0 +1,72 @@
+# Picks the two stops of a trip on Search Stop, destination first and then origin, and waits until the swap and the go
+# circle are drawn. The weekly device flows call it, and none of the nightly or smoke flows do.
+#
+# It is the same sequence 02-plan-trip walks, with the stop names as inputs: `TO_QUERY` is typed into the destination
+# and `FROM_QUERY` into the origin, and the first result for each is chosen, so the flow does not depend on how NSW
+# names or orders its stops. The pick never leaves Search Stop: the stop fills its bar and the screen stays.
+#
+# The caller must already be on Search Stop with the destination field focused and its list showing, meaning
+# `searchstop.query` was tapped and `searchstop.recents` is on screen, which is the state 02-plan-trip reaches before
+# it types. Called with `runFlow` and `env`:
+#
+#   - runFlow:
+#       file: ../shared/pick-trip-stops.yaml
+#       env:
+#         TO_QUERY: "Central"
+#         FROM_QUERY: "Town Hall"
+#
+# Not a test. It has no assertions of its own beyond waits, and a directory run does not pick it up because
+# `.maestro/shared/` sits outside every lane.
+appId: ${APP_ID}
+---
+# --- Destination ---
+- inputText: ${TO_QUERY}
+# Search is a network call, so give it real time rather than a fixed sleep.
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.result..*"
+    timeout: 30000
+- tapOn:
+    id: "searchstop.result..*"
+    index: 0
+
+# --- Origin ---
+# Tapped whether or not it filled itself, so the flow is the same on a device with a fix and one without.
+- extendedWaitUntil:
+    visible:
+      id: "searchrow.from"
+    timeout: 30000
+- tapOn:
+    id: "searchrow.from"
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.query"
+    timeout: 30000
+- tapOn:
+    id: "searchstop.query"
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.recents"
+    timeout: 30000
+- inputText: ${FROM_QUERY}
+- extendedWaitUntil:
+    visible:
+      id: "searchstop.result..*"
+    timeout: 30000
+- tapOn:
+    id: "searchstop.result..*"
+    index: 0
+
+# --- Both stops are chosen ---
+# The go circle and the swap are drawn only now. Both arrive with a short animation and take no tap until it has
+# finished, so the wait ends only when the screen is still.
+- extendedWaitUntil:
+    visible:
+      id: "searchrow.search"
+    timeout: 30000
+- extendedWaitUntil:
+    visible:
+      id: "searchrow.reverse"
+    timeout: 30000
+- waitForAnimationToEnd:
+    timeout: 5000

@@ -1,0 +1,182 @@
+# The first-run Intro, one real tap on every button of every screen, with the outcome of each tap asserted.
+#
+# The weekly device run exists for a class of bug the nightly run cannot see: a control that is on the screen
+# but not reachable, because a system bar, a status pill or a side inset sits over it on an unusual display.
+# A flow that taps a control and then asserts what the tap did catches that, and one that only asserts the control
+# is visible does not. So every screen here is left by tapping its button, and the next screen is what proves the
+# tap landed.
+#
+# Starts from a clean install on purpose (`clearState: true`), because the Intro is shown once and a device that
+# has been through it never shows it again. The other weekly flows start from a device that is past the Intro, and
+# this one is first by file name, so on a fresh CI simulator or emulator it is also the flow that gets them there.
+#
+# Location is denied, so the Park & Ride screen is answered No thanks and never raises a system permission prompt.
+# Yes please is not tapped: it asks for location, which puts a system dialog over the app, and a dialog is not what
+# this flow is measuring.
+#
+# The flow only moves forward. There is no back button, and system back is consumed on every screen after the first
+# (`BackHandler(enabled = state.step != IntroFirstStep) {}` in `IntroFlowScreen`), so the back check is Android only,
+# where `back` exists: it is pressed once on each screen after the first, and the screen must still be there. On
+# the first screen system back leaves the app, so it is not pressed there. iOS has no portable back command.
+#
+# The destination and origin screens carry the same tags, so they are told apart by the bar: it is hidden until a
+# stop is picked, so a screen that has just opened has no `intro.action.primary` on it and the screen it came from
+# did. That is what proves the step moved on.
+#
+# "Yes, save it" is tapped on the confirm screen, so this flow ends with one saved trip, and the next flow
+# (02-saved-trips.yaml) taps it.
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+    stopApp: true
+    permissions:
+      location: never
+
+# --- Park & Ride, the first screen ---
+- extendedWaitUntil:
+    visible:
+      id: "intro.screen"
+    timeout: 60000
+- waitForAnimationToEnd:
+    timeout: 5000
+- assertVisible:
+    id: "intro.action.secondary"
+- assertVisible:
+    id: "intro.action.primary"
+- tapOn:
+    id: "intro.action.secondary"
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# --- Destination ---
+- extendedWaitUntil:
+    visible:
+      id: "intro.stop.first"
+    timeout: 30000
+# Nothing is picked on a screen that has just opened, so its bar is not there. The Park & Ride screen's was.
+- assertNotVisible:
+    id: "intro.action.primary"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+      - waitForAnimationToEnd:
+          timeout: 3000
+      - assertVisible:
+          id: "intro.screen"
+      - assertVisible:
+          id: "intro.stop.first"
+- tapOn:
+    id: "intro.stop.first"
+- extendedWaitUntil:
+    visible:
+      id: "intro.action.primary"
+      enabled: true
+    timeout: 30000
+- tapOn:
+    id: "intro.action.primary"
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# --- Origin ---
+- extendedWaitUntil:
+    visible:
+      id: "intro.stop.first"
+    timeout: 30000
+- assertNotVisible:
+    id: "intro.action.primary"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+      - waitForAnimationToEnd:
+          timeout: 3000
+      - assertVisible:
+          id: "intro.screen"
+      - assertVisible:
+          id: "intro.stop.first"
+- tapOn:
+    id: "intro.stop.first"
+- extendedWaitUntil:
+    visible:
+      id: "intro.action.primary"
+      enabled: true
+    timeout: 30000
+- tapOn:
+    id: "intro.action.primary"
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# --- Confirm ---
+# Two stops are chosen, so the trip tile shows, and both answers are on the screen.
+- extendedWaitUntil:
+    visible:
+      id: "intro.confirm.tile"
+    timeout: 30000
+- assertVisible:
+    id: "intro.action.secondary"
+- assertVisible:
+    id: "intro.action.primary"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+      - waitForAnimationToEnd:
+          timeout: 3000
+      - assertVisible:
+          id: "intro.confirm.tile"
+# Yes, save it. The trip is kept, and the colour screen follows.
+- tapOn:
+    id: "intro.action.primary"
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# --- Colour, the last screen ---
+- extendedWaitUntil:
+    visible:
+      id: "intro.theme.train"
+    timeout: 30000
+# No colour is picked yet, so the bar is not there.
+- assertNotVisible:
+    id: "intro.action.primary"
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - back
+      - assertVisible:
+          id: "intro.screen"
+      - assertVisible:
+          id: "intro.theme.train"
+# The badges drift for as long as this screen is up, so there is no wait for the animation to end here, and the
+# pick is followed by a wait for the button it brings in.
+- tapOn:
+    id: "intro.theme.train"
+- extendedWaitUntil:
+    visible:
+      id: "intro.action.primary"
+      enabled: true
+    timeout: 30000
+- tapOn:
+    id: "intro.action.primary"
+
+# --- The finale, and where it leaves the rider ---
+# The wordmark, the colour flooding the screen and Saved Trips opening underneath take about 3.5 s, and the app behind
+# is hidden from the accessibility tree until the colour has lifted. Waited for, never tapped through.
+- extendedWaitUntil:
+    visible:
+      id: "savedtrips.screen"
+    timeout: 60000
+- assertNotVisible:
+    id: "intro.screen"
+# The outcome of Yes, save it: the trip the rider chose is on Saved Trips. Scrolled to rather than asserted in
+# place, because on a short screen the pills and the search bar can push the first card below the fold.
+- scrollUntilVisible:
+    element:
+      id: "savedtrips.card..*"
+    direction: DOWN
+    timeout: 30000

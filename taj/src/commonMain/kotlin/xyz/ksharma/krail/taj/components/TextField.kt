@@ -21,7 +21,6 @@ import androidx.compose.foundation.text.input.KeyboardActionHandler
 import androidx.compose.foundation.text.input.TextFieldDecorator
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
@@ -111,7 +110,7 @@ fun TextField(
     // Hoisted state takes precedence — callers that need to mutate the text from
     // outside (e.g. selecting a suggestion chip that fills the field) must pass
     // their own state so the field is not rekeyed and focus / IME are preserved.
-    val textFieldState = state ?: rememberTextFieldState(initialText.orEmpty())
+    val textFieldState = state ?: rememberTextFieldTextState(initialText.orEmpty())
     val textSelectionColors = TextSelectionColors(
         handleColor = colors.cursorColor,
         backgroundColor = colors.cursorColor.copy(alpha = TextSelectionBackgroundOpacity),

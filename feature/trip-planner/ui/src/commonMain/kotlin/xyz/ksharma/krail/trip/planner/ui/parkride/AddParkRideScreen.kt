@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.input.TextFieldState
-import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
@@ -25,6 +24,7 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.components.TextField
 import xyz.ksharma.krail.taj.components.TextFieldDefaults
 import xyz.ksharma.krail.taj.components.TitleBar
+import xyz.ksharma.krail.taj.components.rememberTextFieldTextState
 import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
@@ -57,7 +57,7 @@ internal fun AddParkRideScreen(
     // slot and any state remembered inside it is dropped - which silently cleared whatever
     // the rider had typed. Seeded from the ViewModel's query so it also survives process
     // death and the ViewModel outliving the composition.
-    val searchFieldState = rememberTextFieldState(state.query)
+    val searchFieldState = rememberTextFieldTextState(state.query)
 
     // Map pane is a SIBLING of the list, never nested inside it — see DualPaneScaffold for
     // the iOS compositing invariant that requires this.

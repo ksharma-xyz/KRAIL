@@ -83,14 +83,17 @@ fun TextField(
     // Same shape as ButtonDefaults: callers override the whole colour set rather than passing
     // one-off colours. Defaults keep every existing call site unchanged.
     colors: TextFieldColors = TextFieldDefaults.colors(),
-    // SingleLine keeps the pill shape and the fixed [TextFieldHeight]; a multiline limit
-    // drops both so the caller's own height/shape apply (see [shape]).
+    // SingleLine keeps the pill shape and the fixed [TextFieldHeight] (a minimum when [minHeight]
+    // is passed); a multiline limit drops both so the caller's own height/shape apply (see [shape]).
     lineLimits: TextFieldLineLimits = TextFieldLineLimits.SingleLine,
     shape: Shape? = null,
-    // Overrides the multiline branch's own minimum. A caller that wants a field which starts
+    // Multiline: overrides the branch's own minimum. A caller that wants a field which starts
     // as a one line pill and grows only when the words need it passes the single line height
     // here; without it a multiline field is 128dp tall the moment it is composed, which is a
     // box rather than a pill no matter what [shape] says.
+    // Single line: null keeps the fixed [TextFieldDefaults.SingleLineHeight], exactly as every
+    // caller has always had it. Passing a value makes the height a minimum of that value instead,
+    // so the field grows with its text and its own [contentPadding] at large text sizes.
     minHeight: Dp? = null,
     // Overrides the inset between the box's edge and its text. Defaults keep every existing
     // field exactly as it was; a field that is the whole point of its screen wants a roomier
@@ -257,7 +260,14 @@ private fun textFieldLayout(
 ): TextFieldLayout =
     if (lineLimits == TextFieldLineLimits.SingleLine) {
         TextFieldLayout(
-            heightModifier = Modifier.height(TextFieldHeight),
+            // Fixed unless the caller opts in with minHeight, so no existing field changes at any
+            // text size. With it the height is a floor: one line of text plus the content padding
+            // is taller than 48dp at large text, and the field has to grow rather than clip it.
+            heightModifier = if (minHeight != null) {
+                Modifier.heightIn(min = minHeight)
+            } else {
+                Modifier.height(TextFieldHeight)
+            },
             containerModifier = Modifier,
             shape = shape ?: RoundedCornerShape(TextFieldHeight.div(2)),
             verticalPadding = SpacingTokens.XS,
@@ -334,6 +344,8 @@ object TextFieldDefaults {
      * The height a single line field is, published so a multiline caller can ask to start at
      * exactly one line and grow from there. Passed as `minHeight`, it is what makes a field a
      * pill on open rather than a box, without giving up multiline once the words need it.
+     * Passed as `minHeight` to a single line field it makes this height a minimum, not a fixed
+     * value, so the field grows with its text.
      */
     val SingleLineHeight = TextFieldHeight
 

@@ -69,6 +69,11 @@ kotlin {
                 // to catch a defaulted field or a light/dark colour that was never differentiated.
                 // Common code has no kotlin.reflect, which is why that test is JVM-only.
                 implementation(kotlin("reflect"))
+
+                // createComposeRule() launches a ComponentActivity through ActivityScenario, which needs a
+                // manifest to resolve the launch intent. This artifact ships the debug-only one, and the
+                // snapshot convention plugin does not add it (the snapshot tests build their activity directly).
+                implementation(libs.test.composeUiTestManifest)
             }
         }
 

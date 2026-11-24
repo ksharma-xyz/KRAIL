@@ -47,6 +47,14 @@ class TripPlannerNavigatorImplTest {
     }
 
     @Test
+    fun `Manage stop labels opens as a plain push of its route so back lands on the screen that opened it`() {
+        navigator.navigateToManageStopLabels()
+        navigator.goBack()
+
+        assertEquals(listOf("goTo:" + ManageStopLabelsRoute, "pop"), base.calls)
+    }
+
+    @Test
     fun `going back pops one route`() {
         navigator.goBack()
 

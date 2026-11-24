@@ -36,6 +36,9 @@ internal fun EntryProviderScope<NavKey>.SettingsEntry(
             onChangeThemeClick = {
                 tripPlannerNavigator.navigateToThemeSelection()
             },
+            onManageStopLabelsClick = {
+                tripPlannerNavigator.navigateToManageStopLabels()
+            },
             onBackClick = {
                 tripPlannerNavigator.goBack()
             },

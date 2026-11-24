@@ -14,6 +14,7 @@ import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.settings.SettingsScreen
 import xyz.ksharma.krail.trip.planner.ui.settings.story.OurStoryScreen
 import xyz.ksharma.krail.trip.planner.ui.state.settings.story.OurStoryState
+import kotlin.test.assertEquals
 
 /**
  * Settings and Our story on every device profile (`docs/testing/DEVICE_PROFILES.md`): every control stands inside the safe area
@@ -31,12 +32,22 @@ class SettingsDeviceMatrixTest {
     @Test
     fun `Settings keeps every control inside the safe area on every device`() =
         matrix.forEachDeviceProfile(screen = "SettingsScreen") {
+            var manageStopLabelsTaps = 0
             setContent(theme = { BareKrailTheme(content = it) }) {
-                SettingsScreen(appVersion = "1.0.0", showDebugConfig = true, onBackClick = {})
+                SettingsScreen(
+                    appVersion = "1.0.0",
+                    showDebugConfig = true,
+                    onBackClick = {},
+                    onManageStopLabelsClick = { manageStopLabelsTaps++ },
+                )
             }
             assertNothingInteractiveUnderSystemBars()
             assertTouchReaches(onNodeWithContentDescription("Back"))
             assertTouchReaches(onNodeWithTag(TripPlannerTestTags.SETTINGS_ITEM_THEME))
+            // The row Search Stop's Manage button moved to: a real touch at its middle, in this profile's window, reaches it.
+            assertTouchReaches(onNodeWithTag(TripPlannerTestTags.SETTINGS_ITEM_MANAGE_LABELS)) {
+                assertEquals(1, manageStopLabelsTaps, "${profile.name}: a touch on Manage stop labels did not open it")
+            }
             assertScrollEndClearsBottomBar(onNode(hasScrollAction()))
         }
 

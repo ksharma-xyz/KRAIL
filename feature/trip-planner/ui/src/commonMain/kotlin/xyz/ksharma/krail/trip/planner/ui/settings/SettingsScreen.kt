@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import krail.feature.trip_planner.ui.generated.resources.Res
 import krail.feature.trip_planner.ui.generated.resources.ic_heart
+import krail.feature.trip_planner.ui.generated.resources.ic_location_on
 import krail.feature.trip_planner.ui.generated.resources.ic_paint
 import krail.feature.trip_planner.ui.generated.resources.ic_pen
 import krail.feature.trip_planner.ui.generated.resources.ic_star
@@ -53,6 +54,7 @@ fun SettingsScreen(
     showDebugConfig: Boolean = false,
     onBackClick: () -> Unit = {},
     onChangeThemeClick: () -> Unit = {},
+    onManageStopLabelsClick: () -> Unit = {},
     onReferFriendClick: () -> Unit = {},
     onRateAppClick: () -> Unit = {},
     onAboutUsClick: () -> Unit = {},
@@ -89,6 +91,15 @@ fun SettingsScreen(
                         onClick = {
                             onChangeThemeClick()
                         },
+                    )
+                }
+
+                item(key = "settings-manage-stop-labels") {
+                    SettingsItem(
+                        icon = painterResource(Res.drawable.ic_location_on),
+                        text = "Manage stop labels",
+                        modifier = Modifier.testTag(TripPlannerTestTags.SETTINGS_ITEM_MANAGE_LABELS),
+                        onClick = onManageStopLabelsClick,
                     )
                 }
 

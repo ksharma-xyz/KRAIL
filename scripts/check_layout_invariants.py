@@ -45,8 +45,13 @@ TEST_SEARCH_ROOTS = (
 
 
 # The side inset every floating surface pads by. It reads safeDrawing, which is the one inset that
-# carries a side on both platforms, and it is the one file allowed to name the display cutout.
+# carries a side on both platforms, so it names no cutout of its own.
 SIDE_SAFE_INSETS_FILE = "taj/src/commonMain/kotlin/xyz/ksharma/krail/taj/modifier/SideSafeInsets.kt"
+
+# The device profile helper, which never ships. It names the cutout to deliver one to a screen under
+# test, the way the platform does on an Android phone in landscape, so it is the one other file
+# allowed to.
+DEVICE_INSETS_FILE = "core/testing/src/androidMain/kotlin/xyz/ksharma/krail/core/testing/device/DeviceInsets.kt"
 
 # Source sets that hold tests, matched by directory and never by file name. A test dispatches a
 # cutout inset on purpose, to prove what the screen does with it.
@@ -132,9 +137,19 @@ def check_single_ime_authority() -> list[str]:
     return problems
 
 
-def strip_kotlin_comments(text: str) -> str:
-    """Drops block and line comments so a check reads code rather than prose."""
-    text = re.sub(r"/\*.*?\*/", "", text, flags=re.DOTALL)
+def strip_kotlin_comments(text: str, keep_lines: bool = False) -> str:
+    """Drops block and line comments so a check reads code rather than prose.
+
+    With [keep_lines] a block comment leaves its newlines behind, so a line number counted in the
+    result is the line number in the file. Without it the text is shorter, which is fine for a
+    check that only asks whether something appears.
+    """
+    text = re.sub(
+        r"/\*.*?\*/",
+        (lambda match: "\n" * match.group(0).count("\n")) if keep_lines else "",
+        text,
+        flags=re.DOTALL,
+    )
     return re.sub(r"//[^\n]*", "", text)
 
 
@@ -181,7 +196,7 @@ def non_test_kotlin_files(root: Path):
 
 
 def check_no_raw_display_cutout(root: Path = ROOT) -> list[str]:
-    """No screen pads by the display cutout. The one shared side modifier is the exception.
+    """No screen pads by the display cutout. The shared side modifier and the test helper are the exceptions.
 
     `WindowInsets.displayCutout.only(Horizontal)` is the inset Android reports a side inset as,
     and on iOS it is zero at the sides. Compose on iOS put the iPhone Duo's 84 pt side strip in
@@ -193,11 +208,12 @@ def check_no_raw_display_cutout(root: Path = ROOT) -> list[str]:
     source sets are skipped: a test dispatches a cutout inset on purpose.
     """
     problems: list[str] = []
-    allowed = (root / SIDE_SAFE_INSETS_FILE).resolve()
+    allowed = {(root / SIDE_SAFE_INSETS_FILE).resolve(), (root / DEVICE_INSETS_FILE).resolve()}
     for path in non_test_kotlin_files(root):
-        if path.resolve() == allowed:
+        if path.resolve() in allowed:
             continue
-        for number, line in enumerate(strip_kotlin_comments(path.read_text()).splitlines(), start=1):
+        code = strip_kotlin_comments(path.read_text(), keep_lines=True)
+        for number, line in enumerate(code.splitlines(), start=1):
             if not DISPLAY_CUTOUT.search(line):
                 continue
             rel = path.relative_to(root)

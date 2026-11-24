@@ -1,5 +1,9 @@
 package xyz.ksharma.krail.core.testing.device
 
+private const val IPAD_SOURCE = "measured width, assumed height and insets: the window width from " +
+    "docs/TABLET_FOLDABLE_UX.md (iOS simulators, 11 Oct 2026), the height from the device's screen, " +
+    "a status bar and a home indicator guessed"
+
 /**
  * The devices every screen is composed on. The table, the reasoning for each shape and every row's source are in
  * `docs/testing/DEVICE_PROFILES.md`; keep the two in step (a test fails when a name is missing from that page).
@@ -199,8 +203,7 @@ object DeviceProfiles {
         density = 2.0f,
         insets = SystemInsets(top = 24, bottom = 20),
         shape = PlatformInsetShape.IOS,
-        source = "measured width, assumed height and insets: the window width from docs/TABLET_FOLDABLE_UX.md " +
-            "(iOS simulators, 11 Oct 2026), the height from the device's screen, a status bar and a home indicator guessed",
+        source = IPAD_SOURCE,
     )
 
     val IPadMiniLandscape = DeviceProfile(
@@ -210,8 +213,7 @@ object DeviceProfiles {
         density = 2.0f,
         insets = SystemInsets(top = 24, bottom = 20),
         shape = PlatformInsetShape.IOS,
-        source = "measured width, assumed height and insets: the window width from docs/TABLET_FOLDABLE_UX.md " +
-            "(iOS simulators, 11 Oct 2026), the height from the device's screen, a status bar and a home indicator guessed",
+        source = IPAD_SOURCE,
     )
 
     val IPadPro13Portrait = DeviceProfile(
@@ -221,8 +223,7 @@ object DeviceProfiles {
         density = 2.0f,
         insets = SystemInsets(top = 24, bottom = 20),
         shape = PlatformInsetShape.IOS,
-        source = "measured width, assumed height and insets: the window width from docs/TABLET_FOLDABLE_UX.md " +
-            "(iOS simulators, 11 Oct 2026), the height from the device's screen, a status bar and a home indicator guessed",
+        source = IPAD_SOURCE,
     )
 
     val IPadPro13Landscape = DeviceProfile(
@@ -232,8 +233,7 @@ object DeviceProfiles {
         density = 2.0f,
         insets = SystemInsets(top = 24, bottom = 20),
         shape = PlatformInsetShape.IOS,
-        source = "measured width, assumed height and insets: the window width from docs/TABLET_FOLDABLE_UX.md " +
-            "(iOS simulators, 11 Oct 2026), the height from the device's screen, a status bar and a home indicator guessed",
+        source = IPAD_SOURCE,
     )
 
     /** Every profile, narrowest first on Android then iOS. A matrix test runs on all of these unless it says otherwise. */

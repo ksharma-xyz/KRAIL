@@ -14,6 +14,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onChildren
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -33,6 +34,7 @@ import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
@@ -77,6 +79,13 @@ class SearchStopScreenInteractionTest {
         override fun hide() = Unit
     }
 
+    private val workSet = StopLabel(
+        emoji = "💼",
+        label = "Work",
+        stopId = "stop_town_hall",
+        stopName = "Town Hall",
+    )
+
     /** System back, the one step back there is now that the box has no back arrow. */
     private fun pressSystemBack() {
         composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
@@ -117,11 +126,11 @@ class SearchStopScreenInteractionTest {
         }
 
         // The label row leads the card because a label is set, showing the
-        // one set label (Home) plus the trailing Manage button. Work stays hidden
+        // one set label (Home) and nothing after it. Work stays hidden
         // because it's unset. "Home" renders twice total (pill row + Central
         // Station's own inline pill) — see assignedStop_showsLabelPillInline.
         composeRule.onAllNodesWithText("Home").assertCountEquals(2)
-        composeRule.onNodeWithText("Manage").assertIsDisplayed()
+        composeRule.onNodeWithText("Manage").assertDoesNotExist()
     }
 
     // endregion
@@ -692,10 +701,11 @@ class SearchStopScreenInteractionTest {
     // (assigningLabel, onUnsetLabelClick, effectiveOnStopSelect) was unreachable
     // dead code and has been removed.
 
-    // region Manage labels affordance
+    // region The label row has no Manage button
 
+    // Manage stop labels lives in Settings now (SettingsScreenRowsTest holds the row and its tap).
     @Test
-    fun manageButton_isVisible_wheneverPillRowRenders() {
+    fun thereIsNoManageButtonToTap_whenALabelIsSet() {
         composeRule.setContent {
             PreviewTheme {
                 SearchStopScreen(
@@ -705,10 +715,29 @@ class SearchStopScreenInteractionTest {
             }
         }
 
-        // The trailing "Manage" button is the sole entry point to
-        // ManageStopLabelsSheet (change/remove/delete/reorder). It must be present
-        // whenever the pill row renders (i.e. at least one label is set).
-        composeRule.onNodeWithText("Manage").assertIsDisplayed()
+        // The row still renders for a set label, and the old trailing button is not in it, by its words
+        // or by the name a screen reader gave it.
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_LABEL_ROW).assertIsDisplayed()
+        composeRule.onAllNodesWithText("Manage", substring = true, ignoreCase = true).assertCountEquals(0)
+        composeRule.onAllNodesWithContentDescription("Manage", substring = true, ignoreCase = true)
+            .assertCountEquals(0)
+    }
+
+    @Test
+    fun theLabelRowHoldsOnlyTheSetLabels_withNothingAfterTheLastOne() {
+        composeRule.setContent {
+            PreviewTheme {
+                SearchStopScreen(
+                    searchStopState = SearchStopFixtures.recentWithHomeSet().copy(
+                        stopLabels = persistentListOf(SearchStopFixtures.homeSet, workSet),
+                    ),
+                    onEvent = {},
+                )
+            }
+        }
+
+        // Two labels are set, so the row has two items. A third would be a trailing cell of some kind.
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_LABEL_ROW).onChildren().assertCountEquals(2)
     }
 
     @Test
@@ -717,72 +746,15 @@ class SearchStopScreenInteractionTest {
             PreviewTheme {
                 SearchStopScreen(
                     // Fresh install: Home/Work seeded but unset. No pills to show, so
-                    // the trailing Manage button shouldn't float there alone either.
+                    // the row is not drawn at all.
                     searchStopState = SearchStopFixtures.recentWithDefaults(),
                     onEvent = {},
                 )
             }
         }
 
+        composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_LABEL_ROW).assertDoesNotExist()
         composeRule.onNodeWithText("Manage").assertDoesNotExist()
-    }
-
-    @Test
-    fun tappingManageButton_invokesOnManageLabelsClick() {
-        var manageClicked = false
-        composeRule.setContent {
-            PreviewTheme {
-                SearchStopScreen(
-                    searchStopState = SearchStopFixtures.recentWithHomeSet(),
-                    onEvent = {},
-                    onManageLabelsClick = { manageClicked = true },
-                )
-            }
-        }
-
-        // ManageStopLabelsScreen is a real nav destination owned by the caller
-        // (ManageStopLabelsEntry), not rendered inline here — this screen only owns
-        // firing the callback.
-        composeRule.onNodeWithText("Manage").performClick()
-
-        assert(manageClicked) { "expected onManageLabelsClick to fire" }
-    }
-
-    @Test
-    fun tappingManageButton_hidesKeyboardBeforeInvokingCallback() {
-        val events = mutableListOf<String>()
-        val spyKeyboardController = object : SoftwareKeyboardController {
-            override fun show() = Unit
-            override fun hide() {
-                events += "hide"
-            }
-        }
-        composeRule.setContent {
-            PreviewTheme {
-                CompositionLocalProvider(LocalSoftwareKeyboardController provides spyKeyboardController) {
-                    SearchStopScreen(
-                        searchStopState = SearchStopFixtures.recentWithHomeSet(),
-                        onEvent = {},
-                        onManageLabelsClick = { events += "manageClicked" },
-                    )
-                }
-            }
-        }
-
-        // Same "close keyboard before navigating" order as the back button
-        // (the back arrow in the bar): the keyboard must hide before the nav
-        // callback fires, otherwise it stays up mid-navigation.
-        composeRule.onNodeWithText("Manage").performClick()
-
-        // Assert ordering rather than an exact call count: a "hide" must precede
-        // "manageClicked". The screen lands on the list, so its showMap effect calls
-        // show() on first composition, not hide() — but that is incidental here, and
-        // ordering stays the right assertion either way.
-        val manageIndex = events.indexOf("manageClicked")
-        assert(manageIndex > 0) { "expected onManageLabelsClick to fire, got $events" }
-        assert(events.subList(0, manageIndex).contains("hide")) {
-            "expected keyboard to hide before onManageLabelsClick fired, got $events"
-        }
     }
 
     // endregion

@@ -32,7 +32,6 @@ internal fun SearchStopListContent(
     searchStopState: SearchStopState,
     recentsCard: RecentsCard?,
     actions: StopRowActions,
-    onManageClick: () -> Unit,
     onOpenMap: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
@@ -43,12 +42,11 @@ internal fun SearchStopListContent(
             recentsCard,
             searchStopState,
             actions,
-            onManageClick,
             onOpenMap,
             modifier,
         )
         is ListState.Results ->
-            ResultsList(listState, showLabelRow, searchStopState, actions, onManageClick, onOpenMap, modifier)
+            ResultsList(listState, showLabelRow, searchStopState, actions, onOpenMap, modifier)
         ListState.NoMatch -> NoMatchContent(searchStopState, actions, modifier)
         ListState.Error -> ErrorMessage(
             title = "Something went wrong!",
@@ -79,7 +77,6 @@ private fun RecentsList(
     recentsCard: RecentsCard?,
     searchStopState: SearchStopState,
     actions: StopRowActions,
-    onManageClick: () -> Unit,
     onOpenMap: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
@@ -93,7 +90,6 @@ private fun RecentsList(
             show = showLabelRow,
             stopLabels = searchStopState.stopLabels,
             actions = actions,
-            onManageClick = onManageClick,
         )
         selectOnMapItem(onOpenMap)
         recentsCardSection(
@@ -110,7 +106,6 @@ private fun ResultsList(
     showLabelRow: Boolean,
     searchStopState: SearchStopState,
     actions: StopRowActions,
-    onManageClick: () -> Unit,
     onOpenMap: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
@@ -126,7 +121,6 @@ private fun ResultsList(
                 show = showLabelRow,
                 stopLabels = searchStopState.stopLabels,
                 actions = actions,
-                onManageClick = onManageClick,
             )
             selectOnMapItem(onOpenMap)
             searchResultsList(searchResults = listState.results, actions = actions)

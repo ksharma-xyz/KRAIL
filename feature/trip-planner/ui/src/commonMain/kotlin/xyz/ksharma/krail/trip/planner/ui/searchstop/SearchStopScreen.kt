@@ -136,9 +136,6 @@ fun SearchStopScreen(
     // The saved name of the label this screen is choosing a stop for, exactly as saved. Only the label field reads it,
     // for its fixed prompt (Search and select Home).
     labelName: String? = null,
-    // Manage is a real nav destination (ManageStopLabelsRoute), not a sheet owned by
-    // this screen. The caller (SearchStopEntry) wires this to actual navigation.
-    onManageLabelsClick: () -> Unit = {},
     // Counts each stretch of the map being on screen, in either layout, for analytics. Null counts nothing.
     mapOpen: MapOpenTracker? = null,
 ) {
@@ -253,14 +250,6 @@ fun SearchStopScreen(
             )
         },
     )
-    // Same "close keyboard before navigating" order as the back button: otherwise the keyboard stays
-    // up mid-navigation and dismisses itself awkwardly once ManageStopLabelsScreen is on screen.
-    val effectiveOnManageLabelsClick: () -> Unit = {
-        keyboard?.hide()
-        focusRequester.freeFocus()
-        onManageLabelsClick()
-    }
-
     LaunchedEffect(backClicked) {
         if (backClicked) {
             goBack()
@@ -297,7 +286,6 @@ fun SearchStopScreen(
                     if (step.exit) backClicked = true
                 },
                 onMapTap = { onFlowEvent(SearchStopFlowEvent.MapTapped) },
-                onManageClick = effectiveOnManageLabelsClick,
                 onStopSelect = onPick,
                 onEvent = onEvent,
                 fieldType = fieldType,
@@ -313,7 +301,6 @@ fun SearchStopScreen(
                 rows = rows,
                 location = location,
                 onBack = { backClicked = true },
-                onManageClick = effectiveOnManageLabelsClick,
                 fieldType = fieldType,
                 dualPaneMapUiState = dualPaneMapUiState,
                 onDualPaneMapEvent = onDualPaneMapEvent,
@@ -551,7 +538,6 @@ private fun SearchStopScreenSinglePane(
     fieldType: SearchStopFieldType,
     onBack: () -> Unit,
     onMapTap: () -> Unit,
-    onManageClick: () -> Unit,
     onStopSelect: (StopItem) -> Unit,
     onEvent: (SearchStopUiEvent) -> Unit,
     modifier: Modifier = Modifier,
@@ -703,7 +689,6 @@ private fun SearchStopScreenSinglePane(
                     searchStopState = searchStopState,
                     fieldType = fieldType,
                     rows = rows,
-                    onManageClick = onManageClick,
                     onOpenMap = if (searchStopState.isMapsAvailable) onMapTap else null,
                 )
             }
@@ -720,7 +705,6 @@ private fun ColumnScope.SearchStopListSection(
     searchStopState: SearchStopState,
     fieldType: SearchStopFieldType,
     rows: StopRowActions,
-    onManageClick: () -> Unit,
     onOpenMap: (() -> Unit)?,
 ) {
     val userLocation = (searchStopState.mapUiState as? MapUiState.Ready)?.mapDisplay?.userLocation
@@ -748,7 +732,6 @@ private fun ColumnScope.SearchStopListSection(
         searchStopState = searchStopState,
         recentsCard = card,
         actions = rows,
-        onManageClick = onManageClick,
         onOpenMap = onOpenMap,
         modifier = Modifier.weight(1f, fill = false),
     )
@@ -792,7 +775,6 @@ private fun SearchStopScreenDualPane(
     location: LocationPillState,
     fieldType: SearchStopFieldType,
     onBack: () -> Unit,
-    onManageClick: () -> Unit,
     onStopSelect: (StopItem) -> Unit,
     modifier: Modifier = Modifier,
     dualPaneMapUiState: MapUiState? = null,
@@ -824,7 +806,6 @@ private fun SearchStopScreenDualPane(
                         searchStopState = searchStopState,
                         fieldType = fieldType,
                         rows = rows,
-                        onManageClick = onManageClick,
                         onOpenMap = null,
                     )
                 }

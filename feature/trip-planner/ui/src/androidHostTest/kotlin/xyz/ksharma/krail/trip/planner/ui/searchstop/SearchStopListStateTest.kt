@@ -116,7 +116,7 @@ class SearchStopListStateTest {
 
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_RECENTS_LIST).assertIsDisplayed()
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_STOP_LABEL_ROW).assertIsDisplayed()
-        composeRule.onNodeWithText("Manage").assertIsDisplayed()
+        composeRule.onNodeWithText("Manage").assertDoesNotExist()
         composeRule.onNodeWithText("Select on map").assertIsDisplayed()
         composeRule.onNodeWithText("Recent").assertIsDisplayed()
         composeRule.onNodeWithText("Clear all").assertIsDisplayed()

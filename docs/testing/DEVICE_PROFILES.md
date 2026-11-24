@@ -1,6 +1,7 @@
 # Device profiles: one screen, every device
 
-Part of [TESTING.md](../../TESTING.md).
+Part of [TESTING.md](../../TESTING.md). Which device is checked by what, across the host matrix, the Maestro runs and hand QA, and
+what nothing covers, is in [DEVICE_COVERAGE.md](DEVICE_COVERAGE.md).
 
 A screen is composed on a list of devices whose size, density, font scale and system insets are
 fixed in one table, with the insets delivered the way that platform delivers them. The runner

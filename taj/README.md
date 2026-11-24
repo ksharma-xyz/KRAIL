@@ -11,6 +11,12 @@ Short version: something drawn **on top of** the colour means `themeGroundColor(
 drawn **on top of** something means `themeInkColor()`; nothing read off it means
 `themeDecorColor()`.
 
+## Building or changing a component
+
+Read **[COMPONENT_GUIDELINES.md](COMPONENT_GUIDELINES.md)** before and after building or changing a component, or a screen made
+from them. It says which insets belong to the screen and which modifiers to use, the width and text checks, the window sizes the
+app branches on, what to run, and what done means.
+
 ## Snapshot tests
 
 The rest of this file covers snapshot tests for the Taj design system components.

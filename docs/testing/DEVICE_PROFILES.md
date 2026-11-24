@@ -223,8 +223,9 @@ helper that places it as Material 3 does, at the foot of the window, centred and
 `SheetContent` around it. `ModalSheetContentDeviceMatrixTest` holds the container on every profile (a control at each end of a
 full width row stands clear of a strip, and the content is padded by exactly the part of each side inset that the sheet's own
 edge does not clear). A sheet body's own test, `DateTimeSelectorDeviceMatrixTest` for Plan your trip, composes the real screen
-the same way. Nothing a host test can run ties the real sheet to `SheetContent`, so that link is checked on the simulator (see the Gaps in
-[DEVICE_COVERAGE.md](DEVICE_COVERAGE.md)).
+the same way. No host test can see what ties the real sheet to `SheetContent`, so `check_layout_invariants.py` reads the three files and fails when
+the link is gone (the common file stops calling `sideSafeInsets`, an actual stops using `SheetContent`, or the iOS reduced motion
+overlay stops padding its content). The simulator is the other check (see the Gaps in [DEVICE_COVERAGE.md](DEVICE_COVERAGE.md)).
 
 ---
 
@@ -233,6 +234,7 @@ the same way. Nothing a host test can run ties the real sheet to `SheetContent`,
 | Guard | Catches | Where |
 |---|---|---|
 | `check_layout_invariants.py`, raw cutout check | `WindowInsets.displayCutout` or its import in non test Kotlin anywhere but `Modifier.sideSafeInsets()` and the helper's own `DeviceInsets.kt` | CI, `fullQualityChecks.sh`, pre push |
+| `check_layout_invariants.py`, sheet content check | a taj `ModalBottomSheet` actual that no longer puts its content in `SheetContent`, `SheetContent` no longer calling `sideSafeInsets`, or the iOS reduced motion overlay no longer padding its content | CI, `fullQualityChecks.sh`, pre push |
 | `DeviceMatrixAdoptionGuardTest` | a top level `XxxScreen` in a `*/ui/src/commonMain` source set with no matrix test naming it, unless it is in `config/device-matrix-baseline.txt` with a reason; and a stale baseline entry | `testAndroidHostTest` |
 
 The baseline only shrinks (the ratchet contract in [GUARDS.md](GUARDS.md)). Adding a screen means

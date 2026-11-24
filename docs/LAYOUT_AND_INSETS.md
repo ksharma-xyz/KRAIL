@@ -179,6 +179,7 @@ it) would get sheet content 46 dp narrower and off centre. The insets and the wi
 sheet's window opens, and passed in, because the sheet's own composition has been seen to report an inset as 0. A sheet body
 does not call `sideSafeInsets()` and needs no `contentWindowInsets` for the sides. Test a body by composing it through
 `SheetContent` in a matrix test; `DateTimeSelectorDeviceMatrixTest` and `ModalSheetContentDeviceMatrixTest` are the examples.
+`scripts/check_layout_invariants.py` fails when either platform sheet stops using `SheetContent`, or `SheetContent` stops padding.
 
 Cost: layout only. No API call, no payload, no storage, no timer and no battery change.
 

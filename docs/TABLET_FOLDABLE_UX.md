@@ -152,9 +152,10 @@ SearchStop). `TimeTableRoute` navigation still works via back-stack push.
   `MapStopSelectionPane` (singleton `MapStopSelectionViewModel`). Users can
   explore nearby stops and view stop details. A tapped stop opens the floating stop card,
   whose Go here sets the destination and whose Save as pills give the stop a label.
-- Trip planning is done via the SearchStopRow at the bottom of the left pane.
-  On tablet and foldable-unfolded the row is **always expanded**; only
-  phone-landscape collapses it to a button (see compact-height rules below).
+- Trip planning starts from the search capsule at the bottom of the left pane
+  (`HomeSearchCapsule`, see "The classic home" in [`MAP_HOME_UX.md`](MAP_HOME_UX.md)). It is the same
+  one row in every posture, capped at 480 dp and centred in the pane, so nothing collapses to a button,
+  and the labels are one sideways row at the top of the list.
 - **One column** (rule 45 in [`MAP_HOME_UX.md`](MAP_HOME_UX.md)): the trip cards, the Park &
   Ride section and the search row share one column, `min(pane width, 560 dp)` and centred
   (`columnWidthFor` in `SavedTripsColumn.kt`). The Home, Work and Park & Ride chips sit directly above the

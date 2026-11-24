@@ -43,7 +43,7 @@ need to change; until then, do not rely on a pull request running any device flo
 | iPhone Pro, landscape | **partial**: `IPhoneProLandscape`, insets guessed to arrive like the Duo's | **NOT COVERED** | **partial**: the rotation sweep turns the iPhone 17 simulator to landscape | iPhone Pro simulator, by hand. **partial** |
 | iPad mini | **partial**: `IPadMiniPortrait` (single pane) and `IPadMiniLandscape` (dual pane). Widths measured, heights and insets guessed | **NOT COVERED**: the iPad leg is the Pro | **NOT COVERED** | iPad simulators, window widths checked 11 Oct 2026. **partial** |
 | iPad Pro 13 inch | **partial**: `IPadPro13Portrait` and `IPadPro13Landscape`, both dual pane. Widths measured, heights and insets guessed | **partial**: iPad Pro 13 inch (M5) leg, once merged | **NOT COVERED** | iPad simulators, window widths checked 11 Oct 2026. **partial** |
-| iPhone Duo, closed (outer screen) | **covered**: `IPhoneDuoOuter`, insets **measured** by a Compose probe on 24 Nov 2026 | **partial**: Duo leg, once merged, and skipped with a warning if the runner image has no such device type | **NOT COVERED** | iPhone Duo simulator, outer screen: the inset probe, and the swap and go taps before and after the fix, 24 Nov 2026. **covered** by hand |
+| iPhone Duo, closed (outer screen) | **covered**: `IPhoneDuoOuter`, insets **measured** by a Compose probe on 24 Nov 2026. The Plan your trip sheet body and every sheet's container (`SheetContent`) run on it as well, composed as the sheet places them, since a sheet's own window cannot be shown in a host test | **partial**: Duo leg, once merged, and skipped with a warning if the runner image has no such device type | **NOT COVERED** | iPhone Duo simulator, outer screen: the inset probe, and the swap and go taps before and after the fix, 24 Nov 2026, and a full walk the same day that found the Plan your trip sheet at full height drawing Reset and the date chevron under the status pill (fixed in taj's `SheetContent`, not yet re-checked on the simulator). **covered** by hand |
 | iPhone Duo, open (inner screen) | **partial**: `IPhoneDuoInnerPortrait` and `IPhoneDuoInnerLandscape` are a size only stand in, with guessed insets, never a measurement | **NOT COVERED**: outer screen only | **NOT COVERED** | **NOT COVERED**: the simulator cannot be driven to the inner screen headless |
 | iPhone Duo, rotation | **NOT COVERED**: the outer screen has no landscape profile | **NOT COVERED** | **NOT COVERED**: the rotation sweep runs on the iPhone 17 | Not done |
 | Half folded or table top posture | Out of scope, by decision in [TABLET_FOLDABLE_UX.md](../TABLET_FOLDABLE_UX.md): width breakpoints cover the common cases, and posture aware adaptation is revisited only if there is reason to | Out of scope | Out of scope | Out of scope |
@@ -85,9 +85,17 @@ What no automation here can cover, and so what a human must check on real hardwa
    run. The host profiles cover a static window on each side of the edge, and the pane test covers the switch, but not the live
    change of a screen that is already showing.
 8. **The map.** The host matrix replaces the map with a placeholder, so the map's own controls, the location button on each map
-   screen, and the camera are measured only by hand or by the weekly flows that tap them.
+   screen, and the camera are measured only by hand or by the weekly flows that tap them. Two location buttons are read in source
+   and never measured: the Timetable's `JourneyMap` and the Park and Ride `ParkRideMapPane` stand theirs at the bottom end with
+   `navigationBarsPadding()` and no side inset, so on the Duo outer screen they stand inside the 84 pt strip. Whether a tap there
+   reaches the app is not known: the status pill is the system's, but how far down the strip the system takes the touch has been
+   measured only near the top of the screen. Tap both on the Duo, at the bottom right.
 9. **Dynamic Type beyond the app's own font scale.** The matrix runs the one 320 dp frame at 200 percent text. A larger system
    setting on iOS is not run.
+10. **A sheet's own window.** A host test cannot show the window a `ModalBottomSheet` opens, and the iOS sheet is not compiled for
+    the host tests, so the matrix proves the padding of `SheetContent` but nothing automated checks that the real sheets use it, and
+    no automation drags a real sheet to full height. Do that on the Duo outer screen for every sheet (Plan
+    your trip, Service Alerts, the stop sheet, Assign a label) and tap the control at the top right of each.
 
 Before a release, run [MANUAL_TEST_CASES.md](MANUAL_TEST_CASES.md) section 2 on the hardware rows it lists, and walk gaps 1 to 5
 above. For a change to a screen or a floating control, the rows to think about are in

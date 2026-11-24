@@ -162,6 +162,24 @@ ones that matter. `DeviceMatrixAdoptionGuardTest` fails the build on a `*Screen`
 measured and which are assumed, and what the matrix cannot see are in
 [testing/DEVICE_PROFILES.md](testing/DEVICE_PROFILES.md).
 
+#### Sheets
+
+A `ModalBottomSheet` is the one surface the rule above does not reach from the screen. The sheet opens its own window, which
+runs edge to edge (Compose Multiplatform opens it with `usePlatformInsets = false`), Material 3 pads its content by the vertical
+insets only, and every caller passes empty `contentWindowInsets`, so a sheet as wide as a narrow window drew its content under a
+side strip. On the outer screen of the iPhone Duo, at full height, the Plan your trip sheet's Reset button and its next day
+chevron stood under the status pill, and a tap on Reset opened Control Center. Half height was fine, because the sheet's content
+stood below the pill.
+
+The fix is one place, taj's `SheetContent`, which both platform sheets put their content in: the sheet still draws edge to edge
+and its content is padded by `sideSafeInsets(clearOnEachSide = ...)`. A centred sheet is no wider than
+`BottomSheetDefaults.SheetMaxWidth` (640 dp), so in a wider window it has room at each side already and only the part of an inset
+past that room is padded. Without that, an Android phone in landscape (a camera cutout 46 dp on one side, a sheet 137 dp from
+it) would get sheet content 46 dp narrower and off centre. The insets and the width are read in the caller's composition, before the
+sheet's window opens, and passed in, because the sheet's own composition has been seen to report an inset as 0. A sheet body
+does not call `sideSafeInsets()` and needs no `contentWindowInsets` for the sides. Test a body by composing it through
+`SheetContent` in a matrix test; `DateTimeSelectorDeviceMatrixTest` and `ModalSheetContentDeviceMatrixTest` are the examples.
+
 Cost: layout only. No API call, no payload, no storage, no timer and no battery change.
 
 ---

@@ -26,6 +26,11 @@ also why a layout test must not use it (see section 4). The two modifiers below 
 - [ ] Anything that floats over a full-bleed surface, such as a map, stands inside the horizontal safe area with
       `Modifier.sideSafeInsets()` from `xyz.ksharma.krail.taj.modifier` (LAYOUT_AND_INSETS.md 1.6). It reads `safeDrawing`,
       the one inset that carries a side on both Android and iOS.
+- [ ] A sheet body never pads for the sides itself. `ModalBottomSheet` opens its own window, which runs edge to edge, so the
+      screen's insets do not reach it, and taj puts every sheet's content in `SheetContent`, which stands it inside the side
+      safe area (only the part of an inset the centred sheet does not already clear). Do not call `sideSafeInsets()` in a sheet
+      body, and a new sheet goes through `ModalBottomSheet`, never a bare Material 3 sheet or a `Dialog` laid out edge to edge.
+      Compose a sheet body in a matrix test through `SheetContent` (`SheetHost` in the matrix tests does).
 - [ ] Never `WindowInsets.displayCutout`. On iOS it reports 0 at the sides, so a card padded by it ran under the iPhone Duo
       status pill. `scripts/check_layout_invariants.py` fails the build on it in any non test Kotlin file.
 - [ ] A title or control at the very top, where the status bar inset may be zero, uses `cornerClearanceTop()` or

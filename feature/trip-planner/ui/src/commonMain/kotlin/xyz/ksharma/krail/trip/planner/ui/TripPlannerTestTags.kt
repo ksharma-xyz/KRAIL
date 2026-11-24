@@ -58,7 +58,8 @@ object TripPlannerTestTags {
     const val SAVED_TRIPS_CHIP_ROW = "savedtrips.chips"
     const val SAVED_TRIPS_CHIP_PARK_RIDE = "savedtrips.chip.parkride"
 
-    // The classic home's Set Home and Set Work pills, the first row of the list. Each pill carries [homeLabelChip].
+    // The classic home's label row, the first item of the list: every label the rider has, set and unset. Each pill carries
+    // [homeLabelChip].
     const val SAVED_TRIPS_LABEL_PILLS = "savedtrips.pills"
 
     // The theme coloured sheet at the bottom of the classic home, the one that held the search bar. Nothing draws it now.

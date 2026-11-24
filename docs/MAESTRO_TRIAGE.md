@@ -22,6 +22,17 @@ Both legs upload one artifact per run, pass or fail, from
 | Android | `maestro-nightly-android-<run_id>` | `maestro-output/` + `logcat-android.txt` |
 | iOS | `maestro-nightly-ios-<run_id>` | `maestro-output/` only |
 
+The weekly device run, [`maestro-weekly-devices.yml`](../.github/workflows/maestro-weekly-devices.yml), uploads one artifact for
+each leg and keeps it 14 days:
+
+| Leg | Artifact | Contents |
+|---|---|---|
+| Android tablet or fold | `maestro-weekly-android-<leg>-<run_id>` | `maestro-output/<leg>-<posture>/tests/` for each posture, `maestro-output/postures.txt`, and a `logcat-android-<leg>-<posture>.txt` for each |
+| iOS duo, ipad or small-iphone | `maestro-weekly-ios-<leg>-<run_id>` | `maestro-output/` in the layout below, plus `crash-reports/` with any crash report the simulator wrote |
+
+Each leg's job summary on the run page has a table of how every weekly flow ended, so start there and then open the artifact for
+the flow that failed. An iOS leg that shows "skipped: device type not on this runner image" ran nothing and has no artifact to read.
+
 ```
 maestro-output/tests/<timestamp>/
   maestro.log                                  run-level driver log

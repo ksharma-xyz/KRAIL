@@ -412,9 +412,17 @@ Verified against **Maestro 2.8.0**; `setOrientation` needs 2.x.
 |---|---|---|
 | `.maestro/smoke/` | as part of the nightly run | `maestro-nightly.yml` |
 | `.maestro/nightly/` | weekly cron (Sunday 03:00 AEST), `prod/**`, manual dispatch | `maestro-nightly.yml` |
+| `.maestro/weekly/` | weekly cron (Thursday 03:00 AEST), manual dispatch | `maestro-weekly-devices.yml` |
 
-`.maestro/shared/` holds helper flows called via `runFlow`. It sits outside both lanes so a
+`.maestro/shared/` holds helper flows called via `runFlow`. It sits outside every lane so a
 directory run never treats one as a test.
+
+The weekly lane runs real taps on every key control on device types the nightly never sees (the iPhone Duo outer screen, an iPad,
+a small iPhone, an Android tablet and foldable), because a control hidden under a system bar or a status pill on such a screen
+passes every host-side test and fails the first tap. It is a separate workflow, so the nightly is unchanged. It builds the iOS
+app once and gives every device type its own job, and a device type the runner image cannot create is skipped with a line in the
+job summary and run from a desk with `scripts/run_device_matrix_locally.sh`. See
+[`.maestro/README.md`](../../.maestro/README.md#the-weekly-device-run).
 
 Smoke is two flows, cold launch and planning a trip against the real API. It **no longer runs
 on pull requests**: the lane ran a full emulator per PR, was never a required check, and by

@@ -247,8 +247,13 @@ why `MainActivity` must keep `android:windowSoftInputMode="adjustResize"`, why
 `fillMaxSize()` silently does nothing on a non-weighted `Column` child, and the diagnosis
 playbook for when a node is drawn somewhere other than where it was laid out.
 
-`scripts/check_layout_invariants.py` enforces the two mechanical parts and runs inside
-`fullQualityChecks.sh`.
+`scripts/check_layout_invariants.py` enforces the mechanical parts, including a ban on
+`displayCutout` padding (use `Modifier.sideSafeInsets()`), and runs inside `fullQualityChecks.sh`.
+
+A new screen needs a host test that runs it on 12 device profiles with real system bar and side
+insets, `forEachDeviceProfile(screen = "XxxScreen")`; see **`docs/testing/DEVICE_PROFILES.md`**.
+`DeviceMatrixAdoptionGuardTest` fails the build on a screen without one, apart from the few on
+`config/device-matrix-baseline.txt`, which only shrinks.
 
 **When a layout looks wrong on device, measure before theorising.** Log
 `onGloballyPositioned { it.positionInRoot().y }` at every level and compare it against a

@@ -153,6 +153,15 @@ traps, both hit writing `SearchStopSideInsetLayoutTest`:
 The inset that matches iOS on Android is the caption bar type: no other padding call on the screen reads it. Mutation check
 the probe both ways: put `displayCutout` back and the tests must go red.
 
+That probe is now a shared helper, run on 12 device profiles at once, so a new screen does not write its own. On iOS the side
+safe area is in `systemBars`, `safeDrawing`, `safeContent` and `safeGestures`, and `displayCutout` is 0, so anything that pads
+by the cutout alone is wrong on iPhone; on an Android phone in landscape the same inset arrives as `displayCutout`, and on a
+three button bar in landscape it arrives as `navigationBars`. Call `forEachDeviceProfile(screen = "XxxScreen")` in a host test
+and the screen is composed on all of them, with every control held out of the system regions and a real touch sent at the
+ones that matter. `DeviceMatrixAdoptionGuardTest` fails the build on a `*Screen` with no such test. The profiles, which are
+measured and which are assumed, and what the matrix cannot see are in
+[testing/DEVICE_PROFILES.md](testing/DEVICE_PROFILES.md).
+
 Cost: layout only. No API call, no payload, no storage, no timer and no battery change.
 
 ---

@@ -200,9 +200,33 @@ adding its matrix test, not a line to the baseline.
 |---|---|
 | App runtime | None. The helper is in `:core:testing`, which never ships. `Modifier.sideSafeInsets()` is the same `windowInsetsPadding` call every site made before, so no extra layout pass. |
 | Network, storage, timers, battery | None. |
-| CI | Measured, on a warm Gradle daemon. See the table below. |
+| CI | 38 tests added, about 39 s of test class time in total. Measured below. |
 
-CI cost is filled from a real run in the commit that adds the adoption tests.
+Measured on 24 Nov 2026 on a laptop with a warm Gradle daemon, by running both modules' host tests with `--rerun` so nothing
+was cached. Each matrix test runs its screen once per profile, 12 profiles, in a fresh activity each time.
+
+| Test class | Module | Tests | Class time |
+|---|---|---|---|
+| `DeviceMatrixTest` (the helper going red, on a stand in screen) | `:core:testing` | 14 | 8.9 s |
+| `DeviceMatrixAdoptionGuardTest` | `:core:testing` | 9 | 0.6 s |
+| `DeviceProfilesDocTest` | `:core:testing` | 1 | under 0.1 s |
+| `SettingsDeviceMatrixTest` (Settings, Our story) | `:feature:trip-planner:ui` | 2 | 10.2 s |
+| `SavedTripsDeviceMatrixTest` (Saved Trips, map home, each at rest and reordering) | `:feature:trip-planner:ui` | 4 | 5.7 s |
+| `SearchStopDeviceMatrixTest` (map state, Options card, list state) | `:feature:trip-planner:ui` | 3 | 4.9 s |
+| `IntroDeviceMatrixTest` (every `IntroStep`) | `:feature:trip-planner:ui` | 1 | 4.3 s |
+| `DiscoverDeviceMatrixTest` | `:feature:trip-planner:ui` | 1 | 2.3 s |
+| `StopCardDeviceMatrixTest` | `:feature:trip-planner:ui` | 2 | 1.1 s |
+| `TimeTableDeviceMatrixTest` | `:feature:trip-planner:ui` | 1 | 0.7 s |
+
+The two modules together took 55 s wall clock with `--rerun`, which includes Gradle's own task and Robolectric start up. The
+first class to run in a JVM pays the Robolectric start, so `SettingsDeviceMatrixTest`, which ran first, is the high one and the
+others are a fair per profile cost: roughly 0.05 to 0.4 s a profile for a screen, and about 0.25 s for the helper's own
+12 profile tests. `testAndroidHostTest` for `:feature:trip-planner:ui` is the long pole of CI, and these classes add well under a
+minute of test time to it. A screen that is large or animates forever costs more, and the Timetable and Intro tests were
+written to avoid a state that never goes idle.
+
+A new screen's matrix test is one `forEachDeviceProfile` call and costs about 0.5 to 3 s. If that ever matters, the answer is
+`profiles = listOf(...)` on that one call, with the reason in a comment, and not dropping a profile from `DeviceProfiles.all`.
 
 ---
 

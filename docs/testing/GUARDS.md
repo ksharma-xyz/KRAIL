@@ -268,6 +268,8 @@ vacuously. Several guards here carry that pattern; copy it into any new one.
 | `ThemeContrastTest` | `:taj` | every `KrailThemeStyle` yields an AA-passing foreground, and overrides a low-contrast foreground handed to it rather than honouring it | none | self-healing over the enum |
 | `TransportModeContrastTest` | `:feature:trip-planner:ui` | every transport-mode colour clears AA for UI components against both surfaces | in-file, 5 entries with measured ratios | **yes** |
 | `NswTransportLineContrastTest` | `:feature:trip-planner:ui` | every NSW line colour passes on at least one surface and is never failing on both; plus a **surface-token drift guard** asserting the light surface stays near-white and the dark one near-black | in-file `officialNswExceptions`, 5 entries | no — and the set is duplicated across two test methods |
+| `DeviceMatrixAdoptionGuardTest` | `:core:testing` | every top level `@Composable fun XxxScreen(` in a `*/ui/src/commonMain` source set has a host test that calls `forEachDeviceProfile(screen = "XxxScreen")`, which runs it on every profile of [`DEVICE_PROFILES.md`](DEVICE_PROFILES.md); a matrix test that names a `*Screen` that does not exist fails too. It also fails if it finds fewer than 10 screens or no matrix call, so a broken scan is loud | [`config/device-matrix-baseline.txt`](../../config/device-matrix-baseline.txt), 10 entries, `Screen # reason` | **yes**, both ways (screen deleted, or screen now covered), and an entry with no reason fails |
+| `DeviceProfilesDocTest` | `:core:testing` | the geometry table and the inset table in [`DEVICE_PROFILES.md`](DEVICE_PROFILES.md) name exactly the profiles in `DeviceProfiles.all` | the doc tables are the register | **yes**, both directions |
 
 The contrast guards share their thresholds from
 [`ContrastAnalyzer.kt`](../../taj/src/commonMain/kotlin/xyz/ksharma/krail/taj/contrast/ContrastAnalyzer.kt)
@@ -326,6 +328,15 @@ assumptions** CI step. Exits non-zero on a violation. Enforces the mechanical pa
    `getVisibleBoundsInRoot()` (`feature/trip-planner/ui/src/androidHostTest/.../ui/VisibleBounds.kt`)
    instead: it asserts the node is displayed and returns bounds clipped to its ancestors.
 
+4. No non test Kotlin reads `displayCutout` (`WindowInsets.displayCutout`, its import, or the platform
+   property) anywhere. Compose on iOS reports it as 0 at the sides and carries a side safe area in
+   `systemBars` and `safeDrawing`, so a surface padded by the cutout runs under the iPhone Duo status
+   pill while every Android test passes. Pad with `Modifier.sideSafeInsets()` from taj. Comments are
+   stripped first, test source sets are skipped by directory, and the one exempt file is the shared
+   modifier itself, which reads `safeDrawing` and so names nothing. The repo has no pattern for
+   testing its Python scripts, so the proof is a mutation run recorded in the commit that added it:
+   put the cutout padding back and the script prints the file and line and exits 1.
+
 The sibling `check_stale_assumptions.py` in the same CI step is **warning-only**: an analytics
 assumption falling due is not a reason to block an unrelated PR. A scheduled job runs it
 `--strict`.
@@ -343,6 +354,7 @@ assumption falling due is not a reason to block an unrelated PR. A scheduled job
 | `test-wiring-baseline.txt` | 8 — **at its cap** | `verifyNoAdHocBoundaryFakes` (Gradle) |
 | `no-saved-state-allowlist.txt` | 19 | `ViewModelStateDurabilityTest` (`:composeApp`) |
 | `turbine-hygiene-allowlist.txt` | 0 | `TurbineHygieneTest` (`:core:testing`) |
+| `device-matrix-baseline.txt` | 10 | `DeviceMatrixAdoptionGuardTest` (`:core:testing`) |
 | `detekt.yml` | — | every detekt task |
 | `baseline.xml` | 22 IDs | **nothing** — see below |
 

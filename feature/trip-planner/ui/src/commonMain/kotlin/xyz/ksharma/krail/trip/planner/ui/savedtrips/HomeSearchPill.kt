@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
@@ -107,11 +108,20 @@ internal fun HomeSearchPill(
 @Composable
 internal fun homeSearchPillColors(): TextFieldColors = TextFieldDefaults.colors()
 
-/** The microphone: taj's plain [MicIcon] in the bar's content colour, centred in a square touch [slot]. */
+/**
+ * The microphone: taj's plain [MicIcon] in [tint], centred in a square touch [slot]. Shared by the map home's bar and the classic
+ * home's capsule, which sizes the glyph by [iconSize] and draws it outside the text field, so it passes its own [tint].
+ */
 @Composable
-private fun AskKrailMic(slot: Dp, onClick: () -> Unit) {
+internal fun AskKrailMic(
+    slot: Dp,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    iconSize: Dp = KrailTheme.dimensions.iconDefault,
+    tint: Color = LocalTextColor.current,
+) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .size(slot)
             .testTag(TripPlannerTestTags.SEARCH_ROW_ASK_KRAIL)
             .klickable(onClick = onClick)
@@ -124,8 +134,8 @@ private fun AskKrailMic(slot: Dp, onClick: () -> Unit) {
         Image(
             imageVector = MicIcon,
             contentDescription = null,
-            colorFilter = ColorFilter.tint(LocalTextColor.current),
-            modifier = Modifier.size(KrailTheme.dimensions.iconDefault),
+            colorFilter = ColorFilter.tint(tint),
+            modifier = Modifier.size(iconSize),
         )
     }
 }

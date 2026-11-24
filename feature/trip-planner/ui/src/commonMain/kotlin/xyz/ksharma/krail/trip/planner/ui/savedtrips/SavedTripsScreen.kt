@@ -149,11 +149,11 @@ fun SavedTripsScreen(
         mutableStateMapOf<String, Boolean>()
     }
 
-    // The sheet's height as it was last measured, in pixels. The end of the list keeps this much clear so the last card
-    // scrolls fully into view above the sheet, whatever the text size and however many lines the pills wrap onto. It is
-    // kept while the sheet is hidden for reorder mode, so the list does not move when that mode starts. Declared here,
-    // above `body`, for the same reason as the expansion map.
-    var sheetHeightPx by remember { mutableIntStateOf(0) }
+    // The capsule bar's height as it was last measured, in pixels, with its margin and the navigation bar. The end of the
+    // list keeps this much clear so the last card scrolls fully into view above it, whatever the text size, which makes the
+    // capsule taller. It is kept while the bar is hidden for reorder mode, so the list does not move when that mode starts.
+    // Declared here, above `body`, for the same reason as the expansion map.
+    var barHeightPx by remember { mutableIntStateOf(0) }
 
     val lazyListState = rememberLazyListState()
     val reorderState = rememberReorderableLazyListState(lazyListState) { from, to ->
@@ -173,7 +173,7 @@ fun SavedTripsScreen(
                 // Everything behind the Ask KRAIL dialog softens out of focus while it is up
                 // and comes back as it leaves; see rememberAskKrailFocus.
                 .blur(askKrailFocus.blurRadius)
-                // The search row is pinned to the bottom of this box and its AI box is a real text
+                // The search capsule is pinned to the bottom of this box and its AI box is a real text
                 // field, so the layout area has to end where the keyboard starts — same root-level
                 // imePadding SearchStopScreen uses. Padding the row itself instead only stretches
                 // its coloured background downwards.
@@ -220,7 +220,7 @@ fun SavedTripsScreen(
                         state = lazyListState,
                         modifier = Modifier.testTag(TripPlannerTestTags.SAVED_TRIPS_LIST),
                         contentPadding = PaddingValues(
-                            bottom = with(LocalDensity.current) { sheetHeightPx.toDp() } +
+                            bottom = with(LocalDensity.current) { barHeightPx.toDp() } +
                                 KrailTheme.dimensions.spacingM,
                         ),
                     ) {
@@ -240,15 +240,12 @@ fun SavedTripsScreen(
                     }
                 }
 
-                // Hold the sheet off-screen until the saved-trips load has emitted at least once, so it
-                // slides in with the list and not ahead of it. It holds the Home and Work pills above the
-                // search bar and goes, pills and all, while the cards are being reordered.
+                // Hold the search capsule off-screen until the saved-trips load has emitted at least once, so it
+                // slides in with the list and not ahead of it. It goes while the cards are being reordered.
                 SavedTripsBottomSearchRow(
                     visible = !savedTripsState.isSavedTripsLoading && !editing,
-                    stopLabels = savedTripsState.stopLabels,
-                    onLabelClick = { labelKey -> onEvent(SavedTripUiEvent.LabelChipClick(labelKey)) },
                     onSearchBarClick = toButtonClick,
-                    onSheetHeightChanged = { sheetHeightPx = it },
+                    onBarHeightChanged = { barHeightPx = it },
                     onAiEvent = onAiEvent,
                     isAiSearchAvailable = aiState.isWayInAvailable,
                     modifier = Modifier.align(Alignment.BottomCenter),

@@ -61,8 +61,12 @@ object TripPlannerTestTags {
     // The classic home's Set Home and Set Work pills, the first row of the list. Each pill carries [homeLabelChip].
     const val SAVED_TRIPS_LABEL_PILLS = "savedtrips.pills"
 
-    // The theme coloured sheet at the bottom of the classic home, the one that holds the search bar.
+    // The theme coloured sheet at the bottom of the classic home, the one that held the search bar. Nothing draws it now.
     const val SAVED_TRIPS_BOTTOM_SHEET = "savedtrips.sheet"
+
+    // The bar at the bottom of the classic home: the search capsule with its margins and the navigation bar under it. The list
+    // measures it to keep its end clear.
+    const val SAVED_TRIPS_BOTTOM_BAR = "savedtrips.bottombar"
 
     // The search glyph at the start of the home capsule, drawn whether or not the microphone is.
     const val HOME_SEARCH_GLYPH = "savedtrips.searchglyph"

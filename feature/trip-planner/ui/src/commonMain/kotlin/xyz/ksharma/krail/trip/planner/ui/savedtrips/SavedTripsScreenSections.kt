@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,8 +57,8 @@ import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 /**
  * Full LazyColumn body for [SavedTripsScreen]. Info tiles, then the Saved Trips section only when there is
- * something saved, then Park & Ride which always renders. The Home and Work pills are not in the list: they are in
- * the sheet at the bottom, above the search bar ([SavedTripsBottomSearchRow]).
+ * something saved, then Park & Ride which always renders. The search capsule is not in the list: it is pinned at the bottom
+ * ([SavedTripsBottomSearchRow]).
  */
 internal fun LazyListScope.savedTripsListBody(
     savedTripsState: SavedTripsState,
@@ -310,27 +309,22 @@ internal fun SavedTripsTitleBarActions(
 }
 
 /**
- * The sheet pinned to the bottom of the screen, in the theme colour `main` drew the search row in ([HomeSearchSheet]),
- * above the navigation bar. From the top it holds the Home and Work pills ([HomeLabelPills], none until the labels
- * have loaded), an 8 dp gap, and the one search bar. The sheet slides up and fades in once the saved trips have
- * loaded, as `main` revealed the search row, and is gone, pills with it, while the cards are being reordered.
+ * The search capsule pinned to the bottom of the screen, alone ([HomeSearchBar]): no sheet, no pills, centred, capped at 480 dp,
+ * above the navigation bar. It slides up and fades in once the saved trips have loaded, as `main` revealed the search row, and is
+ * gone while the cards are being reordered.
  *
- * A pill tap is [onLabelClick] with the label's key. The sheet's height depends on the text size and on how many
- * lines the pills wrap onto, so it is reported, as measured, through [onSheetHeightChanged] and the caller keeps the
- * end of the list clear by it. The sheet never reads the list, so nothing here depends on the list's size.
+ * Its height depends on the text size and on the navigation bar, so it is reported, as measured, through [onBarHeightChanged] and
+ * the caller keeps the end of the list clear by it. The bar never reads the list, so nothing here depends on the list's size.
  */
 @Composable
 internal fun BoxScope.SavedTripsBottomSearchRow(
     visible: Boolean,
-    stopLabels: List<StopLabel>,
-    onLabelClick: (labelKey: String) -> Unit,
     onSearchBarClick: () -> Unit,
-    onSheetHeightChanged: (heightPx: Int) -> Unit,
+    onBarHeightChanged: (heightPx: Int) -> Unit,
     modifier: Modifier = Modifier,
     onAiEvent: (AiSearchInputEvent) -> Unit = {},
     isAiSearchAvailable: Boolean = false,
 ) {
-    val pills = remember(stopLabels) { labelPillsFor(stopLabels) }
     AnimatedVisibility(
         visible = visible,
         enter = slideInVertically(
@@ -339,15 +333,11 @@ internal fun BoxScope.SavedTripsBottomSearchRow(
         ) + fadeIn(animationSpec = tween(durationMillis = 200)),
         modifier = modifier,
     ) {
-        HomeSearchSheet(modifier = Modifier.onSizeChanged { onSheetHeightChanged(it.height) }) {
-            if (pills.isNotEmpty()) {
-                HomeLabelPills(pills = pills, onLabelClick = onLabelClick)
-            }
-            HomeSearchPill(
-                onClick = onSearchBarClick,
-                isAiAvailable = isAiSearchAvailable,
-                onAiEvent = onAiEvent,
-            )
-        }
+        HomeSearchBar(
+            onClick = onSearchBarClick,
+            isAiAvailable = isAiSearchAvailable,
+            onAiEvent = onAiEvent,
+            modifier = Modifier.onSizeChanged { onBarHeightChanged(it.height) },
+        )
     }
 }

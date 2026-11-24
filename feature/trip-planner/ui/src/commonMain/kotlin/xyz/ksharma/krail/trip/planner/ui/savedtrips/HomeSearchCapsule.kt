@@ -227,6 +227,10 @@ internal fun HomeSearchBar(
 
 // region Previews
 
+// The shadow reaches 32 dp past the capsule (24 dp blur and 8 dp down), so the preview leaves more than that around it, or the
+// picture would cut the shadow off in a hard line.
+private val PREVIEW_SHADOW_ROOM = 40.dp
+
 /** The capsule as a rider sees it, with the microphone, on the page with room around it for the shadow. */
 @ScreenshotTest
 @PreviewComponent
@@ -237,7 +241,7 @@ private fun HomeSearchCapsuleWithMicPreview() {
             onClick = {},
             isAiAvailable = true,
             onAiEvent = {},
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = PREVIEW_SHADOW_ROOM),
         )
     }
 }
@@ -252,7 +256,7 @@ private fun HomeSearchCapsuleNoMicPreview() {
             onClick = {},
             isAiAvailable = false,
             onAiEvent = {},
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = PREVIEW_SHADOW_ROOM),
         )
     }
 }

@@ -104,7 +104,7 @@ If a design breaks one of these rules, the design changes, not the rule.
    the map at open, which covered most of it.) Tapping a pill is the list state: the cloud gradient covers the map and the
    list sits under the same box, drawn as the Search Stop list always was, straight on the gradient with no card behind it.
    The box stands on the gradient there, which follows the app mode, so it follows the app mode too (see The Search Stop box).
-   From the top: the label row (the set labels, Home, Work and any custom label, then taj's Manage button at chip size, one
+   From the top: the label row (the set labels, Home, Work and any custom label, one
    row that scrolls sideways), Select on map (it returns to the map state), the heading with Clear all as taj's small text
    button, then the recents (at most five), the nearest stops under Near you, or the suggested stops. Each stop is a whole
    row as `StopLabelAssignRow` draws it: the name, its mode badges under it, a chevron at the end that opens the label wall,
@@ -146,7 +146,7 @@ If a design breaks one of these rules, the design changes, not the rule.
 - The Park & Ride row on home is one horizontal row of cards, because stations are short cards and a row keeps them in a
   fixed place instead of pushing them down a long list of trips. The next card always peeks, the map's P pins are another
   way to reach any station, and a station expands in place.
-- The label row at the top of the Search Stop list (Home, Work and any custom label, then Manage) is one row that scrolls sideways.
+- The label row at the top of the Search Stop list (Home, Work and any custom label) is one row that scrolls sideways.
 - The home chips and the Search Stop mode chips are not exceptions: they wrap whole at every text size, with no sideways scroll and no fade.
 - Nothing else is allowed to scroll sideways.
 
@@ -262,7 +262,7 @@ If a design breaks one of these rules, the design changes, not the rule.
 40. **A Park & Ride card never promises a trip it cannot start.**
 41. **Home and Work chips stay once set.** Tapping Home plans a trip from the nearest stop to Home with no saved trip
     needed. There is no long press on a chip. The app's own Manage stop labels screen (expand a row: Save changes, Remove,
-    Delete) opens from the Manage button on the label row in Search Stop. There is no floating menu. The chips sit above
+    Delete) opens from the Manage stop labels row in Settings, under Change Theme. There is no floating menu. The chips sit above
     the pill, in the same column as the cards. Each chip is taj's filled button at its small size in the fixed dark, and a set
     label, an unset label and Park & Ride are the same chip. The chips are whole items that wrap at every width and text
     size, never a row that scrolls, and the notices (rule 24) are whole items in the same flow.

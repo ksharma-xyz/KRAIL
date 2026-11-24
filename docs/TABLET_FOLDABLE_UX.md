@@ -283,7 +283,7 @@ code does not declare. The `Metadata` column is parsed, so it takes exactly one 
 | `ThemeSelectionRoute`    | `detailPane()` | unchanged                                         |
 | `OurStoryRoute`          | `detailPane()` | unchanged                                         |
 | `TrackTripRoute`         | `detailPane()` | unchanged                                         |
-| `ManageStopLabelsRoute`  | none           | full-width list screen; no map or second pane to split into |
+| `ManageStopLabelsRoute`  | none           | full-width list screen, opened from a Settings row; no map or second pane to split into |
 | `AddParkRideRoute`       | none           | owns its own list+map split internally (`DualPaneScaffold`) |
 | `DebugConfigHomeRoute`   | `detailPane()` | debug builds only                                 |
 | `DebugConfigNetworkRoute`| `detailPane()` | debug builds only                                 |

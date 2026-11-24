@@ -2,7 +2,8 @@
 
 The screen is built around three ideas: **search for a stop**, **save stops as labels**
 (assigned inline, no picker sheet), and **manage labels** (rename/remove-assignment/
-delete/reorder, via the full-screen `ManageStopLabelsScreen`). This is the **v4**
+delete/reorder, via the full-screen `ManageStopLabelsScreen`, opened from the Manage stop labels row in Settings, not from
+this screen). This is the **v4**
 shipped design — see `STOP_LABEL_UX_REDESIGN_PROPOSAL.md` for the history of how it
 got here (v2 sheet-based → v3 tap-to-expand → v4 external review pack). Most rules
 below are covered by tests. Anything not yet tested is in the
@@ -71,18 +72,17 @@ map instance and no new network call.
 ### The label row (`LabelShortcutsRow`), set labels only, tap-only
 The row is the first row of the recents card. It is one row that scrolls sideways, the exception rule 4 gives
 it, so Home, Work and any custom label are whole chips and the first one starts fully visible. It shows **only
-labels that already have a stop attached** (`labels.filter { it.isSet }`) as tappable pills, plus a trailing
-**Manage** button. Unset labels render
+labels that already have a stop attached** (`labels.filter { it.isSet }`) as tappable pills and nothing after
+them: there is no Manage button on this row. Unset labels render
 nothing here — there is no "+", no unset pill, no way to start an assignment from this
 row. (This is a deliberate v4 change from the earlier long-press-to-edit /
 tap-unset-pill-to-choose-mode designs — see
 [Retired: choose-mode](#retired-choose-mode-and-star-conflict-flow) below.)
 
 - Tap a **set pill** → selects that stop as From / To (`onSetLabelClick`).
-- Tap the trailing **Manage** button → hides the keyboard and clears search-field
-  focus (same order as the back button's `NavActionButton`), then navigates to
-  `ManageStopLabelsScreen` (a real nav destination, `ManageStopLabelsRoute` — not a
-  sheet).
+- Manage stop labels is not reachable from this screen. It is a row in Settings, directly under
+  Change Theme, which navigates to `ManageStopLabelsScreen` (a real nav destination,
+  `ManageStopLabelsRoute`, not a sheet). Back from it returns to Settings.
 
 ### Assigning a stop to a label (`StopLabelAssignRow`)
 Every stop row (recents, search results, empty-state stops) is a `StopLabelAssignRow`.
@@ -107,7 +107,8 @@ A stop row has exactly two states, with no path between them from this row:
 
 ### Managing labels (`ManageStopLabelsScreen`)
 A real nav destination (`ManageStopLabelsRoute`), not a sheet — Google Maps
-"Your Places" / Uber Settings > Saved Places shape. Title bar: "Manage your labels" +
+"Your Places" / Uber Settings > Saved Places shape. It opens from the **Manage stop labels** row in Settings
+(`SettingsScreen`, under Change Theme); it used to open from a Manage button on the Search Stop label row. Title bar: "Manage your labels" +
 a "Reorder"/"Done" toggle action.
 
 - **Normal mode**: description text, then set labels (with stops) followed by a "Not
@@ -137,7 +138,7 @@ a "Reorder"/"Done" toggle action.
 
 ### Label row visibility (`shouldShowLabelRow`)
 
-The label row (set labels and the trailing Manage button) leads the card whenever a label has a stop and
+The label row (the set labels) leads the card whenever a label has a stop and
 there is a list to pick from:
 
 | List state | Label row |
@@ -150,8 +151,7 @@ there is a list to pick from:
 | Error | hidden |
 
 The label row no longer waits for a recent stop: the card can hold nearest or suggested stops instead, and a
-rider with Home set wants Home first either way. If every label is unset there is no label row at all, so
-there is no lone Manage button.
+rider with Home set wants Home first either way. If every label is unset there is no label row at all.
 
 ---
 
@@ -266,8 +266,6 @@ The following existed in earlier iterations (v2/v3):
 
 - Recent header text and "Clear all" both use `KrailColors.label` (not `softLabel`) for
   readability across themes.
-- Trailing **Manage** button uses `ButtonDefaults.monochromeButtonColors()` so it reads
-  as an action distinct from the label pills.
 - Stop-row dividers respect `pageHorizontalPadding` (don't go edge-to-edge).
 - The "searching…" indicator is a small floating `LoadingDotsPill` (taj component),
   positioned at top-center on the z-axis above the LazyColumn — does not claim vertical
@@ -309,9 +307,9 @@ Covered in `SearchStopScreenInteractionTest.kt` (`src/androidHostTest`):
 - ✅ `assignedStop_hidesAssignIcon`
 - ✅ `assignedStop_showsLabelPillInline`
 - ✅ `tappingSetPill_invokesOnStopSelectWithUnderlyingStop`
-- ✅ `manageButton_isVisible_wheneverPillRowRenders`
-- ✅ `tappingManageButton_invokesOnManageLabelsClick`
-- ✅ `tappingManageButton_hidesKeyboardBeforeInvokingCallback`
+- ✅ `thereIsNoManageButtonToTap_whenALabelIsSet`
+- ✅ `theLabelRowHoldsOnlyTheSetLabels_withNothingAfterTheLastOne`
+- ✅ `manageButton_isHidden_whenNoLabelIsSetYet`
 - ✅ `clearAllButton_firesClearRecentSearchStopsEventWithCount`
 - ✅ `recentHeader_showsRecentAndClearAllLabelsWhenRecentsExist`
 - ✅ `singlePane_opensOnTheMapState_withTheBarAndNoListAndNoKeyboard`

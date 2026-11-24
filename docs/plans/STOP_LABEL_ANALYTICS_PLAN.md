@@ -98,6 +98,11 @@ First verify whether the app's standard screen-view tracking records
 taxonomy rather than minting a `manage_labels_open` click event. Do not fire
 both an open click and the destination screen view for the same navigation.
 
+The screen opens from the Manage stop labels row in Settings. It used to open from a
+Manage button on the Search Stop label row. Neither door records an entry point, and
+the move adds no event, so a change in `view_screen` volume for `ManageStopLabels`
+after the move reflects where the door is, not how much riders want the screen.
+
 Manage actions map as follows:
 
 | User action | Event decision |

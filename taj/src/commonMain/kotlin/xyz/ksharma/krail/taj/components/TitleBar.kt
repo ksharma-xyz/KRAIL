@@ -22,6 +22,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -42,6 +43,8 @@ fun TitleBar(
     modifier: Modifier = Modifier,
     onNavActionClick: (() -> Unit)? = null,
     actions: @Composable (() -> Unit)? = null,
+    navActionColor: Color = KrailTheme.colors.onSurface,
+    navActionModifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier
@@ -64,6 +67,8 @@ fun TitleBar(
                 icon = Icons.AutoMirrored.Filled.ArrowBack,
                 iconContentDescription = "Back",
                 onClick = onNavActionClick,
+                modifier = navActionModifier,
+                color = navActionColor,
             )
         }
 
@@ -102,6 +107,7 @@ fun TitleBar(
  * @param iconContentDescription A description of the icon for accessibility purposes.
  * @param onClick The callback to be invoked when the button is clicked.
  * @param modifier The [Modifier] to be applied to the button.
+ * @param color The icon's colour. It is the page's text colour, unless the button stands on ground of its own.
  */
 @Composable
 fun NavActionButton(
@@ -109,6 +115,7 @@ fun NavActionButton(
     iconContentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    color: Color = KrailTheme.colors.onSurface,
 ) {
     Box(
         modifier = modifier
@@ -123,7 +130,7 @@ fun NavActionButton(
         Image(
             imageVector = icon,
             contentDescription = null,
-            colorFilter = ColorFilter.tint(KrailTheme.colors.onSurface),
+            colorFilter = ColorFilter.tint(color),
             modifier = Modifier.size(IconSizeTokens.M),
         )
     }

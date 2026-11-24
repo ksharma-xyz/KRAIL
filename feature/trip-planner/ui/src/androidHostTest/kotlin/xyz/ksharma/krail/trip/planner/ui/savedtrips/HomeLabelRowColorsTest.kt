@@ -6,8 +6,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.test.junit4.createComposeRule
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -22,6 +20,8 @@ import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.ThemeController
 import xyz.ksharma.krail.taj.theme.ThemeMode
 import xyz.ksharma.krail.taj.theme.contrastRatio
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * The two looks of a label pill on the page, in every theme colour and in both modes, as taj ships them: a label with a stop is a
@@ -74,7 +74,10 @@ class HomeLabelRowColorsTest {
 
             assertEquals(Color.Transparent, read.unset.containerColor, "$mode $style: an unset label has no fill")
             val unsetText = read.unset.contentColor.contrastRatio(read.page)
-            assertTrue(unsetText >= MIN_TEXT_CONTRAST, "$mode $style: the unset label's text and outline are $unsetText to 1 on the page")
+            assertTrue(
+                unsetText >= MIN_TEXT_CONTRAST,
+                "$mode $style: the unset label's text and outline are $unsetText to 1 on the page",
+            )
         }
     }
 

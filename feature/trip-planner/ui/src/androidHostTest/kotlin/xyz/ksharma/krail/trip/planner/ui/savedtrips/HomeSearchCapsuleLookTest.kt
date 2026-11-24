@@ -15,9 +15,6 @@ import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.unit.dp
-import kotlin.math.abs
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -32,6 +29,9 @@ import xyz.ksharma.krail.taj.theme.ThemeMode
 import xyz.ksharma.krail.taj.theme.md_theme_dark_modal_sheet_background
 import xyz.ksharma.krail.taj.theme.md_theme_light_surface
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroPixels
+import kotlin.math.abs
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * What the home capsule looks like, read back as pixels from four capsules, one in each of four theme colours, drawn on the page.
@@ -95,11 +95,17 @@ class HomeSearchCapsuleLookTest {
         val read = drawCapsules(mode)
         assertEquals(expectedBase, read.base, "$mode: the capsule's own fill colour")
         val expected = read.base.copy(alpha = HOME_CAPSULE_FILL_ALPHA).compositeOver(read.page)
-        val want = intArrayOf((expected.red * 255).toInt(), (expected.green * 255).toInt(), (expected.blue * 255).toInt())
+        val want = intArrayOf(
+            (expected.red * 255).toInt(),
+            (expected.green * 255).toInt(),
+            (expected.blue * 255).toInt(),
+        )
 
         val perTheme = THEMES.indices.map { sample(it) }
         THEMES.forEachIndexed { index, style ->
-            val (topEdge, topInside, bottomInside, bottomEdge) = perTheme[index]
+            val rows = perTheme[index]
+            val (topEdge, topInside) = rows
+            val (bottomInside, bottomEdge) = rows.drop(2)
             assertClose("$mode $style: the top row has no stroke, it is the fill", topInside, topEdge, 1)
             assertClose("$mode $style: the bottom row has no stroke, it is the fill", bottomInside, bottomEdge, 1)
             assertClose("$mode $style: the fill over the page", want, topInside, FILL_TOLERANCE)
@@ -132,6 +138,7 @@ class HomeSearchCapsuleLookTest {
     private companion object {
         const val CAPSULE_TAG = "test.capsule."
         const val INSIDE_ROWS = 4
+
         // The shadow is drawn behind the whole shape, so 8 percent of it shows through the 92 percent fill: about 3 levels of 255 in light mode.
         const val FILL_TOLERANCE = 5
         const val NEUTRAL_SPREAD = 2

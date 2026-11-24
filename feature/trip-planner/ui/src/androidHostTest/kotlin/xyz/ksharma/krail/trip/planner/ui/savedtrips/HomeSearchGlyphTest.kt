@@ -76,7 +76,10 @@ class HomeSearchGlyphTest {
     }
 
     private fun assertNear(what: String, expected: Dp, actual: Dp) {
-        assertTrue(abs(expected.value - actual.value) <= TOLERANCE_DP, "The glyph's $what should be $expected but is $actual.")
+        assertTrue(
+            abs(expected.value - actual.value) <= TOLERANCE_DP,
+            "The glyph's $what should be $expected but is $actual.",
+        )
     }
 
     private companion object {

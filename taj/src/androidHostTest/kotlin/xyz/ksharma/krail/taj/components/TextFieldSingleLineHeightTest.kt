@@ -17,10 +17,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import java.time.Duration
-import java.util.concurrent.TimeUnit
-import kotlin.math.abs
-import kotlin.test.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
@@ -32,6 +28,10 @@ import org.robolectric.shadows.ShadowChoreographer
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.ThemeController
 import xyz.ksharma.krail.taj.theme.ThemeMode
+import java.time.Duration
+import java.util.concurrent.TimeUnit
+import kotlin.math.abs
+import kotlin.test.assertTrue
 
 /**
  * The single line height of taj's [TextField] is 48 dp for every caller that does not ask for anything else, at every text
@@ -80,7 +80,8 @@ class TextFieldSingleLineHeightTest {
     @Test
     fun `with a minimum a field grows with its text and keeps its padding constant`() {
         val heights = listOf(1f, 1.3f, 2f).map { scale ->
-            val field = heightOf(fontScale = scale, padding = TALL_PADDING, minHeight = TextFieldDefaults.SingleLineHeight)
+            val field =
+                heightOf(fontScale = scale, padding = TALL_PADDING, minHeight = TextFieldDefaults.SingleLineHeight)
             // The same text with no padding and no floor is the line itself, so the field less the line is the padding.
             val line = heightOf(fontScale = scale, padding = NO_PADDING, minHeight = 0.dp)
             assertNear("padding above and below the line at $scale", 30.dp, field - line)

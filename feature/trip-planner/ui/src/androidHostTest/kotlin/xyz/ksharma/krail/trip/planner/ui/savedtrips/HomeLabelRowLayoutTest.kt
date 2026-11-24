@@ -32,9 +32,6 @@ import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
-import kotlin.math.abs
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import org.junit.Rule
@@ -54,6 +51,9 @@ import xyz.ksharma.krail.trip.planner.ui.getVisibleBoundsInRoot
 import xyz.ksharma.krail.trip.planner.ui.intro.IntroPixels
 import xyz.ksharma.krail.trip.planner.ui.intro.colourAt
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
+import kotlin.math.abs
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * The label row on its own, in a window of its own size (density 1, so a dp is a pixel): every label shown, set and unset,
@@ -79,7 +79,9 @@ class HomeLabelRowLayoutTest {
         setRow(MIXED)
 
         val names = listOf("Home", "Work", "Uni", "Gym")
-        names.forEach { composeRule.onNodeWithTag(TripPlannerTestTags.homeLabelChip(it), useUnmergedTree = true).assertIsDisplayed() }
+        names.forEach {
+            composeRule.onNodeWithTag(TripPlannerTestTags.homeLabelChip(it), useUnmergedTree = true).assertIsDisplayed()
+        }
         val lefts = names.map { bounds(TripPlannerTestTags.homeLabelChip(it)).left }
         assertEquals(lefts.sorted(), lefts, "Home, Work, Uni, Gym run from the left in that order.")
         textIn("Home", "Home")
@@ -95,7 +97,11 @@ class HomeLabelRowLayoutTest {
         val first = bounds(TripPlannerTestTags.homeLabelChip("Home"))
         assertNear("the first pill's left edge", 16.dp, first.left)
         listOf("Home", "Work", "Uni", "Gym").zipWithNext().forEach { (a, b) ->
-            assertNear("the gap from $a to $b", 8.dp, bounds(TripPlannerTestTags.homeLabelChip(b)).left - bounds(TripPlannerTestTags.homeLabelChip(a)).right)
+            assertNear(
+                "the gap from $a to $b",
+                8.dp,
+                bounds(TripPlannerTestTags.homeLabelChip(b)).left - bounds(TripPlannerTestTags.homeLabelChip(a)).right,
+            )
         }
     }
 
@@ -119,7 +125,10 @@ class HomeLabelRowLayoutTest {
         setRow(MIXED)
 
         val widths = listOf("Home", "Work", "Uni", "Gym").map { bounds(TripPlannerTestTags.homeLabelChip(it)).width }
-        assertTrue(widths.all { abs(it.value - widths.first().value) <= TOLERANCE_DP }, "The four cells are one width: $widths")
+        assertTrue(
+            widths.all { abs(it.value - widths.first().value) <= TOLERANCE_DP },
+            "The four cells are one width: $widths",
+        )
     }
 
     @Test
@@ -159,7 +168,11 @@ class HomeLabelRowLayoutTest {
         val inside = picture.colourAt(pill.right.value - 24f, y)
         val atEdge = picture.colourAt(pill.right.value - 1f, y)
         assertEquals(THEME_COLOUR.toArgb(), inside.toArgb(), "The pill is the theme colour inside the row.")
-        assertEquals(inside.toArgb(), atEdge.toArgb(), "The last pixels of the cut pill are as solid as the ones 24 px inside: no fade.")
+        assertEquals(
+            inside.toArgb(),
+            atEdge.toArgb(),
+            "The last pixels of the cut pill are as solid as the ones 24 px inside: no fade.",
+        )
     }
 
     @Test
@@ -167,7 +180,10 @@ class HomeLabelRowLayoutTest {
     fun `scrolled to the end the last pill is whole and the content ends 16 dp short of the edge`() {
         setRow(MANY)
 
-        composeRule.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.HorizontalScrollAxisRange), useUnmergedTree = true)
+        composeRule.onNode(
+            SemanticsMatcher.keyIsDefined(SemanticsProperties.HorizontalScrollAxisRange),
+            useUnmergedTree = true,
+        )
             .performSemanticsAction(SemanticsActions.ScrollBy) { it(100_000f, 0f) }
         composeRule.waitForIdle()
 
@@ -198,8 +214,16 @@ class HomeLabelRowLayoutTest {
 
         val names = listOf("Home", "Work", "Uni", "Gym")
         val drawn = names.map { bounds(TripPlannerTestTags.homeLabelChip(it)).height }
-        val slots = names.map { composeRule.onNodeWithTag(TripPlannerTestTags.homeLabelChip(it), useUnmergedTree = true).fetchSemanticsNode().touchBoundsInRoot.height }
-        assertTrue(drawn.all { abs(it.value - drawn.first().value) <= 1f }, "The four pills are drawn one height: $drawn")
+        val slots = names.map {
+            composeRule.onNodeWithTag(
+                TripPlannerTestTags.homeLabelChip(it),
+                useUnmergedTree = true,
+            ).fetchSemanticsNode().touchBoundsInRoot.height
+        }
+        assertTrue(
+            drawn.all { abs(it.value - drawn.first().value) <= 1f },
+            "The four pills are drawn one height: $drawn",
+        )
         assertTrue(slots.all { it >= 48f }, "Each touch slot is at least 48 dp: $slots")
     }
 
@@ -211,12 +235,24 @@ class HomeLabelRowLayoutTest {
         val home = bounds(TripPlannerTestTags.homeLabelChip("Home"))
         val work = bounds(TripPlannerTestTags.homeLabelChip("Work"))
         // Four px into the pill, level with its middle: in its rounded end, before the text, so only the fill or the page is there.
-        assertEquals(THEME_COLOUR.toArgb(), picture.colourAt(home.left.value + 4f, home.top.value + home.height.value / 2).toArgb(), "A set label's fill is the theme colour.")
-        assertEquals(Color.White.toArgb(), picture.colourAt(work.left.value + 8f, work.top.value + work.height.value / 2).toArgb(), "An unset label has no fill, so the page shows.")
+        assertEquals(
+            THEME_COLOUR.toArgb(),
+            picture.colourAt(home.left.value + 4f, home.top.value + home.height.value / 2).toArgb(),
+            "A set label's fill is the theme colour.",
+        )
+        assertEquals(
+            Color.White.toArgb(),
+            picture.colourAt(work.left.value + 8f, work.top.value + work.height.value / 2).toArgb(),
+            "An unset label has no fill, so the page shows.",
+        )
         // Text only, no icon: each pill holds exactly one text node, and the label's own words are in it.
         listOf("Home", "Work").forEach { name ->
-            val inPill = composeRule.onAllNodes(hasAnyAncestor(hasTestTag(TripPlannerTestTags.homeLabelChip(name))), useUnmergedTree = true).fetchSemanticsNodes()
-            assertTrue(inPill.count { SemanticsProperties.Text in it.config } == 1, "$name holds one text and no icon: ${inPill.size} nodes")
+            val inPill = composeRule.onAllNodes(
+                hasAnyAncestor(hasTestTag(TripPlannerTestTags.homeLabelChip(name))),
+                useUnmergedTree = true,
+            ).fetchSemanticsNodes()
+            val texts = inPill.count { SemanticsProperties.Text in it.config }
+            assertEquals(1, texts, "$name holds one text and no icon: ${inPill.size} nodes")
         }
     }
 
@@ -230,11 +266,15 @@ class HomeLabelRowLayoutTest {
 
         assertEquals(
             listOf("Home, double tap to go there"),
-            composeRule.onNodeWithTag(TripPlannerTestTags.homeLabelChip("Home")).fetchSemanticsNode().config.getOrNull(SemanticsProperties.ContentDescription),
+            composeRule.onNodeWithTag(
+                TripPlannerTestTags.homeLabelChip("Home"),
+            ).fetchSemanticsNode().config.getOrNull(SemanticsProperties.ContentDescription),
         )
         assertEquals(
             listOf("Work, not set, double tap to choose a stop"),
-            composeRule.onNodeWithTag(TripPlannerTestTags.homeLabelChip("Work")).fetchSemanticsNode().config.getOrNull(SemanticsProperties.ContentDescription),
+            composeRule.onNodeWithTag(
+                TripPlannerTestTags.homeLabelChip("Work"),
+            ).fetchSemanticsNode().config.getOrNull(SemanticsProperties.ContentDescription),
         )
         assertEquals(
             "Gym, not set, double tap to choose a stop",
@@ -270,7 +310,12 @@ class HomeLabelRowLayoutTest {
                 StopLabel(emoji = "H", label = "home"),
             ),
         )
-        assertEquals(listOf("home", "Work", "Gym"), custom.map { it.label }, "Built in labels first, the rider's own after, in their order.")
+        val names = custom.map { it.label }
+        assertEquals(
+            listOf("home", "Work", "Gym"),
+            names,
+            "Built in labels first, the rider's own after, in their order.",
+        )
     }
 
     // endregion
@@ -285,7 +330,9 @@ class HomeLabelRowLayoutTest {
         composeRule.setContent {
             CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, fontScale)) {
                 KrailTheme(themeController = ThemeController(currentMode = ThemeMode.LIGHT, setThemeMode = {})) {
-                    CompositionLocalProvider(LocalThemeColor provides remember { mutableStateOf(KrailThemeStyle.Train.hexColorCode) }) {
+                    CompositionLocalProvider(
+                        LocalThemeColor provides remember { mutableStateOf(KrailThemeStyle.Train.hexColorCode) },
+                    ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -304,19 +351,31 @@ class HomeLabelRowLayoutTest {
 
     private fun textLayout(label: String, text: String): TextLayoutResult {
         val layouts = mutableListOf<TextLayoutResult>()
-        composeRule.onNode(hasText(text) and hasAnyAncestor(hasTestTag(TripPlannerTestTags.homeLabelChip(label))), useUnmergedTree = true)
-            .fetchSemanticsNode().config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(layouts)
+        val node = composeRule.onNode(
+            hasText(text) and hasAnyAncestor(hasTestTag(TripPlannerTestTags.homeLabelChip(label))),
+            useUnmergedTree = true,
+        ).fetchSemanticsNode()
+        node.config.getOrNull(SemanticsActions.GetTextLayoutResult)?.action?.invoke(layouts)
         return layouts.first()
     }
 
     private fun textIn(label: String, text: String) {
-        composeRule.onNode(hasText(text) and hasAnyAncestor(hasTestTag(TripPlannerTestTags.homeLabelChip(label))), useUnmergedTree = true).assertExists()
+        composeRule.onNode(
+            hasText(text) and hasAnyAncestor(hasTestTag(TripPlannerTestTags.homeLabelChip(label))),
+            useUnmergedTree = true,
+        ).assertExists()
     }
 
-    private fun bounds(tag: String): DpRect = composeRule.onNodeWithTag(tag, useUnmergedTree = true).getVisibleBoundsInRoot()
+    private fun bounds(tag: String): DpRect = composeRule.onNodeWithTag(
+        tag,
+        useUnmergedTree = true,
+    ).getVisibleBoundsInRoot()
 
     private fun assertNear(what: String, expected: Dp, actual: Dp) {
-        assertTrue(abs(expected.value - actual.value) <= TOLERANCE_DP, "$what should be at $expected but is at $actual.")
+        assertTrue(
+            abs(expected.value - actual.value) <= TOLERANCE_DP,
+            "$what should be at $expected but is at $actual.",
+        )
     }
 
     // endregion

@@ -29,9 +29,6 @@ import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
-import kotlin.math.abs
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
@@ -55,6 +52,9 @@ import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
+import kotlin.math.abs
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * The Saved Trips screen as the classic home: the label row is the first item of the list, above the Saved Trips heading, and the
@@ -94,7 +94,11 @@ class SavedTripsHomeLayoutTest {
         ).assertExists()
         assertNear("the row is the first thing in the list", list.top, row.top)
         assertTrue(row.bottom <= title.top, "The row $row is above the Saved Trips heading $title.")
-        assertNear("Home starts on the page inset", PAGE_PADDING, bounds(TripPlannerTestTags.homeLabelChip("Home")).left)
+        assertNear(
+            "Home starts on the page inset",
+            PAGE_PADDING,
+            bounds(TripPlannerTestTags.homeLabelChip("Home")).left,
+        )
         assertNear("the row is one 48 dp slot", 48.dp, row.height)
     }
 
@@ -104,7 +108,10 @@ class SavedTripsHomeLayoutTest {
         setScreen(labels = CUSTOM_LABELS)
 
         listOf("Home", "Work", "Gym").forEach { name ->
-            composeRule.onNodeWithTag(TripPlannerTestTags.homeLabelChip(name), useUnmergedTree = true).assertIsDisplayed()
+            composeRule.onNodeWithTag(
+                TripPlannerTestTags.homeLabelChip(name),
+                useUnmergedTree = true,
+            ).assertIsDisplayed()
         }
         val lefts = listOf("Home", "Work", "Gym").map { bounds(TripPlannerTestTags.homeLabelChip(it)).left }
         assertEquals(lefts.sorted(), lefts, "Home, Work, Gym run from the left in that order.")
@@ -215,7 +222,10 @@ class SavedTripsHomeLayoutTest {
     fun `phone landscape keeps the same capsule`() {
         setScreen()
 
-        assertTrue(bounds(TripPlannerTestTags.SEARCH_ROW_TO).height >= 48.dp, "The capsule is at least 48 dp in landscape.")
+        assertTrue(
+            bounds(TripPlannerTestTags.SEARCH_ROW_TO).height >= 48.dp,
+            "The capsule is at least 48 dp in landscape.",
+        )
         composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_COLLAPSED_PILL).assertDoesNotExist()
     }
 
@@ -255,7 +265,10 @@ class SavedTripsHomeLayoutTest {
 
         val capsule = bounds(TripPlannerTestTags.SEARCH_ROW_TO)
         val mic = bounds(TripPlannerTestTags.SEARCH_ROW_ASK_KRAIL)
-        assertTrue(mic.left >= capsule.left && mic.right <= capsule.right + 1.dp, "The microphone $mic is inside $capsule.")
+        assertTrue(
+            mic.left >= capsule.left && mic.right <= capsule.right + 1.dp,
+            "The microphone $mic is inside $capsule.",
+        )
         assertTrue(capsule.left >= 0.dp && capsule.right <= NARROW_WIDTH, "The capsule $capsule is inside the window.")
     }
 
@@ -301,7 +314,10 @@ class SavedTripsHomeLayoutTest {
         composeRule.waitForIdle()
         val barAtLargest = bounds(TripPlannerTestTags.SAVED_TRIPS_BOTTOM_BAR).height
 
-        assertTrue(barAtLargest > barAt100 + 10.dp, "The capsule is taller at $LARGEST_TEXT times text: $barAtLargest, it was $barAt100.")
+        assertTrue(
+            barAtLargest > barAt100 + 10.dp,
+            "The capsule is taller at $LARGEST_TEXT times text: $barAtLargest, it was $barAt100.",
+        )
         assertLastRowClearsBar()
     }
 

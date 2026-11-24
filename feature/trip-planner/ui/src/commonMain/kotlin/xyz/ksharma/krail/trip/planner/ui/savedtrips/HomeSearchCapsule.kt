@@ -73,7 +73,7 @@ private val DarkShadowRadius = 30.dp
 private val DarkShadowOffset = 10.dp
 private const val DARK_SHADOW_ALPHA = 0.75f
 
-/** A full pill at every height, so it is still a capsule when the text size makes it tall. */
+// A full pill at every height, so it is still a capsule when the text size makes it tall.
 private val CapsuleShape = RoundedCornerShape(percent = 50)
 
 /**
@@ -162,7 +162,10 @@ internal fun HomeSearchCapsule(
                 shape = CapsuleShape,
                 minHeight = TextFieldDefaults.SingleLineHeight,
                 leadingIcon = {
-                    Box(modifier = Modifier.defaultMinSize(minWidth = GlyphSlotMinWidth), contentAlignment = Alignment.Center) {
+                    Box(
+                        modifier = Modifier.defaultMinSize(minWidth = GlyphSlotMinWidth),
+                        contentAlignment = Alignment.Center,
+                    ) {
                         HomeSearchGlyph(tint = colors.contentColor)
                     }
                 },
@@ -218,7 +221,11 @@ internal fun HomeSearchBar(
             .testTag(TripPlannerTestTags.SAVED_TRIPS_BOTTOM_BAR)
             .sideSafeInsets()
             .navigationBarsPadding()
-            .padding(start = dim.pageHorizontalPadding, end = dim.pageHorizontalPadding, bottom = HOME_CAPSULE_BOTTOM_MARGIN),
+            .padding(
+                start = dim.pageHorizontalPadding,
+                end = dim.pageHorizontalPadding,
+                bottom = HOME_CAPSULE_BOTTOM_MARGIN,
+            ),
         contentAlignment = Alignment.BottomCenter,
     ) {
         HomeSearchCapsule(onClick = onClick, isAiAvailable = isAiAvailable, onAiEvent = onAiEvent)

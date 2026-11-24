@@ -28,9 +28,6 @@ import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.width
-import kotlin.math.abs
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -45,6 +42,9 @@ import xyz.ksharma.krail.taj.theme.ThemeMode
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.getVisibleBoundsInRoot
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
+import kotlin.math.abs
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * The home search capsule on its own, in a window of its own size (density 1, so a dp is a pixel): one line that ends in an
@@ -59,6 +59,8 @@ class HomeSearchCapsuleLayoutTest {
 
     @get:Rule
     val composeRule = createComposeRule()
+
+    private val aiState = mutableStateOf(true)
 
     private var clicks = 0
     private val aiEvents = mutableListOf<AiSearchInputEvent>()
@@ -103,7 +105,10 @@ class HomeSearchCapsuleLayoutTest {
         val text = textBounds()
         assertTrue(capsule.left >= 0.dp && capsule.right <= NARROW_WIDTH, "The capsule $capsule is inside the window.")
         assertTrue(glyph.left >= capsule.left && glyph.right <= text.left, "The glyph $glyph is before the text $text.")
-        assertTrue(text.top >= capsule.top && text.bottom <= capsule.bottom, "The text $text is inside the capsule $capsule.")
+        assertTrue(
+            text.top >= capsule.top && text.bottom <= capsule.bottom,
+            "The text $text is inside the capsule $capsule.",
+        )
     }
 
     // endregion
@@ -121,7 +126,11 @@ class HomeSearchCapsuleLayoutTest {
             val capsule = bounds(TripPlannerTestTags.SEARCH_ROW_TO)
             // The line is the taller of the text and the glyph beside it: the text outgrows the glyph as the text size grows.
             val line = maxOf(textBounds().height, bounds(TripPlannerTestTags.HOME_SEARCH_GLYPH).height)
-            assertNear("padding above and below the line at $scale (capsule ${capsule.height}, line $line)", 30.dp, capsule.height - line)
+            assertNear(
+                "padding above and below the line at $scale (capsule ${capsule.height}, line $line)",
+                30.dp,
+                capsule.height - line,
+            )
             capsule.height
         }
 
@@ -175,7 +184,11 @@ class HomeSearchCapsuleLayoutTest {
         assertNear("the glyph's left edge is 16 dp in", 16.dp, glyph.left - capsule.left)
         assertNear("the glyph's width", 24.dp, glyph.width)
         assertNear("the text starts 52 dp in", 52.dp, text.left - capsule.left)
-        assertNear("the glyph is centred on the capsule", capsule.top + capsule.height / 2, glyph.top + glyph.height / 2)
+        assertNear(
+            "the glyph is centred on the capsule",
+            capsule.top + capsule.height / 2,
+            glyph.top + glyph.height / 2,
+        )
     }
 
     @Test
@@ -236,11 +249,15 @@ class HomeSearchCapsuleLayoutTest {
     fun `a screen reader hears the whole question as a button, and the microphone as Ask KRAIL`() {
         setCapsule(fontScale = 2f, ai = true)
 
-        val capsule = composeRule.onNode(hasContentDescription(HOME_PILL_PLACEHOLDER), useUnmergedTree = true).fetchSemanticsNode()
+        val capsule = composeRule.onNode(
+            hasContentDescription(HOME_PILL_PLACEHOLDER),
+            useUnmergedTree = true,
+        ).fetchSemanticsNode()
         assertEquals(Role.Button, capsule.config.getOrNull(SemanticsProperties.Role), "The capsule is a button.")
         assertTrue(capsule.config.contains(SemanticsActions.OnClick), "The capsule can be clicked.")
-        val mic = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_ASK_KRAIL, useUnmergedTree = true)
-            .fetchSemanticsNode().config.getOrNull(SemanticsProperties.ContentDescription).orEmpty()
+        val micNode = composeRule.onNodeWithTag(TripPlannerTestTags.SEARCH_ROW_ASK_KRAIL, useUnmergedTree = true)
+            .fetchSemanticsNode()
+        val mic = micNode.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty()
         assertEquals(listOf("Ask KRAIL"), mic)
     }
 
@@ -271,8 +288,6 @@ class HomeSearchCapsuleLayoutTest {
 
     // region harness
 
-    private val aiState = mutableStateOf(true)
-
     private fun setCapsule(
         fontScale: Float = 1f,
         ai: Boolean = true,
@@ -292,7 +307,9 @@ class HomeSearchCapsuleLayoutTest {
                 LocalDensity provides Density(LocalDensity.current.density, fontScaleState?.value ?: fontScale),
             ) {
                 KrailTheme(themeController = ThemeController(currentMode = ThemeMode.LIGHT, setThemeMode = {})) {
-                    CompositionLocalProvider(LocalThemeColor provides remember { mutableStateOf(KrailThemeStyle.Train.hexColorCode) }) {
+                    CompositionLocalProvider(
+                        LocalThemeColor provides remember { mutableStateOf(KrailThemeStyle.Train.hexColorCode) },
+                    ) {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
                             HomeSearchCapsule(
                                 onClick = { clicks++ },

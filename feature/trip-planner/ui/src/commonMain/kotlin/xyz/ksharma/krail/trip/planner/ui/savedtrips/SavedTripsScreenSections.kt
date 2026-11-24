@@ -56,7 +56,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 /**
- * Full LazyColumn body for [SavedTripsScreen]. Info tiles, then the Saved Trips section only when there is
+ * Full LazyColumn body for [SavedTripsScreen]. The label row, then info tiles, then the Saved Trips section only when there is
  * something saved, then Park & Ride which always renders. The search capsule is not in the list: it is pinned at the bottom
  * ([SavedTripsBottomSearchRow]).
  */
@@ -74,6 +74,14 @@ internal fun LazyListScope.savedTripsListBody(
     onAddParkRideClick: () -> Unit,
 ) {
     if (savedTripsState.isSavedTripsLoading) return
+
+    // The rider's labels are the first thing in the list, above the info tiles and the Saved Trips heading, and they go while
+    // the cards are being reordered. Nothing is drawn until the labels have loaded.
+    homeLabelRowItem(
+        stopLabels = savedTripsState.stopLabels,
+        editing = editing,
+        onLabelClick = { labelKey -> onEvent(SavedTripUiEvent.LabelChipClick(labelKey)) },
+    )
 
     savedTripsInfoTiles(savedTripsState, onEvent)
 

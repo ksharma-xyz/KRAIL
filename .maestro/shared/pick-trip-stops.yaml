@@ -20,14 +20,18 @@
 appId: ${APP_ID}
 ---
 # --- Destination ---
+# The result rows are `searchstop.result.<stop id>`. The pattern asks for the second dot and at least one character after it
+# because the list that holds them is `searchstop.results`, which the looser `searchstop.result..*` also matches, and that
+# list comes first in the hierarchy. `index: 0` then tapped the centre of the whole list and not a row. On the iPhone Duo
+# outer screen, with the keyboard up, that centre falls on the line between two rows, so nothing was picked.
 - inputText: ${TO_QUERY}
 # Search is a network call, so give it real time rather than a fixed sleep.
 - extendedWaitUntil:
     visible:
-      id: "searchstop.result..*"
+      id: 'searchstop\.result\..+'
     timeout: 30000
 - tapOn:
-    id: "searchstop.result..*"
+    id: 'searchstop\.result\..+'
     index: 0
 
 # --- Origin ---
@@ -51,10 +55,10 @@ appId: ${APP_ID}
 - inputText: ${FROM_QUERY}
 - extendedWaitUntil:
     visible:
-      id: "searchstop.result..*"
+      id: 'searchstop\.result\..+'
     timeout: 30000
 - tapOn:
-    id: "searchstop.result..*"
+    id: 'searchstop\.result\..+'
     index: 0
 
 # --- Both stops are chosen ---

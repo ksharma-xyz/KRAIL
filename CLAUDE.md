@@ -413,8 +413,8 @@ and without it a push sends the pointers but not the objects.
 
 The hook runs the fast steps of CI's `code-quality / detekt` job, from the one list in
 `scripts/ci_fast_checks.sh` (the same list `fullQualityChecks.sh` runs, so the two cannot drift).
-First the two scripts CI runs before anything else, `check_layout_invariants.py` and
-`check_stale_assumptions.py`, which take milliseconds and need no Gradle. A script that exits
+First the scripts CI runs before anything else, `check_layout_invariants.py`,
+`check_stale_assumptions.py` and `check_ci_parity.py`, which take milliseconds and need no Gradle. A script that exits
 non-zero fails the push, exactly as it fails the CI step; `check_stale_assumptions.py` only warns
 because it exits 0 unless the ledger is broken. Then the four structural tasks
 (`verifyTestWiring`, `verifyTestingModuleUsage`, `verifyNoAdHocBoundaryFakes`,
@@ -423,7 +423,7 @@ cannot: a module that grew test sources without a host-test task or an iOS lane 
 or a new ad-hoc boundary fake.
 
 When `code-quality.yml` gains a script or verify step, add it to `scripts/ci_fast_checks.sh` in the
-same change.
+same change. `check_ci_parity.py` fails, locally and in CI, when the two disagree.
 
 Bypass with `git push --no-verify` or `SKIP_STRUCTURAL_CHECKS=1`.
 
@@ -442,8 +442,9 @@ To verify a branch compiles on both platforms and passes static analysis, run:
 This runs, in order:
 0. `scripts/ci_fast_checks.sh`, the steps CI runs before detekt and the same list the pre-push hook
    uses: `check_layout_invariants.py` (manifest, inset-authority and layout-probe guards), then
-   `check_stale_assumptions.py` (overdue analytics assumptions, warning only), then the four
-   `verify*` structural Gradle tasks
+   `check_stale_assumptions.py` (overdue analytics assumptions, warning only),
+   `check_ci_parity.py` (this list matches `code-quality.yml`), then the four `verify*`
+   structural Gradle tasks
 1. `compileDebugSources` — Android compile
 2. `compileKotlinIosSimulatorArm64` — iOS Simulator compile
 3. `detekt --continue` — static analysis (auto-corrects imports and trailing commas)

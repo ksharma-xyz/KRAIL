@@ -34,17 +34,22 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 
-      # The same two scripts scripts/fullQualityChecks.sh runs first, promoted to CI so the
-      # invariants they hold are enforced on every PR rather than only for whoever remembers to
-      # run the local script. check_layout_invariants.py exits non-zero on a violation (manifest
-      # losing adjustResize, or a file applying two inset authorities at once) and so fails this
-      # step. check_stale_assumptions.py warns only: an assumption falling due is not a reason to
-      # block an unrelated PR, and a scheduled job runs it with --strict to raise an issue.
+      # The same scripts scripts/fullQualityChecks.sh and the pre-push hook run first, from the one
+      # list in scripts/ci_fast_checks.sh, promoted to CI so the invariants they hold are enforced
+      # on every PR rather than only for whoever remembers to run the local script.
+      # check_layout_invariants.py exits non-zero on a violation (manifest losing adjustResize, a
+      # file applying two inset authorities at once, a layout probe measuring bounds) and so fails
+      # this step. check_stale_assumptions.py warns only: an assumption falling due is not a reason
+      # to block an unrelated PR, and a scheduled job runs it with --strict to raise an issue.
+      # check_ci_parity.py fails when this workflow runs a `python3 scripts/...` step or a verify
+      # task that scripts/ci_fast_checks.sh does not list, or the reverse, so the local gates
+      # cannot fall behind this file again. When you add a step here, add it to that list too.
       - name: Layout invariants and analytics assumptions
         id: prose-invariants
         run: |
           python3 scripts/check_layout_invariants.py
           python3 scripts/check_stale_assumptions.py
+          python3 scripts/check_ci_parity.py
 
       # Test-infrastructure guardrails — run BEFORE detekt/tests so a misconfigured
       # module (missing withHostTest{}, test code leaking into production, ad-hoc

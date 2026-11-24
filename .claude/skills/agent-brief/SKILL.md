@@ -89,10 +89,13 @@ instead of picking one silently.
    androidHostTest). `getUnclippedBoundsInRoot()` in a `*LayoutTest.kt` fails
    `scripts/check_layout_invariants.py`. One inset authority per screen, never
    `safeDrawingPadding()` with `imePadding()` in one file. In panes use `listPaneInsets()` and
-   `detailPaneInsets()` (`DualPaneScaffold.kt`). For the side safe area prefer
-   `WindowInsets.safeDrawing.only(Horizontal)` to `displayCutout` alone; see the comment in
-   `SavedTripsScreen.kt` for why.
-   Source: `docs/LAYOUT_AND_INSETS.md`; `docs/testing/GUARDS.md`.
+   `detailPaneInsets()` (`DualPaneScaffold.kt`). For the side safe area never read `displayCutout`
+   (Compose on iOS reports it as 0 at the sides, so a card runs under the foldable iPhone's status
+   pill): pad floating cards and controls with `Modifier.sideSafeInsets()` from taj, and
+   `scripts/check_layout_invariants.py` fails the build on a raw `displayCutout`. A sheet body pads
+   the vertical system bars only, never the sides: `SheetContent` already insets them. Name the
+   device profiles a screen must pass (`docs/testing/DEVICE_PROFILES.md`) in the brief.
+   Source: `docs/LAYOUT_AND_INSETS.md` 1.6; `docs/testing/GUARDS.md`.
 10. **Spec first, cost first.** A feature that touches network, storage, timers or the main
     thread gets its spec and the seven cost answers, with measured numbers, before any code.
     Do not copy the list into the brief.

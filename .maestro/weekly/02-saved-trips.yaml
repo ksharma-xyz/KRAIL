@@ -1,5 +1,5 @@
 # Saved Trips, the home: a saved trip opens its timetable, the timetable's back arrow brings the rider home, and the
-# search bar opens Search Stop.
+# search capsule opens Search Stop.
 #
 # Each of those is a real tap whose outcome is asserted, so a control that a system bar or a side inset covers on an
 # unusual display fails here and not in front of a rider.
@@ -30,7 +30,7 @@ appId: ${APP_ID}
 - waitForAnimationToEnd:
     timeout: 5000
 
-# The title bar's action and the search bar are what the rider reaches this screen for.
+# The title bar's action and the search capsule are what the rider reaches this screen for.
 - assertVisible:
     id: "savedtrips.action.settings"
 - assertVisible:
@@ -66,7 +66,7 @@ appId: ${APP_ID}
             id: "timetable.screen"
           timeout: 15000
 
-# --- The search bar opens Search Stop ---
+# --- The search capsule opens Search Stop ---
 - waitForAnimationToEnd:
     timeout: 5000
 - tapOn:

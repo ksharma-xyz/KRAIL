@@ -22,7 +22,7 @@ appId: ${APP_ID}
 #
 # Not a preference: setOrientation does not work on the iOS simulator. It reports
 # COMPLETED, the app stays in portrait (the screenshot at the failure is a
-# fully drawn portrait home screen with the search row plainly on it), and the
+# fully drawn portrait home screen with the search capsule plainly on it), and the
 # accessibility tree comes back EMPTY for that moment, so every id assertion
 # after the rotate fails against a screen that is actually fine. Reproduced on
 # an iPhone 17 simulator; the app's Info.plist does allow landscape, so this is
@@ -56,8 +56,8 @@ onFlowComplete:
     visible:
       id: "savedtrips.screen"
     timeout: 60000
-# The one search bar is the same one row in landscape, so assert its root and the
-# pills, which are the first row of the list.
+# The search capsule is the same one row in landscape, so assert its root and the
+# label row, which is the first item of the list.
 - extendedWaitUntil:
     visible:
       id: "searchrow.root"
@@ -74,7 +74,7 @@ onFlowComplete:
     timeout: 60000
 
 # --- Search stop ---
-# The destination first, from `searchrow.to`, the home's one search bar. It opens Search Stop, whose To and From
+# The destination first, from `searchrow.to`, the home's one search capsule. It opens Search Stop, whose To and From
 # form stays on screen through both picks. The origin follows from `searchrow.from` on that form, and the go
 # circle takes the trip out.
 - tapOn:

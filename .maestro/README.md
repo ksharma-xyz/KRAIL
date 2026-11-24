@@ -81,14 +81,14 @@ maestro --device emulator-5554 test -e APP_ID=xyz.ksharma.krail.debug .maestro/s
 
 | Flow | Pins |
 |---|---|
-| `smoke/01-launch-home.yaml` | Cold launch reaches home, the saved-trips list and the search row render, the title bar has its actions. |
-| `smoke/02-plan-trip.yaml` | The core journey: pick a destination, pick an origin, get real journey results back from the API, then (Android) back lands on Search Stop with both bars filled and back again on home. The home is the classic one: Set Home and Set Work pills, then the list, with one search bar at the bottom. |
+| `smoke/01-launch-home.yaml` | Cold launch reaches home, the saved-trips list, the label row and the search capsule render, the title bar has its actions. |
+| `smoke/02-plan-trip.yaml` | The core journey: pick a destination, pick an origin, get real journey results back from the API, then (Android) back lands on Search Stop with both bars filled and back again on home. The home is the classic one: the label row, then the list, with one search capsule at the bottom. |
 | `nightly/03-rotation-sweep.yaml` | Home, search stop and the timetable each survive rotation, including with results and journey data loaded, and back from the rotated timetable still lands on Search Stop. |
 | `nightly/04-background-foreground.yaml` | Backgrounding and returning lands the rider on the screen they left, not on home. |
 | `nightly/05-kill-relaunch.yaml` | After a force-stop the app recovers to home and navigation still works. |
 | `nightly/06-permissions-denied.yaml` | With location denied the app still runs and a trip can still be planned by typing. |
 | `weekly/01-intro-buttons.yaml` | From a clean install, one tap on every button of the five Intro screens, each followed by the next screen as proof. On Android, system back is pressed on every screen after the first and the screen must still be there. Ends with the trip saved by Yes, save it on Saved Trips. |
-| `weekly/02-saved-trips.yaml` | A saved trip card opens its timetable, the timetable's back arrow returns to Saved Trips, and the search bar opens Search Stop. The card steps are skipped when the device has no saved trip. |
+| `weekly/02-saved-trips.yaml` | A saved trip card opens its timetable, the timetable's back arrow returns to Saved Trips, and the search capsule opens Search Stop. The card steps are skipped when the device has no saved trip. |
 | `weekly/03-search-stop-controls.yaml` | The clear X empties the field and keeps the screen, Select on map returns to the map state, the swap trades From and To (read from the real stop names in their labels), and the go circle opens the timetable. |
 | `weekly/04-search-stop-options.yaml` | With location granted, Options is drawn, opens the mode block and shuts it again. The only weekly flow that does not deny location. |
 | `weekly/05-timetable-controls.yaml` | Reverse trades the origin and destination, the star saves the trip and takes it back, and the back arrow returns to Search Stop with both stops and the go circle. |

@@ -21,14 +21,15 @@ appId: ${APP_ID}
     timeout: 60000
 
 
-# The bottom search bar is the app's primary action. If it is missing, the home
-# screen rendered but is useless.
+# The search capsule alone at the bottom is the app's primary action. If it is
+# missing, the home screen rendered but is useless.
 #
-# The bar slides in once the saved trips have loaded, so it is waited for rather
-# than asserted. Asserting it in place passes on a warm device and fails on a
-# cold one, which is the worst kind of flake: green locally, red in CI, and only
-# on the first run. The home has this one bar in every posture and no From bar
-# or go circle, which belong to Search Stop.
+# The capsule slides in once the saved trips have loaded, so it is waited for
+# rather than asserted. Asserting it in place passes on a warm device and fails on
+# a cold one, which is the worst kind of flake: green locally, red in CI, and only
+# on the first run. The home has this one capsule in every posture, with no sheet
+# and no pills in it, and no From bar or go circle, which belong to Search Stop.
+# `searchrow.root` is the capsule and `searchrow.to` is the tappable pill inside it.
 - extendedWaitUntil:
     visible:
       id: "searchrow.root"
@@ -38,8 +39,9 @@ appId: ${APP_ID}
       id: "searchrow.to"
     timeout: 20000
 
-# The list, and the Set Home and Set Work pills that are its first row. The pills
-# draw with the first list, once the labels have loaded.
+# The list, and the label row that is its first item, above the Saved Trips heading.
+# The row draws with the first list, once the labels have loaded, and a fresh install
+# always has Home, so it is there.
 - assertVisible:
     id: "savedtrips.list"
 - extendedWaitUntil:

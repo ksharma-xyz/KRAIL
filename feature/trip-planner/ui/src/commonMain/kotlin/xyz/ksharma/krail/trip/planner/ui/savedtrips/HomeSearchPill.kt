@@ -42,13 +42,14 @@ internal const val HOME_PILL_PLACEHOLDER = "Where are you going?"
 private const val ASK_KRAIL_MICROPHONE_DESCRIPTION = "Ask KRAIL"
 
 /**
- * The one search bar at the bottom of the Saved Trips screen: a tap opens Search Stop for the destination,
- * exactly as the To bar of the old search row did, and its text is one line that ends in an ellipsis.
+ * The one search bar at the bottom of the map home: a tap opens Search Stop for the destination,
+ * exactly as the To bar of the old search row did, and its text is one line that ends in an ellipsis. The classic
+ * Saved Trips home has its own capsule ([HomeSearchCapsule]) and does not use this bar.
  *
  * The bar is taj's [TextField] as it ships, read only, in taj's own default field colours ([homeSearchPillColors]):
  * it holds no text, it shows the placeholder, it cannot take focus, and the tap over it opens Search Stop. It is
- * 48 dp tall, taj's own height, and a full pill. It sits inside the theme coloured sheet that
- * [HomeSearchSheet] draws, so the page surface fill of the default colours is the pill's edge against the sheet.
+ * 48 dp tall, taj's own height, and a full pill. On the map home it stands over the map, so the page surface fill
+ * of the default colours is the pill's edge against the map.
  *
  * The microphone at its end is taj's [MicIcon] as it ships, with no gradient, no circle and no background, in
  * the bar's own content colour, in a 48 dp touch slot flush with the bar's end. It opens Ask KRAIL, and shows

@@ -1,12 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop
 
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import xyz.ksharma.krail.taj.theme.KrailDimensions
 import xyz.ksharma.krail.taj.theme.KrailTheme
@@ -68,18 +62,3 @@ internal fun searchStopGaps(dim: KrailDimensions = KrailDimensions()): SearchSto
 
 @Composable
 internal fun rememberSearchStopGaps(): SearchStopGaps = searchStopGaps(KrailTheme.dimensions)
-
-/**
- * Keeps a floating Search Stop surface out of the sides of the display that belong to the system: a camera cutout, a navigation
- * bar on the side in landscape, and the status pill down the right edge of the outer screen of a foldable iPhone. The map itself
- * is not padded, it draws edge to edge behind the cards; only the cards, their controls and the notice stand inside.
- *
- * It reads `safeDrawing`, not `displayCutout`. Compose on iOS puts the side safe area in the system bars and reports the cutout
- * only for the top edge in portrait, so on that screen a cutout-only inset is zero and the cards run under the pill, where the
- * system takes the touch and opens Control Center instead of the swap and the go circle. This is the one inset the rest of the app
- * already uses for its sides (`docs/LAYOUT_AND_INSETS.md`). The keyboard has no side, so it adds nothing here and the screen's
- * root `imePadding()` stays the only keyboard authority.
- */
-@Composable
-internal fun Modifier.searchStopSideInsets(): Modifier =
-    windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))

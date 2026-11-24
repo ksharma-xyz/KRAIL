@@ -4,14 +4,16 @@
 The first two checks come from one incident, recorded in
 docs/learning/2026-08-16-ime-pan-and-unbounded-column.md. The third comes from its sister
 incident, docs/learning/2026-08-16-clipped-inside-its-own-parent.md, where the probe
-itself was the thing that was wrong. The rules they enforce are explained in
-docs/LAYOUT_AND_INSETS.md.
+itself was the thing that was wrong. The fourth comes from the iPhone Duo side inset
+incident, recorded in docs/testing/DEVICE_PROFILES.md. The rules they enforce are explained
+in docs/LAYOUT_AND_INSETS.md.
 
 Run standalone or via scripts/fullQualityChecks.sh. Exit code 1 on any violation.
 """
 
 from __future__ import annotations
 
+import os
 import re
 import sys
 from pathlib import Path
@@ -40,6 +42,34 @@ TEST_SEARCH_ROOTS = (
     "taj",
     "core",
 )
+
+
+# The side inset every floating surface pads by. It reads safeDrawing, which is the one inset that
+# carries a side on both platforms, and it is the one file allowed to name the display cutout.
+SIDE_SAFE_INSETS_FILE = "taj/src/commonMain/kotlin/xyz/ksharma/krail/taj/modifier/SideSafeInsets.kt"
+
+# Source sets that hold tests, matched by directory and never by file name. A test dispatches a
+# cutout inset on purpose, to prove what the screen does with it.
+TEST_SOURCE_SETS = frozenset(
+    {
+        "commonTest",
+        "androidHostTest",
+        "androidUnitTest",
+        "androidInstrumentedTest",
+        "androidTest",
+        "iosTest",
+        "jvmTest",
+        "test",
+        "testFixtures",
+    }
+)
+
+# Never walked: build output holds generated Kotlin, and the rest is not source.
+SKIPPED_DIRS = frozenset({"build", ".git", ".gradle", ".idea", ".worktrees", "node_modules"})
+
+# `WindowInsets.displayCutout`, the `foundation.layout.displayCutout` import, or the platform's
+# own `displayCutout` property: any of them is a read of the cutout inset.
+DISPLAY_CUTOUT = re.compile(r"\bdisplayCutout\b")
 
 
 def check_manifest_adjust_resize() -> list[str]:
@@ -141,11 +171,53 @@ def check_layout_probes_assert_display() -> list[str]:
     return problems
 
 
+def non_test_kotlin_files(root: Path):
+    """Every Kotlin file under [root] that is not in a test source set or build output."""
+    for current, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in SKIPPED_DIRS and d not in TEST_SOURCE_SETS]
+        for name in filenames:
+            if name.endswith(".kt"):
+                yield Path(current) / name
+
+
+def check_no_raw_display_cutout(root: Path = ROOT) -> list[str]:
+    """No screen pads by the display cutout. The one shared side modifier is the exception.
+
+    `WindowInsets.displayCutout.only(Horizontal)` is the inset Android reports a side inset as,
+    and on iOS it is zero at the sides. Compose on iOS put the iPhone Duo's 84 pt side strip in
+    `systemBars` and `safeDrawing` and reported `displayCutout` as 0, so Search Stop's cards ran
+    under the status pill and the swap and go controls could not be tapped. Every Android host
+    test, golden and Maestro run passed, because Android delivers the side inset as the cutout.
+
+    Comments are stripped first, so a KDoc that explains why the cutout is banned is fine. Test
+    source sets are skipped: a test dispatches a cutout inset on purpose.
+    """
+    problems: list[str] = []
+    allowed = (root / SIDE_SAFE_INSETS_FILE).resolve()
+    for path in non_test_kotlin_files(root):
+        if path.resolve() == allowed:
+            continue
+        for number, line in enumerate(strip_kotlin_comments(path.read_text()).splitlines(), start=1):
+            if not DISPLAY_CUTOUT.search(line):
+                continue
+            rel = path.relative_to(root)
+            problems.append(
+                f"{rel}:{number}: reads the display cutout inset. Compose on iOS reports displayCutout "
+                "as 0 at the sides and carries the side safe area in systemBars and safeDrawing "
+                "(measured on the iPhone Duo outer screen), so a surface padded by the cutout runs "
+                "under the system's status pill there while every Android test passes. Pad with "
+                "Modifier.sideSafeInsets() from taj, which reads safeDrawing. See "
+                "docs/LAYOUT_AND_INSETS.md 1.6 and docs/testing/DEVICE_PROFILES.md."
+            )
+    return problems
+
+
 def main() -> int:
     problems = (
         check_manifest_adjust_resize()
         + check_single_ime_authority()
         + check_layout_probes_assert_display()
+        + check_no_raw_display_cutout()
     )
 
     if problems:

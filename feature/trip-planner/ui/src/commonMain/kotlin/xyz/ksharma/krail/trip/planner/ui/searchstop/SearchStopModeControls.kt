@@ -44,6 +44,7 @@ import xyz.ksharma.krail.taj.LocalTextColor
 import xyz.ksharma.krail.taj.components.Button
 import xyz.ksharma.krail.taj.components.ButtonDefaults
 import xyz.ksharma.krail.taj.components.Text
+import xyz.ksharma.krail.taj.modifier.sideSafeInsets
 import xyz.ksharma.krail.taj.motion.isReduceMotionEnabled
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
@@ -100,7 +101,7 @@ internal fun BoxScope.SearchStopModeControls(
         modifier = modifier
             .align(Alignment.BottomStart)
             .fillMaxWidth()
-            .searchStopSideInsets()
+            .sideSafeInsets()
             .navigationBarsPadding()
             .padding(start = gaps.edge, end = gaps.edge, bottom = optionsBottomPadding(gaps, pillHeight, clearance)),
         horizontalAlignment = Alignment.Start,

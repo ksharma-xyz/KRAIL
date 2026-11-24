@@ -126,11 +126,12 @@ control like them) stands inside the horizontal safe area. The surface under it,
 cards and their controls are inset. Use the one inset the rest of the app uses for the sides:
 
 ```kotlin
-Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
-// Search Stop names it: Modifier.searchStopSideInsets()
+Modifier.sideSafeInsets()
+// taj, xyz.ksharma.krail.taj.modifier. It is
+// Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
 ```
 
-Not `WindowInsets.displayCutout.only(Horizontal)`. Measured on an iOS simulator of a foldable iPhone (its outer screen, where a status pill runs
+Not `WindowInsets.displayCutout.only(Horizontal)`: `scripts/check_layout_invariants.py` fails on it anywhere outside tests. Measured on an iOS simulator of a foldable iPhone (its outer screen, where a status pill runs
 down the right edge), Compose on iOS reported `displayCutout` 0 at both sides, `statusBars` 0, and the
 84 dp side safe area only in `systemBars` and `safeDrawing`. A card padded by the cutout alone ran under the pill. The pill is a
 system touch target: a tap on it opened Control Center, so the swap and the go circle of the From and To card, which stood under

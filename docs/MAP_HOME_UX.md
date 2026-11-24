@@ -508,7 +508,7 @@ only, with one float that animates the hairline for 200 ms when the screen chang
 | What | Value |
 |---|---|
 | Scale | 4, 8, 12, 16 (24 only between sections) |
-| Edge inset, all sides | 16, measured from the safe area on every side (`searchStopSideInsets` on Search Stop: the box, the notice, the list and the Options line stand inside the side safe area, and the map is not inset) |
+| Edge inset, all sides | 16, measured from the safe area on every side (`sideSafeInsets` from taj on Search Stop: the box, the notice, the list and the Options line stand inside the side safe area, and the map is not inset) |
 | Gap between floating elements | 8 (the chips and notices flow to the pill, card to card, stack to the chips and notices). On Search Stop: between the two pills in the box, the box to the location button, and the Options card to the bottom row |
 | Search Stop edge | 16 from the system top inset to the box and 16 from the box to the sides of the safe area, which is the window's edge on a phone in portrait |
 | Card padding | 16 on all four sides, equal top and bottom, for the Options card, which takes the card's own radius token (16) and padding token (16). The box has no padding of its own: its rows are 56 tall with 16 at the start and the circle column at the end, so it is 113 tall at 100 percent text and grows at large text when a name wraps onto more lines |

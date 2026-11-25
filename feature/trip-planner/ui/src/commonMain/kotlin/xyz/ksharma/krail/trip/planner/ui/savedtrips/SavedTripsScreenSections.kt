@@ -47,6 +47,7 @@ import xyz.ksharma.krail.trip.planner.ui.components.CityCodeText
 import xyz.ksharma.krail.trip.planner.ui.components.ParkRideCard
 import xyz.ksharma.krail.trip.planner.ui.components.SavedTripCard
 import xyz.ksharma.krail.trip.planner.ui.search.ai.AiSearchInputEvent
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripsState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.StopLabel
@@ -171,6 +172,7 @@ internal fun LazyListScope.parkRideSection(
                 )
             },
             parkRideUiState = parkRide,
+            onDirectionsClick = { facility -> parkRideDirectionsEvent(facility)?.let(onEvent) },
         )
 
         Spacer(modifier = Modifier.height(dim.spacingXL))
@@ -200,6 +202,19 @@ internal fun LazyListScope.parkRideSection(
             Spacer(modifier = Modifier.height(dim.spacingXL))
         }
     }
+}
+
+/** The event for a tap on one car park's Directions, or null for a car park whose position is not known. */
+internal fun parkRideDirectionsEvent(
+    facility: ParkRideUiState.ParkRideFacilityDetail,
+): SavedTripUiEvent.ParkRideDirectionsClick? {
+    val latitude = facility.latitude ?: return null
+    val longitude = facility.longitude ?: return null
+    return SavedTripUiEvent.ParkRideDirectionsClick(
+        latitude = latitude,
+        longitude = longitude,
+        label = facility.facilityName,
+    )
 }
 
 @Composable

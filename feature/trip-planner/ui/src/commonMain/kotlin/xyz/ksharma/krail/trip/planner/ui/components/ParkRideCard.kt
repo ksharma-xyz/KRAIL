@@ -11,7 +11,6 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -19,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.liveRegion
@@ -28,12 +28,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.toImmutableSet
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
+import xyz.ksharma.krail.park.ride.ui.components.DirectionsButton
 import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.modifier.cardBackground
 import xyz.ksharma.krail.taj.modifier.klickable
+import xyz.ksharma.krail.taj.preview.PreviewComponent
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.KrailThemeStyle
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.TripPlannerTestTags
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 
 private val ParkRideCardVerticalPadding = 20.dp // no token equivalent
@@ -64,6 +67,11 @@ private val ParkRideCardVerticalPadding = 20.dp // no token equivalent
  * all in the draw phase so nothing is laid out again. A later value just replaces the text. The card is also one merged node for a
  * screen reader, which announces it politely once the numbers are in. It is off on the home card, whose numbers appear as they always
  * did. [reduceMotion] is the rider's setting when null, and under it the three lines are one plain fade with no rise and no stagger.
+ *
+ * With [onDirectionsClick], each car park of the open card whose position is known has a Directions button at the card's end edge,
+ * centred on its text, and under the text only where an item would not fit beside it whole ([CarParkWithAction]). A tap on it is its
+ * own, and does not open or close the card. It is null on a surface that only shows the card, such as the Intro, and a card with
+ * [keepReadingSpace] is such a surface and ignores it.
  */
 @Composable
 fun ParkRideCard(
@@ -76,6 +84,7 @@ fun ParkRideCard(
     textWeight: FontWeight? = null,
     stagedReading: Boolean = false,
     reduceMotion: Boolean? = null,
+    onDirectionsClick: ((ParkRideUiState.ParkRideFacilityDetail) -> Unit)? = null,
 ) {
     val dim = KrailTheme.dimensions
     val figuresShown = parkRideUiState.facilities.any { it.spotsAvailable >= 0 }
@@ -114,6 +123,7 @@ fun ParkRideCard(
                                 keepReadingSpace = keepReadingSpace,
                                 textWeight = textWeight,
                                 reveal = reveal,
+                                onDirectionsClick = onDirectionsClick,
                             )
                         }
                     }
@@ -147,15 +157,15 @@ private fun ParkRideFacility(
     keepReadingSpace: Boolean,
     textWeight: FontWeight?,
     reveal: FigureReveal?,
+    onDirectionsClick: ((ParkRideUiState.ParkRideFacilityDetail) -> Unit)?,
 ) {
+    val directions = onDirectionsClick?.takeIf { facility.latitude != null && facility.longitude != null }
+    if (directions != null && !keepReadingSpace) {
+        ParkRideFacilityWithDirections(facility = facility, textWeight = textWeight, onDirectionsClick = directions)
+        return
+    }
     Column(verticalArrangement = Arrangement.spacedBy(KrailTheme.dimensions.spacingXS)) {
-        // Facility Name
-        Text(
-            text = facility.facilityName,
-            style = KrailTheme.typography.displaySmall.copy(
-                fontWeight = textWeight ?: FontWeight.Normal,
-            ),
-        )
+        ParkRideFacilityName(name = facility.facilityName, textWeight = textWeight)
 
         if (keepReadingSpace) {
             ParkRideReadingRoom(facility = facility, textWeight = textWeight, reveal = reveal)
@@ -172,6 +182,43 @@ private fun ParkRideFacility(
             }
         }
     }
+}
+
+/** A car park with a reading and a position: its text, and its Directions at the card's end edge. */
+@Composable
+private fun ParkRideFacilityWithDirections(
+    facility: ParkRideUiState.ParkRideFacilityDetail,
+    textWeight: FontWeight?,
+    onDirectionsClick: (ParkRideUiState.ParkRideFacilityDetail) -> Unit,
+) {
+    CarParkWithAction(
+        name = { ParkRideFacilityName(name = facility.facilityName, textWeight = textWeight) },
+        spots = { ParkRideSpotsFigure(spots = "${facility.spotsAvailable}", textWeight = textWeight) },
+        percentFull = { ParkRidePercentFigure(percentFull = "${facility.percentageFull}%", textWeight = textWeight) },
+        updatedAt = {
+            if (facility.timeText.isNotBlank()) {
+                ParkRideUpdatedAt(timeText = facility.timeText, textWeight = textWeight)
+            }
+        },
+        action = {
+            DirectionsButton(
+                carParkName = facility.facilityName,
+                onClick = { onDirectionsClick(facility) },
+                modifier = Modifier.testTag(TripPlannerTestTags.parkRideDirections(facility.facilityId)),
+            )
+        },
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun ParkRideFacilityName(name: String, textWeight: FontWeight?) {
+    Text(
+        text = name,
+        style = KrailTheme.typography.displaySmall.copy(
+            fontWeight = textWeight ?: FontWeight.Normal,
+        ),
+    )
 }
 
 /**
@@ -223,61 +270,6 @@ private fun Modifier.readingSemantics(figuresShown: Boolean): Modifier = semanti
     if (figuresShown) liveRegion = LiveRegionMode.Polite
 }
 
-@Composable
-private fun ParkRideFigures(
-    spots: String,
-    percentFull: String,
-    textWeight: FontWeight?,
-    spotsBeat: Modifier = Modifier,
-    percentBeat: Modifier = Modifier,
-) {
-    val dim = KrailTheme.dimensions
-    // Spots Information
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(dim.spacingML),
-        verticalArrangement = Arrangement.spacedBy(dim.spacingXS),
-    ) {
-        FlowRow(modifier = spotsBeat, horizontalArrangement = Arrangement.spacedBy(dim.spacingXS)) {
-            Text(
-                text = spots,
-                style = KrailTheme.typography.headlineMedium,
-                modifier = Modifier.alignByBaseline(),
-            )
-            Text(
-                text = "spots available",
-                style = KrailTheme.typography.bodyMedium.withWeight(textWeight),
-                modifier = Modifier.alignByBaseline(),
-            )
-        }
-
-        FlowRow(
-            modifier = percentBeat,
-            horizontalArrangement = Arrangement.spacedBy(dim.spacingXS),
-        ) {
-            Text(
-                text = percentFull,
-                style = KrailTheme.typography.headlineMedium,
-                modifier = Modifier.alignByBaseline(),
-            )
-            Text(
-                text = "full",
-                style = KrailTheme.typography.bodyMedium.withWeight(textWeight),
-                modifier = Modifier.alignByBaseline(),
-            )
-        }
-    }
-}
-
-@Composable
-private fun ParkRideUpdatedAt(timeText: String, textWeight: FontWeight?, modifier: Modifier = Modifier) {
-    Text(
-        text = "Last updated at\u00A0$timeText",
-        style = KrailTheme.typography.bodySmall.withWeight(textWeight),
-        color = KrailTheme.colors.secondaryLabel,
-        modifier = modifier,
-    )
-}
-
 // The widest reading a car park can have: four digits of spots, a full car park, and the longest time of day. The system font gives every
 // digit one width, and AM is at least as wide as PM, so a real reading is never wider than this and never wraps sooner.
 private const val WIDEST_SPOTS = "0000"
@@ -305,6 +297,24 @@ private fun ParkRideCardPreview() {
             parkRideUiState = previewParkRideUiState,
             isExpanded = false,
             onClick = { },
+        )
+    }
+}
+
+@ScreenshotTest
+@PreviewComponent
+@Composable
+private fun ParkRideCardDirectionsPreview() {
+    PreviewTheme(KrailThemeStyle.BarbiePink) {
+        ParkRideCard(
+            parkRideUiState = previewParkRideUiState.copy(
+                facilities = previewParkRideUiState.facilities.mapIndexed { index, facility ->
+                    facility.copy(facilityId = "$index", latitude = -33.69, longitude = 150.9)
+                }.toImmutableSet(),
+            ),
+            isExpanded = true,
+            onClick = { },
+            onDirectionsClick = { },
         )
     }
 }

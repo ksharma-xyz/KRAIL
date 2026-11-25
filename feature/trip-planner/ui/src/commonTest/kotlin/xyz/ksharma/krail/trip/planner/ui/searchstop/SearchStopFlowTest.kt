@@ -215,6 +215,30 @@ class SearchStopFlowTest {
     }
 
     @Test
+    fun `with no map, back leaves from the list even after its focus moved the saved state there`() {
+        val focused = opening.after(SearchStopFlowEvent.BarTapped).flow
+
+        assertTrue(focused.after(SearchStopFlowEvent.BackPressed(mapsAvailable = false)).exit)
+        assertFalse(focused.after(SearchStopFlowEvent.BackPressed()).exit, "With a map, back still goes to it.")
+    }
+
+    @Test
+    fun `with no map and both bars filled, back closes the list to the box before it leaves`() {
+        val listing = opening.after(SearchStopFlowEvent.FieldTapped(ToFromField.From)).flow
+        val back = SearchStopFlowEvent.BackPressed(
+            filled = setOf(ToFromField.From, ToFromField.To),
+            mapsAvailable = false,
+        )
+
+        val first = listing.after(back)
+
+        assertFalse(first.exit)
+        assertNull(first.flow.editing)
+        assertEquals(SearchStopMode.Map, effectiveFlow(first.flow, mapsAvailable = false).mode)
+        assertTrue(first.flow.after(back).exit)
+    }
+
+    @Test
     fun `with nothing being edited the state is never forced to the list`() {
         val nothing = SearchStopFlow(mode = SearchStopMode.Map, editing = null)
 

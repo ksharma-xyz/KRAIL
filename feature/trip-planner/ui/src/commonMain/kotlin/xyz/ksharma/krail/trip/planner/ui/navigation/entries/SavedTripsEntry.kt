@@ -200,9 +200,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                     mapUiState = mapUiState,
                     userLocationManager = userLocationManager,
                     onMapEvent = mapStopSelectionViewModel::onEvent,
-                    onStopSelected = { stop ->
-                        viewModel.onEvent(SavedTripUiEvent.ToStopChanged(stop.toJsonString()))
-                    },
+                    onStopSelected = tripPlannerNavigator::goHereFromHomeMap,
                     labels = savedTripState.stopLabels,
                     onEvent = viewModel::onEvent,
                     mapOpen = viewModel.mapOpen,

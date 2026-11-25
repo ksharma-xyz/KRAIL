@@ -151,7 +151,8 @@ SearchStop). `TimeTableRoute` navigation still works via back-stack push.
 - **Right pane** (`weight(1f)`): a **read-only nearby-stops map** powered by
   `MapStopSelectionPane` (singleton `MapStopSelectionViewModel`). Users can
   explore nearby stops and view stop details. A tapped stop opens the floating stop card,
-  whose Go here sets the destination and whose Save as pills give the stop a label.
+  whose Go here opens Search Stop with that stop as the destination, editing where from, and whose Save as pills give
+  the stop a label.
 - Trip planning starts from the search capsule at the bottom of the left pane
   (`HomeSearchCapsule`, see "The classic home" in [`MAP_HOME_UX.md`](MAP_HOME_UX.md)). It is the same
   one row in every posture, capped at 480 dp and centred in the pane, so nothing collapses to a button,

@@ -507,7 +507,7 @@ frame: the trips were already waiting for their own query. **Stop card:** openin
 the labels the screen already holds (`saveAsPillsFor`, a few rows, a guess of microseconds, not measured), recomputed only when the stop, the role
 or the labels change. **Save as tap:** one local write, the existing assign (`AssignLabelStop` on Search Stop, `LabelStopAssigned` on home), then
 the existing label observer re-emits the table once and the pill turns filled. Nothing is fetched. **Go here:** 0 calls, an in memory event that
-sets the destination (`ToStopChanged` on home, the pick result on Search Stop) and closes the card, and the next screen owns any loading or error.
+closes the card and passes the stop on (on home it opens Search Stop holding it as the destination, on Search Stop it is the pick result), and the next screen owns any loading or error.
 **Park & Ride:** the pin's Go here stop is worked out when the pins are built, from the one coordinate lookup the pins already make
 (`selectStopCoordinatesBatch`), so it adds 0 queries: the answer is the smallest id among the ones that lookup returned. **Time to first content:**
 unchanged, the card draws from state it already holds. **UX:** loading, slow, failed and offline are the same as the card's, because nothing here

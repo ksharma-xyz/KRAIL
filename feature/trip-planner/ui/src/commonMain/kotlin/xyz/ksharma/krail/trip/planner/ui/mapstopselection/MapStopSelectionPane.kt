@@ -60,6 +60,13 @@ fun MapStopSelectionPane(
                     onEvent(MapStopSelectionEvent.MapCenterChanged(sse.center))
                 is SearchStopUiEvent.UserLocationUpdated ->
                     onEvent(MapStopSelectionEvent.UserLocationUpdated(sse.location))
+                is SearchStopUiEvent.ParkRideCardOpened ->
+                    onEvent(MapStopSelectionEvent.ParkRideCardOpened(sse.stopId))
+                SearchStopUiEvent.ParkRideCardClosed ->
+                    onEvent(MapStopSelectionEvent.ParkRideCardClosed)
+                is SearchStopUiEvent.ParkRideDirectionsClicked -> onEvent(
+                    MapStopSelectionEvent.ParkRideDirectionsClicked(sse.latitude, sse.longitude, sse.label),
+                )
                 else -> Unit
             }
         },

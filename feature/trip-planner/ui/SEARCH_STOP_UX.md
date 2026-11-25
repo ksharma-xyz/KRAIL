@@ -54,6 +54,50 @@ there is a map. Before that a rider with no map saw the list for a frame, and a 
 The map starts once, as the screen opens, through the existing `InitializeMap` event, so opening costs the shared
 map instance and no new network call.
 
+**Stop markers.** `NearbyStopsLayer` draws each stop in one of two ways, by zoom.
+
+- From zoom 14.5 a stop is its mode's transport icon: a 29 dp circle in the mode colour with a white edge and the
+  letter `TransportModeIcon` uses (`rememberStopModeMarkerPainter`). The letter does not follow the font size setting.
+- Further out it is a small dot in the same colour, because the letters crowd into each other there.
+- A stop with several modes is marked with the one stop search ranks first (Train, Metro, Light Rail, Ferry, Coach,
+  then Bus), and where two markers overlap, the one ranked higher is on top.
+- The markers do not push the base map's names out of the way.
+- The letters are drawn by one layer that picks its image by a property of the stop, so a map has one extra layer and
+  eight small images, whatever the number of stops.
+
+**Park & Ride stations carry a `P`.** `SearchStopMap` draws the `P` marker of the Add Park & Ride map
+(`ParkRideStationsLayer`) on every station that has parking, in this screen's map and in the side map of the two pane
+layouts.
+
+- The marker is the app's parking logo (`rememberParkRideMarkerPainter`): a large white bold `P` on a 30 dp rounded
+  square with a white edge, the theme colour deepened only as far as the white letter needs (3 to 1). It is drawn as one
+  picture, so an upper marker covers a lower one whole, and its letter does not follow the font size setting. It
+  replaced a small disc with a map text letter, which was hard to read.
+- All of them are marked, wherever the map is centred. The nearby radius and the mode chips do not hide a `P`.
+- The `P` stands 26 dp up and to the right of its station's own marker, so the two never cover each other and each has
+  its own tap. A station with parking has its marker even outside the nearby radius, unless the mode chips hide all of
+  its modes (`stationMarkerStops`).
+- A tap on the station marker opens the station's stop card, as for any stop. A tap on the `P` opens its parking card.
+  The two tap circles meet between the markers, where the `P` wins, and each marker as drawn answers for itself.
+- The stations come from `ParkRideMapSource`: the Park & Ride list in Remote Config, named, placed and given modes by
+  the local stops database. They are read once per map, off the main thread, with no network call. The side map reads
+  them on its first event, so a phone, which draws no side map, never reads them for it.
+- A host that draws its own `P` pins passes `showsParkRideStops = false`, because two copies of the layer on one map
+  would share layer ids.
+
+**The parking card** (`ParkRideStationCard`) is the station card's shell in the app's mode: the station's name, the
+parking logo, every car park of the station, and Close. A car park reads as on the home card, with its Directions at
+the end edge, or under the text where it does not fit. It has no Departure Board, no pick action and no Add to home.
+In a short window, such as a phone on its side, the logo is left out so that the first car park's numbers fit.
+
+- One card is open at a time. Tapping a station marker while a parking card is open swaps to the stop card, and the
+  other way round. Back, Close and a tap on the map close it, and it stays open through a rotation.
+- Numbers load only while the card is on screen. Stored numbers show at once, and car parks that are off cooldown are
+  fetched once, through the loader every Park & Ride surface shares. Nothing polls.
+- A car park with no reading holds the room for its numbers while loading. If none comes, because the fetch failed or
+  the phone is offline, it shows its name alone and never an error.
+- A tap on a `P` sends no analytics event.
+
 ## Labels
 
 ### Defaults & lifecycle

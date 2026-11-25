@@ -13,4 +13,17 @@ sealed interface MapStopSelectionEvent {
 
     /** Map camera moved to a new center. Triggers nearby-stops reload for the new position. */
     data class MapCenterChanged(val center: LatLng) : MapStopSelectionEvent
+
+    /** The parking card of the station at [stopId] came on screen. Loads its car parks' numbers. */
+    data class ParkRideCardOpened(val stopId: String) : MapStopSelectionEvent
+
+    /** The parking card left the screen. */
+    data object ParkRideCardClosed : MapStopSelectionEvent
+
+    /** Directions to one car park, in the phone's maps app. */
+    data class ParkRideDirectionsClicked(
+        val latitude: Double,
+        val longitude: Double,
+        val label: String,
+    ) : MapStopSelectionEvent
 }

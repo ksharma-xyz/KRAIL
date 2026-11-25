@@ -68,6 +68,8 @@ internal fun HomeMapPane(
             onMapTap = { onCardKey(null) },
             onStopPinTap = { stop -> onCardKey(stopCardKey(stop.stopId)) },
             showsLocationButton = false,
+            // Home draws its own `P` pins below, for the stations its cards open for.
+            showsParkRideStops = false,
             mapOpen = mapOpen,
             mapEntry = MapEntry.HOME,
             extraLayers = {

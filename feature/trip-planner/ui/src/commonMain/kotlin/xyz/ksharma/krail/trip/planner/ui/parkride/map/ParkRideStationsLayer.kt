@@ -2,12 +2,12 @@ package xyz.ksharma.krail.trip.planner.ui.parkride.map
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
 import org.maplibre.compose.expressions.dsl.const
-import org.maplibre.compose.expressions.dsl.format
+import org.maplibre.compose.expressions.dsl.image
 import org.maplibre.compose.expressions.dsl.offset
-import org.maplibre.compose.expressions.dsl.span
 import org.maplibre.compose.layers.CircleLayer
 import org.maplibre.compose.layers.SymbolLayer
 import org.maplibre.compose.sources.GeoJsonData
@@ -20,26 +20,19 @@ import org.maplibre.spatialk.geojson.Position
 import xyz.ksharma.krail.core.maps.state.GeoJsonFeatureTypes
 import xyz.ksharma.krail.core.maps.state.GeoJsonPropertyKeys
 import xyz.ksharma.krail.core.maps.state.geoJsonProperties
-import xyz.ksharma.krail.taj.theme.getForegroundColor
-import xyz.ksharma.krail.taj.themeContentColor
-import xyz.ksharma.krail.taj.themeGroundColor
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRideStationPickerItem
 import org.maplibre.spatialk.geojson.Feature as GeoJsonFeature
 
 private const val STATION_ID_PROPERTY = "stationId"
 private const val PARK_RIDE_STATION_TYPE = "park_ride_station"
-private val StationCircleRadius = 14.dp
 private val HitTargetRadius = 24.dp
-private val CircleStrokeWidth = 2.dp
-private const val GLYPH_TEXT_SIZE_EM = 1.1f
-private const val GLYPH_VERTICAL_OFFSET_EM = 0.03f
+private val BesideHitTargetRadius = 22.dp
 
 /**
- * Plots every supported Park & Ride station as a themed disc carrying a bold `P`.
+ * Plots every supported Park & Ride station as the parking logo ([rememberParkRideMarkerPainter]).
  *
- * The `P` is the same identity the home card and picker rows use, so a station looks like
- * itself wherever it appears. Disc fill is the rider's theme colour and the glyph runs
- * through [getForegroundColor], the same contrast guard as `ParkRideAddToggle`.
+ * The white `P` on the theme colour is the same identity the home card and picker rows use, so a station looks like
+ * itself wherever it appears.
  *
  * Positions come from the local GTFS stops table, so this layer needs no network call and
  * has no bearing on the availability polling lifecycle (`docs/POLLING_LIFECYCLE.md`).
@@ -48,46 +41,37 @@ private const val GLYPH_VERTICAL_OFFSET_EM = 0.03f
 fun ParkRideStationsLayer(
     stations: List<ParkRideStationPickerItem>,
     onStationClick: (ParkRideStationPickerItem) -> Unit,
+    // How far the `P` stands from the station's own position, for a map that draws the station's marker there too, so
+    // that each has its own place to tap. Nothing by default: the `P` stands on the station.
+    beside: DpOffset = DpOffset.Zero,
 ) {
     val plottable = stations.filter { it.position != null }
     val source = rememberGeoJsonSource(
         data = GeoJsonData.Features(plottable.toFeatureCollection()),
     )
 
-    val discColor = themeGroundColor()
-    val glyphColor = getForegroundColor(
-        backgroundColor = discColor,
-        foregroundColor = themeContentColor(),
-    )
-
-    CircleLayer(
-        id = "park-ride-stations-circle",
-        source = source,
-        radius = const(StationCircleRadius),
-        color = const(discColor),
-        strokeColor = const(Color.White),
-        strokeWidth = const(CircleStrokeWidth),
-    )
-
     SymbolLayer(
-        id = "park-ride-stations-glyph",
+        id = "park-ride-stations-logo",
         source = source,
-        textField = format(span("P")),
-        textFont = const(listOf("Noto Sans Bold")),
-        textSize = const(GLYPH_TEXT_SIZE_EM.em),
-        textColor = const(glyphColor),
-        textOffset = offset(0f.em, GLYPH_VERTICAL_OFFSET_EM.em),
-        textAllowOverlap = const(true),
+        iconImage = image(
+            value = rememberParkRideMarkerPainter(),
+            size = DpSize(ParkRideMarkerSize, ParkRideMarkerSize),
+        ),
+        iconOffset = offset(beside.x, beside.y),
+        iconAllowOverlap = const(true),
+        // The map's own names stay: the marker does not push them out of the way.
+        iconIgnorePlacement = const(true),
     )
 
-    // Invisible larger hit target on top, same trick NearbyStopsLayer uses: a 14dp disc is
+    // Invisible larger hit target on top, same trick NearbyStopsLayer uses: a 30dp marker is
     // an awkward tap target, and this widens it without changing the visual. Must be declared
     // last so it sits above and receives the click first.
     CircleLayer(
         id = "park-ride-stations-hit",
         source = source,
-        radius = const(HitTargetRadius),
+        radius = const(if (beside == DpOffset.Zero) HitTargetRadius else BesideHitTargetRadius),
         color = const(Color.Transparent),
+        translate = offset(beside.x, beside.y),
         onClick = { features ->
             val stationId = features.firstOrNull()?.getStringProperty(STATION_ID_PROPERTY)
             plottable.find { it.stationId == stationId }?.let(onStationClick)

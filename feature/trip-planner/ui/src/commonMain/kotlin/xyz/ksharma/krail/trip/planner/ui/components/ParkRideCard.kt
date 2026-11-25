@@ -150,6 +150,30 @@ fun ParkRideCard(
     }
 }
 
+/**
+ * One car park on the parking card of a stop map: laid out as on the home card once it has a reading. Without one it holds
+ * the room its numbers will take while they load, and then shows its name alone and never an error.
+ */
+@Composable
+internal fun ParkRideCarPark(
+    facility: ParkRideUiState.ParkRideFacilityDetail,
+    isLoading: Boolean,
+    onDirectionsClick: (ParkRideUiState.ParkRideFacilityDetail) -> Unit,
+) {
+    val hasReading = facility.spotsAvailable >= 0
+    if (hasReading || isLoading) {
+        ParkRideFacility(
+            facility = facility,
+            keepReadingSpace = !hasReading,
+            textWeight = null,
+            reveal = null,
+            onDirectionsClick = onDirectionsClick,
+        )
+    } else {
+        ParkRideFacilityName(name = facility.facilityName, textWeight = null)
+    }
+}
+
 /** One car park of the open card: its name, and under it the reading, or the room the reading will take. */
 @Composable
 private fun ParkRideFacility(

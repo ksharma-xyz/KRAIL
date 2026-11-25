@@ -50,13 +50,12 @@ internal class AndroidAppInfo(private val context: Context) : AppInfo {
         get() = Build.BRAND
 
     /**
-     * Locale. E.g. "en_US"
+     * The first of the phone's languages as one tag, e.g. "en-AU". Only the first: the whole list
+     * grows with every language added and can pass the length an analytics parameter value holds.
+     * Empty if the list has no entry.
      */
     override val locale: String
-        get() {
-            val localeList = context.resources.configuration.locales
-            return localeList.toLanguageTags()
-        }
+        get() = context.resources.configuration.locales.get(0)?.toLanguageTag().orEmpty()
 
     override val timeZone: String
         get() = java.util.TimeZone.getDefault().id

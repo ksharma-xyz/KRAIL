@@ -16,8 +16,8 @@ kotlin {
         namespace = "xyz.ksharma.krail.core.appinfo"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+        withHostTest {}
     }
-
 
     iosArm64()
     iosSimulatorArm64()
@@ -45,6 +45,14 @@ kotlin {
 
                 implementation(libs.compose.runtime)
                 api(libs.di.koinComposeViewmodel)
+            }
+        }
+
+        getByName("androidHostTest") {
+            kotlin.srcDir("src/androidHostTest/kotlin")
+            dependencies {
+                implementation(libs.test.kotlin)
+                implementation(libs.test.robolectric)
             }
         }
     }

@@ -37,6 +37,14 @@ jobs:
           distribution: zulu
           java-version: 21
 
+      # Without a cache every run downloads the whole dependency graph again, and Maven Central
+      # refuses some of those downloads with "429 Too Many Requests". Same step as the other
+      # Gradle jobs. By default only runs on main write to the cache.
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-disabled: false
+
       - name: Make Gradle executable
         run: chmod +x ./gradlew
 

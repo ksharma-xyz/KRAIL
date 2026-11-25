@@ -13,6 +13,8 @@ import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.trip.planner.ui.homemap.homeStopCardOptions
 import xyz.ksharma.krail.trip.planner.ui.homemap.rememberHomeLocationState
 import xyz.ksharma.krail.trip.planner.ui.mapstopselection.MapStopSelectionPane
+import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
+import xyz.ksharma.krail.trip.planner.ui.navigation.TripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.searchstop.LocationStatusChip
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapEntry
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapOpenTracker
@@ -68,4 +70,12 @@ internal fun SavedTripsMapPane(
                 .padding(start = dim.pageHorizontalPadding, top = cornerSafeTopPadding() + dim.spacingM),
         )
     }
+}
+
+/**
+ * Go here on the home side map. The home has one search bar and nowhere to hold a stop, so journey search opens with
+ * [destination] already its destination, editing where from.
+ */
+internal fun TripPlannerNavigator.goHereFromHomeMap(destination: StopItem) {
+    navigateToSearchStop(fieldType = SearchStopFieldType.FROM, presetTo = destination)
 }

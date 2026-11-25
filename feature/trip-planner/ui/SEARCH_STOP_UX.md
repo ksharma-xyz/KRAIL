@@ -28,7 +28,8 @@ The screen has two states and a two step back (`docs/MAP_HOME_UX.md` rule 39), h
   destination kept.
 - With no map to open on (the `maps_stop_search` flag is off for this rider) the list is the only state:
   `effectiveFlow` shows it and the keyboard comes up as it did before the map state existed. Back leaves in
-  one step.
+  one step, also after the list has taken focus: `BackPressed` carries `mapsAvailable`, and a back that would
+  only draw the same list again leaves. With both bars filled, back first closes an opened list to the box.
 
 The map state carries the one filter the map has: a row of `TransportModeChip`s, one per mode the nearby map shows, directly under the
 pill (`SearchStopModeChips`). Whole chips wrap, and over 130 percent text the row is one line that scrolls sideways with the first chip

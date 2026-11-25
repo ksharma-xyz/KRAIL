@@ -280,7 +280,10 @@ fun SearchStopScreen(
                 onBack = {
                     val step = reduceSearchStopFlow(
                         savedFlow,
-                        SearchStopFlowEvent.BackPressed(filled = trip.filled(autoFrom)),
+                        SearchStopFlowEvent.BackPressed(
+                            filled = trip.filled(autoFrom),
+                            mapsAvailable = searchStopState.isMapsAvailable,
+                        ),
                     )
                     savedFlow = step.flow
                     if (step.exit) backClicked = true

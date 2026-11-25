@@ -39,9 +39,13 @@ internal sealed interface SearchStopFlowEvent {
 
     /**
      * System back, the iOS swipe or the arrow in the bar. [filled] is the bars holding a stop, so back
-     * from the list state lands on a bar that still needs one.
+     * from the list state lands on a bar that still needs one. [mapsAvailable] false is a screen with no
+     * map, where back must not take a step that would draw the same list again.
      */
-    data class BackPressed(val filled: Set<ToFromField> = emptySet()) : SearchStopFlowEvent
+    data class BackPressed(
+        val filled: Set<ToFromField> = emptySet(),
+        val mapsAvailable: Boolean = true,
+    ) : SearchStopFlowEvent
 
     /**
      * The go circle left with a trip. The trip results open on top of this screen and back from them
@@ -72,15 +76,27 @@ internal fun reduceSearchStopFlow(flow: SearchStopFlow, event: SearchStopFlowEve
         SearchStopFlowEvent.TripSent -> SearchStopStep(flow.copy(mode = SearchStopMode.Map, editing = null))
 
         is SearchStopFlowEvent.BackPressed -> when (flow.mode) {
-            // Back from a start field switched to in place lands on the field the screen was opened on,
-            // or on the other bar when that one already holds a stop, or on nothing when both do.
-            SearchStopMode.List -> SearchStopStep(
-                flow.copy(mode = SearchStopMode.Map, editing = barToEditAfterBack(flow.openedOn, event.filled)),
-            )
-
+            SearchStopMode.List -> backFromList(flow, event)
             SearchStopMode.Map -> SearchStopStep(flow, exit = true)
         }
     }
+
+/**
+ * Back from a start field switched to in place lands on the field the screen was opened on, or on the
+ * other bar when that one already holds a stop, or on nothing when both do.
+ *
+ * With no map, that landing draws as the list whenever it still edits a bar (see [effectiveFlow]), which
+ * is the screen the rider is already on, so back leaves instead. This is reached because the list takes
+ * focus by itself and focus is recorded as [SearchStopFlowEvent.BarTapped].
+ */
+private fun backFromList(flow: SearchStopFlow, event: SearchStopFlowEvent.BackPressed): SearchStopStep {
+    val landed = flow.copy(
+        mode = SearchStopMode.Map,
+        editing = barToEditAfterBack(flow.openedOn, event.filled),
+    )
+    val drawsAsListAgain = effectiveFlow(landed, event.mapsAvailable).mode == SearchStopMode.List
+    return if (drawsAsListAgain) SearchStopStep(flow, exit = true) else SearchStopStep(landed)
+}
 
 /** The bar back from the list state lands on: [openedOn] if it is empty, else the other if empty, else none. */
 internal fun barToEditAfterBack(openedOn: ToFromField, filled: Set<ToFromField>): ToFromField? =
@@ -106,7 +122,8 @@ internal fun initialSearchStopFlow(
 /**
  * The flow the screen draws. With no map to open on, [mapsAvailable] false, the list state is the
  * only state there is, so the list shows and the keyboard comes up as it did before the map state
- * existed. The saved flow stays the map state, so back still leaves in one step. With nothing being
+ * existed. This leaves the saved flow alone, and back leaves in one step whether or not the list's
+ * focus has since moved the saved flow to the list (see [reduceSearchStopFlow]). With nothing being
  * edited there is no list to show, so the state stays as it is.
  */
 internal fun effectiveFlow(flow: SearchStopFlow, mapsAvailable: Boolean): SearchStopFlow =

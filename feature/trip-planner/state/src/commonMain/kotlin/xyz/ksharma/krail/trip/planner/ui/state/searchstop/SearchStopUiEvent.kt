@@ -30,6 +30,19 @@ sealed interface SearchStopUiEvent {
 
     data class NearbyStopClicked(val stop: NearbyStopFeature) : SearchStopUiEvent
 
+    /** The parking card of the station at [stopId] came on screen. Loads its car parks' numbers. */
+    data class ParkRideCardOpened(val stopId: String) : SearchStopUiEvent
+
+    /** The parking card left the screen. */
+    data object ParkRideCardClosed : SearchStopUiEvent
+
+    /** Directions to one car park, in the phone's maps app. */
+    data class ParkRideDirectionsClicked(
+        val latitude: Double,
+        val longitude: Double,
+        val label: String,
+    ) : SearchStopUiEvent
+
     /**
      * Fired when the user taps the User Location button on the SearchStopMap. Analytics-only.
      * [hadLocation] is true if location was already active at tap time (re-centering).

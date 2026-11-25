@@ -12,6 +12,7 @@ import xyz.ksharma.krail.core.maps.state.StopFeature
 import xyz.ksharma.krail.core.transport.ModeSelectionSurface
 import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 
 /**
  * Map UI state for Search Stop screen.
@@ -19,6 +20,13 @@ import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
  */
 
 /** Nearby stop feature for map rendering */
+/** What the parking card of one station shows: every car park there, and whether its numbers are still being fetched. */
+data class ParkRideMapCardUi(
+    val stationId: String,
+    val carParks: ImmutableList<ParkRideUiState.ParkRideFacilityDetail>,
+    val isLoading: Boolean,
+)
+
 data class NearbyStopFeature(
     val stopId: String,
     val stopName: String,
@@ -44,6 +52,10 @@ data class MapDisplay(
     val stops: ImmutableList<StopFeature> = persistentListOf(),
     val selectedStop: SelectedStopUi? = null,
     val nearbyStops: ImmutableList<NearbyStopFeature> = persistentListOf(),
+    // Every station with Park & Ride parking, each marked with a `P`, wherever the map is centred.
+    val parkRideStops: ImmutableList<NearbyStopFeature> = persistentListOf(),
+    // The parking card of the station whose `P` was tapped, null with none open.
+    val parkRideCard: ParkRideMapCardUi? = null,
     val selectedTransportModes: ImmutableSet<Int> =
         NswTransportConfig.productClassesFor(ModeSelectionSurface.NEARBY_STOPS).toImmutableSet(),
     val mapCenter: LatLng = LatLng(

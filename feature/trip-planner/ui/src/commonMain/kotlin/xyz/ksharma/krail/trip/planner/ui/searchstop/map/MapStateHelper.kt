@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.searchstop.map
 
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableSet
 import xyz.ksharma.krail.core.log.log
@@ -9,6 +10,7 @@ import xyz.ksharma.krail.core.transport.TransportMode
 import xyz.ksharma.krail.core.transport.nsw.NswTransportConfig
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.ParkRideMapCardUi
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopState
 
 /**
@@ -78,6 +80,26 @@ object MapStateHelper {
         isLoading: Boolean,
     ): SearchStopState = state.withMapState {
         copy(isLoadingNearbyStops = isLoading)
+    }
+
+    /**
+     * Set the stations the map marks with a `P`.
+     */
+    fun setParkRideStops(
+        state: SearchStopState,
+        stops: ImmutableList<NearbyStopFeature>,
+    ): SearchStopState = state.withMapState {
+        copy(mapDisplay = mapDisplay.copy(parkRideStops = stops))
+    }
+
+    /**
+     * Set the parking card on screen, or null for none.
+     */
+    fun setParkRideCard(
+        state: SearchStopState,
+        card: ParkRideMapCardUi?,
+    ): SearchStopState = state.withMapState {
+        copy(mapDisplay = mapDisplay.copy(parkRideCard = card))
     }
 
     /**

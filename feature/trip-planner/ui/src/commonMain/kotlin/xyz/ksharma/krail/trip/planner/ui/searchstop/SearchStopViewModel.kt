@@ -40,6 +40,9 @@ import xyz.ksharma.krail.sandook.Sandook
 import xyz.ksharma.krail.trip.planner.ui.components.normaliseLabelName
 import xyz.ksharma.krail.trip.planner.ui.intro.introSuggestedStops
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
+import xyz.ksharma.krail.trip.planner.ui.parkride.map.NoParkRideMapSource
+import xyz.ksharma.krail.trip.planner.ui.parkride.map.ParkRideMapCardHolder
+import xyz.ksharma.krail.trip.planner.ui.parkride.map.ParkRideMapSource
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.AddressSearchEligibility
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.AddressSearchGate
 import xyz.ksharma.krail.trip.planner.ui.searchstop.address.DEFAULT_ADDRESS_SEARCH_MIN_QUERY_LENGTH
@@ -72,7 +75,14 @@ class SearchStopViewModel(
     private val searchSessionStore: SearchSessionStore,
     private val isAddressSearchEnabled: () -> Boolean = { false },
     private val addressSearchMinQueryLength: () -> Int = { DEFAULT_ADDRESS_SEARCH_MIN_QUERY_LENGTH },
+    private val parkRideMapSource: ParkRideMapSource = NoParkRideMapSource,
 ) : ViewModel() {
+
+    private val parkRideCard by lazy {
+        ParkRideMapCardHolder(source = parkRideMapSource, scope = viewModelScope, dispatcher = ioDispatcher) { card ->
+            updateUiState { MapStateHelper.setParkRideCard(this, card) }
+        }
+    }
 
     private val isMapsAvailable: Boolean by lazy {
         flag.getFlagValue(FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key)
@@ -201,6 +211,7 @@ class SearchStopViewModel(
                     updateUiState {
                         copy(mapUiState = MapUiState.Ready(mapDisplay = display))
                     }
+                    loadParkRideStops()
                     // Note: Auto-fetch of user location happens in UI layer
                     // via LaunchedEffect observing permission status
                 }
@@ -222,6 +233,16 @@ class SearchStopViewModel(
             is SearchStopUiEvent.NearbyStopClicked -> {
                 onNearbyStopClicked(event.stop)
             }
+
+            is SearchStopUiEvent.ParkRideCardOpened -> parkRideCard.open(event.stopId)
+
+            SearchStopUiEvent.ParkRideCardClosed -> parkRideCard.close()
+
+            is SearchStopUiEvent.ParkRideDirectionsClicked -> parkRideMapSource.openDirections(
+                latitude = event.latitude,
+                longitude = event.longitude,
+                label = event.label,
+            )
 
             is SearchStopUiEvent.LocationButtonClicked -> {
                 analytics.track(
@@ -771,6 +792,13 @@ class SearchStopViewModel(
     }
 
     // endregion
+
+    private fun loadParkRideStops() {
+        viewModelScope.launchWithExceptionHandler<SearchStopViewModel>(ioDispatcher) {
+            val stops = parkRideMapSource.stops()
+            updateUiState { MapStateHelper.setParkRideStops(this, stops) }
+        }
+    }
 
     private fun updateUiState(block: SearchStopState.() -> SearchStopState) {
         _uiState.update(block)

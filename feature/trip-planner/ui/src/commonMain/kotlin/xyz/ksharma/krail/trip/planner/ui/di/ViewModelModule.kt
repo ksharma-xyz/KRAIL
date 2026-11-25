@@ -33,6 +33,8 @@ import xyz.ksharma.krail.trip.planner.ui.parkride.AddParkRideViewModel
 import xyz.ksharma.krail.trip.planner.ui.parkride.ParkRideStationAdder
 import xyz.ksharma.krail.trip.planner.ui.parkride.RealParkRideAvailabilityLoader
 import xyz.ksharma.krail.trip.planner.ui.parkride.RealParkRideCatalogue
+import xyz.ksharma.krail.trip.planner.ui.parkride.map.ParkRideMapSource
+import xyz.ksharma.krail.trip.planner.ui.parkride.map.RealParkRideMapSource
 import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionSources
 import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.ParkRideSuggestionViewModel
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.InviteFriendsTileManager
@@ -303,10 +305,31 @@ val viewModelsModule = module {
     // Per-entry map ViewModel — each nav entry (SavedTrips, SearchStop) gets its own
     // instance so screens never share state or compete for NearbyStopsManager queries.
     // NearbyStopsManager itself is a single so network/cache work is still deduplicated.
+    factory<ParkRideMapSource> {
+        RealParkRideMapSource(
+            catalogue = RealParkRideCatalogue(
+                nswParkRideFacilityManager = get(),
+                stopResultsManager = get(),
+                sandook = get(),
+                festivalManager = get(),
+            ),
+            sandook = get(),
+            parkRideSandook = get(),
+            availabilityLoader = RealParkRideAvailabilityLoader(
+                parkRideSandook = get(),
+                parkRideService = get(),
+                flag = get(),
+            ),
+            platformOps = get(),
+        )
+    }
+
     viewModel {
         MapStopSelectionViewModel(
             nearbyStopsManager = get(),
             searchRadiusKm = resolveNearbyStopsRadiusKm(get()),
+            parkRideMapSource = get(),
+            ioDispatcher = get(named(IODispatcher)),
         )
     }
 
@@ -374,6 +397,7 @@ val viewModelsModule = module {
             searchSessionStore = get(),
             isAddressSearchEnabled = isAddressSearchEnabled,
             addressSearchMinQueryLength = addressSearchMinQueryLength,
+            parkRideMapSource = get(),
         )
     }
 }

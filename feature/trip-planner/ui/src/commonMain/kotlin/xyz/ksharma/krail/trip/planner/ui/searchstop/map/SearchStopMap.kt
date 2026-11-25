@@ -23,7 +23,9 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.FlowPreview
@@ -54,6 +56,8 @@ import xyz.ksharma.krail.taj.components.Text
 import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.KrailTheme
 import xyz.ksharma.krail.taj.theme.PreviewTheme
+import xyz.ksharma.krail.trip.planner.ui.parkride.map.ParkRideStationsLayer
+import xyz.ksharma.krail.trip.planner.ui.parkride.map.toParkRidePickerItem
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapUiState
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.NearbyStopFeature
@@ -115,6 +119,8 @@ fun SearchStopMap(
     // Null counts nothing, as in a preview.
     mapOpen: MapOpenTracker? = null,
     mapEntry: MapEntry = MapEntry.SEARCH_STOP,
+    // The Park & Ride stations of the map state are marked with a `P`. False for a host that draws its own `P` pins.
+    showsParkRideStops: Boolean = true,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         when (mapUiState) {
@@ -150,6 +156,11 @@ fun SearchStopMap(
                     onBoardExpandedChange = onBoardExpandedChange,
                     mapOpen = mapOpen,
                     mapEntry = mapEntry,
+                    parkRideStops = if (showsParkRideStops) {
+                        mapUiState.mapDisplay.parkRideStops
+                    } else {
+                        persistentListOf()
+                    },
                     modifier = Modifier.fillMaxSize(),
                 )
             }
@@ -203,6 +214,7 @@ private fun MapContent(
     onBoardExpandedChange: (Boolean) -> Unit = {},
     mapOpen: MapOpenTracker? = null,
     mapEntry: MapEntry = MapEntry.SEARCH_STOP,
+    parkRideStops: ImmutableList<NearbyStopFeature> = persistentListOf(),
 ) {
     log(
         "[NEARBY_STOPS_UI] MapContent rendered: nearbyStops.size=${mapState.mapDisplay.nearbyStops.size}, " +
@@ -210,37 +222,32 @@ private fun MapContent(
             "selectedModes=${mapState.mapDisplay.selectedTransportModes}",
     )
 
-    // Which stop's card is open, held as the stop id because that is the part worth saving: the
-    // feature itself is map-rendering data the ViewModel still holds after the Activity is recreated,
-    // so it can be looked up again rather than serialised. Held in a plain `remember` this closed the
-    // card on every rotation, theme switch and font-size change. A stop that has since left the nearby
-    // set leaves the card closed.
-    var selectedStopId by rememberSaveable { mutableStateOf<String?>(null) }
-    val nearbyStops = mapState.mapDisplay.nearbyStops
-    val selectedStop = remember(selectedStopId, nearbyStops) { nearbyStopFor(selectedStopId, nearbyStops) }
+    val cards = rememberMapCards(
+        nearby = mapState.mapDisplay.nearbyStops,
+        parkRide = parkRideStops,
+        selectedProductClasses = mapState.mapDisplay.selectedTransportModes,
+        onEvent = onEvent,
+    )
+    val shownCard = rememberShownCard(cards.open)
     var cardHeight by remember { mutableStateOf(0.dp) }
-    // The stop the card was last open for, held so the card can slide away still showing it once it is dismissed.
-    var lastStop by remember { mutableStateOf<NearbyStopFeature?>(null) }
-    LaunchedEffect(selectedStop) { if (selectedStop != null) lastStop = selectedStop }
-    val shownStop = selectedStop ?: lastStop
 
     // Whether the open card's Departure Board is expanded, held here for the back order and for the host, which hides its box
     // while it is. Keyed on the stop, so another pin's card starts with its board shut.
-    var boardExpanded by rememberSaveable(selectedStopId) { mutableStateOf(false) }
-    val cardOpen = selectedStop != null
-    LaunchedEffect(cardOpen, boardExpanded) { onBoardExpandedChange(cardOpen && boardExpanded) }
+    var boardExpanded by rememberSaveable(cards.stationStopId) { mutableStateOf(false) }
+    val boardShowing = cards.isStationCardOpen && boardExpanded
+    LaunchedEffect(boardShowing) { onBoardExpandedChange(boardShowing) }
     DisposableEffect(Unit) { onDispose { onBoardExpandedChange(false) } }
 
     // System back, one step at a time while a card is up: an expanded board shuts first, then the card is dismissed, then it
     // is the screen's own two step back. These are registered after the screen's, so while a card is open they answer, and
     // with none they are off and the screen's is. While the host covers the map the card is closed and back is the host's.
-    LaunchedEffect(isCovered) { if (isCovered) selectedStopId = null }
+    LaunchedEffect(isCovered) { if (isCovered) cards.close() }
     StopCardBackHandlers(
-        cardOpen = cardOpen,
+        cardOpen = cards.isOpen,
         boardExpanded = boardExpanded,
         covered = isCovered,
         onCollapseBoard = { boardExpanded = false },
-        onDismissCard = { selectedStopId = null },
+        onDismissCard = cards::close,
     )
 
     // The permission is the screen's now: the location pill under the form says what is wrong and
@@ -318,14 +325,17 @@ private fun MapContent(
                     if (onStopPinTap != null) {
                         onStopPinTap(stop)
                     } else {
-                        selectedStopId = stop.stopId
+                        cards.openStationCard(stop.stopId)
                         onEvent(SearchStopUiEvent.NearbyStopClicked(stop))
                     }
                 },
+                onParkRideSelected = { stop -> cards.openParkingCard(stop.stopId) },
+                stationStops = cards.stationStops,
                 extraLayers = extraLayers,
+                parkRideStops = parkRideStops,
                 // A tap on the map closes an open card and is the whole of that tap. With none open it
                 // is the screen's first step back to the map state.
-                onMapTap = { if (selectedStopId != null) selectedStopId = null else onMapTap() },
+                onMapTap = { if (!cards.closeIfAsked()) onMapTap() },
             )
 
             // The location button, bottom end, and the host's own bottom controls. All location business logic lives
@@ -349,7 +359,7 @@ private fun MapContent(
                         )
                     }
                 },
-                cardOpen = selectedStop != null,
+                cardOpen = cards.isOpen,
                 cardHeight = cardHeight,
                 hidesControlsForCard = hidesControlsForCard,
                 locationBottomPadding = locationBottomPadding,
@@ -359,14 +369,22 @@ private fun MapContent(
             // The floating stop card, over the map and never a sheet. It slides up with a fade and back down as it is dismissed,
             // so the stop it shows is held for the length of that exit.
             AnimatedStopCardPlacement(
-                visible = selectedStop != null,
+                visible = cards.isOpen,
                 topReserve = stopCardTopReserve ?: ornamentTopPadding,
                 onHeight = { cardHeight = it },
             ) {
-                shownStop?.let { stop ->
+                shownCard?.takeIf { it.isParking }?.let { card ->
+                    ShownParkingCard(
+                        stop = card.stop,
+                        live = mapState.mapDisplay.parkRideCard,
+                        onEvent = onEvent,
+                        onClose = cards::close,
+                    )
+                }
+                shownCard?.takeUnless { it.isParking }?.stop?.let { stop ->
                     StopCardWithDepartures(
                         stop = stop,
-                        onClose = { selectedStopId = null },
+                        onClose = cards::close,
                         boardExpanded = boardExpanded,
                         onBoardExpandedChange = { boardExpanded = it },
                         // Save as, then Go here or Start here by the field being filled in.
@@ -402,7 +420,7 @@ private fun MapContent(
                                     // joins the open it ends.
                                     mapOpen?.stopPicked()
 
-                                    selectedStopId = null
+                                    cards.close()
                                 },
                             )
                         },
@@ -474,6 +492,9 @@ private fun MapSurface(
     onMapTap: () -> Unit,
     modifier: Modifier = Modifier,
     extraLayers: @Composable () -> Unit = {},
+    parkRideStops: ImmutableList<NearbyStopFeature> = persistentListOf(),
+    stationStops: ImmutableList<NearbyStopFeature> = mapState.mapDisplay.nearbyStops,
+    onParkRideSelected: (NearbyStopFeature) -> Unit = {},
 ) {
     // LATCH the "has had a real size" flag — never reset it to false. During a rotation the
     // container momentarily reports a 0 axis (the adaptive window flips through 840×0dp);
@@ -516,18 +537,23 @@ private fun MapSurface(
                     ),
                 ),
             ) {
-                if (mapState.mapDisplay.nearbyStops.isNotEmpty()) {
+                if (stationStops.isNotEmpty()) {
                     log(
-                        "[NEARBY_STOPS_UI] Rendering ${mapState.mapDisplay.nearbyStops.size} " +
+                        "[NEARBY_STOPS_UI] Rendering ${stationStops.size} " +
                             "stops on map",
                     )
                     NearbyStopsLayer(
-                        stops = mapState.mapDisplay.nearbyStops,
+                        stops = stationStops,
                         onStopClick = { stop ->
                             log("[NEARBY_STOPS_UI] Stop clicked: ${stop.stopName}")
                             onStopSelected(stop)
                         },
                     )
+                }
+
+                // Beside the station markers: a station's `P` has its own place to tap, and opens its parking card.
+                if (parkRideStops.isNotEmpty()) {
+                    ParkRideStopsLayer(stops = parkRideStops, onStopClick = onParkRideSelected)
                 }
 
                 extraLayers()
@@ -540,6 +566,25 @@ private fun MapSurface(
         }
     }
 }
+
+/**
+ * The `P` of every station in [stops], the marker the Add Park & Ride map draws. It stands up and to the right of the
+ * station's own marker, clear of it, so a tap on either is never a tap on the other.
+ */
+@Composable
+private fun ParkRideStopsLayer(
+    stops: ImmutableList<NearbyStopFeature>,
+    onStopClick: (NearbyStopFeature) -> Unit,
+) {
+    val items = remember(stops) { stops.map { it.toParkRidePickerItem() } }
+    ParkRideStationsLayer(
+        stations = items,
+        onStationClick = { item -> nearbyStopFor(item.stationId, stops)?.let(onStopClick) },
+        beside = UpAndRightOfStationMarker,
+    )
+}
+
+private val UpAndRightOfStationMarker = DpOffset(26.dp, (-26).dp)
 
 // region Previews
 

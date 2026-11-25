@@ -3,6 +3,8 @@ package xyz.ksharma.krail.trip.planner.ui.mapstopselection
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -13,6 +15,10 @@ import kotlinx.coroutines.flow.update
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.state.NearbyStopsConfig
+import xyz.ksharma.krail.coroutines.ext.launchWithExceptionHandler
+import xyz.ksharma.krail.trip.planner.ui.parkride.map.NoParkRideMapSource
+import xyz.ksharma.krail.trip.planner.ui.parkride.map.ParkRideMapCardHolder
+import xyz.ksharma.krail.trip.planner.ui.parkride.map.ParkRideMapSource
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.NearbyStopsManager
 import xyz.ksharma.krail.trip.planner.ui.state.mapstopselection.MapStopSelectionEvent
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.MapDisplay
@@ -37,7 +43,17 @@ class MapStopSelectionViewModel(
     private val nearbyStopsManager: NearbyStopsManager,
     // The one radius `nearby_stops_radius_km` sets, read once as the map starts, as Search Stop does.
     searchRadiusKm: Double = NearbyStopsConfig.DEFAULT_RADIUS_KM,
+    private val parkRideMapSource: ParkRideMapSource = NoParkRideMapSource,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
+
+    private var parkRideStopsRequested = false
+
+    private val parkRideCard by lazy {
+        ParkRideMapCardHolder(source = parkRideMapSource, scope = viewModelScope, dispatcher = ioDispatcher) { card ->
+            updateMapDisplay { copy(parkRideCard = card) }
+        }
+    }
 
     init {
         log("[MAP_STOP_SEL] VM init — seeded MapUiState.Ready")
@@ -57,9 +73,17 @@ class MapStopSelectionViewModel(
         )
 
     fun onEvent(event: MapStopSelectionEvent) {
+        loadParkRideStopsOnce()
         when (event) {
             is MapStopSelectionEvent.UserLocationUpdated -> onUserLocationUpdated(event.location)
             is MapStopSelectionEvent.MapCenterChanged -> onMapCenterChanged(event.center)
+            is MapStopSelectionEvent.ParkRideCardOpened -> parkRideCard.open(event.stopId)
+            MapStopSelectionEvent.ParkRideCardClosed -> parkRideCard.close()
+            is MapStopSelectionEvent.ParkRideDirectionsClicked -> parkRideMapSource.openDirections(
+                latitude = event.latitude,
+                longitude = event.longitude,
+                label = event.label,
+            )
         }
     }
 
@@ -79,10 +103,22 @@ class MapStopSelectionViewModel(
         loadNearbyStops()
     }
 
+    // On the first event, which only a map on screen sends: a phone holds this view model too and draws no
+    // map from it, so it never reads the database for one.
+    private fun loadParkRideStopsOnce() {
+        if (parkRideStopsRequested) return
+        parkRideStopsRequested = true
+        viewModelScope.launchWithExceptionHandler<MapStopSelectionViewModel>(ioDispatcher) {
+            val stops = parkRideMapSource.stops()
+            updateMapDisplay { copy(parkRideStops = stops) }
+        }
+    }
+
+    // The new display is built from the state as it is at the write, so a change that lands from another
+    // thread in between, such as the parking stops, is kept.
     private inline fun updateMapDisplay(block: MapDisplay.() -> MapDisplay) {
-        val ready = _mapUiState.value as? MapUiState.Ready ?: return
-        _mapUiState.update {
-            ready.copy(mapDisplay = ready.mapDisplay.block())
+        _mapUiState.update { current ->
+            if (current is MapUiState.Ready) current.copy(mapDisplay = current.mapDisplay.block()) else current
         }
     }
 
@@ -93,8 +129,9 @@ class MapStopSelectionViewModel(
             center = mapState.mapDisplay.mapCenter,
             scope = viewModelScope,
             onLoadingStateChanged = { isLoading ->
-                val ready = _mapUiState.value as? MapUiState.Ready ?: return@loadNearbyStops
-                _mapUiState.value = ready.copy(isLoadingNearbyStops = isLoading)
+                _mapUiState.update { current ->
+                    if (current is MapUiState.Ready) current.copy(isLoadingNearbyStops = isLoading) else current
+                }
             },
             onStopsLoaded = { stops ->
                 updateMapDisplay {

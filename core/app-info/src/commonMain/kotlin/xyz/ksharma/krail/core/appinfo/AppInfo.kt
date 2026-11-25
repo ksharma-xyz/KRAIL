@@ -73,7 +73,7 @@ interface AppInfo {
 
     /**
      * Locale.
-     * Android - Provides list of all language tags
+     * Android - Provides the language tag of the first language only, such as "en-AU"
      * iOS - Provides locale identifier, such as "en_US"
      */
     val locale: String

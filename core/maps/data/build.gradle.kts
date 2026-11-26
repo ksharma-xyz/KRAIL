@@ -15,6 +15,7 @@ kotlin {
         namespace = "xyz.ksharma.krail.core.maps.data"
         compileSdk = AndroidVersion.COMPILE_SDK
         minSdk = AndroidVersion.MIN_SDK
+        withHostTest {}
     }
 
     iosArm64()
@@ -27,9 +28,19 @@ kotlin {
     }
 
     sourceSets {
+        commonTest {
+            dependencies {
+                implementation(projects.core.testing)
+                implementation(libs.test.kotlin)
+                implementation(libs.test.kotlinxCoroutineTest)
+            }
+        }
+
         commonMain {
             dependencies {
                 // Core modules
+                // api: UserLocationManager names the analytics source of a permission request.
+                api(projects.core.analytics)
                 implementation(projects.core.coroutinesExt)
                 implementation(projects.core.di)
                 implementation(projects.core.log)

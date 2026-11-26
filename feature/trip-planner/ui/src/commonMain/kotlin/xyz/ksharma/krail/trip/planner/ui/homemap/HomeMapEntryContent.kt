@@ -73,7 +73,7 @@ internal fun HomeMapEntryContent(
             HomeMapPane(
                 mapUiState = mapUiState,
                 pins = pins,
-                allowPermissionRequest = location.allowPermissionRequest,
+                permissionRequest = location.permissionRequest,
                 onPermissionStatus = location.onPermissionStatus,
                 onMapEvent = onMapEvent,
                 onCardKey = { cardKey = it },
@@ -198,6 +198,8 @@ private fun parkRideCardContent(
                                 latitude = target.latitude,
                                 longitude = target.longitude,
                                 label = carPark.name,
+                                stopId = card.pin.stationId,
+                                facilityId = carPark.facilityId,
                             ),
                         )
                     }

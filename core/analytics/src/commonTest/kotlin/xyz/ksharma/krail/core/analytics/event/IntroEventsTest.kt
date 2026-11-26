@@ -93,7 +93,7 @@ class IntroEventsTest {
                 .toSet(),
         )
         assertEquals(
-            setOf("granted", "denied", "unavailable", "not_asked"),
+            setOf("granted", "granted_no_fix", "denied", "unavailable", "not_asked"),
             LocationResult.entries
                 .map { event(locationResult = it).properties?.get("locationResult") }
                 .toSet(),
@@ -219,9 +219,10 @@ class IntroEventsTest {
     }
 
     @Test
-    fun `the existing Park and Ride sources keep their values`() {
+    fun `the Park and Ride sources are the places a rider adds or removes a station`() {
+        // saved_trips_screen counted rows that follow the saved trips by themselves, so it is no longer sent.
         assertEquals(
-            setOf("add_park_ride_screen", "saved_trips_screen", "intro", "home_suggestion"),
+            setOf("add_park_ride_screen", "intro", "home_suggestion"),
             ParkRideUserFacilityEvent.Source.entries.map { it.value }.toSet(),
         )
     }

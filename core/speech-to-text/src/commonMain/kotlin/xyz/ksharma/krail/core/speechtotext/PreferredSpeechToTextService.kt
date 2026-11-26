@@ -50,6 +50,10 @@ internal class PreferredSpeechToTextService(
         return fromFallback
     }
 
+    // Either of the two may have raised the prompt, since both are asked about availability.
+    override fun takeSpeechRecognitionAnswer(): Boolean? =
+        preferred.takeSpeechRecognitionAnswer() ?: fallback.takeSpeechRecognitionAnswer()
+
     override fun startListening(): Flow<SpeechToTextResult> = current.startListening()
 
     override fun stopListening() = current.stopListening()

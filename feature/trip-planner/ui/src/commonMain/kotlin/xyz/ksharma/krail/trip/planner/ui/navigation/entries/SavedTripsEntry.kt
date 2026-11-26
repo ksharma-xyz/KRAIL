@@ -10,6 +10,7 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.PermissionResultEvent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.navigation.ResultEffect
@@ -65,7 +66,7 @@ internal fun EntryProviderScope<NavKey>.SavedTripsEntry(
                         // three causes (denied, restricted, timed out) arrive as the same null
                         // and produce the same blank From field, which is what made the
                         // reported bug impossible to tell apart from "no stops nearby".
-                        userLocationManager.getCurrentLocation()
+                        userLocationManager.getCurrentLocation(PermissionResultEvent.Source.ASK_KRAIL)
                             .onFailure { log("[AI_ORIGIN] location unavailable: $it") }
                             .getOrNull()
                     },

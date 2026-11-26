@@ -73,8 +73,17 @@ internal fun AddParkRideScreen(
                     onStationSelected = { onEvent(AddParkRideUiEvent.StationSelected(it)) },
                     onDismissStation = { onEvent(AddParkRideUiEvent.StationDismissed) },
                     onToggleStation = { onEvent(AddParkRideUiEvent.ToggleStation(it)) },
-                    onDirectionsClick = { position, name ->
-                        onEvent(AddParkRideUiEvent.DirectionsClicked(position, name))
+                    onDirectionsClick = { position, name, facilityId ->
+                        state.selectedStation?.let { station ->
+                            onEvent(
+                                AddParkRideUiEvent.DirectionsClicked(
+                                    position = position,
+                                    stationName = name,
+                                    stopId = station.stationId,
+                                    facilityId = facilityId,
+                                ),
+                            )
+                        }
                     },
                 )
             },

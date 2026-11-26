@@ -41,7 +41,15 @@ internal class MapCards(
 
     fun openStationCard(stopId: String) = ask(station = stopId, parking = null)
 
-    fun openParkingCard(stopId: String) = ask(station = null, parking = stopId)
+    /**
+     * Asks for [stopId]'s parking card, and says whether that is a new open: false when it is the one already asked
+     * for. It looks at what is asked for as it is called, as [closeIfAsked] does.
+     */
+    fun openParkingCard(stopId: String): Boolean {
+        val isNew = askedParking.value != stopId
+        ask(station = null, parking = stopId)
+        return isNew
+    }
 
     fun close() = ask(station = null, parking = null)
 
@@ -131,6 +139,8 @@ internal fun ShownParkingCard(
     live: ParkRideMapCardUi?,
     onEvent: (SearchStopUiEvent) -> Unit,
     onClose: () -> Unit,
+    // The rider tapped directions to this car park.
+    onDirections: (facilityId: String) -> Unit = {},
 ) {
     var last by remember(stop.stopId) { mutableStateOf<ParkRideMapCardUi?>(null) }
     LaunchedEffect(live) { if (live != null) last = live }
@@ -139,7 +149,12 @@ internal fun ShownParkingCard(
         stationName = stop.stopName,
         carParks = shown?.carParks ?: persistentListOf(),
         isLoading = shown?.isLoading ?: true,
-        onDirectionsClick = { carPark -> carPark.directionsEvent()?.let(onEvent) },
+        onDirectionsClick = { carPark ->
+            carPark.directionsEvent()?.let { event ->
+                onDirections(carPark.facilityId)
+                onEvent(event)
+            }
+        },
         onClose = onClose,
     )
 }

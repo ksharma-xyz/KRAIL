@@ -5,6 +5,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
+import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideLookup
 import xyz.ksharma.krail.trip.planner.ui.state.intro.TripDecision
 import xyz.ksharma.krail.trip.planner.ui.themeselection.themeIdParam
 import kotlin.time.Duration
@@ -27,6 +28,7 @@ internal data class IntroOutcome(
     val finishedOn: IntroStep,
     val parkRideAnswer: ParkRideAnswer,
     val locationResult: LocationResult,
+    val parkRideLookup: ParkRideLookup,
     val addedParkRide: Boolean,
     val savedTrip: Boolean,
     val usedSearch: Boolean,
@@ -46,6 +48,7 @@ internal fun IntroState.toOutcome(stopsWait: StopsWait): IntroOutcome = IntroOut
     finishedOn = step,
     parkRideAnswer = parkRideAnswer,
     locationResult = locationResult,
+    parkRideLookup = parkRideLookup,
     addedParkRide = addedParkRide,
     savedTrip = saved,
     usedSearch = usedSearch,
@@ -83,6 +86,7 @@ internal fun IntroOutcome.toParams(): Map<String, Any> = buildMap {
         },
     )
     put("locationResult", locationResult.name.lowercase())
+    put("parkRideLookup", parkRideLookup.name.lowercase())
     put("addedParkRide", addedParkRide)
     put("savedTrip", savedTrip)
     put("usedSearch", usedSearch)

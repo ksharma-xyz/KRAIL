@@ -10,6 +10,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import kotlinx.coroutines.launch
+import xyz.ksharma.aagya.permission.PermissionResult
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.PermissionResultEvent
 import xyz.ksharma.krail.core.speechtotext.MicPermissionOutcome
 import xyz.ksharma.krail.core.speechtotext.SpeechUnavailableReasons
 import xyz.ksharma.krail.core.speechtotext.rememberOpenAppSettings
@@ -29,7 +31,9 @@ import xyz.ksharma.krail.trip.planner.ui.search.ai.MIC_DENIED
  */
 @Composable
 internal fun rememberStartListening(onEvent: (AiSearchInputEvent) -> Unit): () -> Unit {
-    val requestMicPermission = rememberRequestMicrophonePermission()
+    val requestMicPermission = rememberRequestMicrophonePermission(
+        onAnswer = { result -> result.toMicAnswered()?.let(onEvent) },
+    )
     val coroutineScope = rememberCoroutineScope()
     return {
         coroutineScope.launch {
@@ -43,6 +47,20 @@ internal fun rememberStartListening(onEvent: (AiSearchInputEvent) -> Unit): () -
             )
         }
     }
+}
+
+/** The event for the system's answer, or null for a result that means the rider was not asked. */
+internal fun PermissionResult.toMicAnswered(): AiSearchInputEvent.MicPermissionAnswered? = when (this) {
+    is PermissionResult.Granted ->
+        AiSearchInputEvent.MicPermissionAnswered(PermissionResultEvent.Outcome.GRANTED, canAskAgain = null)
+
+    is PermissionResult.Denied ->
+        AiSearchInputEvent.MicPermissionAnswered(PermissionResultEvent.Outcome.DENIED, canAskAgain = canAskAgain)
+
+    PermissionResult.Cancelled ->
+        AiSearchInputEvent.MicPermissionAnswered(PermissionResultEvent.Outcome.CANCELLED, canAskAgain = null)
+
+    PermissionResult.PolicyExhausted -> null
 }
 
 /**

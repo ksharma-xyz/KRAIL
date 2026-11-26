@@ -13,6 +13,7 @@ data class IntroState(
     val step: IntroStep = IntroFirstStep,
     val parkRideAnswer: ParkRideAnswer = ParkRideAnswer.ASK,
     val locationResult: LocationResult = LocationResult.NOT_ASKED,
+    val parkRideLookup: ParkRideLookup = ParkRideLookup.NOT_LOOKED,
     /** What the question step shows below the question. [ParkRideCardPhase.Card] with [addedParkRide] is Added. */
     val parkRideCard: ParkRideCardPhase = ParkRideCardPhase.None,
     val startStopId: String? = null,
@@ -129,7 +130,16 @@ enum class TripDecision { SAVED, DECLINED }
 /** [ASK] is the unanswered question. */
 enum class ParkRideAnswer { ASK, YES, NO }
 
-enum class LocationResult { NOT_ASKED, GRANTED, DENIED, UNAVAILABLE }
+/**
+ * How the search for the rider's nearest Park & Ride station ended, which only the finish reports. It names no
+ * station and no place. [FOUND_NEAR] and [FOUND_WIDER] say which of the two distances found the station on the
+ * card. [FAILED] is a usable location with no answer, because the stops were not ready or the search failed.
+ * [NOT_LOOKED] is everything else.
+ */
+enum class ParkRideLookup { NOT_LOOKED, FOUND_NEAR, FOUND_WIDER, NONE_NEAR, FAILED }
+
+/** [GRANTED_NO_FIX] is a rider who allowed location and for whom no fix came, which [UNAVAILABLE] does not say. */
+enum class LocationResult { NOT_ASKED, GRANTED, GRANTED_NO_FIX, DENIED, UNAVAILABLE }
 
 /** Whether the live spots on the Park & Ride card are still loading, shown, or could not be read. */
 enum class ParkRideAvailabilityState { Loading, Content, Unavailable }

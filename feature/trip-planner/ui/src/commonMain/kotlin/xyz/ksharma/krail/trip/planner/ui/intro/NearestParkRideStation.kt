@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.sandook.utils.GeoUtils
 import xyz.ksharma.krail.trip.planner.ui.parkride.suggestion.PARK_RIDE_SUGGESTION_DEFAULT_RADIUS_KM
+import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideLookup
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRideStationPickerItem
 
 /**
@@ -39,6 +40,9 @@ internal fun nearestParkRideStation(
     .filter { (_, distanceKm) -> distanceKm <= radiusKm }
     .minByOrNull { (_, distanceKm) -> distanceKm }
     ?.first
+
+/** The station behind the card. [lookup] is which distance found it, or null when it was not found by position. */
+internal data class ParkRideStationMatch(val station: ParkRideStationPickerItem, val lookup: ParkRideLookup?)
 
 /**
  * The nearest station within [radiusKm] of [location] and, only when that finds nothing, within [widerRadiusKm], or null when

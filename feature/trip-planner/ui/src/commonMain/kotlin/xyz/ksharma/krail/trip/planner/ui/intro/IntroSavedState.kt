@@ -8,6 +8,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
+import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideLookup
 import xyz.ksharma.krail.trip.planner.ui.state.intro.TripDecision
 
 internal const val INTRO_SAVED_STATE_KEY = "intro_state"
@@ -37,6 +38,7 @@ private data class IntroSnapshot(
     val noStationNear: Boolean = false,
     val selectedThemeId: Int? = null,
     val tripDecision: TripDecision? = null,
+    val parkRideLookup: ParkRideLookup = ParkRideLookup.NOT_LOOKED,
 )
 
 internal fun SavedStateHandle.saveIntroState(state: IntroState) {
@@ -62,6 +64,7 @@ private fun IntroState.toSnapshot() = IntroSnapshot(
         ParkRideCardPhase.None, ParkRideCardPhase.NoStationNear -> null
     },
     noStationNear = parkRideCard == ParkRideCardPhase.NoStationNear,
+    parkRideLookup = parkRideLookup,
 )
 
 private fun IntroSnapshot.toState(): IntroState {
@@ -73,6 +76,7 @@ private fun IntroSnapshot.toState(): IntroState {
         step = step,
         parkRideAnswer = if (lookLost) ParkRideAnswer.ASK else parkRideAnswer,
         locationResult = if (lookLost) LocationResult.NOT_ASKED else locationResult,
+        parkRideLookup = if (lookLost) ParkRideLookup.NOT_LOOKED else parkRideLookup,
         startStopId = startStopId,
         startName = startName,
         endStopId = endStopId,

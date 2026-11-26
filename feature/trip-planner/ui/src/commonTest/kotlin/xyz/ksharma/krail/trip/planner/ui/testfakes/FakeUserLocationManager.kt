@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.dhruva.location.Location
 import xyz.ksharma.dhruva.location.LocationConfig
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.PermissionResultEvent
 import xyz.ksharma.krail.core.maps.data.location.UserLocationManager
 
 /**
@@ -15,10 +16,12 @@ import xyz.ksharma.krail.core.maps.data.location.UserLocationManager
  */
 internal class FakeUserLocationManager(
     private val permissionStatus: PermissionStatus = PermissionStatus.NotDetermined,
-    /** What one call to [getCurrentLocation] returns. It may suspend, to stand in for a dialog or a slow fix. */
+    /** What one call for a location returns. It may suspend, to stand in for a dialog or a slow fix. */
     currentLocation: suspend () -> Result<Location> = {
         Result.failure(IllegalStateException("not used in these tests"))
     },
+    /** What analytics is told, where it differs from [permissionStatus]. */
+    private val reportedStatus: PermissionStatus? = null,
 ) : UserLocationManager {
 
     private var answer: suspend () -> Result<Location> = currentLocation
@@ -32,22 +35,31 @@ internal class FakeUserLocationManager(
     var openAppSettingsCount = 0
         private set
 
-    override suspend fun getCurrentLocation(): Result<Location> {
+    /** The source of every call for a location, in order. */
+    val locationSources = mutableListOf<PermissionResultEvent.Source>()
+
+    override suspend fun getCurrentLocation(source: PermissionResultEvent.Source): Result<Location> {
         currentLocationCalls++
+        locationSources += source
         return answer()
     }
 
-    /** Make every later call to [getCurrentLocation] answer with [result], in place of the constructor's answer. */
+    /** Make every later call for a location answer with [result], in place of the constructor's answer. */
     fun answerWith(result: Result<Location>) {
         answer = { result }
     }
 
-    override fun locationUpdates(config: LocationConfig): Flow<Location> = emptyFlow()
+    override fun locationUpdates(
+        config: LocationConfig,
+        requestSource: PermissionResultEvent.Source?,
+    ): Flow<Location> = emptyFlow()
 
     override suspend fun checkPermissionStatus(): PermissionStatus {
         permissionChecks++
         return permissionStatus
     }
+
+    override suspend fun reportedPermissionStatus(): PermissionStatus = reportedStatus ?: checkPermissionStatus()
 
     override fun openAppSettings() {
         openAppSettingsCount++

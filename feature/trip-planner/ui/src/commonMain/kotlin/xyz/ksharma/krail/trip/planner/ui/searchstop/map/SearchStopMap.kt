@@ -39,6 +39,8 @@ import org.maplibre.compose.map.OrnamentOptions
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.compose.util.ClickResult
 import xyz.ksharma.aagya.permission.PermissionStatus
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.MapViewedEvent
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.PermissionResultEvent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.maps.state.LatLng
@@ -86,7 +88,8 @@ fun SearchStopMap(
     isCovered: Boolean = false,
     onEvent: (SearchStopUiEvent) -> Unit = {},
     onStopSelect: (StopItem) -> Unit = {},
-    allowPermissionRequest: Boolean = false,
+    // Where the rider asked for the location permission from, once they have. Null until then, and nothing is asked.
+    permissionRequest: PermissionResultEvent.Source? = null,
     onPermissionStatus: (PermissionStatus) -> Unit = {},
     onRequestPermission: () -> Unit = {},
     onMapTap: () -> Unit = {},
@@ -119,6 +122,8 @@ fun SearchStopMap(
     // Null counts nothing, as in a preview.
     mapOpen: MapOpenTracker? = null,
     mapEntry: MapEntry = MapEntry.SEARCH_STOP,
+    // Whether this map is the screen or a pane beside other content, which analytics reports.
+    mapLayout: MapViewedEvent.Layout = MapViewedEvent.Layout.FULL,
     // The Park & Ride stations of the map state are marked with a `P`. False for a host that draws its own `P` pins.
     showsParkRideStops: Boolean = true,
 ) {
@@ -141,7 +146,7 @@ fun SearchStopMap(
                     isCovered = isCovered,
                     onEvent = onEvent,
                     onStopSelect = onStopSelect,
-                    allowPermissionRequest = allowPermissionRequest,
+                    permissionRequest = permissionRequest,
                     onPermissionStatus = onPermissionStatus,
                     onRequestPermission = onRequestPermission,
                     onMapTap = onMapTap,
@@ -156,6 +161,7 @@ fun SearchStopMap(
                     onBoardExpandedChange = onBoardExpandedChange,
                     mapOpen = mapOpen,
                     mapEntry = mapEntry,
+                    mapLayout = mapLayout,
                     parkRideStops = if (showsParkRideStops) {
                         mapUiState.mapDisplay.parkRideStops
                     } else {
@@ -199,7 +205,7 @@ private fun MapContent(
     ornamentTopPadding: Dp = 0.dp,
     ornamentPadding: PaddingValues? = null,
     isCovered: Boolean = false,
-    allowPermissionRequest: Boolean = false,
+    permissionRequest: PermissionResultEvent.Source? = null,
     onPermissionStatus: (PermissionStatus) -> Unit = {},
     onRequestPermission: () -> Unit = {},
     onMapTap: () -> Unit = {},
@@ -214,6 +220,7 @@ private fun MapContent(
     onBoardExpandedChange: (Boolean) -> Unit = {},
     mapOpen: MapOpenTracker? = null,
     mapEntry: MapEntry = MapEntry.SEARCH_STOP,
+    mapLayout: MapViewedEvent.Layout = MapViewedEvent.Layout.FULL,
     parkRideStops: ImmutableList<NearbyStopFeature> = persistentListOf(),
 ) {
     log(
@@ -251,7 +258,7 @@ private fun MapContent(
     )
 
     // The permission is the screen's now: the location pill under the form says what is wrong and
-    // asks or opens Settings, and [allowPermissionRequest] is false until the rider taps it (or the
+    // asks or opens Settings, and [permissionRequest] is null until the rider taps it (or the
     // location button), the only moments tracking may raise the system dialog.
     val userLocationManager = rememberUserLocationManager()
     val scope = rememberCoroutineScope()
@@ -260,6 +267,7 @@ private fun MapContent(
     MapOpenEffect(
         mapOpen = mapOpen,
         entry = mapEntry,
+        layout = mapLayout,
         covered = isCovered,
         hadUserLocation = mapState.mapDisplay.userLocation != null,
         stopCount = mapState.mapDisplay.nearbyStops.size,
@@ -287,7 +295,7 @@ private fun MapContent(
 
         TrackUserLocation(
             userLocationManager = userLocationManager,
-            allowPermissionRequest = allowPermissionRequest,
+            permissionRequest = permissionRequest,
             onLocationUpdate = { latLng ->
                 onPermissionStatus(PermissionStatus.Granted)
                 onEvent(SearchStopUiEvent.UserLocationUpdated(latLng))
@@ -329,7 +337,10 @@ private fun MapContent(
                         onEvent(SearchStopUiEvent.NearbyStopClicked(stop))
                     }
                 },
-                onParkRideSelected = { stop -> cards.openParkingCard(stop.stopId) },
+                onParkRideSelected = { stop ->
+                    // Counted at the rider's tap, so a card restored after a rotation is not counted again.
+                    if (cards.openParkingCard(stop.stopId)) mapOpen?.parkRideCardOpened(mapLayout, stop.stopId)
+                },
                 stationStops = cards.stationStops,
                 extraLayers = extraLayers,
                 parkRideStops = parkRideStops,
@@ -378,6 +389,9 @@ private fun MapContent(
                         stop = card.stop,
                         live = mapState.mapDisplay.parkRideCard,
                         onEvent = onEvent,
+                        onDirections = { facilityId ->
+                            mapOpen?.parkRideDirections(mapLayout, card.stop.stopId, facilityId)
+                        },
                         onClose = cards::close,
                     )
                 }

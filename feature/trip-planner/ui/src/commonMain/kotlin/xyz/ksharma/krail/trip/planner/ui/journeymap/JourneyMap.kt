@@ -33,6 +33,7 @@ import org.maplibre.compose.map.OrnamentOptions
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.Position
 import xyz.ksharma.aagya.permission.PermissionStatus
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.PermissionResultEvent
 import xyz.ksharma.krail.core.maps.data.location.UserLocationManager
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.maps.state.LatLng
@@ -111,7 +112,7 @@ private fun JourneyMapContent(
     // User location state
     var userLocation by remember { mutableStateOf<LatLng?>(null) }
     var showPermissionBanner by remember { mutableStateOf(false) }
-    var allowPermissionRequest by remember { mutableStateOf(false) }
+    var permissionRequest by remember { mutableStateOf<PermissionResultEvent.Source?>(null) }
     val userLocationManager = rememberUserLocationManager()
     val scope = rememberCoroutineScope()
 
@@ -140,7 +141,7 @@ private fun JourneyMapContent(
 
     TrackUserLocation(
         userLocationManager = userLocationManager,
-        allowPermissionRequest = allowPermissionRequest,
+        permissionRequest = permissionRequest,
         onLocationUpdate = { latLng ->
             showPermissionBanner = false
             userLocation = latLng
@@ -204,7 +205,7 @@ private fun JourneyMapContent(
                         userLocationManager = userLocationManager,
                         cameraState = cameraState,
                         onShowPermissionBanner = { showPermissionBanner = true },
-                        onRequestPermission = { allowPermissionRequest = true },
+                        onRequestPermission = { permissionRequest = PermissionResultEvent.Source.JOURNEY_MAP },
                     )
                 }
             },

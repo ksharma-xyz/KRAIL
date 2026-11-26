@@ -84,11 +84,7 @@ class AddParkRideViewModel(
             is AddParkRideUiEvent.ToggleStation -> onToggleStation(event.item)
             is AddParkRideUiEvent.StationSelected -> onStationSelected(event.item)
             AddParkRideUiEvent.StationDismissed -> onStationDismissed()
-            is AddParkRideUiEvent.DirectionsClicked -> platformOps.openMapDirections(
-                latitude = event.position.latitude,
-                longitude = event.position.longitude,
-                label = event.stationName,
-            )
+            is AddParkRideUiEvent.DirectionsClicked -> onDirectionsClicked(event)
             AddParkRideUiEvent.Retry -> onRetry()
         }
     }
@@ -142,6 +138,10 @@ class AddParkRideViewModel(
      * `docs/POLLING_LIFECYCLE.md` still hold.
      */
     private fun onStationSelected(station: ParkRideStationPickerItem) {
+        // A tap on the pin whose card is already open opens nothing new, so it is not counted again.
+        if (_uiState.value.selectedStation?.stationId != station.stationId) {
+            analytics.trackParkRideMapCardOpened(station.stationId)
+        }
         updateUiState { copy(selectedStation = station, isLoadingSelectedStation = true) }
 
         observeSelectedDetailsJob?.cancel()
@@ -181,6 +181,15 @@ class AddParkRideViewModel(
         }
     }
 
+    private fun onDirectionsClicked(event: AddParkRideUiEvent.DirectionsClicked) {
+        analytics.trackParkRideMapDirections(stopId = event.stopId, facilityId = event.facilityId)
+        platformOps.openMapDirections(
+            latitude = event.position.latitude,
+            longitude = event.position.longitude,
+            label = event.stationName,
+        )
+    }
+
     private fun onRetry() {
         updateUiState { copy(isLoading = true, error = null) }
         observeStations()
@@ -209,7 +218,7 @@ class AddParkRideViewModel(
                         source = UserAdded,
                     )
                 }
-                trackRemoved(station)
+                analytics.trackParkRideRemoved(station)
             } else {
                 log("Adding ${station.mappings.size} user-added mappings for ${station.stationName}")
                 // The shared add: it stores every car park, arms the review moment (a delight moment
@@ -218,17 +227,6 @@ class AddParkRideViewModel(
                 stationAdder.add(station, AnalyticsEvent.ParkRideUserFacilityEvent.Source.ADD_PARK_RIDE_SCREEN)
             }
         }
-    }
-
-    private fun trackRemoved(station: ParkRideStationPickerItem) {
-        analytics.track(
-            AnalyticsEvent.ParkRideUserFacilityEvent(
-                facilityId = station.mappings.joinToString { it.facilityId },
-                stopId = station.stationId,
-                action = AnalyticsEvent.ParkRideUserFacilityEvent.Action.REMOVE,
-                source = AnalyticsEvent.ParkRideUserFacilityEvent.Source.ADD_PARK_RIDE_SCREEN,
-            ),
-        )
     }
 
     private fun updateUiState(block: AddParkRideState.() -> AddParkRideState) {

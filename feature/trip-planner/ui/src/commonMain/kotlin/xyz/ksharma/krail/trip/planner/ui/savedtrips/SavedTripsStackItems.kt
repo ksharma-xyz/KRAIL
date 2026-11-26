@@ -126,13 +126,17 @@ private fun LazyItemScope.ParkRideRowEntry(context: HomeStackContext) {
     ReorderableItem(context.reorderState, key = PARK_RIDE_ROW_KEY) { isDragging ->
         Column {
             val row: @Composable (Boolean) -> Unit = { interactive ->
+                val openStationId = context.expandedMap.entries.firstOrNull { it.value }?.key
                 ParkRideRow(
                     tiles = tiles,
-                    openStationId = context.expandedMap.entries.firstOrNull { it.value }?.key,
+                    openStationId = openStationId,
                     onTileClick = { tile ->
                         toggleTile(tile.stationId, state.parkRideUiState, context.expandedMap, onEvent)
                     },
-                    onDirectionsClick = { carPark -> onEvent(directionsEvent(carPark)) },
+                    // Directions are only on the open tile, so the open station is the one they were tapped on.
+                    onDirectionsClick = { carPark ->
+                        openStationId?.let { onEvent(directionsEvent(carPark, stationId = it)) }
+                    },
                     interactive = interactive,
                     onTileLongClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -155,12 +159,14 @@ private fun LazyItemScope.ParkRideRowEntry(context: HomeStackContext) {
     }
 }
 
-private fun directionsEvent(carPark: CarParkBlock): SavedTripUiEvent {
+private fun directionsEvent(carPark: CarParkBlock, stationId: String): SavedTripUiEvent {
     val target = requireNotNull(carPark.directionsTo) { "A car park without a position has no Directions" }
     return SavedTripUiEvent.ParkRideDirectionsClick(
         latitude = target.latitude,
         longitude = target.longitude,
         label = carPark.name,
+        stopId = stationId,
+        facilityId = carPark.facilityId,
     )
 }
 

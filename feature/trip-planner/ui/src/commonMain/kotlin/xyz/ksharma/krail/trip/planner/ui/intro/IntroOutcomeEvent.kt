@@ -4,10 +4,11 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.IntroLetsKrailClick
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
+import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideLookup
 import xyz.ksharma.krail.trip.planner.ui.themeselection.themeIdParam
 
 /**
- * The `intro_lets_krail` event for this outcome. The carousel params stay unset, so only the nine
+ * The `intro_lets_krail` event for this outcome. The carousel params stay unset, so only the ten
  * outcome params are sent, with `themeId` when a colour was chosen. This is the only place the event is built,
  * and [IntroOutcome.introVersion] is not optional, so no firing is without it. `IntroOutcomeEventTest` holds the
  * event to [toParams] for every value.
@@ -17,6 +18,7 @@ internal fun IntroOutcome.toEvent() = IntroLetsKrailClickEvent(
     finishedOn = finishedOn.toEventValue(),
     parkRideAnswer = parkRideAnswer.toEventValue(),
     locationResult = locationResult.toEventValue(),
+    parkRideLookup = parkRideLookup.toEventValue(),
     addedParkRide = addedParkRide,
     savedTrip = savedTrip,
     usedSearch = usedSearch,
@@ -46,8 +48,17 @@ private fun ParkRideAnswer.toEventValue() = when (this) {
 private fun LocationResult.toEventValue() = when (this) {
     LocationResult.NOT_ASKED -> IntroLetsKrailClickEvent.LocationResult.NOT_ASKED
     LocationResult.GRANTED -> IntroLetsKrailClickEvent.LocationResult.GRANTED
+    LocationResult.GRANTED_NO_FIX -> IntroLetsKrailClickEvent.LocationResult.GRANTED_NO_FIX
     LocationResult.DENIED -> IntroLetsKrailClickEvent.LocationResult.DENIED
     LocationResult.UNAVAILABLE -> IntroLetsKrailClickEvent.LocationResult.UNAVAILABLE
+}
+
+private fun ParkRideLookup.toEventValue() = when (this) {
+    ParkRideLookup.NOT_LOOKED -> IntroLetsKrailClickEvent.ParkRideLookup.NOT_LOOKED
+    ParkRideLookup.FOUND_NEAR -> IntroLetsKrailClickEvent.ParkRideLookup.FOUND_NEAR
+    ParkRideLookup.FOUND_WIDER -> IntroLetsKrailClickEvent.ParkRideLookup.FOUND_WIDER
+    ParkRideLookup.NONE_NEAR -> IntroLetsKrailClickEvent.ParkRideLookup.NONE_NEAR
+    ParkRideLookup.FAILED -> IntroLetsKrailClickEvent.ParkRideLookup.FAILED
 }
 
 private fun StopsWait.toEventValue() = when (this) {

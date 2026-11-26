@@ -1,8 +1,10 @@
 package xyz.ksharma.krail.trip.planner.ui.intro
 
 import kotlinx.coroutines.withTimeoutOrNull
+import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.dhruva.location.Location
 import xyz.ksharma.dhruva.location.LocationError
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.PermissionResultEvent
 import xyz.ksharma.krail.core.maps.data.location.UserLocationManager
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
@@ -51,23 +53,34 @@ internal fun locationResultOf(error: Throwable): LocationResult =
 
 /**
  * Asks for the permission if it is not decided, takes one fix, and calls [onResult] exactly once with
- * the answer: granted with the fix, denied, or unavailable for a failure of any kind and for a wait
- * past [LOCATE_BOUND_MS]. A cancelled caller gets no call.
+ * the answer: granted with the fix, denied, granted with no fix, or unavailable for any other failure
+ * and for a wait past [LOCATE_BOUND_MS] with no permission. A cancelled caller gets no call.
  *
  * The fix goes from the location manager straight to [onResult]. It is not stored, not logged and
  * not put in any state here.
  */
 internal suspend fun UserLocationManager.locateOnce(onResult: (LocationResult, LatLng?) -> Unit) {
-    val outcome: Result<Location>? = runCatching { withTimeoutOrNull(LOCATE_BOUND_MS) { getCurrentLocation() } }
+    val outcome: Result<Location>? = runCatching {
+        withTimeoutOrNull(LOCATE_BOUND_MS) { getCurrentLocation(PermissionResultEvent.Source.INTRO) }
+    }
         .onFailure { if (it is CancellationException) throw it }
         .getOrElse { Result.failure(it) }
 
-    if (outcome == null) {
-        onResult(LocationResult.UNAVAILABLE, null)
+    val fix = outcome?.getOrNull()
+    if (fix != null) {
+        onResult(LocationResult.GRANTED, LatLng(fix.latitude, fix.longitude))
     } else {
-        outcome.fold(
-            onSuccess = { onResult(LocationResult.GRANTED, LatLng(it.latitude, it.longitude)) },
-            onFailure = { onResult(locationResultOf(it), null) },
-        )
+        onResult(resultWithoutFix(outcome?.exceptionOrNull()), null)
     }
+}
+
+/** Why there is no fix: a refusal, a rider who allowed location and still got none, or neither. */
+private suspend fun UserLocationManager.resultWithoutFix(error: Throwable?): LocationResult {
+    val failed = error?.let(::locationResultOf) ?: LocationResult.UNAVAILABLE
+    if (failed != LocationResult.UNAVAILABLE) return failed
+    // A lookup that fails too says nothing, and the card still has to be answered.
+    val status = runCatching { checkPermissionStatus() }
+        .onFailure { if (it is CancellationException) throw it }
+        .getOrNull()
+    return if (status is PermissionStatus.Granted) LocationResult.GRANTED_NO_FIX else failed
 }

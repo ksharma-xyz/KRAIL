@@ -57,7 +57,7 @@ internal fun SavedTripsMapPane(
             onEvent = onMapEvent,
             onStopSelected = onStopSelected,
             stopCardOptions = homeStopCardOptions(labels = labels, onEvent = onEvent),
-            allowPermissionRequest = location.allowPermissionRequest,
+            permissionRequest = location.permissionRequest,
             onPermissionStatus = location.onPermissionStatus,
             mapOpen = mapOpen,
             mapEntry = MapEntry.HOME,

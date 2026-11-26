@@ -70,6 +70,7 @@ class SearchStopViewModelMapSessionTest {
         entry = MapEntry.SEARCH_STOP,
         hadUserLocation = true,
         locationPermission = LocationResult.GRANTED,
+        layout = AnalyticsEvent.MapViewedEvent.Layout.FULL,
         stopCount = 1,
     )
 

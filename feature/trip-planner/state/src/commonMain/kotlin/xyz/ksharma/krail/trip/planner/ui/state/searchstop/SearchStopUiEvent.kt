@@ -36,6 +36,9 @@ sealed interface SearchStopUiEvent {
     /** The parking card left the screen. */
     data object ParkRideCardClosed : SearchStopUiEvent
 
+    /** The swap control was tapped and From and To traded places. */
+    data object TripSwapped : SearchStopUiEvent
+
     /** Directions to one car park, in the phone's maps app. */
     data class ParkRideDirectionsClicked(
         val latitude: Double,

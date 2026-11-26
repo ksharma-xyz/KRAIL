@@ -52,6 +52,7 @@ import kotlinx.coroutines.launch
 import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.krail.core.adaptiveui.AdaptiveScreenContent
 import xyz.ksharma.krail.core.adaptiveui.DualPaneScaffold
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.PermissionResultEvent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.UserLocationManager
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
@@ -220,9 +221,11 @@ fun SearchStopScreen(
             {
                 // From and To trade places. What was typed searched for the old bar, so it is cleared for the new one.
                 val step = reduceTripSwap(trip, savedFlow, autoFrom)
+                val swapped = step.trip != trip
                 trip = step.trip
                 savedFlow = step.flow
                 fieldState.clearText()
+                if (swapped) onEvent(SearchStopUiEvent.TripSwapped)
             }
         } else {
             null
@@ -469,9 +472,12 @@ internal class LocationPillState(
     val onClick: () -> Unit,
 )
 
-/** The permission ask the map and the dual pane layout share: whether to ask now, the answer, and the request. */
+/**
+ * The permission ask the map and the dual pane layout share: where the rider asked from once they have (null until
+ * then), the answer, and the map button's request.
+ */
 internal class LocationPermissionAsk(
-    val allowRequest: Boolean,
+    val request: PermissionResultEvent.Source?,
     val onStatus: (PermissionStatus) -> Unit,
     val onRequest: () -> Unit,
 )
@@ -485,7 +491,7 @@ private fun rememberLocationPillState(
     val scope = rememberCoroutineScope()
     // Null until it has been looked up, so the pill never flashes in on a rider who already said yes.
     var status by remember { mutableStateOf<PermissionStatus?>(null) }
-    var allowPermissionRequest by remember { mutableStateOf(false) }
+    var permissionRequest by remember { mutableStateOf<PermissionResultEvent.Source?>(null) }
     val hasUserLocation = (searchStopState.mapUiState as? MapUiState.Ready)?.mapDisplay?.userLocation != null
     val pill = locationPillFor(status, hasUserLocation)
 
@@ -500,14 +506,16 @@ private fun rememberLocationPillState(
         pill = pill,
         granted = locationGrantedFor(status, hasUserLocation),
         ask = LocationPermissionAsk(
-            allowRequest = allowPermissionRequest,
+            request = permissionRequest,
             onStatus = { status = it },
-            onRequest = { allowPermissionRequest = true },
+            // The first tap that asks keeps the request. A later one changes nothing.
+            onRequest = { permissionRequest = permissionRequest ?: PermissionResultEvent.Source.MAP_BUTTON },
         ),
         userLocationManager = userLocationManager,
         onClick = {
             when (pill) {
-                LocationPill.Ask -> allowPermissionRequest = true
+                LocationPill.Ask ->
+                    permissionRequest = permissionRequest ?: PermissionResultEvent.Source.SEARCH_STOP_PILL
                 LocationPill.OpenSettings -> {
                     onEvent(SearchStopUiEvent.LocationPermissionSettingsClicked)
                     userLocationManager.openAppSettings()
@@ -624,7 +632,7 @@ private fun SearchStopScreenSinglePane(
                 mapEntry = MapEntry.SEARCH_STOP,
                 onEvent = onEvent,
                 onStopSelect = onStopSelect,
-                allowPermissionRequest = location.ask.allowRequest,
+                permissionRequest = location.ask.request,
                 onPermissionStatus = location.ask.onStatus,
                 onRequestPermission = location.ask.onRequest,
                 onMapTap = {
@@ -788,9 +796,9 @@ private fun SearchStopScreenDualPane(
     mapOpen: MapOpenTracker? = null,
 ) {
     // This layout has no map of its own to track the rider, so a tap that asks for permission asks here.
-    LaunchedEffect(location.ask.allowRequest) {
-        if (location.ask.allowRequest) {
-            location.userLocationManager.getCurrentLocation()
+    LaunchedEffect(location.ask.request) {
+        location.ask.request?.let { source ->
+            location.userLocationManager.getCurrentLocation(source)
             location.ask.onStatus(location.userLocationManager.checkPermissionStatus())
         }
     }

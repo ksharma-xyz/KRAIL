@@ -1,9 +1,11 @@
 package xyz.ksharma.krail.trip.planner.ui.search.ai
 
 import kotlinx.coroutines.test.runTest
+import xyz.ksharma.aagya.permission.PermissionResult
 import xyz.ksharma.krail.core.aitext.TripIntentExtraction
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
+import xyz.ksharma.krail.trip.planner.ui.components.ai.toMicAnswered
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -112,6 +114,59 @@ class AiAttemptReporterTest {
         assertEquals(listOf(1, 2, 1), rows.map { it.attemptIndex })
         assertEquals(rows[0].askSessionId, rows[1].askSessionId)
         assertTrue(rows[2].askSessionId != rows[1].askSessionId)
+    }
+
+    @Test
+    fun `a microphone answer is one permission result from Ask KRAIL`() {
+        val analytics = FakeAnalytics()
+
+        AiAttemptReporter(analytics = analytics).microphoneAnswered(
+            AiSearchInputEvent.MicPermissionAnswered(
+                outcome = AnalyticsEvent.PermissionResultEvent.Outcome.DENIED,
+                canAskAgain = true,
+            ),
+        )
+
+        assertEquals(
+            listOf(
+                AnalyticsEvent.PermissionResultEvent(
+                    permission = AnalyticsEvent.PermissionResultEvent.Permission.MICROPHONE,
+                    outcome = AnalyticsEvent.PermissionResultEvent.Outcome.DENIED,
+                    source = AnalyticsEvent.PermissionResultEvent.Source.ASK_KRAIL,
+                    canAskAgain = true,
+                ),
+            ),
+            analytics.getTrackedEvents("permission_result"),
+        )
+    }
+
+    @Test
+    fun `a speech recognition answer is granted or denied, and a denial cannot be asked again`() {
+        val analytics = FakeAnalytics()
+        val reporter = AiAttemptReporter(analytics = analytics)
+
+        reporter.speechRecognitionAnswered(allowed = true)
+        reporter.speechRecognitionAnswered(allowed = false)
+
+        val sent = analytics.getTrackedEvents("permission_result").map { it.properties.orEmpty() }
+        assertEquals(listOf("speech_recognition", "speech_recognition"), sent.map { it["permission"] })
+        assertEquals(listOf("granted", "denied"), sent.map { it["result"] })
+        assertEquals(listOf(null, 0), sent.map { it["canAskAgain"] })
+    }
+
+    @Test
+    fun `a result that means the rider was not asked is no event`() {
+        assertEquals(null, PermissionResult.PolicyExhausted.toMicAnswered())
+        assertEquals(
+            listOf(
+                AnalyticsEvent.PermissionResultEvent.Outcome.GRANTED to null,
+                AnalyticsEvent.PermissionResultEvent.Outcome.DENIED to false,
+                AnalyticsEvent.PermissionResultEvent.Outcome.CANCELLED to null,
+            ),
+            listOf(PermissionResult.Granted, PermissionResult.Denied(canAskAgain = false), PermissionResult.Cancelled)
+                .map { it.toMicAnswered() }
+                .map { it?.outcome to it?.canAskAgain },
+        )
     }
 
     private suspend fun AiAttemptReporter.reportBlank(analytics: FakeAnalytics) {

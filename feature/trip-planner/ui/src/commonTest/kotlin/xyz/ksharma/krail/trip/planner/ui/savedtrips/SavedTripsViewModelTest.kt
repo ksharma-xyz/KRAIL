@@ -5,6 +5,7 @@ import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -234,11 +235,14 @@ class SavedTripsViewModelTest {
 
             // THEN verify that trackLoadTimeTableClick is called with correct parameters
             val fakeAnalytics: FakeAnalytics = fakeAnalytics as FakeAnalytics
-            val eventName = AnalyticsEvent.LoadTimeTableClickEvent(
-                fromStopId = fromStopId,
-                toStopId = toStopId,
-            ).name
-            assertTrue(fakeAnalytics.isEventTracked(eventName))
+            assertEquals(
+                AnalyticsEvent.LoadTimeTableClickEvent(
+                    fromStopId = fromStopId,
+                    toStopId = toStopId,
+                    source = AnalyticsEvent.LoadTimeTableClickEvent.Source.SEARCH_STOP,
+                ),
+                fakeAnalytics.getTrackedEvents("load_timetable_click").single(),
+            )
         }
 
     @Test
@@ -878,14 +882,13 @@ class SavedTripsViewModelTest {
 
     // endregion MoveSavedTrip
 
-    // region Park & Ride auto-sync analytics (SAVED_TRIPS_SCREEN source)
+    // region Park & Ride auto-sync
     //
-    // Saving/removing a trip can add/remove a Park & Ride facility from the saved list
-    // without the rider ever touching the Add Park & Ride screen. These tests lock down
-    // that this auto-sync fires `park_ride_user_facility` with `source = SAVED_TRIPS_SCREEN`.
+    // Saving or removing a trip can add or remove a Park & Ride facility on home without the
+    // rider asking for it. It is not something the rider did, so it sends no event.
 
     @Test
-    fun `GIVEN a trip stop maps to a park and ride facility WHEN the trip is saved THEN a saved trips screen add event is tracked`() =
+    fun `saving and removing a trip keeps its park and ride rows in step and counts nothing`() =
         runTest(testDispatcher) {
             val analytics = fakeAnalytics as FakeAnalytics
 
@@ -901,60 +904,21 @@ class SavedTripsViewModelTest {
                 skipItems(1)
                 awaitItem()
                 advanceUntilIdle()
-
-                val tracked = analytics.getTrackedEvents("park_ride_user_facility")
-                assertEquals(1, tracked.size)
-                val event = assertIs<AnalyticsEvent.ParkRideUserFacilityEvent>(tracked.first())
-                assertEquals("6", event.facilityId)
-                assertEquals("207210", event.stopId)
-                assertEquals(AnalyticsEvent.ParkRideUserFacilityEvent.Action.ADD, event.action)
                 assertEquals(
-                    AnalyticsEvent.ParkRideUserFacilityEvent.Source.SAVED_TRIPS_SCREEN,
-                    event.source,
+                    listOf("207210" to "6"),
+                    fakeNswParkRideSandook.observeSavedParkRides().first().map { it.stopId to it.facilityId },
                 )
-
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-    @Test
-    fun `GIVEN a saved trip synced a park and ride facility WHEN the trip is removed THEN a saved trips screen remove event is tracked`() =
-        runTest(testDispatcher) {
-            val analytics = fakeAnalytics as FakeAnalytics
-
-            sandook.insertOrReplaceTrip(
-                tripId = "207210->999",
-                fromStopId = "207210",
-                fromStopName = "Stop A",
-                toStopId = "999",
-                toStopName = "Stop B",
-            )
-
-            viewModel.uiState.test {
-                skipItems(1)
-                awaitItem()
-                advanceUntilIdle()
-                analytics.clear()
 
                 sandook.deleteTrip("207210->999")
                 advanceUntilIdle()
 
-                val tracked = analytics.getTrackedEvents("park_ride_user_facility")
-                assertEquals(1, tracked.size)
-                val event = assertIs<AnalyticsEvent.ParkRideUserFacilityEvent>(tracked.first())
-                assertEquals("6", event.facilityId)
-                assertEquals("207210", event.stopId)
-                assertEquals(AnalyticsEvent.ParkRideUserFacilityEvent.Action.REMOVE, event.action)
-                assertEquals(
-                    AnalyticsEvent.ParkRideUserFacilityEvent.Source.SAVED_TRIPS_SCREEN,
-                    event.source,
-                )
-
+                assertEquals(emptyList(), fakeNswParkRideSandook.observeSavedParkRides().first())
+                assertEquals(emptyList(), analytics.getTrackedEvents("park_ride_user_facility"))
                 cancelAndIgnoreRemainingEvents()
             }
         }
 
-    // endregion Park & Ride auto-sync analytics
+    // endregion Park & Ride auto-sync
 
     @Test
     fun `a park ride card falls back to the stored stop name, never the raw stop id`() =
@@ -981,59 +945,6 @@ class SavedTripsViewModelTest {
                 assertNotNull(parkRide)
                 // "2153478" here would be the raw ID leaking into the UI.
                 assertEquals("Bella Vista", parkRide.stopName)
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-    @Test
-    fun `GIVEN both stops selected WHEN ReverseStopClick THEN stops are swapped and event tracked`() =
-        runTest {
-            // GIVEN both from and to stops are selected
-            val fromStop = StopItem(stopName = "Central Station", stopId = "10101")
-            val toStop = StopItem(stopName = "Town Hall", stopId = "10102")
-            fakeStopResultsManager.setSelectedFromStop(fromStop)
-            fakeStopResultsManager.setSelectedToStop(toStop)
-
-            viewModel.uiState.test {
-                skipItems(1) // Initial state, which loads the selected stops.
-
-                // WHEN the stops are reversed
-                viewModel.onEvent(SavedTripUiEvent.ReverseStopClick)
-
-                // THEN the UI state holds them the other way round
-                val item = awaitItem()
-                assertEquals(toStop.stopId, item.fromStop?.stopId)
-                assertEquals(fromStop.stopId, item.toStop?.stopId)
-
-                // AND so does the manager, which owns the selection the next screen reads
-                assertEquals(toStop, fakeStopResultsManager.selectedFromStop)
-                assertEquals(fromStop, fakeStopResultsManager.selectedToStop)
-
-                assertTrue(
-                    (fakeAnalytics as FakeAnalytics)
-                        .isEventTracked(AnalyticsEvent.ReverseStopClickEvent.name),
-                )
-                cancelAndIgnoreRemainingEvents()
-            }
-        }
-
-    @Test
-    fun `GIVEN only a from stop WHEN ReverseStopClick THEN it becomes the destination`() =
-        runTest {
-            // GIVEN a half-filled pair, which is the state the row spends most of its time in
-            val fromStop = StopItem(stopName = "Central Station", stopId = "10101")
-            fakeStopResultsManager.setSelectedFromStop(fromStop)
-            fakeStopResultsManager.setSelectedToStop(null)
-
-            viewModel.uiState.test {
-                skipItems(1)
-
-                viewModel.onEvent(SavedTripUiEvent.ReverseStopClick)
-
-                // THEN the null travels with the swap rather than being treated as "no change"
-                val item = awaitItem()
-                assertNull(item.fromStop)
-                assertEquals(fromStop.stopId, item.toStop?.stopId)
                 cancelAndIgnoreRemainingEvents()
             }
         }

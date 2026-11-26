@@ -78,6 +78,24 @@ class PreferredSpeechToTextServiceTest {
         assertEquals(0, fallback.stopCount)
     }
 
+    @Test
+    fun `a speech recognition answer from either one is handed on once`() = runTest {
+        val preferred = FakeSpeechToTextService(
+            SpeechToTextAvailability.Unavailable(SpeechUnavailableReasons.PERMISSION_REQUIRED),
+            "analyzer",
+        )
+        val fallback = FakeSpeechToTextService(
+            SpeechToTextAvailability.Available,
+            "legacy",
+            speechRecognitionAnswer = true,
+        )
+        val service = PreferredSpeechToTextService(preferred = preferred, fallback = fallback)
+        service.checkAvailability()
+
+        assertEquals(true, service.takeSpeechRecognitionAnswer())
+        assertEquals(null, service.takeSpeechRecognitionAnswer())
+    }
+
     private suspend fun SpeechToTextService.firstTranscript(): String {
         var text = ""
         startListening().collect { if (it is SpeechToTextResult.Final) text = it.text }

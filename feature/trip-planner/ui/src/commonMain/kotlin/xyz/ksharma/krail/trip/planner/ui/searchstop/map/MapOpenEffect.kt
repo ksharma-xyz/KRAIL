@@ -9,6 +9,8 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import kotlinx.coroutines.launch
 import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.IntroLetsKrailClickEvent.LocationResult
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.MapDismissedEvent.EndReason
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.MapViewedEvent
 import xyz.ksharma.krail.core.maps.data.location.UserLocationManager
 
 /**
@@ -37,6 +39,7 @@ import xyz.ksharma.krail.core.maps.data.location.UserLocationManager
 internal fun MapOpenEffect(
     mapOpen: MapOpenTracker?,
     entry: MapEntry,
+    layout: MapViewedEvent.Layout,
     covered: Boolean,
     hadUserLocation: Boolean,
     stopCount: Int,
@@ -48,26 +51,31 @@ internal fun MapOpenEffect(
     val latestHadUserLocation by rememberUpdatedState(hadUserLocation)
     val latestStopCount by rememberUpdatedState(stopCount)
     val latestIsChanging by rememberUpdatedState(isChangingConfigurations)
+    // Read as an open ends. The cover going up restarts the effect below, and this already says so by then.
+    val latestCovered by rememberUpdatedState(covered)
 
     LaunchedEffect(mapOpen, stopCount) { mapOpen.stopsOnMap(stopCount) }
 
-    LifecycleStartEffect(mapOpen, entry, covered, userLocationManager) {
+    LifecycleStartEffect(mapOpen, entry, layout, covered, userLocationManager) {
         val lookup = if (covered) {
             null
         } else {
             scope.launch {
-                val permission = userLocationManager.checkPermissionStatus().toMapLocationResult()
+                val permission = userLocationManager.reportedPermissionStatus().toMapLocationResult()
                 mapOpen.viewed(
                     entry = entry,
                     hadUserLocation = latestHadUserLocation,
                     locationPermission = permission,
+                    layout = layout,
                     stopCount = latestStopCount,
                 )
             }
         }
         onStopOrDispose {
             lookup?.cancel()
-            if (!latestIsChanging()) mapOpen.dismissed()
+            if (!latestIsChanging()) {
+                mapOpen.dismissed(if (latestCovered) EndReason.LIST else EndReason.LEFT)
+            }
         }
     }
 }

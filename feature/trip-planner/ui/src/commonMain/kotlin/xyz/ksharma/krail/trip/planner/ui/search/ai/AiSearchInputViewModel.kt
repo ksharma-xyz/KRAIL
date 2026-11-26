@@ -189,6 +189,7 @@ class AiSearchInputViewModel(
             }
 
             AiSearchInputEvent.SpeechUnsupported -> _uiState.update { it.withSpeechProblem(MIC_UNSUPPORTED) }
+            is AiSearchInputEvent.MicPermissionAnswered -> reporter.microphoneAnswered(event)
             // Guarded as well as hidden. The button is gone when the feature is off, so this
             // can only be reached by a caller that has not been told; opening a sheet whose
             // only action is inert is the failure this is here to prevent.
@@ -266,6 +267,7 @@ class AiSearchInputViewModel(
 
         listeningJob = viewModelScope.launch {
             val availability = speechToTextService.checkAvailability()
+            speechToTextService.takeSpeechRecognitionAnswer()?.let(reporter::speechRecognitionAnswered)
             if (availability is SpeechToTextAvailability.Unavailable) {
                 _uiState.update { it.withSpeechProblem(availability.reason) }
                 logOutcome(reason = "speech_unavailable")

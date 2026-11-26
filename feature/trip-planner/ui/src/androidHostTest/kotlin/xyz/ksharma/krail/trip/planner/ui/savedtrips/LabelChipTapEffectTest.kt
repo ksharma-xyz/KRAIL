@@ -12,6 +12,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import xyz.ksharma.dhruva.location.Location
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.PermissionResultEvent
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.trip.planner.ui.flow.RecordingTripPlannerNavigator
 import xyz.ksharma.krail.trip.planner.ui.navigation.SearchStopFieldType
@@ -169,6 +170,15 @@ class LabelChipTapEffectTest {
 
         manager.answerWith(Result.failure(IllegalStateException("permission denied")))
         assertNull(runBlocking { manager.currentLatLng() })
+    }
+
+    @Test
+    fun `a chip's tap asks for location as a home chip`() {
+        val manager = FakeUserLocationManager()
+
+        runBlocking { manager.currentLatLng() }
+
+        assertEquals(listOf(PermissionResultEvent.Source.HOME_LABEL_CHIP), manager.locationSources)
     }
 
     @Test

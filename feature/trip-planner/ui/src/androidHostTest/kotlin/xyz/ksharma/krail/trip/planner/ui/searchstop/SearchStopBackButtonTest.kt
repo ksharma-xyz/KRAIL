@@ -72,7 +72,7 @@ class SearchStopBackButtonTest {
             location = LocationPillState(
                 pill = LocationPill.Hidden,
                 granted = true,
-                ask = LocationPermissionAsk(allowRequest = false, onStatus = {}, onRequest = {}),
+                ask = LocationPermissionAsk(request = null, onStatus = {}, onRequest = {}),
                 userLocationManager = rememberUserLocationManager(),
                 onClick = {},
             ),

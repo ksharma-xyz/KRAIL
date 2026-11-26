@@ -1,5 +1,6 @@
 package xyz.ksharma.krail.trip.planner.ui.search.ai
 
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.PermissionResultEvent
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
 import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.StopItem
 
@@ -136,6 +137,15 @@ sealed interface AiSearchInputEvent {
      * no network.
      */
     data object RefreshFeatureFlag : AiSearchInputEvent
+
+    /**
+     * The system answered a microphone request. Sent beside the event that says what the screen does about it,
+     * and only for analytics. [canAskAgain] is known for a refusal alone.
+     */
+    data class MicPermissionAnswered(
+        val outcome: PermissionResultEvent.Outcome,
+        val canAskAgain: Boolean?,
+    ) : AiSearchInputEvent
 
     /** Refused just now, and the system will ask again next time the mic is tapped. */
     data object MicPermissionDenied : AiSearchInputEvent

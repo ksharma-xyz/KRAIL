@@ -97,7 +97,8 @@ class IntroFlowViewModelParkRideLocateTest {
             Triple(LocationResult.DENIED, null, LocationResult.DENIED),
             Triple(LocationResult.UNAVAILABLE, null, LocationResult.UNAVAILABLE),
             // A fix that never arrived behind a granted result is nothing to find a station from.
-            Triple(LocationResult.GRANTED, null, LocationResult.UNAVAILABLE),
+            Triple(LocationResult.GRANTED, null, LocationResult.GRANTED_NO_FIX),
+            Triple(LocationResult.GRANTED_NO_FIX, null, LocationResult.GRANTED_NO_FIX),
             // A fix behind a result that is not granted is dropped, never used.
             Triple(LocationResult.DENIED, AT_TALLAWONG, LocationResult.DENIED),
         )

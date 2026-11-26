@@ -62,16 +62,19 @@ class SearchStopMapOpenEffectTest {
         entry: MapEntry = MapEntry.SEARCH_STOP,
         permission: PermissionStatus = PermissionStatus.Granted,
         counted: MapOpenTracker? = tracker,
+        layout: MapViewedEvent.Layout = MapViewedEvent.Layout.FULL,
+        reported: PermissionStatus = permission,
     ) {
         owner.moveTo(Lifecycle.State.RESUMED)
         // One manager for the whole test: a new one on each recomposition would be a new key and restart the effect.
-        val manager = FakeUserLocationManager(permissionStatus = permission)
+        val manager = FakeUserLocationManager(permissionStatus = permission, reportedStatus = reported)
         restorationTester.setContent {
             CompositionLocalProvider(LocalLifecycleOwner provides owner) {
                 if (shown.value) {
                     MapOpenEffect(
                         mapOpen = counted,
                         entry = entry,
+                        layout = layout,
                         covered = covered.value,
                         hadUserLocation = hadUserLocation.value,
                         stopCount = stopCount.value,
@@ -137,6 +140,7 @@ class SearchStopMapOpenEffectTest {
                 MapOpenEffect(
                     mapOpen = tracker,
                     entry = MapEntry.SEARCH_STOP,
+                    layout = MapViewedEvent.Layout.FULL,
                     covered = false,
                     hadUserLocation = false,
                     stopCount = 0,
@@ -274,7 +278,44 @@ class SearchStopMapOpenEffectTest {
         lifecycle(Lifecycle.State.CREATED)
 
         assertEquals(1, dismissed().size)
-        assertEquals(true, dismissed().single().selected)
+        assertEquals(MapDismissedEvent.EndReason.PICKED, dismissed().single().endReason)
+    }
+
+    @Test
+    fun `an open the cover ends is ended for the list`() {
+        show()
+
+        change(covered, true)
+
+        assertEquals(MapDismissedEvent.EndReason.LIST, dismissed().single().endReason)
+    }
+
+    @Test
+    fun `an open ended by a stop or by leaving the composition is ended as left`() {
+        show()
+        lifecycle(Lifecycle.State.CREATED)
+        lifecycle(Lifecycle.State.RESUMED)
+
+        change(shown, false)
+
+        assertEquals(
+            listOf(MapDismissedEvent.EndReason.LEFT, MapDismissedEvent.EndReason.LEFT),
+            dismissed().map { it.endReason },
+        )
+    }
+
+    @Test
+    fun `the view says the layout it was given`() {
+        show(layout = MapViewedEvent.Layout.SIDE)
+
+        assertEquals(MapViewedEvent.Layout.SIDE, viewed().single().layout)
+    }
+
+    @Test
+    fun `the view reports a refusal the app remembers, which the system lookup has forgotten`() {
+        show(permission = PermissionStatus.NotDetermined, reported = PermissionStatus.Denied(canAskAgain = false))
+
+        assertEquals(LocationResult.DENIED, viewed().single().locationPermission)
     }
 
     @Test

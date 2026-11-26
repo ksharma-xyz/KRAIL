@@ -59,6 +59,43 @@ class AiAttemptReporter(
         attemptIndex += 1
     }
 
+    /** The system's answer to the microphone request Ask KRAIL raised. */
+    fun microphoneAnswered(answer: AiSearchInputEvent.MicPermissionAnswered) {
+        permissionAnswered(
+            permission = AnalyticsEvent.PermissionResultEvent.Permission.MICROPHONE,
+            outcome = answer.outcome,
+            canAskAgain = answer.canAskAgain,
+        )
+    }
+
+    /** The answer to the speech recognition prompt, which only iOS raises, and which it raises once. */
+    fun speechRecognitionAnswered(allowed: Boolean) {
+        permissionAnswered(
+            permission = AnalyticsEvent.PermissionResultEvent.Permission.SPEECH_RECOGNITION,
+            outcome = if (allowed) {
+                AnalyticsEvent.PermissionResultEvent.Outcome.GRANTED
+            } else {
+                AnalyticsEvent.PermissionResultEvent.Outcome.DENIED
+            },
+            canAskAgain = if (allowed) null else false,
+        )
+    }
+
+    private fun permissionAnswered(
+        permission: AnalyticsEvent.PermissionResultEvent.Permission,
+        outcome: AnalyticsEvent.PermissionResultEvent.Outcome,
+        canAskAgain: Boolean?,
+    ) {
+        analytics?.track(
+            AnalyticsEvent.PermissionResultEvent(
+                permission = permission,
+                outcome = outcome,
+                source = AnalyticsEvent.PermissionResultEvent.Source.ASK_KRAIL,
+                canAskAgain = canAskAgain,
+            ),
+        )
+    }
+
     /** Fetched once per attempt, and kept so the row can say whether one was present. */
     suspend fun labelsForThisAttempt(): List<String> =
         riderLabels().also { labelsSeenDuringThisAttempt = it }

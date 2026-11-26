@@ -110,7 +110,7 @@ class IntroFlowViewModelNearbyTest {
                 IntroUiEvent.LocationResultReceived(LocationResult.GRANTED, location = null),
             )
             assertTrue(noFix.nswStops.nearbyCalls.isEmpty(), "a granted result with no fix has nothing to search from")
-            assertEquals(LocationResult.UNAVAILABLE, noFix.state.locationResult)
+            assertEquals(LocationResult.GRANTED_NO_FIX, noFix.state.locationResult)
         }
 
     @Test

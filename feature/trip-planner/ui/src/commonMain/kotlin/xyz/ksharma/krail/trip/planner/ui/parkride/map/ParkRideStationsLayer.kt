@@ -8,6 +8,7 @@ import androidx.compose.ui.unit.dp
 import org.maplibre.compose.expressions.dsl.const
 import org.maplibre.compose.expressions.dsl.image
 import org.maplibre.compose.expressions.dsl.offset
+import org.maplibre.compose.expressions.value.TranslateAnchor
 import org.maplibre.compose.layers.CircleLayer
 import org.maplibre.compose.layers.SymbolLayer
 import org.maplibre.compose.sources.GeoJsonData
@@ -72,6 +73,9 @@ fun ParkRideStationsLayer(
         radius = const(if (beside == DpOffset.Zero) HitTargetRadius else BesideHitTargetRadius),
         color = const(Color.Transparent),
         translate = offset(beside.x, beside.y),
+        // The logo's offset is measured on the screen, so the tap area's must be too. By default it is measured on
+        // the map, and turning the map then carries the tap area away from the logo.
+        translateAnchor = const(TranslateAnchor.Viewport),
         onClick = { features ->
             val stationId = features.firstOrNull()?.getStringProperty(STATION_ID_PROPERTY)
             plottable.find { it.stationId == stationId }?.let(onStationClick)

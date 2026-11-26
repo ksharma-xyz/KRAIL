@@ -19,6 +19,9 @@ removes four classes (`how_to_krail`, `search_stop_map_options_opened`, `search_
 and `select_on_map_button_click`) and adds two (`map_viewed` and `map_dismissed`). The code count leaves
 out the four retired names, which stay spent, so it is not the budget. The owner's figure above is.
 
+On 2026-11-26 `permission_result` and `park_ride_action` were added, so the owner's figure plus these two is 76,
+about 424 slots left. A count of the same lines that day found 66 on `main` and 68 with the two added.
+
 ### The other three caps, and which one actually bites
 
 The 500 event names are the famous limit. Three more exist, and the one that constrains

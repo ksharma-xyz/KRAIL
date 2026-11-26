@@ -59,7 +59,7 @@ private fun previewHost(
         HomeMapPane(
             mapUiState = MapUiState.Ready(mapDisplay = MapDisplay()),
             pins = HomePins(),
-            allowPermissionRequest = false,
+            permissionRequest = null,
             onPermissionStatus = {},
             onMapEvent = {},
             onCardKey = {},

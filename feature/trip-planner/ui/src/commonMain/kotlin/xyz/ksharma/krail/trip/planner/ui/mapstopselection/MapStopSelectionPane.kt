@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import xyz.ksharma.aagya.permission.PermissionStatus
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.MapViewedEvent
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.PermissionResultEvent
 import xyz.ksharma.krail.core.snapshot.ScreenshotTest
 import xyz.ksharma.krail.taj.modifier.cornerSafeTopPadding
 import xyz.ksharma.krail.taj.preview.PreviewComponent
@@ -27,8 +29,9 @@ import xyz.ksharma.krail.trip.planner.ui.stopcard.StopCardOptions
  * - [onStopSelected] fires when the user confirms a stop pick from the floating stop card a pin opens.
  *   Defaults to a no-op — callers that don't need stop-picking can omit it (read-only map).
  * - [stopCardOptions] is what the card offers besides the board: Save as, and Go here or Start here.
- * - [allowPermissionRequest] and [onPermissionStatus] are the host's say over the location permission: the map
- *   never raises the system dialog until the host allows it, and reports what the permission turned out to be.
+ * - [permissionRequest] and [onPermissionStatus] are the host's say over the location permission: the map
+ *   never raises the system dialog until the host says where the rider asked from, and reports what the
+ *   permission turned out to be.
  * - [mapOpen] and [mapEntry] count each stretch of this map being on screen for analytics, under the entry that
  *   hosts it. Null counts nothing.
  *
@@ -41,7 +44,7 @@ fun MapStopSelectionPane(
     modifier: Modifier = Modifier,
     onStopSelected: (StopItem) -> Unit = {},
     stopCardOptions: StopCardOptions = StopCardOptions(),
-    allowPermissionRequest: Boolean = false,
+    permissionRequest: PermissionResultEvent.Source? = null,
     onPermissionStatus: (PermissionStatus) -> Unit = {},
     mapOpen: MapOpenTracker? = null,
     mapEntry: MapEntry = MapEntry.SEARCH_STOP,
@@ -72,10 +75,11 @@ fun MapStopSelectionPane(
         },
         onStopSelect = onStopSelected,
         stopCardOptions = stopCardOptions,
-        allowPermissionRequest = allowPermissionRequest,
+        permissionRequest = permissionRequest,
         onPermissionStatus = onPermissionStatus,
         mapOpen = mapOpen,
         mapEntry = mapEntry,
+        mapLayout = MapViewedEvent.Layout.SIDE,
     )
 }
 

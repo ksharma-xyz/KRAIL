@@ -6,8 +6,16 @@ import kotlin.time.ExperimentalTime
 
 private const val PROP_STOP_ID = "stopId"
 private const val PROP_ACTION = "action"
+private const val PROP_FACILITY_ID = "facilityId"
 private const val VALUE_SETTINGS = "settings"
 private const val VALUE_INTRO = "intro"
+private const val VALUE_SEARCH_STOP = "search_stop"
+private const val VALUE_JOURNEY_MAP = "journey_map"
+private const val VALUE_SIDE = "side"
+private const val VALUE_DENIED = "denied"
+private const val VALUE_GRANTED = "granted"
+private const val VALUE_DIRECTIONS = "directions"
+private const val VALUE_FAILED = "failed"
 private const val PROP_VARIANT = "variant"
 private const val PROP_SOURCE = "source"
 private const val PROP_EXPAND = "expand"
@@ -71,28 +79,56 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
             rawProperties = mapOf(PROP_FROM_STOP_ID to fromStopId, PROP_TO_STOP_ID to toStopId),
         )
 
-    data object ReverseStopClickEvent : AnalyticsEvent(name = "reverse_stop_click")
+    /**
+     * The rider swapped From and To with the swap control. Sent only when a tap did swap them.
+     *
+     * @param source Where the control is. A row with no source is from an older build, where the control was on
+     *   the home screen.
+     */
+    data class ReverseStopClickEvent(val source: Source) : AnalyticsEvent(
+        name = "reverse_stop_click",
+        rawProperties = mapOf(PROP_SOURCE to source.value),
+    ) {
+        enum class Source(val value: String) {
+            SEARCH_STOP(VALUE_SEARCH_STOP),
+        }
+    }
 
     /**
+     * Departure times were opened for a trip the rider asked for.
+     *
+     * @param source          How the rider asked. A row with no source is from an older build, where the only
+     *                        way was the search button.
      * @param searchSessionId Set when this trip was loaded off the back of a stop the
      *                        rider had just searched for, which is what closes the search
      *                        funnel: [StopSelectedEvent] only proves a stop was picked,
      *                        this proves the rider reached departure times. Null when the
-     *                        trip was loaded from a saved card, a recent, or a map pick -
-     *                        no search preceded it, so attributing one would be wrong.
+     *                        trip was loaded from a saved card, a recent, a map pick or a
+     *                        home label - no search preceded it, so attributing one would
+     *                        be wrong.
      */
     data class LoadTimeTableClickEvent(
         val fromStopId: String,
         val toStopId: String,
+        val source: Source,
         val searchSessionId: String? = null,
     ) : AnalyticsEvent(
         name = "load_timetable_click",
         rawProperties = buildMap {
             put(PROP_FROM_STOP_ID, fromStopId)
             put(PROP_TO_STOP_ID, toStopId)
+            put(PROP_SOURCE, source.value)
             searchSessionId?.let { put(PROP_SEARCH_SESSION_ID, it) }
         },
-    )
+    ) {
+        enum class Source(val value: String) {
+            /** The go button on Search Stop. */
+            SEARCH_STOP(VALUE_SEARCH_STOP),
+
+            /** A set label, such as Home or Work, tapped on the home screen. */
+            LABEL_CHIP("label_chip"),
+        }
+    }
 
     /**
      * User taps Retry after an API/load failure. Unified across surfaces to stay within the
@@ -113,7 +149,14 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
 
     data object FromFieldClickEvent : AnalyticsEvent(name = "from_field_click")
 
-    data object ToFieldClickEvent : AnalyticsEvent(name = "to_field_click")
+    /**
+     * The rider tapped the home screen's one search bar. A row with no source is from an older build, where
+     * this was a tap on the To field beside a From field.
+     */
+    data object ToFieldClickEvent : AnalyticsEvent(
+        name = "to_field_click",
+        rawProperties = mapOf(PROP_SOURCE to "home_search_bar"),
+    )
 
     /**
      * Fired when the user reorders a saved-trip card by drag-and-drop in edit mode.
@@ -368,6 +411,9 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         EMPTY_STATE("empty_state"),
         ADDRESS_RESULT("address_result"),
         MAP_CARD("map_card"),
+
+        /** A label set from its own chip on the home screen. */
+        HOME_CHIP("home_chip"),
     }
 
     /** How many labels the user has, bucketed - splits casual (1-2) from power users. */
@@ -978,7 +1024,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
     ) {
         enum class Action(val value: String) {
             SHOWN("shown"),
-            FAILED("failed"),
+            FAILED(VALUE_FAILED),
             UPVOTE("upvote"),
             DOWNVOTE("downvote"),
         }
@@ -1258,8 +1304,8 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      * Carousel Intro: [pageType] and [pageNumber], sent as `completedOnPage` and
      * `completedOnPageNumber`. They describe the carousel and are removed with it.
      *
-     * Two step Intro: the nine outcome params from [introVersion] to [stopsWait], sent together, and
-     * [themeId] with them when a colour was chosen. [introVersion] is on every firing of the two step
+     * Two step Intro: the nine outcome params from [introVersion] to [stopsWait] and [parkRideLookup], sent
+     * together, and [themeId] with them when a colour was chosen. [introVersion] is on every firing of the two step
      * Intro, the skipped outcome included. Each is a flag or one of a short list of values. None
      * carries a coordinate, a stop name or text.
      *
@@ -1274,6 +1320,10 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      * @param usedSearch Whether the search for another stop was used.
      * @param skipped Whether the Intro finished with no complete trip picked.
      * @param stopsWait How long the Intro waited on the stops data.
+     * @param parkRideLookup How the search for the nearest Park & Ride station ended: `found_near` or `found_wider`
+     *   (the closer or the wider distance found the station on the card), `none_near` (the card said so), `failed`
+     *   (a usable location, but the stops were not ready or the search failed) or `not_looked` (everything else).
+     *   It keeps a result the rider was shown. It names no station and no distance travelled, and no position.
      * @param themeId The colour the rider chose on the last step, in the form `theme_selected` sends it (the
      *   theme's number as text). Left out when no colour was chosen. The Intro also sends `theme_selected`,
      *   so this is the same choice on the one event the funnel reads.
@@ -1291,6 +1341,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         val skipped: Boolean? = null,
         val stopsWait: StopsWait? = null,
         val themeId: String? = null,
+        val parkRideLookup: ParkRideLookup? = null,
     ) : AnalyticsEvent(
         name = "intro_lets_krail",
         rawProperties = buildMap {
@@ -1305,6 +1356,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
             usedSearch?.let { put("usedSearch", it) }
             skipped?.let { put("skipped", it) }
             stopsWait?.let { put("stopsWait", it.value) }
+            parkRideLookup?.let { put("parkRideLookup", it.value) }
             themeId?.let { put(PROP_THEME_ID, it) }
         },
     ) {
@@ -1325,10 +1377,21 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         }
 
         enum class LocationResult(val value: String) {
-            GRANTED("granted"),
-            DENIED("denied"),
+            GRANTED(VALUE_GRANTED),
+            DENIED(VALUE_DENIED),
             UNAVAILABLE("unavailable"),
             NOT_ASKED("not_asked"),
+
+            /** The Intro only: location is allowed, and no position came back in time. */
+            GRANTED_NO_FIX("granted_no_fix"),
+        }
+
+        enum class ParkRideLookup(val value: String) {
+            NOT_LOOKED("not_looked"),
+            FOUND_NEAR("found_near"),
+            FOUND_WIDER("found_wider"),
+            NONE_NEAR("none_near"),
+            FAILED(VALUE_FAILED),
         }
 
         enum class StopsWait(val value: String) {
@@ -1336,7 +1399,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
             UNDER_2S("under_2s"),
             TWO_TO_FIVE_S("2_to_5s"),
             OVER_5S("over_5s"),
-            FAILED("failed"),
+            FAILED(VALUE_FAILED),
         }
     }
 
@@ -1414,7 +1477,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         name = "park_ride_card_click",
         rawProperties = mapOf(
             PROP_STOP_ID to stopId.trim(),
-            "facilityId" to facilityId.trim(),
+            PROP_FACILITY_ID to facilityId.trim(),
             PROP_EXPAND to expand.toString().trim(),
             "time" to time.toString().trim(),
         ),
@@ -1439,7 +1502,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
     ) : AnalyticsEvent(
         name = "park_ride_user_facility",
         rawProperties = mapOf(
-            "facilityId" to facilityId.trim(),
+            PROP_FACILITY_ID to facilityId.trim(),
             PROP_STOP_ID to stopId.trim(),
             PROP_ACTION to action.value,
             PROP_SOURCE to source.value,
@@ -1454,12 +1517,6 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         enum class Source(val value: String) {
             /** Rider manually toggled a station on the "Add Park & Ride" screen. */
             ADD_PARK_RIDE_SCREEN("add_park_ride_screen"),
-
-            /**
-             * Auto-synced because a saved trip's stop gained or lost a Park & Ride facility
-             * mapping. See [SavedTripsViewModel.updateParkRideStopIdsInDb].
-             */
-            SAVED_TRIPS_SCREEN("saved_trips_screen"),
 
             /** Rider toggled the nearest station on the Park & Ride step of the Intro. */
             INTRO(VALUE_INTRO),
@@ -1647,9 +1704,12 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      *                           map pane too. The Intro has no map.
      * @param hadUserLocation    Whether a location fix was already in hand when the map became visible, sent as
      *                           `1` or `0`. A fix that lands after that is not counted. No coordinates.
-     * @param locationPermission What the location permission was when the map became visible, with the same
-     *                           values as the Intro's `locationResult`: `granted`, `denied`, `not_asked` or
+     * @param locationPermission What the location permission was when the map became visible, in the words of the
+     *                           Intro's `locationResult`: `granted`, `denied` (including a rider who was asked,
+     *                           did not allow it, and whom the system now reports as not asked), `not_asked` or
      *                           `unavailable` (the system forbids it).
+     * @param layout             Whether the map is the screen (`full`) or a pane beside other content (`side`). A
+     *                           side map shows with the stop search map flag off too.
      * @param mapSessionId       16 lowercase hex characters from a random 64 bit value. Never derived from a user
      *                           id or a time.
      */
@@ -1657,6 +1717,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         val entry: Entry,
         val hadUserLocation: Boolean,
         val locationPermission: IntroLetsKrailClickEvent.LocationResult,
+        val layout: Layout,
         val mapSessionId: String,
     ) : AnalyticsEvent(
         name = "map_viewed",
@@ -1664,12 +1725,18 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
             "entry" to entry.value,
             PROP_HAD_USER_LOCATION to hadUserLocation.asFlag(),
             "locationPermission" to locationPermission.value,
+            "layout" to layout.value,
             PROP_MAP_SESSION_ID to mapSessionId,
         ),
     ) {
         enum class Entry(val value: String) {
             HOME("home"),
-            SEARCH_STOP("search_stop"),
+            SEARCH_STOP(VALUE_SEARCH_STOP),
+        }
+
+        enum class Layout(val value: String) {
+            FULL("full"),
+            SIDE(VALUE_SIDE),
         }
     }
 
@@ -1678,8 +1745,10 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      * foreground (so a rider who quits on an empty map is counted), back, the map being covered by the list state
      * or another screen, or a stop being picked from it. A map with no `map_viewed` sends none.
      *
+     * `selected` is sent as `1` exactly when [endReason] is [EndReason.PICKED]: a pick made from the map itself.
+     *
      * @param mapSessionId   The id the open's `map_viewed` carried.
-     * @param selected       Whether a stop was picked from the map during this open, sent as `1` or `0`.
+     * @param endReason      What ended the open.
      * @param durationBucket How long the map was open, from a monotonic clock difference taken as the open
      *                       ended. There is no timer.
      * @param hadStops       Whether at least one stop marker was on the map at any point in the open, sent as `1`
@@ -1687,18 +1756,30 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
      */
     data class MapDismissedEvent(
         val mapSessionId: String,
-        val selected: Boolean,
+        val endReason: EndReason,
         val durationBucket: DurationBucket,
         val hadStops: Boolean,
     ) : AnalyticsEvent(
         name = "map_dismissed",
         rawProperties = mapOf(
             PROP_MAP_SESSION_ID to mapSessionId,
-            "selected" to selected.asFlag(),
+            "selected" to (endReason == EndReason.PICKED).asFlag(),
+            "endReason" to endReason.value,
             "durationBucket" to durationBucket.value,
             "hadStops" to hadStops.asFlag(),
         ),
     ) {
+        enum class EndReason(val value: String) {
+            /** A stop was picked from the map. */
+            PICKED("picked"),
+
+            /** The rider went to the list state, which covers the map. It does not mean they gave up. */
+            LIST("list"),
+
+            /** Back, another screen, or the app leaving the foreground. */
+            LEFT("left"),
+        }
+
         /**
          * Under 5000 ms, 5000 up to but not including 15000, 15000 up to but not including 60000, and 60000
          * and over.
@@ -1726,6 +1807,112 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
     }
 
     /**
+     * One answer to one permission request. It is sent from what the request returned, never from a status check.
+     * It does not mean that a system dialog was shown: a system can answer a request by itself.
+     *
+     * @param permission  What was asked for.
+     * @param outcome     What came back, sent as `result`.
+     * @param source      The place in the app that asked.
+     * @param canAskAgain On a `denied` result only, whether the system will still ask, sent as `1` or `0`. It is
+     *                    always `0` on iOS.
+     */
+    data class PermissionResultEvent(
+        val permission: Permission,
+        val outcome: Outcome,
+        val source: Source,
+        val canAskAgain: Boolean? = null,
+    ) : AnalyticsEvent(
+        name = "permission_result",
+        rawProperties = buildMap {
+            put("permission", permission.value)
+            put("result", outcome.value)
+            put(PROP_SOURCE, source.value)
+            if (outcome == Outcome.DENIED) canAskAgain?.let { put("canAskAgain", it.asFlag()) }
+        },
+    ) {
+        enum class Permission(val value: String) {
+            LOCATION("location"),
+            MICROPHONE("microphone"),
+
+            /** iOS asks for speech recognition apart from the microphone. Android has no such request. */
+            SPEECH_RECOGNITION("speech_recognition"),
+        }
+
+        enum class Outcome(val value: String) {
+            GRANTED(VALUE_GRANTED),
+
+            /**
+             * Android only: the rider allowed approximate location and not precise. The app asks for precise, so it
+             * treats this rider as not having allowed location.
+             */
+            GRANTED_APPROXIMATE("granted_approximate"),
+            DENIED(VALUE_DENIED),
+            CANCELLED("cancelled"),
+        }
+
+        enum class Source(val value: String) {
+            INTRO(VALUE_INTRO),
+
+            /** The location card on Search Stop, in one pane or two. */
+            SEARCH_STOP_PILL("search_stop_pill"),
+
+            /** The location card on the home screen's map. */
+            HOME_PILL("home_pill"),
+
+            /** The location button on a stop map. */
+            MAP_BUTTON("map_button"),
+
+            /** The location button on the journey map. */
+            JOURNEY_MAP(VALUE_JOURNEY_MAP),
+            HOME_LABEL_CHIP("home_label_chip"),
+            ASK_KRAIL("ask_krail"),
+
+            /** The Add Park & Ride map. */
+            PARK_RIDE_MAP("park_ride_map"),
+        }
+    }
+
+    /**
+     * The rider used Park & Ride from a map, or asked for directions to a car park. Opening and closing the saved
+     * trip card on the home screen is `park_ride_card_click` and is not sent here.
+     *
+     * @param action       [Action.MAP_CARD_OPENED] once for each card the rider opens on a map, never again for a
+     *                     rotation or a restore. [Action.DIRECTIONS] is the tap, not proof of a journey.
+     * @param source       Where the card or the button is.
+     * @param stopId       The station's stop.
+     * @param facilityId   On [Action.DIRECTIONS] only: the one car park asked for. No name or position is sent.
+     * @param mapSessionId On a stop map or a side map, the id of the map open in progress, when there is one.
+     */
+    data class ParkRideActionEvent(
+        val action: Action,
+        val source: Source,
+        val stopId: String,
+        val facilityId: String? = null,
+        val mapSessionId: String? = null,
+    ) : AnalyticsEvent(
+        name = "park_ride_action",
+        rawProperties = buildMap {
+            put(PROP_ACTION, action.value)
+            put(PROP_SOURCE, source.value)
+            put(PROP_STOP_ID, stopId.trim())
+            if (action == Action.DIRECTIONS) facilityId?.let { put(PROP_FACILITY_ID, it.trim()) }
+            mapSessionId?.let { put(PROP_MAP_SESSION_ID, it) }
+        },
+    ) {
+        enum class Action(val value: String) {
+            MAP_CARD_OPENED("map_card_opened"),
+            DIRECTIONS(VALUE_DIRECTIONS),
+        }
+
+        enum class Source(val value: String) {
+            HOME_CARD("home_card"),
+            STOP_MAP("stop_map"),
+            SIDE_MAP("side_map"),
+            ADD_PARK_RIDE("add_park_ride"),
+        }
+    }
+
+    /**
      * Fired when the user taps "Go to Settings" on the location permission denied banner.
      *
      * Tells you how many users hit the permission wall and were motivated enough to open Settings.
@@ -1743,7 +1930,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
     ) {
         enum class Source(val value: String) {
             SEARCH_STOP_MAP("search_stop_map"),
-            JOURNEY_MAP("journey_map"),
+            JOURNEY_MAP(VALUE_JOURNEY_MAP),
         }
     }
 
@@ -1772,7 +1959,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
     ) {
         enum class Source(val value: String) {
             SEARCH_STOP_MAP("search_stop_map"),
-            JOURNEY_MAP("journey_map"),
+            JOURNEY_MAP(VALUE_JOURNEY_MAP),
         }
     }
 

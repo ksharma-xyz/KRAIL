@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
+import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideLookup
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -63,6 +64,7 @@ class IntroOutcomeEventTest {
         finishedOn = step,
         parkRideAnswer = answer,
         locationResult = location,
+        parkRideLookup = ParkRideLookup.NOT_LOOKED,
         addedParkRide = false,
         savedTrip = false,
         usedSearch = false,

@@ -32,6 +32,13 @@ interface SpeechToTextService {
     suspend fun checkAvailability(): SpeechToTextAvailability
 
     /**
+     * The rider's answer to a speech recognition prompt that [checkAvailability] raised, true for allowed, or null
+     * when it raised none. It is handed over once. Only the older iOS recogniser raises such a prompt. The microphone
+     * is asked for at the Compose layer instead ([rememberRequestMicrophonePermission]).
+     */
+    fun takeSpeechRecognitionAnswer(): Boolean? = null
+
+    /**
      * Starts listening and emits partial transcripts as the rider speaks, then a single
      * [SpeechToTextResult.Final] once they stop, or [SpeechToTextResult.Error] on failure.
      * The flow completes after the final/error result — call this again to listen again.

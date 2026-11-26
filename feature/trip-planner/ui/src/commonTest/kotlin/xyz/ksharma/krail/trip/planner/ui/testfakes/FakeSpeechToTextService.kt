@@ -16,6 +16,12 @@ internal class FakeSpeechToTextService : SpeechToTextService {
     var stopListeningCallCount = 0
         private set
 
+    /** The answer to a speech recognition prompt the availability check raised, or null for no prompt. */
+    var speechRecognitionAnswer: Boolean? = null
+
+    override fun takeSpeechRecognitionAnswer(): Boolean? =
+        speechRecognitionAnswer.also { speechRecognitionAnswer = null }
+
     override suspend fun checkAvailability(): SpeechToTextAvailability = availability
 
     override fun startListening(): Flow<SpeechToTextResult> = results

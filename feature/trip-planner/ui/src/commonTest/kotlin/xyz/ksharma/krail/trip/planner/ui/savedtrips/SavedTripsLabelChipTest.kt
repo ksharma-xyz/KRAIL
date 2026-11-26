@@ -3,6 +3,7 @@ package xyz.ksharma.krail.trip.planner.ui.savedtrips
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.maps.data.model.NearbyStop
 import xyz.ksharma.krail.core.testing.coroutines.KrailTestScope
 import xyz.ksharma.krail.core.testing.coroutines.krailRunTest
@@ -42,6 +43,8 @@ class SavedTripsLabelChipTest {
 
     private val sandook = FakeSandook()
     private val nearbyStops = FakeNearbyStopsRepository()
+    private val analytics = FakeAnalytics()
+    private val searchSessionStore = RealSearchSessionStore()
 
     // region a tap
 
@@ -341,6 +344,102 @@ class SavedTripsLabelChipTest {
 
     // endregion
 
+    // region what is counted
+
+    private fun timetableLoads() = analytics.getTrackedEvents("load_timetable_click")
+
+    private fun labelsAssigned() = analytics.getTrackedEvents("stop_label_stop_assigned")
+
+    @Test
+    fun `a chip that plans a trip is counted once as a timetable load from a label chip`() = krailRunTest {
+        setHome()
+        nearbyStops.addStop(CENTRAL)
+        searchSessionStore.recordSelection(searchSessionId = "pending", stopId = HOME_STOP.stopId)
+        val viewModel = buildViewModel()
+        val screen = watchSavedTrips(viewModel)
+        viewModel.onEvent(SavedTripUiEvent.LabelChipClick("Home"))
+        viewModel.onEvent(SavedTripUiEvent.LabelChipLocated("Home", RIDER_LAT, RIDER_LON))
+        runCurrent()
+        assertEquals(emptyList(), timetableLoads(), "Nothing has opened yet.")
+
+        viewModel.onEvent(SavedTripUiEvent.LabelChipTapHandled)
+        viewModel.onEvent(SavedTripUiEvent.LabelChipTapHandled)
+
+        assertEquals(
+            listOf(
+                AnalyticsEvent.LoadTimeTableClickEvent(
+                    fromStopId = CENTRAL_ITEM.stopId,
+                    toStopId = HOME_STOP.stopId,
+                    source = AnalyticsEvent.LoadTimeTableClickEvent.Source.LABEL_CHIP,
+                ),
+            ),
+            timetableLoads(),
+        )
+        assertEquals(
+            "pending",
+            searchSessionStore.consumeFor(fromStopId = CENTRAL_ITEM.stopId, toStopId = HOME_STOP.stopId),
+            "The pending search belongs to the search button, so the chip leaves it.",
+        )
+        leaveSavedTrips(screen)
+    }
+
+    @Test
+    fun `a chip that ends at stop search counts no timetable load`() = krailRunTest {
+        setHome()
+        val viewModel = buildViewModel()
+        val screen = watchSavedTrips(viewModel)
+        viewModel.onEvent(SavedTripUiEvent.LabelChipClick("Home"))
+        viewModel.onEvent(SavedTripUiEvent.LabelChipLocated("Home", latitude = null, longitude = null))
+        runCurrent()
+
+        viewModel.onEvent(SavedTripUiEvent.LabelChipTapHandled)
+        viewModel.onEvent(SavedTripUiEvent.LabelChipClick("Work"))
+        viewModel.onEvent(SavedTripUiEvent.LabelChipTapHandled)
+
+        assertEquals(emptyList(), timetableLoads())
+        leaveSavedTrips(screen)
+    }
+
+    @Test
+    fun `a stop set from a home chip is counted with the home chip surface`() = krailRunTest {
+        val viewModel = buildViewModel()
+        val screen = watchSavedTrips(viewModel)
+
+        viewModel.onEvent(SavedTripUiEvent.LabelStopAssigned("Home", "200070", "Town Hall Station"))
+        runCurrent()
+        viewModel.onEvent(SavedTripUiEvent.LabelStopAssigned("Home", "200060", "Central Station"))
+        runCurrent()
+
+        assertEquals(
+            listOf(false, true).map { reassigned ->
+                AnalyticsEvent.StopLabelStopAssignedEvent(
+                    assignmentSurface = AnalyticsEvent.StopLabelSurface.HOME_CHIP,
+                    assignmentMode = AnalyticsEvent.StopLabelStopAssignedEvent.AssignmentMode.EXISTING_LABEL,
+                    locationKind = AnalyticsEvent.StopSelectedEvent.LocationKind.TRANSIT_STOP,
+                    labelKind = AnalyticsEvent.StopLabelKind.PROTECTED_DEFAULT,
+                    isReassignment = reassigned,
+                )
+            },
+            labelsAssigned(),
+        )
+        leaveSavedTrips(screen)
+    }
+
+    @Test
+    fun `a stop another label holds is refused and not counted`() = krailRunTest {
+        setHome()
+        val viewModel = buildViewModel()
+        val screen = watchSavedTrips(viewModel)
+
+        viewModel.onEvent(SavedTripUiEvent.LabelStopAssigned("Work", HOME_STOP.stopId, HOME_STOP.stopName))
+        runCurrent()
+
+        assertEquals(emptyList(), labelsAssigned())
+        leaveSavedTrips(screen)
+    }
+
+    // endregion
+
     /** Home set to Town Hall, Work present and unset, as a rider who has only set Home has them. */
     private fun setHome() {
         sandook.upsertStopLabel("Work", WORK_EMOJI, null, null, 1)
@@ -378,13 +477,13 @@ class SavedTripsLabelChipTest {
 
     private fun KrailTestScope.buildViewModel() = SavedTripsViewModel(
         sandook = sandook,
-        analytics = FakeAnalytics(),
+        analytics = analytics,
         ioDispatcher = ioDispatcher,
         nswParkRideFacilityManager = FakeParkRideFacilityManager(),
         parkRideService = FakeParkRideService(),
         parkRideSandook = FakeNswParkRideSandook(),
         stopResultsManager = FakeStopResultsManager(),
-        searchSessionStore = RealSearchSessionStore(),
+        searchSessionStore = searchSessionStore,
         flag = FakeFlag(),
         preferences = FakeSandookPreferences(),
         infoTileManager = FakeInfoTileManager(),

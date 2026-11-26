@@ -11,6 +11,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardStation
+import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideLookup
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRideStationPickerItem
 
 /**
@@ -65,7 +66,7 @@ internal class IntroParkRideStep(
      * The permission result and, for a granted one, the fix. A result nobody asked for is ignored, and the call
      * says whether the result was taken, so the one fix can also be given to what else reads it. No usable
      * location moves to the trip step with no message and no error. A granted result with no fix is recorded as
-     * unavailable, because there is nothing to find a station from.
+     * [LocationResult.GRANTED_NO_FIX], and goes the same way, because there is nothing to find a station from.
      */
     fun onLocationResult(result: LocationResult, location: LatLng?): Boolean {
         if (read().parkRideCard !is ParkRideCardPhase.Locating) return false
@@ -73,7 +74,7 @@ internal class IntroParkRideStep(
             write { copy(locationResult = LocationResult.GRANTED) }
             resolve(noneNearIsAnAnswer = true) { gateway.nearestStation(location) }
         } else {
-            val recorded = if (result == LocationResult.GRANTED) LocationResult.UNAVAILABLE else result
+            val recorded = if (result == LocationResult.GRANTED) LocationResult.GRANTED_NO_FIX else result
             write { copy(locationResult = recorded, parkRideCard = ParkRideCardPhase.None).leavingParkRide() }
             onLeftQuestion()
         }
@@ -138,13 +139,15 @@ internal class IntroParkRideStep(
      */
     fun restore() {
         val stationId = (read().parkRideCard as? ParkRideCardPhase.Locating)?.stationId ?: return
-        resolve(noneNearIsAnAnswer = false) { gateway.stationById(stationId) }
+        resolve(noneNearIsAnAnswer = false) {
+            gateway.stationById(stationId)?.let { ParkRideStationMatch(it, lookup = null) }
+        }
     }
 
     // Finds the station once the stops are ready. A station shows the card. None, when the look itself worked and
     // [noneNearIsAnAnswer], shows the message and waits for the rider's OK. Stops that were not ready in time, a look that
     // failed and a saved station that has gone say nothing was learned about what is near, so the screen is passed over, quietly.
-    private fun resolve(noneNearIsAnAnswer: Boolean, find: suspend () -> ParkRideStationPickerItem?) {
+    private fun resolve(noneNearIsAnAnswer: Boolean, find: suspend () -> ParkRideStationMatch?) {
         job?.cancel()
         job = scope.launch {
             val looked = if (readiness.awaitReady(PARK_RIDE_STOPS_WAIT_MS) is StopsReadiness.Ready) {
@@ -154,20 +157,34 @@ internal class IntroParkRideStep(
             }
             when {
                 looked == null || (looked.isEmpty() && !noneNearIsAnAnswer) -> {
-                    write { copy(parkRideCard = ParkRideCardPhase.None).leavingParkRide() }
+                    write {
+                        copy(
+                            parkRideCard = ParkRideCardPhase.None,
+                            parkRideLookup = parkRideLookup.unlessShown(ParkRideLookup.FAILED),
+                        ).leavingParkRide()
+                    }
                     onLeftQuestion()
                 }
-                looked.isEmpty() -> write { copy(parkRideCard = ParkRideCardPhase.NoStationNear) }
+                looked.isEmpty() -> write {
+                    copy(parkRideCard = ParkRideCardPhase.NoStationNear, parkRideLookup = ParkRideLookup.NONE_NEAR)
+                }
                 else -> {
                     // The card shows at once with names only, then settles when the one availability call is back.
-                    val found = looked.single()
+                    val match = looked.single()
+                    val found = match.station
                     station = found
                     val card = ParkRideCardStation(
                         stationId = found.stationId,
                         stationName = found.stationName,
                         carParks = found.carParksWithoutReadings(),
                     )
-                    write { copy(parkRideCard = ParkRideCardPhase.Card(card)) }
+                    // A card worked out again from its station id has no distance, so what was noted before stands.
+                    write {
+                        copy(
+                            parkRideCard = ParkRideCardPhase.Card(card),
+                            parkRideLookup = match.lookup ?: parkRideLookup,
+                        )
+                    }
                     val carParks = attempt { gateway.carParks(found) }
                     write { withReadings(found.stationId, carParks) }
                 }
@@ -194,3 +211,7 @@ internal class IntroParkRideStep(
         onLeftQuestion()
     }
 }
+
+/** A result the rider has already been shown is kept, whatever happens after it. */
+private fun ParkRideLookup.unlessShown(next: ParkRideLookup): ParkRideLookup =
+    if (this == ParkRideLookup.NOT_LOOKED) next else this

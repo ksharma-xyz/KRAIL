@@ -72,6 +72,12 @@ internal class IosSpeechToTextService : SpeechToTextService {
     override val voiceLevel: StateFlow<Float> = level.asStateFlow()
     private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest? = null
 
+    // Set only by a prompt this service raised, and cleared as it is read.
+    private var speechRecognitionAnswer: Boolean? = null
+
+    override fun takeSpeechRecognitionAnswer(): Boolean? =
+        speechRecognitionAnswer.also { speechRecognitionAnswer = null }
+
     override suspend fun checkAvailability(): SpeechToTextAvailability {
         val speechAuthorized = requestSpeechAuthorizationIfNeeded()
         val micAuthorized = microphoneAuthorized()
@@ -293,21 +299,22 @@ internal class IosSpeechToTextService : SpeechToTextService {
         }
         return suspendCancellableCoroutine { continuation ->
             SFSpeechRecognizer.requestAuthorization { status ->
-                continuation.resume(
-                    status == SFSpeechRecognizerAuthorizationStatus.SFSpeechRecognizerAuthorizationStatusAuthorized,
-                )
+                val authorized =
+                    status == SFSpeechRecognizerAuthorizationStatus.SFSpeechRecognizerAuthorizationStatusAuthorized
+                speechRecognitionAnswer = authorized
+                continuation.resume(authorized)
             }
         }
     }
-
-    // Status read only. By the time this runs, aagya's controller has already raised the
-    // system dialog from the mic button (see rememberRequestMicrophonePermission), and only
-    // a granted answer starts listening. Anything but granted here means a caller skipped
-    // that flow, and the answer is the same one AndroidSpeechToTextService gives: report
-    // PERMISSION_REQUIRED rather than ask a second time from a layer that should not own it.
-    private fun microphoneAuthorized(): Boolean =
-        AVAudioApplication.sharedInstance().recordPermission == AVAudioApplicationRecordPermissionGranted
 }
+
+// Status read only. By the time this runs, aagya's controller has already raised the
+// system dialog from the mic button (see rememberRequestMicrophonePermission), and only
+// a granted answer starts listening. Anything but granted here means a caller skipped
+// that flow, and the answer is the same one AndroidSpeechToTextService gives: report
+// PERMISSION_REQUIRED rather than ask a second time from a layer that should not own it.
+private fun microphoneAuthorized(): Boolean =
+    AVAudioApplication.sharedInstance().recordPermission == AVAudioApplicationRecordPermissionGranted
 
 // The same number as Android's SILENCE_AFTER_A_COMPLETE_SOUNDING_PHRASE_MILLIS, which is the
 // window that actually fires over there: a trip said out loud almost always ends on a

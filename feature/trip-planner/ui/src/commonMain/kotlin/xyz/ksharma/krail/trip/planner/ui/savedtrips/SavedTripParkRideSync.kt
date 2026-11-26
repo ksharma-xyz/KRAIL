@@ -1,8 +1,5 @@
 package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
-import kotlinx.coroutines.flow.first
-import xyz.ksharma.krail.core.analytics.Analytics
-import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.park.ride.network.NswParkRideFacilityManager
 import xyz.ksharma.krail.park.ride.network.model.NswParkRideFacility
@@ -34,6 +31,9 @@ import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
  * {"stopId":"209325","parkRideFacilityId":"489","parkRideName":"Park&Ride - Manly Vale"},
  * {"stopId":"209324","parkRideFacilityId":"489","parkRideName":"Park&Ride - Manly Vale"},
  *
+ * It sends no analytics. These rows follow the saved trips and no rider asked for any of them, so they are not
+ * counted as `park_ride_user_facility`.
+ *
  * @param savedTrips List of saved trips to extract stop IDs from.
  */
 internal suspend fun syncSavedTripParkRides(
@@ -41,7 +41,6 @@ internal suspend fun syncSavedTripParkRides(
     facilityManager: NswParkRideFacilityManager,
     stopResultsManager: StopResultsManager,
     parkRideSandook: NswParkRideSandook,
-    analytics: Analytics,
 ) {
     // 1. Collect all unique stop IDs from the saved trips (both fromStopId and toStopId)
     val uniqueStopIds: Set<String> = uniqueSavedTripStopIds(savedTrips)
@@ -85,14 +84,6 @@ internal suspend fun syncSavedTripParkRides(
         log("StopId -> FacilityId Mapping: \n${it.joinToString("\n")}")
     }
 
-    // 4. Diff against the previously persisted set so add/remove can be tracked per facility.
-    val previousKeys = parkRideSandook.observeSavedParkRidesBySource(SavedTrips).first()
-        .map { it.stopId to it.facilityId }
-        .toSet()
-    val newKeys = savedParkRideList.map { it.stopId to it.facilityId }.toSet()
-    val addedKeys = newKeys - previousKeys
-    val removedKeys = previousKeys - newKeys
-
     // Clear all existing saved park rides linked to saved trips for accuracy
     parkRideSandook.clearAllSavedParkRidesBySource(source = SavedTrips)
 
@@ -100,34 +91,6 @@ internal suspend fun syncSavedTripParkRides(
         parkRideSandook.insertOrReplaceSavedParkRides(
             parkRideInfoList = savedParkRideList,
             source = SavedTrips,
-        )
-    }
-
-    analytics.trackParkRideAutoSync(addedKeys, removedKeys)
-}
-
-private fun Analytics.trackParkRideAutoSync(
-    addedKeys: Set<Pair<String, String>>,
-    removedKeys: Set<Pair<String, String>>,
-) {
-    addedKeys.forEach { (stopId, facilityId) ->
-        track(
-            AnalyticsEvent.ParkRideUserFacilityEvent(
-                facilityId = facilityId,
-                stopId = stopId,
-                action = AnalyticsEvent.ParkRideUserFacilityEvent.Action.ADD,
-                source = AnalyticsEvent.ParkRideUserFacilityEvent.Source.SAVED_TRIPS_SCREEN,
-            ),
-        )
-    }
-    removedKeys.forEach { (stopId, facilityId) ->
-        track(
-            AnalyticsEvent.ParkRideUserFacilityEvent(
-                facilityId = facilityId,
-                stopId = stopId,
-                action = AnalyticsEvent.ParkRideUserFacilityEvent.Action.REMOVE,
-                source = AnalyticsEvent.ParkRideUserFacilityEvent.Source.SAVED_TRIPS_SCREEN,
-            ),
         )
     }
 }

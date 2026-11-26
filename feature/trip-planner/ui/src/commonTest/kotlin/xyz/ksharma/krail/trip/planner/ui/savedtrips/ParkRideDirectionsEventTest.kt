@@ -23,7 +23,13 @@ class ParkRideDirectionsEventTest {
     @Test
     fun `directions go to the car park's own position under its own name`() {
         assertEquals(
-            SavedTripUiEvent.ParkRideDirectionsClick(latitude = -33.69, longitude = 150.9, label = "Tallawong P1"),
+            SavedTripUiEvent.ParkRideDirectionsClick(
+                latitude = -33.69,
+                longitude = 150.9,
+                label = "Tallawong P1",
+                stopId = "2155384",
+                facilityId = "1",
+            ),
             parkRideDirectionsEvent(facility),
         )
     }

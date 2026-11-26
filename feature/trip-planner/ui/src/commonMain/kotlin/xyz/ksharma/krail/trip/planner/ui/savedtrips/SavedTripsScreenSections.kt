@@ -214,6 +214,8 @@ internal fun parkRideDirectionsEvent(
         latitude = latitude,
         longitude = longitude,
         label = facility.facilityName,
+        stopId = facility.stopId,
+        facilityId = facility.facilityId,
     )
 }
 

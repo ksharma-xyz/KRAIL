@@ -2,6 +2,7 @@ package xyz.ksharma.krail.trip.planner.ui.savedtrips
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.PermissionResultEvent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.UserLocationManager
 import xyz.ksharma.krail.core.maps.state.LatLng
@@ -76,7 +77,7 @@ private fun act(
 
 /** The rider's position from one fix, or null when there is none: no permission, no signal, timed out. */
 internal suspend fun UserLocationManager.currentLatLng(): LatLng? =
-    getCurrentLocation()
+    getCurrentLocation(PermissionResultEvent.Source.HOME_LABEL_CHIP)
         .onFailure { log("[HOME_CHIP] no location fix: $it") }
         .getOrNull()
         ?.let { LatLng(it.latitude, it.longitude) }
@@ -84,5 +85,5 @@ internal suspend fun UserLocationManager.currentLatLng(): LatLng? =
 /** Stop search answered for a label set from the home chips. A result for any other field is not ours. */
 internal fun onLabelStopSelected(result: StopSelectedResult, onEvent: (SavedTripUiEvent) -> Unit) {
     val labelKey = result.labelKey ?: return
-    onEvent(SavedTripUiEvent.LabelStopAssigned(labelKey, result.stopId, result.stopName))
+    onEvent(SavedTripUiEvent.LabelStopAssigned(labelKey, result.stopId, result.stopName, result.locationKind))
 }

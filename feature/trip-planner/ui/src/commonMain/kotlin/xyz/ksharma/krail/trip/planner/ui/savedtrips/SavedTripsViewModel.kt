@@ -64,6 +64,7 @@ import xyz.ksharma.krail.trip.planner.ui.searchstop.StopResultsManager
 import xyz.ksharma.krail.trip.planner.ui.searchstop.map.MapOpenTracker
 import xyz.ksharma.krail.trip.planner.ui.state.datetimeselector.DateTimeSelectionItem
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.LabelChipTap
+import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.LabelTapOutcome
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ParkRideUiState
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.ReorderSession
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.SavedTripUiEvent
@@ -208,7 +209,6 @@ class SavedTripsViewModel(
         when (event) {
             is SavedTripUiEvent.DeleteSavedTrip -> onDeleteSavedTrip(event.trip)
             is SavedTripUiEvent.AnalyticsSavedTripCardClick -> onSavedTripCardClick(event)
-            SavedTripUiEvent.ReverseStopClick -> onReverseStopClick()
             is SavedTripUiEvent.AnalyticsLoadTimeTableClick -> onLoadTimeTableClick(event)
             SavedTripUiEvent.AnalyticsSettingsButtonClick ->
                 analytics.track(AnalyticsEvent.SettingsClickEvent)
@@ -221,11 +221,7 @@ class SavedTripsViewModel(
                 isExpanded = event.isExpanded,
             )
             is SavedTripUiEvent.RemoveParkRideStation -> removeParkRideStation(event.parkRideState)
-            is SavedTripUiEvent.ParkRideDirectionsClick -> platformOps.openMapDirections(
-                latitude = event.latitude,
-                longitude = event.longitude,
-                label = event.label,
-            )
+            is SavedTripUiEvent.ParkRideDirectionsClick -> onParkRideDirectionsClick(event)
             SavedTripUiEvent.AnalyticsDiscoverButtonClick -> {
                 analytics.track(AnalyticsEvent.DiscoverButtonClick)
                 preferences.markDiscoverAsClicked()
@@ -248,26 +244,48 @@ class SavedTripsViewModel(
             SavedTripUiEvent.ReorderCancel -> updateReorder { null }
             is SavedTripUiEvent.LabelChipClick -> onLabelChipClick(event.labelKey)
             is SavedTripUiEvent.LabelChipLocated -> onLabelChipLocated(event)
-            SavedTripUiEvent.LabelChipTapHandled -> updateUiState { copy(labelChipTap = LabelChipTap.Idle) }
+            SavedTripUiEvent.LabelChipTapHandled -> onLabelChipTapHandled()
             is SavedTripUiEvent.LabelStopAssigned -> onLabelStopAssigned(event)
         }
     }
 
-    private fun onReverseStopClick() {
-        stopResultsManager.reverseSelectedStops()
-        updateSelectedStops()
-        analytics.track(AnalyticsEvent.ReverseStopClickEvent)
+    private fun onParkRideDirectionsClick(event: SavedTripUiEvent.ParkRideDirectionsClick) {
+        analytics.trackHomeCardParkRideDirections(stopId = event.stopId, facilityId = event.facilityId)
+        platformOps.openMapDirections(
+            latitude = event.latitude,
+            longitude = event.longitude,
+            label = event.label,
+        )
     }
 
     private fun onLoadTimeTableClick(event: SavedTripUiEvent.AnalyticsLoadTimeTableClick) {
         analytics.trackLoadTimeTableClick(
             fromStopId = event.fromStopId,
             toStopId = event.toStopId,
+            source = AnalyticsEvent.LoadTimeTableClickEvent.Source.SEARCH_STOP,
             searchSessionId = searchSessionStore.consumeFor(
                 fromStopId = event.fromStopId,
                 toStopId = event.toStopId,
             ),
         )
+    }
+
+    /**
+     * The screen has acted on a chip's decision. A decision to plan opened departure times without passing
+     * through the search button, so it is counted here. It takes no search session id: the pending one, if
+     * there is one, belongs to a search and not to this tap, and is left for it.
+     */
+    private fun onLabelChipTapHandled() {
+        val outcome = (_uiState.value.labelChipTap as? LabelChipTap.Decided)?.outcome
+        if (outcome is LabelTapOutcome.Plan) {
+            analytics.trackLoadTimeTableClick(
+                fromStopId = outcome.from.stopId,
+                toStopId = outcome.to.stopId,
+                source = AnalyticsEvent.LoadTimeTableClickEvent.Source.LABEL_CHIP,
+                searchSessionId = null,
+            )
+        }
+        updateUiState { copy(labelChipTap = LabelChipTap.Idle) }
     }
 
     private fun onSavedTripCardClick(event: SavedTripUiEvent.AnalyticsSavedTripCardClick) {
@@ -325,6 +343,11 @@ class SavedTripsViewModel(
         val row = labels.firstOrNull { it.label.equals(event.labelKey, ignoreCase = true) }
         if (labels.any { it.stopId == event.stopId && it != row }) return
         val builtIn = homeLabelFor(event.labelKey, labels) ?: return
+        analytics.trackLabelSetFromHomeChip(
+            labelKey = builtIn.label,
+            locationKind = event.locationKind,
+            isReassignment = row?.stopId != null && row.stopId != event.stopId,
+        )
         viewModelScope.launchWithExceptionHandler<SavedTripsViewModel>(ioDispatcher) {
             if (row != null) {
                 sandook.updateStopLabelStop(row.label, event.stopId, event.stopName)
@@ -542,7 +565,6 @@ class SavedTripsViewModel(
                             facilityManager = nswParkRideFacilityManager,
                             stopResultsManager = stopResultsManager,
                             parkRideSandook = parkRideSandook,
-                            analytics = analytics,
                         )
                     }
             }

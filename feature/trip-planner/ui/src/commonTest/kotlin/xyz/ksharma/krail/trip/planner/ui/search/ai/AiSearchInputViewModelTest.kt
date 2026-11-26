@@ -18,6 +18,7 @@ import xyz.ksharma.krail.core.maps.data.model.NearbyStop
 import xyz.ksharma.krail.core.speechtotext.SpeechToTextAvailability
 import xyz.ksharma.krail.core.speechtotext.SpeechToTextResult
 import xyz.ksharma.krail.core.speechtotext.SpeechUnavailableReasons
+import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeSandook
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.ChainedStopTextResolver
 import xyz.ksharma.krail.trip.planner.ui.search.ai.resolve.RiderOriginLocator
@@ -632,6 +633,32 @@ class AiSearchInputViewModelTest {
         // find the request still pending and start the microphone again.
         viewModel.onEvent(AiSearchInputEvent.StartListening)
         assertFalse(viewModel.uiState.value.listenOnOpenPending)
+    }
+
+    @Test
+    fun `the speech recognition answer an availability check raised is reported once`() = runTest(testDispatcher) {
+        val analytics = FakeAnalytics()
+        viewModel = AiSearchInputViewModel(
+            aiTextService = aiTextService,
+            speechToTextService = speechToTextService,
+            stopTextResolver = stopTextResolver,
+            riderOriginLocator = RiderOriginLocator(nearbyStopsRepository = nearbyStopsRepository),
+            isAiSearchInputEnabled = { true },
+            reporter = AiAttemptReporter(analytics = analytics),
+        )
+        speechToTextService.speechRecognitionAnswer = false
+        speechToTextService.availability =
+            SpeechToTextAvailability.Unavailable(reason = SpeechUnavailableReasons.PERMISSION_REQUIRED)
+
+        viewModel.onEvent(AiSearchInputEvent.StartListening)
+        advanceUntilIdle()
+        viewModel.onEvent(AiSearchInputEvent.StartListening)
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf("speech_recognition"),
+            analytics.getTrackedEvents("permission_result").map { it.properties?.get("permission") },
+        )
     }
 
     @Test

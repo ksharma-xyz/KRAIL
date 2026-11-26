@@ -238,6 +238,10 @@ class SearchStopViewModel(
 
             SearchStopUiEvent.ParkRideCardClosed -> parkRideCard.close()
 
+            SearchStopUiEvent.TripSwapped -> analytics.track(
+                AnalyticsEvent.ReverseStopClickEvent(AnalyticsEvent.ReverseStopClickEvent.Source.SEARCH_STOP),
+            )
+
             is SearchStopUiEvent.ParkRideDirectionsClicked -> parkRideMapSource.openDirections(
                 latitude = event.latitude,
                 longitude = event.longitude,

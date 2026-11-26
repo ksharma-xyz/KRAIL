@@ -3,7 +3,9 @@ package xyz.ksharma.krail.trip.planner.ui.searchstop.map
 import xyz.ksharma.krail.core.analytics.Analytics
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.IntroLetsKrailClickEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.MapDismissedEvent
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.MapDismissedEvent.EndReason
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.MapViewedEvent
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.ParkRideActionEvent
 import kotlin.random.Random
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
@@ -51,6 +53,7 @@ class MapOpenTracker(
         entry: MapEntry,
         hadUserLocation: Boolean,
         locationPermission: IntroLetsKrailClickEvent.LocationResult,
+        layout: MapViewedEvent.Layout,
         stopCount: Int,
     ) {
         if (open != null) return
@@ -61,7 +64,33 @@ class MapOpenTracker(
                 entry = entry.event,
                 hadUserLocation = hadUserLocation,
                 locationPermission = locationPermission,
+                layout = layout,
                 mapSessionId = id,
+            ),
+        )
+    }
+
+    /** The rider opened a station's parking card from the map. */
+    fun parkRideCardOpened(layout: MapViewedEvent.Layout, stopId: String) {
+        analytics.track(
+            ParkRideActionEvent(
+                action = ParkRideActionEvent.Action.MAP_CARD_OPENED,
+                source = layout.parkRideSource(),
+                stopId = stopId,
+                mapSessionId = sessionId,
+            ),
+        )
+    }
+
+    /** The rider tapped directions to one car park on the map's parking card. */
+    fun parkRideDirections(layout: MapViewedEvent.Layout, stopId: String, facilityId: String) {
+        analytics.track(
+            ParkRideActionEvent(
+                action = ParkRideActionEvent.Action.DIRECTIONS,
+                source = layout.parkRideSource(),
+                stopId = stopId,
+                facilityId = facilityId,
+                mapSessionId = sessionId,
             ),
         )
     }
@@ -71,19 +100,16 @@ class MapOpenTracker(
         if (count > 0) open?.hadStops = true
     }
 
-    fun stopPicked() {
-        open?.selected = true
-        dismissed()
-    }
+    fun stopPicked() = dismissed(EndReason.PICKED)
 
-    fun dismissed() {
+    fun dismissed(reason: EndReason = EndReason.LEFT) {
         val ending = open ?: return
         open = null
         val openMs = ending.startedAt.elapsedNow().inWholeMilliseconds
         analytics.track(
             MapDismissedEvent(
                 mapSessionId = ending.id,
-                selected = ending.selected,
+                endReason = reason,
                 durationBucket = MapDismissedEvent.DurationBucket.from(openMs),
                 hadStops = ending.hadStops,
             ),
@@ -94,8 +120,12 @@ class MapOpenTracker(
         val id: String,
         val startedAt: TimeMark,
         var hadStops: Boolean,
-        var selected: Boolean = false,
     )
+}
+
+private fun MapViewedEvent.Layout.parkRideSource(): ParkRideActionEvent.Source = when (this) {
+    MapViewedEvent.Layout.FULL -> ParkRideActionEvent.Source.STOP_MAP
+    MapViewedEvent.Layout.SIDE -> ParkRideActionEvent.Source.SIDE_MAP
 }
 
 private const val SESSION_ID_LENGTH = 16

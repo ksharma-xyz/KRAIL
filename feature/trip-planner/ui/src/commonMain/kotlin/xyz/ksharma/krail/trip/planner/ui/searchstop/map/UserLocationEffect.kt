@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.dhruva.location.LocationConfig
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.PermissionResultEvent
 import xyz.ksharma.krail.core.log.log
 import xyz.ksharma.krail.core.maps.data.location.UserLocationManager
 import xyz.ksharma.krail.core.maps.state.LatLng
@@ -21,11 +22,11 @@ import xyz.ksharma.krail.core.maps.state.UserLocationConfig
  * Permission behaviour:
  * - If permission is already [PermissionStatus.Granted]: starts tracking immediately.
  * - If permission is [PermissionStatus.Denied]: calls [onPermissionDeny], no request.
- * - If permission is not yet determined / temporarily denied AND [allowPermissionRequest] is false:
+ * - If permission is not yet determined / temporarily denied AND [permissionRequest] is null:
  *   does nothing — waits for the user to tap the location button.
- * - If permission is not yet determined / temporarily denied AND [allowPermissionRequest] is true:
- *   calls [userLocationManager.locationUpdates] which triggers the system permission dialog.
- *   This should only be true after an explicit user action (location button tap).
+ * - If permission is not yet determined / temporarily denied AND [permissionRequest] names where the rider
+ *   asked from: calls [userLocationManager.locationUpdates] which triggers the system permission dialog.
+ *   It should only be non null after an explicit user action (location card or location button tap).
  *
  * **Camera control is intentionally not handled here.** Animating the camera from inside the
  * `collect { ... }` is fragile across lifecycle bounces — the iOS permission dialog can
@@ -39,11 +40,11 @@ internal fun TrackUserLocation(
     userLocationManager: UserLocationManager,
     onLocationUpdate: (LatLng) -> Unit,
     onPermissionDeny: (PermissionStatus) -> Unit,
-    allowPermissionRequest: Boolean,
+    permissionRequest: PermissionResultEvent.Source?,
 ) {
     val scope = rememberCoroutineScope()
 
-    LifecycleStartEffect(allowPermissionRequest) {
+    LifecycleStartEffect(permissionRequest) {
         val trackingJob = scope.launch {
             val status = userLocationManager.checkPermissionStatus()
             when {
@@ -53,15 +54,16 @@ internal fun TrackUserLocation(
                     return@launch
                 }
                 // Only relevant on Android — iOS knows natively via CLAuthorizationStatus.notDetermined.
-                !allowPermissionRequest && status !is PermissionStatus.Granted -> {
+                permissionRequest == null && status !is PermissionStatus.Granted -> {
                     log("[USER_LOCATION] Permission not granted; awaiting explicit user action")
                     return@launch
                 }
             }
 
-            log("[USER_LOCATION] Starting tracking (status=$status, allowRequest=$allowPermissionRequest)")
+            log("[USER_LOCATION] Starting tracking (status=$status, requestSource=$permissionRequest)")
             userLocationManager.locationUpdates(
                 config = LocationConfig(updateIntervalMs = UserLocationConfig.UPDATE_INTERVAL_MS),
+                requestSource = permissionRequest,
             )
                 .catch { error ->
                     log("[USER_LOCATION] Location updates stopped: ${error.message}")

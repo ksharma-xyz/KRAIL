@@ -4,6 +4,7 @@ import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.IntroLetsKrailClickEvent.LocationResult
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.MapDismissedEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.MapViewedEvent
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.ParkRideActionEvent
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import kotlin.random.Random
 import kotlin.test.Test
@@ -30,7 +31,8 @@ class SearchStopMapOpenTrackerTest {
         hadUserLocation: Boolean = false,
         permission: LocationResult = LocationResult.NOT_ASKED,
         stopCount: Int = 0,
-    ) = tracker.viewed(entry, hadUserLocation, permission, stopCount)
+        layout: MapViewedEvent.Layout = MapViewedEvent.Layout.FULL,
+    ) = tracker.viewed(entry, hadUserLocation, permission, layout, stopCount)
 
     private fun viewedEvents() = analytics.getTrackedEvents("map_viewed").filterIsInstance<MapViewedEvent>()
 
@@ -172,12 +174,15 @@ class SearchStopMapOpenTrackerTest {
         open()
         tracker.dismissed()
         tracker.stopPicked()
-        assertEquals(false, dismissedEvents().single().selected)
+        assertEquals(MapDismissedEvent.EndReason.LEFT, dismissedEvents().single().endReason)
 
         open()
         tracker.stopPicked()
         tracker.dismissed()
-        assertEquals(listOf(false, true), dismissedEvents().map { it.selected })
+        assertEquals(
+            listOf(MapDismissedEvent.EndReason.LEFT, MapDismissedEvent.EndReason.PICKED),
+            dismissedEvents().map { it.endReason },
+        )
         assertEquals(2, dismissedEvents().size)
     }
 
@@ -203,16 +208,26 @@ class SearchStopMapOpenTrackerTest {
 
     // endregion
 
-    // region selected and hadStops
+    // region endReason and hadStops
 
     @Test
-    fun `selected is false until a stop is picked, then true`() {
+    fun `the end reason is the one the open ended for, and a pick is picked`() {
         open()
         tracker.dismissed()
         open()
+        tracker.dismissed(MapDismissedEvent.EndReason.LIST)
+        open()
         tracker.stopPicked()
 
-        assertEquals(listOf(false, true), dismissedEvents().map { it.selected })
+        assertEquals(
+            listOf(
+                MapDismissedEvent.EndReason.LEFT,
+                MapDismissedEvent.EndReason.LIST,
+                MapDismissedEvent.EndReason.PICKED,
+            ),
+            dismissedEvents().map { it.endReason },
+        )
+        assertEquals(listOf(0, 0, 1), dismissedEvents().map { it.properties?.get("selected") })
     }
 
     @Test
@@ -315,6 +330,62 @@ class SearchStopMapOpenTrackerTest {
 
     // endregion
 
+    // region The layout and the parking card
+
+    @Test
+    fun `the layout reaches the view`() {
+        open(layout = MapViewedEvent.Layout.SIDE)
+
+        assertEquals(MapViewedEvent.Layout.SIDE, viewedEvents().single().layout)
+    }
+
+    private fun parkRideActions() =
+        analytics.getTrackedEvents("park_ride_action").filterIsInstance<ParkRideActionEvent>()
+
+    @Test
+    fun `a parking card opened on a full map is counted for the stop map, with the open's id`() {
+        open()
+
+        tracker.parkRideCardOpened(MapViewedEvent.Layout.FULL, "2155384")
+
+        assertEquals(
+            ParkRideActionEvent(
+                action = ParkRideActionEvent.Action.MAP_CARD_OPENED,
+                source = ParkRideActionEvent.Source.STOP_MAP,
+                stopId = "2155384",
+                mapSessionId = "aaaaaaaaaaaaaaaa",
+            ),
+            parkRideActions().single(),
+        )
+    }
+
+    @Test
+    fun `directions on a side map are counted for the side map, with the car park`() {
+        open(layout = MapViewedEvent.Layout.SIDE)
+
+        tracker.parkRideDirections(MapViewedEvent.Layout.SIDE, "2155384", "26")
+
+        assertEquals(
+            ParkRideActionEvent(
+                action = ParkRideActionEvent.Action.DIRECTIONS,
+                source = ParkRideActionEvent.Source.SIDE_MAP,
+                stopId = "2155384",
+                facilityId = "26",
+                mapSessionId = "aaaaaaaaaaaaaaaa",
+            ),
+            parkRideActions().single(),
+        )
+    }
+
+    @Test
+    fun `a parking action with no open in progress carries no map session id`() {
+        tracker.parkRideCardOpened(MapViewedEvent.Layout.FULL, "2155384")
+
+        assertNull(parkRideActions().single().mapSessionId)
+    }
+
+    // endregion
+
     // region No stop name, no text
 
     @Test
@@ -324,6 +395,7 @@ class SearchStopMapOpenTrackerTest {
 
         val words = setOf(
             "home", "search_stop", "granted", "denied", "not_asked", "unavailable",
+            "full", "side", "picked", "list", "left",
             "under_5s", "5_to_15s", "15_to_60s", "over_60s",
         )
         analytics.events.forEach { event: AnalyticsEvent ->

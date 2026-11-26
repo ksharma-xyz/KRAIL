@@ -89,6 +89,16 @@ class SearchStopViewModelTest {
     )
 
     @Test
+    fun `GIVEN the rider swapped From and To THEN a swap is counted from stop search`() = runTest {
+        viewModel.onEvent(SearchStopUiEvent.TripSwapped)
+
+        assertEquals(
+            listOf(AnalyticsEvent.ReverseStopClickEvent(AnalyticsEvent.ReverseStopClickEvent.Source.SEARCH_STOP)),
+            (fakeAnalytics as FakeAnalytics).getTrackedEvents("reverse_stop_click"),
+        )
+    }
+
+    @Test
     fun `GIVEN maps are available WHEN the map starts THEN it looks within the Remote Config radius`() =
         runTest {
             fakeFlag.setFlagValue(FlagKeys.SEARCH_STOP_MAPS_AVAILABLE.key, FlagValue.BooleanValue(true))

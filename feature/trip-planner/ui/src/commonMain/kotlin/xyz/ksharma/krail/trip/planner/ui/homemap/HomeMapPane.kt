@@ -9,6 +9,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import xyz.ksharma.aagya.permission.PermissionStatus
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.PermissionResultEvent
 import xyz.ksharma.krail.taj.preview.PreviewScreen
 import xyz.ksharma.krail.taj.theme.PreviewTheme
 import xyz.ksharma.krail.trip.planner.ui.parkride.map.ParkRideStationsLayer
@@ -39,7 +40,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.searchstop.SearchStopUiEvent
 internal fun HomeMapPane(
     mapUiState: MapUiState,
     pins: HomePins,
-    allowPermissionRequest: Boolean,
+    permissionRequest: PermissionResultEvent.Source?,
     onPermissionStatus: (PermissionStatus) -> Unit,
     onMapEvent: (MapStopSelectionEvent) -> Unit,
     onCardKey: (String?) -> Unit,
@@ -63,7 +64,7 @@ internal fun HomeMapPane(
                     else -> Unit
                 }
             },
-            allowPermissionRequest = allowPermissionRequest,
+            permissionRequest = permissionRequest,
             onPermissionStatus = onPermissionStatus,
             onMapTap = { onCardKey(null) },
             onStopPinTap = { stop -> onCardKey(stopCardKey(stop.stopId)) },
@@ -105,7 +106,7 @@ private fun PreviewHomeMapPane() {
         HomeMapPane(
             mapUiState = MapUiState.Ready(mapDisplay = MapDisplay()),
             pins = HomePins(),
-            allowPermissionRequest = false,
+            permissionRequest = null,
             onPermissionStatus = {},
             onMapEvent = {},
             onCardKey = {},

@@ -27,6 +27,7 @@ import org.maplibre.compose.map.OrnamentOptions
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.compose.util.ClickResult
 import xyz.ksharma.aagya.permission.PermissionStatus
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.PermissionResultEvent
 import xyz.ksharma.krail.core.maps.data.location.rememberUserLocationManager
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.maps.state.UserLocationConfig
@@ -70,7 +71,8 @@ internal fun ParkRideMapPane(
     onStationSelected: (ParkRideStationPickerItem) -> Unit,
     onDismissStation: () -> Unit,
     onToggleStation: (ParkRideStationPickerItem) -> Unit,
-    onDirectionsClick: (StationPosition, String) -> Unit,
+    // Directions to one car park, with its position, its name and its id.
+    onDirectionsClick: (position: StationPosition, name: String, facilityId: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // Same location UX as the SearchStop map: auto-centre on a known fix, a recentre button
@@ -79,9 +81,9 @@ internal fun ParkRideMapPane(
     val scope = rememberCoroutineScope()
     var userLocation by remember { mutableStateOf<LatLng?>(null) }
     var showPermissionBanner by remember { mutableStateOf(false) }
-    // False until the rider taps the location button, so the screen never asks for permission
+    // Null until the rider taps the location button, so the screen never asks for permission
     // unprompted.
-    var allowPermissionRequest by remember { mutableStateOf(false) }
+    var permissionRequest by remember { mutableStateOf<PermissionResultEvent.Source?>(null) }
     var cardHeight by remember { mutableStateOf(0.dp) }
 
     // System back closes the card first, and with none open it is off and the screen's own answers.
@@ -92,7 +94,7 @@ internal fun ParkRideMapPane(
 
         TrackUserLocation(
             userLocationManager = userLocationManager,
-            allowPermissionRequest = allowPermissionRequest,
+            permissionRequest = permissionRequest,
             onLocationUpdate = { latLng ->
                 showPermissionBanner = false
                 userLocation = latLng
@@ -167,7 +169,7 @@ internal fun ParkRideMapPane(
                         cameraState = cameraState,
                         userLocationManager = userLocationManager,
                         onPermissionDenied = { showPermissionBanner = true },
-                        onRequestPermission = { allowPermissionRequest = true },
+                        onRequestPermission = { permissionRequest = PermissionResultEvent.Source.PARK_RIDE_MAP },
                     )
                 }
             },
@@ -194,7 +196,8 @@ internal fun ParkRideMapPane(
                     },
                     onDirectionsClick = { carPark ->
                         carPark.directionsTo?.let { target ->
-                            onDirectionsClick(StationPosition(target.latitude, target.longitude), carPark.name)
+                            val position = StationPosition(target.latitude, target.longitude)
+                            onDirectionsClick(position, carPark.name, carPark.facilityId)
                         }
                     },
                     onClose = onDismissStation,

@@ -48,7 +48,7 @@ private fun previewFormModel(): SearchStopFormModel = SearchStopFormModel(
 private fun previewLocationState(pill: LocationPill): LocationPillState = LocationPillState(
     pill = pill,
     granted = pill == LocationPill.Hidden,
-    ask = LocationPermissionAsk(allowRequest = false, onStatus = {}, onRequest = {}),
+    ask = LocationPermissionAsk(request = null, onStatus = {}, onRequest = {}),
     userLocationManager = rememberUserLocationManager(),
     onClick = {},
 )

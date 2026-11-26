@@ -5,6 +5,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroStep
 import xyz.ksharma.krail.trip.planner.ui.state.intro.LocationResult
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
+import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideLookup
 import xyz.ksharma.krail.trip.planner.ui.state.intro.TripDecision
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -25,6 +26,7 @@ class IntroOutcomeTest {
         finishedOn = IntroStep.THEME,
         parkRideAnswer = ParkRideAnswer.ASK,
         locationResult = LocationResult.NOT_ASKED,
+        parkRideLookup = ParkRideLookup.NOT_LOOKED,
         addedParkRide = false,
         savedTrip = false,
         usedSearch = false,
@@ -122,6 +124,7 @@ class IntroOutcomeTest {
             finishedOn = IntroStep.CONFIRM,
             parkRideAnswer = ParkRideAnswer.YES,
             locationResult = LocationResult.GRANTED,
+            parkRideLookup = ParkRideLookup.FOUND_NEAR,
             addedParkRide = true,
             savedTrip = true,
             usedSearch = false,
@@ -136,6 +139,7 @@ class IntroOutcomeTest {
                 "finishedOn" to "first_trip",
                 "parkRideAnswer" to "yes",
                 "locationResult" to "granted",
+                "parkRideLookup" to "found_near",
                 "addedParkRide" to true,
                 "savedTrip" to true,
                 "usedSearch" to false,

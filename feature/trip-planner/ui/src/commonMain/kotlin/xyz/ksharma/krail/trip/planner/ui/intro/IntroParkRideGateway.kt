@@ -16,6 +16,7 @@ import xyz.ksharma.krail.trip.planner.ui.parkride.savedStopName
 import xyz.ksharma.krail.trip.planner.ui.parkride.toSavedParkRides
 import xyz.ksharma.krail.trip.planner.ui.savedtrips.toParkRideState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCarPark
+import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideLookup
 import xyz.ksharma.krail.trip.planner.ui.state.savedtrip.AddParkRideState.ParkRideStationPickerItem
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -40,8 +41,11 @@ internal class IntroParkRideGateway(
      * walk that one list, so the second pass is no call and no query. [location] is used for this one computation and kept
      * nowhere: not here, not in state, not saved.
      */
-    suspend fun nearestStation(location: LatLng): ParkRideStationPickerItem? = withContext(ioDispatcher) {
-        nearestParkRideStationWidening(location, catalogue.stations())
+    suspend fun nearestStation(location: LatLng): ParkRideStationMatch? = withContext(ioDispatcher) {
+        nearestParkRideStationWidening(location, catalogue.stations())?.let { station ->
+            val isNear = nearestParkRideStation(location, listOf(station), INTRO_PARK_RIDE_RADIUS_KM) != null
+            ParkRideStationMatch(station, if (isNear) ParkRideLookup.FOUND_NEAR else ParkRideLookup.FOUND_WIDER)
+        }
     }
 
     /** The station with [stationId], to work the card out again after the process was killed. */

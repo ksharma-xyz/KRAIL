@@ -5,6 +5,7 @@ import xyz.ksharma.krail.core.analytics.AnalyticsPaneTracker
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.IntroLetsKrailClickEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.MapDismissedEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.MapDismissedEvent.DurationBucket
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.MapDismissedEvent.EndReason
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.MapViewedEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.NearbyStopClickEvent
 import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.StopSelectedFromMapEvent
@@ -27,28 +28,34 @@ class MapEventsTest {
         entry: MapViewedEvent.Entry = MapViewedEvent.Entry.SEARCH_STOP,
         hadUserLocation: Boolean = true,
         permission: IntroLetsKrailClickEvent.LocationResult = IntroLetsKrailClickEvent.LocationResult.GRANTED,
+        layout: MapViewedEvent.Layout = MapViewedEvent.Layout.FULL,
     ) = MapViewedEvent(
         entry = entry,
         hadUserLocation = hadUserLocation,
         locationPermission = permission,
+        layout = layout,
         mapSessionId = sessionId,
     )
 
     private fun dismissed(
-        selected: Boolean = false,
+        endReason: EndReason = EndReason.LEFT,
         bucket: DurationBucket = DurationBucket.UNDER_5S,
         hadStops: Boolean = true,
     ) = MapDismissedEvent(
         mapSessionId = sessionId,
-        selected = selected,
+        endReason = endReason,
         durationBucket = bucket,
         hadStops = hadStops,
     )
 
+    /** Every Intro result but the one a map never reports: only the Intro takes a fix before it answers. */
+    private fun mapPermissions() =
+        IntroLetsKrailClickEvent.LocationResult.entries - IntroLetsKrailClickEvent.LocationResult.GRANTED_NO_FIX
+
     // region map_viewed
 
     @Test
-    fun `map_viewed is a new name with exactly its five params`() {
+    fun `map_viewed has exactly its five params`() {
         val event = viewed()
 
         assertEquals("map_viewed", event.name)
@@ -57,6 +64,7 @@ class MapEventsTest {
                 "entry" to "search_stop",
                 "hadUserLocation" to 1,
                 "locationPermission" to "granted",
+                "layout" to "full",
                 "mapSessionId" to sessionId,
             ),
             event.properties,
@@ -82,10 +90,18 @@ class MapEventsTest {
     }
 
     @Test
+    fun `layout sends full and side and nothing else`() {
+        assertEquals(
+            setOf("full", "side"),
+            MapViewedEvent.Layout.entries.map { viewed(layout = it).properties?.get("layout") }.toSet(),
+        )
+    }
+
+    @Test
     fun `location permission reuses the Intro value set`() {
         assertEquals(
             setOf("granted", "denied", "not_asked", "unavailable"),
-            IntroLetsKrailClickEvent.LocationResult.entries
+            mapPermissions()
                 .map { viewed(permission = it).properties?.get("locationPermission") }
                 .toSet(),
         )
@@ -102,14 +118,15 @@ class MapEventsTest {
     // region map_dismissed
 
     @Test
-    fun `map_dismissed is a new name with exactly its four params`() {
-        val event = dismissed(selected = true, bucket = DurationBucket.FIVE_TO_15S, hadStops = false)
+    fun `map_dismissed has exactly its five params`() {
+        val event = dismissed(endReason = EndReason.PICKED, bucket = DurationBucket.FIVE_TO_15S, hadStops = false)
 
         assertEquals("map_dismissed", event.name)
         assertEquals(
             mapOf(
                 "mapSessionId" to sessionId,
                 "selected" to 1,
+                "endReason" to "picked",
                 "durationBucket" to "5_to_15s",
                 "hadStops" to 0,
             ),
@@ -118,9 +135,15 @@ class MapEventsTest {
     }
 
     @Test
-    fun `selected and had stops are numbers one or zero`() {
-        assertEquals(1, dismissed(selected = true).properties?.get("selected"))
-        assertEquals(0, dismissed(selected = false).properties?.get("selected"))
+    fun `every end reason reaches the event, and selected is one exactly when it is picked`() {
+        val sent = EndReason.entries.map { dismissed(endReason = it).properties.orEmpty() }
+
+        assertEquals(listOf("picked", "list", "left"), sent.map { it["endReason"] })
+        assertEquals(listOf(1, 0, 0), sent.map { it["selected"] })
+    }
+
+    @Test
+    fun `had stops is a number one or zero`() {
         assertEquals(1, dismissed(hadStops = true).properties?.get("hadStops"))
         assertEquals(0, dismissed(hadStops = false).properties?.get("hadStops"))
     }
@@ -159,15 +182,20 @@ class MapEventsTest {
         val allowedWords = setOf(
             "home", "search_stop",
             "granted", "denied", "not_asked", "unavailable",
+            "full", "side",
+            "picked", "list", "left",
             "under_5s", "5_to_15s", "15_to_60s", "over_60s",
         )
         val events = buildList {
             MapViewedEvent.Entry.entries.forEach { entry ->
-                IntroLetsKrailClickEvent.LocationResult.entries.forEach { permission ->
-                    add(viewed(entry = entry, permission = permission))
+                mapPermissions().forEach { permission ->
+                    MapViewedEvent.Layout.entries.forEach { layout ->
+                        add(viewed(entry = entry, permission = permission, layout = layout))
+                    }
                 }
             }
             DurationBucket.entries.forEach { add(dismissed(bucket = it)) }
+            EndReason.entries.forEach { add(dismissed(endReason = it)) }
         }
 
         events.forEach { event ->
@@ -202,8 +230,10 @@ class MapEventsTest {
                 "entry",
                 "hadUserLocation",
                 "locationPermission",
+                "layout",
                 "mapSessionId",
                 "selected",
+                "endReason",
                 "durationBucket",
                 "hadStops",
             ),

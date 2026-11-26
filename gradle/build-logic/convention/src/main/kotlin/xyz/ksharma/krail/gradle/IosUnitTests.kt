@@ -88,6 +88,7 @@ val IOS_TEST_EXCLUSIONS: Map<String, String> = mapOf(
     ":core:analytics" to FIREBASE_WALL,
     ":core:app-version" to FIREBASE_WALL,
     ":core:festival" to FIREBASE_WALL,
+    ":core:maps:data" to FIREBASE_WALL,
     ":core:maps:ui" to MAPLIBRE_WALL,
     ":core:network" to FIREBASE_WALL,
     ":core:remote-config" to FIREBASE_WALL,

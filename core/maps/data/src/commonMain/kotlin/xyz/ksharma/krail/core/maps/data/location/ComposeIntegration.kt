@@ -15,7 +15,8 @@ import xyz.ksharma.dhruva.location.data.rememberLocationTracker
 fun rememberUserLocationManager(): UserLocationManager {
     val permissionController = rememberPermissionController()
     val locationTracker = rememberLocationTracker()
-    return remember(permissionController, locationTracker) {
-        UserLocationManagerImpl(permissionController, locationTracker)
+    val recorder = LocalLocationPermissionRecorder.current
+    return remember(permissionController, locationTracker, recorder) {
+        UserLocationManagerImpl(permissionController, locationTracker, recorder)
     }
 }

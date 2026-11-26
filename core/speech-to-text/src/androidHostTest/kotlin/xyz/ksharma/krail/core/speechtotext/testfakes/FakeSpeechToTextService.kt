@@ -18,6 +18,7 @@ import xyz.ksharma.krail.core.speechtotext.SpeechToTextService
 internal class FakeSpeechToTextService(
     private val availability: SpeechToTextAvailability,
     private val transcript: String,
+    private var speechRecognitionAnswer: Boolean? = null,
 ) : SpeechToTextService {
 
     var stopCount: Int = 0
@@ -31,4 +32,7 @@ internal class FakeSpeechToTextService(
     override fun stopListening() {
         stopCount++
     }
+
+    override fun takeSpeechRecognitionAnswer(): Boolean? =
+        speechRecognitionAnswer.also { speechRecognitionAnswer = null }
 }

@@ -1,7 +1,9 @@
 package xyz.ksharma.krail.core.speechtotext
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import xyz.ksharma.aagya.permission.AppPermission
 import xyz.ksharma.aagya.permission.PermissionResult
 import xyz.ksharma.aagya.permission.PermissionStatus
@@ -36,10 +38,15 @@ sealed interface MicPermissionOutcome {
  * Backed by aagya's [PermissionController][xyz.ksharma.aagya.permission.PermissionController],
  * the same one `UserLocationManager` uses for location, so both permissions ask the same way
  * on both platforms instead of this module carrying its own Android-only launcher.
+ *
+ * [onAnswer] gets what the system answered, each time the system was asked, and is not called when it was not.
  */
 @Composable
-fun rememberRequestMicrophonePermission(): suspend () -> MicPermissionOutcome {
+fun rememberRequestMicrophonePermission(
+    onAnswer: (PermissionResult) -> Unit = {},
+): suspend () -> MicPermissionOutcome {
     val permissionController = rememberPermissionController()
+    val latestOnAnswer by rememberUpdatedState(onAnswer)
     return remember(permissionController) {
         {
             when (permissionController.checkPermissionStatus(AppPermission.Microphone.Default)) {
@@ -49,6 +56,7 @@ fun rememberRequestMicrophonePermission(): suspend () -> MicPermissionOutcome {
                 // already been answered, and asking again is a call the platform ignores.
                 is PermissionStatus.NotDetermined -> {
                     val result = permissionController.requestPermission(AppPermission.Microphone.Default)
+                    latestOnAnswer(result)
                     if (result is PermissionResult.Granted) {
                         MicPermissionOutcome.Granted
                     } else {

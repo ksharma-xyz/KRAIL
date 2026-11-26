@@ -169,6 +169,8 @@ sealed interface AddParkRideUiEvent {
     data class DirectionsClicked(
         val position: AddParkRideState.StationPosition,
         val stationName: String,
+        val stopId: String,
+        val facilityId: String,
     ) : AddParkRideUiEvent
 
     data object Retry : AddParkRideUiEvent

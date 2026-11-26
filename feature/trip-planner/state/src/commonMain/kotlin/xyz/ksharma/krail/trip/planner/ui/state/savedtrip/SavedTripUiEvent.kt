@@ -1,6 +1,7 @@
 package xyz.ksharma.krail.trip.planner.ui.state.savedtrip
 
 import xyz.ksharma.krail.info.tile.state.InfoTileData
+import xyz.ksharma.krail.trip.planner.ui.state.searchstop.model.LocationKind
 import xyz.ksharma.krail.trip.planner.ui.state.timetable.Trip
 
 sealed interface SavedTripUiEvent {
@@ -12,8 +13,6 @@ sealed interface SavedTripUiEvent {
 
     data class AnalyticsLoadTimeTableClick(val fromStopId: String, val toStopId: String) :
         SavedTripUiEvent
-
-    data object ReverseStopClick : SavedTripUiEvent
 
     data object AnalyticsSettingsButtonClick : SavedTripUiEvent
 
@@ -30,12 +29,15 @@ sealed interface SavedTripUiEvent {
 
     /**
      * Directions to a car park were tapped. Carries the car park's own position, which the tile only
-     * offers when it has one, and its name for the maps app to show.
+     * offers when it has one, and its name for the maps app to show. The station's stop and the car park's
+     * id are what analytics reports.
      */
     data class ParkRideDirectionsClick(
         val latitude: Double,
         val longitude: Double,
         val label: String,
+        val stopId: String,
+        val facilityId: String,
     ) : SavedTripUiEvent
 
     /**
@@ -100,5 +102,6 @@ sealed interface SavedTripUiEvent {
         val labelKey: String,
         val stopId: String,
         val stopName: String,
+        val locationKind: LocationKind = LocationKind.TRANSIT_STOP,
     ) : SavedTripUiEvent
 }

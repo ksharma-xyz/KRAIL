@@ -3,9 +3,11 @@ package xyz.ksharma.krail.trip.planner.ui.intro
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import xyz.ksharma.aagya.permission.PermissionStatus
 import xyz.ksharma.dhruva.location.Location
 import xyz.ksharma.dhruva.location.LocationError
 import xyz.ksharma.krail.core.analytics.AnalyticsScreen
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent.PermissionResultEvent
 import xyz.ksharma.krail.core.maps.state.LatLng
 import xyz.ksharma.krail.core.testing.coroutines.krailRunTest
 import xyz.ksharma.krail.trip.planner.ui.state.intro.IntroState
@@ -58,6 +60,36 @@ class IntroLocateTest {
         manager { error("the permission controller failed") }.locateOnce(record)
 
         assertEquals(listOf<Pair<LocationResult, LatLng?>>(LocationResult.UNAVAILABLE to null), results)
+    }
+
+    private fun allowed(answer: suspend () -> Result<Location>) =
+        FakeUserLocationManager(permissionStatus = PermissionStatus.Granted, currentLocation = answer)
+
+    @Test
+    fun `a rider who allowed location and got no fix is sent as granted with no fix`() = krailRunTest {
+        allowed { Result.failure(LocationError.Unknown(IllegalStateException("no fix"))) }.locateOnce(record)
+
+        assertEquals(listOf<Pair<LocationResult, LatLng?>>(LocationResult.GRANTED_NO_FIX to null), results)
+    }
+
+    @Test
+    fun `a fix that outlasts the bound after location was allowed is granted with no fix`() = krailRunTest {
+        val never = CompletableDeferred<Result<Location>>()
+        val location = allowed { never.await() }
+
+        launch { location.locateOnce(record) }
+        pumpOnce(LOCATE_BOUND_MS + 1)
+
+        assertEquals(listOf<Pair<LocationResult, LatLng?>>(LocationResult.GRANTED_NO_FIX to null), results)
+    }
+
+    @Test
+    fun `the Intro's request is reported as the Intro's`() = krailRunTest {
+        val location = manager { Result.success(fix) }
+
+        location.locateOnce(record)
+
+        assertEquals(listOf(PermissionResultEvent.Source.INTRO), location.locationSources)
     }
 
     @Test

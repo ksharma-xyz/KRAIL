@@ -9,6 +9,7 @@ import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAnswer
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideAvailabilityState
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardPhase
 import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideCardStation
+import xyz.ksharma.krail.trip.planner.ui.state.intro.ParkRideLookup
 import xyz.ksharma.krail.trip.planner.ui.state.intro.TripDecision
 
 /** The one preference key the Intro's progress lives under, as one serialised string. */
@@ -32,6 +33,7 @@ internal data class IntroProgress(
     val themeId: Int? = null,
     val parkRide: ParkRideAnswer = ParkRideAnswer.ASK,
     val locationResult: LocationResult = LocationResult.NOT_ASKED,
+    val parkRideLookup: ParkRideLookup = ParkRideLookup.NOT_LOOKED,
     val added: Boolean = false,
     val station: ProgressStop? = null,
     val start: ProgressStop? = null,
@@ -58,6 +60,7 @@ internal fun IntroState.toProgress(): IntroProgress {
         themeId = selectedThemeId,
         parkRide = if (questionOpen) ParkRideAnswer.ASK else parkRideAnswer,
         locationResult = if (questionOpen) LocationResult.NOT_ASKED else locationResult,
+        parkRideLookup = if (questionOpen) ParkRideLookup.NOT_LOOKED else parkRideLookup,
         added = addedParkRide,
         station = addedStation(),
         start = stopOf(startStopId, startName),
@@ -85,6 +88,7 @@ internal fun IntroProgress.toState(): IntroState = IntroState(
     step = step,
     parkRideAnswer = parkRide,
     locationResult = locationResult,
+    parkRideLookup = parkRideLookup,
     parkRideCard = station?.let { stop ->
         ParkRideCardPhase.Card(
             ParkRideCardStation(

@@ -10,6 +10,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import xyz.ksharma.krail.core.analytics.Analytics
+import xyz.ksharma.krail.core.analytics.event.AnalyticsEvent
 import xyz.ksharma.krail.core.testing.fakes.FakeAnalytics
 import xyz.ksharma.krail.core.testing.fakes.FakeFestivalManager
 import xyz.ksharma.krail.core.testing.fakes.FakeFlag
@@ -130,6 +131,8 @@ class AddParkRideSelectionTest {
                     AddParkRideUiEvent.DirectionsClicked(
                         position = station.position!!,
                         stationName = station.stationName,
+                        stopId = station.stationId,
+                        facilityId = "26",
                     ),
                 )
                 advanceUntilIdle()
@@ -141,9 +144,61 @@ class AddParkRideSelectionTest {
                     platformOps.lastMapDirections,
                 )
                 assertEquals(null, platformOps.lastOpenedUrl)
+                assertEquals(
+                    AnalyticsEvent.ParkRideActionEvent(
+                        action = AnalyticsEvent.ParkRideActionEvent.Action.DIRECTIONS,
+                        source = AnalyticsEvent.ParkRideActionEvent.Source.ADD_PARK_RIDE,
+                        stopId = station.stationId,
+                        facilityId = "26",
+                    ),
+                    parkRideActions().single(),
+                )
                 cancelAndIgnoreRemainingEvents()
             }
         }
+
+    @Test
+    fun `a station's card is counted once for each time the rider opens it`() =
+        runTest(testDispatcher) {
+            facilityManager.facilities = TALLAWONG
+            sandook.insertNswStop(
+                stopId = "2155384",
+                stopName = "Tallawong Station",
+                stopLat = TALLAWONG_LAT,
+                stopLon = TALLAWONG_LON,
+                isParent = null,
+            )
+
+            viewModel.uiState.test {
+                advanceUntilIdle()
+                val station = expectMostRecentItem().stations.first()
+
+                viewModel.onEvent(AddParkRideUiEvent.StationSelected(station))
+                // The same pin again, with its card already open.
+                viewModel.onEvent(AddParkRideUiEvent.StationSelected(station))
+                advanceUntilIdle()
+                assertEquals(1, parkRideActions().size)
+
+                viewModel.onEvent(AddParkRideUiEvent.StationDismissed)
+                viewModel.onEvent(AddParkRideUiEvent.StationSelected(station))
+                advanceUntilIdle()
+
+                assertEquals(2, parkRideActions().size)
+                assertEquals(
+                    AnalyticsEvent.ParkRideActionEvent(
+                        action = AnalyticsEvent.ParkRideActionEvent.Action.MAP_CARD_OPENED,
+                        source = AnalyticsEvent.ParkRideActionEvent.Source.ADD_PARK_RIDE,
+                        stopId = station.stationId,
+                    ),
+                    parkRideActions().last(),
+                )
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    private fun parkRideActions() = (analytics as FakeAnalytics)
+        .getTrackedEvents("park_ride_action")
+        .filterIsInstance<AnalyticsEvent.ParkRideActionEvent>()
 
     @Test
     fun `a typed query and its filtered results survive a config change`() =

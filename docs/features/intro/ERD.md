@@ -47,7 +47,8 @@ erDiagram
         int selectedThemeId "nullable, the theme the rider picked on the last screen"
         enum tripDecision "nullable SAVED or DECLINED, the answer on the confirm screen, saved with the progress"
         enum parkRideAnswer "ASK, YES, NO"
-        enum locationResult "NOT_ASKED, GRANTED, DENIED, UNAVAILABLE"
+        enum parkRideLookup "NOT_LOOKED, FOUND_NEAR, FOUND_WIDER, NONE_NEAR, FAILED"
+        enum locationResult "NOT_ASKED, GRANTED, GRANTED_NO_FIX, DENIED, UNAVAILABLE"
         enum parkRideCard "NONE, LOCATING, NO_STATION_NEAR, CARD"
         string startStopId "nullable"
         string endStopId "nullable"
@@ -250,6 +251,7 @@ data class IntroState(
     val step: IntroStep,
     val parkRideAnswer: ParkRideAnswer,
     val locationResult: LocationResult,
+    val parkRideLookup: ParkRideLookup,       // for the finish to report, never drawn
     val parkRideCard: ParkRideCardPhase,
     val startStopId: String?, val startName: String?,
     val endStopId: String?, val endName: String?,
@@ -1030,7 +1032,8 @@ list grows with each:
   is true. Any pick of the start by the rider ends that claim, even a pick of the very stop Add chose, and so does an end
   pick that clears the start. The stop names corrected after Add stay as they are.
 - **Outcome.** `parkRideAnswer`, `locationResult` and `addedParkRide` come from the state at the finish, and a test holds all
-  five paths: granted and added, granted and not added, no station near, denied, and a fix that timed out (`unavailable`).
+  five paths: granted and added, granted and not added, no station near, denied, and a fix that never came, which is
+  `granted_no_fix` when location was allowed and `unavailable` when it could not be told.
   The never answered row is gone, because no later screen can be reached without answering the question.
 - **What is saved.** The step, answer, permission result, picks and flags as before, plus the card's station id (or a
   flag for no station near). A card is saved as the id alone, with no car park and no reading, and comes back as a
@@ -2433,8 +2436,12 @@ The 500 event-name budget is respected. Nothing here mints a name.
 - `intro_lets_krail` (existing) gains params. Today it carries `completedOnPage` and `completedOnPageNumber`, which describe the
   old carousel. The new version stops sending them and sends:
   `introVersion` (2), `finishedOn` (park_ride or first_trip), `parkRideAnswer` (yes, no, skipped), `locationResult`
-  (granted, denied, unavailable, not_asked), `addedParkRide` (bool), `savedTrip` (bool), `usedSearch` (bool), `skipped`
-  (bool), `stopsWait` (none, under_2s, 2_to_5s, over_5s, failed). Nine params, well inside the 25 per event. Unit N1 adds a tenth,
+  (granted, granted_no_fix, denied, unavailable, not_asked), `addedParkRide` (bool), `savedTrip` (bool), `usedSearch` (bool), `skipped`
+  (bool), `stopsWait` (none, under_2s, 2_to_5s, over_5s, failed). 1.31 adds `parkRideLookup` (found_near, found_wider,
+  none_near, failed, not_looked): which distance found the station on the card, that the card said none is near, that a
+  usable location got no answer because the stops were not ready or the search failed, or none of those. A result the rider
+  was shown is kept for the run, and it is saved with the progress under the same open question rule as `locationResult`.
+  It names no station, distance or position, and nothing the rider sees depends on it. Nine params, well inside the 25 per event. Unit N1 adds a tenth,
   `themeId`, the colour the rider chose, as the string `theme_selected` sends it, left out when none was chosen (the finish needs one,
   so a normal firing has it). `introVersion` is on every firing, the skipped outcome included.
   In code, `IntroLetsKrailClickEvent` carries all eleven params as optional, and a null one is left out of the event, so

@@ -240,7 +240,7 @@ permission required", the wording the old banner on this map used. `locationPill
 | Permission | Pill | Tap |
 |---|---|---|
 | not looked up yet, or granted, or a fix in hand | none | none |
-| not asked | shown | asks (`allowPermissionRequest`, which `TrackUserLocation` acts on) |
+| not asked | shown | asks (sets `permissionRequest`, which `TrackUserLocation` acts on) |
 | denied or restricted | shown | opens the app's Settings, and sends `LocationPermissionSettingsClicked` |
 
 The status is looked up again on every return to the screen, so coming back from Settings with it granted drops the

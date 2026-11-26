@@ -48,10 +48,10 @@ Denied         — permission denied; direct user to Settings (no re-request)
 |---|---|
 | `Granted` | Starts location tracking immediately — no dialog |
 | `Denied` | Shows the in-app permission banner — no dialog |
-| `NotDetermined` and `allowPermissionRequest = false` | Does nothing — waits for button tap |
-| `NotDetermined` and `allowPermissionRequest = true` | Calls `locationUpdates()` which triggers the system dialog |
+| `NotDetermined` and `permissionRequest = null` | Does nothing, waits for button tap |
+| `NotDetermined` and `permissionRequest` set | Calls `locationUpdates()` which triggers the system dialog |
 
-`allowPermissionRequest` is a Compose state that starts `false` and flips to `true` only when
+`permissionRequest` is a Compose state that starts `null` and is set, to the place the rider tapped, only when
 the user explicitly taps the location button. Changing the flag is the key for
 `LifecycleStartEffect`, so the effect relaunches immediately while the screen is visible.
 
@@ -63,7 +63,7 @@ the user explicitly taps the location button. Changing the flag is the key for
 |---|---|
 | Location dot is visible (tracking active) | Re-centers the camera on the current position |
 | Status is `Denied` | Shows the in-app permission banner |
-| Status is `NotDetermined` | Sets `allowPermissionRequest = true` → dialog shown |
+| Status is `NotDetermined` | Sets `permissionRequest`, so the dialog is shown |
 
 ---
 
@@ -74,9 +74,9 @@ the user explicitly taps the location button. Changing the flag is the key for
 | Map opens, permission never requested | `NotDetermined` → does nothing, no dialog |
 | Map opens, permission already granted | `Granted` → starts tracking immediately |
 | Map opens, permission denied | `Denied` → shows in-app banner, no dialog |
-| User taps location button (not yet requested) | `allowPermissionRequest = true` → effect relaunches → system dialog shown |
+| User taps location button (not yet requested) | `permissionRequest` set, the effect relaunches, system dialog shown |
 | User taps button, denies, leaves and returns | On resume: `Denied` → banner shown, no re-request |
-| User granted permission, then rotates device | `allowPermissionRequest` resets to `false`, but status is `Granted` → auto-resumes |
+| User granted permission, then rotates device | `permissionRequest` is `null` again, but status is `Granted`, so tracking resumes |
 | User revokes in Settings, then returns | On resume: `Denied` → banner shown |
 
 ---
@@ -106,4 +106,16 @@ the user explicitly taps the location button. Changing the flag is the key for
 
 4. **`TrackUserLocation` always renders.** There is no outer `if (isTrackingEnabled)` gate;
    instead, the effect checks permission internally and exits early when appropriate. The single
-   `allowPermissionRequest` flag carries user intent across recompositions.
+   `permissionRequest` flag carries user intent across recompositions.
+
+---
+
+## What analytics reads
+
+This adds no rule about what the app asks for or what counts as allowed.
+
+- Each answered request is sent as `permission_result`, with the place that asked (`PermissionResultEvent.Source`).
+  The app asks for precise location. An Android rider who picks approximate is treated as not allowed, and the
+  event says `granted_approximate`.
+- `LocationPermissionRecorder` keeps one boolean, the last answer was no. Only `reportedPermissionStatus` reads
+  it, so that a refusal Android has forgotten is not reported as never asked. Nothing the rider sees uses it.

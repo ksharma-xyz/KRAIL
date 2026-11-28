@@ -16,6 +16,7 @@ private const val VALUE_DENIED = "denied"
 private const val VALUE_GRANTED = "granted"
 private const val VALUE_DIRECTIONS = "directions"
 private const val VALUE_FAILED = "failed"
+private const val VALUE_SHOWN = "shown"
 private const val PROP_VARIANT = "variant"
 private const val PROP_SOURCE = "source"
 private const val PROP_EXPAND = "expand"
@@ -1023,7 +1024,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         },
     ) {
         enum class Action(val value: String) {
-            SHOWN("shown"),
+            SHOWN(VALUE_SHOWN),
             FAILED(VALUE_FAILED),
             UPVOTE("upvote"),
             DOWNVOTE("downvote"),
@@ -1069,7 +1070,7 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
         },
     ) {
         enum class Action(val value: String) {
-            SHOWN("shown"),
+            SHOWN(VALUE_SHOWN),
             ERROR("error"),
         }
 
@@ -2314,6 +2315,36 @@ sealed class AnalyticsEvent(val name: String, rawProperties: Map<String, Any>? =
             toStopId?.let { put(PROP_TO_STOP_ID, it) }
         },
     )
+
+    // endregion
+
+    // region App upgrade
+
+    /**
+     * The forced upgrade screen, which replaces the app when the installed version is below
+     * `min_supported_app_version` in Remote Config. One event with an [action], so the share of riders who
+     * tap Update can be read against the riders who were shown the screen.
+     *
+     * Count riders, not rows: [Action.SHOWN] is sent once per screen instance, so a rider who opens the app
+     * on three days before updating sends it three times.
+     *
+     * The app version is not a param. Firebase attaches it to every event, and it is the version that was
+     * blocked.
+     */
+    data class AppUpgradePromptEvent(
+        val action: Action,
+    ) : AnalyticsEvent(
+        name = "app_upgrade_prompt",
+        rawProperties = mapOf(PROP_ACTION to action.value),
+    ) {
+        enum class Action(val value: String) {
+            /** The screen came up. */
+            SHOWN(VALUE_SHOWN),
+
+            /** The rider tapped Update, which opens the store listing. Says nothing about whether they updated. */
+            UPDATE_CLICK("update_click"),
+        }
+    }
 
     // endregion
 }

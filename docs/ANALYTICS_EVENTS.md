@@ -47,6 +47,10 @@ What that means in practice:
 - Adding a param is cheap for the app and not free for analytics. That is another reason
   the checklist below prefers reusing an existing param over minting one.
 
+`app_upgrade_prompt` was added on 2026-11-28 and spends one more name. It passes the checklist below: a
+forced upgrade is a new intent, no other event fires on that screen, and it is charted alone (riders
+shown the screen against riders who tapped Update). Both outcomes ride one name through `action`.
+
 ## Decision checklist: new event name vs param
 
 **A new event NAME is justified only when ALL of these hold:**

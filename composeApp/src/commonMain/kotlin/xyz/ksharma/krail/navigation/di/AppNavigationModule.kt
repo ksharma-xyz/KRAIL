@@ -104,6 +104,8 @@ private fun EntryProviderScope<NavKey>.AppUpgradeEntry() {
     entry<AppUpgradeRoute> { _ ->
         val viewModel: AppUpgradeViewModel = koinViewModel()
 
+        LaunchedEffect(Unit) { viewModel.onShown() }
+
         AppUpgradeScreen(
             onUpdateClick = { viewModel.onUpdateClick() },
         )
